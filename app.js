@@ -12893,6 +12893,10 @@ function _majPanneauOuQuand(){
   const aCarte = !!(carte && carte.innerHTML.trim());
   const aGraph = !!(graph && !graph.hidden);
   card.hidden = !(aCarte || aGraph);
+  // Les deux vues presentes : un seul cadre pour les deux, separees par un filet. La CSS
+  // ne sait pas regarder en arriere - elle ne peut pas arrondir le bas de la carte selon
+  // l'etat du graphique qui la suit - alors la classe le lui dit.
+  card.classList.toggle('oq-deux', aCarte && aGraph);
   const leg = document.getElementById('smOuQuandLegende');
   if(leg){
     leg.hidden = card.hidden;
@@ -12911,8 +12915,11 @@ function _legendeOuQuand(aCarte, aGraph){
       `<span style="display:inline-flex;height:12px;border:1px solid var(--line);border-radius:2px;overflow:hidden;margin-right:5px;">${bande}</span>`,
       'facile → rare')
     + jeton('<span class="sm-freq-sw" style="background:#d4d4d8;margin-right:5px;"></span>', 'jamais notée')
+    // « période actuelle » et non « mois actuel » : le contour encadre une quinzaine quand
+    // la source est hebdomadaire, un mois quand elle ne l'est pas, et le lecteur n'a pas a
+    // savoir laquelle des deux il regarde - c'est la periode en cours dans les deux cas.
     + (aGraph ? jeton('<span class="sm-freq-sw" style="background:transparent;border:2px solid var(--accent);width:10px;height:10px;box-sizing:border-box;margin-right:5px;"></span>',
-                      window._oqHebdo ? 'cette semaine' : 'mois actuel') : '');
+                      'période actuelle') : '');
   // Une seule phrase, qui dit la mesure une fois pour les deux vues au lieu de la redire
   // pour chacune. Le mot de zone suit le pays : departement en France, region ailleurs,
   // et rien du tout la ou eBird ne decoupe pas.
@@ -14200,9 +14207,8 @@ function _renderSpeciesFreqChart(key, country){
     _renderSpeciesFreqChart(key, cc);
   };
   // La legende n'est plus ecrite ici : le panneau n'en a qu'une, commune a la carte et au
-  // graphique (_legendeOuQuand). Le mode - quinzaines eBird ou mois etires - est la seule
-  // chose qu'elle ne peut pas deviner seule, on la lui laisse.
-  window._oqHebdo = isWeekly;
+  // graphique (_legendeOuQuand). Elle n'a plus besoin de savoir si la source est
+  // hebdomadaire non plus, depuis qu'elle dit « période actuelle » dans les deux cas.
   _majPanneauOuQuand();
   {
     // Zoom molette : onwheel direct sur SVG + wrapper. Re-render immediat (rAF).
