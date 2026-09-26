@@ -56,6 +56,9 @@ const ISO_FIXUP = {
   'NZ-CIT':'NZ-CI',   // Chatham Islands
   // Natural Earth nomme encore la Zabaikalie par son ancien nom, Tchita.
   'RU-ZAB':'RU-CHI',
+  // Natural Earth donne a Svalbard un code norvegien, eBird un code de pays. On retient
+  // celui de eBird, qui est la cle des frequences.
+  'NO-21':'SJ',
   // Natural Earth donne a Minsk-ville son propre code, que eBird n a pas : sans ce
   // renvoi vers l oblast qui l entoure, la capitale devenait un trou au centre du pays.
   'BY-HM':'BY-MI',
@@ -168,7 +171,11 @@ function resolveCodeBrut(cc, props){
   const iso = props.iso_3166_2;
   if(!iso) return null;
   const fixed = ISO_FIXUP[iso] || iso;
-  return fixed.startsWith(cc + '-') ? fixed : null;
+  // Le prefixe suffit d'ordinaire, mais une zone peut porter un code qui ne commence pas
+  // par celui de son pays : Svalbard est la zone « SJ » de la Norvege. On accepte donc
+  // aussi tout code que EBIRD_REGIONS attribue explicitement a ce pays.
+  if(fixed.startsWith(cc + '-')) return fixed;
+  return (EBIRD_REGIONS[cc] || []).includes(fixed) ? fixed : null;
 }
 
 // Noms FR des regions (repris de REGIONS_BY_COUNTRY dans app.js). Fallback sur le nom NE.
@@ -301,8 +308,11 @@ const EBIRD_REGIONS = {
        'PT-11','PT-12','PT-13','PT-14','PT-15','PT-16','PT-17','PT-18','PT-20','PT-30'],
   // Suisse : les 7 grandes regions de l OFS, pas les 26 cantons.
   CH: ['CH-R1','CH-R2','CH-R3','CH-R4','CH-R5','CH-R6','CH-R7'],
+  // SJ : Svalbard et Jan Mayen, territoire norvegien qu eBird publie sous un code de
+  // pays. Il devient ici une zone de la Norvege, posee en encart faute de pouvoir figurer
+  // a sa vraie place sans ecraser le continent.
   NO: ['NO-01','NO-02','NO-03','NO-04','NO-05','NO-06','NO-07','NO-08','NO-09','NO-10',
-       'NO-11','NO-12','NO-14','NO-15','NO-16','NO-17','NO-18','NO-19','NO-20'],
+       'NO-11','NO-12','NO-14','NO-15','NO-16','NO-17','NO-18','NO-19','NO-20','SJ'],
   GR: ['GR-A','GR-B','GR-C','GR-D','GR-E','GR-F','GR-G','GR-H','GR-I','GR-J','GR-K','GR-L','GR-M'],
   IS: ['IS-1','IS-2','IS-3','IS-4','IS-5','IS-6','IS-7','IS-8'],
   LK: ['LK-11','LK-12','LK-13','LK-21','LK-22','LK-23','LK-31','LK-32','LK-33','LK-41',
@@ -352,12 +362,17 @@ const DOUBLONS_NE = {
   'CH-R1': [{ lon: [6.74, 6.90], lat: [46.71, 46.78] }],
 };
 
+// Anneaux a DEPLACER d une zone vers une autre, par pays. A distinguer de CLIP_LON, qui
+// jette, et de DOUBLONS_NE, qui retire un doublon : ici l anneau existe une seule fois et
+// il est simplement mal range.
+const RATTACHER_NE = {
+  // Jan Mayen, 8 degres ouest par 71 nord, que Natural Earth classe dans le Nordland - a
+  // 1 000 km de la. eBird la compte avec Svalbard ; elle l y rejoint.
+  NO: { 'NO-18': [{ lon: [-10, -7], lat: [70, 72], vers: 'SJ' }] },
+};
+
 const CLIP_LON = {
   'US-HI': { min: -161 },   // ecarte Midway, Kure et le reste de la chaine du Nord-Ouest
-  // Natural Earth rattache Jan Mayen au Nordland. A 8 degres ouest contre 4,5 est pour le
-  // continent, l ile etirait la carte de moitie : la Norvege n'occupait plus que deux tiers
-  // de sa largeur utile. Elle est inhabitee et ne porte aucune donnee propre.
-  'NO-18': { min: 0 },
 };
 
 // Territoires eloignes places en encart (sinon ils etirent la bbox et ecrasent le pays).
@@ -373,6 +388,17 @@ const INSETS = {
         'ES-CE': [672, 800, 92, 64], 'ES-ML': [868, 800, 92, 64] },
   NZ: { 'NZ-CI': [780, 20, 200, 160] },
   GB: { 'GB-ZET': [700, 55, 240, 215] },
+  NO: { 'SJ': [700, 570, 250, 295] },
+};
+
+// Encarts coupes en plusieurs cadres (cf. le commentaire dans buildCountry). Chaque
+// morceau est defini par une fenetre de longitude et sa boite ; celui sans suffixe garde
+// le cadre declare dans INSETS.
+const COUPER_ENCART = {
+  NO: { 'SJ': [
+    { lon: [0, 40], box: [700, 570, 250, 295], nom: 'Svalbard' },
+    { suffixe: 'JM', lon: [-15, -5], box: [603, 790, 72, 75], nom: 'Jan Mayen' },
+  ]},
 };
 
 // ---------------------------------------------------------------------------
@@ -532,6 +558,44 @@ function buildCountry(features, cc){
     (byCode[code] = byCode[code] || []).push(...ringsOf(f.geometry));
     if(!neNames[code]) neNames[code] = f.properties.name_fr || f.properties.name;
   }
+  // Anneaux que Natural Earth range sous une zone alors qu'ils appartiennent a une autre.
+  // Jan Mayen, a 8 degres OUEST par 71 nord, est classee dans le Nordland - a 1 000 km de
+  // la - et etirait la Norvege sur tout l'Atlantique. On la deplacait jusqu'ici par CLIP_LON,
+  // c'est-a-dire qu'on la jetait ; elle rejoint maintenant Svalbard, avec qui eBird la
+  // compte (zone SJ).
+  let rattaches = 0;
+  for(const [source, regles] of Object.entries(RATTACHER_NE[cc] || {})){
+    if(!byCode[source]) continue;
+    for(const r of regles){
+      const partants = byCode[source].filter(ring => ring.every(([x, y]) =>
+        x >= r.lon[0] && x <= r.lon[1] && y >= r.lat[0] && y <= r.lat[1]));
+      if(!partants.length) continue;
+      byCode[source] = byCode[source].filter(ring => !partants.includes(ring));
+      (byCode[r.vers] = byCode[r.vers] || []).push(...partants);
+      rattaches += partants.length;
+    }
+  }
+  // Un encart peut etre COUPE en plusieurs cadres. Svalbard et Jan Mayen ne font qu une
+  // zone chez eBird, mais 1 000 km les separent : dans un cadre commun, la longitude va de
+  // -9 a +34 degres et Svalbard se retrouve reduit a la moitie de sa taille possible pour
+  // loger, a l autre bout, un point de dix pixels. Chaque morceau recoit donc son cadre et
+  // sa propre echelle. Ils restent UNE zone - meme couleur, meme clic, meme donnee : les
+  // chemins sont recolles sous le code de base au moment de l ecriture.
+  const insetCfg = Object.assign({}, INSETS[cc] || {});
+  const nomsEncart = {};
+  for(const [code, morceaux] of Object.entries(COUPER_ENCART[cc] || {})){
+    if(!byCode[code]) continue;
+    const source = byCode[code];
+    for(const m of morceaux){
+      const pris = source.filter(ring => ring.every(([x]) => x >= m.lon[0] && x <= m.lon[1]));
+      if(!pris.length) continue;
+      const cible = m.suffixe ? code + '#' + m.suffixe : code;
+      byCode[cible] = pris;
+      insetCfg[cible] = m.box;
+      if(m.nom) nomsEncart[cible] = m.nom;
+    }
+  }
+
   // Retire les ilots hors fenetre avant tout calcul de bbox (cf. CLIP_LON).
   let clipped = 0;
   for(const [code, fenetre] of Object.entries(CLIP_LON)){
@@ -581,7 +645,6 @@ function buildCountry(features, cc){
   }
 
   // 2. Separe les encarts du corps principal.
-  const insetCfg = INSETS[cc] || {};
   const mainCodes = codes.filter(c => !insetCfg[c]);
   const insetCodes = codes.filter(c => insetCfg[c]);
 
@@ -617,21 +680,37 @@ function buildCountry(features, cc){
   };
 
   const out = {};
+  // Boite REELLE de chaque morceau d encart, en coordonnees du viewBox. L app y pose son
+  // filet pointille : elle la recalculait depuis le chemin, ce qui marchait tant qu un
+  // encart valait une zone, mais entourait Svalbard ET Jan Mayen d un seul cadre des lors
+  // qu une zone est coupee en deux. Le generateur sait ou il a pose chaque morceau ; il le
+  // dit, au lieu de laisser l app le deviner.
+  const encarts = [];
   for(const code of codes){
     const project = projectors[code];
     const paths = [];
+    let ex0 = Infinity, ey0 = Infinity, ex1 = -Infinity, ey1 = -Infinity;
     for(const ring of byCode[code]){
       // Ignore les micro-ilots : sous 6 points apres simplification ils n'apportent rien
       // mais gonflent le fichier (l'Alaska a ~2000 anneaux d'iles).
       const simplified = douglasPeucker(ring, tolDe(code));
       if(simplified.length < 4) continue;
       const proj = simplified.map(project);
+      if(insetCfg[code]) for(const [x, y] of proj){
+        if(x < ex0) ex0 = x; if(x > ex1) ex1 = x;
+        if(y < ey0) ey0 = y; if(y > ey1) ey1 = y;
+      }
       paths.push('M' + proj.map(([x,y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' L') + ' Z');
     }
     if(!paths.length) continue;
-    out[code] = { name: NAMES[code] || neNames[code] || code, path: paths.join(' ') };
+    if(insetCfg[code] && ex1 > ex0) encarts.push(Object.assign({ code: code.split('#')[0], bbox: [ex0, ey0, ex1, ey1].map(v => +v.toFixed(1)) }, nomsEncart[code] ? { nom: nomsEncart[code] } : null));
+    // Un morceau d encart coupe (SJ#JM) rejoint le chemin de sa zone : une seule entree,
+    // donc une seule couleur et un seul clic pour ce qui est une seule zone eBird.
+    const base = code.split('#')[0];
+    if(out[base]) out[base].path += ' ' + paths.join(' ');
+    else out[base] = { name: NAMES[base] || neNames[base] || base, path: paths.join(' ') };
   }
-  return { out, skipped, tol, missing, dissolved, dissolveFailed, clipped, deDoublonnes,
+  return { out, encarts, skipped, tol, rattaches, missing, dissolved, dissolveFailed, clipped, deDoublonnes,
            nRings: codes.reduce((a,c) => a + byCode[c].length, 0) };
 }
 
@@ -670,6 +749,7 @@ for(const cc of COUNTRIES){
   const res = buildCountry(feats, cc);
   if(!res){ console.warn(`${cc} : aucune region resolue sur ${feats.length} features.`); continue; }
   const payload = { viewBox: `0 0 ${W} ${H}`, regions: res.out };
+  if(res.encarts && res.encarts.length) payload.encarts = res.encarts;
   const json = JSON.stringify(payload);
   const outFile = join(OUT_DIR, `regions-${cc.toLowerCase()}-simplified.json`);
   writeFileSync(outFile, json);
@@ -678,6 +758,7 @@ for(const cc of COUNTRIES){
   console.log(`${cc}: ${Object.keys(res.out).length}/${EBIRD_REGIONS[cc].length} regions, ` +
     `${res.nRings} anneaux bruts, tol=${res.tol.toFixed(4)}deg -> ${kb.toFixed(1)} KB`);
   if(res.missing.length) console.warn(`  ⚠ MANQUE : ${res.missing.join(',')}`);
+  if(res.rattaches) console.log(`  rattachement : ${res.rattaches} anneau(x) deplace(s) vers leur vraie zone`);
   if(res.clipped) console.log(`  clip : ${res.clipped} ilots lointains retires (CLIP_LON)`);
   if(res.deDoublonnes) console.log('  anneaux dupliques dans Natural Earth, retires : ' + res.deDoublonnes);
   if(res.dissolved) console.log(`  dissolve : ${res.dissolved} regions fusionnees` +

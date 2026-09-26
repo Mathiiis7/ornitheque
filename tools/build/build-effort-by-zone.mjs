@@ -64,10 +64,16 @@ for(const f of readdirSync(DIR_BAR)){
 // Regroupe par pays, en ne retenant que les zones reellement presentes dans
 // freq_by_region.json : ecrire un profil pour une zone que l'appli ne connait pas
 // n'aurait aucun effet et gonflerait le fichier.
+// Zones dont le code n'est pas prefixe du pays auquel elles appartiennent. Svalbard et
+// Jan Mayen sont du territoire norvegien, mais eBird les publie sous un code de PAYS (SJ) :
+// sans cette table, la regle « un code de deux lettres est un pays » les ecartait.
+// Voir ABSORBE dans build-rarity-multi-country.mjs.
+const PAYS_DE_LA_ZONE = { SJ: 'NO' };
+
 const parPays = new Map();
 for(const [zone, fichier] of parZone){
-  const cc = zone.slice(0, 2);
-  if(zone.length === 2) continue;   // le pays lui-meme : deja dans EFFORT_MENSUEL_PAR_PAYS
+  const cc = PAYS_DE_LA_ZONE[zone] || zone.slice(0, 2);
+  if(zone.length === 2 && !PAYS_DE_LA_ZONE[zone]) continue;   // le pays lui-meme : deja dans EFFORT_MENSUEL_PAR_PAYS
   if(!parPays.has(cc)) parPays.set(cc, []);
   parPays.get(cc).push({ zone, fichier });
 }

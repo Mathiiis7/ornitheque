@@ -12,7 +12,7 @@
 
   Usage : node tools/build-rarity-multi-country.mjs
 */
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -138,9 +138,12 @@ const REGIONS = {
   // grandes regions de l OFS, pas les 26 cantons, et leurs frequences sont produites par
   // une agregation ponderee des cantons (tools/build/agreger-ch.mjs). Relancer ce build
   // avec la liste des cantons ici ecraserait ce travail - c est arrive une fois.
+  // SJ figure ici comme une zone norvegienne : c est le pendant regional de ABSORBE.
+  // Son bar chart s appelle ebird-barchart-SJ-2019-2026.txt, au meme format que les
+  // fylker, donc rien de particulier a prevoir pour le telecharger.
   NO: ['NO-01','NO-02','NO-03','NO-04','NO-05','NO-06','NO-07','NO-08',
        'NO-09','NO-10','NO-11','NO-12','NO-14','NO-15','NO-16','NO-17',
-       'NO-18','NO-19','NO-20'],
+       'NO-18','NO-19','NO-20','SJ'],
   GR: ['GR-A','GR-B','GR-C','GR-D','GR-E','GR-F','GR-G','GR-H','GR-I',
        'GR-J','GR-K','GR-L','GR-M'],
   IS: ['IS-1','IS-2','IS-3','IS-4','IS-5','IS-6','IS-7','IS-8'],
@@ -271,11 +274,25 @@ const BAR_CHART_ALIAS = {
   'Harle bièvre': 'Grand Harle',
 };
 
-function parseBarchart(path){
-  const out = {};
+// Regions eBird qu un pays ABSORBE dans son total national. eBird publie Svalbard et Jan
+// Mayen sous un code de pays a part (SJ) alors que c est du territoire norvegien : les
+// laisser separes fabriquait un mini-pays de 132 taxons au lieu d enrichir la Norvege,
+// comme les Acores enrichissent le Portugal.
+//
+// La fusion se fait a la quinzaine et ponderee par le nombre de listes, donc elle est
+// EXACTE : frequence x nombre de listes = nombre de listes citant l espece, et ces
+// comptes-la s additionnent. C est le meme calcul que pour les zones regroupees
+// (agreger-zones.mjs), applique ici a l echelon national.
+const ABSORBE = { NO: ['SJ'] };
+
+// Lecture brute d un bar chart : l effort par quinzaine et, pour chaque taxon, ses 48
+// frequences. Separee de la mise en forme pour que deux bar charts puissent etre fusionnes
+// avant d etre agreges en mois.
+function lireBrut(path){
   const lignes = readFileSync(path, 'utf8').split(/\r?\n/);
   const effort = lireEffort(lignes);
   if(!effort) throw new Error(`ligne "Sample Size" absente ou malformee : ${path}`);
+  const taxons = {};
   for(const ln of lignes){
     if(!ln.includes('\t')) continue;
     const p = ln.split('\t');
@@ -283,16 +300,64 @@ function parseBarchart(path){
     const nums = p.slice(1).map(Number).filter(x => !isNaN(x));
     if(!nm || nums.length < 12 || /sample size/i.test(nm)) continue;
     const clean = nm.replace(/\s*\(.*?\)\s*/g, ' ').trim();
+    const q48 = new Array(48).fill(0);
+    for(let i = 0; i < 48; i++) q48[i] = nums[i] || 0;
+    taxons[norm(clean)] = { name: clean, q48 };
+  }
+  return { effort, taxons };
+}
+
+function fusionnerBruts(base, ajouts){
+  if(!ajouts.length) return base;
+  const effort = base.effort.slice();
+  const noms = {};
+  for(const [k, v] of Object.entries(base.taxons)) noms[k] = v.name;
+  for(const a of ajouts) for(const [k, v] of Object.entries(a.taxons)) if(!noms[k]) noms[k] = v.name;
+  // On repasse par le nombre de listes citant chaque taxon, seule grandeur additive.
+  const cite = {};
+  for(const k of Object.keys(noms)){
+    cite[k] = new Array(48).fill(0);
+    const v = base.taxons[k];
+    if(v) for(let i = 0; i < 48; i++) cite[k][i] = v.q48[i] * base.effort[i];
+  }
+  for(const a of ajouts){
+    for(const k of Object.keys(noms)){
+      const v = a.taxons[k];
+      if(v) for(let i = 0; i < 48; i++) cite[k][i] += v.q48[i] * a.effort[i];
+    }
+    for(let i = 0; i < 48; i++) effort[i] += a.effort[i];
+  }
+  const taxons = {};
+  for(const k of Object.keys(noms)){
+    taxons[k] = { name: noms[k], q48: cite[k].map((c, i) => effort[i] > 0 ? c / effort[i] : 0) };
+  }
+  return { effort, taxons };
+}
+
+// Met un bar chart brut sous la forme attendue par la suite : moyenne mensuelle ponderee,
+// valeur annuelle sur les 48 quinzaines, et les 48 quinzaines telles quelles.
+function mettreEnForme({ effort, taxons }){
+  const out = {};
+  for(const [k, { name, q48 }] of Object.entries(taxons)){
     // 48 quinzaines -> 12 mois, chaque mois etant la moyenne de ses 4 quinzaines ponderee
     // par leur nombre de listes. Plus de max : c etait un pic deguise.
     const m12 = new Array(12).fill(0);
     for(let m = 0; m < 12; m++){
-      m12[m] = valeurPonderee(nums.slice(m * 4, m * 4 + 4), effort.slice(m * 4, m * 4 + 4));
+      m12[m] = valeurPonderee(q48.slice(m * 4, m * 4 + 4), effort.slice(m * 4, m * 4 + 4));
     }
     // La valeur annuelle se calcule sur les 48 quinzaines, pas sur les 12 mois agreges.
-    out[norm(clean)] = { name: clean, freq: valeurPonderee(nums.slice(0, 48), effort), monthly: m12, q48: nums.slice(0, 48).map(v => +(v || 0).toFixed(5)) };
+    out[k] = { name, freq: valeurPonderee(q48, effort), monthly: m12, q48: q48.map(v => +(v || 0).toFixed(5)) };
   }
   return out;
+}
+
+function parseBarchart(path){ return mettreEnForme(lireBrut(path)); }
+
+// Bar chart national, augmente des regions que le pays absorbe.
+function lireBrutPays(cc){
+  const base = lireBrut(join(BAR_DIR, `ebird-barchart-${cc}-2019-2026.txt`));
+  const ajouts = (ABSORBE[cc] || []).map(r => lireBrut(join(BAR_DIR, `ebird-barchart-${r}-2019-2026.txt`)));
+  return fusionnerBruts(base, ajouts);
 }
 
 // Cache taxonomy eBird (partagee pour les 4 pays)
@@ -330,9 +395,11 @@ async function processCountry(cc){
   const outPath = join(OUT_DIR, `real-rarity-${cc.toLowerCase()}-ebird.generated.js`);
 
   console.log(`\n=== ${cc} ===`);
-  const bar = parseBarchart(barPath);
+  const brut = lireBrutPays(cc);
+  const bar = mettreEnForme(brut);
+  if(ABSORBE[cc]) console.log(`  Absorbe : ${ABSORBE[cc].join(', ')} (effort total ${Math.round(brut.effort.reduce((a, b) => a + b, 0)).toLocaleString('fr-FR')} listes)`);
   {
-    const eff = lireEffort(readFileSync(barPath, 'utf8').split(/\r?\n/));
+    const eff = brut.effort;
     const parMois = [];
     for(let m = 0; m < 12; m++) parMois.push(eff[m*4] + eff[m*4+1] + eff[m*4+2] + eff[m*4+3]);
     const tot = parMois.reduce((a, b) => a + b, 0);
@@ -423,13 +490,27 @@ async function processCountry(cc){
   }
 }
 
+// Filtre optionnel : « ... build-rarity-multi-country.mjs NO » ne refait que la Norvege.
+// Les pays non traites gardent leurs fichiers - le garde-fou sur freq_by_region.json et la
+// fusion du profil d effort s en chargent.
+const filtre = process.argv[2] ? process.argv[2].split(',').map(s => s.trim().toUpperCase()) : null;
 for(const cc of COUNTRIES){
+  if(filtre && !filtre.includes(cc)) continue;
   await processCountry(cc);
 }
 console.log('\nTermine.');
 
 
 // Profil d effort mensuel, injecte dans app.js par inject-rarity-multi-country.mjs.
+// On FUSIONNE avec le fichier existant : lance sur un sous-ensemble de pays (« ... NO »),
+// une ecriture seche effacait silencieusement le profil des 52 autres.
+{
+  const p = join(OUT_DIR, 'effort-mensuel.generated.js');
+  if(existsSync(p)){
+    const m = readFileSync(p, 'utf8').match(/EFFORT_MENSUEL_PAR_PAYS = (\{[\s\S]*?\});/);
+    if(m) for(const [k, v] of Object.entries(JSON.parse(m[1]))) if(!EFFORT_PAR_PAYS[k]) EFFORT_PAR_PAYS[k] = v;
+  }
+}
 writeFileSync(join(OUT_DIR, 'effort-mensuel.generated.js'),
   `// Genere par tools/build/build-rarity-multi-country.mjs. Ne pas editer a la main.
 ` +
