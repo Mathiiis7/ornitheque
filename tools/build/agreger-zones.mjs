@@ -56,7 +56,12 @@ const lire = (code) => {
   return { effort, esp };
 };
 
+// Filtre optionnel : « ... agreger-zones.mjs ME » ne refait que le Montenegro. Ce script
+// REMPLACE le fichier regional du pays qu il traite - le lancer sur tous alors qu il
+// manque des bar charts sources appauvrirait en silence les pays deja faits.
+const filtre = process.argv[2] ? process.argv[2].split(',').map(s => s.trim().toUpperCase()) : null;
 for(const cc of Object.keys(carte.parCommune)){
+  if(filtre && !filtre.includes(cc)) continue;
   const communes = carte.parCommune[cc];
   const parRegion = {};                  // region -> { effort[48], esp: {sci: [48 sommes]} }
   let lues = 0;

@@ -566,9 +566,12 @@ const COUNTRIES_REG = {
     barTier: () => (typeof REAL_RARITY_ME_EBIRD !== 'undefined') ? REAL_RARITY_ME_EBIRD : {},
     monthly: () => (typeof REAL_FREQ_MONTHLY_ME !== 'undefined') ? REAL_FREQ_MONTHLY_ME : {},
     st: () => (typeof REAL_ABUNDANCE_ST_ME !== 'undefined') ? REAL_ABUNDANCE_ST_ME : {},
-    monthlyByRegion: () => null,   // ME : pas de subdivisions
-    // Seul pays sans freq_by_region.json : la fiche ne peut pas mesurer ses zones.
-    zonesMesurables: false,
+    // eBird publie bien 21 communes pour le Montenegro - un commentaire affirmait ici le
+    // contraire, et le pays est reste le seul sans carte regionale pour cette raison. Les
+    // 21 communes font 658 km2 chacune, neuf fois plus fin qu un departement francais :
+    // elles sont regroupees dans les trois regions statistiques MONSTAT (4 604 km2), par
+    // zones-agregees.json comme la Suisse et la Slovenie.
+    monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['ME'] || null,
     hasBarchart: true,
   },
   ES: {
@@ -7167,7 +7170,7 @@ async function _loadFreq48Zone(cc, zone){
 
 async function _loadFreqDataForCountry(cc){
   if(_freqDataPromises[cc]) return _freqDataPromises[cc];
-  const filename = 'data/countries/' + cc.toLowerCase() + '/freq_by_region.json?v=20260926e';
+  const filename = 'data/countries/' + cc.toLowerCase() + '/freq_by_region.json?v=20260926f';
   _freqDataPromises[cc] = (async () => {
     try{
       const data = await fetch(filename).then(r => r.ok ? r.json() : null);
