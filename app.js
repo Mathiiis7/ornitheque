@@ -7815,8 +7815,6 @@ function _drawStart(){
   _drawState.active = true;
   _drawState.vertices = [];
   _map.getContainer().style.cursor = 'crosshair';
-  const cnt = $('#mapDrawCount');
-  if(cnt) cnt.textContent = 'Clique sur la carte pour poser des sommets (double-clic pour fermer, Echap pour annuler)';
   _drawState.onMapClick = (e) => {
     _drawState.vertices.push([e.latlng.lat, e.latlng.lng]);
     _drawRedraw();
@@ -7861,8 +7859,6 @@ function _drawRedraw(){
   // Bouton Fermer : visible des qu'on a au moins 3 sommets.
   const finishBtn = $('#mapDrawFinish');
   if(finishBtn) finishBtn.style.display = (_drawState.active && _drawState.vertices.length >= 3) ? '' : 'none';
-  const cnt = $('#mapDrawCount');
-  if(cnt) cnt.textContent = `${_drawState.vertices.length} sommet${_drawState.vertices.length>1?'s':''}${_drawState.vertices.length>=3?' · clique « Fermer » quand c\'est bon (ou double-clic sur la carte)':' · continue à poser des points'}`;
 }
 // Ferme le polygone (au moins 3 sommets) : set ebFilter.polygon + trigger renderMap.
 // Le filtrage effectif se fait dans _loadMissingLayer (eBird) et _loadMissingLayerGbifBbox (GBIF).
@@ -10164,7 +10160,6 @@ async function handleFiles(fileList){
   catch(e){ showError(e); $('#myStatus').textContent=''; }
 }
 drop.addEventListener('click',()=>fileInput.click());
-$('#browseBtn')?.addEventListener('click',()=>fileInput.click());
 fileInput.addEventListener('change',e=>{ handleFiles(e.target.files); fileInput.value=''; });
 ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('drag');}));
 ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('drag');}));
@@ -14504,10 +14499,9 @@ function openSpeciesModal(sci){
   // pays courant. Ne PAS rappeler _renderSpeciesFreqChart(key) ici : ca
   // ecraserait avec country='FR' par defaut et casserait l'affichage ME/ES/...
   // Photo : card 16/9 en haut de l'onglet Info. Ratio fixe, cover.
-  const hero = $('#smHeroImg'), photoCard = $('#smPhotoCard'), photoCap = $('#smPhotoCaption'), cred = $('#smPhotoCredit');
+  const hero = $('#smHeroImg'), photoCard = $('#smPhotoCard'), cred = $('#smPhotoCredit');
   if(hero) hero.src = '';
   if(photoCard) photoCard.hidden = true;
-  if(photoCap) photoCap.textContent = '';
   if(cred) cred.textContent = '';
   _fetchWikiPhoto(sci).then(p => {
     if(!p || !p.url){ if(cred) cred.textContent = 'Pas de photo trouvée sur Wikipédia'; return; }
@@ -14529,7 +14523,6 @@ function openSpeciesModal(sci){
   });
   // Sons : chant + cri, chaque section a un lecteur + sonogramme + menu deroulant multi-enregistrements.
   const songRow=$('#smSongRow'), callRow=$('#smCallRow'), hint=$('#smAudioHint');
-  try{ $('#smSong')?.pause(); $('#smCall')?.pause(); }catch(_){}
   songRow.hidden = true; callRow.hidden = true;
   songRow.innerHTML = ''; callRow.innerHTML = '';
   hint.textContent = '🎧 Recherche du chant et du cri…'; hint.hidden = false;
@@ -15236,7 +15229,6 @@ function closeSpeciesModal(){
     for(const a of _xaAudios){ try{ a.pause(); a.src = ''; }catch(_){} }
     _xaAudios.clear();
   }
-  for(const id of ['#smSong','#smCall']){ const a=$(id); if(a){ try{ a.pause(); }catch(_){} a.src=''; } }
   // On garde _smMapInstance en memoire (recycle plus rapide), on vide juste la couche marqueurs.
   if(_smMapLayer) _smMapLayer.clearLayers();
 }
@@ -16276,7 +16268,6 @@ function _quizSetMode(m){
     if(stage){
       stage.innerHTML = _quizEmptyStateHtml();
     }
-    const skip = document.getElementById('quizSkip'); if(skip) skip.hidden = true;
     const next = document.getElementById('quizNext'); if(next) next.hidden = true;
   }
   _quizRefreshStatsUI();
@@ -17139,7 +17130,6 @@ function _quizRenderProblemCard(){
       </div>
     </div>
   `;
-  const skip = document.getElementById('quizSkip'); if(skip) skip.hidden = true;
   const next = document.getElementById('quizNext'); if(next) next.hidden = true;
 }
 // Met a jour le badge 'Especes a reviser' dans la topbar (visible si >=3 problemes).
@@ -17340,7 +17330,6 @@ function _quizSetSens(s){
     if(stage){
       stage.innerHTML = _quizEmptyStateHtml();
     }
-    const skip = document.getElementById('quizSkip'); if(skip) skip.hidden = true;
     const next = document.getElementById('quizNext'); if(next) next.hidden = true;
   }
   _quizRefreshStatsUI();
@@ -17355,7 +17344,6 @@ async function _quizStart(){
   const stage = $('#quizStage'); if(!stage) return;
   stage.innerHTML = '<p class="help" style="margin:0;">🔎 Sélection de l\'espèce…</p>';
   const nextBtnEl0 = document.getElementById('quizNext'); if(nextBtnEl0) nextBtnEl0.hidden = true;
-  const skipBtnEl0 = document.getElementById('quizSkip'); if(skipBtnEl0) skipBtnEl0.hidden = true;
   let pool = _quizPickPool();
   if(!pool.length){ stage.innerHTML = '<p class="help" style="margin:0;">Aucune espèce dans le pool. Change de niveau / source.</p>'; return; }
   // En mode cri : restreint le pool aux familles ou le cri est distinctif entre
@@ -17469,7 +17457,6 @@ async function _quizStart(){
       // Auto-play au chargement
       audio.play().catch(()=>{});
     }
-    const skipBtnEl = document.getElementById('quizSkip'); if(skipBtnEl) skipBtnEl.hidden = false;
     return;
   }
   stage.innerHTML = '<p class="help" style="margin:0;">Pas de son trouvé dans le pool après 5 essais. Ré-essaie ou change de niveau.</p>';
@@ -17610,7 +17597,6 @@ function _quizDailyShowLastRecap(){
       </div>
     </div>
   `;
-  const skip = document.getElementById('quizSkip'); if(skip) skip.hidden = true;
   const next = document.getElementById('quizNext'); if(next) next.hidden = true;
 }
 // Demarre le defi (si pas deja joue aujourd'hui). Prend le controle du stage.
@@ -17629,7 +17615,6 @@ async function _quizDailyRenderQuestion(){
   if(!q){ _quizDailyFinish(); return; }
   const stage = document.getElementById('quizStage'); if(!stage) return;
   const nextBtn = document.getElementById('quizNext'); if(nextBtn){ nextBtn.hidden = true; nextBtn.textContent = 'Suivante →'; }
-  const skipBtn = document.getElementById('quizSkip'); if(skipBtn) skipBtn.hidden = true;
   stage.innerHTML = `<p class="help" style="margin:0;">🎧 Chargement du défi (${_quizDailyActive.current + 1}/${_QUIZ_DAILY_LEN})…</p>`;
   const sounds = await _fetchXenoSound(q.sci).catch(() => null);
   if(!sounds){ stage.innerHTML = '<p class="help">Pas de son trouvé pour cette question, on saute.</p>'; setTimeout(() => { _quizDailyActive.current++; _quizDailyRenderQuestion(); }, 800); return; }
@@ -17717,7 +17702,6 @@ function _quizChallengeShowVerdict(sci, correct, kind){
       : _quizWeeklyActive && _quizWeeklyActive.current >= _QUIZ_WEEKLY_LEN - 1);
     nextBtn.textContent = isLast ? 'Voir le résultat 🏁' : 'Suivante →';
   }
-  const skip = document.getElementById('quizSkip'); if(skip) skip.hidden = true;
 }
 // Termine le defi : update streak + affiche le recap
 function _quizDailyFinish(){
@@ -17902,7 +17886,6 @@ function _quizWeeklyShowLastRecap(){
       </div>
     </div>
   `;
-  const skip = document.getElementById('quizSkip'); if(skip) skip.hidden = true;
   const next = document.getElementById('quizNext'); if(next) next.hidden = true;
 }
 async function _quizWeeklyStart(){
@@ -17919,7 +17902,6 @@ async function _quizWeeklyRenderQuestion(){
   if(!q){ _quizWeeklyFinish(); return; }
   const stage = document.getElementById('quizStage'); if(!stage) return;
   const nextBtn = document.getElementById('quizNext'); if(nextBtn){ nextBtn.hidden = true; nextBtn.textContent = 'Suivante →'; }
-  const skipBtn = document.getElementById('quizSkip'); if(skipBtn) skipBtn.hidden = true;
   stage.innerHTML = `<p class="help" style="margin:0;">🎧 Chargement du défi hebdo (${_quizWeeklyActive.current + 1}/${_QUIZ_WEEKLY_LEN})…</p>`;
   const sounds = await _fetchXenoSound(q.sci).catch(() => null);
   if(!sounds){ setTimeout(() => { _quizWeeklyActive.current++; _quizWeeklyRenderQuestion(); }, 600); return; }
@@ -18027,7 +18009,6 @@ async function _quizStartInverse(){
   const stage = $('#quizStage'); if(!stage) return;
   stage.innerHTML = '<p class="help" style="margin:0;">🔎 Sélection de l\'espèce…</p>';
   const nextBtn = $('#quizNext'); if(nextBtn){ nextBtn.hidden = true; nextBtn.textContent = 'Suivante →'; }
-  const skipBtnEl2 = document.getElementById('quizSkip'); if(skipBtnEl2) skipBtnEl2.hidden = true;
   const pool = _quizPickPool();
   if(!pool.length){ stage.innerHTML = '<p class="help" style="margin:0;">Aucune espèce dans le pool.</p>'; return; }
   for(let attempt = 0; attempt < 5; attempt++){
@@ -18100,7 +18081,6 @@ async function _quizStartInverse(){
         else { a.pause(); btn.textContent = '▶'; }
       });
     });
-    $('#quizSkip').hidden = false;
     return;
   }
   stage.innerHTML = '<p class="help" style="margin:0;">Pas trouvé après 5 essais. Ré-essaie.</p>';
@@ -18151,7 +18131,6 @@ function _quizAnswerInverse(idx){
     nextBtn.hidden = false;
     nextBtn.textContent = 'Suivante →';
   }
-  $('#quizSkip').hidden = true;
 }
 function _quizAnswer(idx){
   if(!_quizCurrent) return;
@@ -18216,7 +18195,6 @@ function _quizAnswer(idx){
     // Si la session Classe est terminee, le prochain clic affiche le recap : label explicite.
     nextBtn.textContent = 'Suivante →';
   }
-  $('#quizSkip').hidden = true;
 }
 // Helper : relance l'audio de la question depuis le debut. Utilise par le bouton
 // Rejouer de la verdict card et par le raccourci clavier Espace.
@@ -18273,7 +18251,6 @@ document.addEventListener('click', e => {
     const stage = document.getElementById('quizStage'); if(stage){
       stage.innerHTML = _quizEmptyStateHtml();
     }
-    const skip = document.getElementById('quizSkip'); if(skip) skip.hidden = true;
     const next = document.getElementById('quizNext'); if(next) next.hidden = true;
     // Scroll vers le leaderboard si on sort apres avoir termine un defi
     if(wasAfterFinish){
@@ -18326,7 +18303,6 @@ document.addEventListener('click', e => {
       if(stage){
         stage.innerHTML = _quizEmptyStateHtml();
       }
-      const skip = document.getElementById('quizSkip'); if(skip) skip.hidden = true;
       const next = document.getElementById('quizNext'); if(next) next.hidden = true;
     }
     _quizRefreshStatsUI();   // pills reflete le bucket du nouveau niveau
@@ -18354,7 +18330,6 @@ document.addEventListener('click', e => {
       if(stage){
         stage.innerHTML = _quizEmptyStateHtml();
       }
-      const skip = document.getElementById('quizSkip'); if(skip) skip.hidden = true;
       const next = document.getElementById('quizNext'); if(next) next.hidden = true;
     }
     _quizRefreshStatsUI();   // pills reflete le nouveau bucket
