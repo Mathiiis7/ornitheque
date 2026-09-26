@@ -3282,9 +3282,13 @@ function _initInfobulle(){
   // essaye : il centrait la boite sur ce qu'on survole, donc a cote et souvent loin quand
   // l'element est petit et le texte long.
   const placer = () => {
-    // offsetWidth/Height et non getBoundingClientRect : ces dernieres sont multipliees par le
-    // zoom de la page, alors que innerWidth et style.left ne le sont pas.
-    const w = box.offsetWidth, h = box.offsetHeight;
+    // Tout est lu sur des getBoundingClientRect : la boite, la cible, et le cadrage par
+    // innerWidth / innerHeight. C'est le seul repere ou les trois se comparent. L'ancien
+    // code melangeait offsetWidth - qui ignore les transformations d'ancetres - avec des
+    // positions qui, elles, les subissent ; les deux coincident dans un navigateur
+    // ordinaire, mais pas des qu'une page est mise a l'echelle.
+    const bb = box.getBoundingClientRect();
+    const w = bb.width || box.offsetWidth, h = bb.height || box.offsetHeight;
     // La boite s'accroche a l'ELEMENT, pas au curseur - juste dessous, centree sur lui, et
     // au-dessus s'il n'y a pas la place. Elle suivait le curseur, ce qui echoue sur une
     // petite cible collee a un bord : les filtres X / P / N font 16 px et tiennent le bout
@@ -3295,10 +3299,11 @@ function _initInfobulle(){
     //
     // Le glissement lateral subsiste, mais il ne peut plus eloigner que sur un seul axe :
     // la boite reste collee au bord haut ou bas de l'element quoi qu'il arrive.
-    const c = cible && cible.getBoundingClientRect ? cible.getBoundingClientRect() : null;
+    const brut = cible && cible.getBoundingClientRect ? cible.getBoundingClientRect() : null;
+    const c = brut && brut.width && brut.height ? brut : null;
     const m = 8;
     let x, y;
-    if(c && c.width && c.height){
+    if(c){
       x = c.left + c.width / 2 - w / 2;
       y = c.bottom + m;
       if(y + h > innerHeight - 8) y = c.top - m - h;
@@ -16767,10 +16772,10 @@ function _pkdxRender(){
       + chipsHtml
       + '<button type="button" class="rar-chip" data-tier-all title="Cocher toutes les raretés">Tout</button>'
       + '<button type="button" class="rar-chip" data-tier-none title="Décocher toutes les raretés">Vide</button>'
-      // Rejetes a l'autre bout de la barre (margin-left:auto sur le groupe) : ils ne
-      // filtrent pas un palier mais un statut, et colles a la suite des chiffres ils se
-      // lisaient comme la fin de l'echelle.
-      + '<span class="rar-cats">' + catChipsHtml + '</span>';
+      // Ils suivent « Tout » et « Vide », separes par un filet vertical : ils ne filtrent
+      // pas un palier mais un statut, et sans cette barre ils se lisaient comme la fin de
+      // l'echelle. Rejetes a l'autre bout, ils etaient loin de ce qu'ils filtrent.
+      + '<span class="rar-cats"><span class="rar-sep" aria-hidden="true"></span>' + catChipsHtml + '</span>';
   }
   // Compteur : X vues / Y filtrees / Z total FR.
   // Le denominateur ne compte que les cases reellement affichables : les accidentelles

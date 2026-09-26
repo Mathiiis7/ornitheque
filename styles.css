@@ -1356,8 +1356,12 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     margin:0; transform:none; padding:0; border-radius:50%; font:800 10px/1 system-ui; }
   /* Coche : l'ombre portee de la vignette remplace le filet du repos, comme pour X/P/N. */
   .rar-chip[data-tier].on, .rar-chip[data-rar].on { box-shadow:0 1px 3px rgba(0,0,0,.3); }
-  /* Pousse au bout de la rangee, loin de l'echelle de rarete qu'ils ne prolongent pas. */
-  .rar-cats { margin-left:auto; display:inline-flex; align-items:center; gap:6px; }
+  /* Ils suivent « Tout » et « Vide » plutot que d'etre rejetes au bout de la rangee : le
+     filet vertical suffit a dire qu'ils ne prolongent pas l'echelle des paliers, et ils
+     restent pres des pastilles qu'ils filtrent. */
+  .rar-cats { display:inline-flex; align-items:center; gap:6px; margin-left:2px; }
+  .rar-sep { width:1px; align-self:stretch; min-height:16px; margin:0 6px 0 2px;
+    background:var(--line-2); border-radius:1px; }
   /* Coche : meme ombre portee que la pastille du birdydex, au lieu du filet du repos. */
   .rar-chip[data-cat].on { box-shadow:0 1px 3px rgba(0,0,0,.3); }
   .rar-chip { cursor:pointer; box-shadow:inset 0 0 0 1px var(--line-2); }
