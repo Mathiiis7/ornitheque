@@ -3282,12 +3282,20 @@ function _initInfobulle(){
   // essaye : il centrait la boite sur ce qu'on survole, donc a cote et souvent loin quand
   // l'element est petit et le texte long.
   const placer = () => {
-    // Tout est lu sur des getBoundingClientRect : la boite, la cible, et le cadrage par
-    // innerWidth / innerHeight. C'est le seul repere ou les trois se comparent. L'ancien
-    // code melangeait offsetWidth - qui ignore les transformations d'ancetres - avec des
-    // positions qui, elles, les subissent ; les deux coincident dans un navigateur
-    // ordinaire, mais pas des qu'une page est mise a l'echelle.
+    // LE point delicat de cette fonction. Le body porte zoom:0.85, et la boite est un de
+    // ses descendants : son style.left est donc interprete dans le repere zoome, alors que
+    // getBoundingClientRect, innerWidth et clientX parlent en pixels d'ecran. Poser
+    // left = X place la boite a 0,85 X - un ecart de zero au bord gauche, mais de deux
+    // cents pixels a droite d'un ecran large. C'est pour ca que l'infobulle semblait
+    // correcte partout SAUF sur les filtres X / P / N, qui tiennent le bout droit de la
+    // barre : le defaut etait partout, seulement proportionnel a la distance au bord.
+    //
+    // On calcule donc tout en pixels d'ecran, puis on divise par le facteur au dernier
+    // moment. Le facteur se mesure sur la boite elle-meme - son rectangle rapporte a son
+    // offsetWidth - ce qui capte aussi bien le zoom du body qu'un eventuel zoom de page.
     const bb = box.getBoundingClientRect();
+    const fz = box.offsetWidth ? bb.width / box.offsetWidth : 1;
+    const zoom = (isFinite(fz) && fz > 0.01) ? fz : 1;
     const w = bb.width || box.offsetWidth, h = bb.height || box.offsetHeight;
     // La boite s'accroche a l'ELEMENT, pas au curseur - juste dessous, centree sur lui, et
     // au-dessus s'il n'y a pas la place. Elle suivait le curseur, ce qui echoue sur une
@@ -3314,9 +3322,11 @@ function _initInfobulle(){
       if(x + w > innerWidth - 8) x = dernier.clientX - 18 - w;
       if(y + h > innerHeight - 8) y = dernier.clientY - 18 - h;
     }
-    x = Math.min(x, innerWidth - 8 - w);
-    box.style.left = Math.max(8, x).toFixed(1) + 'px';
-    box.style.top = Math.max(8, y).toFixed(1) + 'px';
+    x = Math.max(8, Math.min(x, innerWidth - 8 - w));
+    y = Math.max(8, y);
+    // Retour dans le repere du body zoome, la seule chose que style.left comprenne.
+    box.style.left = (x / zoom).toFixed(1) + 'px';
+    box.style.top = (y / zoom).toFixed(1) + 'px';
   };
   document.addEventListener('mouseover', (e) => {
     dernier = { clientX: e.clientX, clientY: e.clientY };
