@@ -1348,6 +1348,14 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      d'arrondi ne se voit pas. */
   .rar-chip[data-cat] { width:16px; min-width:16px; height:16px; margin:0; transform:none;
     padding:0; border-radius:50%; font:700 9.5px/1 system-ui; }
+  /* Les paliers 0 a 10 prennent eux aussi le jeton rond des vignettes - .pkdx-tier, 20 px
+     et corps 10 - au lieu du carre arrondi. La barre de filtres et la grille qu'elle
+     filtre montrent desormais la meme piece. « Tout » et « Vide », qui sont des mots et
+     non des paliers, gardent leur bouton rectangulaire. */
+  .rar-chip[data-tier], .rar-chip[data-rar] { width:20px; min-width:20px; height:20px;
+    margin:0; transform:none; padding:0; border-radius:50%; font:800 10px/1 system-ui; }
+  /* Coche : l'ombre portee de la vignette remplace le filet du repos, comme pour X/P/N. */
+  .rar-chip[data-tier].on, .rar-chip[data-rar].on { box-shadow:0 1px 3px rgba(0,0,0,.3); }
   /* Pousse au bout de la rangee, loin de l'echelle de rarete qu'ils ne prolongent pas. */
   .rar-cats { margin-left:auto; display:inline-flex; align-items:center; gap:6px; }
   /* Coche : meme ombre portee que la pastille du birdydex, au lieu du filet du repos. */

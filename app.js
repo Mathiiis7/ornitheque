@@ -3284,18 +3284,32 @@ function _initInfobulle(){
   const placer = () => {
     // offsetWidth/Height et non getBoundingClientRect : ces dernieres sont multipliees par le
     // zoom de la page, alors que innerWidth et style.left ne le sont pas.
-    const m = 18, r = { width: box.offsetWidth, height: box.offsetHeight };
-    // Pres du bord droit on repasse la boite a GAUCHE du curseur, comme on la repasse
-    // au-dessus pres du bas. La faire glisser le long du bord, ce qu'elle faisait avant,
-    // l'emmenait a deux cents pixels de ce qu'on survolait des lors que le texte etait
-    // long : les filtres X / P / N, tout a droite de la barre du birdydex, affichaient
-    // ainsi « Naturalise (N) » au-dessus des filtres de milieu. Le glissement ne sert plus
-    // que de dernier recours, si meme a gauche la boite ne tient pas.
-    let x = dernier.clientX + m;
-    if(x + r.width > innerWidth - 8) x = dernier.clientX - m - r.width;
-    x = Math.min(x, innerWidth - 8 - r.width);
-    let y = dernier.clientY + m;
-    if(y + r.height > innerHeight - 8) y = dernier.clientY - m - r.height;
+    const w = box.offsetWidth, h = box.offsetHeight;
+    // La boite s'accroche a l'ELEMENT, pas au curseur - juste dessous, centree sur lui, et
+    // au-dessus s'il n'y a pas la place. Elle suivait le curseur, ce qui echoue sur une
+    // petite cible collee a un bord : les filtres X / P / N font 16 px et tiennent le bout
+    // droit de la barre du birdydex, si bien que la boite, trop large pour tenir a droite
+    // du curseur, passait a sa gauche - son texte se retrouvait alors a une largeur de
+    // boite du chip, soit cent pixels plus loin, au-dessus des filtres de milieu. Ancree,
+    // la distance ne depend plus de la largeur du texte : elle vaut toujours 8 px.
+    //
+    // Le glissement lateral subsiste, mais il ne peut plus eloigner que sur un seul axe :
+    // la boite reste collee au bord haut ou bas de l'element quoi qu'il arrive.
+    const c = cible && cible.getBoundingClientRect ? cible.getBoundingClientRect() : null;
+    const m = 8;
+    let x, y;
+    if(c && c.width && c.height){
+      x = c.left + c.width / 2 - w / 2;
+      y = c.bottom + m;
+      if(y + h > innerHeight - 8) y = c.top - m - h;
+    } else {
+      // Repli : pas d'element mesurable, on retombe sur le curseur comme avant.
+      x = dernier.clientX + 18;
+      y = dernier.clientY + 18;
+      if(x + w > innerWidth - 8) x = dernier.clientX - 18 - w;
+      if(y + h > innerHeight - 8) y = dernier.clientY - 18 - h;
+    }
+    x = Math.min(x, innerWidth - 8 - w);
     box.style.left = Math.max(8, x).toFixed(1) + 'px';
     box.style.top = Math.max(8, y).toFixed(1) + 'px';
   };
