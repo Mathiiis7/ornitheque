@@ -12196,7 +12196,7 @@ function _exoticMapFileFor(cc){
     // Les contours sont caches dans lmb-data, qui survit aux changements de version du
     // service worker : sans ce parametre, un visiteur deja venu garderait indefiniment
     // l ancienne Bosnie amputee de sa Republique serbe.
-    : `data/regions-${cc.toLowerCase()}-simplified.json?v=20260926h`;
+    : `data/regions-${cc.toLowerCase()}-simplified.json?v=20260926i`;
 }
 async function _loadExoticMapPaths(cc){
   if(_exoticMapPathsCache[cc] !== undefined) return _exoticMapPathsCache[cc];
@@ -12504,10 +12504,14 @@ function _styleCarte(cc, paths){
   if(p.length === 4 && p.every(v => isFinite(v)) && p[3] > 0){
     const ratio = p[2] / p[3];
     large = Math.sqrt(_AIRE_CARTE * ratio);
-    // Un pays tres haut atteindrait le plafond de hauteur avant l'aire voulue : on
-    // redescend alors la largeur pour que la carte tienne entiere, sans letterbox.
+    large = Math.max(_LARGEUR_MINI, Math.min(_LARGEUR_MAXI, large));
+    // Le plafond de hauteur s'applique EN DERNIER, et il prime sur le plancher de largeur.
+    // Dans l'autre ordre, un pays tres haut et etroit - Albanie, Suede, Finlande, Sri
+    // Lanka - voyait sa largeur remontee a 320 px par le plancher, ce qui rendait sa
+    // hauteur a 550 ou 700 px. Mieux vaut une carte plus etroite que le plancher qu'une
+    // colonne qui ne tient pas dans la fiche.
     if(large / ratio > _HAUTEUR_MAXI) large = _HAUTEUR_MAXI * ratio;
-    large = Math.round(Math.max(_LARGEUR_MINI, Math.min(_LARGEUR_MAXI, large)));
+    large = Math.round(large);
   }
   return 'width:100%; max-width:' + large + 'px; height:auto; display:block; margin:0 auto;'
     + ' max-height:' + _HAUTEUR_MAXI + 'px;';

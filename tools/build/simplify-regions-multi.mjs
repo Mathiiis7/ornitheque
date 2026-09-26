@@ -401,14 +401,14 @@ const CLIP_LON = {
 // Ceuta et Melilla ne sont pas loin mais minuscules - 7 et 3 px sur la carte, invisibles et
 // incliquables. Elles rejoignent donc les encarts, pour la taille et non pour la distance.
 const INSETS = {
-  US: { 'US-AK': [10, 600, 260, 260], 'US-HI': [285, 720, 170, 145] },
-  PT: { 'PT-20': [650, 70, 330, 185], 'PT-30': [650, 300, 330, 175] },
+  US: { 'US-AK': [10, 590, 250, 255], 'US-HI': [310, 725, 170, 140] },
+  PT: { 'PT-20': [650, 60, 330, 175], 'PT-30': [650, 330, 330, 170] },
   // Melilla retiree le 2026-09-26 : 68 listes eBird en sept ans, soit du bruit, et une
   // enclave de 12 km2 qu il fallait grossir vingt fois pour la voir. Ses especes restent
   // comptees dans l Espagne, qui les tient de son bar chart national. Ceuta garde sa place
   // - 4 707 listes, 230 especes, le detroit et la migration des rapaces - et recupere
   // l espace libere.
-  ES: { 'ES-CN': [650, 575, 330, 160], 'ES-CE': [720, 765, 200, 105] },
+  ES: { 'ES-CN': [650, 555, 330, 155], 'ES-CE': [720, 775, 200, 95] },
   NZ: { 'NZ-CI': [780, 20, 200, 160] },
   // Quatre cadres dans la colonne de droite : les Shetland, trop au nord, et les trois
   // dependances de la Couronne, trop petites - l ile de Man fait 572 km2, Jersey 119.
