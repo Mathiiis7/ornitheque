@@ -12500,7 +12500,7 @@ function _viewBoxCarte(cc, paths){
     // les inclure ici evite de recadrer sur les seuls chemins et de couper le filet.
     if(bb) for(const b of _boitesEncarts(cc, paths)){
       if(b.x < bb.x0) bb.x0 = b.x;
-      if(b.y - b.CORPS * 0.62 < bb.y0) bb.y0 = b.y - b.CORPS * 0.62;
+      if(b.y - b.CORPS < bb.y0) bb.y0 = b.y - b.CORPS;
       if(b.x + b.w > bb.x1) bb.x1 = b.x + b.w;
       if(b.y + b.h > bb.y1) bb.y1 = b.y + b.h;
     }
@@ -12539,9 +12539,14 @@ function _viewBoxAvecEncarts(cc, viewBox){
   if(!Array.isArray(liste) || !viewBox) return viewBox;
   const p = String(viewBox).trim().split(/\s+/).map(Number);
   if(p.length !== 4 || p.some(v => !isFinite(v))) return viewBox;
-  let droite = p[0] + p[2];
-  for(const cfg of liste) if(cfg.cadre) droite = Math.max(droite, cfg.cadre.x + cfg.cadre.w + 14);
-  return p[0] + " " + p[1] + " " + Math.round(droite - p[0]) + " " + p[3];
+  let droite = p[0] + p[2], bas = p[1] + p[3];
+  for(const cfg of liste){
+    if(!cfg.cadre) continue;
+    const c = _cadreEncartApp(cfg);
+    droite = Math.max(droite, c.x + c.w + 14);
+    bas = Math.max(bas, c.y + c.h + 14);
+  }
+  return p[0] + " " + p[1] + " " + Math.round(droite - p[0]) + " " + Math.round(bas - p[1]);
 }
 function _codesEnEncart(cc){
   const liste = _ENCART_CARTE[cc];
@@ -12615,6 +12620,22 @@ function _encartCarte(cc, paths, rendre){
   if(!Array.isArray(liste) || !paths || !paths.zones) return '';
   return liste.map(cfg => _unEncart(cfg, paths, rendre)).join('');
 }
+// Cadre effectif d'un encart pose par l'app. Le cadre declare dans _ENCART_CARTE ne tient
+// pas compte de son propre nom : « Petite couronne » demande 243 unites de large a 27 de
+// corps, le cadre n'en faisait que 162, et le viewBox s'arretait au bord du cadre - le nom
+// s'affichait donc coupe, « Petite couro ». On elargit le cadre a ce que sa legende exige
+// et on grandit la hauteur d'autant, pour que la loupe garde ses proportions au lieu de
+// s'etirer en bandeau. Lu a deux endroits : par le rendu et par le calcul du viewBox.
+const _CORPS_ENCART_APP = 27;
+function _cadreEncartApp(cfg){
+  const c = cfg.cadre;
+  if(!cfg.titre) return c;
+  const lw = cfg.titre.length * _CORPS_ENCART_APP * 0.56 + 16;
+  const mini = 16 + lw + 16;
+  if(c.w >= mini) return c;
+  const k = mini / c.w;
+  return { x: c.x, y: c.y, w: mini, h: c.h * k };
+}
 function _unEncart(cfg, paths, rendre){
   const codes = cfg.codes.filter(z => paths.zones[z]);
   if(!codes.length) return '';
@@ -12623,11 +12644,11 @@ function _unEncart(cfg, paths, rendre){
   // Un encart peut se passer de titre : la petite couronne autour de Paris se reconnait sans
   // qu'on l'ecrive, alors que « Açores » et « Madère » ne se devinent pas. Sans titre, le
   // bandeau qui lui etait reserve revient a la carte, qui occupe donc toute la boite.
-  const c = cfg.cadre, marge = 2, bandeau = 0;
+  const c = _cadreEncartApp(cfg), marge = 2, bandeau = 0;
   // Meme legende que les encarts poses par le generateur (cf. _cadresEncarts) : le nom
   // s'ecrit SUR le filet, sur un petit fond qui interrompt les pointilles, au lieu de
   // flotter a l'interieur au-dessus de la carte.
-  const CORPS = 27;
+  const CORPS = _CORPS_ENCART_APP;
   const titreSvg = cfg.titre
     ? '<g pointer-events="none"><rect x="' + (c.x + 16) + '" y="' + (c.y - CORPS * 0.62).toFixed(1) + '" width="'
       + (cfg.titre.length * CORPS * 0.56 + 16).toFixed(1) + '" height="' + (CORPS * 1.2).toFixed(1)
