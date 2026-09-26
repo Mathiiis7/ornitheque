@@ -13353,9 +13353,9 @@ function _renderSpeciesRarityCard(key){
       <span class="cat-help-tip" style="position:absolute;top:20px;left:0;z-index:1000;width:340px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:11.5px;line-height:1.5;color:var(--ink-2);box-shadow:0 6px 20px rgba(0,0,0,0.15);display:none;text-align:left;font-weight:400;">
         <div style="margin-bottom:8px;">Une espèce vue hors de son aire naturelle est classée par les bénévoles de l'<b>eBird Exotics Working Group</b>, zone par zone. La même espèce peut donc être <b>naturalisée ici et simple échappée ailleurs</b> : la lettre affichée est celle qu'eBird retient pour le pays, et la carte des statuts, plus bas, dit où elle bascule.</div>
         <div style="display:grid;grid-template-columns:auto 1fr;gap:5px 8px;">
-          <span style="font-weight:700;color:var(--ink);">N</span><span><b>Naturalisé</b> : population qui se reproduit sur place. Ex. Bernache du Canada.</span>
+          <span style="font-weight:700;color:var(--ink);">N</span><span><b>Naturalisé</b> : population installée, qui se reproduit sur place.</span>
           <span style="font-weight:700;color:var(--ink);">P</span><span><b>Provisoire</b> : observations régulières, population non confirmée.</span>
-          <span style="font-weight:700;color:var(--ink);">X</span><span><b>Échappé isolé</b> : manifestement captif, aucune population. Ex. Ara.</span>
+          <span style="font-weight:700;color:var(--ink);">X</span><span><b>Échappé isolé</b> : oiseau manifestement captif, aucune population.</span>
         </div>
         <div style="margin-top:7px;opacity:.85;">Source : les icônes exotiques des bar charts eBird.</div>
       </span>
