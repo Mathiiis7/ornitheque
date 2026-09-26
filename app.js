@@ -12369,7 +12369,7 @@ async function _renderExoticMap(sci, cc){
              : `Sauvage en ${(COUNTRIES_REG[cc] && COUNTRIES_REG[cc].name) || cc}, exotique dans ${nZonesTaggees} ${zoneWord}${nZonesTaggees > 1 ? 's' : ''} (eBird)`}
       </summary>
       <div class="sm-fold-corps">
-        <div style="${_COLONNE_CARTE}"><svg viewBox="${_viewBoxCarte(cc, paths)}" style="${_styleCarte(cc, paths)}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Statut exotique par ${zoneWord}">
+        <div style="${_COLONNE_CARTE}"><svg viewBox="${_viewBoxCarte(cc, paths)}" style="${_styleCarte()}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Statut exotique par ${zoneWord}">
           ${svgZones}
         </svg></div>
         <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:8px; font-size:11px; color:var(--ink-2); justify-content:center;">
@@ -12573,26 +12573,22 @@ function _viewBoxCarte(cc, paths){
 // la largeur de la carte - qui depend de la forme du pays - remontait jusqu au panneau, et
 // la fiche de la Pologne n avait pas la meme largeur que celle de l Allemagne. La carte,
 // elle, continue de prendre la taille qui lui convient, centree dans cette colonne.
-const _COLONNE_CARTE = 'flex:1 1 560px; min-width:0; max-width:560px; margin:0 auto;';
-const _AIRE_CARTE = 130000;   // px2 vises
-const _LARGEUR_MINI = 320, _LARGEUR_MAXI = 560, _HAUTEUR_MAXI = 420;
-function _styleCarte(cc, paths){
-  const p = String(_viewBoxCarte(cc, paths) || '').trim().split(/\s+/).map(Number);
-  let large = _LARGEUR_MINI;
-  if(p.length === 4 && p.every(v => isFinite(v)) && p[3] > 0){
-    const ratio = p[2] / p[3];
-    large = Math.sqrt(_AIRE_CARTE * ratio);
-    large = Math.max(_LARGEUR_MINI, Math.min(_LARGEUR_MAXI, large));
-    // Le plafond de hauteur s'applique EN DERNIER, et il prime sur le plancher de largeur.
-    // Dans l'autre ordre, un pays tres haut et etroit - Albanie, Suede, Finlande, Sri
-    // Lanka - voyait sa largeur remontee a 320 px par le plancher, ce qui rendait sa
-    // hauteur a 550 ou 700 px. Mieux vaut une carte plus etroite que le plancher qu'une
-    // colonne qui ne tient pas dans la fiche.
-    if(large / ratio > _HAUTEUR_MAXI) large = _HAUTEUR_MAXI * ratio;
-    large = Math.round(large);
-  }
-  return 'width:100%; max-width:' + large + 'px; height:auto; display:block; margin:0 auto;'
-    + ' max-height:' + _HAUTEUR_MAXI + 'px;';
+const _COLONNE_CARTE = 'flex:1 1 413px; min-width:0; max-width:413px; margin:0 auto;';
+// Toutes les cartes tiennent dans la MEME boite, celle que la France occupait : 413 x 315.
+// Chaque pays s'y inscrit sans deformation - preserveAspectRatio="xMidYMid meet" - donc un
+// pays large remplit la largeur, un pays haut remplit la hauteur, et les deux laissent du
+// blanc sur l'autre axe.
+//
+// Une regle precedente donnait a chaque pays la boite de SA forme, a aire constante. Elle
+// rendait mieux justice a la Russie et au Royaume-Uni, mais faisait respirer les panneaux
+// de la fiche a des tailles differentes selon le pays - la Suede tenait sur 412 px de haut
+// quand le Danemark en prenait 300. Une fiche qui change de dimensions d'un pays a l'autre
+// se remarque plus qu'une carte un peu plus petite.
+const _BOITE_CARTE = { l: 413, h: 315 };
+function _styleCarte(){
+  return 'width:100%; max-width:' + _BOITE_CARTE.l + 'px;'
+    + ' aspect-ratio:' + _BOITE_CARTE.l + '/' + _BOITE_CARTE.h + ';'
+    + ' height:auto; display:block; margin:0 auto;';
 }
 // `deplace` distingue deux usages du meme cadre :
 //   - une loupe : la petite couronne parisienne est agrandie mais reste aussi a sa place,
@@ -12997,7 +12993,7 @@ async function _renderRarityMap(sci, cc){
                  que la colonne peut afficher 10 dans un Etat ou il ne passe pas. -->
             <div style="font:700 8.5px/1.3 system-ui; letter-spacing:.4px; text-transform:uppercase; color:var(--ink-3); margin-bottom:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" data-tip="${esc(nomPort)}">${esc(nomPort)}</div>
             ${moisBtns}</div>
-          <div style="${_COLONNE_CARTE}"><svg viewBox="${_viewBoxCarte(cc, paths)}" style="${_styleCarte(cc, paths)}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Rareté par ${zoneWord} sur ${libellePeriode}">
+          <div style="${_COLONNE_CARTE}"><svg viewBox="${_viewBoxCarte(cc, paths)}" style="${_styleCarte()}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Rareté par ${zoneWord} sur ${libellePeriode}">
             ${svgZones}
           </svg></div>
           <!-- Colonne fantome de la largeur du selecteur de mois : sans elle, la carte se

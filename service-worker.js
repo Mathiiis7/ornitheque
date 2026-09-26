@@ -3,7 +3,7 @@
 //   puis rafraichit en background. Prochain reload = nouvelle version.
 // - Requetes cross-origin (Firestore, iNaturalist, xeno-canto, Wikipedia, etc.) : reseau seul.
 // - Bump CACHE_VERSION quand on veut invalider volontairement.
-const CACHE_VERSION = 'v585-2026-09-26-ascenseur-toujours-present';
+const CACHE_VERSION = 'v586-2026-09-26-cartes-dans-une-boite-unique';
 const CACHE_NAME = 'lmb-' + CACHE_VERSION;
 
 // Cache des fichiers de donnees, volontairement SANS CACHE_VERSION dans son nom.
