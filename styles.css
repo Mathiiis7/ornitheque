@@ -1972,7 +1972,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      la rangee les aligne de droite a gauche depuis la pastille de palier. */
   .pkdx-card .pkdx-exos { position:absolute; top:8px; right:30px; z-index:2;
     display:flex; flex-wrap:wrap; justify-content:flex-end; gap:3px; }
-  .pkdx-card .pkdx-exo { font:700 9.5px/1 system-ui;
+  /* Le jeton de statut exotique n'est pas scope aux vignettes : la fiche espece le pose
+     aussi, sur sa ligne de rarete, et la meme espece doit porter le meme rond aux deux
+     endroits. Seul le POSITIONNEMENT reste l'affaire de la vignette, ci-dessus. */
+  .pkdx-exo { font:700 9.5px/1 system-ui;
     color:#fff; background:#7e8a99; border-radius:50%; width:16px;
     height:16px; display:grid; place-items:center; cursor:help; }
   .pkdx-card .pkdx-img { width:100%; aspect-ratio:1/1; background:var(--surface-2); border-radius:8px; overflow:hidden; margin-bottom:6px; display:grid; place-items:center; color:var(--ink-3); font-size:28px; }
