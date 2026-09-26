@@ -1349,12 +1349,13 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .rar-chip.on, .tier-chip { color:#fff; box-shadow:none; }
   .tier-chip { vertical-align:middle; font-variant-numeric:tabular-nums; }
   /* Variante ronde. Elle servait la seule ligne RARETE de la fiche espece ; le selecteur de
-     rarete l a rejointe le 2026-09-26, pays et zones. 26 px et corps 13, avec l ombre
+     rarete l a rejointe le 2026-09-26, pays et zones. 22 px et corps 12 - la largeur
+     qu occupait le carre, pour que la colonne des paliers garde son rythme - avec l ombre
      portee du jeton de vignette mais sans son filet. Le carre reste partout ou les
      pastilles s alignent en colonnes, la ou le rond ferait des trous entre les lignes. */
   /* margin et transform remis a zero : la regle du carre au-dessus les pose, et le rond,
      seul sur sa ligne, n'a pas de voisin avec qui se comparer. */
-  .tier-chip.tier-rond { width:26px; min-width:26px; height:26px; margin:0; transform:none; padding:0; border:0; border-radius:50%; font:800 13px/1 system-ui; box-shadow:0 1px 3px rgba(0,0,0,.3); }
+  .tier-chip.tier-rond { width:22px; min-width:22px; height:22px; margin:0; transform:none; padding:0; border:0; border-radius:50%; font:800 12px/1 system-ui; box-shadow:0 1px 3px rgba(0,0,0,.3); }
   .rar-chip.rar-exo.on { background:#7e8a99; }
   /* Retire les flèches spinner natives sur #mapEbMinTodo (on a nos propres boutons +/-) */
   #mapEbMinTodo::-webkit-outer-spin-button, #mapEbMinTodo::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
