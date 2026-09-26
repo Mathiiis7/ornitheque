@@ -13336,14 +13336,17 @@ function _renderSpeciesRarityCard(key){
     const flgFixed = (country.flag||'')
       .replace(' loading="lazy"', '')
       .replace('<img ', '<img width="19" height="14" style="height:14px;width:19px;object-fit:cover;object-position:center;vertical-align:middle;border-radius:2px;margin-right:9px;box-shadow:0 0 0 1px rgba(0,0,0,.08);flex-shrink:0;" ');
-    // Pill : affiche la lettre categorie (N/P) au lieu du chiffre du tier pour les
-    // exotiques etablis N/P (aligne avec le comportement des cartes Birdydex). X et C
-    // avec tier > 0 restent numeriques. Tier 0 exotique : lettre cat (N/P/X/C).
-    const useCatLetter = isExo && (cat === 'N' || cat === 'P') && w > 0;
-    const pillTxt = (w === 0 && isExo) ? (cat || 'X') : (useCatLetter ? cat : w);
-    // Couleur de fond : par defaut, couleur du tier (rareté). Pour l'exotique tier 0
-    // (X/C echappe non-etabli), on force gris neutre pour signifier "hors barème".
-    const pillBg = (w === 0 && isExo) ? '#7e8a99' : color;
+    // La grosse pastille porte TOUJOURS le palier, comme sur la vignette du birdydex. Elle
+    // affichait la lettre du statut a la place pour les exotiques etablis, si bien que la
+    // meme espece montrait « N » ici et « 4 » la-bas, et que la seule chose qu'une pastille
+    // de palier doit dire - le palier - manquait. La lettre a maintenant son propre rond
+    // gris, juste apres le libelle.
+    const pillTxt = w;
+    // Couleur du palier, sans exception : realColor(0) rend deja un gris neutre pour les
+    // « hors bareme ». Le gris force ici etait celui des jetons exotiques, ce qui faisait
+    // passer la pastille de palier pour l'un d'eux - maintenant qu'ils ont leur propre
+    // rond a cote, la confusion n'a plus lieu d'etre.
+    const pillBg = color;
     // La pastille commune, comme partout ailleurs. Elle avait ici sa propre taille - 48 px
     // de large, 15 px de police - pour que la position du libelle ne bouge pas entre un
     // « X » et un « 10 ». Le format unique prime : l'ecart restant entre un et deux
@@ -13355,8 +13358,11 @@ function _renderSpeciesRarityCard(key){
     // du drapeau et du libelle.
     const pill = '<span style="margin-right:8px; flex-shrink:0; display:inline-flex; align-items:center;">'
       + tierChip(pillTxt, pillBg, { title: 'palier ' + w, cls: 'tier-rond' }) + '</span>';
-    // Mini-badge cat retire quand le pill affiche deja la lettre (evite doublon N + N).
-    const catMiniPill = (isExo && cat && w > 0 && !useCatLetter) ? `<span style="display:inline-block;background:var(--surface-2);color:var(--ink-2);padding:1px 7px;border-radius:5px;font-weight:800;font-size:11px;margin-left:10px;vertical-align:middle;" title="${esc(catLbl)}">${cat}</span>` : '';
+    // Le statut exotique prend le MEME rond gris de 16 px que sur les vignettes du
+    // birdydex (.pkdx-exo), pose entre le libelle de rarete et le nom du statut : la meme
+    // espece porte ainsi le meme jeton aux deux endroits. C'etait une petite gelule grise
+    // a l'ancienne largeur variable.
+    const catMiniPill = (isExo && cat) ? `<span class="pkdx-exo" style="margin-left:10px; flex-shrink:0;" data-tip="${esc(catLbl ? catLbl + ' (' + cat + ')' : cat)}">${cat}</span>` : '';
     // Icone "?" avec tooltip explicatif : remplace l'ancien depliant. Petit cercle
     // avec point d'interrogation apres le label categorie ; survole = tooltip.
     // Le tooltip est en CSS pur via :hover sur .cat-help-wrap.
@@ -16755,9 +16761,17 @@ function _pkdxRender(){
           saison = _estSaisonniere(m, val);
         }
       }
-      // Categorie exotique pour ce pays (N/P/X/C ou '') utilisee par les filtres N/P/X.
+      // Categorie exotique retenue par eBird au NATIONAL (N/P/X/C ou ''), celle qui sert
+      // au tri - une naturalisee garde son rang de rarete, une echappee est reléguée.
       const cat = exo ? (exoticCategoryInCountry(sci, country) || _exoticCategory(sci) || '') : '';
-      all.push({ sci, nm, fam, tier, val, exo, cat, accidentelle, saison });
+      // TOUS les statuts que l'espece porte dans le pays, zone par zone : le Cygne noir est
+      // N dans 44 departements francais et X dans 18. C'est ce jeu-la que la vignette
+      // montre en pastilles, et c'est donc lui - et non la seule categorie nationale - que
+      // le filtre N/P/X doit interroger, sinon cliquer X n'affichait pas le Cygne noir
+      // alors que sa case porte un X.
+      const catsPays = exo ? (exoticCategoriesInCountry(sci, country) || []) : [];
+      const cats = cat ? (catsPays.length ? catsPays : [cat]) : [];
+      all.push({ sci, nm, fam, tier, val, exo, cat, cats, accidentelle, saison });
     }
     // Tri : par ordre taxonomique IOC/eBird (FAMILY_ORDER), puis les exotiques rejetees en
     // fin de famille, puis du moins rare au plus rare (tier ascendant, 1 = tres commun).
@@ -16795,7 +16809,7 @@ function _pkdxRender(){
     // val - la frequence annuelle - doit voyager jusqu au rendu : c est sur elle que trie
     // le mode « par rareté ». Sans elle la soustraction donnait NaN et le tri retombait
     // silencieusement sur l ordre alphabétique, son seul départage.
-    const { sci, nm, fam, tier, val, exo, cat, accidentelle, saison } = r;
+    const { sci, nm, fam, tier, val, exo, cat, cats, accidentelle, saison } = r;
     // Accidentelle non cochee : hors catalogue, on ne l affiche pas. Cochee, elle reste —
     // l utilisateur l a bien vue, ce n est pas a nous de l effacer de sa collection.
     if(accidentelle && !mine.has(sci)) continue;
@@ -16806,7 +16820,10 @@ function _pkdxRender(){
     // Mode filtre : si des cats N/P/X sont selectionnees, on affiche UNIQUEMENT les
     // especes matchant une de ces cats (les tier chips sont ignores). Sinon, filtre tier.
     if(_pkdxCatSelected.size > 0){
-      if(!cat || !_pkdxCatSelected.has(cat)) continue;
+      // N'IMPORTE LEQUEL de ses statuts suffit : une espece dont la case porte un X sort
+      // quand on coche X, meme si eBird la classe N au national. Un deuxieme passage plus
+      // bas resserre sur le statut de la zone quand une zone est choisie.
+      if(!cats.length || !cats.some(c => _pkdxCatSelected.has(c))) continue;
     } else if(_pkdxTierExcl.has(tier)){
       continue;
     }
@@ -16894,6 +16911,12 @@ function _pkdxRender(){
   // en grise avait ete envisage - on voyait qu elles existaient ailleurs - mais la grille
   // d un departement doit montrer ce qu on peut y cocher, pas le catalogue national.
   if(zone) rows = rows.filter(r => !(vues.get(r.sci) || {}).absente);
+  // Le filtre de statut se lit a l'echelle affichee. Sans zone, il a deja laisse passer
+  // toute espece portant l'un des statuts coches quelque part dans le pays. Avec une zone,
+  // c'est son statut LA-BAS qui decide - celui que sa pastille montre alors -, sinon la
+  // grille d'un departement ou le Cygne noir est N le sortait quand meme sous le filtre X.
+  if(zone && _pkdxCatSelected.size > 0)
+    rows = rows.filter(r => { const c = (vues.get(r.sci) || {}).cat; return c && _pkdxCatSelected.has(c); });
   const tri = _pkdxFilters.sort || 'famille';
   if(tri === 'rarete'){
     // Sur la frequence precise, pas sur le palier : celui-ci met dans le meme sac tout un
@@ -16928,11 +16951,13 @@ function _pkdxRender(){
     // dit d'ou il sort. Les faire s'exclure obligeait a choisir laquelle perdre.
     const badgeText = vue.tier;
     const fondBadge = tierBg;
-    // La puce liste tous les statuts du pays, pas seulement celui qu'eBird a retenu au
-    // national : "N/P/X" previent qu'il y a ici des populations etablies, des presences
-    // provisoires et des echappes isoles, et que le statut du coin depend de la region.
-    const catsZones = cat ? exoticCategoriesInCountry(r.sci, country) : [];
-    const cats = cat ? (catsZones.length ? catsZones : [cat]) : [];
+    // Les pastilles disent le statut A L'ECHELLE LUE, la meme que le filtre N/P/X.
+    // Sans zone, tous ceux que l'espece porte dans le pays : « N X » previent qu'il y a
+    // ici des populations etablies et des echappes isoles, et que le statut du coin depend
+    // de la region - le Cygne noir est N dans 44 departements francais et X dans 18.
+    // Avec une zone, le seul statut de cette zone : afficher les deux dans un departement
+    // ou eBird n'en retient qu'un aurait contredit la grille, qui ne montre plus que lui.
+    const cats = zone ? (cat ? [cat] : []) : (cat ? (r.cats && r.cats.length ? r.cats : [cat]) : []);
     // Une pastille RONDE PAR STATUT, pas un « N/X » soude. Soude, il se lisait comme un
     // seul jeton portant un nom bizarre, et sa forme de gelule le detachait du reste des
     // pastilles de l'app, toutes rondes. Separe, chaque rond porte sa propre infobulle :
