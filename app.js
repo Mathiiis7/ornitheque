@@ -1139,14 +1139,17 @@ function _openCountryPicker(currentCode, opts = {}){
     // seulement privees de tableau mensuel. Elles scorent desormais 0 comme les 40 autres
     // especes dans le meme cas, ce qui est au moins coherent. Meme choix que le panneau
     // regional, qui ne lit plus que le bar chart lui aussi.
+    // `score` sert a dire si l'espece est absente du pays : c'est le PIC, car une espece
+    // vue un seul mois n'est pas absente. `aff` est la valeur reellement AFFICHEE sur la
+    // ligne - moyenne annuelle ponderee, ou le mois choisi sur la carte. Les deux sont
+    // distinctes : au mois de janvier un migrateur estival affiche 0 sans etre absent.
     const scoreCountryForSpecies = (cc) => {
       const reg = COUNTRIES_REG[cc];
       const monArr = reg.monthly()[focusSci];
-      if(Array.isArray(monArr)){
-        const m = Math.max(...monArr);
-        if(m > 0) return { score: m, isSt: false };
-      }
-      return { score: 0, isSt: false };
+      if(!Array.isArray(monArr)) return { score: 0, aff: 0, isSt: false };
+      const pic = Math.max(...monArr);
+      const aff = (moisLu == null) ? _valeurAnnuelleZone(monArr, cc) : (monArr[moisLu] || 0);
+      return { score: pic > 0 ? pic : 0, aff: aff || 0, isSt: false };
     };
     // Meme format que la liste des zones, au chiffre pres : les deux listes se lisent
     // l'une apres l'autre dans le meme selecteur.
@@ -1160,14 +1163,23 @@ function _openCountryPicker(currentCode, opts = {}){
       const cont = CONTINENT_BY_CC[cc] || 'Autres';
       if(!grouped[cont]) grouped[cont] = [];
       const scored = focusSci ? scoreCountryForSpecies(cc) : null;
-      grouped[cont].push({ cc, score: scored ? scored.score : null, isSt: scored ? scored.isSt : false });
+      grouped[cont].push({ cc, score: scored ? scored.score : null,
+                           aff: scored ? scored.aff : 0, isSt: scored ? scored.isSt : false });
     }
-    // Si focusSci : tri par tier ASC (tier 1 = commun en 1er, absent = fin).
-    // Le tier vient de rarityForCountry (merge S&T + bar chart), stable inter-pays.
+    // Si focusSci : tri par tier ASC (tier 1 = commun en 1er, absent = fin), puis par le
+    // POURCENTAGE AFFICHE, decroissant.
+    //
+    // Le tier seul ne suffisait pas : une espece repandue met une vingtaine de pays dans le
+    // palier 1, qui retombaient alors dans l'ordre de declaration de COUNTRIES_REG. La
+    // colonne se lisait 27, 29, 26, 41, 42, 25 % - un desordre apparent. On ne trie pas par
+    // pourcentage SEUL pour autant : entre deux pays il peut melanger une frequence de bar
+    // chart et une abondance Status & Trends, que le tier, lui, ramene sur une echelle
+    // commune. Le tier decide donc, le pourcentage departage.
     if(focusSci){
       const tierOf = (cc, absent) => absent ? 99 : rarityForCountry(focusSci, cc);
       for(const cont in grouped){
-        grouped[cont].sort((a, b) => tierOf(a.cc, a.score === 0) - tierOf(b.cc, b.score === 0));
+        grouped[cont].sort((a, b) =>
+          (tierOf(a.cc, a.score === 0) - tierOf(b.cc, b.score === 0)) || (b.aff - a.aff));
       }
     }
     const backdrop = document.createElement('div');
