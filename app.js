@@ -12485,6 +12485,10 @@ const _ZONES_ENCART = {
 // Le cadre s'elargit au besoin pour que son nom tienne : les Shetland, hautes et etroites,
 // donnaient un cadre de 60 unites de large sous une legende « Shetland » qui en demande
 // 83, et le nom debordait dans le vide a droite du filet.
+// De combien le nom d'un encart monte au-dessus de son filet : sa propre hauteur, plus
+// 3 unites de respiration. Lu par le rendu ET par le calcul du viewBox - sans quoi le
+// recadrage serre coupait la legende qu'il venait de faire remonter.
+function _HAUT_LEGENDE(corps){ return corps * 1.2 + 3; }
 function _boitesEncarts(cc, paths){
   const noms = _ZONES_ENCART[cc];
   if(!noms || !paths || !paths.zones) return [];
@@ -12522,8 +12526,9 @@ function _boitesEncarts(cc, paths){
 function _cadresEncarts(cc, paths){
   let out = '';
   for(const { nom, x, y, w, h, CORPS, lw } of _boitesEncarts(cc, paths)){
-    // Le nom se pose EN LEGENDE sur le filet, comme le titre d'un fieldset : un petit
-    // fond de la couleur de la carte interrompt les pointilles, et le texte s'y loge.
+    // Le nom se pose AU-DESSUS du filet, pas dessus. A cheval sur le trait, son fond blanc
+    // mordait sur le territoire des que celui-ci montait jusqu'au bord - la petite couronne
+    // touche le haut de son cadre, et « Petite couronne » lui passait dans le vert.
     // Pose a l'interieur du cadre, il flottait au-dessus du territoire et se lisait comme
     // une etiquette de zone ; et a 17 px dans un viewBox de 1000 il faisait 8 px a l'ecran.
     const lx = x + 16;
@@ -12531,9 +12536,9 @@ function _cadresEncarts(cc, paths){
       + '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + w.toFixed(1)
       + '" height="' + h.toFixed(1) + '" fill="none" stroke="var(--line-2, #cfd8d4)"'
       + ' stroke-width="2.5" stroke-dasharray="8 7" rx="12" ry="12"/>'
-      + '<rect x="' + lx.toFixed(1) + '" y="' + (y - CORPS * 0.62).toFixed(1) + '" width="' + lw.toFixed(1)
+      + '<rect x="' + lx.toFixed(1) + '" y="' + (y - _HAUT_LEGENDE(CORPS)).toFixed(1) + '" width="' + lw.toFixed(1)
       + '" height="' + (CORPS * 1.2).toFixed(1) + '" rx="7" ry="7" fill="var(--surface, #fff)"/>'
-      + '<text x="' + (lx + 8).toFixed(1) + '" y="' + (y + CORPS * 0.3).toFixed(1) + '"'
+      + '<text x="' + (lx + 8).toFixed(1) + '" y="' + (y - _HAUT_LEGENDE(CORPS) + CORPS * 0.92).toFixed(1) + '"'
       + ' style="user-select:none" font-size="' + CORPS + '" font-weight="700" font-family="system-ui"'
       + ' fill="var(--ink-2, #47534f)">' + esc(nom) + '</text>'
       + '</g>';
@@ -12560,7 +12565,7 @@ function _viewBoxCarte(cc, paths){
     // les inclure ici evite de recadrer sur les seuls chemins et de couper le filet.
     if(bb) for(const b of _boitesEncarts(cc, paths)){
       if(b.x < bb.x0) bb.x0 = b.x;
-      if(b.y - b.CORPS < bb.y0) bb.y0 = b.y - b.CORPS;
+      if(b.y - _HAUT_LEGENDE(b.CORPS) < bb.y0) bb.y0 = b.y - _HAUT_LEGENDE(b.CORPS);
       if(b.x + b.w > bb.x1) bb.x1 = b.x + b.w;
       if(b.y + b.h > bb.y1) bb.y1 = b.y + b.h;
     }
@@ -12621,14 +12626,18 @@ function _viewBoxAvecEncarts(cc, viewBox){
   if(!Array.isArray(liste) || !viewBox) return viewBox;
   const p = String(viewBox).trim().split(/\s+/).map(Number);
   if(p.length !== 4 || p.some(v => !isFinite(v))) return viewBox;
-  let droite = p[0] + p[2], bas = p[1] + p[3];
+  let droite = p[0] + p[2], bas = p[1] + p[3], haut = p[1];
   for(const cfg of liste){
     if(!cfg.cadre) continue;
     const c = _cadreEncartApp(cfg);
     droite = Math.max(droite, c.x + c.w + 14);
     bas = Math.max(bas, c.y + c.h + 14);
+    // Le nom monte maintenant au-dessus du filet : un encart pose pres du haut de la carte
+    // le verrait coupe. La France a de la marge - son cadre est a 120, le viewBox part de
+    // -8 - mais le calcul ne doit pas en dependre.
+    if(cfg.titre) haut = Math.min(haut, c.y - _HAUT_LEGENDE(_CORPS_ENCART_APP) - 4);
   }
-  return p[0] + " " + p[1] + " " + Math.round(droite - p[0]) + " " + Math.round(bas - p[1]);
+  return p[0] + " " + Math.round(haut) + " " + Math.round(droite - p[0]) + " " + Math.round(bas - haut);
 }
 function _codesEnEncart(cc){
   const liste = _ENCART_CARTE[cc];
@@ -12728,14 +12737,13 @@ function _unEncart(cfg, paths, rendre){
   // bandeau qui lui etait reserve revient a la carte, qui occupe donc toute la boite.
   const c = _cadreEncartApp(cfg), marge = 2, bandeau = 0;
   // Meme legende que les encarts poses par le generateur (cf. _cadresEncarts) : le nom
-  // s'ecrit SUR le filet, sur un petit fond qui interrompt les pointilles, au lieu de
-  // flotter a l'interieur au-dessus de la carte.
-  const CORPS = _CORPS_ENCART_APP;
+  // s'ecrit AU-DESSUS du filet, au lieu de flotter a l'interieur par-dessus la carte.
+  const CORPS = _CORPS_ENCART_APP, hautL = _HAUT_LEGENDE(CORPS);
   const titreSvg = cfg.titre
-    ? '<g pointer-events="none"><rect x="' + (c.x + 16) + '" y="' + (c.y - CORPS * 0.62).toFixed(1) + '" width="'
+    ? '<g pointer-events="none"><rect x="' + (c.x + 16) + '" y="' + (c.y - hautL).toFixed(1) + '" width="'
       + (cfg.titre.length * CORPS * 0.56 + 16).toFixed(1) + '" height="' + (CORPS * 1.2).toFixed(1)
       + '" rx="7" ry="7" fill="var(--surface, #fff)"/>'
-      + '<text x="' + (c.x + 24) + '" y="' + (c.y + CORPS * 0.3).toFixed(1) + '"'
+      + '<text x="' + (c.x + 24) + '" y="' + (c.y - hautL + CORPS * 0.92).toFixed(1) + '"'
       + ' style="user-select:none" font-size="' + CORPS + '" font-weight="700" font-family="system-ui"'
       + ' fill="var(--ink-2, #47534f)">' + esc(cfg.titre) + '</text>'
     : '';
