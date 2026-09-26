@@ -67,13 +67,18 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   }
 
   * { box-sizing: border-box; }
-  /* La gouttiere de l'ascenseur est reservee en permanence. Sans ca, elle apparait des que
-     le contenu depasse la hauteur de l'ecran et disparait quand il rentre - et toute la
-     page glisse lateralement d'une quinzaine de pixels a chaque fois. Ca sautait entre un
-     birdydex filtre sur une seule espece et le birdydex complet, et aussi a l'ouverture
-     d'une fiche espece, qui pose overflow:hidden sur le body. La gouttiere etant posee sur
-     html, elle tient meme quand le body cesse de defiler. */
-  html { scrollbar-gutter: stable; }
+  /* L'ascenseur est toujours la. Sans ca il apparait des que le contenu depasse la hauteur
+     de l'ecran et disparait quand il rentre - et toute la page, centree, glisse
+     lateralement a chaque fois. Ca sautait entre un birdydex filtre sur une seule espece et
+     le birdydex complet, et aussi a l'ouverture d'une fiche espece, qui pose
+     overflow:hidden sur le body ; pose sur html, l'ascenseur tient dans les deux cas.
+     Les fiches, qui sont en position fixe, changeaient de largeur pour la meme raison -
+     1 280 px sur une page courte, 1 265 sur une longue.
+     overflow-y:scroll plutot que scrollbar-gutter:stable : les deux reservent la meme
+     place et tiennent la page aussi bien, mais le premier y met une vraie glissiere la ou
+     le second laisse une bande vide, qui se lit comme un defaut a cote d'une fiche. Sur
+     macOS, ou les ascenseurs se superposent au contenu, il ne reserve rien du tout. */
+  html { overflow-y: scroll; }
   body { margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans);
     line-height:1.5; -webkit-font-smoothing:antialiased;
     /* zoom global 0.85 : rendu par defaut plus dense, comme si le user etait a 85% de zoom
