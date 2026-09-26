@@ -126,9 +126,13 @@ const GB_NOM_EXPLICITE = {
 // Les 33 boroughs londoniens portent chacun leur nom ; c'est leur champ 'region' qui dit
 // Londres, et eBird n'en fait qu'une zone.
 const GB_REGION_EXPLICITE = { 'Greater London':'GB-ENG-LND' };
+const DEPENDANCES_GB = new Set(['JE', 'GG', 'IM']);
 const GB_PAR_NOM = new Map([["bedfordshire","GB-ENG-BDF"],["berkshire","GB-ENG-BRC"],["bristol","GB-ENG-BST"],["buckinghamshire","GB-ENG-BKM"],["cambridgeshire","GB-ENG-CAM"],["cheshire","GB-ENG-CHS"],["cornwall","GB-ENG-CON"],["cumbria","GB-ENG-CMA"],["derbyshire","GB-ENG-DBY"],["devon","GB-ENG-DEV"],["dorset","GB-ENG-DOR"],["durham","GB-ENG-DUR"],["east riding of yorkshire","GB-ENG-ERY"],["east sussex","GB-ENG-ESX"],["essex","GB-ENG-ESS"],["gloucestershire","GB-ENG-GLS"],["halton","GB-ENG-HAL"],["hampshire","GB-ENG-HAM"],["herefordshire","GB-ENG-HEF"],["hertfordshire","GB-ENG-HRT"],["isle of wight","GB-ENG-IOW"],["kent","GB-ENG-KEN"],["lancashire","GB-ENG-LAN"],["leicestershire","GB-ENG-LEC"],["lincolnshire","GB-ENG-LIN"],["london","GB-ENG-LND"],["manchester","GB-ENG-MAN"],["merseyside","GB-ENG-KWL"],["norfolk","GB-ENG-NFK"],["north yorkshire","GB-ENG-NYK"],["northamptonshire","GB-ENG-NTH"],["northumberland","GB-ENG-NBL"],["nottinghamshire","GB-ENG-NTT"],["oxfordshire","GB-ENG-OXF"],["rutland","GB-ENG-RUT"],["shropshire","GB-ENG-SHR"],["somerset","GB-ENG-SOM"],["south yorkshire","GB-ENG-BNS"],["staffordshire","GB-ENG-STS"],["stockton-on-tees","GB-ENG-STT"],["suffolk","GB-ENG-SFK"],["surrey","GB-ENG-SRY"],["tyne and wear","GB-ENG-GAT"],["warwickshire","GB-ENG-WAR"],["west midlands","GB-ENG-SAW"],["west sussex","GB-ENG-WSX"],["west yorkshire","GB-ENG-WKF"],["wiltshire","GB-ENG-WIL"],["worcestershire","GB-ENG-WOR"],["aberdeen","GB-SCT-ABE"],["aberdeenshire","GB-SCT-ABD"],["angus","GB-SCT-ANS"],["argyll and bute","GB-SCT-AGB"],["clackmannanshire","GB-SCT-CLK"],["dumfries and galloway","GB-SCT-DGY"],["dundee","GB-SCT-DND"],["east ayrshire","GB-SCT-EAY"],["east dunbartonshire","GB-SCT-EDU"],["east lothian","GB-SCT-ELN"],["edinburgh","GB-SCT-EDH"],["eilean siar","GB-SCT-ELS"],["falkirk","GB-SCT-FAL"],["fife","GB-SCT-FIF"],["glasgow","GB-SCT-GLG"],["highland","GB-SCT-HLD"],["midlothian","GB-SCT-MLN"],["moray","GB-SCT-MRY"],["north ayrshire","GB-SCT-NAY"],["north lanarkshire","GB-SCT-NLK"],["orkney islands","GB-SCT-ORK"],["perthshire and kinross","GB-SCT-PKN"],["renfrewshire","GB-SCT-RFW"],["scottish borders","GB-SCT-SCB"],["shetland islands","GB-SCT-ZET"],["south ayrshire","GB-SCT-SAY"],["south lanarkshire","GB-SCT-SLK"],["stirling","GB-SCT-STG"],["west dunbartonshire","GB-SCT-WDU"],["west lothian","GB-SCT-WLN"],["anglesey","GB-WLS-AGY"],["blaenau gwent","GB-WLS-BGW"],["bridgend","GB-WLS-BGE"],["caerphilly","GB-WLS-CAY"],["cardiff","GB-WLS-CRF"],["carmarthenshire","GB-WLS-CMN"],["ceredigion","GB-WLS-CGN"],["conwy","GB-WLS-CWY"],["denbighshire","GB-WLS-DEN"],["flintshire","GB-WLS-FLN"],["gwynedd","GB-WLS-GWN"],["merthyr tydfil","GB-WLS-MTY"],["monmouthshire","GB-WLS-MON"],["neath port talbot","GB-WLS-NTL"],["newport","GB-WLS-NWP"],["pembrokeshire","GB-WLS-PEM"],["powys","GB-WLS-POW"],["rhondda, cynon, taff","GB-WLS-RCT"],["swansea","GB-WLS-SWA"],["torfaen","GB-WLS-TOF"],["vale of glamorgan","GB-WLS-VGL"],["wrexham","GB-WLS-WRX"],["antrim","GB-NIR-ANT"],["armagh","GB-NIR-ARM"],["belfast","GB-NIR-BFS"],["derry","GB-NIR-DRY"],["down","GB-NIR-DOW"],["fermanagh","GB-NIR-FER"],["newry and mourne","GB-NIR-NYM"],["omagh","GB-NIR-OMH"]]);
 function resolveGB(props){
   const n = (props.name || '').toLowerCase();
+  // Dependances de la Couronne, recopiees depuis le fichier admin-0 par
+  // ajouter-dependances-gb.mjs : elles portent deja leur code de zone.
+  if(DEPENDANCES_GB.has(props.iso_3166_2)) return props.iso_3166_2;
   if(GB_PAR_NOM.has(n)) return GB_PAR_NOM.get(n);
   const r = (props.region || '').toLowerCase();
   if(GB_PAR_NOM.has(r)) return GB_PAR_NOM.get(r);
@@ -299,7 +303,7 @@ const EBIRD_REGIONS = {
   // Royaume-Uni : 16 regions NUTS-1 au lieu de 109 comtes (2 235 km2 chacun, plus fin
   // qu un departement francais et illisible), plus les Shetland a part - a 60,85 de
   // latitude contre 59,36 pour le reste, elles mangeaient 16 % de la hauteur de carte.
-  GB: ['GB-R01','GB-R02','GB-R03','GB-R04','GB-R05','GB-R06','GB-R07','GB-R08','GB-R09','GB-R10','GB-R11','GB-R12','GB-R13','GB-R14','GB-R15','GB-R16','GB-ZET'],
+  GB: ['GB-R01','GB-R02','GB-R03','GB-R04','GB-R05','GB-R06','GB-R07','GB-R08','GB-R09','GB-R10','GB-R11','GB-R12','GB-R13','GB-R14','GB-R15','GB-R16','GB-ZET','JE','GG','IM'],
   ES: ['ES-AN','ES-AR','ES-AS','ES-CB','ES-CE','ES-CL','ES-CM','ES-CN','ES-CT','ES-EX',
        'ES-GA','ES-IB','ES-MC','ES-MD','ES-ML','ES-NC','ES-PV','ES-RI','ES-VC'],
   IT: ['IT-21','IT-23','IT-25','IT-32','IT-34','IT-36','IT-42','IT-45','IT-52','IT-55',
@@ -344,7 +348,7 @@ const EBIRD_REGIONS = {
 const MAIN_BOX = {
   ES: [20, 10, 960, 670],   // laisse la bande basse libre pour les Canaries
   PT: [20, 18, 560, 864],   // colonne de droite reservee aux Acores et a Madere
-  GB: [20, 18, 690, 864],   // colonne de droite reservee aux Shetland
+  GB: [20, 18, 620, 864],   // colonne de droite reservee aux Shetland et aux dependances
 };
 
 // Certaines regions trainent un chapelet d'ilots tres lointains qui etire leur bbox et
@@ -393,7 +397,10 @@ const INSETS = {
   ES: { 'ES-CN': [650, 575, 330, 160],
         'ES-CE': [672, 800, 92, 64], 'ES-ML': [868, 800, 92, 64] },
   NZ: { 'NZ-CI': [780, 20, 200, 160] },
-  GB: { 'GB-ZET': [700, 55, 240, 215] },
+  // Quatre cadres dans la colonne de droite : les Shetland, trop au nord, et les trois
+  // dependances de la Couronne, trop petites - l ile de Man fait 572 km2, Jersey 119.
+  GB: { 'GB-ZET': [700, 45, 250, 200],
+        'IM': [700, 315, 150, 150], 'JE': [700, 520, 150, 130], 'GG': [700, 700, 150, 130] },
   NO: { 'SJ': [700, 570, 250, 295] },
 };
 
@@ -403,7 +410,7 @@ const INSETS = {
 const COUPER_ENCART = {
   NO: { 'SJ': [
     { lon: [0, 40], box: [700, 570, 250, 295], nom: 'Svalbard' },
-    { suffixe: 'JM', lon: [-15, -5], box: [603, 790, 72, 75], nom: 'Jan Mayen' },
+    { suffixe: 'JM', lon: [-15, -5], box: [455, 700, 175, 170], nom: 'Jan Mayen' },
   ]},
 };
 
@@ -498,6 +505,54 @@ function dissolveRings(rings){
     }
   }
   return out.length ? out : null;
+}
+
+// Archipels a SERRER dans leur encart. Agrandir un archipel tel quel agrandit surtout
+// l'ocean qui le traverse : le bailliage de Guernesey s'etale sur 35 km entre Aurigny et
+// Guernesey, si bien que dans un cadre de 150 unites chaque ile faisait trois pixels. On
+// abandonne leurs positions reelles - elles ne disent rien d'utile a cette taille - et on
+// range les iles cote a cote, d'ouest en est, toutes a la MEME echelle : leurs tailles
+// restent comparables entre elles, et l'archipel reste reconnaissable.
+const SERRER = { GB: new Set(['GG']) };
+
+function serrerIles(chemins, box, ecart){
+  const iles = chemins.map(d => {
+    const n = d.match(/-?\d+(?:\.\d+)?/g).map(Number);
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for(let i = 0; i + 1 < n.length; i += 2){
+      if(n[i] < x0) x0 = n[i]; if(n[i] > x1) x1 = n[i];
+      if(n[i+1] < y0) y0 = n[i+1]; if(n[i+1] > y1) y1 = n[i+1];
+    }
+    return { d, x0, y0, x1, y1 };
+  }).filter(i => i.x1 > i.x0 || i.y1 > i.y0);
+  if(iles.length < 2) return chemins;
+  iles.sort((a, b) => a.x0 - b.x0);
+  const [bx, by, bw, bh] = box;
+  const ranger = (k) => {
+    let x = 0, y = 0, hLigne = 0;
+    const cases = [];
+    for(const it of iles){
+      const w = (it.x1 - it.x0) * k, h = (it.y1 - it.y0) * k;
+      if(x > 0 && x + w > bw){ x = 0; y += hLigne + ecart; hLigne = 0; }
+      cases.push({ it, x, y });
+      x += w + ecart;
+      if(h > hLigne) hLigne = h;
+    }
+    return { cases, hTotale: y + hLigne };
+  };
+  // Plafond donne par l ile la plus large : sans lui, un archipel fait d une grande ile et
+  // de quelques ilots voit la recherche grimper pendant que la grande ile deborde.
+  const plusLarge = Math.max(...iles.map(i => i.x1 - i.x0));
+  let bas = 0.05, haut = bw / Math.max(1e-6, plusLarge);
+  for(let i = 0; i < 40; i++){
+    const m = (bas + haut) / 2;
+    if(ranger(m).hTotale <= bh) bas = m; else haut = m;
+  }
+  const { cases } = ranger(bas);
+  return cases.map(({ it, x, y }) => it.d.replace(
+    /(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/g,
+    (_, a, b) => (((+a) - it.x0) * bas + x + bx).toFixed(1) + ',' + (((+b) - it.y0) * bas + y + by).toFixed(1)
+  ));
 }
 
 const ringsOf = (geom) => {
@@ -697,7 +752,7 @@ function buildCountry(features, cc){
   for(const code of codes){
     const project = projectors[code];
     const paths = [];
-    let ex0 = Infinity, ey0 = Infinity, ex1 = -Infinity, ey1 = -Infinity;
+    let ex0 = Infinity, ey0 = Infinity, ex1 = -Infinity, ey1 = -Infinity;   // reassignes si l archipel est serre
     for(const ring of byCode[code]){
       // Ignore les micro-ilots : sous 6 points apres simplification ils n'apportent rien
       // mais gonflent le fichier (l'Alaska a ~2000 anneaux d'iles).
@@ -711,6 +766,22 @@ function buildCountry(features, cc){
       paths.push('M' + proj.map(([x,y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' L') + ' Z');
     }
     if(!paths.length) continue;
+    // Archipel trop etale pour un simple agrandissement : ses iles sont reposees cote a
+    // cote dans la boite, et la boite reelle est alors celle-ci, pas celle des chemins.
+    if(insetCfg[code] && SERRER[cc] && SERRER[cc].has(code)){
+      const serres = serrerIles(paths, insetCfg[code], 6);
+      if(serres !== paths){
+        paths.length = 0; paths.push(...serres);
+        ex0 = Infinity; ey0 = Infinity; ex1 = -Infinity; ey1 = -Infinity;
+        for(const d of paths){
+          const n = d.match(/-?\d+(?:\.\d+)?/g).map(Number);
+          for(let i = 0; i + 1 < n.length; i += 2){
+            if(n[i] < ex0) ex0 = n[i]; if(n[i] > ex1) ex1 = n[i];
+            if(n[i+1] < ey0) ey0 = n[i+1]; if(n[i+1] > ey1) ey1 = n[i+1];
+          }
+        }
+      }
+    }
     if(insetCfg[code] && ex1 > ex0) encarts.push(Object.assign({ code: code.split('#')[0], bbox: [ex0, ey0, ex1, ey1].map(v => +v.toFixed(1)) }, nomsEncart[code] ? { nom: nomsEncart[code] } : null));
     // Un morceau d encart coupe (SJ#JM) rejoint le chemin de sa zone : une seule entree,
     // donc une seule couleur et un seul clic pour ce qui est une seule zone eBird.

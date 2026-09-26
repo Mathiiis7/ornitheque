@@ -68,7 +68,7 @@ for(const f of readdirSync(DIR_BAR)){
 // Jan Mayen sont du territoire norvegien, mais eBird les publie sous un code de PAYS (SJ) :
 // sans cette table, la regle « un code de deux lettres est un pays » les ecartait.
 // Voir ABSORBE dans build-rarity-multi-country.mjs.
-const PAYS_DE_LA_ZONE = { SJ: 'NO' };
+const PAYS_DE_LA_ZONE = { SJ: 'NO', JE: 'GB', GG: 'GB', IM: 'GB' };
 
 const parPays = new Map();
 for(const [zone, fichier] of parZone){

@@ -113,6 +113,10 @@ const REGIONS = {
   AT: ['AT-1','AT-2','AT-3','AT-4','AT-5','AT-6','AT-7','AT-8',
        'AT-9'],
   IE: ['IE-C','IE-L','IE-M','IE-U'],
+  // Le Royaume-Uni tient ses 17 regroupements de comtes de agreger-zones.mjs ; on n ajoute
+  // ici que les trois dependances de la Couronne, qui sont des zones eBird a part entiere.
+  // La fusion du fichier regional (plus bas) les ajoute sans toucher aux autres.
+  GB: ['JE','GG','IM'],
   CY: ['CY-01','CY-02','CY-03','CY-04','CY-05','CY-06'],
   DK: ['DK-01','DK-02','DK-03','DK-04','DK-05','DK-06','DK-07','DK-08','DK-09','DK-10','DK-11','DK-12','DK-13'],
   BE: ['BE-BRU','BE-VLG','BE-WAL'],
@@ -283,7 +287,11 @@ const BAR_CHART_ALIAS = {
 // EXACTE : frequence x nombre de listes = nombre de listes citant l espece, et ces
 // comptes-la s additionnent. C est le meme calcul que pour les zones regroupees
 // (agreger-zones.mjs), applique ici a l echelon national.
-const ABSORBE = { NO: ['SJ'] };
+// Jersey, Guernesey et l ile de Man sont des dependances de la Couronne : constitutionnel-
+// lement hors du Royaume-Uni, mais en faire trois pays de 233 a 297 especes n avait pas de
+// sens pour un birdydex. Elles pesent 1,5 % des listes britanniques a elles trois, donc la
+// fusion ne deforme pas le chiffre national comme Svalbard deforme le norvegien.
+const ABSORBE = { NO: ['SJ'], GB: ['JE', 'GG', 'IM'] };
 
 // Lecture brute d un bar chart : l effort par quinzaine et, pour chaque taxon, ses 48
 // frequences. Separee de la mise en forme pour que deux bar charts puissent etre fusionnes
@@ -474,20 +482,27 @@ async function processCountry(cc){
   writeFileSync(q48Path, JSON.stringify(q48));
   console.log(`  Ecrit : ${q48Path} (${Object.keys(q48).length} especes)`);
   const regPath = join(countryDir, `freq_by_region.json`);
-  // Garde-fou : ne jamais remplacer un fichier regional existant par un plus pauvre. Une
-  // fenetre de TSV mal nommee ou une region non telechargee produirait sinon une perte
-  // silencieuse — c est ce qui a failli effacer les 96 departements francais.
-  const { existsSync } = await import('node:fs');
-  let ancienNb = 0;
+  // On FUSIONNE au lieu de remplacer : une zone produite ici ecrase son homonyme, une zone
+  // deja presente et non reproduite est conservee. Le garde-fou precedent refusait bloc
+  // l ecriture des qu elle appauvrissait le fichier - il protegeait bien des pertes (une
+  // fenetre de TSV mal nommee a failli effacer les 96 departements francais) mais il
+  // interdisait aussi d AJOUTER une zone a un pays dont les autres viennent d ailleurs :
+  // le Royaume-Uni tient ses 17 regroupements de agreger-zones.mjs, et Jersey, Guernesey
+  // et l ile de Man n auraient jamais pu les rejoindre.
+  let fusion = regionalData, ancienNb = 0;
   if (existsSync(regPath)) {
-    try { ancienNb = Object.keys(JSON.parse(readFileSync(regPath, 'utf8'))).length; } catch (e) {}
+    try {
+      const ancien = JSON.parse(readFileSync(regPath, 'utf8'));
+      ancienNb = Object.keys(ancien).length;
+      fusion = Object.assign(ancien, regionalData);
+    } catch (e) {}
   }
-  if (nRegionsFound < ancienNb) {
-    console.warn(`  ! ${regPath} conserve : ${ancienNb} zones deja presentes contre ${nRegionsFound} produites.`);
-  } else {
-    writeFileSync(regPath, regJson);
-    console.log(`  Ecrit : ${regPath} (${regJson.length} chars, ${nRegionsFound} regions)`);
-  }
+  const sortie = JSON.stringify(fusion);
+  writeFileSync(regPath, sortie);
+  const gardees = Object.keys(fusion).length - nRegionsFound;
+  console.log(`  Ecrit : ${regPath} (${sortie.length} chars, ${Object.keys(fusion).length} zones` +
+    (gardees > 0 ? `, dont ${gardees} conservee(s) d une generation anterieure` : '') + ')');
+  if (!nRegionsFound && ancienNb) console.warn(`  ! aucune zone produite pour ${cc} : les ${ancienNb} existantes sont intactes.`);
 }
 
 // Filtre optionnel : « ... build-rarity-multi-country.mjs NO » ne refait que la Norvege.
