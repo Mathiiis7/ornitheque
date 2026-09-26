@@ -13005,6 +13005,15 @@ async function _renderRarityMap(sci, cc){
   // Un pays sans decoupage n'a qu'une piece : le panneau ne classe donc pas par region
   // mais par MOIS, ce que dit son titre et ce que fait sa colonne de gauche.
   const zoneWord = cc === 'FR' ? 'département' : (_paysSansDecoupage(cc) ? 'mois' : 'région');
+  // « région » est le seul des trois mots qui soit feminin : sans ce test la note se lisait
+  // « des listes du région ».
+  const zoneDe = zoneWord === 'région' ? 'de la région' : 'du ' + zoneWord;
+  // La note sous la carte. Un pays sans decoupage n'a rien a dire sur ses zones : sa carte
+  // d'une piece prend la valeur NATIONALE du mois choisi, et parler de « detail mois par
+  // mois a gauche » y serait un tour de plus pour rien, puisque la colonne EST les mois.
+  const noteMesure = _paysSansDecoupage(cc)
+    ? `Couleur : part des listes eBird du pays qui citent l'espèce au mois choisi, sur 2019-2026. Sur l'année, les mois les plus observés pèsent plus lourd.`
+    : `Couleur : part des listes eBird ${zoneDe} qui citent l'espèce, sur 2019-2026 — les mois les plus observés pèsent plus lourd. À gauche, le détail mois par mois.`;
   const openState = window._smRarityMapOpen ? ' open' : '';
   if(_ccFicheObsolete(cc)) return;
   container.innerHTML = `
@@ -13036,7 +13045,7 @@ async function _renderRarityMap(sci, cc){
           ${legendItem(ABSENT,'Absente')}
         </div>
         <div style="margin-top:8px; padding-top:8px; border-top:1px dashed var(--line-2); font-size:10.5px; color:var(--ink-3); text-align:center; line-height:1.4; opacity:.9;">
-          ⓘ Part des listes eBird du ${zoneWord} où l'espèce a été notée, agrégée sur 2019-2026. Sur l'année, chaque ${zoneWord} est évalué sur la part de ses listes qui mentionnent l'espèce, pondérée par l'effort d'observation de chaque mois — la même mesure que la rareté nationale. La colonne de mois donne le palier de chaque mois sur ${esc(nomPort)}. Reflète la facilité de rencontre, pas l'effectif.
+          ⓘ ${noteMesure} C'est une facilité de rencontre, pas un effectif.
         </div>
       </div>
     </details>`;
