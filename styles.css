@@ -1207,14 +1207,15 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      pas deux encadres voisins. */
   .species-modal .sm-oq-bloc { background:var(--surface-2); border:1px solid var(--line);
     border-radius:10px; padding:8px 10px; }
-  /* Quand les deux vues sont la, elles ne font qu'un seul cadre : la carte perd ses
-     arrondis du bas et sa bordure basse, le graphique perd ceux du haut, et la bordure
-     haute du graphique devient le filet qui les separe. Une bande blanche entre deux
-     encadres les faisait lire comme deux panneaux voisins, ce qu'ils ne sont plus. */
+  /* Quand les deux vues sont la, elles ne font qu'un seul cadre, sans rien entre elles :
+     la carte perd ses arrondis du bas et sa bordure basse, le graphique perd ceux du
+     haut et sa bordure haute. Une bande blanche entre deux encadres les faisait lire
+     comme deux panneaux voisins, ce qu'ils ne sont plus ; le filet qui l'a d'abord
+     remplacee disait encore la meme separation, en plus discret. */
   .species-modal .oq-deux .sm-oq-bloc {
     border-radius:10px 10px 0 0; border-bottom:0; }
   .species-modal .oq-deux .sm-freq-chart-wrap {
-    border-radius:0 0 10px 10px; border-top:1px solid var(--line-2); }
+    border-radius:0 0 10px 10px; border-top:0; }
   /* Et une seule legende pour les deux, en bas du panneau : la cle des couleurs sur une
      ligne, la phrase qui dit la mesure en dessous. Elle remplace les trois qui
      coexistaient, dont deux portaient la meme palette. */
