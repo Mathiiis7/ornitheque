@@ -12881,10 +12881,65 @@ function _valeurAnnuelleZone(arr, cc, zone){
 // la zone, soit la chance de rencontrer l'espece lors d'une sortie prise au hasard dans
 // l'annee), ou un mois precis via les pastilles. C'est la meme agregation que le selecteur
 // de regions, les deux vues concordent donc. Le choix est conserve d'une espece a l'autre pour comparer plusieurs fiches.
+// « Où et quand la trouver » reunit deux vues d'UNE SEULE mesure : la carte par zone et le
+// calendrier annuel. Chacune peut manquer - un pays sans decoupage n'a pas de carte utile,
+// une espece sans quinzaines n'a pas de courbe - mais le panneau ne disparait que si les
+// DEUX manquent. Sans ce partage, masquer le graphique emportait la carte avec lui.
+function _majPanneauOuQuand(){
+  const card = document.getElementById('smOuQuandCard');
+  if(!card) return;
+  const carte = document.getElementById('smRarityMap');
+  const graph = document.getElementById('smGraphZone');
+  const aCarte = !!(carte && carte.innerHTML.trim());
+  const aGraph = !!(graph && !graph.hidden);
+  card.hidden = !(aCarte || aGraph);
+  const leg = document.getElementById('smOuQuandLegende');
+  if(leg){
+    leg.hidden = card.hidden;
+    if(!card.hidden) leg.innerHTML = _legendeOuQuand(aCarte, aGraph);
+  }
+}
+// L'unique legende du panneau. Elle remplace les trois qui coexistaient : la cle des
+// couleurs de la carte, la note sous la carte, et la cle du graphique. Les trois disaient
+// des morceaux d'une meme chose, chacune dans son coin et deux fois la meme palette.
+function _legendeOuQuand(aCarte, aGraph){
+  const p = window._oqPortee || {};
+  const bande = [1,2,3,4,5,6,7,8,9,10]
+    .map(t => `<span style="width:8px;height:12px;background:${realColor(t)};display:inline-block;"></span>`).join('');
+  const jeton = (dedans, texte) => `<span class="sm-freq-lg">${dedans}${texte}</span>`;
+  const cles = jeton(
+      `<span style="display:inline-flex;height:12px;border:1px solid var(--line);border-radius:2px;overflow:hidden;margin-right:5px;">${bande}</span>`,
+      'facile → rare')
+    + jeton('<span class="sm-freq-sw" style="background:#d4d4d8;margin-right:5px;"></span>', 'jamais notée')
+    + (aGraph ? jeton('<span class="sm-freq-sw" style="background:transparent;border:2px solid var(--accent);width:10px;height:10px;box-sizing:border-box;margin-right:5px;"></span>',
+                      window._oqHebdo ? 'cette semaine' : 'mois actuel') : '');
+  // Une seule phrase, qui dit la mesure une fois pour les deux vues au lieu de la redire
+  // pour chacune. Le mot de zone suit le pays : departement en France, region ailleurs,
+  // et rien du tout la ou eBird ne decoupe pas.
+  // Un pays qu'eBird ne subdivise pas n'a ni zone a cliquer ni decoupage a nommer : sa
+  // carte d'une piece prend la valeur nationale du mois choisi.
+  const surCarte = p.sansDecoupage ? 'Le pays entier sur la carte' : `Par ${p.zoneWord || 'région'} sur la carte`;
+  const aCliquer = p.sansDecoupage ? 'un mois ou une barre' : 'une zone, un mois ou une barre';
+  const phrase = aCarte && aGraph
+    ? `La même mesure des deux côtés : la part des listes eBird qui citent l'espèce, sur 2019-2026. ${surCarte}, au fil de l'année sur les barres. Cliquer ${aCliquer} change les deux.`
+    : aCarte
+    ? `La part des listes eBird qui citent l'espèce, sur 2019-2026. ${surCarte}, mois par mois dans la colonne de gauche.`
+    : `La part des listes eBird qui citent l'espèce au fil de l'année, sur 2019-2026.`;
+  return `<div class="sm-oq-cles">${cles}</div>`
+    + `<div class="sm-oq-note">ⓘ ${phrase} C'est une facilité de rencontre, pas un effectif.</div>`;
+}
 async function _renderRarityMap(sci, cc){
   const container = document.getElementById('smRarityMap');
   if(!container) return;
   const key = (sci || '').toLowerCase();
+  // Ce que la legende commune, en bas du panneau, doit savoir de la carte : elle est ecrite
+  // par _legendeOuQuand, qui ne connait ni le pays ni ses zones. Pose AVANT les attentes de
+  // chargement ci-dessous - le graphique, lui, est synchrone et peut ecrire la legende le
+  // premier, avec le mot de zone du pays precedent.
+  window._oqPortee = {
+    zoneWord: cc === 'FR' ? 'département' : (_paysSansDecoupage(cc) ? 'mois' : 'région'),
+    sansDecoupage: _paysSansDecoupage(cc),
+  };
   if(window._smRarityMapMonth == null) window._smRarityMapMonth = 'an';
   const periode = window._smRarityMapMonth;
   const surAnnee = periode === 'an';
@@ -12911,14 +12966,14 @@ async function _renderRarityMap(sci, cc){
   const zonesFiche = (typeof zonesFichePourPays === 'function' ? zonesFichePourPays(cc) : []);
   const zonesSelectionnables = new Set(zonesFiche.map(r => r.code));
   const paths = byZone ? await _loadExoticMapPaths(cc) : null;
-  if(!byZone || !paths){ container.innerHTML = ''; return; }
+  if(!byZone || !paths){ container.innerHTML = ''; _majPanneauOuQuand(); return; }
   // Une espece jamais vue nulle part dans l'annee n'a pas de carte a montrer.
   const zones = Object.keys(paths.zones);
   const aDeLaData = zones.some(z => {
     const arr = byZone[z] && byZone[z][key];
     return Array.isArray(arr) && arr.some(v => v > 0);
   });
-  if(!aDeLaData){ container.innerHTML = ''; return; }
+  if(!aDeLaData){ container.innerHTML = ''; _majPanneauOuQuand(); return; }
   const ABSENT = '#d4d4d8';
   // Zones a mettre en avant quand une region est selectionnee dans la fiche. En France
   // la carte est au departement alors que la selection est une region : on retient donc
@@ -12970,7 +13025,7 @@ async function _renderRarityMap(sci, cc){
   // saute aux yeux sans avoir a cliquer les mois un par un.
   //
   // Reference : la zone selectionnee si elle est mesuree, sinon le pays entier. C'est la
-  // portee de l'entete "Quand la trouver", pour que les deux ne disent pas deux choses
+  // portee de l'entete « Où et quand la trouver », pour que les deux ne disent pas deux choses
   // differentes du meme mois.
   const zonePort = (_speciesRegion && byZone[_speciesRegion]) ? _speciesRegion : '';
   const serieRef = (zonePort
@@ -13009,27 +13064,12 @@ async function _renderRarityMap(sci, cc){
   const moisBtns = chipMois('an', 'année', surAnnee, _valeurAnnuelleZone(serieRef, cc, zonePort || null), true)
     + '<span style="display:block; height:1px; margin:5px 3px; background:var(--line-2);"></span>'
     + _MOIS_COURTS.map((m, i) => chipMois(i, m, !surAnnee && i === mois, serieRef[i] || 0, false)).join('');
-  const legendItem = (col, label) => `<span style="display:inline-flex; align-items:center; gap:4px;"><span style="display:inline-block; width:10px; height:10px; background:${col}; border-radius:2px;"></span>${label}</span>`;
-  // Un pays sans decoupage n'a qu'une piece : le panneau ne classe donc pas par region
-  // mais par MOIS, ce que dit son titre et ce que fait sa colonne de gauche.
-  const zoneWord = cc === 'FR' ? 'département' : (_paysSansDecoupage(cc) ? 'mois' : 'région');
-  // « région » est le seul des trois mots qui soit feminin : sans ce test la note se lisait
-  // « des listes du région ».
-  const zoneDe = zoneWord === 'région' ? 'de la région' : 'du ' + zoneWord;
-  // La note sous la carte. Un pays sans decoupage n'a rien a dire sur ses zones : sa carte
-  // d'une piece prend la valeur NATIONALE du mois choisi, et parler de « detail mois par
-  // mois a gauche » y serait un tour de plus pour rien, puisque la colonne EST les mois.
-  const noteMesure = _paysSansDecoupage(cc)
-    ? `Couleur : part des listes eBird du pays qui citent l'espèce au mois choisi, sur 2019-2026. Sur l'année, les mois les plus observés pèsent plus lourd.`
-    : `Couleur : part des listes eBird ${zoneDe} qui citent l'espèce, sur 2019-2026. Les mois les plus observés pèsent plus lourd. À gauche, le détail mois par mois.`;
-  const openState = window._smRarityMapOpen ? ' open' : '';
+  // Un pays sans decoupage n'a qu'une piece : la carte ne classe donc pas par region mais
+  // par MOIS, ce que fait sa colonne de gauche.
+  const zoneWord = window._oqPortee.zoneWord;
   if(_ccFicheObsolete(cc)) return;
   container.innerHTML = `
-    <details${openState} class="sm-fold" style="margin-top:10px;" id="smRarityMapDetails">
-      <summary>
-        ▸ Rareté par ${zoneWord} (${libellePeriode})
-      </summary>
-      <div class="sm-fold-corps">
+      <div class="sm-oq-bloc">
         <div style="display:flex; align-items:flex-start; justify-content:flex-start; gap:8px;">
           <div id="smRarityMapMois" style="display:flex; flex-direction:column; gap:2px; flex:0 0 auto; width:62px;">
             <!-- La colonne se lit a l'echelle de la zone choisie, la ligne RARETE en haut de
@@ -13046,19 +13086,10 @@ async function _renderRarityMap(sci, cc){
                endroit que la carte de statut exotique juste en dessous. -->
           <div style="flex:0 0 62px;" aria-hidden="true"></div>
         </div>
-        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; font-size:11px; color:var(--ink-2); justify-content:center;">
-          ${legendItem(realColor(1),'Commun')}
-          ${legendItem(realColor(5),'Peu commun')}
-          ${legendItem(realColor(9),'Très rare')}
-          ${legendItem(ABSENT,'Absente')}
-        </div>
-        <div style="margin-top:8px; padding-top:8px; border-top:1px dashed var(--line-2); font-size:10.5px; color:var(--ink-3); text-align:center; line-height:1.4; opacity:.9;">
-          ⓘ ${noteMesure} C'est une facilité de rencontre, pas un effectif.
-        </div>
-      </div>
-    </details>`;
-  const det2 = document.getElementById('smRarityMapDetails');
-  if(det2) det2.ontoggle = () => { window._smRarityMapOpen = det2.open; };
+      </div>`;
+  // La carte n'a plus ni cle des couleurs ni note : le panneau n'en porte qu'une, en bas,
+  // partagee avec le graphique qui lit la meme mesure (cf. _legendeOuQuand).
+  _majPanneauOuQuand();
   // Cliquer une zone la selectionne : c'est le geste naturel une fois qu'on l'a reperee
   // sur la carte. Recliquer la zone deja choisie revient au national, pour pouvoir
   // ressortir sans aller chercher la ligne "France entier" dans la liste.
@@ -13232,8 +13263,10 @@ function _renderSpeciesRarityCard(key){
       ${geoHost ? '' : geoHtml}
     </div>
     <div id="smRarityLine"></div>
-    <div id="smRarityMap"></div>
     <div id="smExoticMap"></div>`;
+  // #smRarityMap ne vit plus ici : la carte par zone est passee dans le panneau « Où et
+  // quand la trouver », avec le calendrier qui lit la meme mesure. La laisser ici en
+  // aurait fait un deuxieme element du meme id, et getElementById aurait rendu celui-la.
   const renderLine = (cc) => {
     // Les deux mini-cartes sont rendues AVANT les sorties anticipees ci-dessous : sinon,
     // en passant sur un pays ou l'espece est absente, renderLine sortait tot et laissait
@@ -13773,7 +13806,7 @@ function _weekToLabel(wi){
   const phase = day <= 10 ? 'début ' : day <= 20 ? 'mi-' : 'fin ';
   return phase + m;
 }
-// Score annuel affiche a cote du nom de zone dans "Quand la trouver". C'est exactement la
+// Score annuel affiche a cote du nom de zone dans « Où et quand la trouver ». C'est exactement la
 // valeur qui decide du palier, calculee sur la zone que montre le graphique : region si
 // une region est selectionnee, pays sinon. L'entete ne donnait jusqu'ici que le pic, ce qui
 // laissait croire que le tier en decoulait ; les deux chiffres sont maintenant cote a cote.
@@ -13802,7 +13835,12 @@ function _scoreAnnuelLbl(m12, cc, zone){
   return ` · <b data-tip="${esc(tip)}" style="font-weight:700;color:var(--ink-2);">${t} %${suffixe}</b>`;
 }
 function _renderSpeciesFreqChart(key, country){
-  const wrap = $('#smFreqWrap'), card = $('#smFreqCard'), svg = $('#smFreqChart'), srcEl = $('#smFreqSrc');
+  // `card` est le panneau fusionne, qui porte AUSSI la carte : le graphique n'a donc plus
+  // le droit de le masquer tout seul. Il montre ou cache sa propre zone et laisse
+  // _majPanneauOuQuand decider du sort du panneau.
+  const wrap = $('#smFreqWrap'), card = $('#smOuQuandCard'), svg = $('#smFreqChart'), srcEl = $('#smFreqSrc');
+  const graph = $('#smGraphZone');
+  const montrerGraph = (v) => { if(graph) graph.hidden = !v; _majPanneauOuQuand(); };
   if(!svg) return;
   const cc = country || 'FR';
   // Charge les 48 quinzaines du pays si besoin, puis redessine. Le premier rendu se fait
@@ -13899,7 +13937,7 @@ function _renderSpeciesFreqChart(key, country){
     // explicitement pour ne pas confondre avec un fallback national trompeur.
     if(strictRegional){
       const regName = (zonesFichePourPays(cc).find(r => r.code === _speciesRegion) || {}).name || _speciesRegion;
-      if(card) card.hidden = false;
+      montrerGraph(true);
       if(srcEl) srcEl.textContent = '';
       if(svg){
         svg.setAttribute('viewBox', '0 0 520 130');
@@ -13912,7 +13950,7 @@ function _renderSpeciesFreqChart(key, country){
     const cat2 = (typeof exoticCategoryInCountry === 'function') ? (exoticCategoryInCountry(key, cc2) || _exoticCategory(key)) : null;
     const parkOnly2 = (typeof isParkOnlyExotic === 'function') && isParkOnlyExotic(key);
     if(parkOnly2 || cat2 === 'X' || cat2 === 'C'){
-      if(card) card.hidden = false;
+      montrerGraph(true);
       if(srcEl) srcEl.textContent = '';
       if(svg){
         svg.setAttribute('viewBox', '0 0 520 130');
@@ -13921,7 +13959,7 @@ function _renderSpeciesFreqChart(key, country){
       if(wrap) wrap.hidden = true;
       return;
     }
-    if(wrap) wrap.hidden = true; if(card) card.hidden = true; return;
+    if(wrap) wrap.hidden = true; if(srcEl) srcEl.textContent = ''; montrerGraph(false); return;
   }
   const maxV = Math.max(0.0001, ...arr);
   const bestIdx = arr.indexOf(maxV);
@@ -13935,7 +13973,7 @@ function _renderSpeciesFreqChart(key, country){
   const _joursParSlot = 365 / _nSlots;
   const curIdx = Math.min(_nSlots - 1, Math.floor(dayOfYear / _joursParSlot));
   if(wrap) wrap.hidden = false;
-  if(card) card.hidden = false;
+  montrerGraph(true);
   // Scope affiche : "Île-de-France" si mode strict region, "France (via Corse)" si
   // agregation 1-region pour le national, "France" ou "Monténégro" sinon.
   // Helper : nom d'une zone (departement en FR, region ailleurs).
@@ -14161,22 +14199,12 @@ function _renderSpeciesFreqChart(key, country){
     if(typeof _renderRarityMap === 'function') _renderRarityMap(key, cc);
     _renderSpeciesFreqChart(key, cc);
   };
-  // Legende adaptee au mode : en weekly, la couleur des barres = tier, donc on montre
-  // une palette compacte + contours "Pic" et "Cette semaine". En monthly stretched,
-  // on garde l'ancienne legende (accent = mois actuel, gold = pic).
-  const legEl = card ? card.querySelector('.sm-freq-legend') : null;
-  if(legEl && typeof realColor === 'function'){
-    // Palette tier commune aux 2 modes (weekly S&T ou monthly stretched). Le contour
-    // or/accent repere le pic et la periode courante (semaine ou mois selon isWeekly).
-    const palette = [1,2,3,4,5,6,7,8,9,10]
-      .map(t => `<span style="width:8px;height:12px;background:${realColor(t)};display:inline-block;"></span>`).join('');
-    const nowLbl = isWeekly ? 'Cette semaine' : 'Mois actuel';
-    // Le niveau de zoom a la molette etait affiche ici : il se voit sur l'axe, et personne
-    // n'a besoin de lire « x0.98 ».
-    legEl.innerHTML = `
-      <span class="sm-freq-lg" title="Vert = espèce facile à voir, magenta = très rare"><span style="display:inline-flex;height:12px;border:1px solid var(--line);border-radius:2px;overflow:hidden;">${palette}</span>&nbsp;facile → rare</span>
-      <span class="sm-freq-lg"><span class="sm-freq-sw" style="background:transparent;border:2px solid var(--accent);width:10px;height:10px;box-sizing:border-box;"></span>${nowLbl}</span>
-`;
+  // La legende n'est plus ecrite ici : le panneau n'en a qu'une, commune a la carte et au
+  // graphique (_legendeOuQuand). Le mode - quinzaines eBird ou mois etires - est la seule
+  // chose qu'elle ne peut pas deviner seule, on la lui laisse.
+  window._oqHebdo = isWeekly;
+  _majPanneauOuQuand();
+  {
     // Zoom molette : onwheel direct sur SVG + wrapper. Re-render immediat (rAF).
     const chartWrap = card ? card.querySelector('.sm-freq-chart-wrap') : null;
     let _wheelRAF = null;

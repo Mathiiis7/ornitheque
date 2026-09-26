@@ -35,7 +35,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=180">
+<link rel="modulepreload" href="app.js?v=181">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -1158,12 +1158,22 @@
             <div class="sm-desc" id="smDesc"></div>
           </div>
           <div class="sm-card" id="smRarityCard" hidden></div>
-          <div class="sm-card" id="smFreqCard" hidden>
-            <div class="sm-card-title">Quand la trouver <span class="sm-freq-src" id="smFreqSrc"></span></div>
-            <div class="sm-freq-chart-wrap">
-              <svg id="smFreqChart" class="sm-freq-chart" viewBox="0 0 360 130" preserveAspectRatio="xMidYMid meet"></svg>
-              <div class="sm-freq-legend"><span class="sm-freq-lg"><span class="sm-freq-sw" style="background:var(--accent)"></span>Mois actuel</span><span class="sm-freq-lg"><span class="sm-freq-sw" style="background:var(--gold)"></span>Pic annuel</span></div>
+          <!-- « Ou et quand la trouver » : la carte par zone et le calendrier annuel sont
+               deux lectures d'UNE SEULE mesure - la part des listes eBird qui citent
+               l'espece. Elles vivaient dans deux panneaux, dont l'un replie, et chacune
+               portait sa propre legende ; elles n'en font plus qu'un, toujours ouvert,
+               sous une legende unique.
+               #smRarityMap est ici et non dans #smRarityCard : l'innerHTML de ce dernier
+               est reconstruit a chaque fiche, il emporterait le graphique avec lui. -->
+          <div class="sm-card" id="smOuQuandCard" hidden>
+            <div class="sm-card-title">Où et quand la trouver <span class="sm-freq-src" id="smFreqSrc"></span></div>
+            <div id="smRarityMap"></div>
+            <div id="smGraphZone">
+              <div class="sm-freq-chart-wrap">
+                <svg id="smFreqChart" class="sm-freq-chart" viewBox="0 0 360 130" preserveAspectRatio="xMidYMid meet"></svg>
+              </div>
             </div>
+            <div class="sm-freq-legend" id="smOuQuandLegende"></div>
           </div>
           <div class="sm-freq" id="smFreqWrap" hidden></div>
           <div class="sm-card" id="smTraitsCard" hidden></div>
@@ -1187,4 +1197,4 @@
   </footer>
 </div>
 
-<script type="module" src="app.js?v=180"></script>
+<script type="module" src="app.js?v=181"></script>
