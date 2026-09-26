@@ -1320,10 +1320,10 @@ function _openCountryPicker(currentCode, opts = {}){
               + (vAn > 0 ? ' · ' + fmtPct(vAn) + ' des listes sur l\'année' : '');
             meta = absent
               ? '<span class="reg-picker-val">absente</span><div class="reg-picker-bar"></div>'
-                + tierChip('–', 'var(--line-2)')
+                + tierChip('–', 'var(--line-2)', { cls: 'tier-rond' })
               : '<span class="reg-picker-val">' + esc(fmtPct(vAn)) + '</span>'
                 + '<div class="reg-picker-bar"><div style="width:' + barW + '%; color:' + col + ';"></div></div>'
-                + tierChip(chipText, col, { title: 'palier ' + tier });
+                + tierChip(chipText, col, { title: 'palier ' + tier, cls: 'tier-rond' });
           } else {
             // Nb d'especes calibrees pour ce pays = le bar chart, qui est la source de la
             // rarete dans les 16 pays. On primait le S&T en le croyant plus riche : il ne
@@ -13120,7 +13120,7 @@ function _renderSpeciesRarityCard(key){
         <span>${esc(s.name)}</span>
         <span class="reg-picker-val">${esc(val)}</span>
         <div class="reg-picker-bar"><div style="width:${barW}%; color:${col};"></div></div>
-        ${tierChip(absent ? '–' : tier, absent ? 'var(--line-2)' : col)}
+        ${tierChip(absent ? '–' : tier, absent ? 'var(--line-2)' : col, { cls: 'tier-rond' })}
       </div>`;
     }).join('');
     return nationalRow + items;
