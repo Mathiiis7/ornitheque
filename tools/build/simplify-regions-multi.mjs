@@ -32,7 +32,7 @@ const OUT_DIR = join(__dir, '..', '..', 'data');
 const ES_HASC = {
   'ES.AN':'ES-AN','ES.AR':'ES-AR','ES.AS':'ES-AS','ES.CB':'ES-CB','ES.CE':'ES-CE',
   'ES.CL':'ES-CL','ES.CM':'ES-CM','ES.CN':'ES-CN','ES.CT':'ES-CT','ES.EX':'ES-EX',
-  'ES.GA':'ES-GA','ES.MD':'ES-MD','ES.ML':'ES-ML','ES.PV':'ES-PV','ES.VC':'ES-VC',
+  'ES.GA':'ES-GA','ES.MD':'ES-MD','ES.PV':'ES-PV','ES.VC':'ES-VC',
   // Divergences entre le HASC de NE et le code ISO utilise par eBird
   'ES.PM':'ES-IB',   // Baleares
   'ES.MU':'ES-MC',   // Murcie
@@ -305,7 +305,7 @@ const EBIRD_REGIONS = {
   // latitude contre 59,36 pour le reste, elles mangeaient 16 % de la hauteur de carte.
   GB: ['GB-R01','GB-R02','GB-R03','GB-R04','GB-R05','GB-R06','GB-R07','GB-R08','GB-R09','GB-R10','GB-R11','GB-R12','GB-R13','GB-R14','GB-R15','GB-R16','GB-ZET','JE','GG','IM'],
   ES: ['ES-AN','ES-AR','ES-AS','ES-CB','ES-CE','ES-CL','ES-CM','ES-CN','ES-CT','ES-EX',
-       'ES-GA','ES-IB','ES-MC','ES-MD','ES-ML','ES-NC','ES-PV','ES-RI','ES-VC'],
+       'ES-GA','ES-IB','ES-MC','ES-MD','ES-NC','ES-PV','ES-RI','ES-VC'],
   IT: ['IT-21','IT-23','IT-25','IT-32','IT-34','IT-36','IT-42','IT-45','IT-52','IT-55',
        'IT-57','IT-62','IT-65','IT-67','IT-72','IT-75','IT-77','IT-78','IT-82','IT-88'],
   PT: ['PT-01','PT-02','PT-03','PT-04','PT-05','PT-06','PT-07','PT-08','PT-09','PT-10',
@@ -353,7 +353,7 @@ const EBIRD_REGIONS = {
 const MAIN_BOX = {
   ES: [20, 10, 960, 670],   // laisse la bande basse libre pour les Canaries
   PT: [20, 18, 560, 864],   // colonne de droite reservee aux Acores et a Madere
-  GB: [20, 18, 620, 864],   // colonne de droite reservee aux Shetland et aux dependances
+  GB: [20, 18, 720, 864],   // colonne de droite reservee aux Shetland et aux dependances
 };
 
 // Certaines regions trainent un chapelet d'ilots tres lointains qui etire leur bbox et
@@ -399,8 +399,12 @@ const CLIP_LON = {
 const INSETS = {
   US: { 'US-AK': [10, 600, 260, 260], 'US-HI': [285, 720, 170, 145] },
   PT: { 'PT-20': [650, 70, 330, 185], 'PT-30': [650, 300, 330, 175] },
-  ES: { 'ES-CN': [650, 575, 330, 160],
-        'ES-CE': [672, 800, 92, 64], 'ES-ML': [868, 800, 92, 64] },
+  // Melilla retiree le 2026-09-26 : 68 listes eBird en sept ans, soit du bruit, et une
+  // enclave de 12 km2 qu il fallait grossir vingt fois pour la voir. Ses especes restent
+  // comptees dans l Espagne, qui les tient de son bar chart national. Ceuta garde sa place
+  // - 4 707 listes, 230 especes, le detroit et la migration des rapaces - et recupere
+  // l espace libere.
+  ES: { 'ES-CN': [650, 575, 330, 160], 'ES-CE': [720, 765, 200, 105] },
   NZ: { 'NZ-CI': [780, 20, 200, 160] },
   // Quatre cadres dans la colonne de droite : les Shetland, trop au nord, et les trois
   // dependances de la Couronne, trop petites - l ile de Man fait 572 km2, Jersey 119.
@@ -409,8 +413,13 @@ const INSETS = {
   // pixels - parfaitement visible et cliquable. La mettre en encart la deracinait pour rien.
   // Jersey et Guernesey, elles, sont au large de la Normandie, SOUS la boite du pays, et
   // n y feraient que trois pixels : elles restent deportees.
-  GB: { 'GB-ZET': [700, 45, 250, 205],
-        'JE': [700, 350, 150, 140], 'GG': [700, 560, 150, 140] },
+  // Colonne resserree : c est la LARGEUR totale du viewBox qui decide de la hauteur a
+  // laquelle le pays se dessine (a aire constante, moins large = plus haut). Le cadre des
+  // Shetland la commandait a lui seul - son bord droit tombait a 903 quand ceux de Jersey
+  // et Guernesey s arretaient a 860. Et Jersey fait 119 km2, Guernesey 78 : leurs cadres
+  // n avaient aucune raison d etre les plus grands de la colonne.
+  GB: { 'GB-ZET': [700, 25, 150, 145],
+        'JE': [700, 240, 105, 65], 'GG': [700, 370, 105, 90] },
   NO: { 'SJ': [700, 570, 250, 295] },
 };
 
