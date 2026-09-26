@@ -13013,7 +13013,7 @@ async function _renderRarityMap(sci, cc){
   // mois a gauche » y serait un tour de plus pour rien, puisque la colonne EST les mois.
   const noteMesure = _paysSansDecoupage(cc)
     ? `Couleur : part des listes eBird du pays qui citent l'espèce au mois choisi, sur 2019-2026. Sur l'année, les mois les plus observés pèsent plus lourd.`
-    : `Couleur : part des listes eBird ${zoneDe} qui citent l'espèce, sur 2019-2026 — les mois les plus observés pèsent plus lourd. À gauche, le détail mois par mois.`;
+    : `Couleur : part des listes eBird ${zoneDe} qui citent l'espèce, sur 2019-2026. Les mois les plus observés pèsent plus lourd. À gauche, le détail mois par mois.`;
   const openState = window._smRarityMapOpen ? ' open' : '';
   if(_ccFicheObsolete(cc)) return;
   container.innerHTML = `
@@ -13028,7 +13028,7 @@ async function _renderRarityMap(sci, cc){
                  la fiche reste nationale. Sans cette etiquette les deux se contredisaient a
                  l'ecran : le Geai bleu sort a 32 % des listes aux Etats-Unis, palier 1, alors
                  que la colonne peut afficher 10 dans un Etat ou il ne passe pas. -->
-            <div style="font:700 8.5px/1.3 system-ui; letter-spacing:.4px; text-transform:uppercase; color:var(--ink-3); margin-bottom:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" data-tip="${esc(nomPort)}">${esc(nomPort)}</div>
+            <div style="font:700 8.5px/1.3 system-ui; letter-spacing:.4px; text-transform:uppercase; color:var(--ink-3); margin-bottom:6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" data-tip="${esc(nomPort)}">${esc(nomPort)}</div>
             ${moisBtns}</div>
           <div style="${_COLONNE_CARTE}"><svg viewBox="${_viewBoxCarte(cc, paths)}" style="${_styleCarte()}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Rareté par ${zoneWord} sur ${libellePeriode}">
             ${svgZones}
