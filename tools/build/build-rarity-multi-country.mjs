@@ -113,6 +113,9 @@ const REGIONS = {
   AT: ['AT-1','AT-2','AT-3','AT-4','AT-5','AT-6','AT-7','AT-8',
        'AT-9'],
   IE: ['IE-C','IE-L','IE-M','IE-U'],
+  // Luxembourg : trois districts eBird, repris tels quels. 862 km2 par zone - plus fin
+  // qu un departement francais, mais le pays entier en fait 2 586.
+  LU: ['LU-D','LU-G','LU-L'],
   // Le Royaume-Uni tient ses 17 regroupements de comtes de agreger-zones.mjs ; on n ajoute
   // ici que les trois dependances de la Couronne, qui sont des zones eBird a part entiere.
   // La fusion du fichier regional (plus bas) les ajoute sans toucher aux autres.

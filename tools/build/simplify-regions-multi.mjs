@@ -142,13 +142,23 @@ function resolveGB(props){
 }
 
 // Pays ou une region eBird agrege plusieurs features Natural Earth (-> dissolve requis).
-const AGGREGATED = new Set(['ES', 'IT', 'GB', 'IE', 'BE', 'RS', 'SI', 'LV', 'CH', 'DK', 'HU', 'BY', 'BA', 'IS', 'ME']);
+const AGGREGATED = new Set(['ES', 'IT', 'GB', 'IE', 'BE', 'RS', 'SI', 'LV', 'CH', 'DK', 'HU', 'BY', 'BA', 'IS', 'ME', 'MK', 'MD']);
 
 // Pays dont les zones sont des REGROUPEMENTS : Suisse, Slovenie, Lettonie, Hongrie,
 // Royaume-Uni. La table zones-agregees.json dit a quelle zone-cible chaque zone source
 // appartient, et c'est la meme table qui sert a agreger les frequences (agreger-zones.mjs,
 // agreger-ch.mjs). La lire ici plutot que de pre-etiqueter le fichier Natural Earth a la
 // main rend la generation rejouable depuis le depot seul.
+// Appariement par NOM pour les pays dont les codes de Natural Earth ne correspondent a
+// rien chez eBird. Meme fichier que les regroupements, cle parNomNE.
+const normNom = s => (s || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/[^a-z]/g, '');
+const NOM_VERS_CODE = (() => {
+  try {
+    const p = join(__dir, 'zones-agregees.json');
+    return existsSync(p) ? JSON.parse(readFileSync(p, 'utf8')).parNomNE || {} : {};
+  } catch(e){ return {}; }
+})();
+
 const AGREGE = (() => {
   try {
     const p = join(__dir, 'zones-agregees.json');
@@ -170,6 +180,10 @@ function resolveCodeBrut(cc, props){
   if(cc === 'IE') return IE_PROVINCE[props.name] || null;
   if(cc === 'BE') return BE_REGION[props.region] || null;
   if(cc === 'BA') return BA_ENTITE[props.region] || null;
+  // Macedoine du Nord : Natural Earth emploie l ANCIENNE numerotation ISO des communes
+  // (MK-72 pour Struga) la ou eBird emploie la nouvelle (MK-312). Aucun code ne se
+  // correspond : l appariement se fait par nom, table parNomNE de zones-agregees.json.
+  if(cc === 'MK') return NOM_VERS_CODE.MK ? (NOM_VERS_CODE.MK[normNom(props.name)] || null) : null;
   if(cc === 'HR' && props.adm1_code === HR_POZEGA) return 'HR-11';
   if(cc === 'RS' && RS_VOJVODINE.has(props.iso_3166_2)) return 'RS-VO';
   const iso = props.iso_3166_2;
@@ -324,6 +338,9 @@ const EBIRD_REGIONS = {
   // Pour un pays regroupe, ce sont les zones CIBLES qui sont listees ici : le resolveur
   // traduit deja la commune en region via zones-agregees.json.
   ME: ['ME-N','ME-C','ME-P'],
+  MK: ['MK-VA','MK-EA','MK-SW','MK-SE','MK-PE','MK-PO','MK-NE','MK-SK'],
+  MD: ['MD-N','MD-C','MD-S','MD-G','MD-CH','MD-T'],
+  LU: ['LU-D','LU-G','LU-L'],
   LK: ['LK-11','LK-12','LK-13','LK-21','LK-22','LK-23','LK-31','LK-32','LK-33','LK-41',
        'LK-42','LK-43','LK-44','LK-45','LK-51','LK-52','LK-53','LK-61','LK-62','LK-71',
        'LK-72','LK-81','LK-82','LK-91','LK-92'],
@@ -830,7 +847,7 @@ const ADM0 = {
   DE:'DEU', NL:'NLD', BE:'BEL', AT:'AUT', PL:'POL', CZ:'CZE', SK:'SVK', HU:'HUN',
   RO:'ROU', BG:'BGR', HR:'HRV', RS:'SRB', BA:'BIH', AL:'ALB', SI:'SVN',
   DK:'DNK', SE:'SWE', FI:'FIN', EE:'EST', LT:'LTU', LV:'LVA', BY:'BLR',
-  UA:'UKR', RU:'RUS', IE:'IRL', CY:'CYP', LV:'LVA', ME:'MNE',
+  UA:'UKR', RU:'RUS', IE:'IRL', CY:'CYP', LV:'LVA', ME:'MNE', MK:'MKD', LU:'LUX', MD:'MDA',
 };
 const filter = process.argv[3];
 const COUNTRIES = filter ? filter.split(',').map(s => s.trim().toUpperCase()) : Object.keys(ADM0);

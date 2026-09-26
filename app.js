@@ -901,8 +901,7 @@ const COUNTRIES_REG = {
     barTier: () => (typeof REAL_RARITY_MK_EBIRD !== 'undefined') ? REAL_RARITY_MK_EBIRD : {},
     monthly: () => (typeof REAL_FREQ_MONTHLY_MK !== 'undefined') ? REAL_FREQ_MONTHLY_MK : {},
     st: () => ({}),
-    monthlyByRegion: () => null,
-    zonesMesurables: false,
+    monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['MK'] || null,
     hasBarchart: true,
   },
   LU: {
@@ -910,8 +909,7 @@ const COUNTRIES_REG = {
     barTier: () => (typeof REAL_RARITY_LU_EBIRD !== 'undefined') ? REAL_RARITY_LU_EBIRD : {},
     monthly: () => (typeof REAL_FREQ_MONTHLY_LU !== 'undefined') ? REAL_FREQ_MONTHLY_LU : {},
     st: () => ({}),
-    monthlyByRegion: () => null,
-    zonesMesurables: false,
+    monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['LU'] || null,
     hasBarchart: true,
   },
   CY: {
@@ -930,8 +928,7 @@ const COUNTRIES_REG = {
     barTier: () => (typeof REAL_RARITY_MD_EBIRD !== 'undefined') ? REAL_RARITY_MD_EBIRD : {},
     monthly: () => (typeof REAL_FREQ_MONTHLY_MD !== 'undefined') ? REAL_FREQ_MONTHLY_MD : {},
     st: () => ({}),
-    monthlyByRegion: () => null,
-    zonesMesurables: false,
+    monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['MD'] || null,
     hasBarchart: true,
   },
   XK: {
@@ -4780,6 +4777,29 @@ const REGIONS_BY_COUNTRY = {
   // Monténégro : pas de subdivisions bar chart eBird (opstine trop petites), mais on
   // definit les 3 regions statistiques officielles MONSTAT pour le S&T regional.
   // Chaque region agrege les municipalites correspondantes cote R (build script).
+  LU: [
+    { code:'LU-D', name:'Diekirch' },
+    { code:'LU-G', name:'Grevenmacher' },
+    { code:'LU-L', name:'Luxembourg' },
+  ],
+  MK: [
+    { code:'MK-SK', name:'Skopje' },
+    { code:'MK-PO', name:'Polog' },
+    { code:'MK-NE', name:'Nord-Est' },
+    { code:'MK-EA', name:'Est' },
+    { code:'MK-SE', name:'Sud-Est' },
+    { code:'MK-VA', name:'Vardar' },
+    { code:'MK-PE', name:'Pélagonie' },
+    { code:'MK-SW', name:'Sud-Ouest' },
+  ],
+  MD: [
+    { code:'MD-N', name:'Nord' },
+    { code:'MD-C', name:'Centre' },
+    { code:'MD-S', name:'Sud' },
+    { code:'MD-CH', name:'Chișinău' },
+    { code:'MD-G', name:'Gagaouzie' },
+    { code:'MD-T', name:'Transnistrie' },
+  ],
   ME: [
     { code:'ME-N', name:'Nord (montagnes)' },
     { code:'ME-C', name:'Centre (Podgorica)' },
@@ -7161,11 +7181,11 @@ async function _loadFreq48Zone(cc, zone){
     try{
       const base = 'data/countries/' + cc.toLowerCase() + '/';
       if(!_freq48ZoneIndex[cc]){
-        const idx = await fetch(base + 'freq48_index.json?v=20260926e').then(r => r.ok ? r.json() : null);
+        const idx = await fetch(base + 'freq48_index.json?v=20260926j').then(r => r.ok ? r.json() : null);
         if(!Array.isArray(idx)) return;      // sans index, le fichier de zone est illisible
         _freq48ZoneIndex[cc] = idx;
       }
-      const brut = await fetch(base + 'freq48/' + zone + '.json?v=20260926e').then(r => r.ok ? r.json() : null);
+      const brut = await fetch(base + 'freq48/' + zone + '.json?v=20260926j').then(r => r.ok ? r.json() : null);
       if(!brut) return;
       const idx = _freq48ZoneIndex[cc];
       const out = {};
@@ -7185,7 +7205,7 @@ async function _loadFreq48Zone(cc, zone){
 
 async function _loadFreqDataForCountry(cc){
   if(_freqDataPromises[cc]) return _freqDataPromises[cc];
-  const filename = 'data/countries/' + cc.toLowerCase() + '/freq_by_region.json?v=20260926g';
+  const filename = 'data/countries/' + cc.toLowerCase() + '/freq_by_region.json?v=20260926j';
   _freqDataPromises[cc] = (async () => {
     try{
       const data = await fetch(filename).then(r => r.ok ? r.json() : null);
@@ -12210,7 +12230,7 @@ function _exoticMapFileFor(cc){
     // Les contours sont caches dans lmb-data, qui survit aux changements de version du
     // service worker : sans ce parametre, un visiteur deja venu garderait indefiniment
     // l ancienne Bosnie amputee de sa Republique serbe.
-    : `data/regions-${cc.toLowerCase()}-simplified.json?v=20260926i`;
+    : `data/regions-${cc.toLowerCase()}-simplified.json?v=20260926j`;
 }
 async function _loadExoticMapPaths(cc){
   if(_exoticMapPathsCache[cc] !== undefined) return _exoticMapPathsCache[cc];
