@@ -1882,12 +1882,11 @@ function exoticCategoriesInCountry(sci, country){
   return _ORDRE_CAT_EXO.filter(c => vues.has(c));
 }
 // Depuis migration S&T (26/08/2026) : rarityReal renvoie le tier apres merge S&T+bar chart
-// (via _palierAvecOverrideExotique) pour rester coherent avec le tier affiche sur les fiches.
+// pour rester coherent avec le tier affiche sur les fiches.
 // Anciennement : REAL_RARITY[k] || 1 pur bar chart.
 function rarityReal(sci){
   const k = (sci||'').trim().toLowerCase();
-  const bar = REAL_RARITY[k] || 1;
-  return _palierAvecOverrideExotique(k, bar);
+  return REAL_RARITY[k] || 1;
 }
 // Version category-aware pour les filtres et le tri : les exotiques renvoient leur vrai
 // tier (via _exoticTier). Utilisee par le feed, la carte "A cocher", les stats profil,
@@ -1904,12 +1903,11 @@ function rarityForFilter(sci){
     const cat = exoticCategoryInCountry(sci, 'FR') || _exoticCategory(k);
     if(_isEstablishedExotic(cat)){
       // Bar chart eBird FR (meme signal que les sauvages depuis 2026-09-21).
-      return _palierAvecOverrideExotique(k, REAL_RARITY[k] || 1);
+      return REAL_RARITY[k] || 1;
     }
     return 0;   // X, C
   }
-  // Prime S&T sur bar chart FR quand dispo, via merge intelligent.
-  return _palierAvecOverrideExotique(k, REAL_RARITY[k] || 1);
+  return REAL_RARITY[k] || 1;
 }
 // Retourne true si l'espece est calibree dans REAL_RARITY (catalogue FR). False = espece
 // hors-FR (Sittelle de Neumayer, Mesange lugubre, etc.) dont la rareté n'est pas connue
@@ -2092,39 +2090,18 @@ function _horsAire(k, cc){
 // le bar chart national ecrase leur presence reelle car les listes du reste de la France
 // dominent, et S&T ne connait pas ces populations europeennes echappees (fallback vers
 // bar chart qui dit 7). En pratique : tres facile a voir a leurs sites de reference.
-// Override cible tier 6 = "Assez rare mais dispo sur sites connus".
-// Override manuel de tier par pays pour les exotiques localement abondantes dont le
-// bar chart national ecrase la presence reelle sur leurs sites de reference.
-// Format : { CC: { sci: tier_force } }. Le tier force est prioritaire sur le merge.
-// Reste ouvert : ajouter des especes au fil de l'eau si le tier auto ne colle pas au
-// terrain (cf debat coherence inter-pays, ex Ibis sacre IT concentre en Venetie).
-const EXOTIQUES_TIER_FORCE = {
-  FR: {
-    'threskiornis aethiopicus': 6,   // Ibis sacre : Grand-Lieu, Camargue, Baie de l'Aiguillon
-    'tadorna ferruginea':      6,    // Tadorne casarca : Alsace, Camargue, Est
-    'aix galericulata':        6,    // Canard mandarin : parcs franciliens, Ain
-  },
-  IT: {
-    // Ibis sacre : concentre Padoue-Venetie, S&T composite dit 2 (tres commun) mais
-    // pour un birder generaliste non-venete c'est plus tier 4. Coherent avec FR (6)
-    // qui refletait la meme logique "commun sur ses sites, absent ailleurs".
-    'threskiornis aethiopicus': 4,
-  },
-  ES: {
-    // Perruche a collier : tier auto 6 mais tres facile a Madrid/Barcelone/Seville.
-    'psittacula krameri':       5,
-  },
-  PT: {
-    // Perruche a collier : idem Lisbonne, tier auto 6 -> reel tier 5.
-    'psittacula krameri':       5,
-  },
-};
-// Alias FR-only historique, pointe vers la sous-dict FR (compat code existant).
-const EXOTIQUES_TIER_FORCE_FR = EXOTIQUES_TIER_FORCE.FR;
-// Merge S&T composite + source d'appui (bar chart ou GBIF exotiques). Applique la regle
-// +/-1 tier + moyenne ponderee si S&T >> bar (biais recherche active).
-// Multi-pays : depuis 2026-08 applique aussi aux pays autres que FR quand la data S&T
-// est dispo. EXOTIQUES_TIER_FORCE court-circuite le merge par pays si l'espece est listee.
+// Le palier vient du bar chart eBird, et de rien d'autre.
+//
+// Une table d'overrides manuels a existe jusqu'au 2026-09-27 : six especes exotiques dont
+// on jugeait que la moyenne nationale ecrasait la presence reelle sur leurs sites de
+// reference - Ibis sacre, Tadorne casarca et Canard mandarin en France, Perruche a collier
+// en Espagne et au Portugal. Elle est retiree. Deux de ses six entrees ne changeaient deja
+// plus rien, le bar chart ayant rejoint la valeur forcee ; les quatre autres deplacaient le
+// palier d'un seul cran. C'etait donc un jugement a la main, invisible dans la mesure
+// affichee, pour un ecart que la mesure elle-meme corrige avec le temps - et la carte par
+// zone dit maintenant bien mieux « commune ici, absente ailleurs » qu'un cran de palier
+// national.
+//
 // Tier de rarete d'une espece dans un pays : UNIQUEMENT le bar chart eBird.
 //
 // La fusion avec le composite Cornell S&T a ete retiree le 2026-09-23 au profit de la
@@ -2141,12 +2118,8 @@ const EXOTIQUES_TIER_FORCE_FR = EXOTIQUES_TIER_FORCE.FR;
 // 1 279 especes. C'est un compromis assume : une echelle unique et comparable partout
 // plutot qu'une echelle plus fine mais valable seulement sur un tiers du catalogue.
 //
-// Le nom de la fonction est conserve, une quinzaine de points d'appel s'y referent.
-function _palierAvecOverrideExotique(k, barTier, country){
-  const cc = country || 'FR';
-  if(EXOTIQUES_TIER_FORCE[cc] && EXOTIQUES_TIER_FORCE[cc][k] != null) return EXOTIQUES_TIER_FORCE[cc][k];
-  return barTier;
-}
+// La fonction qui appliquait les overrides a disparu avec eux : ses six points d'appel
+// rendaient deja le palier du bar chart, elle ne faisait plus que le laisser passer.
 // Le S&T ne dit quelque chose d'une espece que si son abondance dans le pays est non nulle.
 // Une entree a zero sur les trois mesures (annuel, pic national, pic local) signifie que
 // Cornell possede un modele mondial pour cette espece mais n'en trouve aucune trace dans le
@@ -2184,11 +2157,11 @@ function rarityForCountry(sci, country){
   const stEntry = reg.st()[k];
   const barTier = reg.barTier()[k];   // undefined si pas de bar chart pour ce pays
   // Exotiques : N (populations naturalisees) -> traitees comme les sauvages
-  // (bar chart eBird local + composite S&T via _palierAvecOverrideExotique). Meme methode que
+  // (bar chart eBird local). Meme methode que
   // pour les vrais sauvages, robuste aux variations saisonnieres (bar chart = 48 quinzaines
   // sur 2019-2026 normalisees par sample size). P/X/C/park-only -> tier 0.
   // Fix 2026-09-21 : abandon du chemin _exoticTier (GBIF) qui necessitait des overrides
-  // manuels (EXOTIQUES_TIER_FORCE). Le bar chart eBird donne un signal fiable et scalable.
+  // manuels. Le bar chart eBird donne un signal fiable et scalable.
   // Fix 2026-09-22 : utilise isExoticInCountry (per-pays) au lieu de isExotic (FR-only).
   // Ex Perdrix rouge X en ES mais pas listee en FR : isExotic FR-only retournait false et
   // la branche exotique etait skippee -> tier bar chart brut (7) au lieu de tier 0 (X).
@@ -2198,12 +2171,10 @@ function rarityForCountry(sci, country){
     // worldwide (Dendrocygne veuf natif Namibie, Dendrocygne siffleur natif Sri Lanka...).
     // EXOTIQUES_PARCS est Europe-centric, ne bloque plus dans le pays natal.
     const explicitExoCC = !!(EXOTIQUES_EBIRD_PAR_PAYS[c] && EXOTIQUES_EBIRD_PAR_PAYS[c][k]);
-    if(!explicitExoCC && barTier){
-      return _palierAvecOverrideExotique(k, barTier, c);
-    }
+    if(!explicitExoCC && barTier) return barTier;
     const cat = exoticCategoryInCountry(sci, c) || _exoticCategory(k);
     if(_isEstablishedExotic(cat)){
-      if(barTier) return _palierAvecOverrideExotique(k, barTier, c);
+      if(barTier) return barTier;
       if(_stUtilisable(stEntry)) return stEntry.t;
       // N/P sans bar chart ni S&T : espece flaggee exotique par eBird mais frequence
       // trop basse pour etre agregee sur 7 ans. Retourne 0 = absente (le renderLine
@@ -2215,7 +2186,7 @@ function rarityForCountry(sci, country){
   }
   // Sauvages. Depuis le 2026-09-23 le bar chart eBird est la SEULE source du tier quand il
   // existe, la fusion avec le S&T ayant ete retiree pour que l'echelle soit comparable
-  // entre pays (cf. _palierAvecOverrideExotique).
+  // entre pays.
   //
   // Le S&T reste un dernier recours, mais il ne sert plus rien aujourd'hui : depuis que les
   // bar charts sont matches en nomenclature europeenne (locale=fr_FR) et que les alias de
@@ -2229,9 +2200,7 @@ function rarityForCountry(sci, country){
   //   - Pas de bar chart mais S&T : composite S&T
   //   - Ni l'un ni l'autre : tier 0 (non calibree). Le badge "Hors aire" de la fiche dira
   //     qu'on la mesure ailleurs, ce qui est tout ce qu'on sait.
-  if(barTier){
-    return _palierAvecOverrideExotique(k, barTier, c);
-  }
+  if(barTier) return barTier;
   if(_stUtilisable(stEntry)) return stEntry.t;
   return 0;
 }
@@ -13411,20 +13380,21 @@ function _renderSpeciesRarityCard(key){
     // pays qui mentionnent l'espece, ponderee par l'effort d'observation de chaque
     // quinzaine. Le S&T ne sert plus que de filet, quand aucun bar chart n'existe.
     if(canHaveDetails){
-      const forceOverride = (typeof EXOTIQUES_TIER_FORCE === 'object' && EXOTIQUES_TIER_FORCE[cc] && EXOTIQUES_TIER_FORCE[cc][k] != null) ? EXOTIQUES_TIER_FORCE[cc][k] : null;
       const stSecours = !ccBarTier && typeof _stUtilisable === 'function' && _stUtilisable(stEntry);
       const tierAffiche = ccBarTier || (stSecours ? stEntry.t : null);
-      const entete = ccBarTier
+      // Le panneau repond a trois questions, dans cet ordre : combien, depuis quand, d'ou
+      // ca sort. Il ouvrait sur la source en capitales - la moins utile des trois -, puis
+      // annoncait « Part des listes mentionnant l'espece » sans jamais donner le chiffre,
+      // et le redisait en deux phrases dont la seconde s'ouvrait sur « Autrement dit »,
+      // aveu que la premiere n'avait pas suffi.
+      const source = ccBarTier
         ? esc(barSrcLabelCC)
-        : stSecours ? ('eBird Status &amp; Trends — ' + esc(ccName))
+        : stSecours ? ('eBird Status &amp; Trends, ' + esc(ccName))
         : ('Bar chart eBird ' + esc(cc) + ' : espèce absente');
-      const mesure = ccBarTier
-        ? "Part des listes mentionnant l'espèce"
-        : stSecours ? 'Abondance modélisée (Cornell)' : '';
       const note = ccBarTier
-        ? "Moyenne des 48 quinzaines de 2019-2026, pondérée par le nombre de listes de chacune — l'effort d'observation varie fortement selon la saison. Autrement dit : la chance de rencontrer l'espèce lors d'une sortie prise au hasard dans l'année."
+        ? "Part des listes eBird enregistrées " + esc(_auPays(cc)) + " qui citent l'espèce, moyennée sur les 48 quinzaines de 2019-2026. Chaque quinzaine compte selon son nombre de listes, parce qu'on observe bien plus au printemps qu'en décembre. C'est donc la chance de la croiser lors d'une sortie prise au hasard dans l'année."
         : stSecours
-        ? "Aucun bar chart eBird pour cette espèce dans ce pays. Le tier vient du modèle Status &amp; Trends de Cornell, seule source disponible."
+        ? "Aucun bar chart eBird pour cette espèce dans ce pays. Le palier vient du modèle Status &amp; Trends de Cornell, seule source disponible."
         : "Aucune donnée de fréquence dans le bar chart eBird " + esc(cc) + ". L'espèce y est signalée mais trop peu notée pour être agrégée.";
       // Le tier repose sur la moyenne annuelle ponderee, insensible a la saison : c'est ce
       // qui le rend comparable entre pays. Mais 325 des 480 especes francaises ont un pic
@@ -13435,12 +13405,17 @@ function _renderSpeciesRarityCard(key){
       // Plutot que de tordre le tier pour dire deux choses a la fois, on affiche la seconde
       // a cote. Le graphique de saisonnalite donne le detail, cette ligne donne le resume.
       const m12Pays = (regCC && regCC.monthly) ? regCC.monthly()[k] : null;
+      const pct = x => x >= 0.1 ? Math.round(x*100)+' %' : x >= 0.01 ? (x*100).toFixed(1)+' %' : (x*100).toFixed(2)+' %';
+      // La valeur annuelle sort du bloc saisonnier : c'est elle que le panneau doit donner
+      // en premier. Il decrivait la mesure sans jamais l'afficher, et il fallait aller lire
+      // l'en-tete de « Où et quand la trouver » pour savoir de quel chiffre on parlait.
+      const valeurAnnuelle = (Array.isArray(m12Pays) && m12Pays.length === 12)
+        ? _valeurAnnuelleZone(m12Pays, cc) : 0;
       let noteSaison = '';
       if(Array.isArray(m12Pays) && m12Pays.length === 12){
-        const annuel = _valeurAnnuelleZone(m12Pays, cc);
+        const annuel = valeurAnnuelle;
         let pic = 0, moisPic = -1;
         m12Pays.forEach((v, i) => { if((v || 0) > pic){ pic = v; moisPic = i; } });
-        const pct = x => x >= 0.1 ? Math.round(x*100)+' %' : x >= 0.01 ? (x*100).toFixed(1)+' %' : (x*100).toFixed(2)+' %';
         // Deux conditions, qui repondent a deux objections differentes :
         //   - sous x2, la saison ne change rien d'utile ;
         //   - sous 0,5 % au pic, la phrase "viser le bon mois change tout" est fausse :
@@ -13450,10 +13425,11 @@ function _renderSpeciesRarityCard(key){
         //     parler de paliers : sur 446 notes, il en retire 287, dont 240 des 241 qui
         //     concernaient un tier 9 ou 10.
         if(annuel > 0 && moisPic >= 0 && pic >= _PIC_MINI_SAISON && pic / annuel >= 2){
-          noteSaison = `<div style="font-size:10.5px;color:var(--ink-2);margin-top:5px;line-height:1.4;">`
-            + `${pct(annuel)} sur l'année, mais <b>${pct(pic)} en ${_MOIS_COURTS[moisPic]}</b>, sa meilleure période.`
-            + (_estSaisonniere(m12Pays, annuel) ? ` Espèce nettement saisonnière : viser le bon mois change tout.` : '')
-            + `</div>`;
+          // La valeur annuelle est donnee juste au-dessus : cette ligne n'a plus qu'a dire
+          // le pic. Elle repetait « X % sur l'annee, mais Y % en mai » deux lignes apres
+          // le X %.
+          noteSaison = `Mais <b>${pct(pic)} en ${_MOIS_COURTS[moisPic]}</b>, sa meilleure période.`
+            + (_estSaisonniere(m12Pays, annuel) ? ` Espèce nettement saisonnière : viser le bon mois change tout.` : '');
         }
       }
       // Regularite : sur combien des 8 annees de la fenetre l'espece a ete observee dans ce
@@ -13462,24 +13438,32 @@ function _renderSpeciesRarityCard(key){
         ? (ANNEES_PRESENCE[cc][k] != null ? ANNEES_PRESENCE[cc][k]
            : ANNEES_PRESENCE[cc][(typeof SCI_ALIAS === 'object' && SCI_ALIAS[k]) || k])
         : null;
+      // La regularite reste ici et ne remonte pas sur la ligne de rarete : elle ne dit pas
+      // la meme chose que le palier. Le palier mesure la frequence, la regularite dit si
+      // l'espece revient chaque annee ou si elle n'est passee qu'une fois - et c'est elle,
+      // sous trois ans, qui la sort du catalogue. Deux mesures, un seul panneau.
       const noteAnnees = (annees != null)
-        ? `<div style="font-size:10.5px;color:var(--ink-3);margin-top:5px;opacity:.85;line-height:1.4;">Observée <b>${annees} année${annees > 1 ? 's' : ''} sur 8</b> ${esc(_auPays(cc))} entre 2019 et 2026.${annees < 3 ? ' Moins de trois années : considérée comme accidentelle, elle ne figure pas parmi les espèces à trouver.' : ''}</div>`
+        ? `Observée <b>${annees} année${annees > 1 ? 's' : ''} sur 8</b> entre 2019 et 2026.${annees < 3 ? ' Sous trois années elle est jugée accidentelle, et ne figure pas parmi les espèces à trouver.' : ''}`
         : '';
-      const noteOverride = (forceOverride != null && forceOverride !== tierAffiche)
-        ? '<div style="font-size:10.5px;color:var(--warn,#c07500);margin-top:6px;opacity:.9;line-height:1.4;">Tier ajusté manuellement à ' + forceOverride + ' : population localement abondante que la moyenne nationale écrase.</div>'
+      // Un titre court par bloc, et le bloc repond. L'ancien panneau enchainait quatre
+      // paragraphes de meme graisse ou rien ne disait lequel repondait a quoi.
+      const bloc = (titre, corps) => corps
+        ? `<div style="margin-top:9px;">`
+          + `<div style="font:700 9px/1.3 system-ui; letter-spacing:.6px; text-transform:uppercase; color:var(--ink-3); margin-bottom:3px;">${titre}</div>`
+          + `<div style="font-size:11px; color:var(--ink-2); line-height:1.45;">${corps}</div></div>`
+        : '';
+      const chiffre = tierAffiche
+        ? (valeurAnnuelle > 0
+            ? `<b style="font-size:13px; color:var(--ink);">${pct(valeurAnnuelle)} des listes</b> · palier ${tierAffiche}`
+            : `palier ${tierAffiche}`)
         : '';
       detailsHtml = `
         <details style="margin-top:6px;">
           <summary style="cursor:pointer;font-size:12px;color:var(--ink-3);user-select:none;padding:2px 0;">▸ Détails du calcul</summary>
-          <div style="padding:6px 0 4px 4px;border-left:2px solid var(--line);margin:4px 0 2px 6px;padding-left:10px;">
-            <div style="font-size:10.5px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:2px;">${entete}</div>
-            ${tierAffiche ? `<div style="padding:5px 0 2px 0;">
-              <span style="font-size:12px;color:var(--ink);font-weight:600;">${mesure}</span>
-            </div>` : ''}
-            <div style="font-size:10.5px;color:var(--ink-3);margin-top:6px;opacity:.85;line-height:1.4;">${note}</div>
-            ${noteSaison}
-            ${noteAnnees}
-            ${noteOverride}
+          <div style="padding:2px 0 4px 4px;border-left:2px solid var(--line);margin:4px 0 2px 6px;padding-left:10px;">
+            ${bloc('Fréquence', (chiffre ? `<div style="margin-bottom:4px;">${chiffre}</div>` : '') + note + (noteSaison ? `<div style="margin-top:5px;">${noteSaison}</div>` : ''))}
+            ${bloc('Régularité', noteAnnees)}
+            ${bloc('Source', source)}
           </div>
         </details>`;
     }
@@ -16938,7 +16922,7 @@ function _pkdxRender(){
     const num = String(_pkdxNumById.get(r.sci) || 0).padStart(3, '0');
     // Couleur du badge tier : realColor(tier) pour matcher EXACTEMENT le numero affiche.
     // Avant : sciColorForCountry utilisait le bar chart tier brut, alors que r.tier vient
-    // de rarityForCountry qui merge S&T + overrides EXOTIQUES_TIER_FORCE_FR. Divergence
+    // de rarityForCountry, qui lit le bar chart du pays. Divergence
     // possible : Ibis sacre affichait '6' sur fond rouge (couleur du tier 7 bar chart brut).
     const tierBg = realColor(vue.tier);
     // Categorie exotique de l'espece ici. _exoticCategory est la table FR : hors de France

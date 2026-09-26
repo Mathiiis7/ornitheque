@@ -1219,8 +1219,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* Et une seule legende pour les deux, en bas du panneau : la cle des couleurs sur une
      ligne, la phrase qui dit la mesure en dessous. Elle remplace les trois qui
      coexistaient, dont deux portaient la meme palette. */
-  .species-modal .sm-freq-legend { display:flex; flex-direction:column; gap:6px; margin-top:8px;
-    padding-top:8px; border-top:1px dashed var(--line-2); font-size:11px; color:var(--ink-3); }
+  .species-modal .sm-freq-legend { display:flex; flex-direction:column; gap:6px; margin-top:10px;
+    font-size:11px; color:var(--ink-3); }
   .species-modal .sm-oq-cles { display:flex; flex-wrap:wrap; gap:14px; justify-content:center; }
   .species-modal .sm-oq-note { font-size:10.5px; line-height:1.45; text-align:center; opacity:.9; }
   .species-modal .sm-freq-lg { display:inline-flex; align-items:center; gap:5px; }
