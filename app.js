@@ -1166,20 +1166,26 @@ function _openCountryPicker(currentCode, opts = {}){
       grouped[cont].push({ cc, score: scored ? scored.score : null,
                            aff: scored ? scored.aff : 0, isSt: scored ? scored.isSt : false });
     }
-    // Si focusSci : tri par tier ASC (tier 1 = commun en 1er, absent = fin), puis par le
-    // POURCENTAGE AFFICHE, decroissant.
+    // Si focusSci : les pays ou l'espece est absente vont a la fin, les autres se classent
+    // par le POURCENTAGE AFFICHE, decroissant - comme la liste des zones juste a cote.
     //
-    // Le tier seul ne suffisait pas : une espece repandue met une vingtaine de pays dans le
-    // palier 1, qui retombaient alors dans l'ordre de declaration de COUNTRIES_REG. La
-    // colonne se lisait 27, 29, 26, 41, 42, 25 % - un desordre apparent. On ne trie pas par
-    // pourcentage SEUL pour autant : entre deux pays il peut melanger une frequence de bar
-    // chart et une abondance Status & Trends, que le tier, lui, ramene sur une echelle
-    // commune. Le tier decide donc, le pourcentage departage.
+    // Le tri portait d'abord sur le palier seul : une espece repandue met une vingtaine de
+    // pays dans le palier 1, qui retombaient alors dans l'ordre de declaration de
+    // COUNTRIES_REG, et la colonne se lisait 27, 29, 26, 41, 42, 25 %. Puis sur le palier
+    // puis le pourcentage, ce qui ne reglait rien : un pays de palier 2 a 34 % passait
+    // derriere tous les paliers 1, jusqu'a ceux a 5 %.
+    //
+    // Le pourcentage peut trancher seul parce qu'il est homogene : il vient TOUJOURS du bar
+    // chart eBird (REAL_FREQ_MONTHLY_XX), jamais de Status & Trends. S&T n'entre que dans le
+    // calcul du palier, et seuls six pays en portent encore une table. Le palier ne sert donc
+    // plus qu'a departager a pourcentage egal - mesure faite sur six especes repandues :
+    // classer par pourcentage seul ne desordonne la colonne des paliers que dans 2 % des
+    // couples voisins, tous chez ces six pays.
     if(focusSci){
-      const tierOf = (cc, absent) => absent ? 99 : rarityForCountry(focusSci, cc);
+      const absentOf = (x) => x.score === 0 ? 1 : 0;
       for(const cont in grouped){
-        grouped[cont].sort((a, b) =>
-          (tierOf(a.cc, a.score === 0) - tierOf(b.cc, b.score === 0)) || (b.aff - a.aff));
+        grouped[cont].sort((a, b) => (absentOf(a) - absentOf(b)) || (b.aff - a.aff)
+          || (rarityForCountry(focusSci, a.cc) - rarityForCountry(focusSci, b.cc)));
       }
     }
     const backdrop = document.createElement('div');
