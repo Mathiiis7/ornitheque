@@ -1147,8 +1147,8 @@ function _openCountryPicker(currentCode, opts = {}){
     // l'une apres l'autre dans le meme selecteur.
     const fmtPct = v => { if(!(v>0)) return '-'; const p = v*100;
       if(p >= 10) return Math.round(p)+'%';
-      if(p >= 0.1) return p.toFixed(1)+'%';
-      return Number(p.toPrecision(1))+'%'; };
+      if(p >= 0.1) return _fr(p.toFixed(1))+'%';
+      return _fr(Number(p.toPrecision(1)))+'%'; };
     // Grouper par continent (avec optionnel score espece)
     const grouped = {};
     for(const cc of allCodes){
@@ -2898,6 +2898,11 @@ function _flushDirtyForView(viewName){
 }
 
 function fmt(n){ return Math.round(n).toLocaleString('fr-FR'); }
+// Typographie francaise : le separateur decimal est la virgule. Tous les nombres qu'on
+// DONNE A LIRE passent par ici - pourcentages, abondances, distances, tailles. Les
+// coordonnees SVG, les cles de regroupement et les identifiants gardent le point, qui est
+// leur syntaxe et non de la mise en forme.
+function _fr(x){ return String(x).replace('.', ','); }
 
 const MON={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
 function monNum(w){ w=w.toLowerCase().replace(/\./g,'');
@@ -8065,9 +8070,9 @@ async function _renderModeAbundance(){
       const rankLbl = rank ? `<b>${rank}<sup>e</sup></b> sur ${totalRanked} depts français` : 'non classé (0 obs)';
       let popup = `<b>${esc(nm)}</b> <span class="p-sci">${esc(sci)}</span><br>`+
         `<span class="p-meta"><b>${esc(f.properties.nom)}</b> (${esc(insee)}) - ${rankLbl}</span><br>`+
-        `<span class="p-meta">Abondance ${metricLbl} · ${scope} : <b>${v.toFixed(3)}</b> (${_abLabel(v)})</span>`;
+        `<span class="p-meta">Abondance ${metricLbl} · ${scope} : <b>${_fr(v.toFixed(3))}</b> (${_abLabel(v)})</span>`;
       if(m && bestMonth !== m){
-        popup += `<br><span class="p-meta">Meilleur mois ici : <b>${MONTHS[bestMonth]}</b> (${bestV.toFixed(3)})</span>`;
+        popup += `<br><span class="p-meta">Meilleur mois ici : <b>${MONTHS[bestMonth]}</b> (${_fr(bestV.toFixed(3))})</span>`;
       }
       layer.bindPopup(popup);
     }
@@ -8154,8 +8159,8 @@ async function _renderAbundanceOverlayFor(sci){
       const rankLbl = rank ? `<b>${rank}<sup>e</sup></b> sur ${totalRanked} depts` : 'non classé (0 obs)';
       layer.bindPopup(`<b>${esc(nm)}</b> <span class="p-sci">${esc(sci)}</span>`+
         `<span class="p-meta"><b>${esc(f.properties.nom)}</b> (${esc(insee)}) - ${rankLbl}</span>`+
-        `<span class="p-meta">Abondance ${metricLbl} · ${scope} : <b>${v.toFixed(3)}</b> (${_abLabel(v)})</span>`+
-        (m && bestMonth !== m ? `<span class="p-meta">Meilleur mois ici : <b>${MONTHS[bestMonth]}</b> (${bestV.toFixed(3)})</span>` : ''));
+        `<span class="p-meta">Abondance ${metricLbl} · ${scope} : <b>${_fr(v.toFixed(3))}</b> (${_abLabel(v)})</span>`+
+        (m && bestMonth !== m ? `<span class="p-meta">Meilleur mois ici : <b>${MONTHS[bestMonth]}</b> (${_fr(bestV.toFixed(3))})</span>` : ''));
     }
   });
   _lyrAbundance.addTo(_map);
@@ -9526,7 +9531,7 @@ async function _loadHotspotsLayer(region){
           const monthUsed = monthFilter || (hotspotSort==='recent' ? (new Date().getMonth()+1) : 0);
           return monthUsed ? (arr[monthUsed-1]||0) : Math.max(...arr);
         };
-        const fmtPct = v => v===null ? '-' : v>=0.01 ? Math.round(v*100)+' %' : v>=0.0005 ? (v*100).toFixed(1)+' %' : '<0.1 %';
+        const fmtPct = v => v===null ? '-' : v>=0.01 ? Math.round(v*100)+' %' : v>=0.0005 ? _fr((v*100).toFixed(1))+' %' : '<0,1 %';
         const items = filteredMiss
           .map(sci => ({ sci, name:FR_NAMES[sci]||sci, w:rarityReal(sci), freq:freqFor(sci) }))
           // Tri : plus grandes chances en 1er (utile pour choisir sa cible), rareté DESC pour départager.
@@ -9553,7 +9558,7 @@ async function _loadHotspotsLayer(region){
         missingBlock = `<details class="hs-miss"><summary>${label}</summary><div class="hs-hint">${esc(hint)}</div><ul class="p-list">${rows}</ul></details>`;
       }
       // Distance à vol d'oiseau depuis userPos (si géolocalisation faite).
-      const distTag = userPos ? ` · <b>${_haversine(userPos.lat, userPos.lon, h.lat, h.lng).toFixed(1)}</b> km à vol d'oiseau` : '';
+      const distTag = userPos ? ` · <b>${_fr(_haversine(userPos.lat, userPos.lon, h.lat, h.lng).toFixed(1))}</b> km à vol d'oiseau` : '';
       // Étoile favori (toggle, persistée en Firestore via handler global).
       const isFav = myFavHotspots.has(h.locId);
       const favBtn = myUid ? `<button class="hs-fav${isFav?' on':''}" data-loc="${esc(h.locId)}" title="${isFav?'Retirer des favoris':'Ajouter aux favoris'}">${isFav?'★':'☆'}</button>` : '';
@@ -11846,7 +11851,7 @@ async function _renderSpeciesTraitsCard(key){
   // Section Morphologie (masse + longueurs). Longueurs en cm (Avonet fournit en mm).
   const morphLines = [];
   const round = v => v == null ? '' : String(Math.round(v));
-  const cm = v => v == null ? '' : (v/10).toFixed(1).replace(/\.0$/, '');
+  const cm = v => v == null ? '' : _fr((v/10).toFixed(1).replace(/\.0$/, ''));
   if(t.ma != null)   morphLines.push({ k:'Masse',        v: `${round(t.ma)} g`, hint:'Masse corporelle moyenne (adulte)' });
   if(t.wi != null)   morphLines.push({ k:'Aile',         v: `${cm(t.wi)} cm`, hint:'Longueur de l\'aile pliée, du poignet à l\'extrémité de la plus grande rémige' });
   if(t.bl != null)   morphLines.push({ k:'Bec (culmen)', v: `${cm(t.bl)} cm`, hint:'Culmen : arête supérieure du bec, du front à la pointe. Mesure standard pour comparer la taille des becs' });
@@ -12955,7 +12960,7 @@ async function _renderRarityMap(sci, cc){
   // la carte est au departement alors que la selection est une region : on retient donc
   // aussi les zones prefixees (FR-ARA -> FR-ARA-01, FR-ARA-03...).
   const selection = _zonesSelectionnees(cc, zones);
-  const fmtP = (x) => x >= 0.1 ? Math.round(x*100)+'%' : x >= 0.01 ? (x*100).toFixed(1)+'%' : (x*100).toFixed(2)+'%';
+  const fmtP = (x) => x >= 0.1 ? Math.round(x*100)+'%' : x >= 0.01 ? _fr((x*100).toFixed(1))+'%' : _fr((x*100).toFixed(2))+'%';
   // Rendu d'une zone, isole pour que l'encart montre exactement la meme chose que la
   // carte : memes couleurs, memes infobulles, meme clic.
   const rendreZone = (z, echelle, dRemplace) => {
@@ -13138,8 +13143,8 @@ function _renderSpeciesRarityCard(key){
     // meme sac une zone a 0,09 % et une a 0,003 %, soit trente fois plus rare.
     const fmtPct = v => { if(!(v>0)) return '-'; const p = v*100;
       if(p >= 10) return Math.round(p)+'%';
-      if(p >= 0.1) return p.toFixed(1)+'%';
-      return Number(p.toPrecision(1))+'%'; };
+      if(p >= 0.1) return _fr(p.toFixed(1))+'%';
+      return _fr(Number(p.toPrecision(1)))+'%'; };
     // Score = valeur annuelle (cf. _valeurAnnuelleZone), le meme critere que la carte
     // pour que l'ordre de la liste et les couleurs racontent la meme chose.
     // Mois choisi sur la carte : la liste bascule dessus, sinon elle reste sur l annuel.
@@ -13338,16 +13343,18 @@ function _renderSpeciesRarityCard(key){
     const catHelpTip = cat ? `<span class="cat-help-wrap" style="position:relative;display:inline-block;margin-left:8px;line-height:1;cursor:help;vertical-align:baseline;">
       <svg width="14" height="14" viewBox="0 0 14 14" style="vertical-align:-3px;"><circle cx="7" cy="7" r="6.5" fill="var(--surface-2)" stroke="var(--line)"/><text x="7" y="10.5" text-anchor="middle" font-size="10" font-weight="700" fill="var(--ink-3)">?</text></svg>
       <span class="cat-help-tip" style="position:absolute;top:20px;left:0;z-index:1000;width:340px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:11.5px;line-height:1.5;color:var(--ink-2);box-shadow:0 6px 20px rgba(0,0,0,0.15);display:none;text-align:left;font-weight:400;">
-        <div style="margin-bottom:8px;">Chaque espèce vue en dehors de son aire naturelle est classée par des reviewers bénévoles de l'<b>eBird Exotics Working Group</b>, au niveau <b>département / région / pays</b>.</div>
-        <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 8px;">
-          <span style="font-weight:700;color:var(--ink);">N</span><span><b>Naturalisé</b> — pop reproductrice établie. Ex Bernache du Canada.</span>
-          <span style="font-weight:700;color:var(--ink);">P</span><span><b>Provisoire</b> — obs régulières mais pop non-confirmée. Vagrants + échappés mélangés.</span>
-          <span style="font-weight:700;color:var(--ink);">X</span><span><b>Échappé isolé</b> — évidemment captif, pas de pop. Ex Ara, Perroquet gris.</span>
+        <div style="margin-bottom:8px;">Une espèce vue hors de son aire naturelle est classée par les bénévoles de l'<b>eBird Exotics Working Group</b>, zone par zone. La même espèce peut donc être <b>naturalisée ici et simple échappée ailleurs</b> : la lettre affichée est celle qu'eBird retient pour le pays, et la carte des statuts, plus bas, dit où elle bascule.</div>
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:5px 8px;">
+          <span style="font-weight:700;color:var(--ink);">N</span><span><b>Naturalisé</b> : population qui se reproduit sur place. Ex. Bernache du Canada.</span>
+          <span style="font-weight:700;color:var(--ink);">P</span><span><b>Provisoire</b> : observations régulières, population non confirmée.</span>
+          <span style="font-weight:700;color:var(--ink);">X</span><span><b>Échappé isolé</b> : manifestement captif, aucune population. Ex. Ara.</span>
         </div>
-        <div style="margin-top:6px;padding-top:6px;border-top:1px dashed var(--line-2);opacity:.85;">Source : bar chart eBird du pays (scraping HTML des icônes exotiques).</div>
+        <div style="margin-top:7px;opacity:.85;">Source : les icônes exotiques des bar charts eBird.</div>
       </span>
     </span>` : '';
-    const catBadge = catLbl ? `<span style="font-size:12px;color:var(--ink-3);margin-left:10px;">· ${esc(catLbl)}${catHelpTip}</span>` : '';
+    // Sans le point median : il separait le libelle de rarete du nom du statut, mais le
+    // rond gris s'est glisse entre les deux et fait deja la separation.
+    const catBadge = catLbl ? `<span style="font-size:12px;color:var(--ink-3);margin-left:8px;">${esc(catLbl)}${catHelpTip}</span>` : '';
     // Style pur pour le tooltip au hover (une seule fois, ajoute au head)
     if(cat && !document.getElementById('cat-help-style')){
       const st = document.createElement('style');
@@ -13405,7 +13412,7 @@ function _renderSpeciesRarityCard(key){
       // Plutot que de tordre le tier pour dire deux choses a la fois, on affiche la seconde
       // a cote. Le graphique de saisonnalite donne le detail, cette ligne donne le resume.
       const m12Pays = (regCC && regCC.monthly) ? regCC.monthly()[k] : null;
-      const pct = x => x >= 0.1 ? Math.round(x*100)+' %' : x >= 0.01 ? (x*100).toFixed(1)+' %' : (x*100).toFixed(2)+' %';
+      const pct = x => x >= 0.1 ? Math.round(x*100)+' %' : x >= 0.01 ? _fr((x*100).toFixed(1))+' %' : _fr((x*100).toFixed(2))+' %';
       // La valeur annuelle sort du bloc saisonnier : c'est elle que le panneau doit donner
       // en premier. Il decrivait la mesure sans jamais l'afficher, et il fallait aller lire
       // l'en-tete de « Où et quand la trouver » pour savoir de quel chiffre on parlait.
@@ -13819,13 +13826,13 @@ function _scoreAnnuelLbl(m12, cc, zone){
     : ` · <b style="font-weight:700;color:var(--ink-3);">jamais notée${suffixe}</b>`;
   // Meme cascade de precision que le pic affiche juste apres : un exotique a 0,006 %
   // ne doit pas s'arrondir a "0 %".
-  const t = v >= 0.10   ? Math.round(v * 100)
-          : v >= 0.01   ? (v * 100).toFixed(1)
-          : v >= 0.001  ? (v * 100).toFixed(2)
-          : v >= 0.0001 ? (v * 100).toFixed(3)
+  const t = v >= 0.10   ? String(Math.round(v * 100))
+          : v >= 0.01   ? _fr((v * 100).toFixed(1))
+          : v >= 0.001  ? _fr((v * 100).toFixed(2))
+          : v >= 0.0001 ? _fr((v * 100).toFixed(3))
           // Sous 0,01 % on donnait « <0.01 », qui confondait une espece a 0,009 % et une a
           // 0,0002 %. Deux chiffres significatifs : la vraie valeur, sans zeros inutiles.
-          : String(Number((v * 100).toPrecision(2)));
+          : _fr(Number((v * 100).toPrecision(2)));
   const tip = mois == null
     ? "Fréquence annuelle pondérée par l'effort d'observation : la part des listes de la zone qui citent l'espèce. C'est elle qui détermine le palier de rareté."
     : "Part des listes de la zone qui citent l'espèce sur ce seul mois.";
@@ -14014,12 +14021,12 @@ function _renderSpeciesFreqChart(key, country){
     // Format adaptatif (defini plus bas comme fmtAbd, dupliqué ici car scope) : precision
     // supplementaire pour especes rares (0.0002 ind/h).
     peakVal = maxV >= 10 ? String(Math.round(maxV))
-            : maxV >= 1 ? maxV.toFixed(1)
-            : maxV >= 0.1 ? maxV.toFixed(2)
-            : maxV >= 0.01 ? maxV.toFixed(3)
-            : maxV >= 0.001 ? maxV.toFixed(4)
-            : maxV >= 0.0001 ? maxV.toFixed(5)
-            : '<0.0001';
+            : maxV >= 1 ? _fr(maxV.toFixed(1))
+            : maxV >= 0.1 ? _fr(maxV.toFixed(2))
+            : maxV >= 0.01 ? _fr(maxV.toFixed(3))
+            : maxV >= 0.001 ? _fr(maxV.toFixed(4))
+            : maxV >= 0.0001 ? _fr(maxV.toFixed(5))
+            : '<0,0001';
     srcEl.innerHTML = `${esc(ccLabel)}${fallbackNote}`;
   } else {
     // Source mensuelle etiree a 52 slots : le pic est au premier slot du mois pic,
@@ -14029,11 +14036,11 @@ function _renderSpeciesFreqChart(key, country){
     // Format % adaptatif : pour les exotiques (Ibis, Tadorne casarca), maxV peut etre
     // 0.006 = 0.6%. Math.round(0.6) = 1 mais Math.round(0.4) = 0 -> "0%" bugue. On
     // etend a 3-4 decimales quand la freq est tres faible.
-    peakVal = maxV >= 0.10 ? Math.round(maxV*100)   // >= 10%
-            : maxV >= 0.01 ? (maxV*100).toFixed(1)  // 1-10%
-            : maxV >= 0.001 ? (maxV*100).toFixed(2) // 0.1-1%
-            : maxV >= 0.0001 ? (maxV*100).toFixed(3)// 0.01-0.1%
-            : '<0.01';
+    peakVal = maxV >= 0.10 ? String(Math.round(maxV*100))   // >= 10%
+            : maxV >= 0.01 ? _fr((maxV*100).toFixed(1))  // 1-10%
+            : maxV >= 0.001 ? _fr((maxV*100).toFixed(2)) // 0.1-1%
+            : maxV >= 0.0001 ? _fr((maxV*100).toFixed(3))// 0.01-0.1%
+            : '<0,01';
     srcEl.innerHTML = `${esc(ccLabel)}${_scoreAnnuelLbl(monthlyArr, cc, regionScope)}${fallbackNote}`;
   }
   // Layout du chart : toujours 520x130. Source unique = bar chart % checklists.
@@ -14066,12 +14073,12 @@ function _renderSpeciesFreqChart(key, country){
   const fmtAbd = v => {
     if(v === 0) return '0';
     if(v >= 10) return String(Math.round(v));
-    if(v >= 1) return v.toFixed(1);
-    if(v >= 0.1) return v.toFixed(2);
-    if(v >= 0.01) return v.toFixed(3);
-    if(v >= 0.001) return v.toFixed(4);
-    if(v >= 0.0001) return v.toFixed(5);
-    return '<0.0001';
+    if(v >= 1) return _fr(v.toFixed(1));
+    if(v >= 0.1) return _fr(v.toFixed(2));
+    if(v >= 0.01) return _fr(v.toFixed(3));
+    if(v >= 0.001) return _fr(v.toFixed(4));
+    if(v >= 0.0001) return _fr(v.toFixed(5));
+    return '<0,0001';
   };
   // Format y-axis adaptatif : mode weekly (ind/h) via fmtAbd, mode monthly (%) avec
   // precision augmentee pour les exotiques a freq < 1% (sinon "0%" partout).
@@ -14079,10 +14086,10 @@ function _renderSpeciesFreqChart(key, country){
     if(v === 0) return '0%';
     const p = v * 100;
     if(p >= 10) return Math.round(p) + '%';
-    if(p >= 1) return p.toFixed(1) + '%';
-    if(p >= 0.1) return p.toFixed(2) + '%';
-    if(p >= 0.01) return p.toFixed(3) + '%';
-    return '<0.01%';
+    if(p >= 1) return _fr(p.toFixed(1)) + '%';
+    if(p >= 0.1) return _fr(p.toFixed(2)) + '%';
+    if(p >= 0.01) return _fr(p.toFixed(3)) + '%';
+    return '<0,01%';
   };
   const midV = yMax / 2;
   // Seuils tier (utilises pour couleur des barres + conversion inter-unites axe droit).
@@ -16814,7 +16821,10 @@ function _pkdxRender(){
     const owned = _mineHasStrict(mine, sci);
     if(ownedF === 'owned' && !owned) continue;
     if(ownedF === 'missing' && owned) continue;
-    rows.push({ sci, nm, fam, tier, val, exo, cat, owned, saison });
+    // `cats` voyage jusqu'au rendu : sans lui, la vignette retombait sur la seule categorie
+    // nationale et le Cygne noir perdait son X - celui-la meme qui venait de le faire sortir
+    // sous le filtre X, deux lignes plus haut.
+    rows.push({ sci, nm, fam, tier, val, exo, cat, cats, owned, saison });
   }
   // Rendu des chips rareté : style unifie avec le filtre carte (.rar-chip compact).
   const chipsBox = document.getElementById('pkdxTierChips');
