@@ -67,6 +67,13 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   }
 
   * { box-sizing: border-box; }
+  /* La gouttiere de l'ascenseur est reservee en permanence. Sans ca, elle apparait des que
+     le contenu depasse la hauteur de l'ecran et disparait quand il rentre - et toute la
+     page glisse lateralement d'une quinzaine de pixels a chaque fois. Ca sautait entre un
+     birdydex filtre sur une seule espece et le birdydex complet, et aussi a l'ouverture
+     d'une fiche espece, qui pose overflow:hidden sur le body. La gouttiere etant posee sur
+     html, elle tient meme quand le body cesse de defiler. */
+  html { scrollbar-gutter: stable; }
   body { margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans);
     line-height:1.5; -webkit-font-smoothing:antialiased;
     /* zoom global 0.85 : rendu par defaut plus dense, comme si le user etait a 85% de zoom
