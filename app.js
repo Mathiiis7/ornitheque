@@ -4302,6 +4302,12 @@ const FR_DEPARTEMENTS = [
 // buildRegPanel lit monthlyByRegion() et rien d autre. Le Montenegro est dans ce cas - eBird
 // ne publie pas de bar chart par opstina, ses trois regions sont des decoupages MONSTAT que
 // nous avons definis nous-memes. Il vaut mieux ne pas proposer de selecteur du tout.
+// Pays dont eBird ne publie aucune subdivision exploitable : Malte - dont les 68 conseils
+// locaux portent zero espece - le Kosovo et les Feroe, dont la colonne de sous-region est
+// vide dans la table des hotspots. Ils recoivent une carte d'une seule piece, le pays
+// entier, dont le code de zone est le code du pays lui-meme.
+const _SANS_DECOUPAGE = new Set(['MT', 'XK', 'FO']);
+function _paysSansDecoupage(cc){ return _SANS_DECOUPAGE.has(cc); }
 function zonesFichePourPays(cc){
   if(COUNTRIES_REG[cc] && COUNTRIES_REG[cc].zonesMesurables === false) return [];
   if(cc === 'FR') return FR_DEPARTEMENTS;
@@ -12880,8 +12886,18 @@ async function _renderRarityMap(sci, cc){
   if(typeof _loadFreqDataForCountry === 'function'){
     try { await _loadFreqDataForCountry(cc); } catch(_){}
   }
-  const byZone = (typeof REAL_FREQ_MONTHLY_BY_REGION_MULTI === 'object')
+  let byZone = (typeof REAL_FREQ_MONTHLY_BY_REGION_MULTI === 'object')
     ? REAL_FREQ_MONTHLY_BY_REGION_MULTI[cc] : null;
+  // Pays qu'eBird ne subdivise pas - Malte, le Kosovo, les Feroe. Faute de zones, tout le
+  // panneau disparaissait, et avec lui la colonne des mois, qui ne depend pourtant pas du
+  // decoupage. On leur dessine le pays d'une seule piece, colore par sa valeur NATIONALE :
+  // la carte n'apprend rien de plus que la ligne RARETE juste au-dessus, mais elle porte le
+  // selecteur de mois, qui est ce qu'on vient y chercher.
+  if(!byZone && _paysSansDecoupage(cc)){
+    const reg = COUNTRIES_REG[cc];
+    const nat = (reg && typeof reg.monthly === 'function') ? reg.monthly() : null;
+    if(nat && Object.keys(nat).length) byZone = { [cc]: nat };
+  }
   // Codes que le selecteur de zones sait nommer et surligner ; la carte n'autorise le
   // clic que sur ceux-la.
   const zonesFiche = (typeof zonesFichePourPays === 'function' ? zonesFichePourPays(cc) : []);
@@ -12986,7 +13002,9 @@ async function _renderRarityMap(sci, cc){
     + '<span style="display:block; height:1px; margin:5px 3px; background:var(--line-2);"></span>'
     + _MOIS_COURTS.map((m, i) => chipMois(i, m, !surAnnee && i === mois, serieRef[i] || 0, false)).join('');
   const legendItem = (col, label) => `<span style="display:inline-flex; align-items:center; gap:4px;"><span style="display:inline-block; width:10px; height:10px; background:${col}; border-radius:2px;"></span>${label}</span>`;
-  const zoneWord = cc === 'FR' ? 'département' : 'région';
+  // Un pays sans decoupage n'a qu'une piece : le panneau ne classe donc pas par region
+  // mais par MOIS, ce que dit son titre et ce que fait sa colonne de gauche.
+  const zoneWord = cc === 'FR' ? 'département' : (_paysSansDecoupage(cc) ? 'mois' : 'région');
   const openState = window._smRarityMapOpen ? ' open' : '';
   if(_ccFicheObsolete(cc)) return;
   container.innerHTML = `
