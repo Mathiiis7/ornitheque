@@ -1146,9 +1146,9 @@ function _openCountryPicker(currentCode, opts = {}){
     // Meme format que la liste des zones, au chiffre pres : les deux listes se lisent
     // l'une apres l'autre dans le meme selecteur.
     const fmtPct = v => { if(!(v>0)) return '-'; const p = v*100;
-      if(p >= 10) return Math.round(p)+'%';
-      if(p >= 0.1) return _fr(p.toFixed(1))+'%';
-      return _fr(Number(p.toPrecision(1)))+'%'; };
+      if(p >= 10) return Math.round(p)+_PCT;
+      if(p >= 0.1) return _fr(p.toFixed(1))+_PCT;
+      return _fr(Number(p.toPrecision(1)))+_PCT; };
     // Grouper par continent (avec optionnel score espece)
     const grouped = {};
     for(const cc of allCodes){
@@ -2902,7 +2902,15 @@ function fmt(n){ return Math.round(n).toLocaleString('fr-FR'); }
 // DONNE A LIRE passent par ici - pourcentages, abondances, distances, tailles. Les
 // coordonnees SVG, les cles de regroupement et les identifiants gardent le point, qui est
 // leur syntaxe et non de la mise en forme.
-function _fr(x){ return String(x).replace('.', ','); }
+// Le zero final d'un « 4,0 » ne dit rien de plus que « 4 » : les formateurs arrondissent a
+// une decimale par prudence, pour les petites valeurs, et le zero suit quand il n'y en a
+// pas besoin. On le retire ici plutot que dans chacun d'eux.
+function _fr(x){ return String(x).replace('.', ',').replace(/,0$/, ''); }
+// « 4 % » ne doit jamais se couper en fin de ligne : la typographie francaise veut une
+// espace INSECABLE avant le pour-cent. L'app ecrivait tantot « 4% », tantot « 4 % » avec
+// une espace ordinaire, selon l'endroit. Une seule constante, et le signe ne s'echappe
+// plus tout seul au bout d'une ligne etroite.
+const _PCT = ' %';
 
 const MON={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
 function monNum(w){ w=w.toLowerCase().replace(/\./g,'');
@@ -2940,7 +2948,7 @@ function renderBoard(){
       // Bareme semantique par tier. Les seuils sont ceux de THRESHOLDS / _ANNUAL_THR :
       // la part des listes eBird du pays qui mentionnent l'espece sur 2019-2026, moyenne des
       // 48 quinzaines ponderee par le nombre de listes de chacune.
-      const RANGES={1:'≥ 23 %',2:'7,8 – 23 %',3:'3,5 – 7,8 %',4:'1,6 – 3,5 %',5:'0,69 – 1,6 %',6:'0,18 – 0,69 %',7:'0,004 – 0,18 %',8:'0,002 – 0,004 %',9:'0,0008 – 0,002 %',10:'< 0,0008 %'};
+      const RANGES={1:'≥ 23 %',2:'7,8 – 23 %',3:'3,5 – 7,8 %',4:'1,6 – 3,5 %',5:'0,69 – 1,6 %',6:'0,18 – 0,69 %',7:'0,004 – 0,18 %',8:'0,002 – 0,004 %',9:'0,0008 – 0,002 %',10:'< 0,0008 %'};
       const items = [1,2,3,4,5,6,7,8,9,10].map(w=>`<span class="rs-it" title="${w} · ${REAL_LABELS[w]} - ${RANGES[w]}"><i style="background:${realColor(w)}"></i><b>${w}</b> ${REAL_LABELS[w]} <em>${RANGES[w]}</em></span>`).join('')
         + `<span class="rs-it" title="Exotique X/C ou parc semi-libre : hors barème rareté (tier 0)"><i style="background:#7e8a99"></i><b>0</b> Exotique <em>parcs, échappés, domestiques</em></span>`;
       rs.innerHTML='<div class="rs-title">Barème de rareté réelle <span>- part des listes eBird qui mentionnent l&rsquo;espèce, 2019-2026, pondérée par l&rsquo;effort d&rsquo;observation de chaque quinzaine.</span></div>'+
@@ -9531,7 +9539,7 @@ async function _loadHotspotsLayer(region){
           const monthUsed = monthFilter || (hotspotSort==='recent' ? (new Date().getMonth()+1) : 0);
           return monthUsed ? (arr[monthUsed-1]||0) : Math.max(...arr);
         };
-        const fmtPct = v => v===null ? '-' : v>=0.01 ? Math.round(v*100)+' %' : v>=0.0005 ? _fr((v*100).toFixed(1))+' %' : '<0,1 %';
+        const fmtPct = v => v===null ? '-' : v>=0.01 ? Math.round(v*100)+_PCT : v>=0.0005 ? _fr((v*100).toFixed(1))+_PCT : '<0,1'+_PCT;
         const items = filteredMiss
           .map(sci => ({ sci, name:FR_NAMES[sci]||sci, w:rarityReal(sci), freq:freqFor(sci) }))
           // Tri : plus grandes chances en 1er (utile pour choisir sa cible), rareté DESC pour départager.
@@ -12960,7 +12968,7 @@ async function _renderRarityMap(sci, cc){
   // la carte est au departement alors que la selection est une region : on retient donc
   // aussi les zones prefixees (FR-ARA -> FR-ARA-01, FR-ARA-03...).
   const selection = _zonesSelectionnees(cc, zones);
-  const fmtP = (x) => x >= 0.1 ? Math.round(x*100)+'%' : x >= 0.01 ? _fr((x*100).toFixed(1))+'%' : _fr((x*100).toFixed(2))+'%';
+  const fmtP = (x) => x >= 0.1 ? Math.round(x*100)+_PCT : x >= 0.01 ? _fr((x*100).toFixed(1))+_PCT : _fr((x*100).toFixed(2))+_PCT;
   // Rendu d'une zone, isole pour que l'encart montre exactement la meme chose que la
   // carte : memes couleurs, memes infobulles, meme clic.
   const rendreZone = (z, echelle, dRemplace) => {
@@ -13142,9 +13150,9 @@ function _renderSpeciesRarityCard(key){
     // En dessous de 0,1 % on donne quand meme la vraie valeur - « <0.1% » mettait dans le
     // meme sac une zone a 0,09 % et une a 0,003 %, soit trente fois plus rare.
     const fmtPct = v => { if(!(v>0)) return '-'; const p = v*100;
-      if(p >= 10) return Math.round(p)+'%';
-      if(p >= 0.1) return _fr(p.toFixed(1))+'%';
-      return _fr(Number(p.toPrecision(1)))+'%'; };
+      if(p >= 10) return Math.round(p)+_PCT;
+      if(p >= 0.1) return _fr(p.toFixed(1))+_PCT;
+      return _fr(Number(p.toPrecision(1)))+_PCT; };
     // Score = valeur annuelle (cf. _valeurAnnuelleZone), le meme critere que la carte
     // pour que l'ordre de la liste et les couleurs racontent la meme chose.
     // Mois choisi sur la carte : la liste bascule dessus, sinon elle reste sur l annuel.
@@ -13394,12 +13402,14 @@ function _renderSpeciesRarityCard(key){
       // annoncait « Part des listes mentionnant l'espece » sans jamais donner le chiffre,
       // et le redisait en deux phrases dont la seconde s'ouvrait sur « Autrement dit »,
       // aveu que la premiere n'avait pas suffi.
+      // Le decoupage en quinzaines descend ici : c'est la granularite de la source, pas
+      // quelque chose a savoir pour lire le chiffre. Il ouvrait l'explication.
       const source = ccBarTier
-        ? esc(barSrcLabelCC)
+        ? esc(barSrcLabelCC) + ', par quinzaines'
         : stSecours ? ('eBird Status &amp; Trends, ' + esc(ccName))
         : ('Bar chart eBird ' + esc(cc) + ' : espèce absente');
       const note = ccBarTier
-        ? "Part des listes eBird enregistrées " + esc(_auPays(cc)) + " qui citent l'espèce, moyennée sur les 48 quinzaines de 2019-2026. Chaque quinzaine compte selon son nombre de listes, parce qu'on observe bien plus au printemps qu'en décembre. C'est donc la chance de la croiser lors d'une sortie prise au hasard dans l'année."
+        ? "Sur eBird, chaque sortie donne une liste des oiseaux vus. On prend toutes celles enregistrées " + esc(_auPays(cc)) + " depuis 2019 et on compte celles qui citent l'espèce."
         : stSecours
         ? "Aucun bar chart eBird pour cette espèce dans ce pays. Le palier vient du modèle Status &amp; Trends de Cornell, seule source disponible."
         : "Aucune donnée de fréquence dans le bar chart eBird " + esc(cc) + ". L'espèce y est signalée mais trop peu notée pour être agrégée.";
@@ -13412,7 +13422,7 @@ function _renderSpeciesRarityCard(key){
       // Plutot que de tordre le tier pour dire deux choses a la fois, on affiche la seconde
       // a cote. Le graphique de saisonnalite donne le detail, cette ligne donne le resume.
       const m12Pays = (regCC && regCC.monthly) ? regCC.monthly()[k] : null;
-      const pct = x => x >= 0.1 ? Math.round(x*100)+' %' : x >= 0.01 ? _fr((x*100).toFixed(1))+' %' : _fr((x*100).toFixed(2))+' %';
+      const pct = x => x >= 0.1 ? Math.round(x*100)+_PCT : x >= 0.01 ? _fr((x*100).toFixed(1))+_PCT : _fr((x*100).toFixed(2))+_PCT;
       // La valeur annuelle sort du bloc saisonnier : c'est elle que le panneau doit donner
       // en premier. Il decrivait la mesure sans jamais l'afficher, et il fallait aller lire
       // l'en-tete de « Où et quand la trouver » pour savoir de quel chiffre on parlait.
@@ -13452,23 +13462,37 @@ function _renderSpeciesRarityCard(key){
       const noteAnnees = (annees != null)
         ? `Observée <b>${annees} année${annees > 1 ? 's' : ''} sur 8</b> entre 2019 et 2026.${annees < 3 ? ' Sous trois années elle est jugée accidentelle, et ne figure pas parmi les espèces à trouver.' : ''}`
         : '';
+      // Le chiffre traduit en geste. « 4 % des listes » suppose qu'on sache ce qu'est une
+      // liste eBird et qu'on fasse la conversion mentale ; « environ 4 sorties sur 100 »
+      // se lit sans rien savoir. Sous 2 %, on bascule sur « une sortie sur N », qui reste
+      // juste la ou « environ 1 sur 100 » perdrait tout son sens en arrondissant.
+      let concret = '';
+      if(valeurAnnuelle >= 0.02) concret = ` Sur 100 sorties prises au hasard dans l'année, environ <b>${Math.round(valeurAnnuelle*100)}</b> la verront.`;
+      else if(valeurAnnuelle > 0) concret = ` Environ <b>une sortie sur ${fmt(Math.round(1/valeurAnnuelle))}</b> la voit.`;
+      // Pourquoi la moyenne est ponderee. Mis a part, en retrait : c'est une precaution de
+      // methode, pas ce qu'on vient lire.
+      const nuance = ccBarTier
+        ? `<div style="margin-top:6px; opacity:.75;">Les périodes où l'on observe beaucoup pèsent d'autant dans ce calcul, mai plus que décembre : on cherche la chance réelle, pas une moyenne de saisons.</div>`
+        : '';
       // Un titre court par bloc, et le bloc repond. L'ancien panneau enchainait quatre
-      // paragraphes de meme graisse ou rien ne disait lequel repondait a quoi.
+      // paragraphes de meme graisse ou rien ne disait lequel repondait a quoi. Les corps
+      // sont a 12 px : a 11 ils se lisaient comme des notes de bas de page, alors que
+      // c'est la seule explication de la mesure que porte la fiche.
       const bloc = (titre, corps) => corps
-        ? `<div style="margin-top:9px;">`
-          + `<div style="font:700 9px/1.3 system-ui; letter-spacing:.6px; text-transform:uppercase; color:var(--ink-3); margin-bottom:3px;">${titre}</div>`
-          + `<div style="font-size:11px; color:var(--ink-2); line-height:1.45;">${corps}</div></div>`
+        ? `<div style="margin-top:11px;">`
+          + `<div style="font:700 10px/1.3 system-ui; letter-spacing:.6px; text-transform:uppercase; color:var(--ink-3); margin-bottom:4px;">${titre}</div>`
+          + `<div style="font-size:12px; color:var(--ink-2); line-height:1.5;">${corps}</div></div>`
         : '';
       const chiffre = tierAffiche
         ? (valeurAnnuelle > 0
-            ? `<b style="font-size:13px; color:var(--ink);">${pct(valeurAnnuelle)} des listes</b> · palier ${tierAffiche}`
+            ? `<b style="font-size:15px; color:var(--ink);">${pct(valeurAnnuelle)} des listes</b> · palier ${tierAffiche}`
             : `palier ${tierAffiche}`)
         : '';
       detailsHtml = `
         <details style="margin-top:6px;">
-          <summary style="cursor:pointer;font-size:12px;color:var(--ink-3);user-select:none;padding:2px 0;">▸ Détails du calcul</summary>
-          <div style="padding:2px 0 4px 4px;border-left:2px solid var(--line);margin:4px 0 2px 6px;padding-left:10px;">
-            ${bloc('Fréquence', (chiffre ? `<div style="margin-bottom:4px;">${chiffre}</div>` : '') + note + (noteSaison ? `<div style="margin-top:5px;">${noteSaison}</div>` : ''))}
+          <summary style="cursor:pointer;font-size:12.5px;color:var(--ink-3);user-select:none;padding:2px 0;">▸ Détails du calcul</summary>
+          <div style="padding:2px 0 6px 4px;border-left:2px solid var(--line);margin:4px 0 2px 6px;padding-left:11px;">
+            ${bloc('Fréquence', (chiffre ? `<div style="margin-bottom:5px;">${chiffre}</div>` : '') + note + concret + (noteSaison ? `<div style="margin-top:6px;">${noteSaison}</div>` : '') + nuance)}
             ${bloc('Régularité', noteAnnees)}
             ${bloc('Source', source)}
           </div>
@@ -13836,7 +13860,7 @@ function _scoreAnnuelLbl(m12, cc, zone){
   const tip = mois == null
     ? "Fréquence annuelle pondérée par l'effort d'observation : la part des listes de la zone qui citent l'espèce. C'est elle qui détermine le palier de rareté."
     : "Part des listes de la zone qui citent l'espèce sur ce seul mois.";
-  return ` · <b data-tip="${esc(tip)}" style="font-weight:700;color:var(--ink-2);">${t} %${suffixe}</b>`;
+  return ` · <b data-tip="${esc(tip)}" style="font-weight:700;color:var(--ink-2);">${t}${_PCT}${suffixe}</b>`;
 }
 function _renderSpeciesFreqChart(key, country){
   // `card` est le panneau fusionne, qui porte AUSSI la carte : le graphique n'a donc plus
@@ -14083,13 +14107,13 @@ function _renderSpeciesFreqChart(key, country){
   // Format y-axis adaptatif : mode weekly (ind/h) via fmtAbd, mode monthly (%) avec
   // precision augmentee pour les exotiques a freq < 1% (sinon "0%" partout).
   const fmtPct = v => {
-    if(v === 0) return '0%';
+    if(v === 0) return '0'+_PCT;
     const p = v * 100;
-    if(p >= 10) return Math.round(p) + '%';
-    if(p >= 1) return _fr(p.toFixed(1)) + '%';
-    if(p >= 0.1) return _fr(p.toFixed(2)) + '%';
-    if(p >= 0.01) return _fr(p.toFixed(3)) + '%';
-    return '<0,01%';
+    if(p >= 10) return Math.round(p) + _PCT;
+    if(p >= 1) return _fr(p.toFixed(1)) + _PCT;
+    if(p >= 0.1) return _fr(p.toFixed(2)) + _PCT;
+    if(p >= 0.01) return _fr(p.toFixed(3)) + _PCT;
+    return '<0,01'+_PCT;
   };
   const midV = yMax / 2;
   // Seuils tier (utilises pour couleur des barres + conversion inter-unites axe droit).
@@ -15081,7 +15105,7 @@ async function _renderSpeciesMap(key){
       // Aborter si l'user a change de mode/espece entre-temps
       if(_smCurrentKey !== key || _smMapMode !== 'gbif') return;
       const pct = Math.round(done / total * 100);
-      _smSetHint(`… chargement GBIF ${done}/${total} lots (${pct}%) · ${gotObs}/${totalCount} obs · ${gbifScopeLabel}`);
+      _smSetHint(`… chargement GBIF ${done}/${total} lots (${pct}${_PCT}) · ${gotObs}/${totalCount} obs · ${gbifScopeLabel}`);
     };
     const res = await _smFetchGbif(key, gbifMonth, gbifYearMin, gbifYearMax, bbox, cc, onProg);
     if(_smCurrentKey !== key || _smMapMode !== 'gbif') return;
@@ -16137,7 +16161,7 @@ function _quizRenderLeaderboard(){
       <ol class="qz-lb-list">
         ${rows.map((r, i) => {
           const isMe = r.uid === myUid;
-          const nivTxt = r.nivPct == null ? '-' : r.nivPct + '%';
+          const nivTxt = r.nivPct == null ? '-' : r.nivPct + _PCT;
           return `<li class="${isMe ? 'me' : ''}"><span class="qz-lb-rank">${i+1}</span><span class="qz-lb-name">${esc(r.name)}${isMe ? ' <span class="qz-lb-you">(toi)</span>' : ''}</span><span class="qz-lb-metric"><b>${nivTxt}</b> <span class="qz-lb-sub">niveau</span></span><span class="qz-lb-metric"><b>${r.total}</b> <span class="qz-lb-sub">parties</span></span><span class="qz-lb-metric">🔥 <b>${r.bestStreak}</b></span></li>`;
         }).join('')}
       </ol>
@@ -16216,7 +16240,7 @@ function _quizRefreshStatsUI(){
   // Aujourd'hui : dayScore/dayTotal
   const dayEl = $('#quizDayPct');
   if(dayEl){
-    if(bucket.dayTotal > 0) dayEl.textContent = Math.round(bucket.dayScore * 100 / bucket.dayTotal) + '%';
+    if(bucket.dayTotal > 0) dayEl.textContent = Math.round(bucket.dayScore * 100 / bucket.dayTotal) + _PCT;
     else dayEl.textContent = '-';
   }
   const dayCntEl = $('#quizDayCount'); if(dayCntEl) dayCntEl.textContent = bucket.dayScore + '/' + bucket.dayTotal;
@@ -16225,7 +16249,7 @@ function _quizRefreshStatsUI(){
   if(lvlEl){
     if(bucket.last100 && bucket.last100.length > 0){
       const sum = bucket.last100.reduce((a,b) => a+b, 0);
-      lvlEl.textContent = Math.round(sum * 100 / bucket.last100.length) + '%';
+      lvlEl.textContent = Math.round(sum * 100 / bucket.last100.length) + _PCT;
     } else lvlEl.textContent = '-';
   }
   const lvlCntEl = $('#quizLevelCount'); if(lvlCntEl) lvlCntEl.textContent = 'sur ' + (bucket.last100?.length || 0);
@@ -17131,7 +17155,7 @@ function _quizRenderProblemCard(){
   const rows = top.map(r => {
     const nm = FR_NAMES[r.sci] || r.sci;
     const pct = Math.round(r.rate * 100);
-    return `<li><span class="qz-prob-nm"><span class="sp-link" data-sci="${esc(r.sci)}" style="cursor:pointer;">${esc(nm)}</span></span> <span class="qz-prob-stat"><b>${r.fail}</b> ratés sur ${r.total} <span class="qz-prob-pct">(${pct}%)</span></span></li>`;
+    return `<li><span class="qz-prob-nm"><span class="sp-link" data-sci="${esc(r.sci)}" style="cursor:pointer;">${esc(nm)}</span></span> <span class="qz-prob-stat"><b>${r.fail}</b> ratés sur ${r.total} <span class="qz-prob-pct">(${pct}${_PCT})</span></span></li>`;
   }).join('');
   stage.innerHTML = `
     <div class="qz-problem">
