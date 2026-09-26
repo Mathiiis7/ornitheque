@@ -471,7 +471,13 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      maintenant en points de suspension et les trois colonnes de droite ne bougent plus. */
   /* Hauteur figee plutot que deduite du contenu : une ligne ne peut plus grandir parce que
      son nom, sa valeur ou sa pastille auraient change de taille. */
-  .reg-picker-item { display:grid; grid-template-columns:minmax(0,1fr) 44px 60px 30px; gap:8px; align-items:center; height:36px; padding:0 10px; cursor:pointer; border-radius:6px; font-size:14px; color:var(--ink); }
+  /* min-height et non height : les deux onglets du selecteur doivent garder le meme pas
+     d'une ligne a l'autre, or ils l'obtenaient par deux chemins differents - hauteur figee
+     ici, contenu plus 7 px de rembourrage pour .cp-item. Ils coincidaient tant que la
+     pastille faisait 22 px ; passee a 26, les lignes Pays sont montees a 40 px quand les
+     lignes Regions restaient a 36. Avec min-height les deux suivent leur contenu et ne
+     peuvent plus diverger. */
+  .reg-picker-item { display:grid; grid-template-columns:minmax(0,1fr) 44px 60px 30px; gap:8px; align-items:center; min-height:36px; padding:7px 10px; cursor:pointer; border-radius:6px; font-size:14px; color:var(--ink); }
   .reg-picker-item > span:first-child { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .reg-picker-item:hover { background:var(--surface-2); }
   /* Selection courante : la meme que celle d'un pays (voir .cp-item.on, plus bas, dont
@@ -533,7 +539,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .cp-tab.on { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:700; }
   .cp-list { overflow-y:auto; overscroll-behavior:contain; flex:1; }
   .cp-group-title { font:700 10.5px system-ui; text-transform:uppercase; letter-spacing:.5px; color:var(--ink-3); padding:8px 10px 4px; }
-  .cp-item { display:flex; align-items:center; gap:10px; padding:7px 10px; cursor:pointer; border-radius:8px; color:var(--ink); font-size:14px; }
+  /* Meme plancher que .reg-picker-item : les deux onglets du selecteur partagent le pas
+     de leurs lignes, au-dessus comme au-dessous de la hauteur de reference. */
+  .cp-item { display:flex; align-items:center; gap:10px; min-height:36px; padding:7px 10px; cursor:pointer; border-radius:8px; color:var(--ink); font-size:14px; }
   .cp-item:hover { background:var(--surface-2); }
   .cp-item.on { background:var(--surface-2); font-weight:700; }
   .cp-item-flag { display:inline-flex; align-items:center; justify-content:center; width:28px; }
