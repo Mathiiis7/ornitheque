@@ -5735,6 +5735,8 @@ function memberToPerson(id, data, si){
     updatedAt: data.updatedAt?.toMillis ? data.updatedAt.toMillis() : 0 };
 }
 
+// Taille de ma liste au dernier rendu du birdydex. -1 tant qu'on n'a rien dessine.
+let _pkdxDerniereTaille = -1;
 function rebuild(){
   state.people = realPeople.slice();
   renderMembers();
@@ -5752,8 +5754,20 @@ function rebuild(){
   }
   feedLatest = maxAdded; updateTabDots();
   renderStats(realPeople.find(p=>p.id===myUid));
-  // Rafraîchit la carte si elle est visible (sinon vide au 1er chargement quand données arrivent après)
-  if(document.querySelector('.tab.on')?.dataset.view==='map') renderMap();
+  // Les vues qui lisent la liste du joueur sont dessinees au demarrage, quand l'onglet
+  // visite la derniere fois est restaure - c'est-a-dire AVANT que Firestore ait repondu.
+  // Sans un rappel ici, elles restent telles quelles jusqu'a ce qu'on change d'onglet et
+  // qu'on revienne. La carte avait deja sa ligne ; le birdydex l'a rejointe apres qu'un
+  // simple Ctrl+R sur ses cases l'a montre a « 0 / 466 », toutes les vignettes grises.
+  const vueCourante = document.querySelector('.tab.on')?.dataset.view;
+  if(vueCourante === 'map') renderMap();
+  // Le birdydex, lui, ne se redessine que si MA liste a bouge. rebuild() tourne a chaque
+  // mise a jour d'un membre, quel qu'il soit : redessiner les 466 vignettes parce qu'un
+  // autre joueur vient de cocher une espece renverrait le lecteur en haut de la grille.
+  if(vueCourante === 'pokedex'){
+    const n = realPeople.find(p => p.id === myUid)?.species?.size ?? -1;
+    if(n !== _pkdxDerniereTaille){ _pkdxDerniereTaille = n; renderPokedex(); }
+  }
 }
 
 // --- Blocage temporaire de comptes par nom (a vider pour tout debloquer). ---
