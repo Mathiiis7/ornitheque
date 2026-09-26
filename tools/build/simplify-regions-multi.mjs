@@ -142,7 +142,7 @@ function resolveGB(props){
 }
 
 // Pays ou une region eBird agrege plusieurs features Natural Earth (-> dissolve requis).
-const AGGREGATED = new Set(['ES', 'IT', 'GB', 'IE', 'BE', 'RS', 'SI', 'LV', 'CH', 'DK', 'HU', 'BY', 'BA', 'IS']);
+const AGGREGATED = new Set(['ES', 'IT', 'GB', 'IE', 'BE', 'RS', 'SI', 'LV', 'CH', 'DK', 'HU', 'BY', 'BA', 'IS', 'ME']);
 
 // Pays dont les zones sont des REGROUPEMENTS : Suisse, Slovenie, Lettonie, Hongrie,
 // Royaume-Uni. La table zones-agregees.json dit a quelle zone-cible chaque zone source
@@ -319,6 +319,11 @@ const EBIRD_REGIONS = {
        'NO-11','NO-12','NO-14','NO-15','NO-16','NO-17','NO-18','NO-19','NO-20','SJ'],
   GR: ['GR-A','GR-B','GR-C','GR-D','GR-E','GR-F','GR-G','GR-H','GR-I','GR-J','GR-K','GR-L','GR-M'],
   IS: ['IS-1','IS-2','IS-3','IS-4','IS-5','IS-6','IS-7','IS-8'],
+  // Les 21 communes montenegrines, regroupees en trois regions MONSTAT par
+  // zones-agregees.json. eBird les publie bien : le code disait le contraire.
+  // Pour un pays regroupe, ce sont les zones CIBLES qui sont listees ici : le resolveur
+  // traduit deja la commune en region via zones-agregees.json.
+  ME: ['ME-N','ME-C','ME-P'],
   LK: ['LK-11','LK-12','LK-13','LK-21','LK-22','LK-23','LK-31','LK-32','LK-33','LK-41',
        'LK-42','LK-43','LK-44','LK-45','LK-51','LK-52','LK-53','LK-61','LK-62','LK-71',
        'LK-72','LK-81','LK-82','LK-91','LK-92'],
@@ -399,8 +404,13 @@ const INSETS = {
   NZ: { 'NZ-CI': [780, 20, 200, 160] },
   // Quatre cadres dans la colonne de droite : les Shetland, trop au nord, et les trois
   // dependances de la Couronne, trop petites - l ile de Man fait 572 km2, Jersey 119.
-  GB: { 'GB-ZET': [700, 45, 250, 200],
-        'IM': [700, 315, 150, 150], 'JE': [700, 520, 150, 130], 'GG': [700, 700, 150, 130] },
+  // L ile de Man n est PAS en encart : a 54 degres nord dans la mer d Irlande, elle tombe
+  // en plein dans le cadre de la carte britannique, et ses 572 km2 y font une vingtaine de
+  // pixels - parfaitement visible et cliquable. La mettre en encart la deracinait pour rien.
+  // Jersey et Guernesey, elles, sont au large de la Normandie, SOUS la boite du pays, et
+  // n y feraient que trois pixels : elles restent deportees.
+  GB: { 'GB-ZET': [700, 45, 250, 205],
+        'JE': [700, 350, 150, 140], 'GG': [700, 560, 150, 140] },
   NO: { 'SJ': [700, 570, 250, 295] },
 };
 
@@ -807,7 +817,7 @@ const ADM0 = {
   DE:'DEU', NL:'NLD', BE:'BEL', AT:'AUT', PL:'POL', CZ:'CZE', SK:'SVK', HU:'HUN',
   RO:'ROU', BG:'BGR', HR:'HRV', RS:'SRB', BA:'BIH', AL:'ALB', SI:'SVN',
   DK:'DNK', SE:'SWE', FI:'FIN', EE:'EST', LT:'LTU', LV:'LVA', BY:'BLR',
-  UA:'UKR', RU:'RUS', IE:'IRL', CY:'CYP', LV:'LVA',
+  UA:'UKR', RU:'RUS', IE:'IRL', CY:'CYP', LV:'LVA', ME:'MNE',
 };
 const filter = process.argv[3];
 const COUNTRIES = filter ? filter.split(',').map(s => s.trim().toUpperCase()) : Object.keys(ADM0);

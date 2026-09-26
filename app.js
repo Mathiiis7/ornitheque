@@ -12192,7 +12192,7 @@ function _exoticMapFileFor(cc){
     // Les contours sont caches dans lmb-data, qui survit aux changements de version du
     // service worker : sans ce parametre, un visiteur deja venu garderait indefiniment
     // l ancienne Bosnie amputee de sa Republique serbe.
-    : `data/regions-${cc.toLowerCase()}-simplified.json?v=20260926e`;
+    : `data/regions-${cc.toLowerCase()}-simplified.json?v=20260926f`;
 }
 async function _loadExoticMapPaths(cc){
   if(_exoticMapPathsCache[cc] !== undefined) return _exoticMapPathsCache[cc];
@@ -12382,7 +12382,7 @@ const _ZONES_ENCART = {
   PT: { 'PT-20': 'Açores', 'PT-30': 'Madère' },
   ES: { 'ES-CN': 'Canaries', 'ES-CE': 'Ceuta', 'ES-ML': 'Melilla' },
   NZ: { 'NZ-CI': 'Chatham' },
-  GB: { 'GB-ZET': 'Shetland', 'IM': 'Île de Man', 'JE': 'Jersey', 'GG': 'Guernesey' },
+  GB: { 'GB-ZET': 'Shetland', 'JE': 'Jersey', 'GG': 'Guernesey' },
   NO: { 'SJ': 'Svalbard et Jan Mayen' },
 };
 // Filet pointille + nom autour de chaque territoire deporte, calcule sur sa propre boite.
@@ -12482,14 +12482,31 @@ function _viewBoxCarte(cc, paths){
 // Hauteur affichee gardee constante (~290 px) : c'est la largeur qui s'adapte. Le plancher
 // de 320 px preserve la taille actuelle des pays compacts, le plafond de 560 px evite
 // qu'une carte ne prenne toute la fiche.
-const _STYLE_CARTE_BASE = 'height:auto; display:block; margin:0 auto; max-height:290px;';
+// On vise une AIRE affichee constante plutot qu'une hauteur constante. A hauteur fixe, un
+// pays haut et etroit est puni deux fois : il est etroit par nature, et le plafond de
+// hauteur l'empeche de compenser. Le Royaume-Uni se dessinait ainsi dans 229 x 290 px,
+// soit 66 000 px2, quand la Russie en occupait 159 000 - deux fois et demie plus pour la
+// meme importance a l'ecran.
+//
+// A aire constante, chacun reprend la forme qui lui est propre sans y perdre : la Russie
+// s'etale, le Royaume-Uni monte. Les deux plafonds evitent les extremes - une carte qui
+// prendrait toute la largeur de la fiche, ou une colonne trop haute pour tenir a l'ecran
+// a cote du selecteur de mois.
+const _AIRE_CARTE = 130000;   // px2 vises
+const _LARGEUR_MINI = 320, _LARGEUR_MAXI = 560, _HAUTEUR_MAXI = 420;
 function _styleCarte(cc, paths){
   const p = String(_viewBoxCarte(cc, paths) || '').trim().split(/\s+/).map(Number);
-  let large = 320;
+  let large = _LARGEUR_MINI;
   if(p.length === 4 && p.every(v => isFinite(v)) && p[3] > 0){
-    large = Math.round(Math.max(320, Math.min(560, 290 * p[2] / p[3])));
+    const ratio = p[2] / p[3];
+    large = Math.sqrt(_AIRE_CARTE * ratio);
+    // Un pays tres haut atteindrait le plafond de hauteur avant l'aire voulue : on
+    // redescend alors la largeur pour que la carte tienne entiere, sans letterbox.
+    if(large / ratio > _HAUTEUR_MAXI) large = _HAUTEUR_MAXI * ratio;
+    large = Math.round(Math.max(_LARGEUR_MINI, Math.min(_LARGEUR_MAXI, large)));
   }
-  return 'width:100%; max-width:' + large + 'px; ' + _STYLE_CARTE_BASE;
+  return 'width:100%; max-width:' + large + 'px; height:auto; display:block; margin:0 auto;'
+    + ' max-height:' + _HAUTEUR_MAXI + 'px;';
 }
 // `deplace` distingue deux usages du meme cadre :
 //   - une loupe : la petite couronne parisienne est agrandie mais reste aussi a sa place,

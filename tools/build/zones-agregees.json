@@ -496,6 +496,29 @@
       "CH-NW": "CH-R6",
       "CH-ZG": "CH-R6",
       "CH-TI": "CH-R7"
+    },
+    "ME": {
+      "ME-01": "ME-N",
+      "ME-03": "ME-N",
+      "ME-04": "ME-N",
+      "ME-09": "ME-N",
+      "ME-11": "ME-N",
+      "ME-13": "ME-N",
+      "ME-14": "ME-N",
+      "ME-15": "ME-N",
+      "ME-17": "ME-N",
+      "ME-18": "ME-N",
+      "ME-21": "ME-N",
+      "ME-06": "ME-C",
+      "ME-07": "ME-C",
+      "ME-12": "ME-C",
+      "ME-16": "ME-C",
+      "ME-02": "ME-P",
+      "ME-05": "ME-P",
+      "ME-08": "ME-P",
+      "ME-10": "ME-P",
+      "ME-19": "ME-P",
+      "ME-20": "ME-P"
     }
   },
   "noms": {
@@ -700,6 +723,11 @@
         "code": "CH-R7",
         "name": "Tessin"
       }
-    ]
+    ],
+    "ME": {
+      "ME-N": "Nord (montagnes)",
+      "ME-C": "Centre (Podgorica)",
+      "ME-P": "Côte adriatique"
+    }
   }
 }
