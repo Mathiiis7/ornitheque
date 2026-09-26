@@ -1398,17 +1398,19 @@ function _openCountryPicker(currentCode, opts = {}){
       if(!it || it.classList.contains('disabled')) return;
       const cc = it.dataset.cc;
       if(!avecZones){ cleanup(); resolve(cc); return; }
-      // Choisir un pays ne ferme pas le modal : on applique, puis on bascule sur ses zones,
-      // qui sont le plus souvent la raison pour laquelle on en a change.
+      // Choisir un pays ne ferme pas le modal et ne change pas d'onglet : on applique, et
+      // la liste des pays reste a l'ecran, le nouveau pays surligne. Elle basculait
+      // automatiquement sur les zones, en supposant qu'on avait change de pays pour y
+      // descendre - ce qui n'est vrai que parfois, et enlevait la main a qui voulait
+      // simplement comparer deux pays ou corriger un clic.
       if(cc !== ccCourant){
         it.style.opacity = '.5';
-        // On n'attend PAS la fin du chargement pour basculer. Les frequences regionales
+        // On n'attend PAS la fin du chargement pour redessiner. Les frequences regionales
         // pesent 2,6 Mo pour la France et 2,3 pour le Royaume-Uni : le modal restait fige
-        // une seconde entiere apres le clic. Or les noms des zones sont deja en memoire -
-        // on les affiche tout de suite, et on redessine quand les valeurs arrivent.
+        // une seconde entiere apres le clic. On marque le pays tout de suite, et on
+        // redessine une seconde fois quand les valeurs arrivent.
         const chargement = opts.onPays(cc);
         ccCourant = cc;
-        onglet = opts.zones(cc) ? 'zones' : 'pays';
         searchEl.value = '';
         render();
         try { await chargement; } catch(_) {}
@@ -1417,9 +1419,7 @@ function _openCountryPicker(currentCode, opts = {}){
         render();
         return;
       }
-      // Un pays sans decoupage n'a pas d'onglet zones a montrer : on reste sur la liste des
-      // pays, ou le surlignage dit deja que le changement a ete pris.
-      onglet = opts.zones(cc) ? 'zones' : 'pays';
+      // Reclic sur le pays deja choisi : rien a appliquer, on redessine simplement.
       searchEl.value = '';
       render();
     });
