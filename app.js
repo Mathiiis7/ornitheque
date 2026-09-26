@@ -7142,7 +7142,7 @@ async function _loadFreq48(cc){
   if(_freq48Promises[cc]) return _freq48Promises[cc];
   _freq48Promises[cc] = (async () => {
     try{
-      const data = await fetch('data/countries/' + cc.toLowerCase() + '/freq_48.json?v=20260926e').then(r => r.ok ? r.json() : null);
+      const data = await fetch('data/countries/' + cc.toLowerCase() + '/freq_48.json?v=20260926j').then(r => r.ok ? r.json() : null);
       if(data) REAL_FREQ_48_MULTI[cc] = data;
     }catch(err){
       console.warn('Erreur load freq_48_' + cc + ' :', err.message);
@@ -7216,7 +7216,7 @@ async function _loadFreqDataForCountry(cc){
       // ~12 Ko par pays, charge dans la foulee : il n'est utile que la ou les frequences
       // regionales le sont, et son absence est sans consequence (repli sur le pays).
       try{
-        const eff = await fetch('data/countries/' + cc.toLowerCase() + '/effort_by_zone.json?v=20260926e')
+        const eff = await fetch('data/countries/' + cc.toLowerCase() + '/effort_by_zone.json?v=20260926j')
           .then(r => r.ok ? r.json() : null);
         if(eff) EFFORT_PAR_ZONE[cc] = eff;
       }catch(_){}
