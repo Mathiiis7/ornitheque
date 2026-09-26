@@ -18,7 +18,42 @@ import { dirname, join } from 'node:path';
 const __dir = dirname(fileURLToPath(import.meta.url));
 const APP = join(__dir, '..', '..', 'app.js');
 
-const CCS = ['FR','GB','ES','IT','PT','CH','NO','GR','IS','LK','NA','AU','NZ','US','CA'];
+// Les 22 pays europeens ajoutes le 2026-09-26 rejoignent les 15 d'origine. Chaque pays lit
+// SON fichier : les tables d'origine, plus fines (France au departement, Etats-Unis a
+// l'Etat), ne sont pas touchees par un scraping qui ne les a pas refaites.
+const CCS = ['FR','GB','ES','IT','PT','CH','NO','GR','IS','LK','NA','AU','NZ','US','CA',
+  'AL','AT','BA','BE','BG','BY','CY','CZ','DE','DK','EE','FI','HR','HU','IE','LT','LV',
+  'NL','PL','RO','RS','RU','SE','SI','SK','UA'];
+
+// Pays dont les zones de la fiche sont des REGROUPEMENTS de zones eBird. Le scraping se
+// fait forcement a la maille eBird ; la carte, elle, affiche les regroupements. Sans cette
+// etape les cles ne correspondent a rien et la carte du statut exotique reste vide - c'est
+// ce qui est arrive a la Suisse et au Royaume-Uni le jour ou on les a regroupes.
+//
+// N l'emporte sur P, qui l'emporte sur X : si une espece est etablie dans un canton du
+// regroupement, elle l'est pour le regroupement.
+const AGREGE = (() => {
+  try {
+    const p = join(__dir, 'zones-agregees.json');
+    return existsSync(p) ? JSON.parse(readFileSync(p, 'utf8')).parCommune || {} : {};
+  } catch(e){ return {}; }
+})();
+const RANG_EXO = { N: 3, P: 2, X: 1 };
+function agreger(cc, data){
+  const table = AGREGE[cc], out = {};
+  let orphelines = 0;
+  for(const [source, parEspece] of Object.entries(data)){
+    const cible = table[source];
+    if(!cible){ orphelines++; continue; }
+    const dst = out[cible] = out[cible] || {};
+    for(const [sci, cat] of Object.entries(parEspece)){
+      if(!dst[sci] || RANG_EXO[cat] > RANG_EXO[dst[sci]]) dst[sci] = cat;
+    }
+  }
+  console.log('  ' + cc + ' : ' + Object.keys(data).length + ' zones eBird regroupees en '
+    + Object.keys(out).length + (orphelines ? ', ' + orphelines + ' sans regroupement connu' : ''));
+  return out;
+}
 
 const merged = {};
 for(const cc of CCS){
@@ -31,7 +66,7 @@ for(const cc of CCS){
   // Une region presente avec un objet vide a bien ete scrapee et n'a simplement aucune
   // exotique : on la garde, c'est justement la qu'une espece peut etre native. Le scraper
   // supprime la cle des regions en echec, donc "absent du dict" = "pas encore scrape".
-  merged[cc] = data;
+  merged[cc] = AGREGE[cc] ? agreger(cc, data) : data;
   const tot = Object.values(data).reduce((a, o) => a + Object.keys(o).length, 0);
   const empty = Object.values(data).filter(o => !Object.keys(o).length).length;
   console.log(`  ${cc} : ${Object.keys(data).length} regions, ${tot} entrees` + (empty ? ` (dont ${empty} sans exotique)` : ''));

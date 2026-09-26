@@ -26,6 +26,16 @@ import { dirname, join } from 'node:path';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 
+// Zones eBird SOURCES d'un pays dont les zones de la fiche sont des regroupements. eBird
+// ne connait que ses propres subdivisions : on scrape celles-la, l'injecteur regroupe.
+function zonesSources(cc){
+  const p = join(__dir, 'zones-agregees.json');
+  if(!existsSync(p)) throw new Error('zones-agregees.json introuvable, requis pour ' + cc);
+  const t = (JSON.parse(readFileSync(p, 'utf8')).parCommune || {})[cc];
+  if(!t) throw new Error('aucun regroupement connu pour ' + cc);
+  return Object.keys(t);
+}
+
 const REGIONS = {
   // --- Europe, ajoutee le 2026-09-26 ---
   DE: ['DE-BW','DE-BY','DE-BE','DE-BB','DE-HB','DE-HH','DE-HE','DE-MV',
@@ -89,7 +99,16 @@ const REGIONS = {
        'DK-09','DK-07','DK-10','DK-03','DK-11'],
   IE: ['IE-C','IE-L','IE-M','IE-U'],
   BE: ['BE-BRU','BE-VLG','BE-WAL'],
-  GB: ['GB-ENG', 'GB-SCT', 'GB-WLS', 'GB-NIR'],
+  // Le Royaume-Uni est passe des 4 nations aux 17 regroupements de comtes le 2026-09-26,
+  // et ses anciennes cles ne correspondaient plus a aucune zone de la carte, qui restait
+  // donc vide. Mais on ne peut pas scraper un regroupement : eBird ne connait que ses
+  // propres comtes. La liste des zones SOURCES est donc lue dans zones-agregees.json, et
+  // c'est l'injecteur qui regroupe (cf. agreger() dans inject-exotic-by-region.mjs).
+  // Meme cas pour la Suisse, la Hongrie, la Slovenie et la Lettonie, plus bas.
+  GB: zonesSources('GB'),
+  HU: zonesSources('HU'),
+  SI: zonesSources('SI'),
+  LV: zonesSources('LV'),
   ES: ['ES-AN', 'ES-AR', 'ES-AS', 'ES-CB', 'ES-CE', 'ES-CL', 'ES-CM',
        'ES-CN', 'ES-CT', 'ES-EX', 'ES-GA', 'ES-IB', 'ES-MC', 'ES-MD',
        'ES-ML', 'ES-NC', 'ES-PV', 'ES-RI', 'ES-VC'],
@@ -103,7 +122,7 @@ const REGIONS = {
        'CH-GL','CH-GR','CH-JU','CH-LU','CH-NE','CH-NW','CH-OW','CH-SG',
        'CH-SH','CH-SO','CH-SZ','CH-TG','CH-TI','CH-UR','CH-VD','CH-VS',
        'CH-ZG','CH-ZH'],
-  NO: ['NO-01','NO-02','NO-03','NO-04','NO-05','NO-06','NO-07','NO-08',
+  NO: ['SJ','NO-01','NO-02','NO-03','NO-04','NO-05','NO-06','NO-07','NO-08',
        'NO-09','NO-10','NO-11','NO-12','NO-14','NO-15','NO-16','NO-17',
        'NO-18','NO-19','NO-20'],
   GR: ['GR-A','GR-B','GR-C','GR-D','GR-E','GR-F','GR-G','GR-H','GR-I',

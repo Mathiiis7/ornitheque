@@ -371,8 +371,14 @@ const RATTACHER_NE = {
   NO: { 'NO-18': [{ lon: [-10, -7], lat: [70, 72], vers: 'SJ' }] },
 };
 
+// Ilots si lointains qu ils etirent la boite de leur zone et ecrasent ce qu on voulait
+// montrer. La zone garde TOUTES ses donnees : seul le dessin de ces cailloux est omis.
 const CLIP_LON = {
   'US-HI': { min: -161 },   // ecarte Midway, Kure et le reste de la chaine du Nord-Ouest
+  // Les Selvagens, deux ilots de 2,7 km2 au total, sont a 280 km au sud de Madere : elles
+  // portaient la hauteur de l archipel de 0,62 a 3,08 degres, soit Madere cinq fois plus
+  // petite dans son cadre pour montrer deux points d un pixel.
+  'PT-30': { latMin: 31 },
 };
 
 // Territoires eloignes places en encart (sinon ils etirent la bbox et ecrasent le pays).
@@ -383,7 +389,7 @@ const CLIP_LON = {
 // incliquables. Elles rejoignent donc les encarts, pour la taille et non pour la distance.
 const INSETS = {
   US: { 'US-AK': [10, 600, 260, 260], 'US-HI': [285, 720, 170, 145] },
-  PT: { 'PT-20': [650, 80, 330, 190], 'PT-30': [650, 310, 330, 110] },
+  PT: { 'PT-20': [650, 70, 330, 185], 'PT-30': [650, 300, 330, 175] },
   ES: { 'ES-CN': [650, 575, 330, 160],
         'ES-CE': [672, 800, 92, 64], 'ES-ML': [868, 800, 92, 64] },
   NZ: { 'NZ-CI': [780, 20, 200, 160] },
@@ -602,9 +608,11 @@ function buildCountry(features, cc){
     if(!byCode[code]) continue;
     const avant = byCode[code].length;
     byCode[code] = byCode[code].filter(ring => {
-      const lons = ring.map(p => p[0]);
+      const lons = ring.map(p => p[0]), lats = ring.map(p => p[1]);
       if(fenetre.min != null && Math.max(...lons) < fenetre.min) return false;
       if(fenetre.max != null && Math.min(...lons) > fenetre.max) return false;
+      if(fenetre.latMin != null && Math.max(...lats) < fenetre.latMin) return false;
+      if(fenetre.latMax != null && Math.min(...lats) > fenetre.latMax) return false;
       return true;
     });
     clipped += avant - byCode[code].length;
