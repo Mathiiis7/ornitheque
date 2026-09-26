@@ -3,7 +3,7 @@
 //   puis rafraichit en background. Prochain reload = nouvelle version.
 // - Requetes cross-origin (Firestore, iNaturalist, xeno-canto, Wikipedia, etc.) : reseau seul.
 // - Bump CACHE_VERSION quand on veut invalider volontairement.
-const CACHE_VERSION = 'v601-2026-09-27-infobulle-des-statuts-sans-exemples-francais';
+const CACHE_VERSION = 'v602-2026-09-27-detail-du-calcul-trois-lignes';
 const CACHE_NAME = 'lmb-' + CACHE_VERSION;
 
 // Cache des fichiers de donnees, volontairement SANS CACHE_VERSION dans son nom.

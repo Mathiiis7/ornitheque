@@ -13413,42 +13413,16 @@ function _renderSpeciesRarityCard(key){
         : stSecours
         ? "Aucun bar chart eBird pour cette espèce dans ce pays. Le palier vient du modèle Status &amp; Trends de Cornell, seule source disponible."
         : "Aucune donnée de fréquence dans le bar chart eBird " + esc(cc) + ". L'espèce y est signalée mais trop peu notée pour être agrégée.";
-      // Le tier repose sur la moyenne annuelle ponderee, insensible a la saison : c'est ce
-      // qui le rend comparable entre pays. Mais 325 des 480 especes francaises ont un pic
-      // au moins deux fois superieur a cette moyenne, et 179 au moins trois fois. Un
-      // Gobemouche noir classe "Assez commun" (2,6 % sur l'annee) est en fait plus facile
-      // qu'un Pigeon biset si on sort en septembre : 14,5 % contre 20,3 %.
-      //
-      // Plutot que de tordre le tier pour dire deux choses a la fois, on affiche la seconde
-      // a cote. Le graphique de saisonnalite donne le detail, cette ligne donne le resume.
+      // Le panneau ne parle plus du pic : le graphique juste au-dessus montre l'annee entiere
+      // barre par barre, et la colonne des mois donne le palier de chacun. Une phrase qui
+      // redit « Mais 12 % en mai » sous un dessin qui le montre n'ajoute rien.
       const m12Pays = (regCC && regCC.monthly) ? regCC.monthly()[k] : null;
       const pct = x => x >= 0.1 ? Math.round(x*100)+_PCT : x >= 0.01 ? _fr((x*100).toFixed(1))+_PCT : _fr((x*100).toFixed(2))+_PCT;
-      // La valeur annuelle sort du bloc saisonnier : c'est elle que le panneau doit donner
-      // en premier. Il decrivait la mesure sans jamais l'afficher, et il fallait aller lire
-      // l'en-tete de « Où et quand la trouver » pour savoir de quel chiffre on parlait.
+      // La valeur annuelle, que le panneau donne en premier. Il decrivait la mesure sans
+      // jamais l'afficher, et il fallait aller lire l'en-tete de « Où et quand la trouver »
+      // pour savoir de quel chiffre on parlait.
       const valeurAnnuelle = (Array.isArray(m12Pays) && m12Pays.length === 12)
         ? _valeurAnnuelleZone(m12Pays, cc) : 0;
-      let noteSaison = '';
-      if(Array.isArray(m12Pays) && m12Pays.length === 12){
-        const annuel = valeurAnnuelle;
-        let pic = 0, moisPic = -1;
-        m12Pays.forEach((v, i) => { if((v || 0) > pic){ pic = v; moisPic = i; } });
-        // Deux conditions, qui repondent a deux objections differentes :
-        //   - sous x2, la saison ne change rien d'utile ;
-        //   - sous 0,5 % au pic, la phrase "viser le bon mois change tout" est fausse :
-        //     meme au meilleur moment l'espece reste hors de portee, et on affichait des
-        //     lignes du type "0,01 % sur l'annee, mais 0,05 % en novembre". Le critere se
-        //     lit seul (au mieux, une liste sur 200 la signale) et n'a pas besoin de
-        //     parler de paliers : sur 446 notes, il en retire 287, dont 240 des 241 qui
-        //     concernaient un tier 9 ou 10.
-        if(annuel > 0 && moisPic >= 0 && pic >= _PIC_MINI_SAISON && pic / annuel >= 2){
-          // La valeur annuelle est donnee juste au-dessus : cette ligne n'a plus qu'a dire
-          // le pic. Elle repetait « X % sur l'annee, mais Y % en mai » deux lignes apres
-          // le X %.
-          noteSaison = `Mais <b>${pct(pic)} en ${_MOIS_COURTS[moisPic]}</b>, sa meilleure période.`
-            + (_estSaisonniere(m12Pays, annuel) ? ` Espèce nettement saisonnière : viser le bon mois change tout.` : '');
-        }
-      }
       // Regularite : sur combien des 8 annees de la fenetre l'espece a ete observee dans ce
       // pays. C'est le critere qui decide de son entree au catalogue, il a sa place ici.
       const annees = (typeof ANNEES_PRESENCE === 'object' && ANNEES_PRESENCE[cc])
@@ -13469,11 +13443,6 @@ function _renderSpeciesRarityCard(key){
       let concret = '';
       if(valeurAnnuelle >= 0.02) concret = ` Sur 100 sorties prises au hasard dans l'année, environ <b>${Math.round(valeurAnnuelle*100)}</b> la verront.`;
       else if(valeurAnnuelle > 0) concret = ` Environ <b>une sortie sur ${fmt(Math.round(1/valeurAnnuelle))}</b> la voit.`;
-      // Pourquoi la moyenne est ponderee. Mis a part, en retrait : c'est une precaution de
-      // methode, pas ce qu'on vient lire.
-      const nuance = ccBarTier
-        ? `<div style="margin-top:6px; opacity:.75;">Les périodes où l'on observe beaucoup pèsent d'autant dans ce calcul, mai plus que décembre : on cherche la chance réelle, pas une moyenne de saisons.</div>`
-        : '';
       // Un titre court par bloc, et le bloc repond. L'ancien panneau enchainait quatre
       // paragraphes de meme graisse ou rien ne disait lequel repondait a quoi. Les corps
       // sont a 12 px : a 11 ils se lisaient comme des notes de bas de page, alors que
@@ -13492,7 +13461,7 @@ function _renderSpeciesRarityCard(key){
         <details style="margin-top:6px;">
           <summary style="cursor:pointer;font-size:12.5px;color:var(--ink-3);user-select:none;padding:2px 0;">▸ Détails du calcul</summary>
           <div style="padding:2px 0 6px 4px;border-left:2px solid var(--line);margin:4px 0 2px 6px;padding-left:11px;">
-            ${bloc('Fréquence', (chiffre ? `<div style="margin-bottom:5px;">${chiffre}</div>` : '') + note + concret + (noteSaison ? `<div style="margin-top:6px;">${noteSaison}</div>` : '') + nuance)}
+            ${bloc('Fréquence', (chiffre ? `<div style="margin-bottom:5px;">${chiffre}</div>` : '') + note + concret)}
             ${bloc('Régularité', noteAnnees)}
             ${bloc('Source', source)}
           </div>
