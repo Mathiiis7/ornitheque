@@ -1333,11 +1333,13 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     border-radius:12px; font-size:24px; padding:0 0 2px; }
   /* Les filtres de statut exotique prennent le jeton rond du birdydex : ils ne designent
      pas un palier de l'echelle mais d'ou sort l'oiseau, et la forme le dit avant la
-     lecture. 22 px, la hauteur des autres pastilles de la barre, pour que la rangee reste
-     d'un seul tenant. Pas de boite doublee ici - le truc des marges negatives suppose une
-     largeur fixe, et sur un disque le pixel d'arrondi ne se voit pas. */
-  .rar-chip[data-cat] { width:22px; min-width:22px; height:22px; margin:0; transform:none;
-    padding:0; border-radius:50%; font:800 11px/1 system-ui; }
+     lecture. Exactement la taille de .pkdx-exo, la pastille posee sur les vignettes -
+     16 px et 9,5 px de corps : le filtre et ce qu'il filtre se ressemblent, ce qui n'etait
+     pas le cas a 22 px, ou les ronds ecrasaient la rangee. Pas de boite doublee ici : le
+     truc des marges negatives suppose une largeur fixe, et sur un disque le pixel
+     d'arrondi ne se voit pas. */
+  .rar-chip[data-cat] { width:16px; min-width:16px; height:16px; margin:0; transform:none;
+    padding:0; border-radius:50%; font:700 9.5px/1 system-ui; }
   /* Pousse au bout de la rangee, loin de l'echelle de rarete qu'ils ne prolongent pas. */
   .rar-cats { margin-left:auto; display:inline-flex; align-items:center; gap:6px; }
   /* Coche : meme ombre portee que la pastille du birdydex, au lieu du filet du repos. */
@@ -1919,6 +1921,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
        de 7 px. Reduit juste assez pour que les deux respirent ; top:9 le recentre sur la
        pastille de palier, qui ne change pas de taille, elle. */
     .pkdx-card .pkdx-exo { font-size:8px; padding:0 3px; min-width:14px; height:14px; top:9px; }
+    /* Et les filtres suivent la pastille qu ils filtrent, ici comme sur le bureau. */
+    .rar-chip[data-cat] { width:14px; min-width:14px; height:14px; font-size:8px; }
     /* Et le numero rend 4 px de son rembourrage : sans ca les deux se touchaient encore,
        a 0,3 px pres, sur la plus etroite des cartes. */
     .pkdx-card .pkdx-num { padding:1px 4px; } }

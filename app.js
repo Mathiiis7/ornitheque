@@ -3285,9 +3285,15 @@ function _initInfobulle(){
     // offsetWidth/Height et non getBoundingClientRect : ces dernieres sont multipliees par le
     // zoom de la page, alors que innerWidth et style.left ne le sont pas.
     const m = 18, r = { width: box.offsetWidth, height: box.offsetHeight };
-    // Pres d'un bord on fait GLISSER la boite pour la rentrer dans l'ecran. La renvoyer de
-    // l'autre cote du curseur, comme au debut, l'expediait a deux cents pixels du survol.
-    const x = Math.min(dernier.clientX + m, innerWidth - 8 - r.width);
+    // Pres du bord droit on repasse la boite a GAUCHE du curseur, comme on la repasse
+    // au-dessus pres du bas. La faire glisser le long du bord, ce qu'elle faisait avant,
+    // l'emmenait a deux cents pixels de ce qu'on survolait des lors que le texte etait
+    // long : les filtres X / P / N, tout a droite de la barre du birdydex, affichaient
+    // ainsi « Naturalise (N) » au-dessus des filtres de milieu. Le glissement ne sert plus
+    // que de dernier recours, si meme a gauche la boite ne tient pas.
+    let x = dernier.clientX + m;
+    if(x + r.width > innerWidth - 8) x = dernier.clientX - m - r.width;
+    x = Math.min(x, innerWidth - 8 - r.width);
     let y = dernier.clientY + m;
     if(y + r.height > innerHeight - 8) y = dernier.clientY - m - r.height;
     box.style.left = Math.max(8, x).toFixed(1) + 'px';
