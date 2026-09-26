@@ -16899,7 +16899,15 @@ function _pkdxRender(){
     // provisoires et des echappes isoles, et que le statut du coin depend de la region.
     const catsZones = cat ? exoticCategoriesInCountry(r.sci, country) : [];
     const cats = cat ? (catsZones.length ? catsZones : [cat]) : [];
-    const exoLbl = cats.map(c => `${EXOTIC_CATEGORY_LABEL[c] || 'Exotique ' + c} (${c})`).join(' · ');
+    // Une pastille RONDE PAR STATUT, pas un « N/X » soude. Soude, il se lisait comme un
+    // seul jeton portant un nom bizarre, et sa forme de gelule le detachait du reste des
+    // pastilles de l'app, toutes rondes. Separe, chaque rond porte sa propre infobulle :
+    // on survole le N pour savoir ce qu'est un N, sans devoir demeler une bulle commune.
+    const exoChips = cats.map(c => {
+      const tip = `${EXOTIC_CATEGORY_LABEL[c] || 'Exotique ' + c} (${c})`
+        + (cats.length > 1 ? ' — un des statuts de l’espèce dans le pays, il change selon la région' : '');
+      return `<span class="pkdx-exo" data-tip="${esc(tip)}">${c}</span>`;
+    }).join('');
     // Pas d'infobulle pour dire « Palier 4 » sur une pastille qui affiche deja 4, et pas le
     // statut exotique non plus : il se lit sur la puce d'a cote, qui porte deja sa propre
     // infobulle. Le repeter ici faisait sortir la meme bulle a deux endroits voisins.
@@ -16914,7 +16922,7 @@ function _pkdxRender(){
     return `<div class="pkdx-card${r.owned?'':' missing'}" data-sci="${esc(r.sci)}">
       <span class="pkdx-num">#${num}</span>
       ${r.saison ? `<span class="pkdx-saison" data-tip="Espèce nettement saisonnière : elle déserte une bonne partie de l'année. Viser le bon mois change tout.">◑</span>` : ''}
-      ${cats.length ? `<span class="pkdx-exo" data-tip="${esc(exoLbl)}${cats.length > 1 ? ' — le statut change selon la région' : ''}">${cats.join('/')}</span>` : ''}
+      ${cats.length ? `<span class="pkdx-exos">${exoChips}</span>` : ''}
       <span class="pkdx-tier" style="background:${fondBadge};"${infoPastille ? ` data-tip="${infoPastille}"` : ''}>${badgeText}</span>
       <div class="pkdx-img"${photoConnue ? '' : ` data-pkdx-lazy="${esc(r.sci)}"`}>${photoConnue
         ? `<img loading="lazy" src="${esc(photoConnue)}" alt="${esc(r.nm)}" onerror="this.parentElement.textContent='🐦'">`

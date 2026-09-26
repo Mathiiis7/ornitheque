@@ -1947,10 +1947,14 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      photo - le cou du Cygne tubercule disparaissait derriere un « N/P/X ». En haut, elle
      reste dans la bande deja occupee par le numero et la pastille. right:30px = les 6px de
      la pastille + ses 20px + 4px de filet ; top:8px la centre sur elle. */
-  .pkdx-card .pkdx-exo { position:absolute; top:8px; right:30px; font:700 9.5px/1 system-ui;
-    color:#fff; background:#7e8a99; border-radius:999px; min-width:16px;
-    height:16px; padding:0 5px; display:grid; place-items:center;
-    z-index:2; cursor:help; }
+  /* Une espece peut porter jusqu a TROIS statuts dans un meme pays - le Colvert est N, X
+     et P selon la region, et 24 couples pays/espece sont dans ce cas. Chacun a son rond ;
+     la rangee les aligne de droite a gauche depuis la pastille de palier. */
+  .pkdx-card .pkdx-exos { position:absolute; top:8px; right:30px; z-index:2;
+    display:flex; flex-wrap:wrap; justify-content:flex-end; gap:3px; }
+  .pkdx-card .pkdx-exo { font:700 9.5px/1 system-ui;
+    color:#fff; background:#7e8a99; border-radius:50%; width:16px;
+    height:16px; display:grid; place-items:center; cursor:help; }
   .pkdx-card .pkdx-img { width:100%; aspect-ratio:1/1; background:var(--surface-2); border-radius:8px; overflow:hidden; margin-bottom:6px; display:grid; place-items:center; color:var(--ink-3); font-size:28px; }
   .pkdx-card .pkdx-img img { width:100%; height:100%; object-fit:cover; display:block; }
   .pkdx-card .pkdx-name { font:600 12.5px system-ui; color:var(--ink); text-align:center; line-height:1.25; word-wrap:break-word; }
@@ -1966,10 +1970,13 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .pkdx-card.missing .pkdx-tier,
   .pkdx-card.missing .pkdx-exo { opacity:.4; filter:grayscale(.5); }
   @media (max-width:600px){ .pkdx-grid { grid-template-columns:repeat(auto-fill, minmax(105px, 1fr)); gap:8px; } .pkdx-card { padding:6px 6px 8px; }
-    /* Sur une carte de 105 px, un « N/P/X » en taille bureau mordait sur le numero d espece
-       de 7 px. Reduit juste assez pour que les deux respirent ; top:9 le recentre sur la
-       pastille de palier, qui ne change pas de taille, elle. */
-    .pkdx-card .pkdx-exo { font-size:8px; padding:0 3px; min-width:14px; height:14px; top:9px; }
+    /* Sur une carte de 105 px, les ronds en taille bureau mordent sur le numero d espece.
+       Reduits juste assez pour que les deux respirent ; top:9 les recentre sur la pastille
+       de palier, qui ne change pas de taille, elle. Et la rangee est bornee a deux ronds :
+       au troisieme - le cas du Colvert - elle passe a la ligne plutot que d aller couvrir
+       le numero. */
+    .pkdx-card .pkdx-exos { top:9px; gap:2px; max-width:30px; }
+    .pkdx-card .pkdx-exo { font-size:8px; width:14px; height:14px; }
     /* Et les filtres suivent la pastille qu ils filtrent, ici comme sur le bureau. */
     .rar-chip[data-cat] { width:14px; min-width:14px; height:14px; font-size:8px; }
     /* Et le numero rend 4 px de son rembourrage : sans ca les deux se touchaient encore,
