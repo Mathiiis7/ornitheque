@@ -1182,6 +1182,20 @@ function _openCountryPicker(currentCode, opts = {}){
         grouped[cont].sort((a, b) => (absentOf(a) - absentOf(b)) || (b.aff - a.aff)
           || (rarityForCountry(focusSci, a.cc) - rarityForCountry(focusSci, b.cc)));
       }
+    } else {
+      // Sans espece ciblee - ouverture depuis le birdydex - la liste ne sert plus a
+      // comparer mais a TROUVER un pays. On la classe donc par nom, ce que le champ de
+      // recherche juste au-dessus laisse attendre.
+      //
+      // Elle suivait jusqu'ici l'ordre dans lequel les pays ont ete ajoutes au code, qui
+      // ne dit rien a personne : le Montenegro tenait la deuxieme ligne parce qu'il fut
+      // le deuxieme pays du projet. La France garde la premiere, elle, parce qu'elle est
+      // le pays par defaut de l'application.
+      for(const cont in grouped){
+        grouped[cont].sort((a, b) =>
+          (a.cc === 'FR' ? -1 : b.cc === 'FR' ? 1 : 0)
+          || (COUNTRIES_REG[a.cc].name || a.cc).localeCompare(COUNTRIES_REG[b.cc].name || b.cc, 'fr'));
+      }
     }
     const backdrop = document.createElement('div');
     backdrop.className = 'cp-modal-backdrop';
