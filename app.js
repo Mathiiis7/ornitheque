@@ -12369,9 +12369,9 @@ async function _renderExoticMap(sci, cc){
              : `Sauvage en ${(COUNTRIES_REG[cc] && COUNTRIES_REG[cc].name) || cc}, exotique dans ${nZonesTaggees} ${zoneWord}${nZonesTaggees > 1 ? 's' : ''} (eBird)`}
       </summary>
       <div class="sm-fold-corps">
-        <svg viewBox="${_viewBoxCarte(cc, paths)}" style="${_styleCarte(cc, paths)}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Statut exotique par ${zoneWord}">
+        <div style="${_COLONNE_CARTE}"><svg viewBox="${_viewBoxCarte(cc, paths)}" style="${_styleCarte(cc, paths)}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Statut exotique par ${zoneWord}">
           ${svgZones}
-        </svg>
+        </svg></div>
         <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:8px; font-size:11px; color:var(--ink-2); justify-content:center;">
           ${legendItem('#22c55e','N Établi')}
           ${legendItem('#f59e0b','P Provisoire')}
@@ -12569,6 +12569,11 @@ function _viewBoxCarte(cc, paths){
 // s'etale, le Royaume-Uni monte. Les deux plafonds evitent les extremes - une carte qui
 // prendrait toute la largeur de la fiche, ou une colonne trop haute pour tenir a l'ecran
 // a cote du selecteur de mois.
+// La COLONNE qui porte la carte garde une largeur fixe, quel que soit le pays. Sans elle,
+// la largeur de la carte - qui depend de la forme du pays - remontait jusqu au panneau, et
+// la fiche de la Pologne n avait pas la meme largeur que celle de l Allemagne. La carte,
+// elle, continue de prendre la taille qui lui convient, centree dans cette colonne.
+const _COLONNE_CARTE = 'flex:1 1 560px; min-width:0; max-width:560px; margin:0 auto;';
 const _AIRE_CARTE = 130000;   // px2 vises
 const _LARGEUR_MINI = 320, _LARGEUR_MAXI = 560, _HAUTEUR_MAXI = 420;
 function _styleCarte(cc, paths){
@@ -12992,7 +12997,7 @@ async function _renderRarityMap(sci, cc){
                  que la colonne peut afficher 10 dans un Etat ou il ne passe pas. -->
             <div style="font:700 8.5px/1.3 system-ui; letter-spacing:.4px; text-transform:uppercase; color:var(--ink-3); margin-bottom:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" data-tip="${esc(nomPort)}">${esc(nomPort)}</div>
             ${moisBtns}</div>
-          <div style="flex:1 1 auto; min-width:0;"><svg viewBox="${_viewBoxCarte(cc, paths)}" style="${_styleCarte(cc, paths)}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Rareté par ${zoneWord} sur ${libellePeriode}">
+          <div style="${_COLONNE_CARTE}"><svg viewBox="${_viewBoxCarte(cc, paths)}" style="${_styleCarte(cc, paths)}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Rareté par ${zoneWord} sur ${libellePeriode}">
             ${svgZones}
           </svg></div>
           <!-- Colonne fantome de la largeur du selecteur de mois : sans elle, la carte se
