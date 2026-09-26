@@ -12196,7 +12196,7 @@ function _exoticMapFileFor(cc){
     // Les contours sont caches dans lmb-data, qui survit aux changements de version du
     // service worker : sans ce parametre, un visiteur deja venu garderait indefiniment
     // l ancienne Bosnie amputee de sa Republique serbe.
-    : `data/regions-${cc.toLowerCase()}-simplified.json?v=20260926g`;
+    : `data/regions-${cc.toLowerCase()}-simplified.json?v=20260926h`;
 }
 async function _loadExoticMapPaths(cc){
   if(_exoticMapPathsCache[cc] !== undefined) return _exoticMapPathsCache[cc];
@@ -12694,7 +12694,13 @@ function _pathZone(d, fill, titre, estSelectionnee, selectionActive, code, echel
   // Plus d'infobulle sur les zones : la boite recouvrait la carte qu'on etait en train de
   // lire, et la liste juste en dessous donne deja le nom, le pourcentage et le palier de
   // chaque zone. Le parametre `titre` reste pour l'accessibilite.
-  return `<path d="${d}" fill="${fill}" stroke="${stroke}" stroke-width="${largeur}"` +
+  // fill-rule evenodd : une zone qui en enclave une autre doit etre PERCEE. Natural Earth
+  // donne bien le trou - le pays de Vaud a le sien la ou Fribourg pousse ses enclaves
+  // d'Estavayer - mais tous les anneaux arrivent ici a plat dans un meme chemin, et la
+  // regle nonzero ne les annule que si leur sens d'enroulement est correct, ce dont la
+  // source ne garantit rien. Resultat : Vaud remplissait le trou et le meme sol se
+  // retrouvait colore dans deux regions. Evenodd perce quel que soit le sens.
+  return `<path d="${d}" fill="${fill}" fill-rule="evenodd" stroke="${stroke}" stroke-width="${largeur}"` +
          ` stroke-linejoin="round"${opacite}${cliquable} aria-label="${esc(titre)}"></path>`;
 }
 const _MOIS_COURTS = ['janv','févr','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'];

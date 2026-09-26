@@ -368,7 +368,11 @@ const DOUBLONS_NE = {
   // Attention : la cle est la zone TELLE QU ELLE SORT du regroupement. La Suisse etant
   // agregee, les anneaux vaudois sont deja ranges sous CH-R1 (Lemanique) quand ce filtre
   // s applique - chercher 'CH-VD' ne trouvait rien.
-  'CH-R1': [{ lon: [6.74, 6.90], lat: [46.71, 46.78] }],
+  // La Suisse a ete retiree d ici le 2026-09-26 : les anneaux vises n etaient pas des
+  // doublons mais les TROUS que le pays de Vaud creuse autour des enclaves fribourgeoises
+  // d Estavayer. Les supprimer ne donnait pas la parcelle a Fribourg, ca la faisait avaler
+  // par Vaud, qui la dessinait pleine - les deux regions la couvraient donc toujours. Le
+  // trou est desormais respecte a l affichage (fill-rule evenodd dans _pathZone).
 };
 
 // Anneaux a DEPLACER d une zone vers une autre, par pays. A distinguer de CLIP_LON, qui
