@@ -2181,7 +2181,16 @@ function rarityForCountry(sci, country){
       // affichera "Absente du bar chart" plutot que "Parc semi-libre" qui est trompeur).
       return 0;
     }
-    if(isParkOnlyExotic(sci)) return 0;
+    // X, C, oiseaux de parc : leur palier se lit sur le bar chart du pays, comme celui de
+    // tout le monde. Le zero force les peignait en gris « hors bareme », ce qui ne
+    // renseignait sur rien - un Paon bleu note sur les listes franciliennes au meme rythme
+    // qu'un oiseau sauvage de palier 8 n'est pas plus introuvable que lui. Le palier dit la
+    // difficulte a le rencontrer, pas s'il compte : ils restent hors du CLASSEMENT, ou
+    // _countsForRarity ecarte tous les exotiques quel que soit leur palier.
+    //
+    // Reste a zero ce qui n'a vraiment aucune mesure : 18 especes en France, signalees par
+    // eBird mais sans une seule ligne de bar chart.
+    if(barTier) return barTier;
     return 0;
   }
   // Sauvages. Depuis le 2026-09-23 le bar chart eBird est la SEULE source du tier quand il
@@ -13341,7 +13350,6 @@ function _renderSpeciesRarityCard(key){
       // Meme sans tier, on dit ce qu'on sait : sur combien d'annees l'espece a ete notee
       // ici. Un « Pas de calibration » seul laissait l'utilisateur sans explication, alors
       // que c'est souvent le fait d'une accidentelle vue une ou deux fois en huit ans.
-      const nomPays = (COUNTRIES_REG[cc] && COUNTRIES_REG[cc].name) || cc;
       const an = (typeof ANNEES_PRESENCE === 'object' && ANNEES_PRESENCE[cc])
         ? (ANNEES_PRESENCE[cc][k] != null ? ANNEES_PRESENCE[cc][k]
            : ANNEES_PRESENCE[cc][(typeof SCI_ALIAS === 'object' && SCI_ALIAS[k]) || k])
@@ -13368,35 +13376,6 @@ function _renderSpeciesRarityCard(key){
           ? (isEstab ? ((typeof REAL_LABELS === 'object' && REAL_LABELS[w]) || ('niveau '+w)) : 'Exotique')
           : ((typeof REAL_LABELS === 'object' && REAL_LABELS[w]) || ('niveau '+w)));
     const color = realColor(w);
-    const country = avail.find(c => c.code === cc) || avail[0];
-    // Flag : taille fixe + width/height HTML attrs pour eviter le layout shift au load
-    // (image loading=lazy sinon zero-size initial puis pop-in). Remove aussi loading=lazy
-    // pour le charger direct avec la fiche.
-    const flgFixed = (country.flag||'')
-      .replace(' loading="lazy"', '')
-      .replace('<img ', '<img width="19" height="14" style="height:14px;width:19px;object-fit:cover;object-position:center;vertical-align:middle;border-radius:2px;margin-right:9px;box-shadow:0 0 0 1px rgba(0,0,0,.08);flex-shrink:0;" ');
-    // La grosse pastille porte TOUJOURS le palier, comme sur la vignette du birdydex. Elle
-    // affichait la lettre du statut a la place pour les exotiques etablis, si bien que la
-    // meme espece montrait « N » ici et « 4 » la-bas, et que la seule chose qu'une pastille
-    // de palier doit dire - le palier - manquait. La lettre a maintenant son propre rond
-    // gris, juste apres le libelle.
-    const pillTxt = w;
-    // Couleur du palier, sans exception : realColor(0) rend deja un gris neutre pour les
-    // « hors bareme ». Le gris force ici etait celui des jetons exotiques, ce qui faisait
-    // passer la pastille de palier pour l'un d'eux - maintenant qu'ils ont leur propre
-    // rond a cote, la confusion n'a plus lieu d'etre.
-    const pillBg = color;
-    // La pastille commune, comme partout ailleurs. Elle avait ici sa propre taille - 48 px
-    // de large, 15 px de police - pour que la position du libelle ne bouge pas entre un
-    // « X » et un « 10 ». Le format unique prime : l'ecart restant entre un et deux
-    // caracteres est de quelques pixels, et il ne se voit qu'en comparant deux fiches.
-    // Ici, et ici seulement, la pastille prend la forme ronde du birdydex : c'est la meme
-    // espece vue a deux endroits, autant qu'elle porte le meme jeton. Les filtres et les
-    // listes gardent le carre, ou les pastilles s'alignent en colonnes.
-    // Les 8 px de marge repondent aux 8 px du drapeau : le rond tombe a egale distance
-    // du drapeau et du libelle.
-    const pill = '<span style="margin-right:8px; flex-shrink:0; display:inline-flex; align-items:center;">'
-      + tierChip(pillTxt, pillBg, { title: 'palier ' + w, cls: 'tier-rond' }) + '</span>';
     // Le statut exotique prend le MEME rond gris de 16 px que sur les vignettes du
     // birdydex (.pkdx-exo), pose entre le libelle de rarete et le nom du statut : la meme
     // espece porte ainsi le meme jeton aux deux endroits. C'etait une petite gelule grise
@@ -13417,9 +13396,6 @@ function _renderSpeciesRarityCard(key){
         <div style="margin-top:7px;opacity:.85;">Source : les icônes exotiques des bar charts eBird.</div>
       </span>
     </span>` : '';
-    // Sans le point median : il separait le libelle de rarete du nom du statut, mais le
-    // rond gris s'est glisse entre les deux et fait deja la separation.
-    const catBadge = catLbl ? `<span style="font-size:12px;color:var(--ink-3);margin-left:8px;">${esc(catLbl)}${catHelpTip}</span>` : '';
     // Style pur pour le tooltip au hover (une seule fois, ajoute au head)
     if(cat && !document.getElementById('cat-help-style')){
       const st = document.createElement('style');
@@ -16373,6 +16349,9 @@ if(_pkdxFilters.habitat && typeof HABITAT_CATS !== 'undefined' && !HABITAT_CATS.
 // Rarete filtree via chips (Set des tiers EXCLUS). Coche = affiche, decoche = cache.
 var _pkdxTierExcl = new Set();
 try{ const s = localStorage.getItem('mb-pkdx-tier-excl'); if(s) _pkdxTierExcl = new Set(JSON.parse(s)); }catch(_){}
+// Le palier 0 n'a plus de pastille pour le rallumer : s'il trainait dans un reglage
+// enregistre, les especes sans donnee de frequence resteraient cachees pour toujours.
+_pkdxTierExcl.delete(0);
 // Filtres categorie exotique (N/P/X) : Set des lettres ACTIVES. Ex : {'N'} = affiche
 // UNIQUEMENT les Naturalises. Vide = pas de filtre cat, on utilise le filtre tier.
 // Mutuellement exclusif avec les chips numeriques : clic sur un cat -> decoche tous les
@@ -16446,7 +16425,7 @@ function renderPokedex(){
           saveState(); _pkdxRender(); return;
         }
         if(e.target.matches('[data-tier-none]')){
-          _pkdxTierExcl = new Set([0,1,2,3,4,5,6,7,8,9,10]);
+          _pkdxTierExcl = new Set([1,2,3,4,5,6,7,8,9,10]);
           _pkdxCatSelected = new Set();
           saveState(); _pkdxRender(); return;
         }
@@ -16464,7 +16443,7 @@ function renderPokedex(){
             if(toutesCochees) _pkdxCatSelected.delete(c); else _pkdxCatSelected.add(c);
           }
           if(wasEmpty && _pkdxCatSelected.size > 0){
-            _pkdxTierExcl = new Set([0,1,2,3,4,5,6,7,8,9,10]);
+            _pkdxTierExcl = new Set([1,2,3,4,5,6,7,8,9,10]);
           } else if(!wasEmpty && _pkdxCatSelected.size === 0){
             _pkdxTierExcl = new Set();
           }
@@ -16889,16 +16868,17 @@ function _pkdxRender(){
   // Rendu des chips rareté : style unifie avec le filtre carte (.rar-chip compact).
   const chipsBox = document.getElementById('pkdxTierChips');
   if(chipsBox){
-    // Chips tier : 0 (exotique X/C/park-only) + 1-10. Le chip 0 sert a EXCLURE les
-    // exotiques du mode normal (browsing tous les tiers). Le chip X plus bas fait
-    // l'inverse : afficher UNIQUEMENT les exotiques (mode inclusif exclusif).
+    // Les paliers 1 a 10. Le 0 n'a plus de rangee : il servait a ecarter les exotiques,
+    // qui y etaient tous parques ; ils portent maintenant leur vrai palier, et les trois
+    // pastilles N / P / X juste a cote font ce tri-la bien mieux. Ce qui reste au 0 n'est
+    // plus une famille d'oiseaux mais un manque de donnees, que personne ne vient filtrer.
     // Quand un cat est actif (_pkdxCatSelected non vide), les tier chips sont visuellement
     // desactives (gris) car le filtre cat prime.
     const catActive = _pkdxCatSelected.size > 0;
-    const tiersPresent = [...new Set(_pkdxAllSorted.map(r => r.tier))].filter(t => t != null).sort((a, b) => a - b);
+    const tiersPresent = [...new Set(_pkdxAllSorted.map(r => r.tier))].filter(t => t != null && t !== 0).sort((a, b) => a - b);
     const chipsHtml = tiersPresent.map(t => {
       const on = !catActive && !_pkdxTierExcl.has(t);
-      const lbl = (typeof REAL_LABELS === 'object' && REAL_LABELS[t]) || (t === 0 ? 'Exotique (parc / échappé)' : 'tier '+t);
+      const lbl = (typeof REAL_LABELS === 'object' && REAL_LABELS[t]) || ('palier ' + t);
       const color = realColor(t);
       const bgStyle = on ? `background:${color};` : '';
       return `<button type="button" class="rar-chip${on?' on':''}" data-tier="${t}" style="${bgStyle}" title="${esc(lbl)}">${t}</button>`;
