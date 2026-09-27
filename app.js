@@ -1308,7 +1308,7 @@ function _openCountryPicker(currentCode, opts = {}){
             // de 16 px, le meme qu'ailleurs, pose AVANT le pourcentage : elle dit d'ou sort
             // l'oiseau, pas s'il est facile a voir, et les deux ne se remplacent pas.
             const exoChip = chipCat
-              ? '<span class="pkdx-exo" data-tip="' + esc((EXOTIC_CATEGORY_LABEL[chipCat] || 'Exotique ' + chipCat) + ' (' + chipCat + ')') + '">' + chipCat + '</span>'
+              ? jetonExo(chipCat)
               : '';
             // Nouveau format : label texte AVANT le chip numero pour que les chips
             // soient tous alignes a droite (ex: "Rare [7]"). Absent = pas de chip.
@@ -2485,6 +2485,24 @@ const REAL_LABELS={0:'Parc semi-libre',1:'Omniprésent',2:'Très commun',3:'Comm
 // fiche, le birdydex, les badges pays. Le texte n'est pas toujours un chiffre (les
 // exotiques affichent leur categorie N/P/X/C, une zone sans donnee un tiret), d'ou le
 // premier argument libre.
+// Le centrage horizontal des glyphes est laisse au navigateur, apres une tentative de le
+// corriger qui a echoue - et dont l'echec vaut d'etre garde en memoire.
+//
+// Le navigateur centre la CHASSE d'un caractere, pas son encre. Mesure sur les quinze
+// glyphes que portent ces jetons, l'ecart entre les deux va de -0,20 a +0,42 px : les
+// « 0 6 7 8 9 » tombent 0,34 px a droite, le « 4 » 0,20 px a gauche, le « 2 3 5 » presque
+// au centre - ce qui explique qu'on voie le 5 bien pose et les autres non.
+//
+// Corriger glyphe par glyphe suppose de mesurer l'encre. Le canvas sait le faire, et sa
+// mesure retombait juste sur treize glyphes sur quinze ; mais sur le « N » et le « X »,
+// parfaitement centres a l'ecran, il annoncait 0,25 px d'ecart et la correction les
+// decentrait. En cause : a 9,5 px de corps, actualBoundingBox revient quantifie sur la
+// grille de pixels. Et la mesurer en grand pour eviter la quantification ne marche pas
+// davantage - l'ecart ne vient pas du dessin de la fonte, qui est presque symetrique, mais
+// du calage du glyphe sur les pixels A CETTE TAILLE. Aucune API ne le donne.
+//
+// On garde donc ce que le navigateur fait, et le residu reste sous le demi-pixel. Le
+// centrage VERTICAL, lui, est corrige et exact : cf. le rembourrage de .tier-chip.tier-rond.
 function tierChip(texte, couleur, opts){
   const o = opts || {};
   const cls = 'tier-chip' + (o.cls ? ' ' + o.cls : '');
@@ -2492,6 +2510,16 @@ function tierChip(texte, couleur, opts){
   // servait jusqu'ici.
   const t = o.title ? ' data-tip="' + esc(o.title) + '" aria-label="' + esc(o.title) + '"' : '';
   return '<span class="' + cls + '" style="background:' + couleur + ';"' + t + '>' + texte + '</span>';
+}
+// Le rond gris du statut exotique, ecrit au meme endroit pour les trois qui l'affichent :
+// la vignette du birdydex, la ligne de zone du selecteur, et l'entete de la fiche. Il etait
+// recopie a la main aux trois, et le centrage optique aurait eu a l'etre aussi.
+function jetonExo(cat, opts){
+  const o = opts || {};
+  const tip = o.tip != null ? o.tip
+    : ((typeof EXOTIC_CATEGORY_LABEL === 'object' && EXOTIC_CATEGORY_LABEL[cat]) || ('Exotique ' + cat)) + ' (' + cat + ')';
+  return '<span class="pkdx-exo"' + (o.style ? ' style="' + o.style + '"' : '')
+    + ' data-tip="' + esc(tip) + '">' + esc(cat) + '</span>';
 }
 function realColor(w){
   if(w === 0) return 'hsl(0 0% 55%)';    // tier 0 (parcs semi-libres) -> gris neutre
@@ -13520,7 +13548,9 @@ function _renderSpeciesRarityCard(key){
     // birdydex (.pkdx-exo), pose entre le libelle de rarete et le nom du statut : la meme
     // espece porte ainsi le meme jeton aux deux endroits. C'etait une petite gelule grise
     // a l'ancienne largeur variable.
-    const catMiniPill = (isExo && cat) ? `<span class="pkdx-exo" style="margin-left:10px; flex-shrink:0;" data-tip="${esc(catLbl ? catLbl + ' (' + cat + ')' : cat)}">${cat}</span>` : '';
+    const catMiniPill = (isExo && cat)
+      ? jetonExo(cat, { style: 'margin-left:10px; flex-shrink:0;', tip: catLbl ? catLbl + ' (' + cat + ')' : cat })
+      : '';
     // Icone "?" avec tooltip explicatif : remplace l'ancien depliant. Petit cercle
     // avec point d'interrogation apres le label categorie ; survole = tooltip.
     // Le tooltip est en CSS pur via :hover sur .cat-help-wrap.
@@ -17052,7 +17082,7 @@ function _pkdxRender(){
     const exoChips = cats.map(c => {
       const tip = `${EXOTIC_CATEGORY_LABEL[c] || 'Exotique ' + c} (${c})`
         + (cats.length > 1 ? ' — un des statuts de l’espèce dans le pays, il change selon la région' : '');
-      return `<span class="pkdx-exo" data-tip="${esc(tip)}">${c}</span>`;
+      return jetonExo(c, { tip });
     }).join('');
     // Pas d'infobulle pour dire « Palier 4 » sur une pastille qui affiche deja 4, et pas le
     // statut exotique non plus : il se lit sur la puce d'a cote, qui porte deja sa propre
