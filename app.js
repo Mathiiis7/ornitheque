@@ -13391,6 +13391,11 @@ function _renderSpeciesRarityCard(key){
     // Mois choisi sur la carte : la liste bascule dessus, sinon elle reste sur l annuel.
     // Les deux doivent dire la meme chose, sans quoi la carte colore un departement en vert
     // pendant que la liste le donne rouge juste en dessous.
+    // eBird classe le statut exotique zone par zone : une espece naturalisee dans un coin
+    // peut n'etre qu'une echappee dans le suivant. La lettre se pose donc sur la ligne de
+    // la zone, comme elle se pose sur celle du pays. Une seule, ici : une zone n'a qu'un
+    // statut, la ou un pays en cumule parfois trois.
+    const statutsZone = (typeof _exoticStatusByZone === 'function') ? (_exoticStatusByZone(cc) || {}) : {};
     const mm = window._smRarityMapMonth;
     const moisLu = (typeof mm === 'number' && mm >= 0 && mm <= 11) ? mm : null;
     const scored = regList.map(r => {
@@ -13434,8 +13439,10 @@ function _renderSpeciesRarityCard(key){
         : `${s.name} — ${fmt(s.score)} sur l'année` +
           (s.moisPic >= 0 ? ` · jusqu'à ${fmt(s.pic)} en ${_MOIS_COURTS[s.moisPic]}` : '') +
           ` · présente ${s.nbMois} mois sur 12`;
+      const catZone = (statutsZone[s.code] || {})[k] || '';
       return `<div class="reg-picker-item${absent?' absent':''}${s.code===_speciesRegion?' on':''}" data-code="${esc(s.code)}" data-tip="${esc(titre)}">
         <span>${esc(s.name)}</span>
+        <span class="reg-picker-exo">${catZone ? jetonExo(catZone) : ''}</span>
         <span class="reg-picker-val">${esc(val)}</span>
         <div class="reg-picker-bar"><div style="width:${barW}%; color:${col};"></div></div>
         ${tierChip(absent ? '–' : tier, absent ? 'var(--line-2)' : col, { cls: 'tier-rond' })}
@@ -16769,6 +16776,7 @@ function _pkdxLignesZones(cc){
     return '<div class="reg-picker-item' + (n ? '' : ' absent') + (r.code === choisie ? ' on' : '')
       + '" data-code="' + esc(r.code) + '">'
       + '<span>' + esc(r.name) + '</span>'
+      + '<span class="reg-picker-exo"></span>'
       + '<span class="reg-picker-val">' + (n ? n + ' esp.' : '—') + '</span>'
       + '<div class="reg-picker-bar"><div style="width:' + Math.round(n / max * 100) + '%; color:var(--accent);"></div></div>'
       + '<span></span></div>';

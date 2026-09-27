@@ -504,8 +504,12 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      pastille faisait 22 px ; passee a 26, les lignes Pays sont montees a 40 px quand les
      lignes Regions restaient a 36. Avec min-height les deux suivent leur contenu et ne
      peuvent plus diverger. */
-  .reg-picker-item { display:grid; grid-template-columns:minmax(0,1fr) 44px 60px 30px; gap:8px; align-items:center; min-height:36px; padding:7px 10px; cursor:pointer; border-radius:6px; font-size:14px; color:var(--ink); }
+  .reg-picker-item { display:grid; grid-template-columns:minmax(0,1fr) 16px 44px 60px 30px; gap:8px; align-items:center; min-height:36px; padding:7px 10px; cursor:pointer; border-radius:6px; font-size:14px; color:var(--ink); }
   .reg-picker-item > span:first-child { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  /* La case de la lettre, vide ou non : elle existe sur toutes les lignes pour que les
+     pourcentages restent en colonne. Une zone n'a qu'un statut, il n'y a donc jamais plus
+     d'une lettre a loger - contrairement aux lignes de pays, qui en cumulent jusqu'a trois. */
+  .reg-picker-exo { display:flex; align-items:center; justify-content:flex-end; }
   .reg-picker-item:hover { background:var(--surface-2); }
   /* Selection courante : la meme que celle d'un pays (voir .cp-item.on, plus bas, dont
      cette regle partage la declaration). Les deux listes vivent dans le meme modal, une
