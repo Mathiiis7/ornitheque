@@ -12956,6 +12956,14 @@ function _valeurAnnuelleZone(arr, cc, zone){
 // Quelle carte le bloc montre : la rarete par zone, ou le statut exotique. Le choix suit
 // l'utilisateur d'une espece a l'autre, comme le mois choisi.
 function _vueCarte(){ return window._smCarteVue === 'exo' ? 'exo' : 'rarete'; }
+// Quelle carte est REELLEMENT affichee. _smCarteVue dit ce que l'utilisateur a choisi ;
+// mais quand une seule des deux cartes existe, _majOngletsOuQuand affiche celle-la quoi
+// qu'il ait choisi, et il n'y a alors aucun onglet pour le lui dire. C'est le DOM qui
+// tranche - sinon une espece dont on n'a QUE la carte des statuts gardait ses barres.
+function _carteExoAffichee(){
+  const e = document.getElementById('smExoticMap');
+  return !!(e && !e.hidden && e.innerHTML.trim());
+}
 // Le nom de la zone lue. Il etait dans la colonne des mois, ou il ne servait qu'a elle ;
 // il est maintenant dans l'entete du bloc, ou les deux cartes le lisent.
 function _majEnteteOuQuand(nomZone){
@@ -12963,13 +12971,13 @@ function _majEnteteOuQuand(nomZone){
   if(!el) return;
   if(nomZone != null) el.dataset.nom = nomZone;
   const nom = el.dataset.nom || '';
-  const note = (_vueCarte() === 'exo' && window._oqNoteExo)
+  const note = (_carteExoAffichee() && window._oqNoteExo)
     ? `<span class="sm-oq-note-zone">${esc(window._oqNoteExo)}</span>` : '';
   // Le chiffre suit le nom de zone, ici et non dans le titre du panneau : la-haut il
   // fallait redire « Norvege » pour savoir de quoi il parlait, et le nom se lisait alors
   // deux fois a trois lignes d'intervalle. La carte du statut exotique ne mesure rien, le
   // chiffre s'efface avec elle.
-  const score = (_vueCarte() !== 'exo' && window._oqScore) ? window._oqScore : '';
+  const score = (!_carteExoAffichee() && window._oqScore) ? window._oqScore : '';
   // data-tip-coupe : le nom ne se repete en infobulle que si les points de suspension l'ont
   // reellement ampute. « FRANCE » entier n'a rien a apprendre a qui le lit deja.
   el.innerHTML = `<span class="sm-oq-nom" data-tip-coupe="${esc(nom)}">${esc(nom)}</span>`
@@ -13142,20 +13150,27 @@ function _majPanneauOuQuand(){
   const bloc = card.querySelector('.sm-oq-bloc');
   const aCarte = !!(carte && carte.innerHTML.trim());
   const aExo = !!(carteExo && carteExo.innerHTML.trim());
-  const aGraph = !!(graph && !graph.hidden);
+  const aGraph = !!(graph && graph.dataset.plein === '1');
   // Le bloc des cartes disparait quand aucune des deux n'a de quoi s'afficher : sinon son
   // entete flottait au-dessus du vide, avec un nom de zone et rien dessous.
   if(bloc) bloc.hidden = !(aCarte || aExo);
   _majOngletsOuQuand();
+  // Apres les onglets, qui viennent de decider laquelle des deux cartes se montre.
+  // La carte des statuts ne mesure pas une frequence - elle dit d'ou sort l'oiseau. Les
+  // barres, qui sont une frequence, n'ont rien a faire sous elle : elles reviennent avec
+  // l'onglet Rarete.
+  const vueExo = _carteExoAffichee();
+  if(graph) graph.hidden = !aGraph || vueExo;
+  const graphVu = aGraph && !vueExo;
   card.hidden = !(aCarte || aExo || aGraph);
   // Le bloc des cartes et le graphique presents : un seul cadre pour les deux. La CSS ne
   // sait pas regarder en arriere - elle ne peut pas arrondir le bas du premier selon
   // l'etat du second, qui le SUIT - alors la classe le lui dit.
-  card.classList.toggle('oq-deux', (aCarte || aExo) && aGraph);
+  card.classList.toggle('oq-deux', (aCarte || aExo) && graphVu);
   const leg = document.getElementById('smOuQuandLegende');
   if(leg){
     leg.hidden = card.hidden;
-    if(!card.hidden) leg.innerHTML = _legendeOuQuand(aCarte, aGraph, _vueCarte() === 'exo' && aExo);
+    if(!card.hidden) leg.innerHTML = _legendeOuQuand(aCarte, graphVu, vueExo);
   }
 }
 // L'unique legende du panneau. Elle remplace les trois qui coexistaient : la cle des
@@ -14007,8 +14022,11 @@ function _scoreAnnuelLbl(m12, cc, zone){
   const mois = (typeof mm === 'number' && mm >= 0 && mm <= 11) ? mm : null;
   const suffixe = mois == null ? '' : ' en ' + _MOIS_COURTS[mois];
   const v = mois == null ? _valeurAnnuelleZone(m12, cc, zone) : (m12[mois] || 0);
+  // Plus de « · » en tete : le point separait le chiffre du nom de zone quand les deux
+  // vivaient dans le titre du panneau, a la suite. Ils sont maintenant deux elements d'une
+  // meme ligne, espaces par la grille - le point flottait entre eux sans rien separer.
   if(!(v > 0)) return mois == null ? ''
-    : ` · <b style="font-weight:700;color:var(--ink-3);">jamais notée${suffixe}</b>`;
+    : `<b style="font-weight:700;color:var(--ink-3);">jamais notée${suffixe}</b>`;
   // Meme cascade de precision que le pic affiche juste apres : un exotique a 0,006 %
   // ne doit pas s'arrondir a "0 %".
   const t = v >= 0.10   ? String(Math.round(v * 100))
@@ -14021,7 +14039,7 @@ function _scoreAnnuelLbl(m12, cc, zone){
   const tip = mois == null
     ? "Fréquence annuelle pondérée par l'effort d'observation : la part des listes de la zone qui citent l'espèce. C'est elle qui détermine le palier de rareté."
     : "Part des listes de la zone qui citent l'espèce sur ce seul mois.";
-  return ` · <b data-tip="${esc(tip)}" style="font-weight:700;color:var(--ink-2);">${t}${_PCT}${suffixe}</b>`;
+  return `<b data-tip="${esc(tip)}" style="font-weight:700;color:var(--ink-2);">${t}${_PCT}${suffixe}</b>`;
 }
 function _renderSpeciesFreqChart(key, country){
   // `card` est le panneau fusionne, qui porte AUSSI la carte : le graphique n'a donc plus
@@ -14029,7 +14047,13 @@ function _renderSpeciesFreqChart(key, country){
   // _majPanneauOuQuand decider du sort du panneau.
   const wrap = $('#smFreqWrap'), card = $('#smOuQuandCard'), svg = $('#smFreqChart'), srcEl = $('#smFreqSrc');
   const graph = $('#smGraphZone');
-  const montrerGraph = (v) => { if(graph) graph.hidden = !v; _majPanneauOuQuand(); };
+  // `plein` dit si le graphique A quelque chose a montrer, `hidden` s'il le montre. Les
+  // deux ne se confondent plus depuis que l'onglet du statut exotique le masque : sans
+  // cette distinction, revenir sur l'onglet Rarete l'aurait cru vide.
+  const montrerGraph = (v) => {
+    if(graph){ graph.dataset.plein = v ? '1' : '0'; graph.hidden = !v; }
+    _majPanneauOuQuand();
+  };
   if(!svg) return;
   const cc = country || 'FR';
   // Charge les 48 quinzaines du pays si besoin, puis redessine. Le premier rendu se fait
