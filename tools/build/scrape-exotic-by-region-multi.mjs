@@ -109,6 +109,12 @@ const REGIONS = {
   HU: zonesSources('HU'),
   SI: zonesSources('SI'),
   LV: zonesSources('LV'),
+  MK: zonesSources('MK'),
+  MD: zonesSources('MD'),
+  ME: zonesSources('ME'),
+  // Le Luxembourg a garde ses trois districts cote eBird, la ou l'Etat les a supprimes en
+  // 2015 : la fiche affiche exactement les zones d'eBird, aucun regroupement a faire.
+  LU: ['LU-D','LU-G','LU-L'],
   ES: ['ES-AN', 'ES-AR', 'ES-AS', 'ES-CB', 'ES-CE', 'ES-CL', 'ES-CM',
        'ES-CN', 'ES-CT', 'ES-EX', 'ES-GA', 'ES-IB', 'ES-MC', 'ES-MD',
        'ES-ML', 'ES-NC', 'ES-PV', 'ES-RI', 'ES-VC'],
@@ -216,6 +222,20 @@ const ctx = await browser.newContext({
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36',
   locale: 'fr-FR',
 });
+// Cookies d'une vraie session eBird, s'ils sont fournis. Sans eux le scraper repart en
+// visiteur anonyme et retombe sur le mur anti-robot d'Anubis au bout d'une centaine de
+// pages ; avec le jeton anubis deja valide, la session tient plus longtemps.
+// Le fichier contient un secret : il vit HORS du depot et son chemin arrive par
+// EBIRD_COOKIE_FILE, jamais en dur ici.
+if(process.env.EBIRD_COOKIE_FILE && existsSync(process.env.EBIRD_COOKIE_FILE)){
+  const brut = readFileSync(process.env.EBIRD_COOKIE_FILE, 'utf8').trim();
+  const cookies = brut.split(';').map(p => {
+    const i = p.indexOf('=');
+    if(i < 1) return null;
+    return { name: p.slice(0, i).trim(), value: p.slice(i + 1).trim(), domain: '.ebird.org', path: '/' };
+  }).filter(Boolean);
+  if(cookies.length){ await ctx.addCookies(cookies); console.log(`Session eBird chargee : ${cookies.length} cookies.\n`); }
+}
 const page = await ctx.newPage();
 
 // Fetch taxonomy une seule fois
