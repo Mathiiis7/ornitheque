@@ -27,7 +27,7 @@ const modules = [];
 for(const f of readdirSync(__dir).sort()){
   if(!f.endsWith('.mjs') || f.startsWith('_') || f === 'tous.mjs') continue;
   const m = await import(pathToFileURL(join(__dir, f)).href);
-  if(!m.nom || typeof m.html !== 'function') continue;
+  if(!m.nom || (typeof m.html !== 'function' && typeof m.mesure !== 'function')) continue;
   if(filtre.length && !filtre.includes(m.nom)) continue;
   modules.push(m);
 }
@@ -46,6 +46,17 @@ page.on('pageerror', e => erreurs.push(String(e).split('\n')[0]));
 
 let rates = 0;
 for(const m of modules){
+  // Un banc pilote conduit le navigateur lui-meme et rend deja { ok, sortie } : pas de page a
+  // ecrire, pas de verdict a aller lire dans le DOM.
+  if(typeof m.mesure === 'function'){
+    let ok = false, sortie = '';
+    try{ ({ ok, sortie } = await m.mesure({ navigateur, RACINE })); }
+    catch(e){ sortie = 'le banc n a pas rendu son verdict : ' + String(e).split('\n')[0]; }
+    if(!ok) rates++;
+    console.log(`\n\x1b[1m${m.nom}\x1b[0m — ${m.quoi}`);
+    console.log(sortie.split('\n').map(l => '  ' + l).join('\n'));
+    continue;
+  }
   const fichier = join(RACINE, `verif-${m.nom}.html`);
   erreurs.length = 0;
   let ok = false, sortie = '';

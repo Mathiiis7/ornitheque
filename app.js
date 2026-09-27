@@ -6342,8 +6342,15 @@ function _detectTrophyEventsCore(){
   if(!realPeople.length || !myUid || !leagueId) return;
   if(!_trophyEventsLoaded) return;
   // Meme garde que renderTrophies : sans les donnees de build() les rangs sont faux, et les
-  // evenements ecrits ici partiraient chez tous les membres. Le prochain snapshot relancera.
-  if(!_statsPretes(realPeople)) return;
+  // evenements ecrits ici partiraient chez tous les membres.
+  if(!_statsPretes(realPeople)){
+    // build() n'a pas encore tourne. On se represente : sans ca la detection attendrait le
+    // prochain snapshot pour repartir, et un onglet reste en arriere-plan (frame jamais
+    // rendue, donc build() jamais appele) ne detecterait plus rien du tout. Le banc
+    // « trophees » le mesure, frames gelees.
+    if(!_detectTimer) _detectTimer = setTimeout(() => { _detectTimer = null; _detectTrophyEventsCore(); }, 2000);
+    return;
+  }
   const prev = _loadCompState();
   const firstRun = !prev.unlocked;
   const N = state.people.length || realPeople.length;

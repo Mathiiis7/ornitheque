@@ -106,6 +106,14 @@ attrapent les régressions qu'une capture d'écran ne montre pas.
 Pour en ajouter un : copier le plus proche, il n'y a qu'un contrat — appeler `fini()` à la
 fin, après avoir empilé ses vérifications avec `verif(libellé, valeur, ok)`.
 
+Un banc peut aussi piloter le navigateur lui-même, quand une page à regarder ne suffit pas :
+il exporte `mesure({ navigateur })` au lieu de `html()`, et rend `{ ok, sortie }` avec
+`rapport()`. C'est le cas de `trophees`, qui charge `app.js` en entier avec Firebase bouchonné
+(`tools/verif/bouchons/`, branchés par une importmap) et choisit l'ordre d'arrivée des
+snapshots : c'est le seul moyen d'exercer le démarrage CONNECTÉ sans compte et sans toucher à
+la vraie ligue, et il a attrapé quatre `TypeError` qui étaient en production. Il avance
+l'horloge au lieu d'attendre, sinon la détection de trophées lui coûterait 14 secondes.
+
 ## Données eBird
 
 Les fréquences viennent des bar charts eBird, fenêtre 2019-2026, **et exigent un compte** :
