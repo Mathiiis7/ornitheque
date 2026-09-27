@@ -12290,7 +12290,7 @@ async function _renderExoticMap(sci, cc){
   const container = document.getElementById('smExoticMap');
   if(!container) return;
   const statusByZone = _exoticStatusByZone(cc);
-  if(!statusByZone){ container.innerHTML = ''; return; }
+  if(!statusByZone){ container.innerHTML = ''; _majPanneauOuQuand(); return; }
   const key = (sci || '').toLowerCase();
   // La carte s'affiche des qu'au moins une zone porte un tag, que l'espece soit classee
   // exotique au niveau national ou non.
@@ -12311,10 +12311,10 @@ async function _renderExoticMap(sci, cc){
     const cat = byZone[key];
     if(cat){ perZone[code] = cat; anyStatus = true; }
   }
-  if(!anyStatus){ container.innerHTML = ''; return; }
+  if(!anyStatus){ container.innerHTML = ''; _majPanneauOuQuand(); return; }
   const nZonesTaggees = Object.keys(perZone).length;
   const paths = await _loadExoticMapPaths(cc);
-  if(!paths){ container.innerHTML = ''; return; }
+  if(!paths){ container.innerHTML = ''; _majPanneauOuQuand(); return; }
   // Zones ou eBird ne tague pas l'espece alors qu'elle y est observee. On dit "pas de
   // classement exotique" et non "native" : l'absence de tag prouve seulement qu'eBird ne la
   // tient pas pour exotique ici, pas qu'elle y soit indigene. Le Canard de Chine en Alaska
@@ -12347,38 +12347,35 @@ async function _renderExoticMap(sci, cc){
   const svgZones = _ordonnerSelectionDevant(zonesCarte, selection)
     .map(code => rendreZoneExo(code, 1)).join('')
     + _encartCarte(cc, paths, rendreZoneExo) + _cadresEncarts(cc, paths);
-  const legendItem = (col, label) => `<span style="display:inline-flex; align-items:center; gap:4px;"><span style="display:inline-block; width:10px; height:10px; background:${col}; border-radius:2px;"></span>${label}</span>`;
   const zoneWord = cc === 'FR' ? 'département' : 'région';
-  // Persist l'etat ouvert/ferme du details entre les switchs d'especes (fleches).
-  // Si l'user a ouvert la carte sur une espece, garde ouvert pour les suivantes qui
-  // ont aussi une carte.
-  const openState = window._smExoticMapOpen ? ' open' : '';
+  // Le bleu n'apparait que dans les pays ou certaines zones n'ont aucun classement : la
+  // legende commune, en bas du panneau, ne le montre que dans ce cas.
+  window._oqExoNatif = nativeZones.size > 0;
   if(_ccFicheObsolete(cc)) return;
+  // Plus de depliant : cette carte est devenue l'autre face de celle des raretes, et les
+  // deux onglets de l'entete disent laquelle on regarde. La phrase que portait le resume -
+  // « sauvage ici, exotique dans N departements » - descend sous la carte, ou elle
+  // renseigne au lieu de servir de poignee.
+  const resume = nationalExotic
+    ? ''
+    : `<div style="font-size:11px; color:var(--ink-2); text-align:center; margin-bottom:6px;">Sauvage ${esc(_auPays(cc))}, mais exotique dans <b>${nZonesTaggees} ${zoneWord}${nZonesTaggees > 1 ? 's' : ''}</b>.</div>`;
+  // Les deux colonnes fantomes encadrent la carte comme la colonne des mois et son pendant
+  // encadrent celle des raretes : sans elles, la carte sauterait de quelques dizaines de
+  // pixels en changeant d'onglet, alors que c'est le meme pays au meme endroit.
   container.innerHTML = `
-    <details${openState} class="sm-fold" style="margin-top:10px;" id="smExoticMapDetails">
-      <summary>
-        ▸ ${nationalExotic
-             ? `Statut exotique par ${zoneWord} (eBird)`
-             : `Sauvage en ${(COUNTRIES_REG[cc] && COUNTRIES_REG[cc].name) || cc}, exotique dans ${nZonesTaggees} ${zoneWord}${nZonesTaggees > 1 ? 's' : ''} (eBird)`}
-      </summary>
-      <div class="sm-fold-corps">
+      <div>
+        ${resume}
+        <div style="display:flex; align-items:flex-start; gap:8px;">
+        <div style="flex:0 0 62px;" aria-hidden="true"></div>
         <div style="${_COLONNE_CARTE}"><svg viewBox="${_viewBoxCarte(cc, paths)}" style="${_styleCarte()}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Statut exotique par ${zoneWord}">
           ${svgZones}
         </svg></div>
-        <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:8px; font-size:11px; color:var(--ink-2); justify-content:center;">
-          ${legendItem('#22c55e','N Établi')}
-          ${legendItem('#f59e0b','P Provisoire')}
-          ${legendItem('#ef4444','X Échappé')}
-          ${nativeZones.size ? legendItem(NATIVE_COLOR,'Pas de classement exotique') : ''}
-          ${legendItem('#d4d4d8','Sauvage / absent')}
+        <div style="flex:0 0 62px;" aria-hidden="true"></div>
         </div>
-        <div style="margin-top:8px; padding-top:8px; border-top:1px dashed var(--line-2); font-size:10.5px; color:var(--ink-3); text-align:center; line-height:1.4; opacity:.9;">
-          ⓘ Granularité approximative : le statut peut varier <b>au sein d'${cc === 'FR' ? 'un département' : 'une région'}</b> selon le hotspot. eBird décide aussi au niveau de chaque obs individuelle — un couple nicheur en zone rurale peut être <b>N</b> alors qu'un individu isolé dans un parc urbain proche sera <b>X</b>.
-        </div>
-      </div>
-    </details>`;
+      </div>`;
   // Cliquer une zone la selectionne, comme sur la carte de rarete. Recliquer celle qui
   // est deja choisie revient au national.
+  _majPanneauOuQuand();
   const svgExo = document.querySelector('#smExoticMap svg');
   if(svgExo && typeof _appliquerZoneFiche === 'function'){
     svgExo.onclick = (e) => {
@@ -12387,10 +12384,6 @@ async function _renderExoticMap(sci, cc){
       const z = p.dataset.zone;
       _appliquerZoneFiche(z === _speciesRegion ? '' : z);
     };
-  }
-  const det = document.getElementById('smExoticMapDetails');
-  if(det){
-    det.ontoggle = () => { window._smExoticMapOpen = det.open; };
   }
 }
 // Les deux mini-cartes attendent des fetch avant d'ecrire. Si l'utilisateur change de
@@ -12862,29 +12855,90 @@ function _valeurAnnuelleZone(arr, cc, zone){
 // calendrier annuel. Chacune peut manquer - un pays sans decoupage n'a pas de carte utile,
 // une espece sans quinzaines n'a pas de courbe - mais le panneau ne disparait que si les
 // DEUX manquent. Sans ce partage, masquer le graphique emportait la carte avec lui.
+// Quelle carte le bloc montre : la rarete par zone, ou le statut exotique. Le choix suit
+// l'utilisateur d'une espece a l'autre, comme le mois choisi.
+function _vueCarte(){ return window._smCarteVue === 'exo' ? 'exo' : 'rarete'; }
+// Le nom de la zone lue. Il etait dans la colonne des mois, ou il ne servait qu'a elle ;
+// il est maintenant dans l'entete du bloc, ou les deux cartes le lisent.
+function _majEnteteOuQuand(nomZone){
+  const el = document.getElementById('smOqZone');
+  if(!el) return;
+  if(nomZone != null) el.dataset.nom = nomZone;
+  const nom = el.dataset.nom || '';
+  el.innerHTML = `<span class="sm-oq-nom" data-tip="${esc(nom)}">${esc(nom)}</span>`
+    + (window._oqStatutExo || '');
+}
+// Les onglets. Celui du statut exotique n'apparait que si l'espece en a un a montrer dans
+// ce pays : sur la plupart des oiseaux il n'y a qu'une carte, et un onglet seul qui ne
+// mene nulle part vaut moins que pas d'onglet du tout.
+function _majOngletsOuQuand(){
+  const box = document.getElementById('smOqOnglets');
+  const carteRar = document.getElementById('smRarityMap');
+  const carteExo = document.getElementById('smExoticMap');
+  if(!box || !carteRar || !carteExo) return;
+  const aRar = !!carteRar.innerHTML.trim();
+  const aExo = !!carteExo.innerHTML.trim();
+  let vue = _vueCarte();
+  if(vue === 'exo' && !aExo) vue = 'rarete';
+  if(vue === 'rarete' && !aRar && aExo) vue = 'exo';
+  carteRar.hidden = vue !== 'rarete';
+  carteExo.hidden = vue !== 'exo';
+  if(!(aRar && aExo)){ box.innerHTML = ''; return; }
+  const onglet = (cle, texte) => `<button type="button" data-vue="${cle}" class="sm-oq-onglet${vue === cle ? ' on' : ''}"`
+    + ` aria-pressed="${vue === cle}">${texte}</button>`;
+  box.innerHTML = onglet('rarete', 'Rareté') + onglet('exo', 'Statut exotique');
+  box.onclick = (e) => {
+    const b = e.target.closest('[data-vue]');
+    if(!b) return;
+    window._smCarteVue = b.dataset.vue;
+    // Par le panneau et non par les onglets seuls : la legende change avec la carte, et
+    // c'est lui qui la reecrit. Sans ce detour, on basculait sur les statuts exotiques
+    // avec, en dessous, la cle des couleurs de la rarete.
+    _majPanneauOuQuand();
+  };
+}
 function _majPanneauOuQuand(){
   const card = document.getElementById('smOuQuandCard');
   if(!card) return;
   const carte = document.getElementById('smRarityMap');
+  const carteExo = document.getElementById('smExoticMap');
   const graph = document.getElementById('smGraphZone');
+  const bloc = card.querySelector('.sm-oq-bloc');
   const aCarte = !!(carte && carte.innerHTML.trim());
+  const aExo = !!(carteExo && carteExo.innerHTML.trim());
   const aGraph = !!(graph && !graph.hidden);
-  card.hidden = !(aCarte || aGraph);
-  // Les deux vues presentes : un seul cadre pour les deux, separees par un filet. La CSS
-  // ne sait pas regarder en arriere - elle ne peut pas arrondir le bas de la carte selon
-  // l'etat du graphique qui la suit - alors la classe le lui dit.
-  card.classList.toggle('oq-deux', aCarte && aGraph);
+  // Le bloc des cartes disparait quand aucune des deux n'a de quoi s'afficher : sinon son
+  // entete flottait au-dessus du vide, avec un nom de zone et rien dessous.
+  if(bloc) bloc.hidden = !(aCarte || aExo);
+  _majOngletsOuQuand();
+  card.hidden = !(aCarte || aExo || aGraph);
+  // Le bloc des cartes et le graphique presents : un seul cadre pour les deux. La CSS ne
+  // sait pas regarder en arriere - elle ne peut pas arrondir le bas du premier selon
+  // l'etat du second, qui le SUIT - alors la classe le lui dit.
+  card.classList.toggle('oq-deux', (aCarte || aExo) && aGraph);
   const leg = document.getElementById('smOuQuandLegende');
   if(leg){
     leg.hidden = card.hidden;
-    if(!card.hidden) leg.innerHTML = _legendeOuQuand(aCarte, aGraph);
+    if(!card.hidden) leg.innerHTML = _legendeOuQuand(aCarte, aGraph, _vueCarte() === 'exo' && aExo);
   }
 }
 // L'unique legende du panneau. Elle remplace les trois qui coexistaient : la cle des
 // couleurs de la carte, la note sous la carte, et la cle du graphique. Les trois disaient
 // des morceaux d'une meme chose, chacune dans son coin et deux fois la meme palette.
-function _legendeOuQuand(aCarte, aGraph){
+function _legendeOuQuand(aCarte, aGraph, vueExo){
   const p = window._oqPortee || {};
+  // Onglet « Statut exotique » ouvert : la carte ne parle plus de frequence, sa cle et sa
+  // phrase changent donc avec elle. Le graphique, lui, ne bouge pas - il dit toujours le
+  // « quand » - et garde son repere de periode.
+  if(vueExo){
+    const pastille = (col, texte) => `<span class="sm-freq-lg"><span class="sm-freq-sw" style="background:${col};margin-right:5px;"></span>${texte}</span>`;
+    const clesExo = pastille('#22c55e', 'N naturalisé') + pastille('#f59e0b', 'P provisoire')
+      + pastille('#ef4444', 'X échappé')
+      + (window._oqExoNatif ? pastille('#3b82f6', 'pas de classement') : '')
+      + pastille('#d4d4d8', 'sauvage ou absente');
+    return `<div class="sm-oq-cles">${clesExo}</div>`
+      + `<div class="sm-oq-note">ⓘ D'où sort l'oiseau, ${p.sansDecoupage ? 'dans le pays' : 'zone par zone'} : eBird classe chaque population vue hors de son aire naturelle. Le statut peut changer au sein d'une même zone selon le lieu. Les barres, en dessous, disent toujours quand la trouver.</div>`;
+  }
   const bande = [1,2,3,4,5,6,7,8,9,10]
     .map(t => `<span style="width:8px;height:12px;background:${realColor(t)};display:inline-block;"></span>`).join('');
   const jeton = (dedans, texte) => `<span class="sm-freq-lg">${dedans}${texte}</span>`;
@@ -13052,15 +13106,12 @@ async function _renderRarityMap(sci, cc){
   // par MOIS, ce que fait sa colonne de gauche.
   const zoneWord = window._oqPortee.zoneWord;
   if(_ccFicheObsolete(cc)) return;
+  // Le nom de la zone n'est plus dans la colonne des mois : il est passe dans l'entete du
+  // bloc, ou il sert AUSSI a la carte des statuts exotiques, qui se relaie avec celle-ci.
+  _majEnteteOuQuand(nomPort);
   container.innerHTML = `
-      <div class="sm-oq-bloc">
         <div style="display:flex; align-items:flex-start; justify-content:flex-start; gap:8px;">
           <div id="smRarityMapMois" style="display:flex; flex-direction:column; gap:2px; flex:0 0 auto; width:62px;">
-            <!-- La colonne se lit a l'echelle de la zone choisie, la ligne RARETE en haut de
-                 la fiche reste nationale. Sans cette etiquette les deux se contredisaient a
-                 l'ecran : le Geai bleu sort a 32 % des listes aux Etats-Unis, palier 1, alors
-                 que la colonne peut afficher 10 dans un Etat ou il ne passe pas. -->
-            <div style="font:700 8.5px/1.3 system-ui; letter-spacing:.4px; text-transform:uppercase; color:var(--ink-3); margin-bottom:6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" data-tip="${esc(nomPort)}">${esc(nomPort)}</div>
             ${moisBtns}</div>
           <div style="${_COLONNE_CARTE}"><svg viewBox="${_viewBoxCarte(cc, paths)}" style="${_styleCarte()}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Rareté par ${zoneWord} sur ${libellePeriode}">
             ${svgZones}
@@ -13069,8 +13120,7 @@ async function _renderRarityMap(sci, cc){
                centrerait dans la place restante et non dans le panneau, donc pas au meme
                endroit que la carte de statut exotique juste en dessous. -->
           <div style="flex:0 0 62px;" aria-hidden="true"></div>
-        </div>
-      </div>`;
+        </div>`;
   // La carte n'a plus ni cle des couleurs ni note : le panneau n'en porte qu'une, en bas,
   // partagee avec le graphique qui lit la meme mesure (cf. _legendeOuQuand).
   _majPanneauOuQuand();
@@ -13246,11 +13296,23 @@ function _renderSpeciesRarityCard(key){
       <span>Rareté</span>
       ${geoHost ? '' : geoHtml}
     </div>
-    <div id="smRarityLine"></div>
-    <div id="smExoticMap"></div>`;
-  // #smRarityMap ne vit plus ici : la carte par zone est passee dans le panneau « Où et
-  // quand la trouver », avec le calendrier qui lit la meme mesure. La laisser ici en
-  // aurait fait un deuxieme element du meme id, et getElementById aurait rendu celui-la.
+    <div id="smRarityLine"></div>`;
+  // Ni #smRarityMap ni #smExoticMap ne vivent plus ici : les deux cartes sont passees dans
+  // le panneau « Où et quand la trouver », ou elles se relaient sous deux onglets. Les
+  // laisser ici en aurait fait des elements du meme id en double, et getElementById aurait
+  // rendu ceux-la. Cette carte-ci ne porte plus que les cas ou l'on n'a rien a montrer.
+  // Le seul cas ou la carte « Rareté » a encore quelque chose a dire : quand il n'y a rien
+  // a montrer. Elle porte alors la phrase qui l'explique, et rien d'autre.
+  const _messageRarete = (html) => {
+    const l = $('#smRarityLine');
+    if(l) l.innerHTML = `<span class="help">${html}</span>`;
+    const b = document.getElementById('smRarityCard');
+    if(b) b.hidden = false;
+    window._oqStatutExo = '';
+    _majEnteteOuQuand(null);
+    const d = document.getElementById('smDetailsCalcul');
+    if(d) d.innerHTML = '';
+  };
   const renderLine = (cc) => {
     // Les deux mini-cartes sont rendues AVANT les sorties anticipees ci-dessous : sinon,
     // en passant sur un pays ou l'espece est absente, renderLine sortait tot et laissait
@@ -13272,7 +13334,7 @@ function _renderSpeciesRarityCard(key){
     const inEbirdCC = !!(EXOTIQUES_EBIRD_PAR_PAYS[cc] && EXOTIQUES_EBIRD_PAR_PAYS[cc][k]);
     const inBarCC = !!(COUNTRIES_REG[cc] && COUNTRIES_REG[cc].barTier && COUNTRIES_REG[cc].barTier()[k]);
     if(cc !== 'FR' && isExo && !inEbirdCC && !inBarCC){
-      $('#smRarityLine').innerHTML = `<span class="help">${esc(COUNTRIES_REG[cc]?.name || cc)} : espèce absente.</span>`;
+      _messageRarete(`${esc(COUNTRIES_REG[cc]?.name || cc)} : espèce absente.`);
       return;
     }
     if(!isInCatalog(cc) && !isExo){
@@ -13289,7 +13351,7 @@ function _renderSpeciesRarityCard(key){
         : an < 3
         ? `Observée ${an} année${an > 1 ? 's' : ''} sur 8 ${esc(_auPays(cc))} : accidentelle, elle ne figure pas parmi les espèces à trouver.`
         : `Observée ${an} années sur 8 ${esc(_auPays(cc))}, mais sans fréquence exploitable pour la classer.`;
-      $('#smRarityLine').innerHTML = `<span class="help">${detail}</span>`; return;
+      _messageRarete(detail); return;
     }
     const cat = isExo ? (exoticCategoryInCountry(k, cc) || _exoticCategory(k)) : '';
     const catLbl = cat ? (EXOTIC_CATEGORY_LABEL[cat] || '') : '';
@@ -13462,7 +13524,21 @@ function _renderSpeciesRarityCard(key){
           </div>
         </details>`;
     }
-    $('#smRarityLine').innerHTML = `<div style="display:flex;align-items:center;gap:6px;padding:6px 0;">${flgFixed}${pill}<span style="font-weight:600;color:var(--ink);">${esc(label)}</span>${catMiniPill}${catBadge}</div>${catExplainer}${detailsHtml}`;
+    // La ligne de rarete disparait. Elle redisait ce que la carte montre deja : la pastille
+    // ANNEE porte le meme palier, dans la meme couleur, a quelques pixels de la. Ce qu'elle
+    // etait seule a porter se range ailleurs - le statut exotique passe a cote du nom de
+    // zone, le detail du calcul sous le panneau. Reste ici ce qu'aucune carte ne sait dire,
+    // les cas ou il n'y a rien a montrer, traites plus haut.
+    $('#smRarityLine').innerHTML = '';
+    const boxRar = document.getElementById('smRarityCard');
+    if(boxRar) boxRar.hidden = true;
+    // Le statut exotique voyage vers l'entete du bloc de cartes, avec son infobulle et son
+    // « ? ». Le libelle - « Introduit établi » - part avec lui : le rond le dit en une
+    // lettre, et l'infobulle en toutes lettres au survol.
+    window._oqStatutExo = catMiniPill ? (catMiniPill + (catHelpTip || '')) : '';
+    _majEnteteOuQuand(null);
+    const boxDet = document.getElementById('smDetailsCalcul');
+    if(boxDet) boxDet.innerHTML = detailsHtml;
   };
   // Pays par defaut : reprend le contexte du site (filtre Birdydex ou carte). Sinon FR.
   // (initCountry deja calcule plus haut avant box.innerHTML)

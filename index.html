@@ -35,7 +35,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=190">
+<link rel="modulepreload" href="app.js?v=191">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -1167,13 +1167,25 @@
                est reconstruit a chaque fiche, il emporterait le graphique avec lui. -->
           <div class="sm-card" id="smOuQuandCard" hidden>
             <div class="sm-card-title">Où et quand la trouver <span class="sm-freq-src" id="smFreqSrc"></span></div>
-            <div id="smRarityMap"></div>
+            <!-- Un seul cadre, deux cartes qui s'y relaient : la rarete par zone et le
+                 statut exotique. Elles decrivent la meme geographie, elles n'ont pas
+                 besoin de deux encadres l'un sous l'autre. L'entete porte le nom de la
+                 zone lue, le statut exotique de l'espece, et les deux onglets. -->
+            <div class="sm-oq-bloc">
+              <div class="sm-oq-entete">
+                <span class="sm-oq-zone" id="smOqZone"></span>
+                <span class="sm-oq-onglets" id="smOqOnglets"></span>
+              </div>
+              <div id="smRarityMap"></div>
+              <div id="smExoticMap" hidden></div>
+            </div>
             <div id="smGraphZone">
               <div class="sm-freq-chart-wrap">
                 <svg id="smFreqChart" class="sm-freq-chart" viewBox="0 0 360 130" preserveAspectRatio="xMidYMid meet"></svg>
               </div>
             </div>
             <div class="sm-freq-legend" id="smOuQuandLegende"></div>
+            <div id="smDetailsCalcul"></div>
           </div>
           <div class="sm-freq" id="smFreqWrap" hidden></div>
           <div class="sm-card" id="smTraitsCard" hidden></div>
@@ -1197,4 +1209,4 @@
   </footer>
 </div>
 
-<script type="module" src="app.js?v=190"></script>
+<script type="module" src="app.js?v=191"></script>
