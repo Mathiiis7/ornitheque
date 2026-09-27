@@ -1378,7 +1378,7 @@ function _openCountryPicker(currentCode, opts = {}){
             const nSp = nEspecesDe(cc);
             meta = '<span class="cp-item-exo"></span>'
               + (nSp > 0
-                  ? `<span class="cp-item-meta">${nSp} espèces</span>`
+                  ? `<span class="cp-item-meta">${nSp} esp.</span>`
                     + `<div class="reg-picker-bar"><div style="width:${Math.round(nSp / maxEspeces * 100)}%; color:var(--accent);"></div></div>`
                   : '<span></span><span></span>');
           }
@@ -1510,7 +1510,11 @@ function _openFilterPicker(currentValue, opts){
         const on = (o.value === currentValue) ? ' on' : '';
         const dot = o.color ? `<span class="cp-item-dot" style="background:${o.color};"></span>` : '';
         const cnt = (o.count != null) ? `<span class="cp-item-meta">${o.count} esp.</span>` : '';
-        return `<div class="cp-item${on}" data-value="${esc(String(o.value))}">
+        // cp-item-simple : ce selecteur generique ne pose que deux ou trois elements, quand
+        // .cp-item dessine depuis la grille a six colonnes du selecteur de pays. Sans lui, le
+        // libelle tombait dans la colonne du drapeau, large de 28 px, et « Par famille » se
+        // lisait « P… ».
+        return `<div class="cp-item cp-item-simple${on}" data-value="${esc(String(o.value))}">
           ${dot}
           <span class="cp-item-name">${esc(o.label)}</span>
           ${cnt}

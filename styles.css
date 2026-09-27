@@ -588,6 +588,13 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* Sans espece courante, pas de pastille de palier : la colonne disparait et la barre
      finit la ligne, exactement comme du cote des zones. */
   .cp-item.sans-palier { grid-template-columns:28px minmax(0,1fr) var(--cp-exo,16px) 44px 60px; }
+  /* Le selecteur generique - trier la grille, choisir un milieu, une famille - reutilise
+     .cp-item mais ne pose que le nom, parfois une pastille de couleur et un compte. La
+     grille a six colonnes du selecteur de pays lui mettait le nom dans la colonne du
+     drapeau : il rendait « P… » pour « Par famille ». Ici, une simple rangee. */
+  .cp-item.cp-item-simple { display:flex; align-items:center; gap:10px; }
+  .cp-item.cp-item-simple .cp-item-name { flex:1 1 auto; }
+  .cp-item.cp-item-simple .cp-item-meta { flex:none; }
   .cp-item:hover { background:var(--surface-2); }
   .cp-item.on { background:var(--surface-2); font-weight:700; }
   .cp-item-flag { display:inline-flex; align-items:center; justify-content:center; }
@@ -598,7 +605,12 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* margin-left:auto : sans espece courante, la ligne ne porte que le nom, le compte et
      la barre. Le compte est pousse a droite avec la barre a sa suite, pour que celle-ci
      finisse la ligne comme dans la liste des zones. */
-  .cp-item-meta { font-size:11px; color:var(--ink-3); text-align:right; white-space:nowrap; }
+  /* Exactement la meme chose que .reg-picker-val, l'equivalent dans l'onglet des zones :
+     meme corps, meme chasse fixe, meme alignement. Les deux onglets du meme selecteur
+     disaient le nombre d'especes dans deux tailles differentes, et « 610 especes » etait
+     trop long pour sa colonne de 60 px - il passait sous la barre. */
+  .cp-item-meta { font-size:10.5px; color:var(--ink-3); text-align:right; white-space:nowrap;
+    font-variant-numeric:tabular-nums; }
   .cp-item.disabled { opacity:.5; cursor:not-allowed; }
   .cp-item.disabled:hover { background:transparent; }
   .cp-item.absent { opacity:.55; }
@@ -1251,18 +1263,15 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* Le chiffre de l'entete : meme graisse que le nom de zone mais en encre normale, pour
      qu'il se lise comme sa valeur et non comme un second titre. */
   .species-modal .sm-oq-score { font:400 11.5px/1.3 system-ui; color:var(--ink-3); white-space:nowrap; }
-  /* Alignement sur la LIGNE D'ECRITURE, pas sur le milieu des boites : le nom de zone est
-     en 9,5 px et le pourcentage en 11,5, et centrer deux boites de hauteurs differentes
-     pose leurs deux textes a deux hauteurs. Le jeton de statut, lui, est un rond et non du
-     texte - il garde son centrage. */
-  .species-modal .sm-oq-zone { display:flex; align-items:baseline; gap:8px; min-width:0; }
-  .species-modal .sm-oq-zone .pkdx-exo { align-self:center; }
-  /* Interligne 16 px et non 1,3 : c'est l'element dont l'ascendante monte le plus haut qui
-     place la ligne de base de toute la rangee. Le pourcentage, plus gros que le nom, la
-     tenait - et en disparaissant sur l'onglet du statut exotique il la faisait remonter de
-     2 px, nom compris. A 16 px le nom l'emporte toujours, et sa ligne ne bouge plus d'un
-     onglet a l'autre. C'est la plus petite valeur qui y suffise. */
-  .species-modal .sm-oq-nom { font:700 9.5px/16px system-ui; letter-spacing:.5px;
+  /* Le nom de zone et le pourcentage ont le MEME corps : leurs boites de ligne sont donc
+     identiques, et un simple centrage aligne d'un coup leurs milieux, leurs lignes
+     d'ecriture et le centre du jeton de statut. C'est ce que l'alignement sur la ligne
+     d'ecriture ne savait pas faire tant que les deux tailles differaient - et il avait en
+     prime l'inconvenient de faire remonter le nom quand le pourcentage disparaissait. */
+  .species-modal .sm-oq-zone { display:flex; align-items:center; gap:8px; min-width:0; }
+  /* Meme corps que .sm-oq-score, a la graisse pres : les deux textes de l'entete se lisent
+     sur une seule ligne d'ecriture et ne bougent plus l'un sans l'autre. */
+  .species-modal .sm-oq-nom { font:700 11.5px/1.3 system-ui; letter-spacing:.5px;
     text-transform:uppercase; color:var(--ink-3);
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   /* La note de l'entete : en minuscules et en gris, elle se lit comme une precision du nom
