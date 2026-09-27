@@ -1243,6 +1243,16 @@ function _openCountryPicker(currentCode, opts = {}){
       // qui n'en ont qu'une ; une case libre decalerait la colonne des pourcentages des
       // qu'une ligne en porte deux. On la taille sur la liste elle-meme.
       let maxLettres = 1;
+      // Sans espece courante, les lignes de pays montrent le nombre d'especes que leur bar
+      // chart connait. Une barre le rend comparable d'un coup d'oeil, comme sur les lignes
+      // de zone qui en ont une depuis toujours. Rapportee au plus fourni des pays listes.
+      const nEspecesDe = (c) => {
+        const r = COUNTRIES_REG[c];
+        if(!r) return 0;
+        return Object.keys((r.barTier && r.barTier()) || {}).length
+            || Object.keys((r.st && r.st()) || {}).length;
+      };
+      const maxEspeces = focusSci ? 0 : Math.max(1, ...Object.keys(COUNTRIES_REG).map(nEspecesDe));
       for(const cont of CONTINENT_ORDER){
         const items = (grouped[cont] || []).filter(x => {
           const cc = x.cc;
@@ -1349,8 +1359,11 @@ function _openCountryPicker(currentCode, opts = {}){
             // pourvus d'un S&T affichaient donc un nombre plus petit que les 10 autres,
             // qui tombaient deja sur le bar chart (l'Espagne annoncait 284 especes contre
             // 694 reelles). Le bar chart partout, c'est comparable.
-            const nSp = Object.keys(reg.barTier() || {}).length || Object.keys(reg.st() || {}).length;
-            meta = nSp > 0 ? `<span class="cp-item-meta">${nSp} espèces</span>` : '';
+            const nSp = nEspecesDe(cc);
+            meta = nSp > 0
+              ? `<span class="cp-item-meta">${nSp} espèces</span>`
+                + `<div class="reg-picker-bar"><div style="width:${Math.round(nSp / maxEspeces * 100)}%; color:var(--accent);"></div></div>`
+              : '';
           }
           // Fix 2026-09-22 : absentCls doit refléter le vrai statut 'absent' (tier === 0
            // ET pas exotique local) au lieu de it.score seul. Sinon FR avec tier 7 via
@@ -16773,13 +16786,13 @@ function _pkdxLignesZones(cc){
   const pays = (COUNTRIES_REG[cc] && COUNTRIES_REG[cc].name) || cc;
   const lignes = zones.slice().sort((a, b) => a.name.localeCompare(b.name, 'fr')).map(r => {
     const n = nb(r.code);
-    return '<div class="reg-picker-item' + (n ? '' : ' absent') + (r.code === choisie ? ' on' : '')
+    return '<div class="reg-picker-item sans-palier' + (n ? '' : ' absent') + (r.code === choisie ? ' on' : '')
       + '" data-code="' + esc(r.code) + '">'
       + '<span>' + esc(r.name) + '</span>'
       + '<span class="reg-picker-exo"></span>'
       + '<span class="reg-picker-val">' + (n ? n + ' esp.' : '—') + '</span>'
       + '<div class="reg-picker-bar"><div style="width:' + Math.round(n / max * 100) + '%; color:var(--accent);"></div></div>'
-      + '<span></span></div>';
+      + '</div>';
   }).join('');
   return '<div class="reg-picker-item national' + (choisie ? '' : ' on') + '" data-code="">'
     + esc(pays) + ' entier</div>' + lignes;

@@ -510,6 +510,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      pourcentages restent en colonne. Une zone n'a qu'un statut, il n'y a donc jamais plus
      d'une lettre a loger - contrairement aux lignes de pays, qui en cumulent jusqu'a trois. */
   .reg-picker-exo { display:flex; align-items:center; justify-content:flex-end; }
+  /* Les lignes du selecteur du birdydex n'ont pas de pastille de palier : sans elle, la
+     cinquieme colonne ne servait qu'a tenir la barre a 30 px du bord. Quatre colonnes, et
+     la barre finit la ligne. */
+  .reg-picker-item.sans-palier { grid-template-columns:minmax(0,1fr) 16px 44px 60px; }
   .reg-picker-item:hover { background:var(--surface-2); }
   /* Selection courante : la meme que celle d'un pays (voir .cp-item.on, plus bas, dont
      cette regle partage la declaration). Les deux listes vivent dans le meme modal, une
@@ -588,7 +592,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* min-width:0 pour la meme raison que la premiere colonne des lignes de zone : sans lui un
      nom long refuse de retrecir et decale la valeur, la barre et la pastille. */
   .cp-item-name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .cp-item-meta { font-size:11px; color:var(--ink-3); }
+  /* margin-left:auto : sans espece courante, la ligne ne porte que le nom, le compte et
+     la barre. Le compte est pousse a droite avec la barre a sa suite, pour que celle-ci
+     finisse la ligne comme dans la liste des zones. */
+  .cp-item-meta { font-size:11px; color:var(--ink-3); margin-left:auto; }
   .cp-item.disabled { opacity:.5; cursor:not-allowed; }
   .cp-item.disabled:hover { background:transparent; }
   .cp-item.absent { opacity:.55; }
