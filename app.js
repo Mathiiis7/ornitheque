@@ -12435,15 +12435,14 @@ async function _renderExoticMap(sci, cc){
   // deux onglets de l'entete disent laquelle on regarde. La phrase que portait le resume -
   // « sauvage ici, exotique dans N departements » - descend sous la carte, ou elle
   // renseigne au lieu de servir de poignee.
-  const resume = nationalExotic
+  window._oqNoteExo = nationalExotic
     ? ''
-    : `<div style="font-size:11px; color:var(--ink-2); text-align:center; margin-bottom:6px;">Sauvage ${esc(_auPays(cc))}, mais exotique dans <b>${nZonesTaggees} ${zoneWord}${nZonesTaggees > 1 ? 's' : ''}</b>.</div>`;
+    : `exotique dans ${nZonesTaggees} ${zoneWord}${nZonesTaggees > 1 ? 's' : ''}`;
   // Les deux colonnes fantomes encadrent la carte comme la colonne des mois et son pendant
   // encadrent celle des raretes : sans elles, la carte sauterait de quelques dizaines de
   // pixels en changeant d'onglet, alors que c'est le meme pays au meme endroit.
   container.innerHTML = `
       <div>
-        ${resume}
         <div style="display:flex; align-items:flex-start; gap:8px;">
         <div style="flex:0 0 62px;" aria-hidden="true"></div>
         <div style="${_COLONNE_CARTE}"><svg viewBox="${_viewBoxCarte(cc, paths)}" style="${_styleCarte()}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Statut exotique par ${zoneWord}">
@@ -12944,8 +12943,10 @@ function _majEnteteOuQuand(nomZone){
   if(!el) return;
   if(nomZone != null) el.dataset.nom = nomZone;
   const nom = el.dataset.nom || '';
+  const note = (_vueCarte() === 'exo' && window._oqNoteExo)
+    ? `<span class="sm-oq-note-zone">${esc(window._oqNoteExo)}</span>` : '';
   el.innerHTML = `<span class="sm-oq-nom" data-tip="${esc(nom)}">${esc(nom)}</span>`
-    + (window._oqStatutExo || '');
+    + (window._oqStatutExo || '') + note;
 }
 // Les onglets. Celui du statut exotique n'apparait que si l'espece en a un a montrer dans
 // ce pays : sur la plupart des oiseaux il n'y a qu'une carte, et un onglet seul qui ne
@@ -12962,6 +12963,7 @@ function _majOngletsOuQuand(){
   if(vue === 'rarete' && !aRar && aExo) vue = 'exo';
   carteRar.hidden = vue !== 'rarete';
   carteExo.hidden = vue !== 'exo';
+  _majEnteteOuQuand(null);
   if(!(aRar && aExo)){ box.innerHTML = ''; return; }
   const onglet = (cle, texte) => `<button type="button" data-vue="${cle}" class="sm-oq-onglet${vue === cle ? ' on' : ''}"`
     + ` aria-pressed="${vue === cle}">${texte}</button>`;
