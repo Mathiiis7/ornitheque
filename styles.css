@@ -1444,14 +1444,14 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      0,048 em ramene l'ecart a 0,30 px sur le rond de 16 et 0,10 sur celui de 20. En em et
      non en px : la correction tient a la fonte, pas a la taille du jeton. */
   .rar-chip[data-cat], .pkdx-exo { width:32px; min-width:32px; height:32px; margin:-8px;
-    transform:scale(.5); padding:0.06em 0 0; border-radius:50%; font:700 19px/1 system-ui; }
+    transform:scale(.5); padding:0 0 0.145em; border-radius:50%; font:700 19px/1 system-ui; }
   /* Les paliers 0 a 10 prennent eux aussi le jeton rond des vignettes - .pkdx-tier, 20 px
      et corps 10 - au lieu du carre arrondi. La barre de filtres et la grille qu'elle
      filtre montrent desormais la meme piece. « Tout » et « Vide », qui sont des mots et
      non des paliers, gardent leur bouton rectangulaire. */
   .rar-chip[data-tier], .rar-chip[data-rar], .tier-chip.tier-rond {
     width:40px; min-width:40px; height:40px; margin:-10px;
-    transform:scale(.5); padding:0.06em 0 0; border-radius:50%; font:800 20px/1 system-ui; }
+    transform:scale(.5); padding:0 0 0.145em; border-radius:50%; font:800 20px/1 system-ui; }
   /* Coche : l'ombre portee de la vignette remplace le filet du repos, comme pour X/P/N. */
   .rar-chip[data-tier].on, .rar-chip[data-rar].on { box-shadow:none; }
   /* Ils suivent « Tout » et « Vide » plutot que d'etre rejetes au bout de la rangee : le
