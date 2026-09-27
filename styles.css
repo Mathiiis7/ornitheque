@@ -568,7 +568,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* overflow:hidden + overscroll-behavior:contain : le fond devient un conteneur de
      defilement qui ne chaine pas. Sans ca, la molette arrivee en butee de la liste - ou
      simplement passee a cote du panneau - faisait defiler la page derriere le modal. */
-  .cp-modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:2147483647; display:flex; align-items:center; justify-content:center; padding:20px; overflow:hidden; overscroll-behavior:contain; }
+  .cp-modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:2147483000; display:flex; align-items:center; justify-content:center; padding:20px; overflow:hidden; overscroll-behavior:contain; }
   .cp-modal-inner { background:var(--surface); border-radius:14px; padding:14px; max-width:520px; width:100%; max-height:80vh; display:flex; flex-direction:column; box-shadow:0 12px 40px rgba(0,0,0,.28); }
   .cp-modal-title { font:700 15px system-ui; color:var(--ink); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between; }
   .cp-modal-close { background:none; border:none; font-size:20px; cursor:pointer; color:var(--ink-3); padding:0 4px; }
@@ -1432,15 +1432,23 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      pas le cas a 22 px, ou les ronds ecrasaient la rangee. Pas de boite doublee ici : le
      truc des marges negatives suppose une largeur fixe, et sur un disque le pixel
      d'arrondi ne se voit pas. */
+  /* padding-top : la boite de ligne est bien centree dans le rond, mais la boite du TEXTE
+     ne l'est pas - une boite de ligne se cale sur l'em, et l'ascendante de system-ui
+     deborde l'em plus que sa descendante ne le fait. Mesure sur un rond de 14 px d'ecran :
+     0,75 px au-dessus du texte contre 1,84 en dessous, soit 1,09 px de trop en haut. Il
+     faut donc rendre de la place EN HAUT ; le rembourrage qu'on avait d'abord mis en bas
+     aggravait la chose, ce que l'oeil avait vu avant la mesure.
+     0,048 em ramene l'ecart a 0,30 px sur le rond de 16 et 0,10 sur celui de 20. En em et
+     non en px : la correction tient a la fonte, pas a la taille du jeton. */
   .rar-chip[data-cat], .pkdx-exo { width:16px; min-width:16px; height:16px; margin:0;
-    transform:none; padding:0; border-radius:50%; font:700 9.5px/1 system-ui; }
+    transform:none; padding:0.048em 0 0; border-radius:50%; font:700 9.5px/1 system-ui; }
   /* Les paliers 0 a 10 prennent eux aussi le jeton rond des vignettes - .pkdx-tier, 20 px
      et corps 10 - au lieu du carre arrondi. La barre de filtres et la grille qu'elle
      filtre montrent desormais la meme piece. « Tout » et « Vide », qui sont des mots et
      non des paliers, gardent leur bouton rectangulaire. */
   .rar-chip[data-tier], .rar-chip[data-rar], .tier-chip.tier-rond {
     width:20px; min-width:20px; height:20px;
-    margin:0; transform:none; padding:0; border-radius:50%; font:800 10px/1 system-ui; }
+    margin:0; transform:none; padding:0.048em 0 0; border-radius:50%; font:800 10px/1 system-ui; }
   /* Coche : l'ombre portee de la vignette remplace le filet du repos, comme pour X/P/N. */
   .rar-chip[data-tier].on, .rar-chip[data-rar].on { box-shadow:none; }
   /* Ils suivent « Tout » et « Vide » plutot que d'etre rejetes au bout de la rangee : le
