@@ -35,6 +35,16 @@ function snapshot(docs){
   };
 }
 
+/*
+  Comptage des lectures, pour le banc firestore. Facturation reelle de Firestore : a
+  l'abonnement, CHAQUE document du premier snapshot compte une lecture ; ensuite une lecture
+  par document modifie. Un getDoc compte une lecture meme si le document n'existe pas.
+  Ici on releve la STRUCTURE - combien d'abonnements, sur quels chemins, combien d'appels
+  ponctuels - et le banc multiplie par la taille reelle des collections.
+*/
+window.__lectures = { abonnements: [], ponctuelles: [], docsLivres: 0 };
+function compter(quoi, r){ window.__lectures.ponctuelles.push(quoi + ' ' + ((r && r.__chemin) || '?')); }
+
 export function getFirestore(){ return { __db: true }; }
 export function collection(...a){ return ref(morceaux(a)); }
 export function doc(...a){ return ref(morceaux(a)); }
@@ -44,8 +54,8 @@ export function limit(){ return { __contrainte: 'limit' }; }
 export function where(){ return { __contrainte: 'where' }; }
 export function serverTimestamp(){ return { __ts: true }; }
 export function deleteField(){ return { __del: true }; }
-export function getDoc(){ return Promise.resolve(snapshot([])); }
-export function getDocs(){ return Promise.resolve(snapshot([])); }
+export function getDoc(r){ compter('getDoc', r); return Promise.resolve(snapshot([])); }
+export function getDocs(r){ compter('getDocs', r); return Promise.resolve(snapshot([])); }
 
 window.__ecritures = [];
 function ecrire(op, r){ window.__ecritures.push(op + ' ' + ((r && r.__chemin) || '?')); return Promise.resolve(); }
@@ -60,6 +70,7 @@ export function writeBatch(){
 
 export function onSnapshot(r, cb){
   const c = (r && r.__chemin) || '?';
+  window.__lectures.abonnements.push(c);
   if(!abonnes.has(c)) abonnes.set(c, []);
   abonnes.get(c).push(cb);
   return () => {};
@@ -77,6 +88,7 @@ window.__fs = {
   livrer(chemin, docs){
     const cbs = abonnes.get(chemin) || [];
     const s = snapshot(docs || []);
+    window.__lectures.docsLivres += (docs || []).length * (abonnes.get(chemin) || []).length;
     for(const cb of cbs){
       try{ cb(s); }
       catch(e){ window.__erreurs.push({ chemin, message: String((e && e.message) || e),

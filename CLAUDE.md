@@ -1,7 +1,7 @@
-# La Ligue des Birds — ce qu'il faut savoir avant de toucher au code
+# La Ligue des Birds - ce qu'il faut savoir avant de toucher au code
 
 Appli web statique de birding, en français. Pas de framework, pas de build : trois fichiers
-servis tels quels. `app.js` fait 3,2 Mo, et sa taille reste un choix : le code et les tables
+servis tels quels. `app.js` fait 2,35 Mo (mesuré le 2026-09-27), et sa taille reste un choix : le code et les tables
 qui servent partout y restent, plutôt que d'éparpiller. Ce qui en est sorti l'a été sur
 mesure, avec un chiffre à l'appui : les fréquences mensuelles des 47 pays étrangers
 pesaient 1,9 Mo, soit 579 Ko gzippés avant le premier affichage ; elles vivent depuis le
@@ -19,9 +19,19 @@ styles.css        toute la CSS
 index.html        le squelette et les <template>
 service-worker.js le cache
 tools/build/      les générateurs de données (Node, ESM)
-tools/verif/      les bancs de mesure — voir plus bas
+tools/verif/      les bancs de mesure - voir plus bas
 data/             les données générées, publiées telles quelles
 ```
+
+## Voir le résultat avant de pousser
+
+Mathis regarde l'appli sur **http://localhost:8765**, servie depuis le dépôt lui-même :
+`npx --yes http-server . -p 8765 -c-1`, configurée dans `.claude/launch.json` sous le nom
+`ligue-plumes-dev`. Lui dire « regarde en local », pas « j'ai poussé ».
+
+**Le premier rechargement montre encore l'ancienne version** : le service worker sert sa copie
+en cache et ne la remplace qu'au chargement suivant. Recharger deux fois, ou une fois avec
+Ctrl+Maj+R.
 
 ## Déployer
 
@@ -30,7 +40,7 @@ chaque commit qui touche `app.js`, `styles.css` ou `index.html`, trois nombres �
 sinon les visiteurs gardent l'ancienne version en cache :
 
 1. `CACHE_VERSION` dans `service-worker.js`
-2. `app.js?v=NNN` dans `index.html` — **il y a DEUX occurrences**, le `modulepreload` et le
+2. `app.js?v=NNN` dans `index.html` - **il y a DEUX occurrences**, le `modulepreload` et le
    `<script>`. En oublier une ne casse rien tout de suite, ce qui est pire.
 
 ## Les pièges qui m'ont déjà fait perdre du temps
@@ -38,11 +48,17 @@ sinon les visiteurs gardent l'ancienne version en cache :
 **`node --check app.js` ne marche pas** : la commande suppose du CommonJS et `app.js` est un
 module. Utiliser `node --input-type=module --check < app.js`.
 
+**Les fins de ligne sont MÉLANGÉES dans le dépôt** : `app.js` et ce `CLAUDE.md` sont en CRLF,
+`index.html` et `service-worker.js` en LF. Un script qui découpe sur `\r\n` en dur ne voit
+qu'une seule ligne dans `index.html` et ne remplace donc qu'UNE des deux occurrences de
+`app.js?v=` - exactement la panne que la section « Déployer » redoute. Détecter le séparateur,
+ne jamais le supposer.
+
 **Les heredocs du shell mangent les échappements.** `\\n` devient un vrai retour à la ligne,
 `\.` dans une expression régulière perd son antislash. Pour tout ce qui contient des
 échappements, passer par les outils Write / Edit, jamais par `cat <<'FIN'`.
 
-**Un accent grave dans un littéral de gabarit le referme** — y compris dans un commentaire à
+**Un accent grave dans un littéral de gabarit le referme** - y compris dans un commentaire à
 l'intérieur. Les générateurs de `tools/verif/` en sont pleins : y écrire « la variable ok »
 et non « la variable \`ok\` ». Ça m'a coûté deux erreurs de syntaxe le même jour.
 
@@ -54,7 +70,7 @@ fait produire trois mesures fausses d'affilée. Mesurer tout dans un seul repèr
 l'encre va de la ligne de base à la hauteur de capitale ; la boîte, elle, descend jusqu'à la
 descendante, que ces caractères n'utilisent pas. L'écart vaut
 `(ascendante − descendante − hauteur de capitale) / 2`, soit 0,064 em en Segoe UI. Centrer la
-boîte pose le texte trop bas — visiblement.
+boîte pose le texte trop bas - visiblement.
 
 **`pointer-events="none"` sur un `<g>` SVG se transmet aux enfants**, et un `<g>` qu'on oublie
 de fermer est refermé par le navigateur à la fin du parent : tout ce qui suit devient
@@ -67,7 +83,7 @@ règle générale du curseur dessiné.
 ## Comment travailler ici
 
 **Mesurer avant d'affirmer.** Un banc de mesure qui imprime des chiffres vaut mieux qu'une
-capture d'écran regardée de près — surtout pour l'alignement, les tailles et les écarts.
+capture d'écran regardée de près - surtout pour l'alignement, les tailles et les écarts.
 Voir `tools/verif/`.
 
 **Dire « je ne sais pas ».** Le nom exact d'une table, d'un fichier de données, d'une zone
@@ -103,7 +119,7 @@ Chaque banc affiche ses mesures et se termine par `CONFORME` ou `DÉFAUT`. Les l
 toute retouche de l'entête du panneau, des sélecteurs, des pastilles ou des cartes : ils
 attrapent les régressions qu'une capture d'écran ne montre pas.
 
-Pour en ajouter un : copier le plus proche, il n'y a qu'un contrat — appeler `fini()` à la
+Pour en ajouter un : copier le plus proche, il n'y a qu'un contrat - appeler `fini()` à la
 fin, après avoir empilé ses vérifications avec `verif(libellé, valeur, ok)`.
 
 Un banc peut aussi piloter le navigateur lui-même, quand une page à regarder ne suffit pas :
@@ -114,6 +130,12 @@ snapshots : c'est le seul moyen d'exercer le démarrage CONNECTÉ sans compte et
 la vraie ligue, et il a attrapé quatre `TypeError` qui étaient en production. Il avance
 l'horloge au lieu d'attendre, sinon la détection de trophées lui coûterait 14 secondes.
 
+`firestore` se sert du même montage pour compter ce qu’une session coûte en lectures : 14
+abonnements ouverts à la connexion, aucun doublon, et surtout **une lecture par client abonné**
+à chaque document modifié. Avec 50 connectés, une frappe dans le chat coûte 50 lectures, soit
+1 000 frappes par jour avant le plafond gratuit de 50 000. C’est ce plafond-là qui cédera le
+premier si l'appli marche, bien avant la bande passante de GitHub Pages.
+
 ## Données eBird
 
 Les fréquences viennent des bar charts eBird, fenêtre 2019-2026, **et exigent un compte** :
@@ -122,7 +144,7 @@ dépôt, désigné par `EBIRD_COOKIE_FILE`. Les statuts exotiques, eux, se lisen
 publique sans aucun compte.
 
 La dernière année de la fenêtre est toujours incomplète. Les poids des quinzaines sont donc
-ramenés à l'année — voir `tools/build/annees-par-quinzaine.mjs`, qui explique pourquoi et
+ramenés à l'année - voir `tools/build/annees-par-quinzaine.mjs`, qui explique pourquoi et
 donne les mesures. **Là où l'effort sert à pondérer le temps, il est ramené à l'année ; là où
 il sert à recombiner des comptes en fréquence, il reste brut.**
 

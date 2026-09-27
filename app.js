@@ -7331,11 +7331,13 @@ function _donneesPaysPretes(){
 // tous ses appelants savent deja traiter.
 function _chargerHabitats(){ return _chargerFichierPays('habitats'); }
 function _habitatsPrets(){ return Object.keys(HABITATS).length > 0; }
-// Des que le fil principal souffle, sans attendre une demande : le premier rendu n'en a
-// pas besoin, mais le selecteur de pays si, et il s'ouvre sans prevenir.
-function _prechargerSorties(){ _chargerDonneesPays(); _chargerHabitats(); }
-if(typeof requestIdleCallback === 'function') requestIdleCallback(() => _prechargerSorties(), { timeout: 4000 });
-else setTimeout(() => _prechargerSorties(), 1200);
+// Charges A LA DEMANDE, jamais au demarrage. Mesure du 2026-09-28 : une premiere visite
+// pesait 1 473 Ko servis, dont 735 Ko pour ces trois fichiers - freq 576, rarete 84,
+// habitats 75. La moitie de la visite, pour des donnees dont la France par defaut n a aucun
+// besoin puisqu elle est en dur. Leurs trois lecteurs savent deja les reclamer et se
+// redessiner a leur arrivee : le selecteur de pays, le birdydex, et le chargement d un pays
+// etranger. Les precharger ici les faisait payer a tout le monde, y compris a qui ne quitte
+// jamais la France.
 
 async function _loadFreqDataForCountry(cc){
   if(_freqDataPromises[cc]) return _freqDataPromises[cc];
@@ -17115,14 +17117,16 @@ function _pkdxRender(){
   const zone = _pkdxFilters.zone || '';
   // Les frequences par zone sont chargees a la demande : si elles manquent, on les demande
   // et on redessine a leur arrivee.
+  // Les milieux de vie vivent dans leur propre fichier depuis le 2026-09-27, et ne sont plus
+  // precharges depuis le 2026-09-28. Le birdydex est leur seul lecteur et il en a besoin DES
+  // qu'il se rend, pas seulement quand une zone est choisie : sans eux, mesure du 2026-09-28,
+  // son filtre « milieu » comptait 13 especes en foret au lieu de 105 et 0 en marin au lieu de
+  // 40, sans la moindre erreur affichee. Il se redessine a leur arrivee.
+  if(!_habitatsPrets()) _chargerHabitats().then(() => { _pkdxLastRowsHash = null; _pkdxRender(); }).catch(() => {});
   if(zone && typeof _loadFreqDataForCountry === 'function'){
     const byZ = (typeof REAL_FREQ_MONTHLY_BY_REGION_MULTI === 'object') ? REAL_FREQ_MONTHLY_BY_REGION_MULTI[country] : null;
     if(!byZ || !byZ[zone]){
       _loadFreqDataForCountry(country).then(() => { _pkdxLastRowsHash = null; _pkdxRender(); }).catch(() => {});
-      // Les milieux de vie arrivent dans leur propre fichier depuis le 2026-09-27. Le
-      // birdydex est leur seul lecteur : sans eux ses vignettes n'affichent pas d'habitat
-      // et le filtre reste vide, alors on le redessine des qu'ils sont la.
-      if(!_habitatsPrets()) _chargerHabitats().then(() => { _pkdxLastRowsHash = null; _pkdxRender(); }).catch(() => {});
     }
   }
   const vues = new Map(rows.map(r => [r.sci, _pkdxVue(r, country, zone)]));
