@@ -159,6 +159,14 @@ rien ne le signalait.
 fichier local ignorait cinq zones lettonnes, et c'étaient les cinq plus grosses, de 147 à
 241 espèces : jamais demandées, donc jamais récoltées, pendant des mois.
 
+**Le mur anti-robot refuse le mode invisible.** Mesuré le 2026-09-28 sur le même témoin à la
+minute près : en `headless`, eBird rend « impossible de déterminer si vous êtes un robot » et
+0 espèce ; en fenêtre visible, SI-061 rend ses 295 espèces. Une zone qui répond 0 en mode
+invisible ne dit rien sur la zone, seulement sur le mur - c'est ce qui a fait conclure à tort
+à un bridage. Deux commandes répondent désormais : `tools/build/etat-exotiques.mjs` pour ce
+qui manque face aux listes eBird, `tools/build/verifie-zones-vides.mjs` pour trancher zone par
+zone.
+
 **« Zone vide » ou « scrape raté » : seule la page barchart ouverte dans un vrai navigateur
 tranche.** Les deux sondes de l'API mentent, chacune à sa façon : `obs/recent` donne 0 pour
 une commune rurale en septembre, et `spplist` compte toute l'histoire d'eBird quand le bar
