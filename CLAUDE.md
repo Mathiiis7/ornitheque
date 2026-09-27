@@ -43,6 +43,12 @@ sinon les visiteurs gardent l'ancienne version en cache :
 2. `app.js?v=NNN` dans `index.html` - **il y a DEUX occurrences**, le `modulepreload` et le
    `<script>`. En oublier une ne casse rien tout de suite, ce qui est pire.
 
+**Le poids publié se mesure avec `node tools/build/poids-publie.mjs`, jamais avec `du`.**
+`du -sh` compte ce que `.gitignore` exclut : il annonçait 469 Mo le 2026-09-28 et m'a fait
+alerter à tort sur le plafond de 1 Go de GitHub Pages. Le vrai chiffre est **95,4 Mo, 9 % du
+plafond**. Les cartes de répartition (443 Mo) vivent dans le dépôt séparé
+`Ligue_des_Plumes_data`, et `data/range*` comme `data/generated` ne sont pas publiés.
+
 ## Les pièges qui m'ont déjà fait perdre du temps
 
 **`node --check app.js` ne marche pas** : la commande suppose du CommonJS et `app.js` est un
