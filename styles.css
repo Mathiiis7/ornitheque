@@ -1257,7 +1257,12 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      texte - il garde son centrage. */
   .species-modal .sm-oq-zone { display:flex; align-items:baseline; gap:8px; min-width:0; }
   .species-modal .sm-oq-zone .pkdx-exo { align-self:center; }
-  .species-modal .sm-oq-nom { font:700 9.5px/1.3 system-ui; letter-spacing:.5px;
+  /* Interligne 16 px et non 1,3 : c'est l'element dont l'ascendante monte le plus haut qui
+     place la ligne de base de toute la rangee. Le pourcentage, plus gros que le nom, la
+     tenait - et en disparaissant sur l'onglet du statut exotique il la faisait remonter de
+     2 px, nom compris. A 16 px le nom l'emporte toujours, et sa ligne ne bouge plus d'un
+     onglet a l'autre. C'est la plus petite valeur qui y suffise. */
+  .species-modal .sm-oq-nom { font:700 9.5px/16px system-ui; letter-spacing:.5px;
     text-transform:uppercase; color:var(--ink-3);
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   /* La note de l'entete : en minuscules et en gris, elle se lit comme une precision du nom
