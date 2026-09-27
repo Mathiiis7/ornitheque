@@ -1,0 +1,4 @@
+// Genere par scrape-exotic-by-region-multi.mjs (Playwright + Chromium headless).
+// Ne pas editer a la main. Regenerable : node tools/build/scrape-exotic-by-region-multi.mjs ME
+// Format : { "ME-YY": { sciName: category } } avec N=Naturalized, P=Provisional, X=Escapee.
+export const EXOTIC_STATUS_BY_REGION_ME = {"ME-01":{},"ME-03":{},"ME-04":{},"ME-09":{},"ME-11":{},"ME-13":{},"ME-14":{"phasianus colchicus":"N"},"ME-15":{},"ME-17":{},"ME-18":{},"ME-21":{},"ME-06":{"cairina moschata":"X"},"ME-07":{},"ME-12":{},"ME-16":{"cairina moschata":"X","phasianus colchicus":"N"},"ME-02":{"anser anser":"X","cairina moschata":"X"},"ME-05":{"phasianus colchicus":"N"},"ME-08":{"phasianus colchicus":"N"},"ME-10":{},"ME-19":{"phasianus colchicus":"N","psittacula krameri":"X"},"ME-20":{"cairina moschata":"X","phasianus colchicus":"N","melopsittacus undulatus":"X"}};
