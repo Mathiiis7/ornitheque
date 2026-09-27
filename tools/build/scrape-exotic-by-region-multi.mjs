@@ -166,36 +166,36 @@ console.log(`Scrape exotic status per region : ${COUNTRIES.length} pays, ${total
 if(FORCE) console.log(`Mode FORCE : re-scrape toutes les regions meme celles deja faites.`);
 console.log(`Estim ~60s/region => ~${Math.round(totalRegions * 60 / 60)} min total.\n`);
 
+/*
+  Une zone. Mesure du 2026-09-28 : 1 a 4 secondes, contre une soixantaine avant.
+
+  CE QUI A CHANGE, ET POURQUOI
+  Cette fonction avait ete ecrite quand eBird rendait ses tableaux cote navigateur : d'ou
+  les 45 s d'attente du premier selecteur, la boucle de stabilisation jusqu'a 40 s, et les
+  allers-retours de defilement destines a declencher le chargement paresseux des icones
+  hors ecran. eBird rend maintenant la page cote serveur : tout est la des le premier
+  rendu. Verifie sur trois zones deja en base - FR-IDF-75C 23 exotiques, FR-BRE-29 18,
+  SI-061 9 - avec et sans la danse de defilement : memes icones, aux memes especes.
+
+  Le filet de securite reste : si la page ne rend rien, on lui laisse une seconde chance
+  avec un defilement, au cas ou eBird reviendrait un jour au rendu cote navigateur.
+*/
 async function scrapeRegion(page, region) {
   const url = `https://ebird.org/barchart?r=${region}&byr=2019&eyr=2026`;
   await page.goto(url, { waitUntil: 'networkidle', timeout: 120000 });
   try {
-    await page.waitForSelector('.SpeciesName', { timeout: 45000 });
+    await page.waitForSelector('.SpeciesName', { timeout: 25000 });
   } catch(e) {
-    console.warn(`    (aucun .SpeciesName apres 45s, tente extract quand meme)`);
+    console.warn(`    (aucun .SpeciesName apres 25s, tente extract quand meme)`);
   }
-  // Attente stabilisation : la liste peut etre en cours de render. On boucle jusqu'a
-  // stabilisation du nombre de rows (max 40s) puis attente supplementaire pour les
-  // icones exotic qui peuvent arriver apres. Grosses regions (GB-ENG, US-CA) sont
-  // lentes a rendre : on prend le temps.
-  await page.evaluate(async () => {
-    let prev = -1, stable = 0, attempts = 0;
-    while(attempts++ < 80 && stable < 5){
-      const n = document.querySelectorAll('.SpeciesName').length;
-      if(n === prev && n > 0) stable++; else stable = 0;
-      prev = n;
-      await new Promise(r => setTimeout(r, 500));
-    }
-  });
-  // Scroll bottom -> top -> bottom pour trigger lazy-load des icones hors viewport
-  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-  await page.waitForTimeout(3000);
-  await page.evaluate(() => window.scrollTo(0, 0));
-  await page.waitForTimeout(2000);
-  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-  await page.waitForTimeout(3000);
-  // Attente finale pour laisser les icones apparaitre
-  await page.waitForTimeout(3000);
+  const compte = () => page.evaluate(() => document.querySelectorAll('.SpeciesName').length);
+  if(await compte() === 0){
+    // Seconde chance a l'ancienne, si jamais la page se remet a se construire toute seule.
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await page.waitForTimeout(2500);
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.waitForTimeout(1500);
+  }
   return await page.evaluate(() => {
     const out = {};
     const icons = document.querySelectorAll('[class*="Icon--exotic"]');
@@ -217,7 +217,8 @@ async function scrapeRegion(page, region) {
   });
 }
 
-const browser = await chromium.launch({ channel: 'chrome', headless: false });
+// headless : mesure du 2026-09-28, la page se lit aussi bien sans fenetre, et sans cookie.
+const browser = await chromium.launch({ channel: 'chrome', headless: !process.argv.includes('--fenetre') });
 const ctx = await browser.newContext({
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36',
   locale: 'fr-FR',
