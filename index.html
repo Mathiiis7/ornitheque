@@ -35,7 +35,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=206">
+<link rel="modulepreload" href="app.js?v=207">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -1181,7 +1181,7 @@
             </div>
             <div id="smGraphZone">
               <div class="sm-freq-chart-wrap">
-                <svg id="smFreqChart" class="sm-freq-chart" viewBox="0 0 360 130" preserveAspectRatio="xMidYMid meet"></svg>
+                <svg id="smFreqChart" class="sm-freq-chart" viewBox="0 0 520 130" preserveAspectRatio="xMidYMid meet"></svg>
               </div>
             </div>
             <div class="sm-freq-legend" id="smOuQuandLegende"></div>
@@ -1209,4 +1209,4 @@
   </footer>
 </div>
 
-<script type="module" src="app.js?v=206"></script>
+<script type="module" src="app.js?v=207"></script>

@@ -12965,10 +12965,16 @@ function _majEnteteOuQuand(nomZone){
   const nom = el.dataset.nom || '';
   const note = (_vueCarte() === 'exo' && window._oqNoteExo)
     ? `<span class="sm-oq-note-zone">${esc(window._oqNoteExo)}</span>` : '';
+  // Le chiffre suit le nom de zone, ici et non dans le titre du panneau : la-haut il
+  // fallait redire « Norvege » pour savoir de quoi il parlait, et le nom se lisait alors
+  // deux fois a trois lignes d'intervalle. La carte du statut exotique ne mesure rien, le
+  // chiffre s'efface avec elle.
+  const score = (_vueCarte() !== 'exo' && window._oqScore) ? window._oqScore : '';
   // data-tip-coupe : le nom ne se repete en infobulle que si les points de suspension l'ont
   // reellement ampute. « FRANCE » entier n'a rien a apprendre a qui le lit deja.
   el.innerHTML = `<span class="sm-oq-nom" data-tip-coupe="${esc(nom)}">${esc(nom)}</span>`
-    + (window._oqStatutExo || '') + note;
+    + (window._oqStatutExo || '')
+    + (score ? `<span class="sm-oq-score">${score}</span>` : '') + note;
   _bulleSiCoupe(el.firstElementChild);
 }
 // Les onglets. Celui du statut exotique n'apparait que si l'espece en a un a montrer dans
@@ -13556,6 +13562,7 @@ function _renderSpeciesRarityCard(key){
     const b = document.getElementById('smRarityCard');
     if(b) b.hidden = false;
     window._oqStatutExo = '';
+    window._oqScore = '';
     _majEnteteOuQuand(null);
     const d = document.getElementById('smDetailsCalcul');
     if(d) d.innerHTML = '';
@@ -13981,6 +13988,13 @@ function _weekToLabel(wi){
   const phase = day <= 10 ? 'début ' : day <= 20 ? 'mi-' : 'fin ';
   return phase + m;
 }
+// Le titre du panneau nommait la zone que l'entete du bloc, trois lignes plus bas, nomme
+// deja : « OU ET QUAND LA TROUVER  Norvege » puis « NORVEGE ». Il ne garde donc que le cas
+// ou il dit autre chose - une valeur nationale derivee d'une seule region, « France (via
+// Ile-de-France) », que l'entete ne peut pas exprimer.
+function _titreSrc(ccLabel, regionScope, strictRegional){
+  return (regionScope && !strictRegional) ? ccLabel : '';
+}
 // Score annuel affiche a cote du nom de zone dans « Où et quand la trouver ». C'est exactement la
 // valeur qui decide du palier, calculee sur la zone que montre le graphique : region si
 // une region est selectionnee, pays sinon. L'entete ne donnait jusqu'ici que le pic, ce qui
@@ -14198,7 +14212,11 @@ function _renderSpeciesFreqChart(key, country){
             : maxV >= 0.001 ? _fr(maxV.toFixed(4))
             : maxV >= 0.0001 ? _fr(maxV.toFixed(5))
             : '<0,0001';
-    srcEl.innerHTML = `${esc(ccLabel)}${fallbackNote}`;
+    // Cette branche ne mesure pas en part de listes : pas de chiffre a porter dans
+    // l'entete, et surtout pas celui de l'espece precedente.
+    window._oqScore = '';
+    _majEnteteOuQuand(null);
+    srcEl.innerHTML = `${esc(_titreSrc(ccLabel, regionScope, strictRegional))}${fallbackNote}`;
   } else {
     // Source mensuelle etiree a 52 slots : le pic est au premier slot du mois pic,
     // on reconvertit vers un label mois-only pour ne pas suggerer une precision fictive.
@@ -14212,7 +14230,11 @@ function _renderSpeciesFreqChart(key, country){
             : maxV >= 0.001 ? _fr((maxV*100).toFixed(2)) // 0.1-1%
             : maxV >= 0.0001 ? _fr((maxV*100).toFixed(3))// 0.01-0.1%
             : '<0,01';
-    srcEl.innerHTML = `${esc(ccLabel)}${_scoreAnnuelLbl(monthlyArr, cc, regionScope)}${fallbackNote}`;
+    // Le chiffre descend dans l'entete du bloc, a cote du nom de zone auquel il se
+    // rapporte. Le titre ne garde que ce que l'entete ne dit pas.
+    window._oqScore = _scoreAnnuelLbl(monthlyArr, cc, regionScope);
+    _majEnteteOuQuand(null);
+    srcEl.innerHTML = `${esc(_titreSrc(ccLabel, regionScope, strictRegional))}${fallbackNote}`;
   }
   // Layout du chart : toujours 520x130. Source unique = bar chart % checklists.
   const W = 520, H = 130, PT = 12, PB = 26, PL = 32, PR = 8;
