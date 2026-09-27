@@ -3027,7 +3027,7 @@ function renderBoard(){
       // la part des listes eBird du pays qui mentionnent l'espece sur 2019-2026, moyenne des
       // 48 quinzaines ponderee par le nombre de listes de chacune.
       const RANGES={1:'≥ 23 %',2:'7,8 – 23 %',3:'3,5 – 7,8 %',4:'1,6 – 3,5 %',5:'0,69 – 1,6 %',6:'0,18 – 0,69 %',7:'0,004 – 0,18 %',8:'0,002 – 0,004 %',9:'0,0008 – 0,002 %',10:'< 0,0008 %'};
-      const items = [1,2,3,4,5,6,7,8,9,10].map(w=>`<span class="rs-it" title="${w} · ${REAL_LABELS[w]} - ${RANGES[w]}"><i style="background:${realColor(w)}"></i><b>${w}</b> ${REAL_LABELS[w]} <em>${RANGES[w]}</em></span>`).join('')
+      const items = [1,2,3,4,5,6,7,8,9,10].map(w=>`<span class="rs-it"><i style="background:${realColor(w)}"></i><b>${w}</b> ${REAL_LABELS[w]} <em>${RANGES[w]}</em></span>`).join('')
         + `<span class="rs-it" title="Exotique X/C ou parc semi-libre : hors barème rareté (tier 0)"><i style="background:#7e8a99"></i><b>0</b> Exotique <em>parcs, échappés, domestiques</em></span>`;
       rs.innerHTML='<div class="rs-title">Barème de rareté réelle <span>- part des listes eBird qui mentionnent l&rsquo;espèce, 2019-2026, pondérée par l&rsquo;effort d&rsquo;observation de chaque quinzaine.</span></div>'+
         '<div class="rs-items">'+items+'</div>';
@@ -3156,7 +3156,7 @@ function renderMatrix({universe,N}){
     const chipsHtml = tiersPresent.map(t=>{
       const on = !state.tierExcl.has(t.id);
       const bgStyle = on ? `background:${t.color};` : '';
-      return `<button type="button" class="rar-chip${on?' on':''}" data-tier="${esc(t.id)}" style="${bgStyle}" title="${esc(t.label)}">${esc(t.label)}</button>`;
+      return `<button type="button" class="rar-chip${on?' on':''}" data-tier="${esc(t.id)}" style="${bgStyle}">${esc(t.label)}</button>`;
     }).join('');
     box.innerHTML = chipsHtml
       + '<button type="button" class="rar-chip" data-tier-all title="Cocher toutes les raretés">Tout</button>'
@@ -3404,6 +3404,9 @@ function _initInfobulle(){
     }
     const txt = el.getAttribute('data-tip') || '';
     if(!txt) return;
+    // Un texte coupe par text-overflow:ellipsis garde son infobulle - c'est le seul moyen
+    // d'en lire la fin. Entier, il la perd : elle ne ferait que recopier ce qu'on lit.
+    if(el.hasAttribute('data-tip-coupe') && el.scrollWidth <= el.clientWidth + 1) return;
     cible = el;
     // On attend avant d'afficher. Sans ce delai, traverser une rangee de boutons faisait
     // clignoter une infobulle par bouton.
@@ -6081,14 +6084,14 @@ function _autoLink(escText){
     if(wpMatch){
       const lang = wpMatch[1].toUpperCase();
       const title = decodeURIComponent(wpMatch[2]).replace(/_/g, ' ');
-      return `<a class="msg-link msg-link-wp" href="${url}" target="_blank" rel="noopener" title="Wikipedia ${lang}"><span class="msg-link-icon">📖</span> <span class="msg-link-title">${esc(title)}</span> <span class="msg-link-src">Wikipedia ${lang}</span></a>`;
+      return `<a class="msg-link msg-link-wp" href="${url}" target="_blank" rel="noopener"><span class="msg-link-icon">📖</span> <span class="msg-link-title">${esc(title)}</span> <span class="msg-link-src">Wikipedia ${lang}</span></a>`;
     }
     // Detection YouTube : ajoute la miniature du video (i.ytimg.com)
     const ytMatch = url.match(/^https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
     if(ytMatch){
       const vid = ytMatch[1];
       const thumb = `https://i.ytimg.com/vi/${vid}/mqdefault.jpg`;
-      return `<a class="msg-link msg-link-yt msg-link-media" href="${url}" target="_blank" rel="noopener" title="YouTube"><img class="msg-link-thumb" src="${thumb}" alt="miniature YouTube" loading="lazy"><span class="msg-link-body"><span class="msg-link-title">▶️ Vidéo YouTube</span> <span class="msg-link-src">youtube.com/${esc(vid)}</span></span></a>`;
+      return `<a class="msg-link msg-link-yt msg-link-media" href="${url}" target="_blank" rel="noopener"><img class="msg-link-thumb" src="${thumb}" alt="miniature YouTube" loading="lazy"><span class="msg-link-body"><span class="msg-link-title">▶️ Vidéo YouTube</span> <span class="msg-link-src">youtube.com/${esc(vid)}</span></span></a>`;
     }
     // Detection eBird : essaie de resoudre le nom francais depuis le code
     const ebMatch = url.match(/^https?:\/\/ebird\.org\/species\/([A-Za-z0-9-]+)/);
@@ -6096,17 +6099,17 @@ function _autoLink(escText){
       const code = ebMatch[1];
       const frNm = _codeToFrName(code);
       const label = frNm || code;
-      return `<a class="msg-link msg-link-eb" href="${url}" target="_blank" rel="noopener" title="eBird"><span class="msg-link-icon">🐦</span> <span class="msg-link-title">${esc(label)}</span> <span class="msg-link-src">eBird</span></a>`;
+      return `<a class="msg-link msg-link-eb" href="${url}" target="_blank" rel="noopener"><span class="msg-link-icon">🐦</span> <span class="msg-link-title">${esc(label)}</span> <span class="msg-link-src">eBird</span></a>`;
     }
     // Detection Xeno-Canto : extrait le slug espece "Genus-species" et cherche le nom FR
     const xcMatch = url.match(/^https?:\/\/(?:www\.)?xeno-canto\.org\/species\/([A-Za-z-]+)/);
     if(xcMatch){
       const slug = xcMatch[1];
       const frNm = _xcSlugToFrName(slug) || slug.replace(/-/g, ' ');
-      return `<a class="msg-link msg-link-xc" href="${url}" target="_blank" rel="noopener" title="Xeno-Canto"><span class="msg-link-icon">🎵</span> <span class="msg-link-title">${esc(frNm)}</span> <span class="msg-link-src">xeno-canto.org</span></a>`;
+      return `<a class="msg-link msg-link-xc" href="${url}" target="_blank" rel="noopener"><span class="msg-link-icon">🎵</span> <span class="msg-link-title">${esc(frNm)}</span> <span class="msg-link-src">xeno-canto.org</span></a>`;
     }
     if(/xeno-canto\.org/.test(url)){
-      return `<a class="msg-link msg-link-xc" href="${url}" target="_blank" rel="noopener" title="Xeno-Canto"><span class="msg-link-icon">🎵</span> <span class="msg-link-title">Xeno-Canto</span> <span class="msg-link-src">xeno-canto.org</span></a>`;
+      return `<a class="msg-link msg-link-xc" href="${url}" target="_blank" rel="noopener"><span class="msg-link-icon">🎵</span> <span class="msg-link-title">Xeno-Canto</span> <span class="msg-link-src">xeno-canto.org</span></a>`;
     }
     // Fallback : lien generique
     const short = url.length > 50 ? url.slice(0, 47) + '…' : url;
@@ -12945,7 +12948,9 @@ function _majEnteteOuQuand(nomZone){
   const nom = el.dataset.nom || '';
   const note = (_vueCarte() === 'exo' && window._oqNoteExo)
     ? `<span class="sm-oq-note-zone">${esc(window._oqNoteExo)}</span>` : '';
-  el.innerHTML = `<span class="sm-oq-nom" data-tip="${esc(nom)}">${esc(nom)}</span>`
+  // data-tip-coupe : le nom ne se repete en infobulle que si les points de suspension l'ont
+  // reellement ampute. « FRANCE » entier n'a rien a apprendre a qui le lit deja.
+  el.innerHTML = `<span class="sm-oq-nom" data-tip-coupe data-tip="${esc(nom)}">${esc(nom)}</span>`
     + (window._oqStatutExo || '') + note;
 }
 // Les onglets. Celui du statut exotique n'apparait que si l'espece en a un a montrer dans
