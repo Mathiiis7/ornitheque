@@ -24,6 +24,7 @@
 
 import { readFileSync, writeFileSync, readdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
+import { anneesPourFichier, poidsAnnuels } from './annees-par-quinzaine.mjs';
 import { fileURLToPath } from 'url';
 
 const RACINE = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -43,9 +44,17 @@ function profilMensuel(chemin){
   if(eff.length !== 48) return null;
   const total = eff.reduce((a, b) => a + b, 0);
   if(!total) return null;
+  // Ce profil sert de POIDS a la moyenne annuelle : chaque quinzaine compte donc pour son
+  // nombre de listes PAR AN. La derniere annee de la fenetre s'arrete en cours de route, et
+  // sans cette division les mois d'avant la coupure - qui portent une annee de plus -
+  // pesaient plus lourd qu'une vraie annee ne leur donne. Voir annees-par-quinzaine.mjs.
+  // `listes`, lui, reste le compte BRUT : c'est une mesure de volume, pas un poids.
+  const parAn = poidsAnnuels(eff, anneesPourFichier(chemin));
+  const totalParAn = parAn.reduce((a, b) => a + b, 0);
+  if(!totalParAn) return null;
   const parts = [];
   for(let m = 0; m < 12; m++){
-    parts.push(eff.slice(m * 4, m * 4 + 4).reduce((a, b) => a + b, 0) / total);
+    parts.push(parAn.slice(m * 4, m * 4 + 4).reduce((a, b) => a + b, 0) / totalParAn);
   }
   return { parts: parts.map(v => +v.toFixed(5)), listes: Math.round(total) };
 }

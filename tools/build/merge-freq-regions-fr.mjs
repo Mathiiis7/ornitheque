@@ -25,6 +25,7 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { anneesPourFichier, poidsAnnuels } from './annees-par-quinzaine.mjs';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dir, '..', '..');
@@ -80,6 +81,9 @@ function parse(chemin) {
   const lignes = readFileSync(chemin, 'utf8').split(/\r?\n/);
   const effort = lireEffort(lignes);
   if (!effort) throw new Error(`ligne "Sample Size" absente : ${chemin}`);
+  // Poids = listes PAR AN : la derniere annee de la fenetre s'arrete en cours de route, et
+  // les quinzaines d'avant la coupure porteraient sinon une annee de plus que les autres.
+  const poids = poidsAnnuels(effort, anneesPourFichier(chemin));
   for (const ln of lignes) {
     if (!ln.includes('\t')) continue;
     const p = ln.split('\t');
@@ -91,7 +95,7 @@ function parse(chemin) {
     if (!sci) continue;
     const m12 = new Array(12).fill(0);
     for (let m = 0; m < 12; m++) {
-      m12[m] = +pondere(nums.slice(m * 4, m * 4 + 4), effort.slice(m * 4, m * 4 + 4)).toFixed(6);
+      m12[m] = +pondere(nums.slice(m * 4, m * 4 + 4), poids.slice(m * 4, m * 4 + 4)).toFixed(6);
     }
     out[sci] = m12;
   }

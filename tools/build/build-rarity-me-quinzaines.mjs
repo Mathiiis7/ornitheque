@@ -14,6 +14,7 @@
 //
 // Ecrit seulement si --ecrire est passe. Sans l'option, compare et n'ecrit rien.
 import { readFileSync, writeFileSync } from 'fs';
+import { anneesPourFichier, poidsAnnuels } from './annees-par-quinzaine.mjs';
 const ECRIRE = process.argv.includes('--ecrire');
 const RE = new RegExp('\r?\n');
 const src = readFileSync('app.js', 'utf8');
@@ -67,8 +68,12 @@ if(!effort) throw new Error('ligne Sample Size absente');
 console.log('bar chart ME : ' + brut.length + ' taxons, ' + effort.reduce((a, b) => a + b, 0).toLocaleString('fr') + ' listes sur 2019-2026');
 
 // --- profil d'effort mensuel : part des listes de l'annee tombant dans chaque mois ---
-const totalListes = effort.reduce((a, b) => a + b, 0);
-const effMois = [...Array(12)].map((_, m) => effort.slice(m * 4, m * 4 + 4).reduce((a, b) => a + b, 0) / totalListes);
+// Poids = listes PAR AN et non total brut : la derniere annee de la fenetre s'arrete en
+// cours de route, et les quinzaines d'avant la coupure porteraient sinon une annee de plus
+// que celles d'apres. Voir annees-par-quinzaine.mjs.
+const poids = poidsAnnuels(effort, anneesPourFichier('ebird-barchart-ME-2019-2026.txt'));
+const totalListes = poids.reduce((a, b) => a + b, 0);
+const effMois = [...Array(12)].map((_, m) => poids.slice(m * 4, m * 4 + 4).reduce((a, b) => a + b, 0) / totalListes);
 console.log('effort mensuel ME : ' + effMois.map(x => x.toFixed(5)).join(', '));
 console.log('  min ' + (Math.min(...effMois) * 100).toFixed(1) + '% du total, max ' + (Math.max(...effMois) * 100).toFixed(1) + '%');
 
@@ -89,12 +94,12 @@ for(const { nom, v } of brut){
   apparies++;
   // 12 mois : moyenne des 4 quinzaines ponderee par leurs listes, comme les autres pays
   const m12 = [...Array(12)].map((_, m) => {
-    const e = effort.slice(m * 4, m * 4 + 4), f = v.slice(m * 4, m * 4 + 4);
+    const e = poids.slice(m * 4, m * 4 + 4), f = v.slice(m * 4, m * 4 + 4);
     const den = e.reduce((a, b) => a + b, 0);
     return den ? +(f.reduce((s, x, i) => s + x * e[i], 0) / den).toFixed(5) : 0;
   });
   // annuel : la meme moyenne sur les 48 quinzaines
-  const an = v.reduce((s, x, i) => s + x * effort[i], 0) / totalListes;
+  const an = v.reduce((s, x, i) => s + x * poids[i], 0) / totalListes;
   tiers[sci] = palier(an);
   mois[sci] = m12;
 }

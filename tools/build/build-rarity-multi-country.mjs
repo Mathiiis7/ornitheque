@@ -15,6 +15,7 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { anneesPourFichier, poidsAnnuels } from './annees-par-quinzaine.mjs';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 
@@ -315,7 +316,9 @@ function lireBrut(path){
     for(let i = 0; i < 48; i++) q48[i] = nums[i] || 0;
     taxons[norm(clean)] = { name: clean, q48 };
   }
-  return { effort, taxons };
+  // Combien d'annees derriere chaque quinzaine : la derniere annee de la fenetre est
+  // incomplete, et ou elle s'arrete depend du jour du telechargement.
+  return { effort, taxons, annees: anneesPourFichier(path) };
 }
 
 function fusionnerBruts(base, ajouts){
@@ -342,22 +345,34 @@ function fusionnerBruts(base, ajouts){
   for(const k of Object.keys(noms)){
     taxons[k] = { name: noms[k], q48: cite[k].map((c, i) => effort[i] > 0 ? c / effort[i] : 0) };
   }
-  return { effort, taxons };
+  // Les deux bar charts n'ont pas forcement ete telecharges le meme jour, donc pas la meme
+  // coupure. Le nombre d'annees du total est celui qui redonne le bon nombre de listes PAR
+  // AN : la somme des listes divisee par la somme des listes-par-an de chacun.
+  const annees = new Array(48);
+  for(let i = 0; i < 48; i++){
+    const parAn = [base, ...ajouts].reduce((s, b) => s + (b.effort[i] || 0) / (b.annees[i] || 1), 0);
+    annees[i] = parAn > 0 ? effort[i] / parAn : base.annees[i];
+  }
+  return { effort, taxons, annees };
 }
 
 // Met un bar chart brut sous la forme attendue par la suite : moyenne mensuelle ponderee,
 // valeur annuelle sur les 48 quinzaines, et les 48 quinzaines telles quelles.
-function mettreEnForme({ effort, taxons }){
+function mettreEnForme({ effort, taxons, annees }){
   const out = {};
+  // Le poids d'une quinzaine, c'est son nombre de listes PAR AN et non son total brut :
+  // sinon les quinzaines qui portent une annee de plus - celles d'avant la coupure - pesent
+  // plus lourd qu'une vraie annee ne leur donnerait. Voir annees-par-quinzaine.mjs.
+  const poids = poidsAnnuels(effort, annees);
   for(const [k, { name, q48 }] of Object.entries(taxons)){
     // 48 quinzaines -> 12 mois, chaque mois etant la moyenne de ses 4 quinzaines ponderee
     // par leur nombre de listes. Plus de max : c etait un pic deguise.
     const m12 = new Array(12).fill(0);
     for(let m = 0; m < 12; m++){
-      m12[m] = valeurPonderee(q48.slice(m * 4, m * 4 + 4), effort.slice(m * 4, m * 4 + 4));
+      m12[m] = valeurPonderee(q48.slice(m * 4, m * 4 + 4), poids.slice(m * 4, m * 4 + 4));
     }
     // La valeur annuelle se calcule sur les 48 quinzaines, pas sur les 12 mois agreges.
-    out[k] = { name, freq: valeurPonderee(q48, effort), monthly: m12, q48: q48.map(v => +(v || 0).toFixed(5)) };
+    out[k] = { name, freq: valeurPonderee(q48, poids), monthly: m12, q48: q48.map(v => +(v || 0).toFixed(5)) };
   }
   return out;
 }
@@ -410,7 +425,9 @@ async function processCountry(cc){
   const bar = mettreEnForme(brut);
   if(ABSORBE[cc]) console.log(`  Absorbe : ${ABSORBE[cc].join(', ')} (effort total ${Math.round(brut.effort.reduce((a, b) => a + b, 0)).toLocaleString('fr-FR')} listes)`);
   {
-    const eff = brut.effort;
+    // Ce profil sert de POIDS a la moyenne annuelle dans l'appli (_valeurAnnuelleZone) :
+    // listes PAR AN et non total brut, comme partout ailleurs ici.
+    const eff = poidsAnnuels(brut.effort, brut.annees);
     const parMois = [];
     for(let m = 0; m < 12; m++) parMois.push(eff[m*4] + eff[m*4+1] + eff[m*4+2] + eff[m*4+3]);
     const tot = parMois.reduce((a, b) => a + b, 0);
