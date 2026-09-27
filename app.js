@@ -411,6 +411,13 @@ const EXOTIC_CATEGORY_LABEL = {
   'P':'Provisoire',         // presence reguliere mais pop non-confirmee (vagrant + echappes melanges)
   'X':'Échappé isolé',      // individu echappe, pas de pop
 };
+// Un seul libelle par categorie, partout. Trois tables concurrentes vivaient ailleurs dans
+// le fichier et disaient « Naturalise » la ou celle-ci dit « Introduit etabli » : le meme
+// rond vert changeait de nom d'un ecran a l'autre.
+function libelleExo(cat, avecCode){
+  const l = (typeof EXOTIC_CATEGORY_LABEL === 'object' && EXOTIC_CATEGORY_LABEL[cat]) || ('Exotique ' + cat);
+  return avecCode ? l + ' (' + cat + ')' : l;
+}
 // Rarete "observabilite reelle" des exotiques en FR, calibree via GBIF (inclut iNaturalist,
 // donc capture les obs de parcs publics que eBird filtre pour "captif"). Prime sur REAL_RARITY
 // pour les exotiques dans rarityForCountry (voir plus bas). Regenerable :
@@ -2548,8 +2555,7 @@ function tierChip(texte, couleur, opts){
 // recopie a la main aux trois, et le centrage optique aurait eu a l'etre aussi.
 function jetonExo(cat, opts){
   const o = opts || {};
-  const tip = o.tip != null ? o.tip
-    : ((typeof EXOTIC_CATEGORY_LABEL === 'object' && EXOTIC_CATEGORY_LABEL[cat]) || ('Exotique ' + cat)) + ' (' + cat + ')';
+  const tip = o.tip != null ? o.tip : libelleExo(cat, true);
   return '<span class="pkdx-exo"' + (o.style ? ' style="' + o.style + '"' : '')
     + ' data-tip="' + esc(tip) + '">' + esc(cat) + '</span>';
 }
@@ -12415,7 +12421,6 @@ async function _renderExoticMap(sci, cc){
   // Colorees distinctement pour montrer que le tag national ne vaut pas partout.
   const nativeZones = new Set(nativeRegionsDespiteNationalTag(key, cc));
   const CAT_COLOR = { N:'#22c55e', P:'#f59e0b', X:'#ef4444' };
-  const CAT_LABEL = { N:'Naturalisé', P:'Provisoire', X:'Échappé' };
   const NATIVE_COLOR = '#3b82f6';
   // Meme mise en evidence que la carte de rarete, pour que les deux se lisent pareil.
   const selection = _zonesSelectionnees(cc, Object.keys(paths.zones));
@@ -12429,7 +12434,7 @@ async function _renderExoticMap(sci, cc){
     const isNative = !cat && nativeZones.has(code);
     const fill = cat ? CAT_COLOR[cat] : (isNative ? NATIVE_COLOR : '#d4d4d8');
     const nomR = nomZone(cc, code, r.name);
-    const title = cat ? `${nomR} — ${CAT_LABEL[cat]} (${cat})`
+    const title = cat ? `${nomR} — ${libelleExo(cat, true)}`
                 : isNative ? `${nomR} — pas de classement exotique (présente, eBird ne la tague pas ici)`
                 : `${nomR} — non listé (sauvage / absent)`;
     return _pathZone(dRemplace || r.path, fill, title, selection.has(code), selection.size > 0,
@@ -13157,8 +13162,11 @@ function _legendeOuQuand(aCarte, aGraph, vueExo){
   // « quand » - et garde son repere de periode.
   if(vueExo){
     const pastille = (col, texte) => `<span class="sm-freq-lg"><span class="sm-freq-sw" style="background:${col};margin-right:5px;"></span>${texte}</span>`;
-    const clesExo = pastille('#22c55e', 'N naturalisé') + pastille('#f59e0b', 'P provisoire')
-      + pastille('#ef4444', 'X échappé')
+    // Les libelles viennent de la table commune : la legende disait « naturalise » quand le
+    // reste de l'appli disait « introduit etabli ».
+    const clesExo = pastille('#22c55e', 'N ' + libelleExo('N').toLowerCase())
+      + pastille('#f59e0b', 'P ' + libelleExo('P').toLowerCase())
+      + pastille('#ef4444', 'X ' + libelleExo('X').toLowerCase())
       + (window._oqExoNatif ? pastille('#3b82f6', 'pas de classement') : '')
       + pastille('#d4d4d8', 'sauvage ou absente');
     return `<div class="sm-oq-cles">${clesExo}</div>`
@@ -13185,11 +13193,14 @@ function _legendeOuQuand(aCarte, aGraph, vueExo){
   // carte d'une piece prend la valeur nationale du mois choisi.
   const surCarte = p.sansDecoupage ? 'Le pays entier sur la carte' : `Par ${p.zoneWord || 'région'} sur la carte`;
   const aCliquer = p.sansDecoupage ? 'un mois ou une barre' : 'une zone, un mois ou une barre';
+  // La note dit ce que seule elle peut dire - que les deux vues sont une meme mesure, et
+  // qu'un clic les bouge ensemble. La DEFINITION de cette mesure, elle, est juste en
+  // dessous dans « Details du calcul » : la redire ici la faisait lire deux fois.
   const phrase = aCarte && aGraph
-    ? `La même mesure des deux côtés : la part des listes eBird qui citent l'espèce, sur 2019-2026. ${surCarte}, au fil de l'année sur les barres. Cliquer ${aCliquer} change les deux.`
+    ? `La même mesure des deux côtés. ${surCarte}, au fil de l'année sur les barres. Cliquer ${aCliquer} change les deux.`
     : aCarte
-    ? `La part des listes eBird qui citent l'espèce, sur 2019-2026. ${surCarte}, mois par mois dans la colonne de gauche.`
-    : `La part des listes eBird qui citent l'espèce au fil de l'année, sur 2019-2026.`;
+    ? `${surCarte}, mois par mois dans la colonne de gauche.`
+    : `La fréquence au fil de l'année.`;
   return `<div class="sm-oq-cles">${cles}</div>`
     + `<div class="sm-oq-note">ⓘ ${phrase} C'est une facilité de rencontre, pas un effectif.</div>`;
 }
@@ -17009,7 +17020,6 @@ function _pkdxRender(){
     // Chips categorie X/N/P : filtre exclusif inverse. Cliquer un chip active la cat.
     // Multi-select : X + N + P peuvent etre coches ensemble (union). Default OFF (gris).
     const CAT_COLOR = { X:'#ef4444', N:'#22c55e', P:'#f59e0b' };
-    const CAT_LABEL = { X:'Échappé (X)', N:'Naturalisé (N)', P:'Provisoire (P)' };
     // Une pastille par categorie. X et P avaient ete regroupes tant que les pastilles
     // etaient des carres a texte ; en rond, « X/P » ne tenait plus et les separer laisse de
     // toute facon choisir l'un sans l'autre - elles restent cumulables.
@@ -17020,7 +17030,7 @@ function _pkdxRender(){
       // pour signaler "filtre applique". Coherent avec les tier chips.
       const bgStyle = on ? `background:#7e8a99;color:#fff;` : '';
       const cls = 'rar-chip' + (on ? ' on' : '');
-      return `<button type="button" class="${cls}" data-cat="${g.join(',')}" style="${bgStyle}" title="${esc(g.map(c => CAT_LABEL[c]).join(' / '))}">${g.join('/')}</button>`;
+      return `<button type="button" class="${cls}" data-cat="${g.join(',')}" style="${bgStyle}" title="${esc(g.map(c => libelleExo(c, true)).join(' / '))}">${g.join('/')}</button>`;
     }).join('');
     chipsBox.innerHTML = '<span style="font-size:11px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.5px; font-weight:700; align-self:center; margin-right:6px;">Rareté</span>'
       + chipsHtml
