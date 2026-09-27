@@ -12793,7 +12793,7 @@ function _unEncart(cfg, paths, rendre){
       + '" rx="7" ry="7" fill="var(--surface, #fff)"/>'
       + '<text x="' + (c.x + 24) + '" y="' + (c.y - hautL + CORPS * 0.92).toFixed(1) + '"'
       + ' style="user-select:none" font-size="' + CORPS + '" font-weight="700" font-family="system-ui"'
-      + ' fill="var(--ink-2, #47534f)">' + esc(cfg.titre) + '</text>'
+      + ' fill="var(--ink-2, #47534f)">' + esc(cfg.titre) + '</text></g>'
     : '';
   // Un filet pointille gris dit que ce cadre n'est pas a l'echelle ni a sa place : sans lui,
   // les Canaries posees a cote de l'Andalousie se lisent comme une region voisine.
@@ -13590,30 +13590,10 @@ function _renderSpeciesRarityCard(key){
     // espece porte ainsi le meme jeton aux deux endroits. C'etait une petite gelule grise
     // a l'ancienne largeur variable.
     const catMiniPill = (isExo && cat)
-      ? jetonExo(cat, { style: 'margin-left:10px; flex-shrink:0;', tip: catLbl ? catLbl + ' (' + cat + ')' : cat })
+      ? jetonExo(cat, { style: 'flex-shrink:0;', tip: catLbl ? catLbl + ' (' + cat + ')' : cat })
       : '';
-    // Icone "?" avec tooltip explicatif : remplace l'ancien depliant. Petit cercle
-    // avec point d'interrogation apres le label categorie ; survole = tooltip.
-    // Le tooltip est en CSS pur via :hover sur .cat-help-wrap.
-    const catHelpTip = cat ? `<span class="cat-help-wrap" style="position:relative;display:inline-block;margin-left:8px;line-height:1;cursor:help;vertical-align:baseline;">
-      <svg width="14" height="14" viewBox="0 0 14 14" style="vertical-align:-3px;"><circle cx="7" cy="7" r="6.5" fill="var(--surface-2)" stroke="var(--line)"/><text x="7" y="10.5" text-anchor="middle" font-size="10" font-weight="700" fill="var(--ink-3)">?</text></svg>
-      <span class="cat-help-tip" style="position:absolute;top:20px;left:0;z-index:1000;width:340px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:11.5px;line-height:1.5;color:var(--ink-2);box-shadow:0 6px 20px rgba(0,0,0,0.15);display:none;text-align:left;font-weight:400;">
-        <div style="margin-bottom:8px;">Une espèce vue hors de son aire naturelle est classée par les bénévoles de l'<b>eBird Exotics Working Group</b>, zone par zone. La même espèce peut donc être <b>naturalisée ici et simple échappée ailleurs</b> : la lettre affichée est celle qu'eBird retient pour le pays, et la carte des statuts, plus bas, dit où elle bascule.</div>
-        <div style="display:grid;grid-template-columns:auto 1fr;gap:5px 8px;">
-          <span style="font-weight:700;color:var(--ink);">N</span><span><b>Naturalisé</b> : population installée, qui se reproduit sur place.</span>
-          <span style="font-weight:700;color:var(--ink);">P</span><span><b>Provisoire</b> : observations régulières, population non confirmée.</span>
-          <span style="font-weight:700;color:var(--ink);">X</span><span><b>Échappé isolé</b> : oiseau manifestement captif, aucune population.</span>
-        </div>
-        <div style="margin-top:7px;opacity:.85;">Source : les icônes exotiques des bar charts eBird.</div>
-      </span>
-    </span>` : '';
-    // Style pur pour le tooltip au hover (une seule fois, ajoute au head)
-    if(cat && !document.getElementById('cat-help-style')){
-      const st = document.createElement('style');
-      st.id = 'cat-help-style';
-      st.textContent = '.cat-help-wrap:hover .cat-help-tip{display:block !important;}';
-      document.head.appendChild(st);
-    }
+    // Le « ? » et son depliant sont retires : les trois definitions N / P / X iront ailleurs,
+    // en un seul endroit plutot qu'en infobulle accrochee a chaque jeton.
     // Ancien catExplainer (details deroulant) retire 2026-09-22 -> remplace par le tooltip.
     const catExplainer = '';
     // seulement pour les sauvages calibrées S&T). Rend le calcul transparent : montre les 3
@@ -13633,7 +13613,7 @@ function _renderSpeciesRarityCard(key){
     // Le statut exotique voyage vers l'entete du bloc de cartes, avec son infobulle et son
     // « ? ». Le libelle - « Introduit établi » - part avec lui : le rond le dit en une
     // lettre, et l'infobulle en toutes lettres au survol.
-    window._oqStatutExo = catMiniPill ? (catMiniPill + (catHelpTip || '')) : '';
+    window._oqStatutExo = catMiniPill || '';
     _majEnteteOuQuand(null);
   };
   // Pays par defaut : reprend le contexte du site (filtre Birdydex ou carte). Sinon FR.
@@ -14350,7 +14330,7 @@ function _renderSpeciesFreqChart(key, country){
   // de leur colonne est donc a PL-12,5. En y : les mois ont leur ligne de base a H-8, dont
   // le milieu optique est 3,2 px plus haut.
   const xAide = PL - 12.5, yAide = H - 11.2;
-  out += `<g style="cursor:help;" data-tip="% checklists = fraction des sorties eBird qui ont coché l'espèce. Ex : 23% en mars = 1 sortie sur 4 a vu l'espèce en mars.">
+  out += `<g data-tip="% checklists = fraction des sorties eBird qui ont coché l'espèce. Ex : 23% en mars = 1 sortie sur 4 a vu l'espèce en mars.">
     <circle cx="${xAide}" cy="${yAide.toFixed(1)}" r="5.5" fill="var(--surface-2)" stroke="var(--line)"/>
     <text x="${xAide}" y="${(yAide + 2.8).toFixed(1)}" text-anchor="middle" font-size="8" font-weight="700" fill="var(--ink-3)">?</text>
   </g>`;
