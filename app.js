@@ -1713,40 +1713,15 @@ function habitatsOf(sci){
   return visibles.length ? visibles : null;
 }
 // Reverse index : catégorie → tableau [sci] trié par nom FR. Construit une seule fois.
-// Reverse index habitat -> [sci]. Tri par nom sci (Latin) car SCI_ALIAS n'est pas
-// encore initialise ici (TDZ) et donc frName() throw si on essaie de trier par nom FR.
-// Un consommateur peut re-trier par nom FR apres init si besoin.
-// Construit au PREMIER APPEL et non plus au chargement du module. Deux raisons : la table
-// HABITATS arrive maintenant dans un fichier a part, donc elle n'est pas encore la quand le
-// module s'execute ; et parcourir 361 Ko pour batir un index que, au 2026-09-27, plus
-// personne n'appelle etait du travail pur perdu a chaque demarrage. L'index a perdu son
-// dernier consommateur avec les trophees habitat (voir la note plus bas) : il est garde au
-// cas ou, mais ne coute plus rien tant qu'on ne le demande pas.
-let _habitatToScis = null;
-function habitatToScis(){
-  if(_habitatToScis) return _habitatToScis;
-  _habitatToScis = (() => {
-  const idx = Object.fromEntries(HABITAT_CATS.map(c=>[c, []]));
-  // Union des cles pour prendre en compte les especes uniquement classees par
-  // ADDITIONS/OVERRIDES (ex : Gypaete tagge "montane" hors AVONET).
-  const seen = new Set();
-  const push = sci => { if(seen.has(sci)) return; seen.add(sci);
-    const cats = habitatsOf(sci); if(!cats) return;
-    for(const c of cats) if(idx[c]) idx[c].push(sci); };
-  for(const sci in HABITATS) push(sci);
-  for(const sci in HABITAT_ADDITIONS) push(sci);
-  for(const sci in HABITAT_OVERRIDES) push(sci);
-  for(const c of HABITAT_CATS) idx[c].sort();
-  return idx;
-  })();
-  return _habitatToScis;
-}
-// Version restreinte aux especes presentes en France : intersecte HABITATS avec
-// REAL_RARITY (bar chart eBird FR, ~739 sp regulieres) + REAL_ABUNDANCE_ST_FR (S&T FR).
-// Sert de base pour les seuils des trophees Saint-Graal : 5 % de "vraiment observable
-// en FR" est plus juste que 5 % du catalogue mondial. Ex : Forest 6052 sp mondial ->
-// ~200 sp FR (bien plus atteignable). Getter lazy : REAL_RARITY est declare plus bas,
-// donc on differe le calcul au 1er acces.
+// HABITAT_TO_SCIS, l'index inverse habitat -> [especes] du monde entier, est supprime le
+// 2026-09-27. Il se reconstruisait a CHAQUE demarrage en parcourant les 10584 entrees
+// d'HABITATS, et plus personne ne l'appelait depuis le retrait des trophees habitat, qui
+// avait deja emporte sa version francaise (note juste en dessous).
+// Pour le refaire si le besoin revient : parcourir HABITATS, HABITAT_ADDITIONS et
+// HABITAT_OVERRIDES en passant chaque espece par habitatsOf(), puis trier par nom LATIN -
+// SCI_ALIAS n'est pas encore initialise a cet endroit du fichier, donc frName() y leve.
+// Et le construire au premier appel, pas au chargement : HABITATS arrive maintenant dans
+// un fichier a part et n'est pas la quand le module s'execute.
 // HABITAT_TO_SCIS_FR (index habitat -> especes francaises) et son filtre inFR ont ete
 // retires avec les trophees habitat : ils n'avaient pas d'autre consommateur. inFR etait
 // le dernier usage du S&T pour trancher "presente en France", via les entrees a abondance
