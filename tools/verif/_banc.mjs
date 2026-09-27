@@ -13,6 +13,12 @@
     fini()                       affiche tout et rend le verdict au lanceur
 
   Le lanceur (tous.mjs) attend `window.__fini`, lit `window.__ok` et `#mesure`.
+
+  LES BANCS PILOTES
+  Un banc peut aussi exporter { nom, titre, quoi, mesure({ navigateur }) } au lieu de page() :
+  c'est lui qui conduit le navigateur, parce qu'il a besoin de plus qu'une page a regarder -
+  charger app.js en entier, choisir l'ordre d'arrivee des donnees, avancer le temps. Il rend
+  { ok, sortie } et se sert de rapport() pour ecrire ses lignes comme les autres.
 */
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -66,6 +72,26 @@ export function constante(nom){
     else if(c === ';' && d === 0) break;
   }
   return 'const ' + nom + ' =' + src.slice(debut, j) + ';';
+}
+
+/*
+  Le meme verif() / note() / verdict, mais cote Node, pour les bancs pilotes. La mise en forme
+  est ecrite une seule fois : celle de fini(), plus bas, est sa jumelle dans la page.
+*/
+export function rapport(){
+  const C = [];
+  return {
+    verif(libelle, valeur, ok){ C.push({ libelle, valeur: String(valeur), ok: !!ok }); },
+    note(texte){ C.push({ note: texte }); },
+    rendu(){
+      const larg = Math.max(...C.filter(c => c.libelle).map(c => c.libelle.length), 0) + 2;
+      const rates = C.filter(c => c.libelle && !c.ok).length;
+      const lignes = C.map(c => c.note !== undefined ? c.note
+        : c.libelle.padEnd(larg) + c.valeur.padEnd(26) + (c.ok ? 'ok' : 'DEFAUT'));
+      return { ok: rates === 0,
+               sortie: lignes.join('\n') + '\n\n' + (rates ? rates + ' DEFAUT(S)' : 'CONFORME') };
+    }
+  };
 }
 
 // Le squelette de page. `corps` est le HTML a mesurer, `script` le code qui mesure.

@@ -5271,6 +5271,16 @@ const MANCHOT_CATALOG = [
   ['eudyptes chrysocome','Gorfou sauteur'],['eudyptes moseleyi','Gorfou de Moseley'],['eudyptes chrysolophus','Gorfou doré'],['eudyptes schlegeli','Gorfou de Schlegel'],['eudyptes sclateri','Gorfou huppé'],['eudyptes pachyrhynchus','Gorfou du Fiordland'],['eudyptes robustus','Gorfou des Snares']
 ].map(([sci,name])=>({sci,name})).sort((a,b)=>a.name.localeCompare(b.name,'fr'));
 const MANCHOT_SET = new Set(MANCHOT_CATALOG.map(m=>m.sci));
+// Les trophees ne se calculent qu'apres build() : ils lisent _active, total et le rang dans
+// la ligue. renderResults() differe build() d'une frame (requestAnimationFrame), et les
+// snapshots Firestore votes / reactions / photos rentrent dans cet intervalle : ils
+// appelaient statsFor() sur des personnes encore nues - trois « Cannot read properties of
+// undefined (reading 'values') » a chaque chargement, en production depuis toujours.
+// Sortir plutot que calculer : la frame qui suit rend les trophees avec les vraies donnees,
+// ou les marque dirty si l'onglet est cache. Calculer quand meme serait pire que l'erreur :
+// avec un N a 0 et des total undefined les rangs sont faux, et _detectTrophyEventsCore ecrit
+// ses evenements de classement dans Firestore, donc chez tous les membres.
+function _statsPretes(gens){ return gens.length > 0 && gens.every(p => p._active); }
 function statsFor(me, N){
   const ranked=[...state.people].sort((a,b)=>b.total-a.total);   // rang basé sur le nb d'espèces (classement principal)
   const rank=ranked.findIndex(p=>p.id===me.id)+1;
@@ -5433,6 +5443,7 @@ function renderTrophies(data){
   let sel = people.find(p=>p.id===trophyPlayerId) || people.find(p=>p.isMe) || people[0];
   trophyPlayerId = sel.id;
   if(who) who.innerHTML = people.map(p=>`<button class="whochip ${p.id===sel.id?'on':''}" data-id="${esc(p.id)}" style="--series:var(--s${p.si})"><span class="dot"></span>${esc(p.name)}${p.isMe?' (vous)':''}</button>`).join('');
+  if(!_statsPretes(people)) return;
   const s=statsFor(sel, data.N);
   let unlocked=0;
   trophyDetails={};
@@ -6320,6 +6331,16 @@ function _detectTrophyEvents(){
 function _detectTrophyEventsCore(){
   if(!realPeople.length || !myUid || !leagueId) return;
   if(!_trophyEventsLoaded) return;
+  // Meme garde que renderTrophies : sans les donnees de build() les rangs sont faux, et les
+  // evenements ecrits ici partiraient chez tous les membres.
+  if(!_statsPretes(realPeople)){
+    // build() n'a pas encore tourne. On se represente : sans ca la detection attendrait le
+    // prochain snapshot pour repartir, et un onglet reste en arriere-plan (frame jamais
+    // rendue, donc build() jamais appele) ne detecterait plus rien du tout. Le banc
+    // « trophees » le mesure, frames gelees.
+    if(!_detectTimer) _detectTimer = setTimeout(() => { _detectTimer = null; _detectTrophyEventsCore(); }, 2000);
+    return;
+  }
   const prev = _loadCompState();
   const firstRun = !prev.unlocked;
   const N = state.people.length || realPeople.length;
