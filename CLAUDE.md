@@ -144,6 +144,13 @@ premier si l'appli marche, bien avant la bande passante de GitHub Pages.
 
 ## Données eBird
 
+**Le jeton eBird d'`app.js` est public, et c'est assumé.** Le dépôt est public et l'appli
+appelle l'API eBird depuis le navigateur du visiteur : le jeton part forcément avec le code,
+le ranger ailleurs ne le cacherait qu'à nous. Le masquer vraiment demanderait de faire passer
+tous les appels par un serveur à nous, donc de quitter GitHub Pages. Décision prise le
+2026-09-28 : on ne change rien, le jeton ne lit que des données eBird publiques, pas le
+compte ni les listes. Le cookie, lui, reste hors dépôt - c'est lui le vrai secret.
+
 Les fréquences viennent des bar charts eBird, fenêtre 2019-2026, **et exigent un compte** :
 l'URL `barchartData` redirige vers la connexion. Le cookie se colle dans un fichier hors
 dépôt, désigné par `EBIRD_COOKIE_FILE`. Les statuts exotiques, eux, se lisent sur la page
