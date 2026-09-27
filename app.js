@@ -12369,6 +12369,7 @@ async function _renderExoticMap(sci, cc){
   // Le bleu n'apparait que dans les pays ou certaines zones n'ont aucun classement : la
   // legende commune, en bas du panneau, ne le montre que dans ce cas.
   window._oqExoNatif = nativeZones.size > 0;
+  window._oqExoNational = nationalExotic;
   if(_ccFicheObsolete(cc)) return;
   // Plus de depliant : cette carte est devenue l'autre face de celle des raretes, et les
   // deux onglets de l'entete disent laquelle on regarde. La phrase que portait le resume -
@@ -12904,7 +12905,10 @@ function _majOngletsOuQuand(){
   if(!(aRar && aExo)){ box.innerHTML = ''; return; }
   const onglet = (cle, texte) => `<button type="button" data-vue="${cle}" class="sm-oq-onglet${vue === cle ? ' on' : ''}"`
     + ` aria-pressed="${vue === cle}">${texte}</button>`;
-  box.innerHTML = onglet('rarete', 'Rareté') + onglet('exo', 'Statut exotique');
+  // Pas le meme mot selon ce que la carte raconte : le statut de l'espece dans le pays,
+  // ou les seuls endroits ou on a note des echappes.
+  box.innerHTML = onglet('rarete', 'Rareté')
+    + onglet('exo', window._oqExoNational ? 'Statut exotique' : 'Échappés');
   box.onclick = (e) => {
     const b = e.target.closest('[data-vue]');
     if(!b) return;
@@ -13078,7 +13082,9 @@ function _legendeOuQuand(aCarte, aGraph, vueExo){
       + (window._oqExoNatif ? pastille('#3b82f6', 'pas de classement') : '')
       + pastille('#d4d4d8', 'sauvage ou absente');
     return `<div class="sm-oq-cles">${clesExo}</div>`
-      + `<div class="sm-oq-note">ⓘ D'où sort l'oiseau, ${p.sansDecoupage ? 'dans le pays' : 'zone par zone'} : eBird classe chaque population vue hors de son aire naturelle. Le statut peut changer au sein d'une même zone selon le lieu. Les barres, en dessous, disent toujours quand la trouver.</div>`;
+      + `<div class="sm-oq-note">ⓘ ${window._oqExoNational
+          ? "D'où sort l'oiseau, " + (p.sansDecoupage ? 'dans le pays' : 'zone par zone') + " : eBird classe chaque population vue hors de son aire naturelle."
+          : "L'espèce est tenue pour sauvage dans le pays. La carte montre les seules zones où eBird a classé des individus comme introduits ou échappés."} Le statut peut changer au sein d'une même zone selon le lieu. Les barres, en dessous, disent toujours quand la trouver.</div>`;
   }
   const bande = [1,2,3,4,5,6,7,8,9,10]
     .map(t => `<span style="width:8px;height:12px;background:${realColor(t)};display:inline-block;"></span>`).join('');
