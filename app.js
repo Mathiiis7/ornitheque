@@ -3327,6 +3327,17 @@ function esc(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>
 // police systeme, apparition lente - et on ne peut pas non plus la positionner. On garde le
 // meme principe : un texte porte par l'element, mais sous data-tip au lieu de title, et une
 // seule boite reutilisee pour tout le document.
+
+// Un nom ampute par text-overflow merite son infobulle : c'est le seul moyen d'en lire la
+// fin. Entier, il n'a rien a ajouter. Le texte attend donc sous data-tip-coupe, et n'est
+// promu data-tip QUE s'il deborde - le curseur « ? » se regle sur data-tip, il ne doit
+// jamais annoncer une bulle qui ne viendra pas.
+function _bulleSiCoupe(el){
+  if(!el || !el.hasAttribute('data-tip-coupe')) return;
+  const t = el.getAttribute('data-tip-coupe');
+  if(t && el.scrollWidth > el.clientWidth + 1) el.setAttribute('data-tip', t);
+  else el.removeAttribute('data-tip');
+}
 function _initInfobulle(){
   if(document.getElementById('tipbox')) return;
   const box = document.createElement('div');
@@ -3390,6 +3401,10 @@ function _initInfobulle(){
   };
   document.addEventListener('mouseover', (e) => {
     dernier = { clientX: e.clientX, clientY: e.clientY };
+    // Le texte a pu etre mesure avant d'avoir sa largeur definitive - une fiche encore
+    // fermee, une fenetre redimensionnee. On retranche la question au moment du survol.
+    const coupe = e.target && e.target.closest ? e.target.closest('[data-tip-coupe]') : null;
+    if(coupe) _bulleSiCoupe(coupe);
     const el = e.target && e.target.closest ? e.target.closest('[data-tip], [title]') : null;
     if(!el || el === cible) return;
     // Reprise a la volee de title : plutot que de convertir a la main les cent trente
@@ -3404,9 +3419,6 @@ function _initInfobulle(){
     }
     const txt = el.getAttribute('data-tip') || '';
     if(!txt) return;
-    // Un texte coupe par text-overflow:ellipsis garde son infobulle - c'est le seul moyen
-    // d'en lire la fin. Entier, il la perd : elle ne ferait que recopier ce qu'on lit.
-    if(el.hasAttribute('data-tip-coupe') && el.scrollWidth <= el.clientWidth + 1) return;
     cible = el;
     // On attend avant d'afficher. Sans ce delai, traverser une rangee de boutons faisait
     // clignoter une infobulle par bouton.
@@ -10755,7 +10767,7 @@ async function _gifFetch(query){
         const preview = g.images?.fixed_width_small?.url || g.images?.preview_gif?.url || g.images?.original?.url;
         const full = g.images?.fixed_height?.url || g.images?.original?.url;
         if(!preview || !full) return '';
-        return `<button type="button" class="gif-item" data-url="${esc(full)}" data-preview="${esc(preview)}" title="${esc(g.title||'')}"><img src="${esc(preview)}" alt="${esc(g.title||'gif')}" loading="lazy"></button>`;
+        return `<button type="button" class="gif-item" data-url="${esc(full)}" data-preview="${esc(preview)}"${g.title ? ` title="${esc(g.title)}"` : ''}><img src="${esc(preview)}" alt="${esc(g.title||'gif')}" loading="lazy"></button>`;
       }).join('');
     }
   }catch(err){
@@ -12950,8 +12962,9 @@ function _majEnteteOuQuand(nomZone){
     ? `<span class="sm-oq-note-zone">${esc(window._oqNoteExo)}</span>` : '';
   // data-tip-coupe : le nom ne se repete en infobulle que si les points de suspension l'ont
   // reellement ampute. « FRANCE » entier n'a rien a apprendre a qui le lit deja.
-  el.innerHTML = `<span class="sm-oq-nom" data-tip-coupe data-tip="${esc(nom)}">${esc(nom)}</span>`
+  el.innerHTML = `<span class="sm-oq-nom" data-tip-coupe="${esc(nom)}">${esc(nom)}</span>`
     + (window._oqStatutExo || '') + note;
+  _bulleSiCoupe(el.firstElementChild);
 }
 // Les onglets. Celui du statut exotique n'apparait que si l'espece en a un a montrer dans
 // ce pays : sur la plupart des oiseaux il n'y a qu'une carte, et un onglet seul qui ne
