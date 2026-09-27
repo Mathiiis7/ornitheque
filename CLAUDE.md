@@ -67,7 +67,18 @@ eBird : ça se vérifie en une commande. Ne jamais le deviner.
 une décision vient d'une mesure, ils donnent le chiffre.
 
 **Ne jamais réduire un périmètre tout seul.** Si une partie de la demande paraît inutile ou
-risquée : le dire, et attendre.
+risquée : le dire, et attendre. Et ne jamais simplifier ni retirer un élément d'interface
+existant qui n'a pas été mentionné.
+
+**Une classe partagée se touche avec précaution.** Réparer un composant en modifiant une
+classe que d'autres utilisent casse les autres en silence. `.cp-item` sert au sélecteur de
+pays ET au sélecteur générique : lui avoir donné la grille à six colonnes du premier a réduit
+« Par famille » à « P… » dans le second, et personne ne l'a vu pendant deux jours. Avant de
+modifier une classe, chercher qui d'autre s'en sert.
+
+**Retirer une chose, c'est retirer ses effets de bord.** En supprimant une infobulle, penser
+au curseur, à l'attribut `aria`, à la place qu'elle occupait. Le « ? » est resté deux
+sessions après la disparition de la bulle qu'il annonçait.
 
 ## Les bancs de mesure
 
