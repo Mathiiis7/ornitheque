@@ -2,6 +2,13 @@
 #
 # Version 2 (26/08/2026) : extraction composite 3 metriques + weekly.
 #
+# APRES CE SCRIPT, REPASSER node tools/build/compacte-abondance-st.mjs
+# Les 52 valeurs hebdomadaires pesent 24,6 Ko servis sur les 31,7 Ko de la table (mesure du
+# 28/09/2026), et un seul endroit du code les lit, pour une question oui/non : l espece est-elle
+# presente au moins une semaine. Le compacteur les remplace par p:1 et retire ta, tn, tl, tr,
+# que personne ne lit. Oublier cette etape ne casse rien - le lecteur accepte les deux formes -
+# mais rend 24,6 Ko a chaque visiteur, en silence.
+#
 # Pour chaque espece FR de l'app, on extrait de S&T (rasters hebdomadaires) :
 #   - abd_annual : moyenne annuelle nationale (mean pixels x 52 semaines)
 #     -> reflete la difficulte d'observation au hasard
