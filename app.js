@@ -1303,7 +1303,13 @@ function _openCountryPicker(currentCode, opts = {}){
             if(absent) lbl = 'absente';
             else if(tier === 0 && chipCat) lbl = EXOTIC_CATEGORY_LABEL[chipCat] || 'Exotique';
             else lbl = (typeof REAL_LABELS === 'object' && REAL_LABELS[tier]) || ('tier '+tier);
-            const chipText = chipCat || tier;
+            // La pastille porte le PALIER, partout et sans exception - la vignette du
+            // birdydex et la fiche le font deja. La lettre du statut part dans le rond gris
+            // de 16 px, le meme qu'ailleurs, pose AVANT le pourcentage : elle dit d'ou sort
+            // l'oiseau, pas s'il est facile a voir, et les deux ne se remplacent pas.
+            const exoChip = chipCat
+              ? '<span class="pkdx-exo" data-tip="' + esc((EXOTIC_CATEGORY_LABEL[chipCat] || 'Exotique ' + chipCat) + ' (' + chipCat + ')') + '">' + chipCat + '</span>'
+              : '';
             // Nouveau format : label texte AVANT le chip numero pour que les chips
             // soient tous alignes a droite (ex: "Rare [7]"). Absent = pas de chip.
             // Meme lecture que les lignes de zone : la valeur annuelle, sa barre, puis le
@@ -1318,12 +1324,15 @@ function _openCountryPicker(currentCode, opts = {}){
             const barW = _longueurBarre(vAn);
             titreLigne = (reg.name || cc) + ' — ' + lbl
               + (vAn > 0 ? ' · ' + fmtPct(vAn) + ' des listes sur l\'année' : '');
+            // La place du rond est reservee meme quand il n'y a pas de statut, sinon les
+            // pourcentages ne s'alignaient plus d'une ligne a l'autre.
+            const caseExo = '<span class="cp-item-exo">' + exoChip + '</span>';
             meta = absent
-              ? '<span class="reg-picker-val">absente</span><div class="reg-picker-bar"></div>'
+              ? caseExo + '<span class="reg-picker-val">absente</span><div class="reg-picker-bar"></div>'
                 + tierChip('–', 'var(--line-2)', { cls: 'tier-rond' })
-              : '<span class="reg-picker-val">' + esc(fmtPct(vAn)) + '</span>'
+              : caseExo + '<span class="reg-picker-val">' + esc(fmtPct(vAn)) + '</span>'
                 + '<div class="reg-picker-bar"><div style="width:' + barW + '%; color:' + col + ';"></div></div>'
-                + tierChip(chipText, col, { title: 'palier ' + tier, cls: 'tier-rond' });
+                + tierChip(tier, col, { title: 'palier ' + tier, cls: 'tier-rond' });
           } else {
             // Nb d'especes calibrees pour ce pays = le bar chart, qui est la source de la
             // rarete dans les 16 pays. On primait le S&T en le croyant plus riche : il ne
@@ -12906,6 +12915,129 @@ function _majOngletsOuQuand(){
     _majPanneauOuQuand();
   };
 }
+// Le detail du calcul, sorti de renderLine : il doit se refaire quand on change de ZONE
+// ou de MOIS, pas seulement de pays. Le laisser dans renderLine aurait oblige a rejouer
+// toute la ligne - et avec elle les deux cartes, qui sont justement ce qui vient de
+// changer - pour rafraichir trois phrases.
+function _majDetailsCalcul(k, cc, isExo, cat){
+  const boite = document.getElementById('smDetailsCalcul');
+  if(!boite) return;
+  let detailsHtml = '';
+  const isEstabExo = isExo && _isEstablishedExotic(cat);
+  const canHaveDetails = (!isExo || isEstabExo);
+  // Data S&T + bar chart du pays courant (via registry pour multi-pays).
+  const regCC = COUNTRIES_REG[cc];
+  const stEntry = (regCC && regCC.st) ? (regCC.st()[k] || null) : null;
+  const ccBarTier = (regCC && regCC.barTier) ? (regCC.barTier()[k] || null) : null;
+  const ccName = (regCC && regCC.name) || cc;
+  // Label source d'appui : bar chart eBird du pays (meme pour les exotiques N/P depuis
+  // le fix 2026-09-21 qui abandonne GBIF pour utiliser le meme signal que les sauvages).
+  const barSrcLabelCC = (cc === 'FR' ? 'Bar chart eBird FR 2019-2026' : ('Bar chart eBird ' + cc + ' 2019-2026'));
+  // Le panneau decrit la methode reellement utilisee, et rien d'autre. Il a longtemps
+  // expose une fusion S&T + bar chart avec ses regles d'arbitrage, puis une mesure
+  // "pic biweekly" : ni l'une ni l'autre n'existe plus, et il annoncait donc un calcul
+  // fictif. Depuis le 2026-09-23 la rarete est une seule chose, la part des listes du
+  // pays qui mentionnent l'espece, ponderee par l'effort d'observation de chaque
+  // quinzaine. Le S&T ne sert plus que de filet, quand aucun bar chart n'existe.
+  if(canHaveDetails){
+    const stSecours = !ccBarTier && typeof _stUtilisable === 'function' && _stUtilisable(stEntry);
+    const tierAffiche = ccBarTier || (stSecours ? stEntry.t : null);
+    // Le panneau repond a trois questions, dans cet ordre : combien, depuis quand, d'ou
+    // ca sort. Il ouvrait sur la source en capitales - la moins utile des trois -, puis
+    // annoncait « Part des listes mentionnant l'espece » sans jamais donner le chiffre,
+    // et le redisait en deux phrases dont la seconde s'ouvrait sur « Autrement dit »,
+    // aveu que la premiere n'avait pas suffi.
+    // Le decoupage en quinzaines descend ici : c'est la granularite de la source, pas
+    // quelque chose a savoir pour lire le chiffre. Il ouvrait l'explication.
+    // Le panneau ne parle plus du pic : le graphique juste au-dessus montre l'annee entiere
+    // barre par barre, et la colonne des mois donne le palier de chacun. Une phrase qui
+    // redit « Mais 12 % en mai » sous un dessin qui le montre n'ajoute rien.
+    const pct = x => x >= 0.1 ? Math.round(x*100)+_PCT : x >= 0.01 ? _fr((x*100).toFixed(1))+_PCT : _fr((x*100).toFixed(2))+_PCT;
+    // Le panneau explique LE chiffre que la fiche affiche, pas un autre : il suit donc la
+    // zone choisie plutot que le pays, et le mois choisi plutot que l'annee. Il parlait
+    // d'un 27 % national pendant que la carte juste au-dessus en montrait un tout autre
+    // pour le departement qu'on venait de cliquer.
+    const _parZone = (typeof REAL_FREQ_MONTHLY_BY_REGION_MULTI === 'object')
+      ? REAL_FREQ_MONTHLY_BY_REGION_MULTI[cc] : null;
+    const zoneLue = (_speciesRegion && _parZone && _parZone[_speciesRegion] && _parZone[_speciesRegion][k])
+      ? _speciesRegion : '';
+    const m12Pays = zoneLue
+      ? _parZone[zoneLue][k]
+      : ((regCC && regCC.monthly) ? regCC.monthly()[k] : null);
+    const nomLu = zoneLue
+      ? ((zonesFichePourPays(cc).find(r => r.code === zoneLue) || {}).name || zoneLue)
+      : ((COUNTRIES_REG[cc] && COUNTRIES_REG[cc].name) || cc);
+    // 'an' ou un mois : le meme reglage que la colonne de pastilles de la carte.
+    const moisLu = (typeof window._smRarityMapMonth === 'number'
+                    && window._smRarityMapMonth >= 0 && window._smRarityMapMonth <= 11)
+      ? window._smRarityMapMonth : null;
+    const serieLue = (Array.isArray(m12Pays) && m12Pays.length === 12) ? m12Pays : null;
+    const valeurAnnuelle = !serieLue ? 0
+      : (moisLu == null ? _valeurAnnuelleZone(serieLue, cc, zoneLue || null) : (serieLue[moisLu] || 0));
+    const source = ccBarTier
+      ? esc(barSrcLabelCC) + ', par quinzaines'
+      : stSecours ? ('eBird Status &amp; Trends, ' + esc(ccName))
+      : ('Bar chart eBird ' + esc(cc) + ' : espèce absente');
+    // La portee se dit avant le chiffre, sinon on ne sait pas de quoi il parle : « dans
+    // les Yvelines », « en juin », ou les deux. C'est ce que la carte et la colonne des
+    // mois viennent de regler juste au-dessus.
+    // Pour une zone, le nom est pose SEUL puis repris par « y » : la preposition juste
+    // depend du nom - « en Île-de-France » mais « dans les Yvelines », « en Bretagne » mais
+    // « dans le Nord » - et aucune regle simple ne les couvre tous. Le pays, lui, passe par
+    // _auPays, qui sait le dire.
+    const quand = moisLu == null ? '' : ' en ' + _MONTH_FR[moisLu];
+    const compte = " et on compte celles qui citent l'espèce : <b>" + pct(valeurAnnuelle) + "</b>.";
+    const note = ccBarTier
+      ? (zoneLue
+          ? "Sur eBird, chaque sortie donne une liste des oiseaux vus. Ici on regarde <b>" + esc(nomLu) + "</b>" + (quand ? ',' + quand : '') + " : on prend toutes les listes qui y ont été enregistrées depuis 2019" + compte
+          : "Sur eBird, chaque sortie donne une liste des oiseaux vus. On prend toutes celles enregistrées " + esc(_auPays(cc)) + (quand ? ',' + quand + ',' : '') + " depuis 2019" + compte)
+      : stSecours
+      ? "Aucun bar chart eBird pour cette espèce dans ce pays. Le palier vient du modèle Status &amp; Trends de Cornell, seule source disponible."
+      : "Aucune donnée de fréquence dans le bar chart eBird " + esc(cc) + ". L'espèce y est signalée mais trop peu notée pour être agrégée.";
+    // Regularite : sur combien des 8 annees de la fenetre l'espece a ete observee dans ce
+    // pays. C'est le critere qui decide de son entree au catalogue, il a sa place ici.
+    const annees = (typeof ANNEES_PRESENCE === 'object' && ANNEES_PRESENCE[cc])
+      ? (ANNEES_PRESENCE[cc][k] != null ? ANNEES_PRESENCE[cc][k]
+         : ANNEES_PRESENCE[cc][(typeof SCI_ALIAS === 'object' && SCI_ALIAS[k]) || k])
+      : null;
+    // La regularite reste ici et ne remonte pas sur la ligne de rarete : elle ne dit pas
+    // la meme chose que le palier. Le palier mesure la frequence, la regularite dit si
+    // l'espece revient chaque annee ou si elle n'est passee qu'une fois - et c'est elle,
+    // sous trois ans, qui la sort du catalogue. Deux mesures, un seul panneau.
+    const noteAnnees = (annees != null)
+      ? `Observée <b>${annees} année${annees > 1 ? 's' : ''} sur 8</b> entre 2019 et 2026.${annees < 3 ? ' Sous trois années elle est jugée accidentelle, et ne figure pas parmi les espèces à trouver.' : ''}`
+      : '';
+    // Le chiffre traduit en geste. « 4 % des listes » suppose qu'on sache ce qu'est une
+    // liste eBird et qu'on fasse la conversion mentale ; « environ 4 sorties sur 100 »
+    // se lit sans rien savoir. Sous 2 %, on bascule sur « une sortie sur N », qui reste
+    // juste la ou « environ 1 sur 100 » perdrait tout son sens en arrondissant.
+    let concret = '';
+    const quandSorties = moisLu == null ? "prises au hasard dans l'année" : 'de ' + _MONTH_FR[moisLu];
+    if(!ccBarTier) concret = '';
+    else if(valeurAnnuelle >= 0.02) concret = ` Sur 100 sorties ${quandSorties}, environ <b>${Math.round(valeurAnnuelle*100)}</b> la verront.`;
+    else if(valeurAnnuelle > 0) concret = ` Il faut compter <b>${fmt(Math.round(1/valeurAnnuelle))} sorties ${quandSorties}</b> pour en voir une.`;
+    // Un titre court par bloc, et le bloc repond. L'ancien panneau enchainait quatre
+    // paragraphes de meme graisse ou rien ne disait lequel repondait a quoi. Les corps
+    // sont a 12 px : a 11 ils se lisaient comme des notes de bas de page, alors que
+    // c'est la seule explication de la mesure que porte la fiche.
+    const bloc = (titre, corps) => corps
+      ? `<div style="margin-top:11px;">`
+        + `<div style="font:700 10px/1.3 system-ui; letter-spacing:.6px; text-transform:uppercase; color:var(--ink-3); margin-bottom:4px;">${titre}</div>`
+        + `<div style="font-size:12px; color:var(--ink-2); line-height:1.5;">${corps}</div></div>`
+      : '';
+
+    detailsHtml = `
+      <details style="margin-top:6px;">
+        <summary style="cursor:pointer;font-size:12.5px;color:var(--ink-3);user-select:none;padding:2px 0;">▸ Détails du calcul</summary>
+        <div style="padding:2px 0 6px 4px;border-left:2px solid var(--line);margin:4px 0 2px 6px;padding-left:11px;">
+          ${bloc('Fréquence', note + concret)}
+          ${bloc('Régularité', noteAnnees)}
+          ${bloc('Source', source)}
+        </div>
+      </details>`;
+  }
+  boite.innerHTML = detailsHtml;
+}
 function _majPanneauOuQuand(){
   const card = document.getElementById('smOuQuandCard');
   if(!card) return;
@@ -13157,6 +13289,8 @@ async function _renderRarityMap(sci, cc){
       _renderRarityMap(sci, cc);
       // Le graphique en dessous suit : il met en avant les barres du mois choisi.
       if(typeof _renderSpeciesFreqChart === 'function') _renderSpeciesFreqChart(sci, cc);
+      if(typeof _majDetailsCalcul === 'function')
+        _majDetailsCalcul(key, cc, isExoticInCountry(key, cc), (typeof exoticCategoryInCountry === 'function' ? (exoticCategoryInCountry(key, cc) || '') : ''));
     };
   }
 }
@@ -13410,96 +13544,7 @@ function _renderSpeciesRarityCard(key){
     //     S&T (non parlants), affiche juste source d'appui retenue + note explicative
     // Source d'appui = bar chart eBird pour sauvages, GBIF pour exotiques N/P.
     // Non affichée pour tier 0 (parcs semi-libres, X/C échappés) : pas de calcul de tier.
-    let detailsHtml = '';
-    const isEstabExo = isExo && _isEstablishedExotic(cat);
-    const canHaveDetails = (!isExo || isEstabExo);
-    // Data S&T + bar chart du pays courant (via registry pour multi-pays).
-    const regCC = COUNTRIES_REG[cc];
-    const stEntry = (regCC && regCC.st) ? (regCC.st()[k] || null) : null;
-    const ccBarTier = (regCC && regCC.barTier) ? (regCC.barTier()[k] || null) : null;
-    const ccName = (regCC && regCC.name) || cc;
-    // Label source d'appui : bar chart eBird du pays (meme pour les exotiques N/P depuis
-    // le fix 2026-09-21 qui abandonne GBIF pour utiliser le meme signal que les sauvages).
-    const barSrcLabelCC = (cc === 'FR' ? 'Bar chart eBird FR 2019-2026' : ('Bar chart eBird ' + cc + ' 2019-2026'));
-    // Le panneau decrit la methode reellement utilisee, et rien d'autre. Il a longtemps
-    // expose une fusion S&T + bar chart avec ses regles d'arbitrage, puis une mesure
-    // "pic biweekly" : ni l'une ni l'autre n'existe plus, et il annoncait donc un calcul
-    // fictif. Depuis le 2026-09-23 la rarete est une seule chose, la part des listes du
-    // pays qui mentionnent l'espece, ponderee par l'effort d'observation de chaque
-    // quinzaine. Le S&T ne sert plus que de filet, quand aucun bar chart n'existe.
-    if(canHaveDetails){
-      const stSecours = !ccBarTier && typeof _stUtilisable === 'function' && _stUtilisable(stEntry);
-      const tierAffiche = ccBarTier || (stSecours ? stEntry.t : null);
-      // Le panneau repond a trois questions, dans cet ordre : combien, depuis quand, d'ou
-      // ca sort. Il ouvrait sur la source en capitales - la moins utile des trois -, puis
-      // annoncait « Part des listes mentionnant l'espece » sans jamais donner le chiffre,
-      // et le redisait en deux phrases dont la seconde s'ouvrait sur « Autrement dit »,
-      // aveu que la premiere n'avait pas suffi.
-      // Le decoupage en quinzaines descend ici : c'est la granularite de la source, pas
-      // quelque chose a savoir pour lire le chiffre. Il ouvrait l'explication.
-      const source = ccBarTier
-        ? esc(barSrcLabelCC) + ', par quinzaines'
-        : stSecours ? ('eBird Status &amp; Trends, ' + esc(ccName))
-        : ('Bar chart eBird ' + esc(cc) + ' : espèce absente');
-      const note = ccBarTier
-        ? "Sur eBird, chaque sortie donne une liste des oiseaux vus. On prend toutes celles enregistrées " + esc(_auPays(cc)) + " depuis 2019 et on compte celles qui citent l'espèce."
-        : stSecours
-        ? "Aucun bar chart eBird pour cette espèce dans ce pays. Le palier vient du modèle Status &amp; Trends de Cornell, seule source disponible."
-        : "Aucune donnée de fréquence dans le bar chart eBird " + esc(cc) + ". L'espèce y est signalée mais trop peu notée pour être agrégée.";
-      // Le panneau ne parle plus du pic : le graphique juste au-dessus montre l'annee entiere
-      // barre par barre, et la colonne des mois donne le palier de chacun. Une phrase qui
-      // redit « Mais 12 % en mai » sous un dessin qui le montre n'ajoute rien.
-      const m12Pays = (regCC && regCC.monthly) ? regCC.monthly()[k] : null;
-      const pct = x => x >= 0.1 ? Math.round(x*100)+_PCT : x >= 0.01 ? _fr((x*100).toFixed(1))+_PCT : _fr((x*100).toFixed(2))+_PCT;
-      // La valeur annuelle, que le panneau donne en premier. Il decrivait la mesure sans
-      // jamais l'afficher, et il fallait aller lire l'en-tete de « Où et quand la trouver »
-      // pour savoir de quel chiffre on parlait.
-      const valeurAnnuelle = (Array.isArray(m12Pays) && m12Pays.length === 12)
-        ? _valeurAnnuelleZone(m12Pays, cc) : 0;
-      // Regularite : sur combien des 8 annees de la fenetre l'espece a ete observee dans ce
-      // pays. C'est le critere qui decide de son entree au catalogue, il a sa place ici.
-      const annees = (typeof ANNEES_PRESENCE === 'object' && ANNEES_PRESENCE[cc])
-        ? (ANNEES_PRESENCE[cc][k] != null ? ANNEES_PRESENCE[cc][k]
-           : ANNEES_PRESENCE[cc][(typeof SCI_ALIAS === 'object' && SCI_ALIAS[k]) || k])
-        : null;
-      // La regularite reste ici et ne remonte pas sur la ligne de rarete : elle ne dit pas
-      // la meme chose que le palier. Le palier mesure la frequence, la regularite dit si
-      // l'espece revient chaque annee ou si elle n'est passee qu'une fois - et c'est elle,
-      // sous trois ans, qui la sort du catalogue. Deux mesures, un seul panneau.
-      const noteAnnees = (annees != null)
-        ? `Observée <b>${annees} année${annees > 1 ? 's' : ''} sur 8</b> entre 2019 et 2026.${annees < 3 ? ' Sous trois années elle est jugée accidentelle, et ne figure pas parmi les espèces à trouver.' : ''}`
-        : '';
-      // Le chiffre traduit en geste. « 4 % des listes » suppose qu'on sache ce qu'est une
-      // liste eBird et qu'on fasse la conversion mentale ; « environ 4 sorties sur 100 »
-      // se lit sans rien savoir. Sous 2 %, on bascule sur « une sortie sur N », qui reste
-      // juste la ou « environ 1 sur 100 » perdrait tout son sens en arrondissant.
-      let concret = '';
-      if(valeurAnnuelle >= 0.02) concret = ` Sur 100 sorties prises au hasard dans l'année, environ <b>${Math.round(valeurAnnuelle*100)}</b> la verront.`;
-      else if(valeurAnnuelle > 0) concret = ` Environ <b>une sortie sur ${fmt(Math.round(1/valeurAnnuelle))}</b> la voit.`;
-      // Un titre court par bloc, et le bloc repond. L'ancien panneau enchainait quatre
-      // paragraphes de meme graisse ou rien ne disait lequel repondait a quoi. Les corps
-      // sont a 12 px : a 11 ils se lisaient comme des notes de bas de page, alors que
-      // c'est la seule explication de la mesure que porte la fiche.
-      const bloc = (titre, corps) => corps
-        ? `<div style="margin-top:11px;">`
-          + `<div style="font:700 10px/1.3 system-ui; letter-spacing:.6px; text-transform:uppercase; color:var(--ink-3); margin-bottom:4px;">${titre}</div>`
-          + `<div style="font-size:12px; color:var(--ink-2); line-height:1.5;">${corps}</div></div>`
-        : '';
-      const chiffre = tierAffiche
-        ? (valeurAnnuelle > 0
-            ? `<b style="font-size:15px; color:var(--ink);">${pct(valeurAnnuelle)} des listes</b> · palier ${tierAffiche}`
-            : `palier ${tierAffiche}`)
-        : '';
-      detailsHtml = `
-        <details style="margin-top:6px;">
-          <summary style="cursor:pointer;font-size:12.5px;color:var(--ink-3);user-select:none;padding:2px 0;">▸ Détails du calcul</summary>
-          <div style="padding:2px 0 6px 4px;border-left:2px solid var(--line);margin:4px 0 2px 6px;padding-left:11px;">
-            ${bloc('Fréquence', (chiffre ? `<div style="margin-bottom:5px;">${chiffre}</div>` : '') + note + concret)}
-            ${bloc('Régularité', noteAnnees)}
-            ${bloc('Source', source)}
-          </div>
-        </details>`;
-    }
+    _majDetailsCalcul(k, cc, isExo, cat);
     // La ligne de rarete disparait. Elle redisait ce que la carte montre deja : la pastille
     // ANNEE porte le meme palier, dans la meme couleur, a quelques pixels de la. Ce qu'elle
     // etait seule a porter se range ailleurs - le statut exotique passe a cote du nom de
@@ -13513,8 +13558,6 @@ function _renderSpeciesRarityCard(key){
     // lettre, et l'infobulle en toutes lettres au survol.
     window._oqStatutExo = catMiniPill ? (catMiniPill + (catHelpTip || '')) : '';
     _majEnteteOuQuand(null);
-    const boxDet = document.getElementById('smDetailsCalcul');
-    if(boxDet) boxDet.innerHTML = detailsHtml;
   };
   // Pays par defaut : reprend le contexte du site (filtre Birdydex ou carte). Sinon FR.
   // (initCountry deja calcule plus haut avant box.innerHTML)
@@ -13592,6 +13635,8 @@ function _renderSpeciesRarityCard(key){
       // Les cartes mettent en evidence la zone choisie : il faut les redessiner.
       if(typeof _renderRarityMap === 'function') _renderRarityMap(k, cc2);
       if(typeof _renderExoticMap === 'function') _renderExoticMap(k, cc2);
+      if(typeof _majDetailsCalcul === 'function')
+        _majDetailsCalcul(k, cc2, isExoticInCountry(k, cc2), (typeof exoticCategoryInCountry === 'function' ? (exoticCategoryInCountry(k, cc2) || '') : ''));
     });
   };
   _appliquerZoneFiche = appliquer;
@@ -14242,6 +14287,8 @@ function _renderSpeciesFreqChart(key, country){
     window._smRarityMapMonth = (window._smRarityMapMonth === m) ? 'an' : m;
     if(typeof _renderRarityMap === 'function') _renderRarityMap(key, cc);
     _renderSpeciesFreqChart(key, cc);
+    if(typeof _majDetailsCalcul === 'function')
+      _majDetailsCalcul(key, cc, isExoticInCountry(key, cc), (typeof exoticCategoryInCountry === 'function' ? (exoticCategoryInCountry(key, cc) || '') : ''));
   };
   // La legende n'est plus ecrite ici : le panneau n'en a qu'une, commune a la carte et au
   // graphique (_legendeOuQuand). Elle n'a plus besoin de savoir si la source est

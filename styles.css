@@ -522,6 +522,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .reg-picker-item .tier-chip { justify-self:end; }
   /* Memes colonnes de mesure dans les lignes de pays, qui sont en flex : la valeur et sa
      barre doivent tomber au meme endroit dans les deux onglets du selecteur. */
+  /* Une case de largeur fixe pour le rond du statut, occupee ou non : sans elle, les
+     pourcentages se decalaient d'une ligne a l'autre selon qu'un oiseau porte un statut
+     exotique ou pas, et la colonne des chiffres ne se lisait plus d'un coup d'oeil. */
+  .cp-item .cp-item-exo { flex:0 0 16px; display:flex; align-items:center; justify-content:center; }
   .cp-item .reg-picker-val { flex:0 0 44px; }
   .cp-item .reg-picker-bar { flex:0 0 60px; }
   /* La barre est PEINTE, elle n'est plus un bloc.
@@ -1422,7 +1426,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .rar-chip[data-tier], .rar-chip[data-rar] { width:20px; min-width:20px; height:20px;
     margin:0; transform:none; padding:0; border-radius:50%; font:800 10px/1 system-ui; }
   /* Coche : l'ombre portee de la vignette remplace le filet du repos, comme pour X/P/N. */
-  .rar-chip[data-tier].on, .rar-chip[data-rar].on { box-shadow:0 1px 3px rgba(0,0,0,.3); }
+  .rar-chip[data-tier].on, .rar-chip[data-rar].on { box-shadow:0 1px 1.5px rgba(0,0,0,.10); }
   /* Ils suivent « Tout » et « Vide » plutot que d'etre rejetes au bout de la rangee : le
      filet vertical suffit a dire qu'ils ne prolongent pas l'echelle des paliers, et ils
      restent pres des pastilles qu'ils filtrent. */
@@ -1430,7 +1434,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .rar-sep { width:1px; align-self:stretch; min-height:16px; margin:0 6px 0 2px;
     background:var(--line-2); border-radius:1px; }
   /* Coche : meme ombre portee que la pastille du birdydex, au lieu du filet du repos. */
-  .rar-chip[data-cat].on { box-shadow:0 1px 3px rgba(0,0,0,.3); }
+  .rar-chip[data-cat].on { box-shadow:0 1px 1.5px rgba(0,0,0,.10); }
   .rar-chip { cursor:pointer; box-shadow:inset 0 0 0 1px var(--line-2); }
   .rar-chip:hover { filter:brightness(0.97); }
   .rar-chip.on, .tier-chip { color:#fff; box-shadow:none; }
@@ -1446,7 +1450,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      sous la ligne de base une place que les chiffres n'occupent pas. Valeur trouvee en
      balayant 0, 0,5, 1 et 1,5 et en mesurant l'encre a chaque fois - a 0,75 les dix
      chiffres tombent pile au centre. */
-  .tier-chip.tier-rond { width:22px; min-width:22px; height:22px; margin:0; transform:none; padding:0 0 0.75px; border:0; border-radius:50%; font:800 12px/1 system-ui; box-shadow:0 1px 3px rgba(0,0,0,.3); }
+  .tier-chip.tier-rond { width:22px; min-width:22px; height:22px; margin:0; transform:none; padding:0 0 0.75px; border:0; border-radius:50%; font:800 12px/1 system-ui; box-shadow:0 1px 1.5px rgba(0,0,0,.10); }
   .rar-chip.rar-exo.on { background:#7e8a99; }
   /* Retire les flèches spinner natives sur #mapEbMinTodo (on a nos propres boutons +/-) */
   #mapEbMinTodo::-webkit-outer-spin-button, #mapEbMinTodo::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
@@ -1974,7 +1978,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* right:6px et non 8px : la photo commence a 8px (padding de la carte), donc a 8px la
      pastille affleurait le bord droit de l image alors qu elle la depassait de 2px en haut.
      Le debord est maintenant le meme des deux cotes, et le coin se lit comme un coin. */
-  .pkdx-card .pkdx-tier { position:absolute; top:6px; right:6px; width:20px; height:20px; border-radius:50%; color:#fff; font:800 10px system-ui; display:grid; place-items:center; box-shadow:0 1px 3px rgba(0,0,0,.3); z-index:2; }
+  .pkdx-card .pkdx-tier { position:absolute; top:6px; right:6px; width:20px; height:20px; border-radius:50%; color:#fff; font:800 10px system-ui; display:grid; place-items:center; box-shadow:0 1px 1.5px rgba(0,0,0,.10); z-index:2; }
   /* Repere des especes nettement saisonnieres : pic mensuel >= 3x la moyenne annuelle. Le
      tier repose sur l annuel et ne le dit pas, alors qu il suffit souvent de viser le bon
      mois. Pose sous le numero, a gauche, pour ne pas concurrencer la pastille de tier. */
