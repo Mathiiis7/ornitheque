@@ -183,12 +183,31 @@ console.log(`Estim ~60s/region => ~${Math.round(totalRegions * 60 / 60)} min tot
 async function scrapeRegion(page, region) {
   const url = `https://ebird.org/barchart?r=${region}&byr=2019&eyr=2026`;
   await page.goto(url, { waitUntil: 'networkidle', timeout: 120000 });
+  // On attend le PREMIER des deux : la liste d'especes, ou l'entete du tableau qui annonce
+  // leur nombre. Une zone sans donnee n'aura jamais de .SpeciesName, et l'attendre seule
+  // coutait les 25 s entieres - sur la centaine de zones vides d'un run, trois quarts
+  // d'heure. L'entete, elle, est la dans les deux cas : « 0 especes (+0 autre taxons) »
+  // quand eBird n'a rien pour la zone. Mesure du 2026-09-27 : LV-065 vide repond en 3 s
+  // au lieu de 29, LV-106 pleine (235 especes) est inchangee.
   try {
-    await page.waitForSelector('.SpeciesName', { timeout: 25000 });
+    await page.waitForSelector('.SpeciesName, span.species', { timeout: 25000 });
   } catch(e) {
-    console.warn(`    (aucun .SpeciesName apres 25s, tente extract quand meme)`);
+    console.warn(`    (ni liste ni entete apres 25s, tente extract quand meme)`);
   }
+  // Le nombre annonce par l'entete. On lit le PREMIER nombre du texte pour ne dependre
+  // d'aucune langue : « 235 especes (+9 autre taxons) » comme « 235 species (+9 other taxa) ».
+  const annonce = () => page.evaluate(() => {
+    const s = document.querySelector('span.species');
+    if(!s) return null;
+    const m = (s.textContent || '').match(/[0-9]+/);
+    return m ? parseInt(m[0], 10) : null;
+  });
   const compte = () => page.evaluate(() => document.querySelectorAll('.SpeciesName').length);
+  // Zone declaree vide par eBird lui-meme : rien ne viendra, ni en attendant ni en
+  // secouant la page. On rend la main tout de suite.
+  if(await annonce() === 0 && await compte() === 0){
+    return { data: {}, totalRows: 0, totalAnnonce: 0 };
+  }
   if(await compte() === 0){
     // Seconde chance a l'ancienne, si jamais la page se remet a se construire toute seule.
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
@@ -196,7 +215,7 @@ async function scrapeRegion(page, region) {
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.waitForTimeout(1500);
   }
-  return await page.evaluate(() => {
+  const lu = await page.evaluate(() => {
     const out = {};
     const icons = document.querySelectorAll('[class*="Icon--exotic"]');
     for(const icon of icons) {
@@ -215,6 +234,8 @@ async function scrapeRegion(page, region) {
     }
     return { data: out, totalRows: document.querySelectorAll('.SpeciesName').length };
   });
+  // Relu apres la seconde chance : l'entete peut n'etre arrivee qu'avec le reste.
+  return { ...lu, totalAnnonce: await annonce() };
 }
 
 // headless : mesure du 2026-09-28, la page se lit aussi bien sans fenetre, et sans cookie.
@@ -276,7 +297,7 @@ for(const cc of COUNTRIES) {
     }
     try {
       console.log(`  [${done}/${totalRegions}] ${region} ...`);
-      const { data: raw, totalRows } = await scrapeRegion(page, region);
+      const { data: raw, totalRows, totalAnnonce } = await scrapeRegion(page, region);
       // Convert code -> sciName
       const bySci = {};
       for(const [code, cat] of Object.entries(raw)){
@@ -294,6 +315,12 @@ for(const cc of COUNTRIES) {
       // aussi, le scrape a echoue -> on retire l'entree pour qu'elle soit relancee.
       if(Object.keys(bySci).length === 0){
         if(totalRows > 0) console.log(`    (aucune exotique dans cette region - resultat conserve)`);
+        else if(totalAnnonce === 0){
+          // eBird a repondu, et sa reponse est « rien sur cette periode ». Ce n'est pas un
+          // rate : la distinguer evite de la relancer en croyant rattraper quelque chose.
+          console.log(`    (eBird n'a aucune donnee pour cette zone - relancee quand meme au prochain run)`);
+          delete results[region];
+        }
         else { console.warn(`    ⚠ liste d'especes vide : scrape rate, sera relance`); delete results[region]; }
       }
       // Sauvegarde progressive apres chaque region (resistance aux crashs)
