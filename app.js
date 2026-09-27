@@ -1238,6 +1238,11 @@ function _openCountryPicker(currentCode, opts = {}){
         return;
       }
       let html = '';
+      // Largeur de la case des lettres : celle de la ligne qui en porte le plus. Une case
+      // figee a trois lettres laisserait un grand vide sur les neuf dixiemes des lignes,
+      // qui n'en ont qu'une ; une case libre decalerait la colonne des pourcentages des
+      // qu'une ligne en porte deux. On la taille sur la liste elle-meme.
+      let maxLettres = 1;
       for(const cont of CONTINENT_ORDER){
         const items = (grouped[cont] || []).filter(x => {
           const cc = x.cc;
@@ -1297,19 +1302,23 @@ function _openCountryPicker(currentCode, opts = {}){
             //   sur les cartes Birdydex, coherent inter-vues)
             // - Autres : le chiffre du tier
             const localCat = ebCC || (cc === 'FR' ? _exoticCategory(focusSci) : '') || '';
-            const isEstabLetter = _isEstablishedExotic(localCat) && tier > 0;
-            const chipCat = (tier === 0) ? localCat : (isEstabLetter ? localCat : '');
             let lbl;
             if(absent) lbl = 'absente';
-            else if(tier === 0 && chipCat) lbl = EXOTIC_CATEGORY_LABEL[chipCat] || 'Exotique';
             else lbl = (typeof REAL_LABELS === 'object' && REAL_LABELS[tier]) || ('tier '+tier);
             // La pastille porte le PALIER, partout et sans exception - la vignette du
-            // birdydex et la fiche le font deja. La lettre du statut part dans le rond gris
-            // de 16 px, le meme qu'ailleurs, pose AVANT le pourcentage : elle dit d'ou sort
-            // l'oiseau, pas s'il est facile a voir, et les deux ne se remplacent pas.
-            const exoChip = chipCat
-              ? jetonExo(chipCat)
-              : '';
+            // birdydex et la fiche le font deja. Les lettres du statut partent dans leurs
+            // ronds gris de 16 px, les memes qu'ailleurs, poses AVANT le pourcentage :
+            // elles disent d'ou sort l'oiseau, pas s'il est facile a voir.
+            //
+            // TOUS les statuts, et non le seul retenu au national : le pays qui classe une
+            // espece N quelque part et X ailleurs porte les deux lettres, a la suite, comme
+            // la vignette du birdydex le fait deja. On n'en montrait qu'un, et seulement
+            // s'il etait N ou P - un X ne s'affichait jamais.
+            const catsPays = (typeof exoticCategoriesInCountry === 'function')
+              ? (exoticCategoriesInCountry(focusSci, cc) || []) : [];
+            const catsLigne = catsPays.length ? catsPays : (localCat ? [localCat] : []);
+            if(catsLigne.length > maxLettres) maxLettres = catsLigne.length;
+            const exoChip = catsLigne.map(c => jetonExo(c)).join('');
             // Nouveau format : label texte AVANT le chip numero pour que les chips
             // soient tous alignes a droite (ex: "Rare [7]"). Absent = pas de chip.
             // Meme lecture que les lignes de zone : la valeur annuelle, sa barre, puis le
@@ -1354,6 +1363,8 @@ function _openCountryPicker(currentCode, opts = {}){
           </div>`;
         }
       }
+      // 16 px par lettre, 3 px entre elles.
+      listEl.style.setProperty('--cp-exo', (maxLettres * 16 + (maxLettres - 1) * 3) + 'px');
       listEl.innerHTML = html || '<div style="padding:16px; text-align:center; color:var(--ink-3);">Aucun pays trouvé.</div>';
     };
     render();

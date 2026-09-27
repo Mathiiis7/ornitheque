@@ -525,7 +525,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* Une case de largeur fixe pour le rond du statut, occupee ou non : sans elle, les
      pourcentages se decalaient d'une ligne a l'autre selon qu'un oiseau porte un statut
      exotique ou pas, et la colonne des chiffres ne se lisait plus d'un coup d'oeil. */
-  .cp-item .cp-item-exo { flex:0 0 16px; display:flex; align-items:center; justify-content:center; }
+  /* Les lettres sont collees a droite de leur case, contre le pourcentage : c'est la
+     colonne des chiffres qui doit rester droite, pas celle des lettres. La largeur vient
+     de la ligne la plus chargee de la liste (--cp-exo, posee au rendu). */
+  .cp-item .cp-item-exo { flex:0 0 var(--cp-exo, 16px); display:flex; align-items:center;
+    justify-content:flex-end; gap:3px; }
   .cp-item .reg-picker-val { flex:0 0 44px; }
   .cp-item .reg-picker-bar { flex:0 0 60px; }
   /* La barre est PEINTE, elle n'est plus un bloc.
@@ -1417,13 +1421,14 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      pas le cas a 22 px, ou les ronds ecrasaient la rangee. Pas de boite doublee ici : le
      truc des marges negatives suppose une largeur fixe, et sur un disque le pixel
      d'arrondi ne se voit pas. */
-  .rar-chip[data-cat] { width:16px; min-width:16px; height:16px; margin:0; transform:none;
-    padding:0; border-radius:50%; font:700 9.5px/1 system-ui; }
+  .rar-chip[data-cat], .pkdx-exo { width:16px; min-width:16px; height:16px; margin:0;
+    transform:none; padding:0; border-radius:50%; font:700 9.5px/1 system-ui; }
   /* Les paliers 0 a 10 prennent eux aussi le jeton rond des vignettes - .pkdx-tier, 20 px
      et corps 10 - au lieu du carre arrondi. La barre de filtres et la grille qu'elle
      filtre montrent desormais la meme piece. « Tout » et « Vide », qui sont des mots et
      non des paliers, gardent leur bouton rectangulaire. */
-  .rar-chip[data-tier], .rar-chip[data-rar] { width:20px; min-width:20px; height:20px;
+  .rar-chip[data-tier], .rar-chip[data-rar], .tier-chip.tier-rond {
+    width:20px; min-width:20px; height:20px;
     margin:0; transform:none; padding:0; border-radius:50%; font:800 10px/1 system-ui; }
   /* Coche : l'ombre portee de la vignette remplace le filet du repos, comme pour X/P/N. */
   .rar-chip[data-tier].on, .rar-chip[data-rar].on { box-shadow:none; }
@@ -1446,8 +1451,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      pastilles s alignent en colonnes, la ou le rond ferait des trous entre les lignes. */
   /* margin et transform remis a zero : la regle du carre au-dessus les pose, et le rond,
      seul sur sa ligne, n'a pas de voisin avec qui se comparer. */
-  /* Meme pixel de rembourrage que .pkdx-exo, et pour la meme raison. */
-  .tier-chip.tier-rond { width:22px; min-width:22px; height:22px; margin:0; transform:none; padding:0 0 1px; border:0; border-radius:50%; font:800 12px/1 system-ui; box-shadow:none; }
+  /* Taille et corps viennent de la declaration partagee avec .rar-chip[data-tier], plus
+     haut. Ne reste ici que ce qui lui est propre. */
+  .tier-chip.tier-rond { border:0; box-shadow:none; }
   .rar-chip.rar-exo.on { background:#7e8a99; }
   /* Retire les flèches spinner natives sur #mapEbMinTodo (on a nos propres boutons +/-) */
   #mapEbMinTodo::-webkit-outer-spin-button, #mapEbMinTodo::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
@@ -2000,15 +2006,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* Le jeton de statut exotique n'est pas scope aux vignettes : la fiche espece le pose
      aussi, sur sa ligne de rarete, et la meme espece doit porter le meme rond aux deux
      endroits. Seul le POSITIONNEMENT reste l'affaire de la vignette, ci-dessus. */
-  /* 1 px de rembourrage en bas. La boite de ligne est bien centree, mais elle reserve
-     sous la ligne de base une place que ni les chiffres ni les capitales n'occupent :
-     l'encre tombe 0,43 px trop bas, et un pixel de rembourrage la remonte d'exactement
-     autant. Meme valeur que pour les pastilles de palier, malgre un corps different - la
-     correction depend des proportions de la fonte, pas de sa taille. Valeur balayee et
-     mesuree sur l'encre reelle, pas deduite. */
-  .pkdx-exo { font:700 9.5px/1 system-ui;
-    color:#fff; background:#7e8a99; border-radius:50%; width:16px;
-    height:16px; padding-bottom:1px; display:grid; place-items:center; cursor:help; }
+  /* Taille, corps et forme viennent de la declaration partagee avec .rar-chip[data-cat],
+     plus haut : le filtre et ce qu'il filtre sont le meme jeton. Ne reste ici que la
+     couleur, et de quoi centrer son contenu. */
+  .pkdx-exo { color:#fff; background:#7e8a99; display:grid; place-items:center; cursor:help; }
   .pkdx-card .pkdx-img { width:100%; aspect-ratio:1/1; background:var(--surface-2); border-radius:8px; overflow:hidden; margin-bottom:6px; display:grid; place-items:center; color:var(--ink-3); font-size:28px; }
   .pkdx-card .pkdx-img img { width:100%; height:100%; object-fit:cover; display:block; }
   .pkdx-card .pkdx-name { font:600 12.5px system-ui; color:var(--ink); text-align:center; line-height:1.25; word-wrap:break-word; }
@@ -2030,9 +2031,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
        au troisieme - le cas du Colvert - elle passe a la ligne plutot que d aller couvrir
        le numero. */
     .pkdx-card .pkdx-exos { top:9px; gap:2px; max-width:30px; }
-    .pkdx-card .pkdx-exo { font-size:8px; width:14px; height:14px; }
     /* Et les filtres suivent la pastille qu ils filtrent, ici comme sur le bureau. */
-    .rar-chip[data-cat] { width:14px; min-width:14px; height:14px; font-size:8px; }
+    .rar-chip[data-cat], .pkdx-exo { width:14px; min-width:14px; height:14px; font-size:8px; }
     /* Et le numero rend 4 px de son rembourrage : sans ca les deux se touchaient encore,
        a 0,3 px pres, sur la plus etroite des cartes. */
     .pkdx-card .pkdx-num { padding:1px 4px; } }
