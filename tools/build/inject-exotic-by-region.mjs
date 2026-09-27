@@ -23,7 +23,11 @@ const APP = join(__dir, '..', '..', 'app.js');
 // l'Etat), ne sont pas touchees par un scraping qui ne les a pas refaites.
 const CCS = ['FR','GB','ES','IT','PT','CH','NO','GR','IS','LK','NA','AU','NZ','US','CA',
   'AL','AT','BA','BE','BG','BY','CY','CZ','DE','DK','EE','FI','HR','HU','IE','LT','LV',
-  'NL','PL','RO','RS','RU','SE','SI','SK','UA'];
+  'NL','PL','RO','RS','RU','SE','SI','SK','UA',
+  // Ajoutes le 2026-09-28. Ils etaient dans le scraper depuis le 2026-09-28 mais pas ici :
+  // leurs 135 zones etaient recoltees et absentes d'app.js, cartes de statut vides a l'ecran
+  // sans le moindre signal. Completer le scraper sans completer cette liste ne sert a rien.
+  'LU','MD','ME','MK'];
 
 // Pays dont les zones de la fiche sont des REGROUPEMENTS de zones eBird. Le scraping se
 // fait forcement a la maille eBird ; la carte, elle, affiche les regroupements. Sans cette
@@ -178,8 +182,12 @@ const block = `${HEADER}\nconst EXOTIC_STATUS_BY_REGION_MULTI = ${JSON.stringify
 // Remplace un bloc MULTI existant, sinon remplace l'ancienne table FR seule.
 // Le bloc NATIVE_REGIONS est optionnel : absent lors de la premiere migration depuis
 // la table FR seule, present sur les reinjections suivantes.
-const reMulti = /\/\/ Statut exotique par region, \d+ pays\.[\s\S]*?\nconst EXOTIC_STATUS_BY_REGION_MULTI = \{[\s\S]*?\};\n(?:(?:\/\/[^\n]*\n)*const NATIVE_REGIONS_DESPITE_NATIONAL_TAG = \{[\s\S]*?\};\n)?/;
-const reFrOnly = /const EXOTIC_STATUS_BY_REGION_FR = \{[\s\S]*?\};\n/;
+// \r?\n PARTOUT : app.js est en CRLF, et « };\n » n'y trouve rien puisque le fichier contient
+// « };\r\n ». Mesure du 2026-09-28 : la meme expression trouve le bloc avec \r?\n et ne trouve
+// rien sans. Sans ca l'injecteur affichait « ni bloc MULTI ni table FR trouves » et sortait
+// sans rien ecrire - LU, MD, ME et MK sont restes dehors comme ca, cartes de statut vides.
+const reMulti = /\/\/ Statut exotique par region, \d+ pays\.[\s\S]*?\r?\nconst EXOTIC_STATUS_BY_REGION_MULTI = \{[\s\S]*?\};\r?\n(?:(?:\/\/[^\n]*\r?\n)*const NATIVE_REGIONS_DESPITE_NATIONAL_TAG = \{[\s\S]*?\};\r?\n)?/;
+const reFrOnly = /const EXOTIC_STATUS_BY_REGION_FR = \{[\s\S]*?\};\r?\n/;
 
 if(reMulti.test(app)){
   app = app.replace(reMulti, block);
@@ -192,7 +200,10 @@ if(reMulti.test(app)){
   process.exit(1);
 }
 
-writeFileSync(APP, app);
+// app.js est en CRLF : un bloc insere en \n seul le rendrait mixte, et tout script qui le
+// modifie ligne par ligne casserait en silence. On aligne le bloc sur le fichier.
+const finDeLigne = app.includes('\r\n') ? '\r\n' : '\n';
+writeFileSync(APP, app.replace(/\r?\n/g, finDeLigne));
 const totalEntries = Object.values(merged).reduce((a, byR) =>
   a + Object.values(byR).reduce((b, o) => b + Object.keys(o).length, 0), 0);
 console.log(`Ecrit app.js : ${Object.keys(merged).length} pays, ${totalEntries} entrees, ${(block.length/1024).toFixed(1)} KB.`);
