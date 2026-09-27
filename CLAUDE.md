@@ -1,10 +1,20 @@
 # La Ligue des Birds — ce qu'il faut savoir avant de toucher au code
 
 Appli web statique de birding, en français. Pas de framework, pas de build : trois fichiers
-servis tels quels. `app.js` fait 5 Mo — c'est un choix, pas un accident.
+servis tels quels. `app.js` fait 3,2 Mo, et sa taille reste un choix : le code et les tables
+qui servent partout y restent, plutôt que d'éparpiller. Ce qui en est sorti l'a été sur
+mesure, avec un chiffre à l'appui : les fréquences mensuelles des 47 pays étrangers
+pesaient 1,9 Mo, soit 579 Ko gzippés avant le premier affichage ; elles vivent depuis le
+2026-09-27 dans `data/freq_monthly_pays.json`, chargé en tâche de fond une fois la page
+peinte. La France, pays par défaut, est restée en dur.
+
+Avant de sortir une autre table, mesurer : créer 1,87 Mo de données en mémoire ne coûte que
+29 ms, et le temps d'analyse au démarrage n'a baissé que de 404 à 369 ms. Le gain est dans
+l'octet téléchargé avant le premier rendu, pas dans le temps d'analyse. Je m'étais trompé
+en croyant l'inverse.
 
 ```
-app.js            tout le code et toutes les tables de données
+app.js            tout le code, et les tables qui servent partout
 styles.css        toute la CSS
 index.html        le squelette et les <template>
 service-worker.js le cache
@@ -107,3 +117,21 @@ La dernière année de la fenêtre est toujours incomplète. Les poids des quinz
 ramenés à l'année — voir `tools/build/annees-par-quinzaine.mjs`, qui explique pourquoi et
 donne les mesures. **Là où l'effort sert à pondérer le temps, il est ramené à l'année ; là où
 il sert à recombiner des comptes en fréquence, il reste brut.**
+
+**Repasser l'injecteur fait partie du scrape, pas d'une étape facultative.**
+`inject-exotic-by-region.mjs` avait deux jours de retard le 2026-09-27 : la Grande-Bretagne,
+la Hongrie, la Slovénie et la Lettonie avaient **zéro zone** dans `app.js` alors que leurs
+fichiers générés étaient pleins. Leurs cartes de statut s'affichaient vides à l'écran, et
+rien ne le signalait.
+
+**La liste des zones d'un pays se demande à eBird, jamais à `zones-agregees.json`** :
+`https://api.ebird.org/v2/ref/region/list/subnational1/XX.json`, jeton `dbflh4atmsom`. Le
+fichier local ignorait cinq zones lettonnes, et c'étaient les cinq plus grosses, de 147 à
+241 espèces : jamais demandées, donc jamais récoltées, pendant des mois.
+
+**« Zone vide » ou « scrape raté » : seule la page barchart ouverte dans un vrai navigateur
+tranche.** Les deux sondes de l'API mentent, chacune à sa façon : `obs/recent` donne 0 pour
+une commune rurale en septembre, et `spplist` compte toute l'histoire d'eBird quand le bar
+chart s'arrête à la fenêtre courante. Et ne jamais conclure au bridage sans avoir chargé un
+témoin connu dans la même minute : le 2026-09-27, le scraper échouait partout pendant que
+LV-022 rendait ses 228 espèces en trois secondes.
