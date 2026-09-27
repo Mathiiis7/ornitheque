@@ -504,7 +504,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      pastille faisait 22 px ; passee a 26, les lignes Pays sont montees a 40 px quand les
      lignes Regions restaient a 36. Avec min-height les deux suivent leur contenu et ne
      peuvent plus diverger. */
-  .reg-picker-item { display:grid; grid-template-columns:minmax(0,1fr) 16px 44px 60px 30px; gap:8px; align-items:center; min-height:36px; padding:7px 10px; cursor:pointer; border-radius:6px; font-size:14px; color:var(--ink); }
+  .reg-picker-item { display:grid; grid-template-columns:minmax(0,1fr) var(--cp-exo,16px) 44px 60px 30px; gap:8px; align-items:center; min-height:36px; padding:7px 10px; cursor:pointer; border-radius:6px; font-size:14px; color:var(--ink); }
   .reg-picker-item > span:first-child { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   /* La case de la lettre, vide ou non : elle existe sur toutes les lignes pour que les
      pourcentages restent en colonne. Une zone n'a qu'un statut, il n'y a donc jamais plus
@@ -513,7 +513,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* Les lignes du selecteur du birdydex n'ont pas de pastille de palier : sans elle, la
      cinquieme colonne ne servait qu'a tenir la barre a 30 px du bord. Quatre colonnes, et
      la barre finit la ligne. */
-  .reg-picker-item.sans-palier { grid-template-columns:minmax(0,1fr) 16px 44px 60px; }
+  .reg-picker-item.sans-palier { grid-template-columns:minmax(0,1fr) var(--cp-exo,16px) 44px 60px; }
   .reg-picker-item:hover { background:var(--surface-2); }
   /* Selection courante : la meme que celle d'un pays (voir .cp-item.on, plus bas, dont
      cette regle partage la declaration). Les deux listes vivent dans le meme modal, une
@@ -527,7 +527,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* justify-self : sans lui, la pastille est etiree a la largeur de sa colonne de grille et
      ne fait plus la meme taille que dans la liste des pays, ou elle est un element flex
      libre. La colonne reste fixe pour que les barres restent alignees d une ligne a l autre. */
-  .reg-picker-item .tier-chip { justify-self:end; }
+  .reg-picker-item .tier-chip, .cp-item .tier-chip { justify-self:end; }
   /* Memes colonnes de mesure dans les lignes de pays, qui sont en flex : la valeur et sa
      barre doivent tomber au meme endroit dans les deux onglets du selecteur. */
   /* Une case de largeur fixe pour le rond du statut, occupee ou non : sans elle, les
@@ -536,10 +536,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* Les lettres sont collees a droite de leur case, contre le pourcentage : c'est la
      colonne des chiffres qui doit rester droite, pas celle des lettres. La largeur vient
      de la ligne la plus chargee de la liste (--cp-exo, posee au rendu). */
-  .cp-item .cp-item-exo { flex:0 0 var(--cp-exo, 16px); display:flex; align-items:center;
-    justify-content:flex-end; gap:3px; }
-  .cp-item .reg-picker-val { flex:0 0 44px; }
-  .cp-item .reg-picker-bar { flex:0 0 60px; }
+  .cp-item .cp-item-exo { display:flex; align-items:center; justify-content:flex-end; gap:3px; }
+
   /* La barre est PEINTE, elle n'est plus un bloc.
      Un bloc de 5 px de haut est cale sur la grille de pixels de l'ecran : quand l'echelle
      d'affichage n'est pas entiere, son bord haut tombe a une position fractionnaire qui
@@ -584,18 +582,23 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .cp-group-title { font:700 10.5px system-ui; text-transform:uppercase; letter-spacing:.5px; color:var(--ink-3); padding:8px 10px 4px; }
   /* Meme plancher que .reg-picker-item : les deux onglets du selecteur partagent le pas
      de leurs lignes, au-dessus comme au-dessous de la hauteur de reference. */
-  .cp-item { display:flex; align-items:center; gap:10px; min-height:36px; padding:7px 10px; cursor:pointer; border-radius:8px; color:var(--ink); font-size:14px; }
+  .cp-item { display:grid; grid-template-columns:28px minmax(0,1fr) var(--cp-exo,16px) 44px 60px 30px;
+    gap:8px; align-items:center; min-height:36px; padding:7px 10px; cursor:pointer;
+    border-radius:8px; color:var(--ink); font-size:14px; }
+  /* Sans espece courante, pas de pastille de palier : la colonne disparait et la barre
+     finit la ligne, exactement comme du cote des zones. */
+  .cp-item.sans-palier { grid-template-columns:28px minmax(0,1fr) var(--cp-exo,16px) 44px 60px; }
   .cp-item:hover { background:var(--surface-2); }
   .cp-item.on { background:var(--surface-2); font-weight:700; }
-  .cp-item-flag { display:inline-flex; align-items:center; justify-content:center; width:28px; }
+  .cp-item-flag { display:inline-flex; align-items:center; justify-content:center; }
   .cp-btn-flag { display:inline-flex; align-items:center; }
   /* min-width:0 pour la meme raison que la premiere colonne des lignes de zone : sans lui un
      nom long refuse de retrecir et decale la valeur, la barre et la pastille. */
-  .cp-item-name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .cp-item-name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   /* margin-left:auto : sans espece courante, la ligne ne porte que le nom, le compte et
      la barre. Le compte est pousse a droite avec la barre a sa suite, pour que celle-ci
      finisse la ligne comme dans la liste des zones. */
-  .cp-item-meta { font-size:11px; color:var(--ink-3); margin-left:auto; }
+  .cp-item-meta { font-size:11px; color:var(--ink-3); text-align:right; white-space:nowrap; }
   .cp-item.disabled { opacity:.5; cursor:not-allowed; }
   .cp-item.disabled:hover { background:transparent; }
   .cp-item.absent { opacity:.55; }
@@ -1440,15 +1443,15 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      aggravait la chose, ce que l'oeil avait vu avant la mesure.
      0,048 em ramene l'ecart a 0,30 px sur le rond de 16 et 0,10 sur celui de 20. En em et
      non en px : la correction tient a la fonte, pas a la taille du jeton. */
-  .rar-chip[data-cat], .pkdx-exo { width:16px; min-width:16px; height:16px; margin:0;
-    transform:none; padding:0.048em 0 0; border-radius:50%; font:700 9.5px/1 system-ui; }
+  .rar-chip[data-cat], .pkdx-exo { width:32px; min-width:32px; height:32px; margin:-8px;
+    transform:scale(.5); padding:0.06em 0 0; border-radius:50%; font:700 19px/1 system-ui; }
   /* Les paliers 0 a 10 prennent eux aussi le jeton rond des vignettes - .pkdx-tier, 20 px
      et corps 10 - au lieu du carre arrondi. La barre de filtres et la grille qu'elle
      filtre montrent desormais la meme piece. « Tout » et « Vide », qui sont des mots et
      non des paliers, gardent leur bouton rectangulaire. */
   .rar-chip[data-tier], .rar-chip[data-rar], .tier-chip.tier-rond {
-    width:20px; min-width:20px; height:20px;
-    margin:0; transform:none; padding:0.048em 0 0; border-radius:50%; font:800 10px/1 system-ui; }
+    width:40px; min-width:40px; height:40px; margin:-10px;
+    transform:scale(.5); padding:0.06em 0 0; border-radius:50%; font:800 20px/1 system-ui; }
   /* Coche : l'ombre portee de la vignette remplace le filet du repos, comme pour X/P/N. */
   .rar-chip[data-tier].on, .rar-chip[data-rar].on { box-shadow:none; }
   /* Ils suivent « Tout » et « Vide » plutot que d'etre rejetes au bout de la rangee : le
@@ -2051,7 +2054,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
        le numero. */
     .pkdx-card .pkdx-exos { top:9px; gap:2px; max-width:30px; }
     /* Et les filtres suivent la pastille qu ils filtrent, ici comme sur le bureau. */
-    .rar-chip[data-cat], .pkdx-exo { width:14px; min-width:14px; height:14px; font-size:8px; }
+    .rar-chip[data-cat], .pkdx-exo { width:28px; min-width:28px; height:28px; margin:-7px; font-size:16px; }
     /* Et le numero rend 4 px de son rembourrage : sans ca les deux se touchaient encore,
        a 0,3 px pres, sur la plus etroite des cartes. */
     .pkdx-card .pkdx-num { padding:1px 4px; } }

@@ -1210,6 +1210,17 @@ function _openCountryPicker(currentCode, opts = {}){
         <div class="cp-list"></div>
       </div>`;
     const listEl = backdrop.querySelector('.cp-list');
+    // Largeur de la case des lettres : celle du pays qui en porte le plus, sur TOUTE la
+    // liste et non sur ce qui est affiche. Elle doit valoir pareil dans les deux onglets,
+    // sinon les colonnes sautent quand on passe de l'un a l'autre ; et elle ne doit pas
+    // suivre le filtre, sinon taper trois lettres deplace la colonne des chiffres.
+    {
+      let n = 1;
+      if(focusSci && typeof exoticCategoriesInCountry === 'function')
+        for(const c of Object.keys(COUNTRIES_REG))
+          n = Math.max(n, (exoticCategoriesInCountry(focusSci, c) || []).length);
+      listEl.style.setProperty('--cp-exo', (n * 16 + (n - 1) * 3) + 'px');
+    }
     const searchEl = backdrop.querySelector('.cp-search');
     const closeBtn = backdrop.querySelector('.cp-modal-close');
 
@@ -1242,7 +1253,6 @@ function _openCountryPicker(currentCode, opts = {}){
       // figee a trois lettres laisserait un grand vide sur les neuf dixiemes des lignes,
       // qui n'en ont qu'une ; une case libre decalerait la colonne des pourcentages des
       // qu'une ligne en porte deux. On la taille sur la liste elle-meme.
-      let maxLettres = 1;
       // Sans espece courante, les lignes de pays montrent le nombre d'especes que leur bar
       // chart connait. Une barre le rend comparable d'un coup d'oeil, comme sur les lignes
       // de zone qui en ont une depuis toujours. Rapportee au plus fourni des pays listes.
@@ -1327,7 +1337,6 @@ function _openCountryPicker(currentCode, opts = {}){
             const catsPays = (typeof exoticCategoriesInCountry === 'function')
               ? (exoticCategoriesInCountry(focusSci, cc) || []) : [];
             const catsLigne = catsPays.length ? catsPays : (localCat ? [localCat] : []);
-            if(catsLigne.length > maxLettres) maxLettres = catsLigne.length;
             const exoChip = catsLigne.map(c => jetonExo(c)).join('');
             // Nouveau format : label texte AVANT le chip numero pour que les chips
             // soient tous alignes a droite (ex: "Rare [7]"). Absent = pas de chip.
@@ -1360,24 +1369,23 @@ function _openCountryPicker(currentCode, opts = {}){
             // qui tombaient deja sur le bar chart (l'Espagne annoncait 284 especes contre
             // 694 reelles). Le bar chart partout, c'est comparable.
             const nSp = nEspecesDe(cc);
-            meta = nSp > 0
-              ? `<span class="cp-item-meta">${nSp} espèces</span>`
-                + `<div class="reg-picker-bar"><div style="width:${Math.round(nSp / maxEspeces * 100)}%; color:var(--accent);"></div></div>`
-              : '';
+            meta = '<span class="cp-item-exo"></span>'
+              + (nSp > 0
+                  ? `<span class="cp-item-meta">${nSp} espèces</span>`
+                    + `<div class="reg-picker-bar"><div style="width:${Math.round(nSp / maxEspeces * 100)}%; color:var(--accent);"></div></div>`
+                  : '<span></span><span></span>');
           }
           // Fix 2026-09-22 : absentCls doit refléter le vrai statut 'absent' (tier === 0
            // ET pas exotique local) au lieu de it.score seul. Sinon FR avec tier 7 via
           // S&T Cornell mais aucune data monthly apparaît grisée à tort.
           const absentCls = focusSci && typeof absent !== 'undefined' && absent ? ' absent' : '';
-          html += `<div class="cp-item${cc === ccCourant ? ' on' : ''}${absentCls}" data-cc="${esc(cc)}"${titreLigne ? ` data-tip="${esc(titreLigne)}"` : ''}>
+          html += `<div class="cp-item${focusSci ? '' : ' sans-palier'}${cc === ccCourant ? ' on' : ''}${absentCls}" data-cc="${esc(cc)}"${titreLigne ? ` data-tip="${esc(titreLigne)}"` : ''}>
             <span class="cp-item-flag">${flag}</span>
             <span class="cp-item-name">${esc(reg.name || cc)}</span>
             ${meta}
           </div>`;
         }
       }
-      // 16 px par lettre, 3 px entre elles.
-      listEl.style.setProperty('--cp-exo', (maxLettres * 16 + (maxLettres - 1) * 3) + 'px');
       listEl.innerHTML = html || '<div style="padding:16px; text-align:center; color:var(--ink-3);">Aucun pays trouvé.</div>';
     };
     render();
