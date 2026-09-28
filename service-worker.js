@@ -78,6 +78,12 @@ self.addEventListener('fetch', (event) => {
   if (url.pathname.endsWith('/app.js') || url.pathname.endsWith('/index.html') || url.pathname.endsWith('/styles.css') || url.pathname === '/Ligue_des_Plumes/') return;
   // Ni le manifest range (evolue frequemment avec nouvelles especes generees).
   if (url.pathname.endsWith('/data/range-index.json')) return;
+  // Ni la demo du portfolio. Elle ne s enregistre pas elle-meme (son index.html neutralise
+  // register), mais ce SW-ci est installe pour TOUTE l origine des qu on a visite le vrai
+  // site : sans cette ligne il servirait une demo en cache, et un visiteur qui revient
+  // verrait l avant-derniere version. Le piege du premier rechargement, applique a une page
+  // qu on montre a des inconnus.
+  if (url.pathname.includes('/demo/')) return;
   // data/generated/ retire du repo (2026-09-02) : etaient des build artifacts
   // jamais fetches par le site (data inline dans app.js). Cette regle bypass devient
   // inutile mais laissee pour retrocompat au cas ou.

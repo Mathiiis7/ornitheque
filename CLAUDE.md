@@ -21,6 +21,7 @@ service-worker.js le cache
 tools/build/      les générateurs de données (Node, ESM)
 tools/verif/      les bancs de mesure - voir plus bas
 data/             les données générées, publiées telles quelles
+demo/             la démo du portfolio, générée - voir MODE-DEMO.md
 ```
 
 ## Voir le résultat avant de pousser
@@ -59,6 +60,15 @@ module. Utiliser `node --input-type=module --check < app.js`.
 qu'une seule ligne dans `index.html` et ne remplace donc qu'UNE des deux occurrences de
 `app.js?v=` - exactement la panne que la section « Déployer » redoute. Détecter le séparateur,
 ne jamais le supposer.
+
+**Une importmap ne s'applique PAS à un `<link rel="modulepreload">`.** Le preload garde l'URL
+écrite telle quelle. La démo détournait bien les trois modules Firebase vers ses bouchons, et
+les téléchargeait quand même depuis gstatic. Invisible à l'œil, attrapé par `tools/verif/demo.mjs`
+le 2026-09-28.
+
+**`index.html` n'a ni `<head>` ni `<body>`**, les deux sont implicites. Un générateur qui
+cherche l'un ou l'autre échoue - c'est déjà arrivé deux fois. L'ancre fiable est
+`<meta charset="utf-8">`.
 
 **Les heredocs du shell mangent les échappements.** `\\n` devient un vrai retour à la ligne,
 `\.` dans une expression régulière perd son antislash. Pour tout ce qui contient des
@@ -134,6 +144,10 @@ vrai navigateur et impriment des chiffres. Tout rejouer :
 ```
 node tools/verif/tous.mjs
 ```
+
+Le banc `demo` est à part : il vérifie que `demo/index.html` n'a pas pris de retard sur
+`index.html`, puis charge la démo dans un vrai navigateur et envoie un message dans son chat.
+Après toute retouche d'`index.html`, relancer `node tools/build/genere-demo.mjs`.
 
 Chaque banc affiche ses mesures et se termine par `CONFORME` ou `DÉFAUT`. Les lancer après
 toute retouche de l'entête du panneau, des sélecteurs, des pastilles ou des cartes : ils

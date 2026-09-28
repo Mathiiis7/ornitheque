@@ -1,0 +1,380 @@
+/*
+  Genere la demo du portfolio : demo/index.html et demo/donnees.js.
+
+    node tools/build/genere-demo.mjs            ecrit les deux fichiers
+    node tools/build/genere-demo.mjs --verifie  ne rien ecrire, dire si c est a jour
+
+  Le mode verification est branche dans tools/verif/tous.mjs. C est lui qui compte : la demo
+  recopie le squelette d index.html, et un double qui prend du retard en silence est LE piege
+  maison - inject-exotic-by-region.mjs a coute deux jours pour exactement ca le 2026-09-27.
+  Le code, lui, ne se recopie pas : demo/index.html charge le MEME app.js, le MEME styles.css
+  et le meme data/ que le vrai site, par <base href="../">. Une correction poussee arrive donc
+  dans la demo sans rien faire.
+
+  Contrepartie assumee : un bug pousse casse aussi la demo, devant les visiteurs du
+  portfolio. Ca se voit tout de suite, c est le prix de l absence de retard.
+*/
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const RACINE = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const f = (...p) => resolve(RACINE, ...p);
+const VERIFIE = process.argv.includes('--verifie');
+
+const LIGUE = 'merlin-bird';          // doit rester egal a LEAGUE_ID dans app.js
+const UID_MOI = 'demo-visiteur';
+
+/* ============================================================
+   Lire les tables d app.js sans l executer
+   ============================================================ */
+// app.js est un module qui a besoin du DOM : impossible de l importer ici. On extrait donc
+// le litteral, en suivant les guillemets pour ne pas se faire piper par une accolade dans
+// un nom d espece.
+function litteral(source, nom){
+  const i = source.indexOf('const ' + nom + ' = {');
+  if(i < 0) throw new Error(nom + ' introuvable dans app.js');
+  const debut = source.indexOf('{', i);
+  let profondeur = 0, dansChaine = false, echappe = false;
+  for(let j = debut; j < source.length; j++){
+    const c = source[j];
+    if(dansChaine){
+      if(echappe) echappe = false;
+      else if(c === '\\') echappe = true;
+      else if(c === '"') dansChaine = false;
+      continue;
+    }
+    if(c === '"') dansChaine = true;
+    else if(c === '{') profondeur++;
+    else if(c === '}'){ profondeur--; if(profondeur === 0) return JSON.parse(source.slice(debut, j + 1)); }
+  }
+  throw new Error(nom + ' : accolade fermante introuvable');
+}
+
+const APP = readFileSync(f('app.js'), 'utf8');
+const FR_NAMES = litteral(APP, 'FR_NAMES');
+const REAL_RARITY = litteral(APP, 'REAL_RARITY');
+
+const ligueDansApp = APP.match(/const LEAGUE_ID = '([^']+)'/);
+if(!ligueDansApp || ligueDansApp[1] !== LIGUE){
+  throw new Error('LEAGUE_ID vaut ' + (ligueDansApp ? ligueDansApp[1] : '?') + ' dans app.js, ' + LIGUE + ' ici');
+}
+
+/* ============================================================
+   Choisir des especes francaises credibles
+   ============================================================ */
+// freq_48.json donne la frequence de chaque espece par quinzaine, en France. Trier sur la
+// moyenne met les especes que tout le monde voit en tete : c est exactement l ordre dans
+// lequel une vraie life list francaise se remplit.
+const FREQ = JSON.parse(readFileSync(f('data/countries/fr/freq_48.json'), 'utf8'));
+const ESPECES = Object.entries(FREQ)
+  .map(([sci, quinzaines]) => ({ sci, moyenne: quinzaines.reduce((a, b) => a + b, 0) / quinzaines.length }))
+  .filter(e => FR_NAMES[e.sci])                  // sans nom francais, le panneau afficherait du latin
+  .sort((a, b) => b.moyenne - a.moyenne)
+  .map(e => e.sci);
+
+if(ESPECES.length < 500) throw new Error('seulement ' + ESPECES.length + ' especes utilisables, attendu au moins 500');
+const sansRarete = ESPECES.filter(s => REAL_RARITY[s] === undefined).length;
+
+// Lieux reels, pour que la carte des observations ne soit pas vide. Coordonnees arrondies
+// au centieme : c est une demo, pas un releve.
+const LIEUX = [
+  { l: 'Parc ornithologique du Pont de Gau, Camargue', la: 43.51, lo: 4.41 },
+  { l: 'Baie de Somme, Le Crotoy',                     la: 50.22, lo: 1.63 },
+  { l: 'Forêt de Fontainebleau',                       la: 48.40, lo: 2.70 },
+  { l: 'Marais de Brière',                             la: 47.37, lo: -2.18 },
+  { l: 'Étang de Lindre, Moselle',                      la: 48.77, lo: 6.75 },
+  { l: 'Pic du Midi de Bigorre, Hautes-Pyrénées',       la: 42.94, lo: 0.14 },
+  { l: 'Lac du Der-Chantecoq',                          la: 48.58, lo: 4.76 },
+  { l: 'Pointe du Raz, Finistère',                      la: 48.04, lo: -4.74 },
+  { l: 'Réserve de la Bassée, Seine-et-Marne',          la: 48.41, lo: 3.32 },
+  { l: 'Calanques de Marseille',                        la: 43.21, lo: 5.44 },
+];
+
+// Tirage deterministe : le meme fichier sort a chaque execution, sinon le mode verification
+// annoncerait un retard a chaque fois.
+function pseudo(n){ const x = Math.sin(n * 12.9898) * 43758.5453; return x - Math.floor(x); }
+
+function listeDe(graine, combien){
+  const out = [];
+  for(let i = 0; i < ESPECES.length && out.length < combien; i++){
+    // Les especes communes entrent presque toujours, les rares de moins en moins : une life
+    // list vraisemblable, et deux joueurs ne se retrouvent pas avec la meme.
+    const chance = 0.55 + 0.45 * (1 - i / ESPECES.length);
+    if(pseudo(i * 7 + graine * 101) > chance) continue;
+    const sci = ESPECES[i];
+    const lieu = LIEUX[Math.floor(pseudo(i + graine * 13) * LIEUX.length)];
+    const jour = 1 + Math.floor(pseudo(i * 3 + graine) * 27);
+    const mois = 1 + Math.floor(pseudo(i * 5 + graine * 2) * 12);
+    let annee = 2020 + Math.floor(pseudo(i * 11 + graine * 3) * 7);
+    // Une observation dans le futur se verrait tout de suite. On recule d une annee plutot
+    // que de raboter, pour garder des cochages recents : une demo ou personne n a rien vu
+    // depuis neuf mois a l air abandonnee.
+    while(Date.UTC(annee, mois - 1, jour) > MAINTENANT - 2 * JOUR) annee--;
+    const d = annee + '-' + String(mois).padStart(2, '0') + '-' + String(jour).padStart(2, '0');
+    out.push({ k: sci, c: FR_NAMES[sci], s: sci, d, l: lieu.l, o: 1, f: 1, co: 'FR',
+               la: lieu.la, lo: lieu.lo, a: Date.UTC(annee, mois - 1, jour) });
+  }
+  return out;
+}
+
+/* ============================================================
+   La fausse ligue
+   ============================================================ */
+const JOUR = 86400000;
+const MAINTENANT = Date.UTC(2026, 8, 28);     // date figee : le fichier ne doit pas changer tout seul
+const ts = ms => ({ __horodatage: ms });      // remplace par un vrai objet dans donnees.js
+
+const MEMBRES = [
+  { id: UID_MOI,      nom: 'Vous',      especes: 212, graine: 1, statut: 'En quête du Guêpier',
+    but: 'Passer les 250 espèces cette année', reve: 'Le Gypaète barbu en vol',
+    rare: 'Marouette ponctuée, Brenne, 2023', avatar: '🦅', jours: 400 },
+  { id: 'demo-claire', nom: 'Claire',   especes: 318, graine: 2, statut: 'Camargue tous les week-ends',
+    but: 'Finir les limicoles de la façade atlantique', reve: 'Une Aigrette des récifs',
+    rare: 'Bécassine double, baie de Somme, 2024', avatar: '🦩', jours: 900 },
+  { id: 'demo-hugo',   nom: 'Hugo',     especes: 274, graine: 3, statut: 'Sorties au petit matin',
+    but: 'Photographier les dix pics de France', reve: 'Le Grand Tétras',
+    rare: 'Chevêchette d’Europe, Jura, 2022', avatar: '🦉', jours: 700 },
+  { id: 'demo-lina',   nom: 'Lina',     especes: 156, graine: 4, statut: 'Débutante assumée',
+    but: 'Reconnaître dix chants sans tricher', reve: 'Un Martin-pêcheur de près',
+    rare: 'Torcol fourmilier, jardin, 2025', avatar: '🐦', jours: 120 },
+  { id: 'demo-samir',  nom: 'Samir',    especes: 389, graine: 5, statut: 'Compte les Pouillots',
+    but: 'Boucler les 400', reve: 'Une Sittelle corse chez elle',
+    rare: 'Rollier d’Europe, Crau, 2021', avatar: '🐧', jours: 1500 },
+];
+
+const DONNEES = {};
+DONNEES['leagues/' + LIGUE] = {
+  name: 'La Ligue des Birds',
+  goalHeader: 'Démonstration - cette ligue et ses membres sont inventés',
+};
+
+for(const m of MEMBRES){
+  DONNEES['leagues/' + LIGUE + '/members/' + m.id] = {
+    name: m.nom, species: listeDe(m.graine, m.especes),
+    goal: m.but, dream: m.reve, rare: m.rare, status: m.statut, avatar: m.avatar,
+    fav: '', regions: ['FR-11', 'FR-93', 'FR-75', 'FR-53'],
+    joinedAt: ts(MAINTENANT - m.jours * JOUR), updatedAt: ts(MAINTENANT - 2 * JOUR),
+  };
+}
+
+// Deux personnes en ligne, pour que la pastille verte ait un sens.
+for(const id of ['demo-claire', 'demo-samir']){
+  const m = MEMBRES.find(x => x.id === id);
+  DONNEES['leagues/' + LIGUE + '/presence/' + id] = { name: m.nom, at: ts(MAINTENANT), lastSeen: ts(MAINTENANT) };
+}
+
+const CHAT = [
+  ['demo-claire', 'Claire', 'Guêpiers de retour sur la carrière ce matin, une quinzaine 🐝', 260],
+  ['demo-samir',  'Samir',  'Jalouse. Moi c’est pouillot véloce, pouillot véloce et pouillot véloce.', 240],
+  ['demo-hugo',   'Hugo',   'Quelqu’un a déjà coché la Chevêchette ailleurs que dans le Jura ?', 180],
+  ['demo-lina',   'Lina',   'Je viens de dépasser les 150 ! Merci pour les conseils sur les chants 🙏', 120],
+  ['demo-claire', 'Claire', 'Bravo Lina 🎉 la suite c’est les limicoles, et là ça pique', 110],
+  [UID_MOI,       'Vous',   'Sortie Camargue le week-end prochain si quelqu’un veut se joindre', 40],
+];
+CHAT.forEach(([uid, nom, texte, minutes], i) => {
+  DONNEES['leagues/' + LIGUE + '/chat/msg-' + (i + 1)] =
+    { uid, name: nom, text: texte, createdAt: ts(MAINTENANT - minutes * 60000) };
+});
+
+const IDEES = [
+  ['demo-hugo',  'Hugo',  'Un classement par département, pas seulement national', 'todo', 9],
+  ['demo-lina',  'Lina',  'Pouvoir écouter le chant depuis la fiche d’espèce', 'doing', 5],
+  ['demo-claire','Claire','Un défi mensuel : cinq espèces tirées au sort', 'done', 20],
+];
+IDEES.forEach(([uid, nom, texte, statut, jours], i) => {
+  DONNEES['leagues/' + LIGUE + '/requests/idee-' + (i + 1)] =
+    { uid, name: nom, text: texte, status: statut, createdAt: ts(MAINTENANT - jours * JOUR) };
+});
+
+const REACTIONS = [
+  ['demo-hugo',   'chat:msg-4', '🎉'], ['demo-samir', 'chat:msg-4', '👏'],
+  ['demo-claire', 'chat:msg-2', '😂'], [UID_MOI,      'chat:msg-1', '😍'],
+];
+REACTIONS.forEach(([uid, cible, emoji], i) => {
+  DONNEES['leagues/' + LIGUE + '/reactions/r-' + (i + 1)] =
+    { uid, target: cible, emoji, createdAt: ts(MAINTENANT - (i + 1) * 3600000) };
+});
+
+DONNEES['leagues/' + LIGUE + '/comments/c-1'] =
+  { uid: 'demo-samir', name: 'Samir', text: 'La même chose au lac du Der la semaine dernière.',
+    target: 'chat:msg-1', createdAt: ts(MAINTENANT - 3 * 3600000) };
+
+const VOTES = [
+  ['demo-claire', UID_MOI,       'regulier'], ['demo-hugo', 'demo-claire', 'explorateur'],
+  ['demo-lina',   'demo-samir',  'pedagogue'], [UID_MOI,     'demo-lina',  'progression'],
+];
+VOTES.forEach(([voter, cible, trophee], i) => {
+  DONNEES['leagues/' + LIGUE + '/votes/v-' + (i + 1)] =
+    { voter, target: cible, trophy: trophee, createdAt: ts(MAINTENANT - (i + 2) * JOUR) };
+});
+
+// Collections laissees vides EXPRES, et le bouchon les sert quand meme : un abonnement sans
+// reponse laisse son morceau d interface en chargement perpetuel, l effet "demo cassee" a
+// eviter avant tout. typing, photos, requestVotes, trophyEvents, quizStats, admins.
+// admins vide a une raison de plus : la demo ne doit pas etre administratrice.
+
+/* ============================================================
+   Ecrire demo/donnees.js
+   ============================================================ */
+function enJs(v){
+  if(v && typeof v === 'object' && typeof v.__horodatage === 'number') return 'h(' + v.__horodatage + ')';
+  if(Array.isArray(v)) return '[' + v.map(enJs).join(',') + ']';
+  if(v && typeof v === 'object') return '{' + Object.entries(v).map(([k, x]) => JSON.stringify(k) + ':' + enJs(x)).join(',') + '}';
+  return JSON.stringify(v);
+}
+
+const donneesJs = `/*
+  La fausse ligue de la demo. FICHIER GENERE par tools/build/genere-demo.mjs : ne pas
+  modifier a la main, la prochaine execution ecraserait tout.
+
+  Les ${ESPECES.length} especes disponibles viennent de data/countries/fr/freq_48.json, triees de la plus
+  commune a la plus rare en France ; leurs noms francais de la table FR_NAMES d app.js. Les
+  listes sont donc vraisemblables, et les fiches d espece s affichent puisque les cles sont
+  celles du vrai jeu de donnees.${sansRarete ? '\n  (' + sansRarete + ' especes sans indice de rarete connu : leur pastille restera neutre.)' : ''}
+
+  Genere le ${new Date().toISOString().slice(0, 10)} a partir d une date figee : relancer le generateur sans
+  toucher a rien redonne le meme fichier, sinon le mode verification crierait au retard a
+  chaque execution.
+*/
+const h = ms => ({ seconds: Math.floor(ms / 1000), nanoseconds: 0,
+                   toDate(){ return new Date(ms); }, toMillis(){ return ms; }, valueOf(){ return ms; } });
+
+export const UID_MOI = ${JSON.stringify(UID_MOI)};
+export const LIGUE = ${JSON.stringify(LIGUE)};
+
+export const DONNEES = {
+${Object.entries(DONNEES).map(([c, d]) => '  ' + JSON.stringify(c) + ': ' + enJs(d) + ',').join('\n')}
+};
+`;
+
+/* ============================================================
+   Ecrire demo/index.html
+   ============================================================ */
+const ANCRE = '<meta charset="utf-8">';
+const INJECTION = `
+<!-- ================= DEMO DU PORTFOLIO - BLOC AJOUTE PAR tools/build/genere-demo.mjs =================
+     Tout ce qui suit cette balise est identique a index.html. Ne pas modifier ce fichier a la
+     main : relancer le generateur.
+
+     <base href="../"> fait pointer TOUS les chemins relatifs vers la racine du site : app.js,
+     styles.css, data/ et les fetch qu app.js lance lui-meme (data/countries/..., etc.) sont
+     donc les vrais, pas des copies. C est ce qui empeche la demo de prendre du retard.
+     index.html n a aucun href="#", donc <base> ne casse aucune ancre - verifie le 2026-09-28.
+
+     L importmap doit venir avant tout module : elle detourne les trois URL Firebase de
+     gstatic vers les bouchons, qui n ont pas une ligne de reseau.
+
+     Piege deja paye par le banc : index.html n a PAS de balise <head>. Le mot n apparait que
+     dans un commentaire. L ancre est <meta charset="utf-8">, et le generateur verifie apres
+     coup que l injection est bien tombee avant le premier script.
+-->
+<base href="../">
+<script type="importmap">
+{
+  "imports": {
+    "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js": "./demo/bouchons/firebase-app.js",
+    "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js": "./demo/bouchons/firebase-auth.js",
+    "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js": "./demo/bouchons/firebase-firestore.js"
+  }
+}
+</script>
+<script>
+  // La demo n enregistre JAMAIS de service worker. Elle est sur la meme origine que le vrai
+  // site sur GitHub Pages, et <base href="../"> ferait resoudre le register('service-worker.js')
+  // d app.js vers la racine : la demo abimerait le cache du vrai site.
+  try{
+    if(navigator.serviceWorker){
+      Object.defineProperty(navigator.serviceWorker, 'register',
+        { value: () => Promise.resolve(), configurable: true });
+    }
+  }catch(_){ }
+</script>
+<style>
+  /* Bandeau non negociable : personne ne doit croire qu il regarde la vraie ligue.
+     Fixe en bas pour ne rien pousser - body porte un zoom 0.85, une bande en haut
+     decalerait toutes les mesures de l interface. */
+  #demoBandeau{
+    position:fixed; left:0; right:0; bottom:0; z-index:99999;
+    background:#1d3557; color:#fff; font:600 13px/1.4 system-ui, sans-serif;
+    padding:8px 14px; text-align:center; letter-spacing:.2px;
+    box-shadow:0 -2px 12px rgba(0,0,0,.25);
+  }
+  #demoBandeau span{ font-weight:400; opacity:.85; }
+  @media (max-width:640px){ #demoBandeau{ font-size:12px; padding:7px 10px; } }
+</style>
+<!-- ================= FIN DU BLOC DEMO ================= -->`;
+
+const BANDEAU = `<div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans votre navigateur.</span></div>`;
+
+function genereHtml(){
+  let html = readFileSync(f('index.html'), 'utf8');
+  const n = html.split(ANCRE).length - 1;
+  if(n !== 1) throw new Error('ancre ' + ANCRE + ' trouvee ' + n + ' fois dans index.html, attendu 1');
+
+  html = html.replace(ANCRE, ANCRE + INJECTION);
+
+  // Le manifeste est celui du vrai site : le laisser proposerait d installer la vraie appli
+  // depuis la demo.
+  const manifeste = html.match(/^.*rel="manifest".*$\r?\n/m);
+  if(manifeste) html = html.replace(manifeste[0], '');
+
+  // Les trois <link rel="modulepreload"> vers gstatic doivent SAUTER. Une importmap ne
+  // s applique pas a un preload : il garde l URL ecrite. La demo telechargeait donc pour
+  // rien les vrais modules Firebase - et faisait savoir a gstatic que quelqu un regardait
+  // le portfolio. Trouve par le banc tools/verif/demo.mjs le 2026-09-28, pas a l oeil.
+  const avant = html;
+  html = html.replace(/^.*rel="modulepreload"[^\n]*firebasejs[^\n]*$\r?\n/gm, '')
+             .replace(/^.*rel="preconnect"[^\n]*gstatic[^\n]*$\r?\n/gm, '');
+  const retires = (avant.match(/firebasejs/g) || []).length - (html.match(/firebasejs/g) || []).length;
+  if(retires !== 3) throw new Error('attendu 3 modulepreload firebasejs a retirer, ' + retires + ' retire(s)');
+
+  // Le bandeau se pose A LA FIN du document. index.html n a pas plus de <body> que de
+  // <head> - les deux sont implicites - et chercher l un ou l autre a deja fait echouer ce
+  // generateur. Un element en position fixe se moque de sa place dans le document.
+  html = html.replace(/\s*$/, '\n' + BANDEAU + '\n');
+
+  // Verification du piege : l injection doit precede le premier script ET le premier link.
+  const iBase = html.indexOf('<base href="../">');
+  const iScript = html.indexOf('<script');
+  const iLink = html.indexOf('<link');
+  if(iBase < 0 || (iScript >= 0 && iBase > iScript) || (iLink >= 0 && iBase > iLink)){
+    throw new Error('le bloc demo est tombe APRES un script ou un link : app.js ne demarrerait pas');
+  }
+  return html;
+}
+
+/* ============================================================
+   Ecrire, ou verifier
+   ============================================================ */
+const html = genereHtml();
+const cibles = [['demo/index.html', html], ['demo/donnees.js', donneesJs]];
+
+if(VERIFIE){
+  let defauts = 0;
+  for(const [chemin, contenu] of cibles){
+    if(!existsSync(f(chemin))){ console.log('  ' + chemin.padEnd(22) + 'ABSENT'); defauts++; continue; }
+    // Comparaison aux fins de ligne pres. Le depot est en core.autocrlf=true sans
+    // .gitattributes : Git rend ces fichiers en CRLF au prochain clone, alors que le
+    // generateur les ecrit avec les fins de ligne de sa source. Sans cette normalisation le
+    // banc annoncerait un retard permanent apres un clone, sur des fichiers identiques.
+    const meme = s => s.replace(/\r\n/g, '\n');
+    const surDisque = readFileSync(f(chemin), 'utf8');
+    const ok = meme(surDisque) === meme(contenu);
+    console.log('  ' + chemin.padEnd(22) + (ok ? 'a jour' : 'EN RETARD sur la source'));
+    if(!ok) defauts++;
+  }
+  const membres = MEMBRES.map(m => m.nom + ' ' + (DONNEES['leagues/' + LIGUE + '/members/' + m.id].species.length));
+  console.log('  ligue fictive         ' + membres.join(', '));
+  if(defauts){
+    console.log('\n  Relancer : node tools/build/genere-demo.mjs');
+    process.exit(1);
+  }
+} else {
+  mkdirSync(f('demo'), { recursive: true });
+  for(const [chemin, contenu] of cibles){ writeFileSync(f(chemin), contenu, 'utf8'); console.log('ecrit  ' + chemin); }
+  console.log('\nEspeces disponibles : ' + ESPECES.length + (sansRarete ? ' (' + sansRarete + ' sans indice de rarete)' : ''));
+  for(const m of MEMBRES){
+    console.log('  ' + m.nom.padEnd(8) + String(DONNEES['leagues/' + LIGUE + '/members/' + m.id].species.length).padStart(4) + ' especes');
+  }
+}
