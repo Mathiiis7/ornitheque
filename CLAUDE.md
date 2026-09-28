@@ -103,6 +103,13 @@ la liste était bien enregistrée, mais la page restait sur « … enregistremen
 affichait « Sans nom ». Il faut rappeler `subscribe()` après le dépôt. Corollaire général :
 tout ce qui devient permis APRÈS le démarrage exige un ré-abonnement explicite.
 
+**Masquer l'interface n'est pas la vider.** Se déconnecter posait seulement une classe CSS
+sur `<html>` : `realPeople`, la liste chargée, le nom et le classement restaient en mémoire de
+l'onglet. Qui se reconnectait avec un AUTRE compte retrouvait l'écran du précédent, alors que
+Firestore ne lui répondait plus rien. Les règles tenaient, l'écran mentait - et personne ne va
+vérifier ce qu'un écran affiche. Depuis le 2026-09-28, changer de compte recharge la page :
+c'est la seule remise à zéro qui n'oubliera pas la variable ajoutée demain.
+
 **Un refus de lecture est souvent un état normal, pas une panne.** Trois écrans annonçaient
 « pas encore activé (règles Firebase) » à quelqu'un qui n'avait simplement pas déposé sa
 liste, ce qui fait croire le site cassé. `_txtAccesMembres()` choisit le texte selon le code
