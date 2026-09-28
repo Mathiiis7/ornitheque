@@ -5884,7 +5884,7 @@ function _showBlockedScreen(){
   module : app.js pese 2,3 Mo et s execute plusieurs centaines de millisecondes apres, ce qui
   ferait durer le plancher d autant.
 */
-const _SPLASH_PLANCHER = 1000, _SPLASH_PLAFOND = 8000;
+const _SPLASH_PLANCHER = 1500, _SPLASH_PLAFOND = 8000;   // 1,5 s : 1 s laissait encore une impression de clignotement (Mathis, 2026-09-28)
 let _splashRetire = false;
 function _retireSplash(){
   if(_splashRetire) return;
