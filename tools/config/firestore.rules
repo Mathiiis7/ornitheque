@@ -29,6 +29,26 @@ service cloud.firestore {
         && (!('joinedAt' in m) || m.joinedAt < request.time - duration.value(days, 'd'));
     }
 
+    // ------------------------------------------------------------
+    // LA CONDITION D ENTREE DANS LA LIGUE, et elle est seule de son espece.
+    //
+    // Elle tient dans UNE fonction, exprès : l entree pourra redevenir libre un jour, et
+    // ce jour-la il suffira de lui faire rendre true. Ne pas la disperser dans plusieurs
+    // match, ne pas la recopier.
+    //
+    // Ce qu elle exige : la fiche membre porte le code, ce code existe, et il a ete pris
+    // par CETTE personne a l inscription. Elle ne s applique qu a la CREATION : les
+    // membres deja en place mettent leur liste a jour sans rien fournir.
+    // ------------------------------------------------------------
+    function entreeAutorisee(database, leagueId) {
+      return 'invite' in request.resource.data
+        && request.resource.data.invite is string
+        && request.resource.data.invite.size() >= 8
+        && request.resource.data.invite.size() <= 40
+        && exists(/databases/$(database)/documents/leagues/$(leagueId)/invites/$(request.resource.data.invite))
+        && get(/databases/$(database)/documents/leagues/$(leagueId)/invites/$(request.resource.data.invite)).data.usedBy == request.auth.uid;
+    }
+
     // ============================================================
     // /admins/{uid} : lecture publique (client verifie si user est admin)
     // ============================================================
@@ -74,7 +94,12 @@ service cloud.firestore {
       // ------------------------------------------------------------
       match /members/{memberId} {
         allow read: if isSelf(memberId) || isMember(leagueId) || isAdmin();
-        allow write: if isSelf(memberId) || isAdmin();
+        // CREATION = entrer dans la ligue. Sur invitation depuis le 2026-09-28, voir
+        // entreeAutorisee() plus haut. Un admin fait entrer qui il veut, sans code.
+        allow create: if (isSelf(memberId) && entreeAutorisee(database, leagueId)) || isAdmin();
+        // Mise a jour et retrait : inchanges. C est ce qui protege les membres deja en
+        // place, qui n ont aucun code a fournir pour re-importer leur liste.
+        allow update, delete: if isSelf(memberId) || isAdmin();
       }
 
       // ------------------------------------------------------------
