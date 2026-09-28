@@ -10286,7 +10286,14 @@ async function handleFiles(fileList){
     for(const [k,v] of parsed.species) if(!v.addedAt) v.addedAt = importAt;
   }
   $('#myStatus').textContent = '… enregistrement';
-  try{ await saveMyList(name, parsed.species, parsed.regions); }
+  try{
+    await saveMyList(name, parsed.species, parsed.regions);
+    // Premier depot : les abonnements ont ete refuses au demarrage faute d'etre membre, et
+    // Firestore ne rejoue pas un ecouteur refuse. Sans ce rappel la page restait bloquee sur
+    // « … enregistrement », la liste enregistree mais invisible (2026-09-28). Un membre qui
+    // re-importe n'en a pas besoin : ses abonnements vivent deja.
+    if(!iAmInLeague) subscribe();
+  }
   catch(e){ showError(e); $('#myStatus').textContent=''; }
 }
 drop.addEventListener('click',()=>fileInput.click());
