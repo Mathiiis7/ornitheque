@@ -82,15 +82,15 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Ligue des Birds">
+<meta name="apple-mobile-web-app-title" content="L’Ornithèque">
 <link rel="apple-touch-icon" href="assets/logos/huppe.png">
 <link rel="icon" href="assets/logos/huppe.png">
-<title>Ligue des Birds</title>
+<title>L’Ornithèque</title>
 <!-- Leaflet (carte OpenStreetMap) -->
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=239">
+<link rel="modulepreload" href="app.js?v=240">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -121,14 +121,14 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
 
 <!-- Splash pendant que Firebase resout l'etat auth (evite le flash de l'ecran de connexion) -->
 <div id="authSplash" class="auth-splash">
-  <img class="auth-splash-logo" src="assets/logos/huppe.png" alt="Ligue des Birds">
+  <img class="auth-splash-logo" src="assets/logos/huppe.png" alt="L’Ornithèque">
 </div>
 
 <div id="authGate" class="auth-gate">
   <div class="auth-gate-card">
     <div class="auth-gate-brand">
-      <img class="auth-gate-logo" src="assets/logos/huppe.png" alt="Ligue des Birds">
-      <h1>Ligue des Birds</h1>
+      <img class="auth-gate-logo" src="assets/logos/huppe.png" alt="L’Ornithèque">
+      <h1>L’Ornithèque</h1>
       <p class="auth-gate-tag">Comparez vos life lists entre birders</p>
     </div>
     <div class="auth-gate-tabs" role="tablist">
@@ -181,13 +181,13 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   <header class="top">
     <div class="brand">
       <div class="mark" id="logoMark" title="Cliquez pour choisir votre logo">
-        <img class="mark-emoji" src="assets/logos/huppe.png" alt="Ligue des Birds">
+        <img class="mark-emoji" src="assets/logos/huppe.png" alt="L’Ornithèque">
         <img id="logoImg" alt="Logo" hidden>
         <span class="edit-hint">✎</span>
       </div>
       <input type="file" id="logoFile" accept="image/*" hidden>
       <div>
-        <h1>Ligue des Birds</h1>
+        <h1>L’Ornithèque</h1>
       </div>
     </div>
     <div style="display:flex; align-items:center; gap:8px; margin-left:auto;">
@@ -950,7 +950,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   <div id="viewAbout" style="display:none;">
     <section class="panel" style="padding:24px; margin-top:22px; max-width:900px;">
       <div class="section-head">
-        <div><div class="eyebrow">Documentation</div><h2>ℹ️ À propos de la Ligue des Birds</h2>
+        <div><div class="eyebrow">Documentation</div><h2>ℹ️ À propos de L’Ornithèque</h2>
           <p class="help" style="margin-top:2px;">Comment ça marche, d'où viennent les données, comment lire les indicateurs.</p></div>
       </div>
       <div class="about-body" style="font-size:14px; line-height:1.6; color:var(--ink); margin-top:16px;">
@@ -1278,10 +1278,10 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </div>
 
   <footer>
-    Ligue des Birds · rareté calculée au sein de votre groupe · données <b>Merlin / eBird / eBird Status &amp; Trends</b>, propriété du Cornell Lab of Ornithology.<br>
+    L’Ornithèque · rareté calculée au sein de votre groupe · données <b>Merlin / eBird / eBird Status &amp; Trends</b>, propriété du Cornell Lab of Ornithology.<br>
     Connexion anonyme · vos listes ne sont partagées qu'au sein de la ligue.
   </footer>
 </div>
 
-<script type="module" src="app.js?v=239"></script>
+<script type="module" src="app.js?v=240"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans votre navigateur.</span></div>

@@ -38,14 +38,14 @@ Ouvre PowerShell dans `C:\Users\mathi\Documents\` (parent du repo main) :
 cd C:\Users\mathi\Documents
 
 # Clone le nouveau repo (si pas deja fait)
-git clone https://github.com/Mathiiis7/Ligue_des_Plumes_data.git
+git clone https://github.com/Mathiiis7/ornitheque-data.git
 
 # Copie le dossier range-weekly generne dedans (remplace si deja present)
-Remove-Item Ligue_des_Plumes_data\range-weekly -Recurse -Force -ErrorAction SilentlyContinue
-Copy-Item Ligue_des_Plumes\data\range-weekly Ligue_des_Plumes_data\ -Recurse
+Remove-Item ornitheque-data\range-weekly -Recurse -Force -ErrorAction SilentlyContinue
+Copy-Item ornitheque\data\range-weekly ornitheque-data\ -Recurse
 
 # Push (peut prendre 2-5 min selon le poids)
-cd Ligue_des_Plumes_data
+cd ornitheque-data
 git add -A
 git commit -m "Import range-weekly PNGs (304 migrateurs FR, PNG-8 optim, 52 frames, bbox adaptatif)"
 git push
@@ -53,14 +53,14 @@ git push
 
 ## 4. Activer GitHub Pages sur le repo data (a faire UNE seule fois)
 
-- Ouvre https://github.com/Mathiiis7/Ligue_des_Plumes_data/settings/pages
+- Ouvre https://github.com/Mathiiis7/ornitheque-data/settings/pages
 - Source : **Deploy from a branch** -> branch **main** / (root) -> **Save**
-- Attends 1-2 min : verifie que https://mathiiis7.github.io/Ligue_des_Plumes_data/range-weekly/barswa/w01.png charge une image
+- Attends 1-2 min : verifie que https://mathiiis7.github.io/ornitheque-data/range-weekly/barswa/w01.png charge une image
 
 ## 5. Push le manifest a jour dans le main repo
 
 ```powershell
-cd C:\Users\mathi\Documents\Projets\Ligue_des_Plumes
+cd C:\Users\mathi\Documents\Projets\ornitheque
 git add data\range-weekly-index.json
 git commit -m "Manifest range-weekly complet (304 migrateurs)"
 git push
@@ -72,9 +72,9 @@ Le main a servi de scratch pendant les tests. Maintenant que tout est dans le re
 on peut retirer `data/range-weekly/` du main pour ne pas dupliquer 150+ MB inutile :
 
 ```powershell
-cd C:\Users\mathi\Documents\Projets\Ligue_des_Plumes
+cd C:\Users\mathi\Documents\Projets\ornitheque
 git rm -r data\range-weekly
-git commit -m "Retire range-weekly du main (deplace vers Ligue_des_Plumes_data)"
+git commit -m "Retire range-weekly du main (deplace vers ornitheque-data)"
 git push
 ```
 
@@ -83,7 +83,7 @@ git push
 ```powershell
 # Optionnel apres le git rm : purge du dossier local
 # (les fichiers ne sont plus tracks par git, seulement en workspace)
-Remove-Item C:\Users\mathi\Documents\Projets\Ligue_des_Plumes\data\range-weekly -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item C:\Users\mathi\Documents\Projets\ornitheque\data\range-weekly -Recurse -Force -ErrorAction SilentlyContinue
 ```
 
 ## 7. Tester

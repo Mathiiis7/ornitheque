@@ -16,7 +16,7 @@ t0 <- Sys.time()
 CLC_PATH  <- "C:/Users/mathi/Documents/Projets/clc/extracted/u2018_clc2018_v2020_20u1_raster100m/DATA/U2018_CLC2018_V2020_20u1.tif"
 CGLC_PATH <- "C:/Users/mathi/Documents/Projets/clc/cglc/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif"
 CACHE_DIR <- "C:/Users/mathi/Documents/Projets/clc/cache_frac"
-OUT_DIR   <- "C:/Users/mathi/Documents/Projets/Ligue_des_Plumes/data/countries"
+OUT_DIR   <- "C:/Users/mathi/Documents/Projets/ornitheque/data/countries"
 EBIRDST_DIR <- "C:/Users/mathi/AppData/Roaming/R/data/R/ebirdst/2023"
 
 dir.create(CACHE_DIR, showWarnings=FALSE, recursive=TRUE)

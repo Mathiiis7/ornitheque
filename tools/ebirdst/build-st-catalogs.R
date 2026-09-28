@@ -10,7 +10,7 @@ suppressMessages({
   library(jsonlite); library(ebirdst)
 })
 
-OUT_DIR <- "C:/Users/mathi/Documents/Projets/Ligue_des_Plumes/data/countries"
+OUT_DIR <- "C:/Users/mathi/Documents/Projets/ornitheque/data/countries"
 
 # Table sci -> species_code (backbone ebirdst)
 runs <- ebirdst::ebirdst_runs

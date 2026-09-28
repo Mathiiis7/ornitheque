@@ -15,7 +15,7 @@ suppressMessages({
 })
 
 CACHE_DIR <- "C:/Users/mathi/Documents/Projets/clc/cache"
-OUT_DIR <- "C:/Users/mathi/Documents/Projets/Ligue_des_Plumes/data/countries"
+OUT_DIR <- "C:/Users/mathi/Documents/Projets/ornitheque/data/countries"
 EBIRDST_DIR <- "C:/Users/mathi/AppData/Roaming/R/data/R/ebirdst/2023"
 
 EEA_COUNTRIES <- c("FR","DE","ES","IT","GB","PT","BE","NL","LU","IE","AT","CH",

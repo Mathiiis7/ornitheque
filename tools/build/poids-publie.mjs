@@ -6,7 +6,7 @@
   Un `du -sh` sur le dossier de travail MENT : il compte ce que .gitignore exclut. Le
   2026-09-28, il annoncait 469 Mo et j'en ai conclu a tort qu'on approchait du plafond - alors
   que data/range-weekly (143 Mo) et data/generated (30 Mo) ne sont pas publies, les cartes de
-  repartition vivant dans le depot separe Ligue_des_Plumes_data. Seuls les fichiers SUIVIS PAR
+  repartition vivant dans le depot separe ornitheque-data. Seuls les fichiers SUIVIS PAR
   GIT sont servis.
 
       node tools/build/poids-publie.mjs

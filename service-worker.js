@@ -3,7 +3,7 @@
 //   puis rafraichit en background. Prochain reload = nouvelle version.
 // - Requetes cross-origin (Firestore, iNaturalist, xeno-canto, Wikipedia, etc.) : reseau seul.
 // - Bump CACHE_VERSION quand on veut invalider volontairement.
-const CACHE_VERSION = 'v653-2026-09-28-fond-sur-html';
+const CACHE_VERSION = 'v654-2026-09-29-ornitheque';
 const CACHE_NAME = 'lmb-' + CACHE_VERSION;
 
 // Cache des fichiers de donnees, volontairement SANS CACHE_VERSION dans son nom.
@@ -75,7 +75,7 @@ self.addEventListener('fetch', (event) => {
   // Ni app.js ni index.html : servis fresh a chaque fois. Sans ca, une nouvelle version
   // du code deploye met plusieurs reloads a etre servie (stale-while-revalidate a un
   // reload de retard). Cout minimal grace au HTTP cache navigateur.
-  if (url.pathname.endsWith('/app.js') || url.pathname.endsWith('/index.html') || url.pathname.endsWith('/styles.css') || url.pathname === '/Ligue_des_Plumes/') return;
+  if (url.pathname.endsWith('/app.js') || url.pathname.endsWith('/index.html') || url.pathname.endsWith('/styles.css') || url.pathname === '/ornitheque/') return;
   // Ni le manifest range (evolue frequemment avec nouvelles especes generees).
   if (url.pathname.endsWith('/data/range-index.json')) return;
   // Ni la demo du portfolio. Elle ne s enregistre pas elle-meme (son index.html neutralise

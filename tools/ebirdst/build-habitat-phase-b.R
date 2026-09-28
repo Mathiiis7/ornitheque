@@ -21,7 +21,7 @@ suppressMessages({
 t0 <- Sys.time()
 
 CACHE_DIR   <- "C:/Users/mathi/Documents/Projets/clc/cache_frac"
-OUT_DIR     <- "C:/Users/mathi/Documents/Projets/Ligue_des_Plumes/data/countries"
+OUT_DIR     <- "C:/Users/mathi/Documents/Projets/ornitheque/data/countries"
 EBIRDST_DIR <- "C:/Users/mathi/AppData/Roaming/R/data/R/ebirdst/2023"
 
 # Pays cibles supportes par l'app.
@@ -65,7 +65,7 @@ CGLC_L1_MAP <- list(
 # ============================================================================
 # Charge AVONET
 # ============================================================================
-avonet_file <- "C:/Users/mathi/Documents/Projets/Ligue_des_Plumes/data/avonet_traits.json"
+avonet_file <- "C:/Users/mathi/Documents/Projets/ornitheque/data/avonet_traits.json"
 avonet <- if (file.exists(avonet_file)) fromJSON(avonet_file, simplifyVector = FALSE) else list()
 cat(sprintf("[SETUP] AVONET : %d entrees\n", length(avonet)))
 

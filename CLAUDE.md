@@ -1,4 +1,4 @@
-# La Ligue des Birds - ce qu'il faut savoir avant de toucher au code
+# L’Ornithèque - ce qu'il faut savoir avant de toucher au code
 
 Appli web statique de birding, en français. Pas de framework, pas de build : trois fichiers
 servis tels quels. `app.js` fait 2,35 Mo (mesuré le 2026-09-27), et sa taille reste un choix : le code et les tables
@@ -28,7 +28,7 @@ demo/             la démo du portfolio, générée - voir MODE-DEMO.md
 
 Mathis regarde l'appli sur **http://localhost:8765**, servie depuis le dépôt lui-même :
 `npx --yes http-server . -p 8765 -c-1`, configurée dans `.claude/launch.json` sous le nom
-`ligue-plumes-dev`. Lui dire « regarde en local », pas « j'ai poussé ».
+`ornitheque-dev`. Lui dire « regarde en local », pas « j'ai poussé ».
 
 **Le premier rechargement montre encore l'ancienne version** : le service worker sert sa copie
 en cache et ne la remplace qu'au chargement suivant. Recharger deux fois, ou une fois avec
@@ -48,7 +48,7 @@ sinon les visiteurs gardent l'ancienne version en cache :
 `du -sh` compte ce que `.gitignore` exclut : il annonçait 469 Mo le 2026-09-28 et m'a fait
 alerter à tort sur le plafond de 1 Go de GitHub Pages. Le vrai chiffre est **95,4 Mo, 9 % du
 plafond**. Les cartes de répartition vivent dans le dépôt séparé
-`Ligue_des_Plumes_data`, et `data/range*` comme `data/generated` ne sont pas publiés.
+`ornitheque-data`, et `data/range*` comme `data/generated` ne sont pas publiés.
 Ce dépôt-là pèse 250 Mo servis - 142 Mo de `range-weekly`, 108 Mo de `range` - mesuré le
 2026-09-28. Les 443 Mo que ce fichier annonçait avant comptaient le dossier `.git` : c'est
 l'encombrement sur le disque, pas ce que GitHub Pages sert.

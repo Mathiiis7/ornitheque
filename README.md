@@ -1,13 +1,13 @@
-# La Ligue des Plumes
+# L’Ornithèque
 
 Webapp de comparaison de listes d'observations d'oiseaux entre amis, basée sur les données eBird / Cornell Status & Trends / xeno-canto / Avonet.
 
-Deployée sur GitHub Pages : [mathiiis7.github.io/Ligue_des_Plumes](https://mathiiis7.github.io/Ligue_des_Plumes/)
+Deployée sur GitHub Pages : [mathiiis7.github.io/ornitheque](https://mathiiis7.github.io/ornitheque/)
 
 ## Structure du projet
 
 ```
-Ligue_des_Plumes/
+ornitheque/
 ├── index.html              structure HTML (squelette + link CSS + script)
 ├── styles.css              toute la CSS de l'app
 ├── app.js                  module JS principal (Firebase + logique métier)

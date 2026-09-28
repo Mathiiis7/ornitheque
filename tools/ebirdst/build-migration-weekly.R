@@ -7,7 +7,7 @@
 #   data/range-weekly/{code}/w{01..52}.webp   WebP LOSSLESS indexed + alpha
 #   data/range-weekly-index.json              Manifest { sci: {code, w, h, bbox, weeks:[]} }
 #
-# Configuration qualite max (stockage sur repo separe Ligue_des_Plumes_data, plus
+# Configuration qualite max (stockage sur repo separe ornitheque-data, plus
 # de contrainte poids sur main) :
 # - PNG_W = 500 (nettete sur retina), PNG_H calcule par espece via bbox adaptatif
 # - BBOX adaptatif par espece : trim transparent + padding 3 degres + filtre p1
@@ -19,7 +19,7 @@
 #   (WebP lossy testee mais PIRE que PNG-8 pour ce type d'image)
 # - Skip complet des especes deja traitees via manifest
 # Estimation : ~1500-2000 KB par espece = ~500-600 MB total pour 304 sp
-# (aucun impact sur main repo, tout dans Ligue_des_Plumes_data)
+# (aucun impact sur main repo, tout dans ornitheque-data)
 #
 # Normalisation percentile GLOBALE sur les 52 weeks (cle du signal migration :
 # semaines vides restent vides, pics d'abondance sont rouges).

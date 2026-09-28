@@ -86,7 +86,7 @@ console.log(`→ ${sciNames.length} espèces à interroger sur IUCN.`);
 async function fetchIUCN(sci) {
   const url = `https://apiv3.iucnredlist.org/api/v3/habitats/species/name/${encodeURIComponent(sci)}?token=${TOKEN}`;
   for (let attempt = 0; attempt < 3; attempt++) {
-    const r = await fetch(url, { headers: { 'User-Agent': 'ligue-plumes/1.0' } });
+    const r = await fetch(url, { headers: { 'User-Agent': 'ornitheque/1.0' } });
     if (r.status === 429) { await new Promise(res => setTimeout(res, 2000 * (attempt+1))); continue; }
     if (r.status >= 500) { await new Promise(res => setTimeout(res, 1000 * (attempt+1))); continue; }
     if (!r.ok) throw new Error(`HTTP ${r.status}`);

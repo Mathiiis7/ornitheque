@@ -145,7 +145,7 @@ const MEMBRES = [
 
 const DONNEES = {};
 DONNEES['leagues/' + LIGUE] = {
-  name: 'La Ligue des Birds',
+  name: 'L’Ornithèque',
   goalHeader: 'Démonstration - cette ligue et ses membres sont inventés',
 };
 

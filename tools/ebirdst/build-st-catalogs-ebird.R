@@ -13,7 +13,7 @@ suppressMessages({
   library(jsonlite); library(ebirdst); library(httr2)
 })
 
-OUT_DIR   <- "C:/Users/mathi/Documents/Projets/Ligue_des_Plumes/data/countries"
+OUT_DIR   <- "C:/Users/mathi/Documents/Projets/ornitheque/data/countries"
 CACHE_DIR <- "C:/Users/mathi/Documents/Projets/clc/cache_frac"
 EBIRD_KEY <- "dbflh4atmsom"
 

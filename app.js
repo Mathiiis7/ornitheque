@@ -5884,7 +5884,7 @@ async function _verifieExclusion(uid){
   }catch(_){ }
 }
 function _showBlockedScreen(){
-  document.body.innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:#fafafa;font-family:system-ui;text-align:center;color:#222;"><div style="max-width:420px;"><div style="font-size:48px;margin-bottom:16px;">🚧</div><h1 style="font-size:22px;margin:0 0 12px;">Accès temporairement suspendu</h1><p style="color:#666;line-height:1.5;">Ton accès à la Ligue des Birds est momentanément bloqué. Contacte Mathis pour en savoir plus.</p></div></div>';
+  document.body.innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:#fafafa;font-family:system-ui;text-align:center;color:#222;"><div style="max-width:420px;"><div style="font-size:48px;margin-bottom:16px;">🚧</div><h1 style="font-size:22px;margin:0 0 12px;">Accès temporairement suspendu</h1><p style="color:#666;line-height:1.5;">Ton accès à L’Ornithèque est momentanément bloqué. Contacte Mathis pour en savoir plus.</p></div></div>';
 }
 /*
   L ecran d attente (le logo qui rebondit) partait des que Firebase avait repondu qui on
@@ -10226,8 +10226,8 @@ $('#newInviteBtn')?.addEventListener('click', async () => {
   finally{ b.disabled = false; }
 });
 async function doInvite(){
-  const url=shareUrl(); const text='Rejoins-nous sur la Ligue des Birds 🐦 - compare tes listes d\'oiseaux avec nous !';
-  if(navigator.share){ try{ await navigator.share({title:'Ligue des Birds', text, url}); return; }catch(_){ return; } }
+  const url=shareUrl(); const text='Rejoins-nous sur L’Ornithèque 🐦 - compare tes listes d\'oiseaux avec nous !';
+  if(navigator.share){ try{ await navigator.share({title:'L’Ornithèque', text, url}); return; }catch(_){ return; } }
   try{ await navigator.clipboard.writeText(text+' '+url); const b=$('#inviteBtn'); if(b){ const t=b.textContent; b.textContent='✓ Copié !'; setTimeout(()=>b.textContent=t,1600); } }catch(_){ }
 }
 function updateChatIdentity(){
@@ -12281,9 +12281,9 @@ async function _renderSpeciesRangeCard(sci){
 // Migration animee : 26 frames PNG hebdo (1 sur 2) par migrateur, timeline slider + autoplay.
 // Charge le manifest range-weekly, verifie si sci est dispo, monte une carte Leaflet
 // dediee + timeline. Preload les frames pour animation fluide.
-// STOCKAGE : les PNGs (~90 MB total) sont dans le repo SEPARE Ligue_des_Plumes_data
+// STOCKAGE : les PNGs (~90 MB total) sont dans le repo SEPARE ornitheque-data
 // pour ne pas alourdir le repo main. Manifest reste dans le repo main (petit fichier).
-const WEEKLY_DATA_BASE = 'https://mathiiis7.github.io/Ligue_des_Plumes_data';
+const WEEKLY_DATA_BASE = 'https://mathiiis7.github.io/ornitheque-data';
 let _weeklyIndexCache = null;
 async function _loadWeeklyIndex(){
   if(_weeklyIndexCache) return _weeklyIndexCache;
