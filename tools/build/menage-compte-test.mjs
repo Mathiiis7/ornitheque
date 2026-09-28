@@ -68,23 +68,41 @@ if(!CODE){
 }
 
 const cible = lignes.filter(l => l.invite === CODE);
-if(cible.length !== 1){
-  console.log('\nARRET : ' + cible.length + ' fiche(s) portent le code ' + CODE + ', il en faut exactement une.');
+// Plus d une fiche pour un code ne devrait jamais arriver : on s arrete plutot que de
+// choisir au hasard laquelle effacer.
+if(cible.length > 1){
+  console.log('\nARRET : ' + cible.length + ' fiches portent le code ' + CODE + ', il en faut au plus une.');
   process.exit(1);
 }
-const f = cible[0];
+if(!invites.docs.some(d => d.id === CODE)){
+  console.log('\nARRET : le code ' + CODE + ' n existe pas.');
+  process.exit(1);
+}
+
 console.log('\n--- SUPPRESSION ---');
-console.log('  fiche membre : ' + f.id + '  (' + f.nom + ', ' + f.n + ' especes, entre le ' + f.entre + ')');
+const f = cible[0] || null;
+if(f){
+  console.log('  fiche membre : ' + f.id + '  (' + f.nom + ', ' + f.n + ' especes, entre le ' + f.entre + ')');
+} else {
+  // Cas courant d un essai interrompu : le code a ete PRIS - premiere etape - mais la fiche
+  // n a jamais ete creee. Le code reste alors au nom de ce compte, qui pourrait s en servir
+  // plus tard : il faut donc le retirer quand meme.
+  console.log('  fiche membre : aucune (code pris, mais inscription jamais terminee)');
+}
 console.log('  code         : ' + CODE);
 
-await db.doc('leagues/' + LIGUE + '/members/' + f.id).delete();
-console.log('  fiche membre supprimee');
+if(f){
+  await db.doc('leagues/' + LIGUE + '/members/' + f.id).delete();
+  console.log('  fiche membre supprimee');
+}
 await db.doc('leagues/' + LIGUE + '/invites/' + CODE).delete();
 console.log('  code supprime');
 
 // La ligne accounts porte l email rattache a cette fiche : elle n a plus d objet.
-const compte = db.doc('leagues/' + LIGUE + '/accounts/' + f.id);
-if((await compte.get()).exists){ await compte.delete(); console.log('  ligne accounts supprimee'); }
+if(f){
+  const compte = db.doc('leagues/' + LIGUE + '/accounts/' + f.id);
+  if((await compte.get()).exists){ await compte.delete(); console.log('  ligne accounts supprimee'); }
+}
 
 console.log('\nFait. Le compte Firebase, lui, existe toujours : il se supprime dans la console,');
 console.log('et ce n est pas necessaire - sans fiche ni code, il ne voit plus rien.\n');
