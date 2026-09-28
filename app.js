@@ -2879,11 +2879,16 @@ function renderResults(){
 let _lastBuildData = null;
 function _renderResultsImpl(){
   const res=$('#results');
+  // Un non-membre ne peut pas lire la liste des membres, donc #results reste masque et la
+  // page de classement etait entierement blanche : ni titre, ni explication (2026-09-28).
+  const videRang=$('#rankingEmpty');
   if(state.people.length===0){
     res.classList.remove('show');
+    if(videRang) videRang.hidden = false;
     renderTrophies({N:0});   // etat vide = juste un message, cheap
     return;
   }
+  if(videRang) videRang.hidden = true;
   res.classList.add('show');
   const data = build();
   _lastBuildData = data;
@@ -5973,7 +5978,7 @@ function subscribe(){
   unsubRequests = onSnapshot(query(collection(db,'leagues',leagueId,'requests'), orderBy('createdAt','desc'), limit(200)),
     snap=>{ const arr=[]; snap.forEach(d=>arr.push({id:d.id, ...d.data()})); requests=arr; renderRequests();
       requestsLatest = arr.reduce((m,x)=>Math.max(m, x.createdAt&&x.createdAt.toMillis?x.createdAt.toMillis():0),0); updateTabDots(); },
-    err=>{ const box=$('#reqList'); if(box) box.innerHTML='<p class="help" style="margin:0;">Les requêtes ne sont pas encore activées (règles Firebase à ajouter).</p>'; });
+    err=>{ const box=$('#reqList'); if(box) box.innerHTML='<p class="help" style="margin:0;">'+esc(_txtAccesMembres(err, 'Les requêtes ne sont pas encore activées (règles Firebase à ajouter).'))+'</p>'; });
   if(unsubReqVotes){ unsubReqVotes(); unsubReqVotes=null; }
   unsubReqVotes = onSnapshot(collection(db,'leagues',leagueId,'requestVotes'),
     snap=>{ const m=new Map(); snap.forEach(d=>{ const v=d.data()||{}; if(!v.requestId||!v.uid)return; if(!m.has(v.requestId))m.set(v.requestId,new Set()); m.get(v.requestId).add(v.uid); }); reqVotesMap=m; renderRequests(); },
@@ -10186,6 +10191,16 @@ async function saveMyList(name, speciesMap, regions){
 }
 
 /* ---------------- error UI ---------------- */
+/* Un refus de lecture sur les collections reservees aux membres est l'etat NORMAL de
+   quelqu'un qui n'a pas encore depose sa liste. Le dire, au lieu d'accuser les regles
+   Firebase : le 2026-09-28, un compte neuf lisait « pas encore activé (règles Firebase) »
+   sur le tchat et les requetes, ce qui fait croire le site casse. Le message technique
+   reste pour les vraies pannes. */
+function _txtAccesMembres(err, technique){
+  return (err && err.code === 'permission-denied')
+    ? 'Déposez votre liste eBird dans l\'onglet « Ma liste » pour rejoindre la ligue et voir cette page.'
+    : technique;
+}
 function showError(err){
   const box=$('#fbError'); if(!box) return;
   let msg;
@@ -10922,7 +10937,7 @@ function _subscribeChatWithLimit(){
   unsubChat = onSnapshot(query(collection(db,'leagues',leagueId,'chat'), orderBy('createdAt','desc'), limit(_chatLimit)),
     snap=>{ const msgs=[]; snap.forEach(d=>msgs.push({id:d.id, ...d.data()})); msgs.reverse(); renderChat(msgs);
       chatLatest=msgs.reduce((m,x)=>Math.max(m, x.createdAt&&x.createdAt.toMillis?x.createdAt.toMillis():0),0); updateTabDots(); },
-    err=>{ console.error(err); const box=$('#chatMessages'); if(box) box.innerHTML='<div class="chat-empty">Le tchat n\'est pas encore activé (règles Firebase).</div>'; });
+    err=>{ console.error(err); const box=$('#chatMessages'); if(box) box.innerHTML='<div class="chat-empty">'+esc(_txtAccesMembres(err, 'Le tchat n\'est pas encore activé (règles Firebase).'))+'</div>'; });
 }
 function _loadMoreChat(){
   _chatLimit = Math.min(_chatLimit + 100, 1000);
