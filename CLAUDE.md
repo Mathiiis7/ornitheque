@@ -47,8 +47,11 @@ sinon les visiteurs gardent l'ancienne version en cache :
 **Le poids publié se mesure avec `node tools/build/poids-publie.mjs`, jamais avec `du`.**
 `du -sh` compte ce que `.gitignore` exclut : il annonçait 469 Mo le 2026-09-28 et m'a fait
 alerter à tort sur le plafond de 1 Go de GitHub Pages. Le vrai chiffre est **95,4 Mo, 9 % du
-plafond**. Les cartes de répartition (443 Mo) vivent dans le dépôt séparé
+plafond**. Les cartes de répartition vivent dans le dépôt séparé
 `Ligue_des_Plumes_data`, et `data/range*` comme `data/generated` ne sont pas publiés.
+Ce dépôt-là pèse 250 Mo servis - 142 Mo de `range-weekly`, 108 Mo de `range` - mesuré le
+2026-09-28. Les 443 Mo que ce fichier annonçait avant comptaient le dossier `.git` : c'est
+l'encombrement sur le disque, pas ce que GitHub Pages sert.
 
 ## Les pièges qui m'ont déjà fait perdre du temps
 

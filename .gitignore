@@ -71,3 +71,7 @@ tools/build/exotic-per-country-scraped.generated.js
 /ACCES-LIGUE.md
 /MODE-DEMO.md
 /AUDIT-SECURITE.md
+# RESUME-PROJET.md est le dossier de presentation pour le portfolio. Hors depot par
+# coherence avec les trois au-dessus : il resume ce qu ils contiennent, dont le mecanisme
+# d invitation et les resultats de l audit. Le publier se decide, ca ne se subit pas.
+/RESUME-PROJET.md
