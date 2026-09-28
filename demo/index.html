@@ -90,7 +90,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=236">
+<link rel="modulepreload" href="app.js?v=237">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -113,7 +113,11 @@
 <!-- Etat d'auth : au chargement, on ne sait pas encore si l'utilisateur est connecte.
      data-auth="pending" par defaut -> affiche un splash neutre (pas l'ecran de connexion).
      Une fois Firebase resolve, updateAuthUI() bascule sur "signed-in" ou "signed-out" -->
-<script>document.documentElement.setAttribute('data-auth', 'pending');</script>
+<script>document.documentElement.setAttribute('data-auth', 'pending');
+// data-splash tient l ecran d attente APRES que Firebase a repondu, le temps que les donnees
+// arrivent. C est app.js qui le retire, voir _retireSplash(). Pose ici et non dans app.js :
+// il doit exister des la premiere ligne, avant meme que le module soit telecharge.
+document.documentElement.setAttribute('data-splash', 'on');</script>
 
 <!-- Splash pendant que Firebase resout l'etat auth (evite le flash de l'ecran de connexion) -->
 <div id="authSplash" class="auth-splash">
@@ -1279,5 +1283,5 @@
   </footer>
 </div>
 
-<script type="module" src="app.js?v=236"></script>
+<script type="module" src="app.js?v=237"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans votre navigateur.</span></div>

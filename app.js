@@ -5869,7 +5869,34 @@ async function _verifieExclusion(uid){
 function _showBlockedScreen(){
   document.body.innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:#fafafa;font-family:system-ui;text-align:center;color:#222;"><div style="max-width:420px;"><div style="font-size:48px;margin-bottom:16px;">🚧</div><h1 style="font-size:22px;margin:0 0 12px;">Accès temporairement suspendu</h1><p style="color:#666;line-height:1.5;">Ton accès à la Ligue des Birds est momentanément bloqué. Contacte Mathis pour en savoir plus.</p></div></div>';
 }
+/*
+  L ecran d attente (le logo qui rebondit) partait des que Firebase avait repondu qui on
+  etait, soit une demi-seconde : les donnees, elles, arrivaient apres, et on voyait le logo
+  disparaitre puis la page se remplir. Il tient maintenant jusqu au premier contenu, avec un
+  plancher d une seconde pour qu il ne clignote pas quand tout va vite - c est le cas de la
+  demo, ou les donnees sont deja la. Demande de Mathis le 2026-09-28.
+
+  Le plafond est un filet, et il n est pas theorique : si le contenu n arrive jamais - reseau
+  coupe, refus inattendu, snapshot qui ne vient pas - le logo resterait a l ecran et le site
+  paraitrait bloque. Mieux vaut montrer une page vide qu un chargement sans fin.
+
+  performance.now() compte depuis le debut de la navigation, pas depuis l execution de ce
+  module : app.js pese 2,3 Mo et s execute plusieurs centaines de millisecondes apres, ce qui
+  ferait durer le plancher d autant.
+*/
+const _SPLASH_PLANCHER = 1000, _SPLASH_PLAFOND = 8000;
+let _splashRetire = false;
+function _retireSplash(){
+  if(_splashRetire) return;
+  _splashRetire = true;
+  const reste = Math.max(0, _SPLASH_PLANCHER - performance.now());
+  setTimeout(() => document.documentElement.removeAttribute('data-splash'), reste);
+}
+setTimeout(_retireSplash, _SPLASH_PLAFOND);
+
 function applySnapshot(snap){
+  // Le contenu est la : l ecran d attente peut partir (pas avant son plancher).
+  _retireSplash();
   hideError();
   const raw=[];
   snap.forEach(d=> raw.push({ id:d.id, data:d.data() }));
@@ -5908,7 +5935,10 @@ function subscribe(){
     // depose sa liste. Lui afficher « les regles ne sont pas configurees » serait faux et
     // alarmant. Le diagnostic des regles vraiment absentes vit sur l'abonnement au doc de
     // ligue, plus bas, qui doit reussir pour tout compte connecte.
-    err=>{ if(err && err.code==='permission-denied'){ console.info('Liste des membres refusee : pas encore membre de la ligue.'); return; } console.error(err); showError(err); });
+    // Un refus ferme l attente lui aussi : quelqu un qui n est pas encore membre n aura
+    // jamais de snapshot, et il doit voir l ecran de depot plutot qu un logo qui tourne.
+    err=>{ _retireSplash();
+           if(err && err.code==='permission-denied'){ console.info('Liste des membres refusee : pas encore membre de la ligue.'); return; } console.error(err); showError(err); });
   // Favoris hotspots personnels - stockés sur le doc membre (champ favHotspots)
   // pour bénéficier des règles Firebase existantes autorisant l'update de son propre membre.
   if(unsubFavs){ unsubFavs(); unsubFavs=null; }
@@ -16152,6 +16182,8 @@ function authMsg(txt, ok){ const el=$('#authMsg'); if(!el) return; el.textConten
 function updateAuthUI(user){
   const box=$('#authBox');
   const real=isRealAccount(user);
+  // Personne de connecte : il n y a aucune donnee a attendre, le portail peut venir.
+  if(!real) _retireSplash();
   // Gate d'auth : bloque tout l'acces a l'app tant que pas connecte avec un vrai compte.
   // Etat via [data-auth] sur <html> : 'signed-in' | 'signed-out' | 'pending'.
   document.documentElement.setAttribute('data-auth', real ? 'signed-in' : 'signed-out');

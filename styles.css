@@ -114,6 +114,16 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   html[data-auth="signed-in"] .auth-splash,
   html[data-auth="signed-out"] .auth-splash { display:none !important; }
   html[data-auth="pending"], html[data-auth="signed-out"] { overflow:hidden; }
+  /* L ecran d attente ne part plus des que Firebase a repondu, mais quand le contenu est
+     pret - et jamais avant une seconde, pour qu il ne clignote pas. C est app.js qui retire
+     data-splash.
+     Cette regle a la MEME specificite que html[data-auth="signed-in"] .auth-splash juste
+     au-dessus, toutes deux en !important : c est donc sa place APRES qui la fait gagner, et
+     la deplacer plus haut la rendrait sans effet, en silence.
+     On ne masque PAS .wrap ici, expres : le contenu se construit derriere avec ses vraies
+     dimensions - une carte ou un canvas mesures dans un conteneur cache rendent n importe
+     quoi - et le splash, opaque et en position fixe, le recouvre le temps qu il faut. */
+  html[data-splash="on"] .auth-splash { display:flex !important; }
   /* Compat retrocompatible avec l'ancienne classe auth-gated (avant data-auth) */
   body.auth-gated .wrap, html.auth-gated .wrap { display:none !important; }
   body.auth-gated, html.auth-gated { overflow:hidden; }
