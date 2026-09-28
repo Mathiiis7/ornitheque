@@ -86,6 +86,20 @@ incliquable sans une erreur. C'est arrivé à la Petite couronne.
 dernière écrite gagne. Un `cursor:help` écrit à la main plus bas dans le fichier annulait la
 règle générale du curseur dessiné.
 
+**Firestore ne rejoue JAMAIS un écouteur refusé.** Depuis que les fiches membres sont
+réservées aux membres (2026-09-28), les 15 abonnements sont refusés au démarrage pour qui
+n'est pas encore inscrit. Après un premier dépôt réussi, plus aucun snapshot n'arrivait :
+la liste était bien enregistrée, mais la page restait sur « … enregistrement » et le nom
+affichait « Sans nom ». Il faut rappeler `subscribe()` après le dépôt. Corollaire général :
+tout ce qui devient permis APRÈS le démarrage exige un ré-abonnement explicite.
+
+**Un refus de lecture est souvent un état normal, pas une panne.** Trois écrans annonçaient
+« pas encore activé (règles Firebase) » à quelqu'un qui n'avait simplement pas déposé sa
+liste, ce qui fait croire le site cassé. `_txtAccesMembres()` choisit le texte selon le code
+d'erreur : `permission-denied` invite à rejoindre la ligue, le reste garde le message
+technique. Et un panneau masqué faute de données laisse une page blanche : le classement
+n'affichait RIEN, pas même son titre.
+
 ## Comment travailler ici
 
 **Mesurer avant d'affirmer.** Un banc de mesure qui imprime des chiffres vaut mieux qu'une
