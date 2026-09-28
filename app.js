@@ -10471,7 +10471,15 @@ $('#boardModes').addEventListener('click',e=>{ const b=e.target.closest('button'
 $('#removeMineBtn').addEventListener('click',async()=>{
   if(!iAmInLeague) return;
   if(!confirm('Retirer votre liste de cette ligue ?')) return;
-  try{ await deleteDoc(doc(db,'leagues',leagueId,'members',myUid)); $('#myStatus').textContent=''; }
+  try{
+    await deleteDoc(doc(db,'leagues',leagueId,'members',myUid));
+    $('#myStatus').textContent='';
+    // Depuis que la liste des membres est reservee aux membres (2026-09-28), se retirer
+    // coupe l'abonnement au lieu de livrer un dernier snapshot : le classement et les
+    // autres joueurs restaient affiches, photo perimee d'un acces qu'on n'a plus.
+    // Rechargement, comme la suppression de compte RGPD juste en dessous.
+    location.reload();
+  }
   catch(err){ showError(err); }
 });
 // RGPD : suppression complete de toutes les data utilisateur (life list + chat + photos
