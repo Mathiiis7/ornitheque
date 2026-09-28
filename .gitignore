@@ -61,3 +61,12 @@ data/generated/
 data/range/
 data/range-weekly/
 tools/build/exotic-per-country-scraped.generated.js
+
+# Etat local de l extension Impeccable (detecteur coupe le 2026-09-28) : outil de travail,
+# pas du site. GitHub Pages sert tout ce qui est suivi.
+.impeccable/
+
+# Plans de travail gardes en local : ACCES-LIGUE.md decrit une faiblesse encore ouverte,
+# et le depot est public. A pousser quand les deux portes seront fermees (2026-09-28).
+/ACCES-LIGUE.md
+/MODE-DEMO.md
