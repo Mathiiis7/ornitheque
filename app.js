@@ -5907,7 +5907,13 @@ function subscribe(){
   // Le doc de ligue est lisible par tout compte connecte : si CET abonnement est refuse,
   // les regles sont vraiment absentes ou cassees. C'est donc lui qui porte le diagnostic,
   // depuis que le refus sur la liste des membres est devenu un etat normal (2026-09-28).
-  }, err=>{ console.error(err); showError(err); });
+  }, err=>{
+    console.error(err);
+    // Pas connecte : le refus est normal, il ne dit rien sur les regles. Crier ici a
+    // fait apparaitre « les regles ne sont pas configurees » apres un mot de passe
+    // refuse, et le bandeau survivait a la connexion suivante (2026-09-28).
+    if(auth.currentUser) showError(err);
+  });
   if(unsubChat){ unsubChat(); unsubChat=null; }
   // Charge la taxonomie (code eBird -> sci) en fond pour resoudre les nom FR
   // sur les liens eBird colles dans le chat.
@@ -11007,7 +11013,7 @@ function _subscribeChatWithLimit(){
   unsubChat = onSnapshot(query(collection(db,'leagues',leagueId,'chat'), orderBy('createdAt','desc'), limit(_chatLimit)),
     snap=>{ const msgs=[]; snap.forEach(d=>msgs.push({id:d.id, ...d.data()})); msgs.reverse(); renderChat(msgs);
       chatLatest=msgs.reduce((m,x)=>Math.max(m, x.createdAt&&x.createdAt.toMillis?x.createdAt.toMillis():0),0); updateTabDots(); },
-    err=>{ console.error(err); const box=$('#chatMessages'); if(box) box.innerHTML='<div class="chat-empty">'+esc(_txtAccesMembres(err, 'Le tchat n\'est pas encore activé (règles Firebase).'))+'</div>'; });
+    err=>{ if(err && err.code==='permission-denied') console.info('Tchat refuse : pas encore membre de la ligue.'); else console.error(err); const box=$('#chatMessages'); if(box) box.innerHTML='<div class="chat-empty">'+esc(_txtAccesMembres(err, 'Le tchat n\'est pas encore activé (règles Firebase).'))+'</div>'; });
 }
 function _loadMoreChat(){
   _chatLimit = Math.min(_chatLimit + 100, 1000);
