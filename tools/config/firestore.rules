@@ -50,13 +50,30 @@ service cloud.firestore {
         && (!('name' in request.resource.data)       || isBoundedString(request.resource.data.name, 0, 100));
 
       // ------------------------------------------------------------
-      // MEMBRES : accessible aux signed-in pour permettre le check "suis-je membre".
+      // MEMBRES : la fiche porte le nom ET la life list complete.
+      //
+      // La lecture etait ouverte a tout compte connecte jusqu au 2026-09-28 : n importe qui
+      // pouvait creer un compte et lire qui joue et ce que chacun avait coche. Elle est
+      // desormais reservee aux membres, plus le titulaire de la fiche.
+      // - isSelf : indispensable au demarrage, chacun doit pouvoir lire SA fiche avant
+      //   d etre membre. C est l abonnement de app.js:5883 sur members/{monUid}.
+      // - isMember : lire les autres, donc le classement, une fois inscrit.
+      //
+      // Consequence assumee : un connecte non membre ne peut plus LISTER la collection, donc
+      // l abonnement de app.js:5877 lui est refuse. C est l etat normal de quelqu un qui
+      // vient de creer son compte et n a pas encore depose sa liste : son gestionnaire
+      // d erreur reste silencieux au lieu d annoncer a tort que les regles ne sont pas
+      // configurees. Ce diagnostic-la vit maintenant sur l abonnement au doc de ligue, qui
+      // doit reussir pour tout compte connecte.
+      //
+      // Effet de bord connu : le garde-fou anti-doublon de app.js:10150, qui prevenait un
+      // revenant connecte avec un autre compte qu une ligne existait deja a son nom, ne voit
+      // plus rien avant inscription. Voir ACCES-LIGUE.md.
+      //
       // - Ecriture : chacun sa fiche (upload lifelist), admins peuvent tout.
-      // - Lecture : tous les signed-in (car chacun doit pouvoir lire les autres membres
-      //   apres son inscription, ET checker sa propre membership avant inscription).
       // ------------------------------------------------------------
       match /members/{memberId} {
-        allow read: if isSignedIn();
+        allow read: if isSelf(memberId) || isMember(leagueId) || isAdmin();
         allow write: if isSelf(memberId) || isAdmin();
       }
 

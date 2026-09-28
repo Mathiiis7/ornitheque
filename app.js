@@ -5875,7 +5875,12 @@ function applySnapshot(snap){
 function subscribe(){
   if(unsub){ unsub(); unsub=null; }
   unsub = onSnapshot(collection(db,'leagues',leagueId,'members'), applySnapshot,
-    err=>{ console.error(err); showError(err); });
+    // Depuis le 2026-09-28 les regles reservent la liste des membres aux membres : un refus
+    // ici est l'etat NORMAL de quelqu'un qui vient de creer son compte et n'a pas encore
+    // depose sa liste. Lui afficher « les regles ne sont pas configurees » serait faux et
+    // alarmant. Le diagnostic des regles vraiment absentes vit sur l'abonnement au doc de
+    // ligue, plus bas, qui doit reussir pour tout compte connecte.
+    err=>{ if(err && err.code==='permission-denied'){ console.info('Liste des membres refusee : pas encore membre de la ligue.'); return; } console.error(err); showError(err); });
   // Favoris hotspots personnels - stockés sur le doc membre (champ favHotspots)
   // pour bénéficier des règles Firebase existantes autorisant l'update de son propre membre.
   if(unsubFavs){ unsubFavs(); unsubFavs=null; }
@@ -5894,7 +5899,10 @@ function subscribe(){
     const d=snap.data()||{};
     if(d.goalHeader) goalHeader=d.goalHeader;
     renderResults();
-  }, ()=>{});
+  // Le doc de ligue est lisible par tout compte connecte : si CET abonnement est refuse,
+  // les regles sont vraiment absentes ou cassees. C'est donc lui qui porte le diagnostic,
+  // depuis que le refus sur la liste des membres est devenu un etat normal (2026-09-28).
+  }, err=>{ console.error(err); showError(err); });
   if(unsubChat){ unsubChat(); unsubChat=null; }
   // Charge la taxonomie (code eBird -> sci) en fond pour resoudre les nom FR
   // sur les liens eBird colles dans le chat.
