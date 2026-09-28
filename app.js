@@ -16374,6 +16374,7 @@ function _toggleMapRender(){
 document.addEventListener('click', e => {
   if(e.target.closest('[data-map-render-toggle]')) _toggleMapRender();
 });
+let _uidPrecedent = null;   // le dernier compte vu, pour detecter un changement (voir plus bas)
 onAuthStateChanged(auth, user=>{
   // L app ne demarre que pour un vrai compte. Elle signait en anonyme des qu une page
   // s ouvrait sans session : un compte Firebase par visite - huit en huit jours dans la
@@ -16385,6 +16386,24 @@ onAuthStateChanged(auth, user=>{
   //
   // Les sessions anonymes deja ouvertes ne sont pas fermees : elles restent valides pour
   // linkWithCredential, qui transforme une session anonyme en compte en gardant son UID.
+  //
+  // CHANGER DE COMPTE RECHARGE LA PAGE, et ce n est pas une precaution de principe.
+  // Se deconnecter ne faisait que masquer l interface par CSS (data-auth="signed-out") :
+  // realPeople, la liste chargee, le nom, le classement restaient en memoire de l onglet.
+  // Qui se reconnectait avec un AUTRE compte retrouvait donc l ecran du precedent - sa
+  // liste, son prenom, les autres membres - alors que Firestore ne lui repondait plus rien.
+  // Sur un ordinateur partage, la personne suivante voyait la ligue.
+  //
+  // Les regles tenaient, elles : un deposer-sa-liste dans cet etat partait sans code
+  // d invitation et se faisait refuser. Mais l ecran mentait, et un ecran qui ment sur ce
+  // point est aussi grave qu une regle trop large.
+  //
+  // Recharger est la seule remise a zero sure : vider les variables une par une oublierait
+  // celle qu on ajoutera demain. C est deja ce que fait la suppression de compte.
+  // Signale par Mathis le 2026-09-28, en testant l arrivee d un nouveau membre.
+  const uidCourant = (user && isRealAccount(user)) ? user.uid : null;
+  if(_uidPrecedent && uidCourant !== _uidPrecedent){ location.reload(); return; }
+  if(uidCourant) _uidPrecedent = uidCourant;
   if(user && isRealAccount(user)){ myUid=user.uid; _verifieExclusion(user.uid); subscribeAdmins(); updateAuthUI(user); boot(); }
   else { myUid=null; updateAuthUI(user || null); }
 });
