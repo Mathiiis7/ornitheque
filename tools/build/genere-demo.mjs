@@ -177,10 +177,20 @@ CHAT.forEach(([uid, nom, texte, minutes], i) => {
     { uid, name: nom, text: texte, createdAt: ts(MAINTENANT - minutes * 60000) };
 });
 
+// Les trois idees sont calees sur ce que l appli fait VRAIMENT, verifie dans app.js le
+// 2026-09-28 : le visiteur du portfolio peut aller voir.
+//   - "Fait" doit exister pour de bon, sinon la demo promet une fonctionnalite absente. Le
+//     chant depuis la fiche d espece existe (xeno-canto, app.js:11779), donc il est coche.
+//   - "En cours" est une extension d un existant : le quiz de chants a un defi quotidien et
+//     un hebdomadaire (_quizDailyShowLastRecap, _quizWeeklyShowLastRecap), rien de mensuel.
+//   - "A faire" est bien absent : le classement n a que ses trois modes (#boardModes), aucun
+//     filtre geographique.
+// La version precedente disait l inverse : elle reclamait le chant qui existe deja et
+// annoncait "fait" un defi mensuel qui n existe pas.
 const IDEES = [
-  ['demo-hugo',  'Hugo',  'Un classement par département, pas seulement national', 'todo', 9],
-  ['demo-lina',  'Lina',  'Pouvoir écouter le chant depuis la fiche d’espèce', 'doing', 5],
-  ['demo-claire','Claire','Un défi mensuel : cinq espèces tirées au sort', 'done', 20],
+  ['demo-hugo',  'Hugo',  'Un classement filtrable par département, pas seulement sur la France entière', 'todo', 9],
+  ['demo-claire','Claire','Un défi mensuel au quiz de chants, en plus du quotidien et de l’hebdo', 'doing', 5],
+  ['demo-lina',  'Lina',  'Pouvoir écouter le chant depuis la fiche d’espèce', 'done', 20],
 ];
 IDEES.forEach(([uid, nom, texte, statut, jours], i) => {
   DONNEES['leagues/' + LIGUE + '/requests/idee-' + (i + 1)] =
