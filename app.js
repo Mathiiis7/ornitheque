@@ -10485,7 +10485,10 @@ $('#boardModes').addEventListener('click',e=>{ const b=e.target.closest('button'
 
 $('#removeMineBtn').addEventListener('click',async()=>{
   if(!iAmInLeague) return;
-  if(!confirm('Retirer votre liste de cette ligue ?')) return;
+  // L'avertissement n'est pas decoratif : retirer sa liste SUPPRIME la fiche, et y revenir
+  // est donc une creation, qui exige un code depuis le 2026-09-28. Les membres entres avant
+  // l'invitation n'en ont aucun : sans cette phrase, un clic les met dehors sans retour.
+  if(!confirm('Retirer votre liste de cette ligue ?\n\nAttention : l\'entrée dans la ligue se fait sur invitation. Pour revenir, il te faudra un nouveau code.')) return;
   try{
     await deleteDoc(doc(db,'leagues',leagueId,'members',myUid));
     $('#myStatus').textContent='';
