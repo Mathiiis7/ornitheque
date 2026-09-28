@@ -10105,6 +10105,50 @@ function _setBadge(host, className, n, hideIfEmpty){
 }
 function markSeen(v){ try{ localStorage.setItem('mb-seen-'+v, String(Date.now())); }catch(_){ } updateTabDots(); }
 // ---- Inviter ----
+/*
+  CODES D'INVITATION. Entrer dans la ligue se fait sur code depuis le 2026-09-28, et
+  Mathis est seul a en creer. Un code sert UNE fois.
+
+  Douze caracteres tires au hasard, soit 32^12, plus d'un million de milliards de
+  combinaisons. Cette longueur n'est pas decorative : le code se verifie SANS compte,
+  a l'inscription, donc la regle Firestore autorise a demander « ce code existe-t-il »
+  a qui le connait deja. C'est la seule lecture publique de cette base, et c'est
+  l'entropie du code qui la rend sans danger.
+
+  Alphabet sans I, O, 0 ni 1 : le code se dicte au telephone.
+*/
+const _ALPHABET_CODE = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function _nouveauCodeInvitation(){
+  const n = new Uint32Array(12);
+  crypto.getRandomValues(n);
+  const c = [...n].map(x => _ALPHABET_CODE[x % _ALPHABET_CODE.length]).join('');
+  return 'PLUME-' + c.slice(0, 4) + '-' + c.slice(4, 8) + '-' + c.slice(8, 12);
+}
+// Le bouton n'existe que pour un admin. Rappele a chaque snapshot de la collection
+// admins, comme le bandeau de version : le statut peut arriver apres le premier rendu.
+function _majBoutonInvitation(){
+  const b = $('#newInviteBtn'); if(b) b.hidden = !isAdmin();
+}
+$('#newInviteBtn')?.addEventListener('click', async () => {
+  const b = $('#newInviteBtn'), box = $('#inviteCodeBox');
+  if(!isAdmin() || !myUid || !leagueId) return;
+  b.disabled = true;
+  const code = _nouveauCodeInvitation();
+  try{
+    await setDoc(doc(db, 'leagues', leagueId, 'invites', code),
+      { createdBy: myUid, createdAt: serverTimestamp(), usedBy: null });
+    const lien = shareUrl() + '?code=' + encodeURIComponent(code);
+    if(box){
+      box.hidden = false;
+      box.innerHTML = 'Code cree, valable pour UNE personne : <code>' + esc(code) + '</code>'
+        + '<br>Lien pret a envoyer : <code>' + esc(lien) + '</code>';
+    }
+    try{ await navigator.clipboard.writeText(lien); b.textContent = '✓ Lien copié !'; }
+    catch(_){ b.textContent = '✓ Code créé'; }
+    setTimeout(() => { b.textContent = '🔑 Créer un code'; }, 2200);
+  }catch(err){ showError(err); }
+  finally{ b.disabled = false; }
+});
 async function doInvite(){
   const url=shareUrl(); const text='Rejoins-nous sur la Ligue des Birds 🐦 - compare tes listes d\'oiseaux avec nous !';
   if(navigator.share){ try{ await navigator.share({title:'Ligue des Birds', text, url}); return; }catch(_){ return; } }
@@ -16186,6 +16230,7 @@ function subscribeAdmins(){
       ADMIN_UIDS.add('pCf1HuUeIkNJTXC0wujsX04UsFs2');
       snap.forEach(d => { if(d.id) ADMIN_UIDS.add(d.id); });
       _updateAdminBuildStamp();
+      _majBoutonInvitation();
       // Re-render la page trophees UNIQUEMENT si le statut admin de l'utilisateur
       // a change (evite un render redondant a chaque snapshot Firestore).
       const nowAdmin = isAdmin();

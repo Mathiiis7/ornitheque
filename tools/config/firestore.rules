@@ -94,6 +94,37 @@ service cloud.firestore {
           && (!('email' in request.resource.data) || isBoundedString(request.resource.data.email, 0, 200));
       }
 
+      // ------------------------------------------------------------
+      // INVITATIONS. Entrer dans la ligue se fera sur code, et seul un admin en cree.
+      // Un code sert UNE fois. Pose le 2026-09-28 ; tant que la regle d entree de
+      // /members n exige pas le code, rien ne change pour personne.
+      //
+      // Le code EST l identifiant du document, et `get` est ouvert a tout le monde, y
+      // compris sans compte : c est la SEULE lecture publique de cette base. Elle existe
+      // pour refuser une inscription AVANT meme de creer le compte Firebase, sans quoi
+      // des comptes fantomes s accumuleraient. On ne peut demander qu un code qu on
+      // connait deja - `list` est reserve aux admins - et le code fait 12 caracteres
+      // tires au hasard, soit 32^12 : le deviner n est pas une voie praticable. C est
+      // l entropie qui rend cette ouverture sans danger, pas l obscurite.
+      //
+      // Consommation : la personne inscrit son uid dans usedBy. Elle peut recommencer
+      // autant qu elle veut, usedBy restant le sien, mais personne d autre ne le reprend.
+      // ------------------------------------------------------------
+      match /invites/{code} {
+        allow get: if true;
+        allow list: if isAdmin();
+        allow create: if isAdmin()
+          && hasOnlyKeys(['createdBy', 'createdAt', 'usedBy'])
+          && request.resource.data.createdBy == request.auth.uid
+          && request.resource.data.usedBy == null;
+        allow delete: if isAdmin();
+        allow update: if isSignedIn()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedBy', 'usedAt'])
+          && request.resource.data.usedBy == request.auth.uid
+          && (!('usedBy' in resource.data) || resource.data.usedBy == null
+              || resource.data.usedBy == request.auth.uid);
+      }
+
       // ============================================================
       // COLLECTIONS MEMBRES-ONLY : lecture ET ecriture reservees aux membres.
       // Un anon (juste signed-in mais pas inscrit) ne peut RIEN voir ici.
