@@ -2972,10 +2972,27 @@ function renderBoard(){
   const rs=$('#realScale');
   if(rs){
     if(mode==='real'){
-      // Bareme semantique par tier. Les seuils sont ceux de THRESHOLDS / _ANNUAL_THR :
-      // la part des listes eBird du pays qui mentionnent l'espece sur 2019-2026, moyenne des
-      // 48 quinzaines ponderee par le nombre de listes de chacune.
-      const RANGES={1:'≥ 23 %',2:'7,8 – 23 %',3:'3,5 – 7,8 %',4:'1,6 – 3,5 %',5:'0,69 – 1,6 %',6:'0,18 – 0,69 %',7:'0,004 – 0,18 %',8:'0,002 – 0,004 %',9:'0,0008 – 0,002 %',10:'< 0,0008 %'};
+      // Bareme semantique par tier : la part des listes eBird du pays qui mentionnent
+      // l'espece sur 2019-2026, moyenne des 48 quinzaines ponderee par le nombre de listes
+      // de chacune.
+      //
+      // Les bornes se CALCULENT depuis _ANNUAL_THR, la table que annualFreqToTier applique
+      // vraiment. Elles etaient recopiees a la main, et les DIX etaient fausses : la legende
+      // annoncait « ≥ 23 % » la ou le seuil est a 24 %, « 0,004 – 0,18 % » la ou il vaut
+      // 0,2 – 0,75 %. Elles dataient d anciens seuils - le commentaire citait meme une
+      // constante THRESHOLDS qui n existe plus - et personne ne l avait vu pendant des mois.
+      // Trouve par Mathis le 2026-09-28, en regardant simplement le site.
+      // Une table ecrite a la main a cote d une table de code finit toujours par diverger ;
+      // celle-ci ne peut plus.
+      const _pcNum = x => (x * 100).toLocaleString('fr-FR', { maximumFractionDigits: 4 });
+      const RANGES = {};
+      _ANNUAL_THR.forEach(([lim, tier], i) => {
+        RANGES[tier] = i === 0
+          ? '≥ ' + _pcNum(lim) + ' %'
+          : _pcNum(lim) + ' – ' + _pcNum(_ANNUAL_THR[i - 1][0]) + ' %';
+      });
+      // Le dernier palier n a pas de borne basse : tout ce qui passe sous le dernier seuil.
+      RANGES[10] = '< ' + _pcNum(_ANNUAL_THR[_ANNUAL_THR.length - 1][0]) + ' %';
       const items = [1,2,3,4,5,6,7,8,9,10].map(w=>`<span class="rs-it"><i style="background:${realColor(w)}"></i><b>${w}</b> ${REAL_LABELS[w]} <em>${RANGES[w]}</em></span>`).join('')
         + `<span class="rs-it" title="Exotique X/C ou parc semi-libre : hors barème rareté (tier 0)"><i style="background:#7e8a99"></i><b>0</b> Exotique <em>parcs, échappés, domestiques</em></span>`;
       rs.innerHTML='<div class="rs-title">Barème de rareté réelle <span>- part des listes eBird qui mentionnent l&rsquo;espèce, 2019-2026, pondérée par l&rsquo;effort d&rsquo;observation de chaque quinzaine.</span></div>'+
