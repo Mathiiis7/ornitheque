@@ -10242,11 +10242,20 @@ async function saveMyList(name, speciesMap, regions){
     // verifier qu'il a bien ete pris par cette personne. Retente la prise au passage,
     // au cas ou l'ecriture d'apres inscription aurait echoue.
     let codeInv = ''; try{ codeInv = localStorage.getItem('mb-invite') || ''; }catch(_){ }
-    if(codeInv){
-      try{ await updateDoc(doc(db, 'leagues', leagueId, 'invites', codeInv),
-        { usedBy: myUid, usedAt: serverTimestamp() }); }catch(_){ }
-      payload.invite = codeInv;
+    // Filet. Le code est garde en local a l'inscription, mais il disparait avec un
+    // navigateur nettoye, un autre appareil, ou un compte cree avant l'invitation.
+    // Sans lui la regle d'entree refuse le depot sans rien expliquer : on le redemande
+    // plutot que de laisser quelqu'un dehors avec un message incomprehensible.
+    if(!codeInv){
+      const saisi = prompt('Ton code d\'invitation ?\n\nL\'entree dans la ligue se fait sur invitation. Demande un code a la personne qui t\'a parle de la ligue.');
+      const v = await _verifieCodeInvitation(saisi);
+      if(!v.ok) throw new Error(v.message);
+      codeInv = v.code;
+      try{ localStorage.setItem('mb-invite', codeInv); }catch(_){ }
     }
+    try{ await updateDoc(doc(db, 'leagues', leagueId, 'invites', codeInv),
+      { usedBy: myUid, usedAt: serverTimestamp() }); }catch(_){ }
+    payload.invite = codeInv;
   }
   await setDoc(ref, payload, {merge:true});
 }
