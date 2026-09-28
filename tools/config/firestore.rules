@@ -40,13 +40,46 @@ service cloud.firestore {
     // par CETTE personne a l inscription. Elle ne s applique qu a la CREATION : les
     // membres deja en place mettent leur liste a jour sans rien fournir.
     // ------------------------------------------------------------
+    // Exclure quelqu un. Supprimer sa fiche membre ne suffit PAS : son code d invitation
+    // porte toujours son uid dans usedBy, et la regle d entree se contente de ca. Il
+    // recreait sa fiche et il etait de nouveau dedans - trouve a l audit du 2026-09-28.
+    // La collection se remplit A LA MAIN dans la console, un document vide par uid exclu ;
+    // rien ne l ecrit depuis l appli, et c est voulu.
+    function estExclu(database, leagueId) {
+      return exists(/databases/$(database)/documents/leagues/$(leagueId)/blocked/$(request.auth.uid));
+    }
+
+    // Les champs d une fiche membre, et eux seuls. L ecriture etait libre jusqu au
+    // 2026-09-28 : n importe quel champ, n importe quelle taille, jusqu au plafond de 1 Mo
+    // par document que tous les autres membres telechargent ensuite.
+    // joinedAt etait le plus genant, parce qu il sert a memberOlderThan : le delai de
+    // 7 jours avant de pouvoir voter un trophee se contournait en reecrivant sa propre
+    // date d arrivee. Il est gele sur update, plus bas.
+    // species n est pas borne en octets - Firestore s en charge - mais en NOMBRE d entrees :
+    // il y a environ 11 000 especes au monde, 20 000 laisse toute la marge utile.
+    function bornesFicheMembre() {
+      return (!('name'    in request.resource.data) || isBoundedString(request.resource.data.name, 0, 60))
+        && (!('goal'    in request.resource.data) || isBoundedString(request.resource.data.goal, 0, 300))
+        && (!('dream'   in request.resource.data) || isBoundedString(request.resource.data.dream, 0, 300))
+        && (!('rare'    in request.resource.data) || isBoundedString(request.resource.data.rare, 0, 300))
+        && (!('fav'     in request.resource.data) || isBoundedString(request.resource.data.fav, 0, 300))
+        && (!('status'  in request.resource.data) || isBoundedString(request.resource.data.status, 0, 40))
+        && (!('email'   in request.resource.data) || isBoundedString(request.resource.data.email, 0, 200))
+        && (!('invite'  in request.resource.data) || isBoundedString(request.resource.data.invite, 0, 40))
+        && (!('avatar'  in request.resource.data) || isBoundedString(request.resource.data.avatar, 0, 60000))
+        && (!('species' in request.resource.data) || request.resource.data.species.size() <= 20000)
+        && (!('favHotspots' in request.resource.data) || request.resource.data.favHotspots.size() <= 2000)
+        && (!('regions' in request.resource.data) || request.resource.data.regions.size() <= 200);
+    }
+
     function entreeAutorisee(database, leagueId) {
       return 'invite' in request.resource.data
         && request.resource.data.invite is string
         && request.resource.data.invite.size() >= 8
         && request.resource.data.invite.size() <= 40
         && exists(/databases/$(database)/documents/leagues/$(leagueId)/invites/$(request.resource.data.invite))
-        && get(/databases/$(database)/documents/leagues/$(leagueId)/invites/$(request.resource.data.invite)).data.usedBy == request.auth.uid;
+        && get(/databases/$(database)/documents/leagues/$(leagueId)/invites/$(request.resource.data.invite)).data.usedBy == request.auth.uid
+        && !estExclu(database, leagueId);
     }
 
     // ============================================================
@@ -96,10 +129,28 @@ service cloud.firestore {
         allow read: if isSelf(memberId) || isMember(leagueId) || isAdmin();
         // CREATION = entrer dans la ligue. Sur invitation depuis le 2026-09-28, voir
         // entreeAutorisee() plus haut. Un admin fait entrer qui il veut, sans code.
-        allow create: if (isSelf(memberId) && entreeAutorisee(database, leagueId)) || isAdmin();
+        allow create: if (isSelf(memberId) && entreeAutorisee(database, leagueId)
+          && hasOnlyKeys(['name', 'species', 'regions', 'favHotspots', 'goal', 'dream',
+                          'rare', 'fav', 'status', 'avatar', 'joinedAt', 'invite',
+                          'updatedAt', 'email'])
+          && bornesFicheMembre()) || isAdmin();
         // Mise a jour et retrait : inchanges. C est ce qui protege les membres deja en
         // place, qui n ont aucun code a fournir pour re-importer leur liste.
-        allow update, delete: if isSelf(memberId) || isAdmin();
+        // Ce qui est controle ici, ce sont les champs MODIFIES, pas la liste des champs du
+        // document : une fiche ancienne peut porter un champ qu aucune version actuelle
+        // n ecrit plus, et exiger la liste complete la rendrait intouchable par son
+        // proprietaire, sans que rien ne le dise.
+        // joinedAt et invite sont absents de la liste, et c est tout le sujet : ils se
+        // posent a la creation et ne se modifient plus jamais. joinedAt commande le delai
+        // de 7 jours avant de pouvoir voter un trophee (memberOlderThan).
+        allow update: if isAdmin() || (
+          isSelf(memberId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+               'name', 'species', 'regions', 'favHotspots', 'goal', 'dream',
+               'rare', 'fav', 'status', 'avatar', 'updatedAt', 'email'])
+          && bornesFicheMembre()
+        );
+        allow delete: if isSelf(memberId) || isAdmin();
       }
 
       // ------------------------------------------------------------
@@ -114,7 +165,11 @@ service cloud.firestore {
       // ------------------------------------------------------------
       match /accounts/{accountId} {
         allow read: if isAdmin() || isSelf(accountId);
-        allow write: if isSelf(accountId)
+        // isMember ajoute le 2026-09-28 : sans lui, tout compte connecte pouvait ecrire
+        // dans leagues/<nom invente>/accounts/<son uid>, dans autant de ligues fictives
+        // qu il voulait. C etait la seule ecriture accessible hors de la ligue.
+        // Corollaire cote appli : l email s enregistre APRES la fiche membre, pas avant.
+        allow write: if isSelf(accountId) && isMember(leagueId)
           && hasOnlyKeys(['email', 'updatedAt'])
           && (!('email' in request.resource.data) || isBoundedString(request.resource.data.email, 0, 200));
       }
@@ -148,6 +203,17 @@ service cloud.firestore {
           && request.resource.data.usedBy == request.auth.uid
           && (!('usedBy' in resource.data) || resource.data.usedBy == null
               || resource.data.usedBy == request.auth.uid);
+      }
+
+      // ------------------------------------------------------------
+      // EXCLUSIONS. Un document vide suffit : c est la presence de l uid qui compte.
+      // Se remplit a la main dans la console Firebase. Lisible par le titulaire - pour que
+      // l appli puisse le lui dire plutot que de le laisser devant un refus muet - et par
+      // l admin. Personne ne l ecrit depuis le navigateur, pas meme l admin.
+      // ------------------------------------------------------------
+      match /blocked/{uid} {
+        allow read: if isSelf(uid) || isAdmin();
+        allow write: if false;
       }
 
       // ============================================================
@@ -195,7 +261,10 @@ service cloud.firestore {
       // Auto-expire cote client apres 5s (pas de rules d'expiration).
       match /typing/{uid} {
         allow read: if isMember(leagueId) || isAdmin();
-        allow write, delete: if isSelf(uid) && isMember(leagueId);
+        allow delete: if isSelf(uid) && isMember(leagueId);
+        allow write: if isSelf(uid) && isMember(leagueId)
+          && hasOnlyKeys(['name', 'updatedAt'])
+          && (!('name' in request.resource.data) || isBoundedString(request.resource.data.name, 0, 60));
       }
 
       match /presence/{uid} {
@@ -263,7 +332,10 @@ service cloud.firestore {
           && isBoundedString(request.resource.data.text, 1, 500)
           && (!('name'   in request.resource.data) || isBoundedString(request.resource.data.name, 0, 30))
           && (!('status' in request.resource.data) || isBoundedString(request.resource.data.status, 0, 20));
-        allow update: if isMember(leagueId)
+        // Le bouton qui fait tourner le statut est deja reserve a l admin cote appli
+        // (app.js, data-status-cycle). La regle disait le contraire : tout membre pouvait
+        // changer le statut de N IMPORTE QUELLE demande. Aligne le 2026-09-28.
+        allow update: if isAdmin()
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
           && (!('status' in request.resource.data) || isBoundedString(request.resource.data.status, 0, 20));
         allow delete: if isMember(leagueId) && (resource.data.uid == request.auth.uid || isAdmin());
@@ -299,7 +371,13 @@ service cloud.firestore {
 
       match /trophyEvents/{eid} {
         allow read: if isMember(leagueId) || isAdmin();
-        allow create, update: if isMember(leagueId)
+        // create SEUL, plus d update depuis le 2026-09-28. L id de l evenement est
+        // deterministe et n importe quel appareil peut le poser - c est le dessin, un
+        // trophee qui change de main est detecte par tous les clients a la fois. Mais
+        // reecrire un evenement existant n a aucune raison d arriver, et quand ca arrivait
+        // ca remettait le champ at a jour : le trophee remontait en tete du fil comme s il
+        // venait d etre gagne. Le refus rend ce bug impossible.
+        allow create: if isMember(leagueId)
           && hasOnlyKeys(['kind', 'uid', 'name', 'trophyName', 'fromUid', 'fromName', 'fromTrophy', 'toTrophy', 'at'])
           && isBoundedString(request.resource.data.kind, 1, 30)
           && isBoundedString(request.resource.data.uid, 1, 128)
@@ -309,6 +387,7 @@ service cloud.firestore {
           && (!('fromName'    in request.resource.data) || request.resource.data.fromName == null || isBoundedString(request.resource.data.fromName, 0, 60))
           && (!('fromTrophy'  in request.resource.data) || isBoundedString(request.resource.data.fromTrophy, 0, 80))
           && (!('toTrophy'    in request.resource.data) || isBoundedString(request.resource.data.toTrophy, 0, 80));
+        allow update: if false;
         allow delete: if isAdmin();
       }
 

@@ -5843,6 +5843,26 @@ function rebuild(){
 // uniquement (bypassable par un dev, mais suffisant pour un blocage amical).
 const BLOCKED_NAMES = [];
 function _isBlocked(name){ return BLOCKED_NAMES.some(re => re.test((name||'').trim())); }
+// Exclusion par UID, posee a la main dans la console : leagues/<id>/blocked/<uid>, un
+// document vide suffit. C est le pendant visible de la regle d entree, qui refuse depuis
+// l audit du 2026-09-28 de recreer une fiche membre pour un uid exclu - sans quoi
+// supprimer la fiche de quelqu un ne l excluait pas : son code d invitation portait
+// toujours son uid, il recreait sa fiche et il etait de nouveau dedans.
+//
+// Ne retarde PAS le demarrage : lancee sans await, elle remplace la page quand la reponse
+// arrive, comme le blocage par nom le fait deja depuis applySnapshot. Une erreur de lecture
+// ne bloque personne - un reseau coupe n est pas une exclusion.
+//
+// L ecran seul ne protege rien, il explique. Exclure vraiment demande DEUX gestes en
+// console : ajouter l uid ici ET supprimer sa fiche membre, faute de quoi isMember reste
+// vrai et l API continue de lui repondre.
+async function _verifieExclusion(uid){
+  if(!uid || !leagueId) return;
+  try{
+    const d = await getDoc(doc(db, 'leagues', leagueId, 'blocked', uid));
+    if(d.exists()) _showBlockedScreen();
+  }catch(_){ }
+}
 function _showBlockedScreen(){
   document.body.innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:#fafafa;font-family:system-ui;text-align:center;color:#222;"><div style="max-width:420px;"><div style="font-size:48px;margin-bottom:16px;">🚧</div><h1 style="font-size:22px;margin:0 0 12px;">Accès temporairement suspendu</h1><p style="color:#666;line-height:1.5;">Ton accès à la Ligue des Birds est momentanément bloqué. Contacte Mathis pour en savoir plus.</p></div></div>';
 }
@@ -10229,11 +10249,8 @@ async function saveMyList(name, speciesMap, regions){
   }
   // L email va dans la collection accounts, pas ici : le document membre est lisible par
   // tout utilisateur connecte. deleteField retire celui qu une version precedente y avait
-  // ecrit, sur les quelques lignes enregistrees entre-temps.
-  if(monEmail){
-    setDoc(doc(db, 'leagues', leagueId, 'accounts', myUid),
-      { email: monEmail, updatedAt: serverTimestamp() }, { merge:true }).catch(() => {});
-  }
+  // ecrit, sur les quelques lignes enregistrees entre-temps. L ecriture elle-meme se fait
+  // APRES la fiche membre, plus bas - voir le commentaire la-bas.
   const payload={ name, species:arr, updatedAt: serverTimestamp(), email: deleteField() };
   if(Array.isArray(regions)) payload.regions = regions;   // codes FR-XX visités (issus du CSV) - omis si absent (merge conserve l'ancien)
   if(!iAmInLeague){
@@ -10258,6 +10275,16 @@ async function saveMyList(name, speciesMap, regions){
     payload.invite = codeInv;
   }
   await setDoc(ref, payload, {merge:true});
+  // APRES la fiche, et pas avant : depuis l audit du 2026-09-28 la collection accounts
+  // exige d etre membre, sans quoi n importe quel compte connecte pouvait ecrire dans
+  // une ligue inventee. Pour un nouvel arrivant, la fiche n existe pas encore a l entree
+  // de cette fonction : ecrire l email plus haut serait refuse, et en silence puisque le
+  // catch est vide - son email ne serait jamais enregistre, et l admin n aurait aucun
+  // moyen de rattacher sa ligne a un compte.
+  if(monEmail){
+    setDoc(doc(db, 'leagues', leagueId, 'accounts', myUid),
+      { email: monEmail, updatedAt: serverTimestamp() }, { merge:true }).catch(() => {});
+  }
 }
 
 /* ---------------- error UI ---------------- */
@@ -16358,7 +16385,7 @@ onAuthStateChanged(auth, user=>{
   //
   // Les sessions anonymes deja ouvertes ne sont pas fermees : elles restent valides pour
   // linkWithCredential, qui transforme une session anonyme en compte en gardant son UID.
-  if(user && isRealAccount(user)){ myUid=user.uid; subscribeAdmins(); updateAuthUI(user); boot(); }
+  if(user && isRealAccount(user)){ myUid=user.uid; _verifieExclusion(user.uid); subscribeAdmins(); updateAuthUI(user); boot(); }
   else { myUid=null; updateAuthUI(user || null); }
 });
 /* ---------------- Quiz chants (xeno-canto v3) ---------------- */
