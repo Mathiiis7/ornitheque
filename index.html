@@ -35,7 +35,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=226">
+<link rel="modulepreload" href="app.js?v=227">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -88,6 +88,15 @@
       <div class="auth-gate-field">
         <label for="authGatePass">Mot de passe</label>
         <input type="password" id="authGatePass" placeholder="Au moins 6 caractères" autocomplete="current-password" minlength="6" required>
+      </div>
+      <!-- Code d'invitation. Visible en mode « Créer un compte » seulement, comme le
+           consentement juste en dessous, et pre-rempli depuis ?code= dans l'URL quand la
+           personne arrive par un lien d'invitation. Bloc distinct et d'un seul tenant :
+           l'entree pourra redevenir libre un jour, il suffira de le cacher. -->
+      <div class="auth-gate-field" id="authGateInviteWrap" hidden>
+        <label for="authGateInvite">Code d'invitation</label>
+        <input type="text" id="authGateInvite" placeholder="PLUME-XXXX-XXXX-XXXX" autocomplete="off" spellcheck="false">
+        <p class="help" style="margin:4px 0 0;">L'entrée se fait sur invitation. Demande un code à la personne qui t'a parlé de la ligue.</p>
       </div>
       <label class="auth-gate-consent" id="authGateConsentWrap" hidden>
         <input type="checkbox" id="authGateConsent">
@@ -1217,4 +1226,4 @@
   </footer>
 </div>
 
-<script type="module" src="app.js?v=226"></script>
+<script type="module" src="app.js?v=227"></script>

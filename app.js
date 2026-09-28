@@ -10230,7 +10230,18 @@ async function saveMyList(name, speciesMap, regions){
   }
   const payload={ name, species:arr, updatedAt: serverTimestamp(), email: deleteField() };
   if(Array.isArray(regions)) payload.regions = regions;   // codes FR-XX visités (issus du CSV) - omis si absent (merge conserve l'ancien)
-  if(!iAmInLeague) payload.joinedAt = serverTimestamp();
+  if(!iAmInLeague){
+    payload.joinedAt = serverTimestamp();
+    // Premiere entree : la fiche porte le code, c'est lui que la regle relira pour
+    // verifier qu'il a bien ete pris par cette personne. Retente la prise au passage,
+    // au cas ou l'ecriture d'apres inscription aurait echoue.
+    let codeInv = ''; try{ codeInv = localStorage.getItem('mb-invite') || ''; }catch(_){ }
+    if(codeInv){
+      try{ await updateDoc(doc(db, 'leagues', leagueId, 'invites', codeInv),
+        { usedBy: myUid, usedAt: serverTimestamp() }); }catch(_){ }
+      payload.invite = codeInv;
+    }
+  }
   await setDoc(ref, payload, {merge:true});
 }
 
@@ -16104,12 +16115,41 @@ function updateAuthUI(user){
 }
 // ============ AUTH GATE handlers ============
 let _authGateMode = 'signin';   // 'signin' | 'signup'
+/*
+  Verifie un code SANS etre connecte : la regle ouvre `get` sur /invites a qui connait
+  deja le code. C'est ce qui permet de refuser l'inscription avant de creer le compte,
+  donc sans laisser de comptes fantomes dans Firebase.
+  Un code deja pris par QUELQU'UN D'AUTRE est refuse ; repris par la meme personne, il
+  passe, pour qu'un echec en cours de route ne la laisse pas dehors.
+*/
+async function _verifieCodeInvitation(saisi){
+  const code = String(saisi || '').trim().toUpperCase();
+  if(!code) return { ok:false, message:'Il faut un code d\'invitation pour créer un compte. Demande-le à la personne qui t\'a parlé de la ligue.' };
+  let snap;
+  try{ snap = await getDoc(doc(db, 'leagues', leagueId, 'invites', code)); }
+  catch(_){ return { ok:false, message:'Impossible de vérifier le code pour le moment. Réessaie dans un instant.' }; }
+  if(!snap.exists()) return { ok:false, message:'Ce code n\'existe pas. Vérifie que tu l\'as recopié en entier.' };
+  const d = snap.data() || {};
+  const moi = auth.currentUser && auth.currentUser.uid;
+  if(d.usedBy && d.usedBy !== moi) return { ok:false, message:'Ce code a déjà servi. Demande-en un autre.' };
+  return { ok:true, code };
+}
+// Arrivee par un lien d'invitation : le code est dans l'URL, on epargne un copier-coller.
+try{
+  const _c = new URLSearchParams(location.search).get('code');
+  if(_c){
+    const _i = $('#authGateInvite'); if(_i) _i.value = _c.trim().toUpperCase();
+    _authGateMode = 'signup';
+  }
+}catch(_){ }
 function _authGateSyncTab(){
   document.querySelectorAll('.auth-gate-tab').forEach(b => b.classList.toggle('on', b.dataset.authTab === _authGateMode));
   const cta = $('#authGateSubmit');
   if(cta) cta.textContent = _authGateMode === 'signin' ? 'Se connecter' : 'Créer mon compte';
   const consent = $('#authGateConsentWrap');
   if(consent) consent.hidden = _authGateMode !== 'signup';
+  const invit = $('#authGateInviteWrap');
+  if(invit) invit.hidden = _authGateMode !== 'signup';
   const passInput = $('#authGatePass');
   if(passInput) passInput.setAttribute('autocomplete', _authGateMode === 'signin' ? 'current-password' : 'new-password');
   const forgot = $('#authGateForgot');
@@ -16134,11 +16174,19 @@ document.addEventListener('click', async e => {
     if(_authGateMode === 'signup'){
       const consent = $('#authGateConsent')?.checked;
       if(!consent){ _authGateMsg('Accepte les conditions de confidentialité pour continuer.'); return; }
+      const inv = await _verifieCodeInvitation($('#authGateInvite')?.value);
+      if(!inv.ok){ _authGateMsg(inv.message); $('#authGateInvite')?.focus(); return; }
       submit.disabled = true; _authGateMsg('…', true);
       try{
         const cur = auth.currentUser;
         if(cur && cur.isAnonymous){ await linkWithCredential(cur, EmailAuthProvider.credential(email, pass)); _authGateMsg('Compte créé - ta liste est conservée ✓', true); }
         else { await createUserWithEmailAndPassword(auth, email, pass); _authGateMsg('Compte créé ✓', true); }
+        // Le code est marque pris tout de suite, et garde en local : c'est au depot de
+        // la liste que la regle d'entree le relira (etape 3). Si cette ecriture echoue,
+        // le depot la retentera - reprendre son propre code est permis.
+        try{ localStorage.setItem('mb-invite', inv.code); }catch(_){ }
+        try{ await updateDoc(doc(db, 'leagues', leagueId, 'invites', inv.code),
+          { usedBy: auth.currentUser.uid, usedAt: serverTimestamp() }); }catch(_){ }
         $('#authGatePass').value = ''; updateAuthUI(auth.currentUser);
       }catch(err){ _authGateMsg(authErr(err)); }
       submit.disabled = false;
