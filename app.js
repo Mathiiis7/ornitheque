@@ -2424,10 +2424,13 @@ function ingest(filename, text){
   return { filename, defaultName:base, species, regions:[...regionsSet].sort() };
 }
 
+// Le nom de repli quand on n a VRAIMENT rien. Sorti en constante le 2026-09-28 pour que le
+// depot puisse le reconnaitre et demander le prenom, au lieu de l enregistrer tel quel.
+const NOM_ABSENT = '⚠️ Sans nom - modifiez « Ma liste » → nom';
 function cleanName(base, n){
   let s = (base||'').replace(/[_\-]+/g,' ').replace(/\s+/g,' ').trim();
   // Fallback très visible pour repérer un compte sans nom (l'utilisateur oubliera moins de se renommer).
-  if(!s) return '⚠️ Sans nom - modifiez « Ma liste » → nom';
+  if(!s) return NOM_ABSENT;
   return s.charAt(0).toUpperCase()+s.slice(1);
 }
 
@@ -10346,7 +10349,23 @@ async function handleFiles(fileList){
   let text; try{ text=await f.text(); }catch(e){ $('#myStatus').textContent='Lecture du fichier impossible.'; return; }
   const parsed=ingest(f.name, text);
   if(!parsed){ $('#myStatus').textContent='Fichier non reconnu (est-ce bien un export eBird ?)'; return; }
-  const name = ($('#myName').value.trim()) || cleanName(parsed.defaultName, state.people.length+1);
+  // Le prenom se DEMANDE plutot que de se remplacer par un avertissement. Le repli sur le
+  // nom du fichier reste, c est lui qui sert le plus souvent ; mais quand il ne donne rien
+  // non plus, « ⚠️ Sans nom » partait dans la base et s affichait au classement de tout le
+  // groupe, a charge pour la personne de deviner ou le corriger.
+  // Signale par Mathis le 2026-09-28 en rejoignant avec un compte neuf : l ecran etant
+  // desormais remis a zero au changement de compte, le champ n est plus pre-rempli par la
+  // session precedente, et un depot sans prenom est devenu facile.
+  // NOM_ABSENT reste le dernier filet, pour les lignes deja enregistrees ainsi.
+  let name = ($('#myName').value.trim()) || cleanName(parsed.defaultName, state.people.length+1);
+  if(name === NOM_ABSENT){
+    name = (prompt('Ton prénom ?\n\nIl s\'affichera dans le classement de la ligue.') || '').trim().slice(0, 24);
+    if(!name){
+      $('#myStatus').textContent = 'Il faut un prénom pour rejoindre la ligue.';
+      $('#myName').focus();
+      return;
+    }
+  }
   $('#myName').value = name;
   // Préserver les coords GPS déjà connues : si l'espèce était déjà là avec lat/lon
   // et que le nouveau CSV ne fournit pas de coords (ex. life list simple),
@@ -10437,10 +10456,10 @@ function _lockMyNameIfSet(){
   const me = realPeople.find(p=>p.id===myUid);
   const hasName = !!(me && me.name);
   if(hasName && !_nameIsUnlocked(me)){
-    inp.readOnly = true; inp.classList.add('locked'); inp.title = 'Verrouillé (fenêtre de grâce de 24 h dépassée). Admin uniquement.';
+    inp.readOnly = true; inp.classList.add('locked'); inp.title = 'Verrouillé après 24 h : demande à un admin';
   } else {
     inp.readOnly = false; inp.classList.remove('locked');
-    inp.title = hasName ? 'Modifiable pendant 24 h après inscription - corrigez si besoin.' : '';
+    inp.title = hasName ? 'Modifiable pendant 24 h après inscription' : '';
   }
 }
 // H : désactive visuellement écriture chat + upload photo pour les non-membres.
