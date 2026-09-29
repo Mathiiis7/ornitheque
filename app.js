@@ -23,7 +23,12 @@ const auth = getAuth(fbApp);
 // On saute donc la tentative vouee a l'echec et on demande l'interrogation repetee d'emblee -
 // celle sur laquelle le SDK finissait de toute facon. Le reglage interdit d'etre combine avec
 // experimentalAutoDetectLongPolling, actif par defaut : le poser suffit a le desactiver.
-const db = initializeFirestore(fbApp, { experimentalForceLongPolling: true });
+// getFirestore aurait suffi ; initializeFirestore reste parce qu il est le seul a accepter un
+// reglage, et qu on y reviendra peut-etre. Mais PAS experimentalForceLongPolling : essaye le
+// 2026-09-29 contre la lenteur du demarrage, mesure A/B dans le meme navigateur et la meme
+// session, il l AGGRAVE - mediane 7,0 s contre 5,0 s par defaut, et 30 requetes contre 2.
+// Ne pas le reproposer sans nouvelle mesure.
+const db = initializeFirestore(fbApp, {});
 
 /* ---------------- state ---------------- */
 const SERIES_N = 8;
