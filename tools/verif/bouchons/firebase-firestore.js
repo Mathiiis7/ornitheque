@@ -29,7 +29,9 @@ function snapshot(docs){
     docChanges: () => arr.map(d => ({ type: 'added', doc: d })),
     // Snapshot de document unique : le premier doc livre fait office de contenu.
     exists: () => arr.length > 0,
-    data: () => (arr.length ? arr[0].data : undefined),
+    // arr[0].data est une FONCTION : il faut l appeler, sinon un snapshot de document
+    // unique rend la fonction au lieu des donnees.
+    data: () => (arr.length ? arr[0].data() : undefined),
     id: arr.length ? arr[0].id : 'inconnu',
     metadata: { fromCache: false, hasPendingWrites: false }
   };
@@ -50,14 +52,38 @@ export function getFirestore(){ return { __db: true }; }
 // experimentalForceLongPolling. Le bouchon ignore le reglage, il n a pas de reseau.
 export function initializeFirestore(){ return { __db: true }; }
 export function collection(...a){ return ref(morceaux(a)); }
-export function doc(...a){ return ref(morceaux(a)); }
+// doc(collection(...)) sans identifiant : le vrai SDK en fabrique un sans aller au reseau.
+// app.js s en sert pour donner le MEME identifiant a une photo et aux deux documents qui
+// portent ses images. Un chemin de collection a un nombre IMPAIR de morceaux.
+let compteurAuto = 0;
+export function doc(...a){
+  const parts = morceaux(a);
+  if(parts.length % 2 === 1) parts.push('auto' + (++compteurAuto));
+  return ref(parts);
+}
 export function query(r){ return r; }
 export function orderBy(){ return { __contrainte: 'orderBy' }; }
 export function limit(){ return { __contrainte: 'limit' }; }
 export function where(){ return { __contrainte: 'where' }; }
 export function serverTimestamp(){ return { __ts: true }; }
 export function deleteField(){ return { __del: true }; }
-export function getDoc(r){ compter('getDoc', r); return Promise.resolve(snapshot([])); }
+// Documents lisibles un par un, poses d avance par le banc (window.__fs.poser). Sans eux
+// getDoc rend du vide, ce qui reste le comportement par defaut pour les autres bancs.
+const magasin = new Map();
+export function getDoc(r){
+  compter('getDoc', r);
+  const chemin = (r && r.__chemin) || '';
+  // Snapshot de document unique, construit ici et non par snapshot() : celui-la rend
+  // arr[0].data, qui est la FONCTION data et non les donnees. Le piege m a coute une
+  // mesure fausse - les vignettes etaient bien lues, et arrivaient vides.
+  if(magasin.has(chemin)){
+    const d = magasin.get(chemin);
+    return Promise.resolve({ exists: () => true, data: () => d, get: k => d[k],
+                             id: chemin.split('/').pop(),
+                             metadata: { fromCache: false, hasPendingWrites: false } });
+  }
+  return Promise.resolve(snapshot([]));
+}
 export function getDocs(r){ compter('getDocs', r); return Promise.resolve(snapshot([])); }
 
 window.__ecritures = [];
@@ -82,6 +108,9 @@ export function onSnapshot(r, cb){
 window.__erreurs = [];
 window.__fs = {
   chemins(){ return [...abonnes.keys()]; },
+  // Pose le contenu d un document precis, pour que getDoc le rende. Sert au banc photos,
+  // qui verifie que la vignette et l image pleine ne sont lues qu au moment de les regarder.
+  poser(chemin, data){ magasin.set(chemin, data); },
   // Livre un snapshot a TOUS les abonnes d'un chemin, et retourne leur nombre : 0 veut dire que
   // le banc s'est trompe de chemin, et il doit le voir plutot que de mesurer le vide.
   //

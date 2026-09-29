@@ -124,6 +124,24 @@ la liste était bien enregistrée, mais la page restait sur « … enregistremen
 affichait « Sans nom ». Il faut rappeler `subscribe()` après le dépôt. Corollaire général :
 tout ce qui devient permis APRÈS le démarrage exige un ré-abonnement explicite.
 
+**Une image ne voyage plus avec son document.** Depuis le 2026-09-29, une photo publiée vit
+dans TROIS documents : `photos/<id>` garde un aperçu flou de 2,2 Ko et part au démarrage,
+`photoThumbs/<id>` garde la vignette de 21 Ko et ne se lit qu'à l'approche de l'écran,
+`photoFull/<id>` garde l'image pleine de 104 Ko et ne se lit qu'à l'ouverture en grand. Idem
+pour le tchat (`chatThumbs`, `chatFull`), sous l'identifiant du message. Avant, 56 images
+entières pesaient 14 737 Ko avalés au démarrage, et le classement attendait derrière.
+Conséquences pour qui touche à ce code :
+- l'identifiant se fabrique AVANT l'écriture (`doc(collection(...))`) pour que les trois
+  documents le partagent, et les lourds partent en premier ;
+- retirer une photo, c'est retirer ses trois documents, et la suppression RGPD liste les
+  quatre nouvelles collections ;
+- le champ `image` est encore LU partout, pour les photos d'avant la séparation. Tant que la
+  vraie ligue n'est pas migrée (`window.__migrerImages()`, compte admin, voir
+  `notes-privees/MIGRATION-PHOTOS.md`), les deux formes coexistent, et les règles acceptent
+  les deux exprès ;
+- un re-rendu ne doit JAMAIS faire repartir une photo de son aperçu flou : `thumbAttrs()`
+  relit le cache mémoire avant d'écrire le HTML. Le banc `photos` vérifie ce point précis.
+
 **Masquer l'interface n'est pas la vider.** Se déconnecter posait seulement une classe CSS
 sur `<html>` : `realPeople`, la liste chargée, le nom et le classement restaient en mémoire de
 l'onglet. Qui se reconnectait avec un AUTRE compte retrouvait l'écran du précédent, alors que
@@ -172,7 +190,7 @@ tout seul** : `.claude/hooks/verif-avant-fin.mjs`, branché sur l'événement `S
 bancs et refuse de laisser une réponse finir tant qu'un banc est en défaut, dès qu'`app.js`,
 `index.html` ou `styles.css` sont modifiés et pas encore commités. Après une retouche
 d'`index.html` : `node tools/build/genere-demo.mjs`. Le reste (bancs demo, trophees, firestore,
-en écrire un) : skill `bancs-de-mesure`.
+photos, en écrire un) : skill `bancs-de-mesure`.
 
 **Une cible tactile s'écrit 52 px pour en faire 44.** `body` porte `zoom:0.85`, donc le seuil
 de 44 px d'écran (Apple, Material, WCAG 2.5.5) se traduit par 52 px dans la CSS. Tout ce qui
@@ -181,6 +199,12 @@ concerne le doigt vit dans un `@media (pointer: coarse)` en fin de `styles.css` 
 `isMobile: true`, sinon on mesure l'affichage souris en croyant mesurer le doigt. Le banc
 `accessibilite` vérifie les deux à la fois, et refait au passage le tour de ce qu'un lecteur
 d'écran annonce (région vivante, rangées d'onglets, noms des commandes).
+
+**Un bouchon de snapshot rend `data` comme une fonction.** Dans les deux bouchons Firestore
+(`tools/verif/bouchons/` et `demo/bouchons/`), `snapshot(docs)` construisait `data: () =>
+arr[0].data` - or `arr[0].data` EST la fonction, pas les données. Un `getDoc` sur un document
+existant rendait donc la fonction elle-même, et les vignettes arrivaient vides sans une seule
+erreur. Corrigé le 2026-09-29 dans les deux, attrapé par le banc `photos`.
 
 **Le plafond qui cédera le premier est Firestore, pas GitHub Pages.** Chaque document modifié
 coûte **une lecture par client abonné** : à 50 connectés, une frappe dans le chat coûte 50

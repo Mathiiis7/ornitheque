@@ -225,21 +225,31 @@ service cloud.firestore {
         allow read: if isMember(leagueId) || isAdmin();
         allow create: if isMember(leagueId)
           && request.resource.data.uid == request.auth.uid
-          && hasOnlyKeys(['uid', 'name', 'text', 'image', 'voice', 'gif', 'createdAt', 'replyTo'])
+          // Comme pour les photos : 'image' reste accepte le temps de la transition, jamais
+          // en meme temps que 'blur'.
+          && hasOnlyKeys(['uid', 'name', 'text', 'blur', 'image', 'voice', 'gif', 'createdAt', 'replyTo'])
           && (!('name' in request.resource.data) || isBoundedString(request.resource.data.name, 0, 30))
           && (
                (request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 500)
+               || (request.resource.data.blur is string && request.resource.data.blur.size() > 0)
                || (request.resource.data.image is string && request.resource.data.image.size() > 0)
                || (request.resource.data.voice is string && request.resource.data.voice.size() > 0)
                || (request.resource.data.gif is string && request.resource.data.gif.size() > 0)
              )
+          && !(('blur' in request.resource.data) && ('image' in request.resource.data))
           && (!('text' in request.resource.data)  || isBoundedString(request.resource.data.text, 0, 500))
+          && (!('blur' in request.resource.data)  || (request.resource.data.blur is string && request.resource.data.blur.size() <= 20000))
           && (!('image' in request.resource.data) || (request.resource.data.image is string && request.resource.data.image.size() <= 950000))
           && (!('voice' in request.resource.data) || (request.resource.data.voice is string && request.resource.data.voice.size() <= 950000))
           && (!('gif' in request.resource.data)   || (request.resource.data.gif is string && request.resource.data.gif.size() <= 500));
         // Update autorise : (1) auteur qui edite son propre message (text seulement, dans les 5 min),
-        // (2) auteur ou admin qui soft-delete (marque deleted:true + snapshot original).
-        allow update: if isMember(leagueId) && (
+        // (2) auteur ou admin qui soft-delete (marque deleted:true + snapshot original),
+        // (3) migration par un admin : pose l'apercu flou et retire l'image entiere.
+        allow update: if (isAdmin()
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['blur', 'image'])
+            && request.resource.data.blur is string && request.resource.data.blur.size() <= 20000
+            && !('image' in request.resource.data))
+          || (isMember(leagueId) && (
           // Edit auteur : diff limite au champ text + editedAt
           (resource.data.uid == request.auth.uid
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text', 'editedAt'])
@@ -252,7 +262,7 @@ service cloud.firestore {
                  'deletedOriginalText', 'deletedOriginalImage', 'deletedOriginalVoice', 'deletedOriginalGif'
                ])
             && request.resource.data.deleted == true)
-        );
+        ));
         // Delete hard : conserve pour compatibilite (invites ou messages tres anciens)
         allow delete: if isMember(leagueId) && (resource.data.uid == request.auth.uid || isAdmin());
       }
@@ -287,16 +297,74 @@ service cloud.firestore {
         allow update: if false;
       }
 
+      // Document LEGER d'une photo : metadonnees + apercu flou de quelques Ko. C'est lui
+      // que tout le monde recoit au demarrage. La vignette nette vit dans photoThumbs et
+      // l'image pleine dans photoFull, sous le MEME identifiant, lues seulement quand on
+      // regarde. Avant cette separation, 56 photos entieres = 14 737 Ko au demarrage
+      // (mesure du 2026-09-29). 'image' reste accepte en lecture pour les photos publiees
+      // avant la separation ; plus personne n'en cree.
       match /photos/{photoId} {
         allow read: if isMember(leagueId) || isAdmin();
         allow create: if isMember(leagueId)
           && request.resource.data.uid == request.auth.uid
-          && hasOnlyKeys(['uid', 'name', 'image', 'caption', 'sci', 'common', 'createdAt', 'lat', 'lng'])
-          && request.resource.data.image is string && request.resource.data.image.size() <= 950000
+          && hasOnlyKeys(['uid', 'name', 'blur', 'image', 'caption', 'sci', 'common', 'createdAt', 'lat', 'lng'])
+          // 'image' reste accepte le temps que tout le monde ait la nouvelle version : entre
+          // le moment ou ces regles sont collees et celui ou un visiteur recharge, son
+          // ancienne page publie encore l'image entiere. Les deux ensemble, jamais.
+          && ((request.resource.data.blur is string && request.resource.data.blur.size() <= 20000)
+              || (request.resource.data.image is string && request.resource.data.image.size() <= 950000))
+          && !(('blur' in request.resource.data) && ('image' in request.resource.data))
           && (!('caption' in request.resource.data) || isBoundedString(request.resource.data.caption, 0, 200))
           && (!('name'    in request.resource.data) || isBoundedString(request.resource.data.name, 0, 30))
           && (!('sci'     in request.resource.data) || isBoundedString(request.resource.data.sci, 0, 100))
           && (!('common'  in request.resource.data) || isBoundedString(request.resource.data.common, 0, 100));
+        // Seule modification permise : la migration, par un admin, qui pose l'apercu flou
+        // et retire l'image pleine. Rien d'autre ne peut changer dans une photo.
+        allow update: if isAdmin()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['blur', 'image'])
+          && request.resource.data.blur is string && request.resource.data.blur.size() <= 20000
+          && !('image' in request.resource.data);
+        allow delete: if isMember(leagueId) && (resource.data.uid == request.auth.uid || isAdmin());
+      }
+
+      // Les deux tailles lourdes d'une photo, dans leur propre document pour ne PAS
+      // voyager au demarrage. Immuables : on cree, on supprime, on ne modifie jamais.
+      // L'admin peut ecrire pour n'importe quel auteur, c'est la migration des anciennes.
+      match /photoThumbs/{photoId} {
+        allow read: if isMember(leagueId) || isAdmin();
+        allow create: if isMember(leagueId)
+          && (request.resource.data.uid == request.auth.uid || isAdmin())
+          && hasOnlyKeys(['uid', 'image', 'createdAt'])
+          && request.resource.data.image is string && request.resource.data.image.size() <= 150000;
+        allow update: if false;
+        allow delete: if isMember(leagueId) && (resource.data.uid == request.auth.uid || isAdmin());
+      }
+      match /photoFull/{photoId} {
+        allow read: if isMember(leagueId) || isAdmin();
+        allow create: if isMember(leagueId)
+          && (request.resource.data.uid == request.auth.uid || isAdmin())
+          && hasOnlyKeys(['uid', 'image', 'createdAt'])
+          && request.resource.data.image is string && request.resource.data.image.size() <= 950000;
+        allow update: if false;
+        allow delete: if isMember(leagueId) && (resource.data.uid == request.auth.uid || isAdmin());
+      }
+
+      // Memes deux tailles pour les images du tchat, meme identifiant que le message.
+      match /chatThumbs/{msgId} {
+        allow read: if isMember(leagueId) || isAdmin();
+        allow create: if isMember(leagueId)
+          && (request.resource.data.uid == request.auth.uid || isAdmin())
+          && hasOnlyKeys(['uid', 'image', 'createdAt'])
+          && request.resource.data.image is string && request.resource.data.image.size() <= 150000;
+        allow update: if false;
+        allow delete: if isMember(leagueId) && (resource.data.uid == request.auth.uid || isAdmin());
+      }
+      match /chatFull/{msgId} {
+        allow read: if isMember(leagueId) || isAdmin();
+        allow create: if isMember(leagueId)
+          && (request.resource.data.uid == request.auth.uid || isAdmin())
+          && hasOnlyKeys(['uid', 'image', 'createdAt'])
+          && request.resource.data.image is string && request.resource.data.image.size() <= 950000;
         allow update: if false;
         allow delete: if isMember(leagueId) && (resource.data.uid == request.auth.uid || isAdmin());
       }

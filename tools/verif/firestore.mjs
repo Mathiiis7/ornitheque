@@ -200,8 +200,19 @@ export async function mesure({ navigateur }){
   // Un abonnement ouvert a la demande, UNE seule fois, est un bon comportement : la vue le
   // demande quand on y entre. Ce qui serait fautif, c est de le rouvrir a chaque passage.
   r.verif('  abonnements ouverts en naviguant', nouveaux.length, nouveaux.length <= 1);
-  const ponctuellesEnPlus = m.apresNavigation.ponctuelles.length - m.apresDemarrage.ponctuelles.length;
-  r.verif('  lectures ponctuelles en plus', ponctuellesEnPlus, ponctuellesEnPlus === 0);
+  // Depuis la separation des images (2026-09-29), ouvrir la galerie va chercher une vignette
+  // par photo regardee : ce sont des lectures ponctuelles ATTENDUES, et elles ne doivent pas
+  // se confondre avec celles qu'on traque ici, qui elles doivent rester a zero.
+  const ponctuellesTout = m.apresNavigation.ponctuelles.slice(m.apresDemarrage.ponctuelles.length);
+  const lecturesImages = ponctuellesTout.filter(x => /photoThumbs|photoFull|chatThumbs|chatFull/.test(x));
+  const ponctuellesEnPlus = ponctuellesTout.length - lecturesImages.length;
+  r.verif('  lectures ponctuelles en plus, hors images', ponctuellesEnPlus, ponctuellesEnPlus === 0);
+  r.verif('  aucune image lue deux fois', new Set(lecturesImages).size + ' distinctes',
+          new Set(lecturesImages).size === lecturesImages.length);
+  // Combien de vignettes partent ici depend de ce que l'observateur a eu le temps de voir, et
+  // ce banc pilote l'horloge : le chiffre saute d'une execution a l'autre. Le compte exact est
+  // au banc photos, qui attend en temps reel. Ici on ne garde que la regle, qui est sure :
+  // une vignette regardee = une lecture, une seule fois par session.
   const ecrituresEnPlus = enPlus.length;
   r.verif('  ecritures en naviguant', ecrituresEnPlus, ecrituresEnPlus <= 2);
 
@@ -210,6 +221,16 @@ export async function mesure({ navigateur }){
   r.note('Ce que ca donne sur le plan gratuit (' + PLAFOND.toLocaleString('fr-FR') + ' lectures par jour)');
   r.note('  cout d une session       : ' + litDemarrage + ' lectures pour ' + TAILLES.members + ' membres');
   r.note('  sessions par jour        : ' + Math.floor(PLAFOND / Math.max(litDemarrage, 1)).toLocaleString('fr-FR'));
+  // Ce que la separation des images a change, et il faut le dire franchement : Firestore
+  // facture les LECTURES, pas les octets. Separer divise le poids telecharge par cent et
+  // ajoute une lecture par vignette regardee. Qui n'ouvre pas la galerie ne paie rien de
+  // plus ; qui l'ouvre en entier paie une lecture par photo, une seule fois par session.
+  const avecGalerie = litDemarrage + TAILLES.photos;
+  r.note('  session qui regarde TOUTE la galerie : ' + avecGalerie + ' lectures (' +
+         TAILLES.photos + ' de plus, une par vignette), soit ' +
+         Math.floor(PLAFOND / Math.max(avecGalerie, 1)).toLocaleString('fr-FR') + ' par jour');
+  r.note('  qui n ouvre pas la galerie ne paie rien de plus, et chaque photo ouverte en grand');
+  r.note('  coute une lecture de plus, une seule fois par session (cache memoire).');
   r.note('Temps reel : un seul document modifie (une frappe dans le chat)');
   r.verif('  lectures chez UN client abonne', m.coutTempsReel, m.coutTempsReel === 1);
   r.note('  chaque client abonne paie la meme lecture, donc le cout suit le nombre de connectes :');

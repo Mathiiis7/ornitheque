@@ -64,7 +64,10 @@ function snapshot(docs){
     // Snapshot de document unique : le premier document livre fait office de contenu, et
     // une liste vide veut dire "ce document n existe pas".
     exists: () => arr.length > 0,
-    data: () => (arr.length ? arr[0].data : undefined),
+    // arr[0].data est une FONCTION (le SDK rend les donnees par appel) : il faut l appeler,
+    // sinon un getDoc sur un document existant rend la fonction elle-meme. Attrape le
+    // 2026-09-29 par le banc photos, sur le bouchon jumeau de tools/verif/.
+    data: () => (arr.length ? arr[0].data() : undefined),
     id: arr.length ? arr[0].id : 'inconnu',
     metadata: { fromCache: false, hasPendingWrites: false }
   };
@@ -114,7 +117,7 @@ function notifier(cheminDoc){
 
 /* ---------------- l API que app.js appelle ---------------- */
 function ref(parts, opts){
-  return { __chemin: parts.join('/'), __parts: parts,
+  return { __chemin: parts.join('/'), __parts: parts, id: parts[parts.length - 1] || '',
            tri: (opts && opts.tri) || null, limite: (opts && opts.limite) || 0,
            filtres: (opts && opts.filtres) || [] };
 }
@@ -132,7 +135,16 @@ export function getFirestore(){ return { __db: true }; }
 // experimentalForceLongPolling. Le bouchon ignore le reglage, il n a pas de reseau.
 export function initializeFirestore(){ return { __db: true }; }
 export function collection(...a){ return ref(assemble(a)); }
-export function doc(...a){ return ref(assemble(a)); }
+// doc(collection(...)) sans identifiant : le vrai SDK en fabrique un sur-le-champ, sans
+// aller au reseau. app.js s en sert pour donner le MEME identifiant a une photo et aux
+// deux documents qui portent ses images. Un chemin de collection a un nombre impair de
+// segments (leagues/X/photos), un chemin de document un nombre pair.
+let _compteurAuto = 0;
+export function doc(...a){
+  const parts = assemble(a);
+  if(parts.length % 2 === 1) parts.push('auto' + (++_compteurAuto) + Date.now().toString(36));
+  return ref(parts);
+}
 export function orderBy(champ, sens){ return { __contrainte: 'orderBy', champ, sens: sens || 'asc' }; }
 export function limit(n){ return { __contrainte: 'limit', n }; }
 export function where(champ, op, valeur){ return { __contrainte: 'where', champ, op, valeur }; }

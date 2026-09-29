@@ -39,6 +39,12 @@ snapshots : c'est le seul moyen d'exercer le démarrage CONNECTÉ sans compte et
 la vraie ligue, et il a attrapé quatre `TypeError` qui étaient en production. Il avance
 l'horloge au lieu d'attendre, sinon la détection de trophées lui coûterait 14 secondes.
 
+`photos` se sert du même montage pour vérifier que les images ne voyagent plus au démarrage :
+aucune vignette ni image pleine lue à la connexion, une lecture par vignette quand la galerie
+s'ouvre et jamais deux, rien de relu à un re-rendu, l'image pleine au clic seulement. Il pose
+des documents dans le bouchon (`window.__fs.poser`) et reconnaît laquelle des trois tailles une
+image affiche à la longueur de sa data-URL, sans regarder un pixel.
+
 `firestore` se sert du même montage pour compter ce qu’une session coûte en lectures : 14
 abonnements ouverts à la connexion, aucun doublon, et surtout **une lecture par client abonné**
 à chaque document modifié. Avec 50 connectés, une frappe dans le chat coûte 50 lectures, soit

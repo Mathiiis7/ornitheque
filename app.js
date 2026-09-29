@@ -6382,13 +6382,26 @@ function renderChat(msgs){
     const fieldVoice = isDeleted ? m.deletedOriginalVoice : m.voice;
     const fieldGif = isDeleted ? m.deletedOriginalGif : m.gif;
     const fieldText = isDeleted ? m.deletedOriginalText : m.text;
-    const safeImg = (showOriginal && typeof fieldImg==='string' && /^data:image\//.test(fieldImg)) ? fieldImg.replace(/"/g,'%22') : '';
-    const imgHtml = safeImg ? `<img class="msg-img${isDeleted?' msg-deleted-content':''}" src="${safeImg}" alt="image partagée">` : '';
+    // Image du message : soit entiere dans le document (messages d'avant la separation),
+    // soit un apercu flou ici et la vignette / l'image pleine dans des documents a part.
+    const hasLegacyImg = typeof fieldImg==='string' && /^data:image\//.test(fieldImg);
+    const blurImg = (typeof m.blur==='string' && /^data:image\//.test(m.blur)) ? m.blur : '';
+    const hasImg = showOriginal && (hasLegacyImg || !!blurImg);
+    let imgHtml = '';
+    if(hasImg){
+      const cls = `msg-img${isDeleted?' msg-deleted-content':''}`;
+      if(hasLegacyImg){
+        imgHtml = `<img class="${cls}" src="${fieldImg.replace(/"/g,'%22')}" alt="image partagée">`;
+      } else {
+        const th = thumbAttrs('chatThumbs', m.id);
+        imgHtml = `<img class="${cls}" src="${(th.src||blurImg).replace(/"/g,'%22')}"${th.attr} data-full="chatFull:${esc(m.id)}" alt="image partagée">`;
+      }
+    }
     const safeVoice = (showOriginal && typeof fieldVoice==='string' && /^data:audio\//.test(fieldVoice)) ? fieldVoice.replace(/"/g,'%22') : '';
     const voiceHtml = safeVoice ? `<audio class="msg-voice${isDeleted?' msg-deleted-content':''}" src="${safeVoice}" controls preload="metadata"></audio>` : '';
     const safeGif = (showOriginal && typeof fieldGif==='string' && /^https:\/\/[a-z0-9-]+\.giphy\.com\//.test(fieldGif)) ? fieldGif.replace(/"/g,'%22') : '';
     const gifHtml = safeGif ? `<img class="msg-gif${isDeleted?' msg-deleted-content':''}" src="${safeGif}" alt="GIF" loading="lazy">` : '';
-    const emojiOnly = !safeImg && !safeVoice && !safeGif && !isDeleted && _isEmojiOnly(fieldText);
+    const emojiOnly = !hasImg && !safeVoice && !safeGif && !isDeleted && _isEmojiOnly(fieldText);
     const txtHtml = (showOriginal && fieldText) ? `<div class="${isDeleted?'msg-deleted-content':''}">${_autoLink(_renderMentions(esc(fieldText), byId))}</div>` : '';
     // Tag "message supprime" pour tout le monde (au-dessus du contenu original pour admin)
     const deletedNote = isDeleted ? `<div class="msg-deleted-note">🗑️ Message supprimé${m.deletedByName ? ' par ' + esc(m.deletedByName) : ''}${isAdmin() ? ' <span class="msg-deleted-admin">(vue admin ci-dessous)</span>' : ''}</div>` : '';
@@ -6407,7 +6420,7 @@ function renderChat(msgs){
     // Detecte @moi dans le texte : met en highlight la bulle
     const mentionsMe = normName && m.text && new RegExp('@' + normName + '\\b', 'i').test((m.text||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^@a-z0-9]/g,''));
     // Actions : Répondre (tous), Éditer (mine + <5min + texte seul), Supprimer (mine OU admin)
-    const canEdit = mine && !isDeleted && t && (now - t.getTime() < EDIT_WINDOW_MS) && !safeImg && !safeVoice && !safeGif;
+    const canEdit = mine && !isDeleted && t && (now - t.getTime() < EDIT_WINDOW_MS) && !hasImg && !safeVoice && !safeGif;
     const canDelete = !isDeleted && (mine || isAdmin());
     const replyBtn = `<button class="msg-act msg-reply" data-id="${esc(m.id)}" title="Répondre" aria-label="Répondre à ce message">↪</button>`;
     const editBtn = canEdit ? `<button class="msg-act msg-edit" data-id="${esc(m.id)}" title="Éditer" aria-label="Éditer mon message">✏️</button>` : '';
@@ -6420,6 +6433,7 @@ function renderChat(msgs){
       <div class="msg-time">${esc(time)}${editedTag}</div>
     </div>`;
   }).join('');
+  watchThumbs(box);
   if(nearBottom) box.scrollTop = box.scrollHeight;
 }
 function myMemberName(){ const me=realPeople.find(p=>p.id===myUid); return me ? me.name : ''; }
@@ -6525,6 +6539,69 @@ function openEmojiPop(ctx){
   $('#emojiPop').classList.add('open');
 }
 function closeEmojiPop(){ $('#emojiPop')?.classList.remove('open'); emojiContext=null; }
+// ---- Images a la demande : apercu flou -> vignette nette -> image pleine ----
+// Une image publiee vit dans TROIS documents. L'apercu flou (120 px, ~5 Ko) reste dans
+// le document leger charge au demarrage ; la vignette nette dort dans '<coll>Thumbs' et
+// ne se lit qu'a l'approche de l'ecran ; l'image pleine dort dans '<coll>Full' et ne se
+// lit qu'a l'ouverture en grand. Avant cette separation, 56 photos entieres pesaient
+// 14 737 Ko avales au demarrage (mesure du 2026-09-29), et le classement attendait derriere.
+// Une image ne change JAMAIS apres publication : un getDoc ponctuel suffit, pas d'abonnement.
+const _imgDocPending = new Map();   // 'photoThumbs/abc' -> Promise<dataURL>
+const _imgDocReady   = new Map();   // 'photoThumbs/abc' -> dataURL, consultable sans attendre
+function imgReady(coll, id){ return _imgDocReady.get(coll+'/'+id) || ''; }
+function loadImageDoc(coll, id){
+  if(!leagueId || !id) return Promise.resolve('');
+  const key = coll+'/'+id;
+  if(_imgDocReady.has(key)) return Promise.resolve(_imgDocReady.get(key));
+  if(_imgDocPending.has(key)) return _imgDocPending.get(key);
+  const p = getDoc(doc(db,'leagues',leagueId,coll,id))
+    .then(s=>{
+      const v = s.exists() ? s.data().image : '';
+      const src = (typeof v==='string' && /^data:image\//.test(v)) ? v : '';
+      if(src) _imgDocReady.set(key, src);
+      return src;
+    })
+    .catch(()=>'');
+  _imgDocPending.set(key, p);
+  return p;
+}
+// Un rendu peut etre rejoue a tout moment (une reaction, un commentaire) : sans cette
+// relecture du cache, chaque re-rendu ferait repartir les photos de l'apercu flou.
+// La chaine est 'collection:id', posee dans data-thumb tant que la nette manque.
+function thumbAttrs(coll, id){
+  const known = imgReady(coll, id);
+  return known ? { src:known, attr:'' } : { src:'', attr:` data-thumb="${coll}:${id}"` };
+}
+let _thumbIO = null;
+function _applyThumb(el){
+  const spec = el.dataset.thumb; if(!spec) return;
+  delete el.dataset.thumb;
+  const i = spec.indexOf(':');
+  loadImageDoc(spec.slice(0,i), spec.slice(i+1)).then(src=>{ if(src) el.src = src; });
+}
+function watchThumbs(root){
+  const scope = root || document;
+  if(!('IntersectionObserver' in window)){ scope.querySelectorAll('img[data-thumb]').forEach(_applyThumb); return; }
+  if(!_thumbIO){
+    _thumbIO = new IntersectionObserver(entries=>{
+      for(const e of entries){ if(!e.isIntersecting) continue; _thumbIO.unobserve(e.target); _applyThumb(e.target); }
+    }, { rootMargin:'300px' });
+  }
+  scope.querySelectorAll('img[data-thumb]').forEach(el=>_thumbIO.observe(el));
+}
+// Pose l'image de la modale : la vignette tout de suite, la pleine des qu'elle arrive.
+// dataset.spec garde ce qu'on attend : si on ferme ou si on ouvre une autre photo
+// pendant la lecture, l'image pleine en retard ne vient plus ecraser la nouvelle.
+function _setModalImage(previewSrc, fullSpec){
+  const el = $('#imgModalImg'); if(!el) return;
+  el.src = previewSrc || '';
+  el.dataset.spec = fullSpec || '';
+  if(!fullSpec) return;
+  const i = fullSpec.indexOf(':');
+  loadImageDoc(fullSpec.slice(0,i), fullSpec.slice(i+1)).then(src=>{
+    if(src && el.dataset.spec === fullSpec) el.src = src;
+  });
+}
 // ---- Galerie photos ----
 function renderPhotos(){
   const grid=$('#photoGrid'); if(!grid) return;
@@ -6536,17 +6613,24 @@ function renderPhotos(){
     const guest=authoritative?'':' <span class="msg-guest">invité</span>';
     const t=ph.createdAt&&ph.createdAt.toDate?ph.createdAt.toDate():null;
     const time=t?t.toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'…';
-    const safeImg=(typeof ph.image==='string'&&/^data:image\//.test(ph.image))?ph.image.replace(/"/g,'%22'):'';
+    // Photo publiee avant la separation : l'image pleine est encore dans le document,
+    // on l'affiche telle quelle. Sinon : apercu flou, puis vignette a l'approche de l'ecran.
+    const legacy=(typeof ph.image==='string'&&/^data:image\//.test(ph.image))?ph.image:'';
+    const blur=(typeof ph.blur==='string'&&/^data:image\//.test(ph.blur))?ph.blur:'';
+    const th = legacy ? { src:legacy, attr:'' } : thumbAttrs('photoThumbs', ph.id);
+    const safeImg=(th.src||blur).replace(/"/g,'%22');
+    const fullAttr = legacy ? '' : ` data-full="photoFull:${esc(ph.id)}"`;
     const del=ph.uid===myUid?`<button class="photo-del" data-id="${esc(ph.id)}">supprimer</button>`:'';
     const target = 'photo:'+ph.id;
     return `<div class="photo-card">
-      <img class="photo-img" src="${safeImg}" alt="photo d'observation">
+      <img class="photo-img" src="${safeImg}"${th.attr}${fullAttr} alt="photo d'observation">
       ${ph.caption?`<div class="photo-cap">${esc(ph.caption)}</div>`:''}
       <div class="photo-meta"><span>${esc(nm)}${guest} · ${esc(time)}</span>${del}</div>
       <div class="photo-actions">${heartButton(target)}${reactionBar(target, {excludeEmojis:[HEART_EMOJI]})}</div>
       ${commentsBar(target)}
     </div>`;
   }).join('');
+  watchThumbs(grid);
 }
 // ---- Fil des observations ----
 let feedMode = 'new';       // 'new' = tri par addedAt (par défaut), 'chrono' = tri par date d'obs
@@ -10827,7 +10911,10 @@ $('#rgpdDeleteAll')?.addEventListener('click', async ()=>{
 
   const btn = document.getElementById('rgpdDeleteAll');
   if(btn){ btn.disabled = true; btn.textContent = '⏳ Suppression en cours...'; }
-  const targetsToKill = ['chat', 'photos', 'comments', 'reactions', 'votes', 'requestVotes', 'requests', 'trophyEvents'];
+  // Les quatre collections d'images portent le meme champ uid que le reste : la meme
+  // requete les nettoie. Sans elles, supprimer son compte laisserait ses photos pleines.
+  const targetsToKill = ['chat', 'chatThumbs', 'chatFull', 'photos', 'photoThumbs', 'photoFull',
+                         'comments', 'reactions', 'votes', 'requestVotes', 'requests', 'trophyEvents'];
   let totalDeleted = 0;
   try{
     for(const coll of targetsToKill){
@@ -11164,8 +11251,13 @@ setTimeout(() => {
   }catch(_){ }
 }, 0);
 let pendingImage = null;
-async function compressImage(file, maxDim=1000, maxLen=700000){
-  const img = await new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=()=>rej(new Error('img')); i.src=URL.createObjectURL(file); });
+function _decodeImg(src){
+  return new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=()=>rej(new Error('img')); i.src=src; });
+}
+// Encode une image DEJA decodee en JPEG data-URL, sous maxLen caracteres.
+// minDim est le plancher de reduction : 480 px pour une image pleine (comportement
+// historique), bien plus bas pour un apercu flou qu'on veut minuscule.
+function _encodeImg(img, maxDim, maxLen, minDim=480){
   let w=img.naturalWidth, h=img.naturalHeight;
   const s=Math.min(1, maxDim/Math.max(w,h)); w=Math.max(1,Math.round(w*s)); h=Math.max(1,Math.round(h*s));
   const cv=document.createElement('canvas');
@@ -11173,14 +11265,90 @@ async function compressImage(file, maxDim=1000, maxLen=700000){
   draw();
   let q=0.72, url=cv.toDataURL('image/jpeg',q);
   while(url.length>maxLen && q>0.4){ q-=0.1; url=cv.toDataURL('image/jpeg',q); }
-  while(url.length>maxLen && Math.max(w,h)>480){ w=Math.round(w*0.85); h=Math.round(h*0.85); draw(); url=cv.toDataURL('image/jpeg',0.6); }
-  URL.revokeObjectURL(img.src);
+  while(url.length>maxLen && Math.max(w,h)>minDim){ w=Math.round(w*0.85); h=Math.round(h*0.85); draw(); url=cv.toDataURL('image/jpeg',0.6); }
   return url;
 }
+async function compressImage(file, maxDim=1000, maxLen=700000){
+  const url=URL.createObjectURL(file);
+  try{ return _encodeImg(await _decodeImg(url), maxDim, maxLen); }
+  finally{ URL.revokeObjectURL(url); }
+}
+// Trois tailles issues d'un seul decodage. L'apercu flou voyage dans le document
+// leger charge au demarrage, la vignette nette et l'image pleine dorment chacune
+// dans un document a part, lu seulement quand on regarde. Mesure du 2026-09-29 :
+// 56 images entieres dans les documents = 14 737 Ko avalees au demarrage.
+const IMG_BLUR_DIM = 120,  IMG_BLUR_MAX  = 9000;     // ~4 a 6 Ko par photo
+const IMG_THUMB_DIM = 480, IMG_THUMB_MAX = 70000;    // net sur une tuile de 200 px en ecran dense
+async function imageTrio(file, fullDim=1200, fullMax=850000){
+  const url=URL.createObjectURL(file);
+  try{
+    const img=await _decodeImg(url);
+    return { blur:  _encodeImg(img, IMG_BLUR_DIM,  IMG_BLUR_MAX,  48),
+             thumb: _encodeImg(img, IMG_THUMB_DIM, IMG_THUMB_MAX, 240),
+             full:  _encodeImg(img, fullDim, fullMax) };
+  } finally{ URL.revokeObjectURL(url); }
+}
+// Refabrique les deux petites tailles a partir d'une image pleine deja en base
+// (migration des photos publiees avant la separation).
+async function imageTrioFromDataUrl(dataUrl){
+  const img=await _decodeImg(dataUrl);
+  return { blur:  _encodeImg(img, IMG_BLUR_DIM,  IMG_BLUR_MAX,  48),
+           thumb: _encodeImg(img, IMG_THUMB_DIM, IMG_THUMB_MAX, 240),
+           full:  dataUrl };
+}
+// Expose la fabrication des trois tailles : le banc tools/verif/photos.mjs mesure leur
+// poids reel plutot que de le supposer, et elle se teste a la main depuis la console.
+window.__imageTrio = imageTrio;
+window.__imageTrioFromDataUrl = imageTrioFromDataUrl;
+// ---- Migration unique des images d'avant la separation ----
+// A lancer une fois depuis la console, connecte en admin :
+//   window.__migrerImages({simulation:true})   pour voir sans rien ecrire
+//   window.__migrerImages()                    pour migrer pour de bon
+// Pour chaque document qui porte encore son image entiere : fabrique l'apercu et la
+// vignette, ecrit les deux documents lourds, puis remplace 'image' par 'blur' dans le
+// document leger. Rejouable sans danger, ce qui est deja separe est saute. Aucune
+// image n'est detruite : la pleine est recopiee telle quelle dans son document.
+async function _migrerCollection(coll, fullColl, thumbColl, dry){
+  const snap = await getDocs(collection(db,'leagues',leagueId,coll));
+  let vus=0, faits=0, sautes=0, rates=0, avant=0, apres=0;
+  for(const d of snap.docs){
+    const v = d.data()||{}; vus++;
+    const full = v.image;
+    if(typeof full!=='string' || !/^data:image\//.test(full)){ sautes++; continue; }
+    avant += full.length;
+    try{
+      const trio = await imageTrioFromDataUrl(full);
+      apres += trio.blur.length;
+      if(!dry){
+        await setDoc(doc(db,'leagues',leagueId,fullColl,  d.id), { uid:v.uid||'', image:trio.full,  createdAt:v.createdAt||serverTimestamp() });
+        await setDoc(doc(db,'leagues',leagueId,thumbColl, d.id), { uid:v.uid||'', image:trio.thumb, createdAt:v.createdAt||serverTimestamp() });
+        await updateDoc(d.ref, { blur:trio.blur, image:deleteField() });
+      }
+      faits++;
+      console.log('  ' + coll + '/' + d.id + ' : ' + Math.round(full.length/1024) + ' Ko -> ' + Math.round(trio.blur.length/1024) + ' Ko');
+    }catch(err){ rates++; console.warn('  ' + coll + '/' + d.id + ' ECHEC', (err && err.message) || err); }
+  }
+  console.log(coll + ' : ' + vus + ' documents, ' + faits + ' migres, ' + sautes + ' deja separes ou sans image, ' + rates + ' en echec');
+  console.log(coll + ' : ' + Math.round(avant/1024) + ' Ko dans les documents legers -> ' + Math.round(apres/1024) + ' Ko');
+  return { vus, faits, sautes, rates, avant, apres };
+}
+window.__migrerImages = async function(opts){
+  const dry = !!(opts && opts.simulation);
+  if(!leagueId){ console.error('Pas de ligue chargee.'); return; }
+  if(!isAdmin()){ console.error('Reserve a un compte admin.'); return; }
+  console.log(dry ? 'SIMULATION : rien ne sera ecrit.' : 'MIGRATION REELLE.');
+  console.log('La migration telecharge toutes les images entieres une fois : c est long et lourd, une seule fois.');
+  const p = await _migrerCollection('photos','photoFull','photoThumbs', dry);
+  const c = await _migrerCollection('chat','chatFull','chatThumbs', dry);
+  const gagne = (p.avant - p.apres + c.avant - c.apres)/1024;
+  console.log('Total : ' + Math.round(gagne) + ' Ko en moins a chaque demarrage.');
+  if(!dry) console.log('Recharge la page (deux fois, service worker) pour verifier.');
+  return { photos:p, chat:c };
+};
 $('#chatImgInput')?.addEventListener('change', async e=>{
   const f=e.target.files && e.target.files[0]; e.target.value='';
   if(!f || !/^image\//.test(f.type)) return;
-  try{ pendingImage=await compressImage(f); $('#chatPreviewImg').src=pendingImage; $('#chatPreview').style.display=''; }
+  try{ pendingImage=await imageTrio(f, 1000, 700000); $('#chatPreviewImg').src=pendingImage.thumb; $('#chatPreview').style.display=''; }
   catch(err){ showError(new Error('Image illisible.')); }
 });
 $('#chatPreviewRemove')?.addEventListener('click', ()=>{ pendingImage=null; $('#chatPreview').style.display='none'; $('#chatPreviewImg').src=''; });
@@ -11454,14 +11622,25 @@ $('#chatForm')?.addEventListener('submit',async e=>{
   const vp = $('#chatVoicePreview'); if(vp){ vp.hidden=true; vp.innerHTML=''; }
   const payload={ uid:myUid, name, createdAt:serverTimestamp() };
   if(text) payload.text=text;
-  if(img) payload.image=img;
+  if(img) payload.blur=img.blur;
   if(voice) payload.voice=voice;
   if(gif) payload.gif=gif;
   if(_replyingTo) payload.replyTo = _replyingTo;
   const replyStore = _replyingTo;
   _setReplyingTo(null);
-  try{ await addDoc(collection(db,'leagues',leagueId,'chat'), payload); }
-  catch(err){ $('#chatText').value=text; if(img){ pendingImage=img; $('#chatPreviewImg').src=img; $('#chatPreview').style.display=''; } if(replyStore) _setReplyingTo(replyStore); showError(err); }
+  // Identifiant fabrique d'avance pour que le message et ses deux images le partagent.
+  // Les images lourdes partent avant le message : quand il s'affiche chez les autres,
+  // la vignette est deja la.
+  const ref = doc(collection(db,'leagues',leagueId,'chat'));
+  try{
+    if(img){
+      await setDoc(doc(db,'leagues',leagueId,'chatFull',   ref.id), { uid:myUid, image:img.full,  createdAt:serverTimestamp() });
+      await setDoc(doc(db,'leagues',leagueId,'chatThumbs', ref.id), { uid:myUid, image:img.thumb, createdAt:serverTimestamp() });
+    }
+    await setDoc(ref, payload);
+    if(img){ _imgDocReady.set('chatThumbs/'+ref.id, img.thumb); _imgDocReady.set('chatFull/'+ref.id, img.full); }
+  }
+  catch(err){ $('#chatText').value=text; if(img){ pendingImage=img; $('#chatPreviewImg').src=img.thumb; $('#chatPreview').style.display=''; } if(replyStore) _setReplyingTo(replyStore); showError(err); }
 });
 $('#chatMessages')?.addEventListener('click', async e=>{
   const loadMore = e.target.closest('#chatLoadMore'); if(loadMore){ _loadMoreChat(); return; }
@@ -11486,7 +11665,11 @@ $('#chatMessages')?.addEventListener('click', async e=>{
     // Soft delete : conserve le doc + snapshot pour l'audit admin, marque deleted=true.
     // Le rendu affiche "(message supprimé)" pour tout le monde, sauf admin qui voit l'original.
     const m = lastChatMsgs.find(x => x.id === id);
-    if(!m){ try{ await deleteDoc(doc(db,'leagues',leagueId,'chat',id)); }catch(err){ showError(err); } return; }
+    // Message introuvable en memoire : suppression seche, images comprises.
+    if(!m){ try{ await deleteDoc(doc(db,'leagues',leagueId,'chat',id)); }catch(err){ showError(err); return; }
+      try{ await deleteDoc(doc(db,'leagues',leagueId,'chatThumbs',id)); }catch(_){ }
+      try{ await deleteDoc(doc(db,'leagues',leagueId,'chatFull',id)); }catch(_){ }
+      return; }
     try{
       await updateDoc(doc(db,'leagues',leagueId,'chat',id), {
         deleted: true,
@@ -11507,7 +11690,7 @@ $('#chatMessages')?.addEventListener('click', async e=>{
     if(target){ target.scrollIntoView({behavior:'smooth', block:'center'}); target.classList.add('msg-flash'); setTimeout(()=>target.classList.remove('msg-flash'), 1200); }
     return;
   }
-  const im=e.target.closest('.msg-img'); if(!im) return; $('#imgModalImg').src=im.src; $('#imgModal').classList.add('open');
+  const im=e.target.closest('.msg-img'); if(!im) return; _setModalImage(im.src, im.dataset.full||''); $('#imgModal').classList.add('open');
 });
 // Cancel reply / edit
 document.addEventListener('click', e => {
@@ -11619,7 +11802,7 @@ function renderPhotoDrafts(){
   const box=$('#photoDraft'), thumbs=$('#photoDraftThumbs'); if(!box||!thumbs) return;
   if(!photoDrafts.length){ box.style.display='none'; thumbs.innerHTML=''; return; }
   box.style.display='';
-  thumbs.innerHTML=photoDrafts.map((src,i)=>`<div class="photo-draft-thumb"><img src="${src}" alt="aperçu"><button type="button" data-i="${i}" title="Retirer">✕</button></div>`).join('');
+  thumbs.innerHTML=photoDrafts.map((d,i)=>`<div class="photo-draft-thumb"><img src="${d.thumb}" alt="aperçu"><button type="button" data-i="${i}" title="Retirer">✕</button></div>`).join('');
   const btn=$('#photoPublish'); if(btn) btn.textContent = photoDrafts.length>1 ? `Publier (${photoDrafts.length})` : 'Publier';
 }
 $('#photoInput')?.addEventListener('change', async e=>{
@@ -11627,7 +11810,7 @@ $('#photoInput')?.addEventListener('change', async e=>{
   if(!files.length) return;
   let done=0;
   for(const f of files){
-    try{ const img=await compressImage(f, 1200, 850000); photoDrafts.push(img); renderPhotoDrafts(); done++; }
+    try{ photoDrafts.push(await imageTrio(f, 1200, 850000)); renderPhotoDrafts(); done++; }
     catch(err){ /* image illisible : on passe */ }
   }
   if(!done) showError(new Error('Aucune image lisible.'));
@@ -11648,10 +11831,19 @@ $('#photoPublish')?.addEventListener('click', async ()=>{
   const name=myMemberName() || 'Membre';
   const btn=$('#photoPublish'); btn.disabled=true;
   try{
-    for(const image of photoDrafts){
-      const payload={ uid:myUid, name, image, createdAt:serverTimestamp() };
+    for(const trio of photoDrafts){
+      // L'identifiant se fabrique AVANT l'ecriture pour que les trois documents le partagent.
+      // Les lourds partent d'abord : quand le document leger arrive aux autres membres,
+      // la vignette et l'image pleine sont deja en place.
+      const ref = doc(collection(db,'leagues',leagueId,'photos'));
+      await setDoc(doc(db,'leagues',leagueId,'photoFull',   ref.id), { uid:myUid, image:trio.full,  createdAt:serverTimestamp() });
+      await setDoc(doc(db,'leagues',leagueId,'photoThumbs', ref.id), { uid:myUid, image:trio.thumb, createdAt:serverTimestamp() });
+      const payload={ uid:myUid, name, blur:trio.blur, createdAt:serverTimestamp() };
       if(caption) payload.caption=caption;
-      await addDoc(collection(db,'leagues',leagueId,'photos'), payload);
+      await setDoc(ref, payload);
+      // Le depot connait deja ses images : pas de relecture au premier affichage.
+      _imgDocReady.set('photoThumbs/'+ref.id, trio.thumb);
+      _imgDocReady.set('photoFull/'+ref.id,   trio.full);
     }
     photoDrafts=[]; $('#photoCaption').value=''; renderPhotoDrafts();
   }catch(err){ showError(err); }
@@ -11664,8 +11856,16 @@ $('#photoGrid')?.addEventListener('click', async e=>{
   const cdel=e.target.closest('.cmt-del'); if(cdel){ if(!confirm('Supprimer ce commentaire ?')) return;
     try{ await deleteDoc(doc(db,'leagues',leagueId,'comments',cdel.dataset.cmtDel)); }catch(err){ showError(err); } return; }
   const del=e.target.closest('.photo-del'); if(del){ if(!confirm('Supprimer cette photo ?')) return;
-    try{ await deleteDoc(doc(db,'leagues',leagueId,'photos',del.dataset.id)); }catch(err){ showError(err); } return; }
-  const img=e.target.closest('.photo-img'); if(img){ $('#imgModalImg').src=img.src; $('#imgModal').classList.add('open'); document.body.classList.add('img-modal-open'); }
+    const pid=del.dataset.id;
+    // Le document leger part en premier : c'est lui qui fait disparaitre la carte.
+    // Les deux lourds suivent ; une photo d'avant la separation n'en a pas, d'ou le silence.
+    try{ await deleteDoc(doc(db,'leagues',leagueId,'photos',pid)); }catch(err){ showError(err); return; }
+    try{ await deleteDoc(doc(db,'leagues',leagueId,'photoThumbs',pid)); }catch(_){ }
+    try{ await deleteDoc(doc(db,'leagues',leagueId,'photoFull',pid)); }catch(_){ }
+    _imgDocReady.delete('photoThumbs/'+pid); _imgDocPending.delete('photoThumbs/'+pid);
+    _imgDocReady.delete('photoFull/'+pid);   _imgDocPending.delete('photoFull/'+pid);
+    return; }
+  const img=e.target.closest('.photo-img'); if(img){ _setModalImage(img.src, img.dataset.full||''); $('#imgModal').classList.add('open'); document.body.classList.add('img-modal-open'); }
 });
 $('#feedList')?.addEventListener('click', async e=>{
   const chip=e.target.closest('.react-chip'); if(chip){ toggleReaction(chip.dataset.target, chip.dataset.emoji); return; }
@@ -11689,6 +11889,8 @@ document.addEventListener('submit', async e=>{
 // elle-meme ne ferme pas (pour permettre a l'utilisateur de la regarder / zoomer).
 function _closeImgModal(){
   $('#imgModal').classList.remove('open');
+  // dataset.spec vide = une image pleine encore en route ne viendra plus s'afficher.
+  const el=$('#imgModalImg'); if(el) el.dataset.spec='';
   $('#imgModalImg').src='';
   document.body.classList.remove('img-modal-open');
 }
