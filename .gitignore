@@ -86,3 +86,7 @@ tools/build/exotic-per-country-scraped.generated.js
 # le depot public sans que rien ne le signale. La regle par dossier couvre aussi celles
 # de demain.
 /notes-privees/
+
+# BIRDBASE : source des milieux de vie, 6,7 Mo, retelechargeable depuis son DOI.
+tools/birdbase.xlsx
+tools/habitats-sans-milieu.txt

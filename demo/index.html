@@ -98,7 +98,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=263">
+<link rel="modulepreload" href="app.js?v=264">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -1017,6 +1017,8 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
           <li><b>GBIF</b> - données d'occurrence, utilisées par la carte d'observations de la fiche espèce</li>
           <li><b>xeno-canto</b> - chants et cris (onglet Quiz)</li>
           <li><b>Wikipedia</b> - descriptions et photos</li>
+          <li><b>BIRDBASE</b> - les milieux de vie de chaque espèce, classés par ordre de préférence. Şekercioğlu et al. 2025, <i>Scientific Data</i> 12:1558, <a href="https://doi.org/10.6084/m9.figshare.27051040" target="_blank" rel="noopener">doi:10.6084/m9.figshare.27051040</a>, sous <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>.</li>
+          <li><b>AVONET</b> - les traits de la fiche espèce (morphologie, régime, déplacement). Tobias et al. 2022, <i>Ecology Letters</i>.</li>
           <li><b>Natural Earth</b> (domaine public) - contours des régions sur les cartes par zone</li>
           <li><b>geoBoundaries</b> - contours des communes danoises (domaine public), d'Åland et des six districts chypriotes. Ces deux derniers dérivent d'<b>OpenStreetMap</b> : © les contributeurs OpenStreetMap, sous <a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" rel="noopener">ODbL 1.0</a>, licence qui s'étend aux contours simplifiés publiés ici (<code>data/regions-cy-simplified.json</code> et <code>data/regions-fi-simplified.json</code>).</li>
         </ul>
@@ -1311,5 +1313,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=263"></script>
+<script type="module" src="app.js?v=264"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans votre navigateur.</span></div>
