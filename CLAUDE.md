@@ -165,6 +165,14 @@ Chaque banc affiche ses mesures et se termine par `CONFORME` ou `DÉFAUT`. Les l
 toute retouche de l'entête du panneau, des sélecteurs, des pastilles ou des cartes : ils
 attrapent les régressions qu'une capture d'écran ne montre pas.
 
+**Un crochet les lance tout seul.** `.claude/hooks/verif-avant-fin.mjs`, branché sur
+l'événement `Stop` dans `.claude/settings.json` : si `app.js`, `index.html` ou `styles.css`
+sont modifiés au moment où une réponse se termine, il rejoue `tous.mjs` et refuse de laisser
+finir tant qu'un banc est en défaut. Tout rejouer coûte 11,5 s mesurés le 2026-09-29, d'où le
+choix de ne pas deviner quel banc concerne quel fichier - deviner raterait la régression à
+distance. Il ne se déclenche pas deux fois de suite (`stop_hook_active`), et il se tait dès que
+le travail est commité, `git status` étant sa seule source.
+
 Pour en ajouter un : copier le plus proche, il n'y a qu'un contrat - appeler `fini()` à la
 fin, après avoir empilé ses vérifications avec `verif(libellé, valeur, ok)`.
 
