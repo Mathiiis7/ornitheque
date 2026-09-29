@@ -1668,42 +1668,16 @@ let HABITATS = {};
 // 'aerial' retire de la liste 2026-09-23 : masque partout, cf. HABITATS_MASQUES.
 const HABITAT_CATS = ["forest","woodland","shrubland","grassland","tundra","agricole","wetland","riverine","mangrove","marine","coastal","rock","cave","montane","desert","humanmod"];
 const HABITAT_LABELS = {"forest":"🌲 Forêt","woodland":"🌳 Bois / savane arborée","shrubland":"🌿 Arbustif / matorral","grassland":"🌾 Prairies / steppe","tundra":"❄️ Toundra","agricole":"🌻 Milieu agricole","wetland":"🪺 Zones humides","riverine":"💧 Rivières / eau douce","mangrove":"🌴 Mangrove","marine":"🌊 Marin (pélagique)","coastal":"🏖️ Littoral / côte","rock":"🪨 Rocher / falaises","cave":"🕳️ Cavernes","montane":"🏔️ Montagne / altitude","desert":"🏜️ Désert","humanmod":"🏙️ Modifié par l'homme","aerial":"🌬️ Aériens (martinets, hirondelles)"};
-// Additions manuelles a HABITATS pour couvrir les cas ou AVONET mono-classifie mal.
-// - MONTANE : especes d'altitude (>1500m regulier) qui vivent aussi en forêt/rocher.
-// - AGRICOLE : especes fortement liees aux paysages agricoles (champs, bocage, vergers).
-// - Multi-habitat curated : cas frontieres ou une seule categorie AVONET est reductrice.
-// Merge dans habitatsOf() ci-dessous.
-// Overrides AVONET : cas ou la mono-classification AVONET est franchement fausse.
-// Contrairement a HABITAT_ADDITIONS (qui AJOUTE aux categories AVONET), les OVERRIDES
-// REMPLACENT entierement les habitats AVONET pour l'espece. Reserve aux vraies erreurs.
-const HABITAT_OVERRIDES = {
-  // ----- Rapaces mal classes par AVONET -----
-  // Balbuzard pecheur : rapace piscivore de rivieres/lacs/estuaires, pas pelagique.
-  "pandion haliaetus":["riverine","coastal","wetland"],
-  // Buse variable : rapace le plus commun de France, TOUS milieux. AVONET dit "grassland".
-  "buteo buteo":["forest","woodland","agricole","montane"],
-  // Buse pattue : arctique, mais quand en France = agricole/prairies/marais.
-  "buteo lagopus":["agricole","grassland","wetland"],
-  // Faucon pelerin : falaises + villes (cathedrales) + cotes, pas prairies.
-  "falco peregrinus":["rock","coastal","humanmod","montane","aerial"],
-  // Pygargue a queue blanche : rapace piscivore, lacs + cotes + rivieres, pas rock/aerial.
-  "haliaeetus albicilla":["coastal","wetland","riverine"],
-  // Vautour fauve : falaises + montagne, chasse en zone ouverte mais pas classe "grassland".
-  "gyps fulvus":["montane","rock"],
-  // Vautour moine : forets de montagne + soar en montagne.
-  "aegypius monachus":["montane","forest"],
-  // Gypaete barbu : deja montane via ADDITIONS mais AVONET donne shrubland - override.
-  "gypaetus barbatus":["montane","rock"],
-  // Cormoran huppe : cotier, niche sur falaises et forage pres du rivage, pas pelagique.
-  "gulosus aristotelis":["coastal","rock"],
-  // Sterne pierregarin : cotiere/wetland, pas pelagique.
-  "sterna hirundo":["coastal","wetland","aerial"],
-  // Courlis cendre : wetland + coastal + prairies, pas juste grassland.
-  "numenius arquata":["wetland","coastal","grassland"],
-};
+// HABITAT_OVERRIDES remplace entierement les milieux d'une espece. Il est vide depuis le
+// 2026-09-29 et le mecanisme reste : ses onze entrees sont passees dans HABITAT_ADDITIONS,
+// plus bas. Elles corrigeaient AVONET, qui ne donnait qu'un milieu par espece et se
+// trompait souvent ; BIRDBASE en donne plusieurs et les classe, si bien que remplacer
+// appauvrissait - le Faucon pelerin gardait 4 milieux la ou BIRDBASE en donne 7.
+// A ne ressortir que pour une vraie erreur de la source, pas pour un manque.
+const HABITAT_OVERRIDES = {};
 const HABITAT_ADDITIONS = {
   // ----- MONTANE (montagne / altitude) -----
-  "gypaetus barbatus":["montane"],"aquila chrysaetos":["montane"],
+  "aquila chrysaetos":["montane"],
   "lagopus muta":["montane"],"tetrao tetrix":["montane"],"alectoris graeca":["montane"],
   "nucifraga caryocatactes":["montane"],"pyrrhocorax pyrrhocorax":["montane"],
   "pyrrhocorax graculus":["montane"],"tichodroma muraria":["montane"],
@@ -1726,7 +1700,7 @@ const HABITAT_ADDITIONS = {
   "milvus migrans":["agricole"],"milvus milvus":["agricole"],
   "falco tinnunculus":["agricole"],"falco naumanni":["agricole"],
   "circus pygargus":["agricole"],"circus cyaneus":["agricole"],
-  "buteo buteo":["agricole"],"ciconia ciconia":["agricole"],
+  "ciconia ciconia":["agricole"],
   "sturnus vulgaris":["agricole"],"corvus frugilegus":["agricole"],
   "corvus monedula":["agricole"],"linaria cannabina":["agricole"],
   "carduelis carduelis":["agricole"],"chloris chloris":["agricole"],
@@ -1838,6 +1812,33 @@ const HABITAT_ADDITIONS = {
   "anthus spinoletta":["montane","grassland"],   // deja montane via ADDITIONS
   // Rougequeue noir : rocher/falaise + urbain.
   "phoenicurus ochruros":["rock","humanmod"],
+  // ----- Les onze anciens OVERRIDES, devenus des complements le 2026-09-29 -----
+  // Ce qu'ils apportent encore, BIRDBASE ne l'ayant pas : la montagne pour cinq d'entre
+  // eux, le milieu agricole pour deux, les rivieres du balbuzard et les falaises du
+  // gypaete. Le reste fait doublon avec la source, et c'est voulu.
+  // ----- Rapaces mal classes par AVONET -----
+  // Balbuzard pecheur : rapace piscivore de rivieres/lacs/estuaires, pas pelagique.
+  "pandion haliaetus":["riverine","coastal","wetland"],
+  // Buse variable : rapace le plus commun de France, TOUS milieux. AVONET dit "grassland".
+  "buteo buteo":["forest","woodland","agricole","montane"],
+  // Buse pattue : arctique, mais quand en France = agricole/prairies/marais.
+  "buteo lagopus":["agricole","grassland","wetland"],
+  // Faucon pelerin : falaises + villes (cathedrales) + cotes, pas prairies.
+  "falco peregrinus":["rock","coastal","humanmod","montane","aerial"],
+  // Pygargue a queue blanche : rapace piscivore, lacs + cotes + rivieres, pas rock/aerial.
+  "haliaeetus albicilla":["coastal","wetland","riverine"],
+  // Vautour fauve : falaises + montagne, chasse en zone ouverte mais pas classe "grassland".
+  "gyps fulvus":["montane","rock"],
+  // Vautour moine : forets de montagne + soar en montagne.
+  "aegypius monachus":["montane","forest"],
+  // Gypaete barbu : deja montane via ADDITIONS mais AVONET donne shrubland - override.
+  "gypaetus barbatus":["montane","rock"],
+  // Cormoran huppe : cotier, niche sur falaises et forage pres du rivage, pas pelagique.
+  "gulosus aristotelis":["coastal","rock"],
+  // Sterne pierregarin : cotiere/wetland, pas pelagique.
+  "sterna hirundo":["coastal","wetland","aerial"],
+  // Courlis cendre : wetland + coastal + prairies, pas juste grassland.
+  "numenius arquata":["wetland","coastal","grassland"],
 };
 // Milieux masques partout : chips de la fiche, filtre Birdydex, index inverses, trophees.
 // 'aerial' decrit un mode de deplacement (martinets, hirondelles) plutot qu'un milieu, et
