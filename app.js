@@ -86,7 +86,11 @@ function _top(etape){
       + ' · abonnements posés ' + _chrono.abos + ' ms'
       + ' · liste reçue ' + _chrono.snapshot + ' ms'
       + ' · écran à jour ' + _chrono.rendu + ' ms'
-      + '   (millisecondes depuis l\'ouverture de la page)');
+      + '   (millisecondes depuis l\'ouverture de la page)'
+      + (_chrono.poids ? '\n   reçu : ' + _chrono.poids.membres + ' membre(s), '
+          + _chrono.poids.especes + ' espèces au total, ' + _chrono.poids.ko + ' Ko avant compression'
+          + ' — soit ' + Math.round(_chrono.poids.ko * 1024 / Math.max(1, _chrono.poids.especes))
+          + ' octets par espèce' : ''));
   }
 }
 window.__chrono = _chrono;
@@ -5962,6 +5966,19 @@ function _retireSplash(){
 setTimeout(_retireSplash, _SPLASH_PLAFOND);
 
 function applySnapshot(snap){
+  // Ce que pese vraiment le premier snapshot, mesure UNE fois : c'est le seul moyen de savoir
+  // si les secondes d'attente sont du transfert ou de l'etablissement de connexion. Le calcul
+  // ne tourne pas sur les snapshots suivants - serialiser toutes les listes a chaque frappe du
+  // chat couterait plus cher que ce qu'on cherche a mesurer.
+  if(_chrono.snapshot === undefined){
+    try{
+      let octets = 0, membres = 0, especes = 0;
+      snap.forEach(d => { const v = d.data() || {}; membres++;
+        especes += Array.isArray(v.species) ? v.species.length : 0;
+        octets += JSON.stringify(v).length; });
+      _chrono.poids = { membres, especes, ko: Math.round(octets / 1024) };
+    }catch(_){ }
+  }
   _top('snapshot');
   // Le contenu est la : l ecran d attente peut partir (pas avant son plancher).
   _retireSplash();
