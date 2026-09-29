@@ -708,8 +708,16 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .flag { display:inline-block; height:14px; width:calc(14px * 4 / 3); vertical-align:-2px; border-radius:2px; box-shadow:0 0 0 .5px rgba(0,0,0,.18); object-fit:cover; object-position:center; }
   .country-badge { display:inline-flex; align-items:center; gap:8px; padding:5px 12px; border-radius:20px; background:var(--surface-2); border:1px solid var(--line); font-size:13.5px; font-weight:600; color:var(--ink); white-space:nowrap; }
   .country-badge .flag { vertical-align:0; }
+  /* Le mot est fondu a moitie vers l'encre du theme, le fond et la bordure gardent la
+     couleur pure du palier. Ecrire le mot dans sa couleur pure le posait sur une dilution
+     a 16 % de cette meme couleur : mesure le 2026-09-29, 1,63:1 sur le jaune, l'endroit
+     le moins lisible de l'appli. Fondu a 50 %, 4,59:1 au pire des 11 paliers et des deux
+     themes - c'est la valeur la plus COLOREE qui passe, 60 % retombe a 3,70:1.
+     Le melange se fait vers --ink, donc il fonce en theme clair et eclaircit en sombre :
+     une valeur fixe aurait casse l'un des deux. */
   .chip { display:inline-block; font-size:11px; font-weight:700; padding:2px 8px; border-radius:4px;
-    white-space:nowrap; background:color-mix(in srgb,var(--tc) 16%,transparent); color:var(--tc);
+    white-space:nowrap; background:color-mix(in srgb,var(--tc) 16%,transparent);
+    color:color-mix(in srgb,var(--tc) 50%,var(--ink));
     border:1px solid color-mix(in srgb,var(--tc) 30%,transparent); }
   .cnt { font-variant-numeric:tabular-nums; color:var(--ink-2); text-align:center; }
 
