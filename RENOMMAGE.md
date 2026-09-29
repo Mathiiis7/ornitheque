@@ -19,7 +19,7 @@ vérifiées. Il ne reste que l'étape 10, à faire app fermée.
 | 7. Le nom affiché | fait, démo régénérée |
 | 8. Les documents | fait, dont 32 chemins absolus dans 12 scripts R |
 | 9. Vérifier | fait : 9 bancs conformes, 95,9 Mo publiés, site et démo en ligne sans erreur |
-| 10. Le dossier local | **programmé au prochain démarrage de Windows** le 29/09 - voir plus bas |
+| 10. Le dossier local | **fait** le 29/09, au redémarrage de Windows - vérifié |
 
 **Vérifié en ligne le 29/09** : `.../Ligue_des_Plumes/` arrive sur `.../ornitheque/` et
 `.../Ligue_des_Plumes/demo/` sur `.../ornitheque/demo/` - le chemin est gardé, c'était tout
@@ -34,27 +34,27 @@ la convention visible dans `.claude/projects`. Penser aussi à `Ligue_des_Plumes
 devient `ornitheque-data` pour rester aligné sur son dépôt.
 
 
-## Le dossier local, au 2026-09-29 au soir
+## Le dossier local, renommé le 2026-09-29
 
-Le dossier ne pouvait pas être renommé : l’application Claude le tient ouverte, et Windows
-refuse de renommer un dossier qu’un programme a ouvert. Mesuré, pas supposé - le script de
-diagnostic a compté 22 processus Claude vivants et aucun autre programme en cause.
+Le dossier ne pouvait pas être renommé à chaud : l’application Claude le tenait ouvert, et
+Windows refuse de renommer un dossier qu’un programme a ouvert. Mesuré, pas supposé - le
+script de diagnostic a compté 22 processus Claude vivants, et aucun autre programme en cause.
 
-Le renommage est donc **programmé au prochain démarrage de Windows**, par le même mécanisme
-que les mises à jour système utilisent pour remplacer des fichiers en cours d’usage
-(`MoveFileEx`, option `MOVEFILE_DELAY_UNTIL_REBOOT`). Les deux scripts sont dans
-`Documents/Projets/` : `renommer-au-redemarrage.ps1` et `finir-renommage.ps1`, à supprimer
-une fois le dossier renommé.
+Le renommage est donc passé par le mécanisme dont les mises à jour système se servent pour
+remplacer des fichiers en cours d’usage : `MoveFileEx` avec l’option
+`MOVEFILE_DELAY_UNTIL_REBOOT`, qui fait exécuter l’opération par Windows au tout début du
+démarrage suivant, avant le lancement du moindre programme. Il faut les droits administrateur,
+une seule fois.
 
-**La mémoire de Claude, elle, est déjà sous le nouveau nom** (499,8 Mo). Ses 15 fichiers de
-mémoire ont été recopiés dans l’ancien emplacement - 44 Ko - pour qu’aucune conversation ne
-se retrouve sans mémoire entre-temps. Après le redémarrage, l’ancien dossier n’est plus qu’un
-résidu sans importance.
+**Vérifié après le redémarrage** : `Documents/Projets/ornitheque` existe,
+`Ligue_des_Plumes` n’existe plus, `git rev-parse` répond depuis le nouveau chemin, et plus
+aucun fichier suivi ni aucun réglage de `.claude/` ne contient l’ancien nom.
 
-**Le dossier de données est renommé** en `ornitheque-data`, lui, dès le 29/09.
+**La mémoire de Claude** est sous le nouveau nom, 499,8 Mo. Ses 15 fichiers de mémoire avaient
+été recopiés dans l’ancien emplacement le temps du redémarrage, pour qu’aucune conversation
+ne démarre sans mémoire entre-temps ; cette copie n’est plus qu’un résidu.
 
-À vérifier au premier démarrage : que `Documents/Projets/ornitheque` existe. Sinon, fermer
-Claude et lancer `finir-renommage.ps1`.
+**Le dossier de données** est renommé en `ornitheque-data` depuis le 29/09.
 
 **Deux chiffres du plan étaient faux, mesurés depuis** : les chemins absolus sont dans **12**
 scripts R et non 17, et **11** lignes de `DEPLOY-MIGRATION.md` et non 3. Tous corrigés.
@@ -222,7 +222,7 @@ Dans cet ordre, et je te dis ce que chacun a donné :
 6. Le nouveau site affiche une carte de répartition - donc les données suivent
 7. La démo se charge et répond dans son chat
 
-### 10. Le dossier local, session fermée - TOI
+### 10. Le dossier local - FAIT le 29/09
 
 **Deux choses cassent au renommage du dossier, et elles doivent être réglées AVANT.**
 
@@ -237,7 +237,8 @@ Dans cet ordre, et je te dis ce que chacun a donné :
   `C:\Users\mathi\.claude\projects\C--Users-mathi-Documents-Projets-Ligue-des-Plumes`
   vers le nom correspondant au nouveau chemin. **Je te donnerai la commande exacte.**
 
-Ensuite seulement : fermer l'app, renommer le dossier dans l'explorateur, rouvrir.
+Les deux points ont été réglés avant le renommage, et le renommage lui-même est passé par
+un redémarrage de Windows - voir « Le dossier local, renommé le 2026-09-29 » plus haut.
 
 ---
 
