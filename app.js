@@ -11308,6 +11308,25 @@ window.__imageTrioFromDataUrl = imageTrioFromDataUrl;
 // vignette, ecrit les deux documents lourds, puis remplace 'image' par 'blur' dans le
 // document leger. Rejouable sans danger, ce qui est deja separe est saute. Aucune
 // image n'est detruite : la pleine est recopiee telle quelle dans son document.
+// Firestore met les ecritures dans une file, et cette file a une taille maximum. Le
+// 2026-09-29, la migration de la vraie ligue l'a saturee apres 29 photos :
+// "resource-exhausted : Write stream exhausted maximum allowed queued writes". Le SDK a
+// ralenti tout seul et les 53 photos sont passees sans perte, mais il a rempli la console
+// d'une pile d'erreurs a faire croire a une panne. Attendre l'acquittement ne suffit pas
+// quand les documents pesent jusqu'a 777 Ko : on souffle entre deux, et on reprend une fois
+// quand la file deborde quand meme.
+const MIGRATION_PAUSE_MS = 250;
+const MIGRATION_REPRISE_MS = 3000;
+async function _ecrireEnMigrant(faire){
+  try{ return await faire(); }
+  catch(err){
+    const code = (err && err.code) || '';
+    if(code !== 'resource-exhausted') throw err;
+    console.warn('  file Firestore pleine, on attend ' + (MIGRATION_REPRISE_MS/1000) + ' s puis on reprend');
+    await new Promise(r => setTimeout(r, MIGRATION_REPRISE_MS));
+    return await faire();
+  }
+}
 async function _migrerCollection(coll, fullColl, thumbColl, dry){
   const snap = await getDocs(collection(db,'leagues',leagueId,coll));
   let vus=0, faits=0, sautes=0, rates=0, avant=0, apres=0;
@@ -11320,9 +11339,10 @@ async function _migrerCollection(coll, fullColl, thumbColl, dry){
       const trio = await imageTrioFromDataUrl(full);
       apres += trio.blur.length;
       if(!dry){
-        await setDoc(doc(db,'leagues',leagueId,fullColl,  d.id), { uid:v.uid||'', image:trio.full,  createdAt:v.createdAt||serverTimestamp() });
-        await setDoc(doc(db,'leagues',leagueId,thumbColl, d.id), { uid:v.uid||'', image:trio.thumb, createdAt:v.createdAt||serverTimestamp() });
-        await updateDoc(d.ref, { blur:trio.blur, image:deleteField() });
+        await _ecrireEnMigrant(() => setDoc(doc(db,'leagues',leagueId,fullColl,  d.id), { uid:v.uid||'', image:trio.full,  createdAt:v.createdAt||serverTimestamp() }));
+        await _ecrireEnMigrant(() => setDoc(doc(db,'leagues',leagueId,thumbColl, d.id), { uid:v.uid||'', image:trio.thumb, createdAt:v.createdAt||serverTimestamp() }));
+        await _ecrireEnMigrant(() => updateDoc(d.ref, { blur:trio.blur, image:deleteField() }));
+        await new Promise(r => setTimeout(r, MIGRATION_PAUSE_MS));
       }
       faits++;
       console.log('  ' + coll + '/' + d.id + ' : ' + Math.round(full.length/1024) + ' Ko -> ' + Math.round(trio.blur.length/1024) + ' Ko');

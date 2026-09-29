@@ -127,9 +127,11 @@ tout ce qui devient permis APRÈS le démarrage exige un ré-abonnement explicit
 **Une image ne voyage plus avec son document.** Depuis le 2026-09-29, une photo publiée vit
 dans TROIS documents : `photos/<id>` garde un aperçu flou de 2,2 Ko et part au démarrage,
 `photoThumbs/<id>` garde la vignette de 21 Ko et ne se lit qu'à l'approche de l'écran,
-`photoFull/<id>` garde l'image pleine de 104 Ko et ne se lit qu'à l'ouverture en grand. Idem
-pour le tchat (`chatThumbs`, `chatFull`), sous l'identifiant du message. Avant, 56 images
-entières pesaient 14 737 Ko avalés au démarrage, et le classement attendait derrière.
+`photoFull/<id>` garde l'image pleine et ne se lit qu'à l'ouverture en grand. Idem pour le
+tchat (`chatThumbs`, `chatFull`), sous l'identifiant du message. La vraie ligue a été migrée
+le 2026-09-29 : **14 737 Ko de photos au démarrage sont devenus 212 Ko**, et l'attente entre
+les abonnements et la liste est passée de 4 338 à 613 ms - écran à jour à 3 819 ms au lieu de
+7 284. Les aperçus des vraies photos pèsent 3 à 7 Ko, pas les 2,2 Ko d'une image de test.
 Conséquences pour qui touche à ce code :
 - l'identifiant se fabrique AVANT l'écriture (`doc(collection(...))`) pour que les trois
   documents le partagent, et les lourds partent en premier ;
@@ -199,6 +201,15 @@ concerne le doigt vit dans un `@media (pointer: coarse)` en fin de `styles.css` 
 `isMobile: true`, sinon on mesure l'affichage souris en croyant mesurer le doigt. Le banc
 `accessibilite` vérifie les deux à la fois, et refait au passage le tour de ce qu'un lecteur
 d'écran annonce (région vivante, rangées d'onglets, noms des commandes).
+
+**Écrire en boucle sature la file d'écritures de Firestore, même en attendant chacune.** La
+migration du 2026-09-29 a fait remonter `resource-exhausted : Write stream exhausted maximum
+allowed queued writes` après 29 photos, alors que chaque `setDoc` était attendu. Attendre
+l'acquittement ne suffit pas quand les documents pèsent jusqu'à 777 Ko. Le SDK ralentit tout
+seul et rien ne se perd - les 53 photos sont passées - mais il déverse une pile d'erreurs qui
+fait croire à une panne. D'où `MIGRATION_PAUSE_MS` et `_ecrireEnMigrant()` : une pause de
+250 ms entre deux documents, et une reprise à 3 s si la file déborde quand même. À refaire
+pour tout traitement de masse.
 
 **Un bouchon de snapshot rend `data` comme une fonction.** Dans les deux bouchons Firestore
 (`tools/verif/bouchons/` et `demo/bouchons/`), `snapshot(docs)` construisait `data: () =>
