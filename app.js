@@ -92,6 +92,22 @@ function _top(etape){
           + ' — soit ' + Math.round(_chrono.poids.ko * 1024 / Math.max(1, _chrono.poids.especes))
           + ' octets par espèce' : '')
       + _chronoReseau());
+    // Le releve ci-dessus est incomplet par construction : une requete n'entre dans
+    // performance qu'une fois TERMINEE, et celle qui porte les donnees - le long-poll du canal
+    // WebChannel - est encore ouverte a cet instant. Le 2026-09-29, elle manquait a l'appel :
+    // trois requetes finies a 2 128 ms, des donnees arrivees a 6 745, et 4,6 s sans rien pour
+    // les expliquer. On reimprime donc quelques secondes plus tard, quand elle a ferme.
+    setTimeout(() => {
+      const r = performance.getEntriesByType('resource')
+        .filter(x => /firestore\.googleapis|identitytoolkit|securetoken|www\.google\.com/.test(x.name))
+        .sort((a, b) => a.startTime - b.startTime);
+      if(!r.length) return;
+      console.info('⏱ Ornithèque · le détail des échanges avec Google\n'
+        + r.map(x => '   ' + String(Math.round(x.startTime)).padStart(6) + ' → '
+            + String(Math.round(x.responseEnd)).padStart(6) + ' ms  ('
+            + String(Math.round(x.duration)).padStart(5) + ' ms)  '
+            + x.name.replace(/^https:\/\//, '').replace(/\?.*$/, '')).join('\n'));
+    }, 5000);
   }
 }
 
