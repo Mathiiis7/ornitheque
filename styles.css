@@ -11,6 +11,12 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     --ink: #15201e;
     --ink-2: #47534f;
     --ink-3: #7c8783;
+    /* Encre des elements poses sur un fond BLANC FIXE (pastilles de l'en-tete de fiche,
+       bouton fermer, fleches de navigation). Elle ne doit JAMAIS suivre le theme : ces
+       fonds restent blancs en sombre, et --ink y devient clair. Mesure le 2026-09-29 sur
+       la fiche espece en sombre : 1,10:1 avec --ink, 16,04:1 avec celle-ci.
+       A ne PAS redeclarer dans les blocs sombres plus bas. */
+    --ink-sur-blanc: #15201e;
     --line: rgba(21,32,30,0.10);
     --line-2: rgba(21,32,30,0.16);
     --accent: #0b7c77;
@@ -964,7 +970,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .species-modal .sm-geo { position:absolute; top:13px; right:142px; margin-top:0; z-index:5; justify-content:flex-end; }
   }
   .species-modal .sm-info-chips { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
-  .species-modal .sm-info-chips .chip { font-size:11.5px; font-weight:700; padding:3px 10px; border-radius:14px; background:rgba(255,255,255,.95); color:var(--ink); border:none; display:inline-flex; align-items:center; gap:5px; box-shadow:0 1px 3px rgba(0,0,0,.15); }
+  .species-modal .sm-info-chips .chip { font-size:11.5px; font-weight:700; padding:3px 10px; border-radius:14px; background:rgba(255,255,255,.95); color:var(--ink-sur-blanc); border:none; display:inline-flex; align-items:center; gap:5px; box-shadow:0 1px 3px rgba(0,0,0,.15); }
   .species-modal .sm-info-chips .chip .dot { width:9px; height:9px; border-radius:50%; }
   .species-modal .sm-info-chips .chip.rar-chip-fill { color:#fff; text-shadow:0 1px 1px rgba(0,0,0,.35); font-weight:800; }
   /* Card photo : ratio 16/9, cover, arrondie */
@@ -972,7 +978,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .species-modal .sm-photo-card img { display:block; width:100%; aspect-ratio:16/9; object-fit:cover; object-position:center; }
   .species-modal .sm-photo-card .photo-caption { padding:8px 12px; font-size:11.5px; color:var(--ink-3); background:var(--surface); border-top:1px solid var(--line); }
   /* Bouton fermer : rond blanc glassy en haut a droite */
-  .species-modal .sm-close { position:absolute; top:14px; right:16px; background:rgba(255,255,255,.95); border:none; font-size:18px; color:var(--ink); cursor:pointer; width:34px; height:34px; border-radius:50%; box-shadow:0 2px 8px rgba(0,0,0,.3); z-index:6; display:grid; place-items:center; transition:transform .12s; }
+  .species-modal .sm-close { position:absolute; top:14px; right:16px; background:rgba(255,255,255,.95); border:none; font-size:18px; color:var(--ink-sur-blanc); cursor:pointer; width:34px; height:34px; border-radius:50%; box-shadow:0 2px 8px rgba(0,0,0,.3); z-index:6; display:grid; place-items:center; transition:transform .12s; }
   .species-modal .sm-close:hover { transform:scale(1.08); }
   /* Mobile : bouton fermer plus grand + zone tactile agrandie pour eviter les mistap */
   @media (max-width: 640px) {
@@ -1038,14 +1044,6 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .xa-block:last-child { border-bottom:none; padding-bottom:0; }
   .xa-more .xa-block { border-bottom:1px dashed var(--line); padding-bottom:8px; }
   .xa-more .xa-block:last-child { border-bottom:none; padding-bottom:0; }
-  .species-modal .sm-close:hover { background:var(--surface-2); color:var(--ink); }
-  .species-modal .sm-header { margin-bottom:12px; padding-right:30px; }
-  .species-modal .sm-title { margin:0; font-size:20px; color:var(--ink); }
-  .species-modal .sm-sci { font-size:13px; color:var(--ink-3); font-style:italic; margin-top:2px; }
-  .species-modal .sm-info-chips { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
-  .species-modal .sm-info-chips .chip { font-size:11.5px; font-weight:700; padding:2px 8px; border-radius:9px; background:var(--surface-2); color:var(--ink-2); border:1px solid var(--line); display:inline-flex; align-items:center; gap:5px; }
-  .species-modal .sm-info-chips .chip .dot { width:9px; height:9px; border-radius:50%; }
-  .species-modal .sm-info-chips .chip.rar-chip-fill { color:#fff; text-shadow:0 1px 1px rgba(0,0,0,.35); font-weight:800; }
   /* ============ QUIZ (nouveau design) ============ */
   .qz-panel { padding:20px 22px 22px; margin-top:22px; }
   .qz-head { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
