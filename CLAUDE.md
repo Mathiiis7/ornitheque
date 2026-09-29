@@ -60,11 +60,18 @@ l'encombrement sur le disque, pas ce que GitHub Pages sert.
 **`node --check app.js` ne marche pas** : la commande suppose du CommonJS et `app.js` est un
 module. Utiliser `node --input-type=module --check < app.js`.
 
-**Les fins de ligne sont MÉLANGÉES dans le dépôt** : `app.js` et ce `CLAUDE.md` sont en CRLF,
-`index.html` et `service-worker.js` en LF. Un script qui découpe sur `\r\n` en dur ne voit
-qu'une seule ligne dans `index.html` et ne remplace donc qu'UNE des deux occurrences de
-`app.js?v=` - exactement la panne que la section « Déployer » redoute. Détecter le séparateur,
-ne jamais le supposer.
+**Les fins de ligne sont MÉLANGÉES dans le dépôt**, et ce fichier se trompait sur la
+répartition jusqu'au 2026-09-29. Compté, pas supposé : `app.js`, `index.html` et ce
+`CLAUDE.md` sont en **CRLF** ; `styles.css`, `service-worker.js` et `tools/` en **LF**.
+Un script qui découpe sur `\n` seul laisse un `\r` traîner en fin de ligne, un script qui
+découpe sur `\r\n` en dur ne voit qu'une seule ligne dans `styles.css`. Détecter le
+séparateur, ne jamais le supposer, et réécrire avec celui du fichier - c'est exactement la
+panne que la section « Déployer » redoute pour les deux occurrences d'`app.js?v=`.
+La commande qui tranche :
+
+```
+node -e "const b=require('fs').readFileSync(process.argv[1]);let c=0,l=0;for(let i=0;i<b.length;i++)if(b[i]===10){b[i-1]===13?c++:l++};console.log('CRLF='+c,'LF='+l)" FICHIER
+```
 
 **Une importmap ne s'applique PAS à un `<link rel="modulepreload">`.** Le preload garde l'URL
 écrite telle quelle. La démo détournait bien les trois modules Firebase vers ses bouchons, et
@@ -157,6 +164,14 @@ bancs et refuse de laisser une réponse finir tant qu'un banc est en défaut, d�
 `index.html` ou `styles.css` sont modifiés et pas encore commités. Après une retouche
 d'`index.html` : `node tools/build/genere-demo.mjs`. Le reste (bancs demo, trophees, firestore,
 en écrire un) : skill `bancs-de-mesure`.
+
+**Une cible tactile s'écrit 52 px pour en faire 44.** `body` porte `zoom:0.85`, donc le seuil
+de 44 px d'écran (Apple, Material, WCAG 2.5.5) se traduit par 52 px dans la CSS. Tout ce qui
+concerne le doigt vit dans un `@media (pointer: coarse)` en fin de `styles.css` - l'affichage
+à la souris ne bouge pas. **`pointer: coarse` ne se simule pas avec `hasTouch`** : il faut
+`isMobile: true`, sinon on mesure l'affichage souris en croyant mesurer le doigt. Le banc
+`accessibilite` vérifie les deux à la fois, et refait au passage le tour de ce qu'un lecteur
+d'écran annonce (région vivante, rangées d'onglets, noms des commandes).
 
 **Le plafond qui cédera le premier est Firestore, pas GitHub Pages.** Chaque document modifié
 coûte **une lecture par client abonné** : à 50 connectés, une frappe dans le chat coûte 50

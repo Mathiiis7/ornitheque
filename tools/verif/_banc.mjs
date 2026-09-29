@@ -21,8 +21,10 @@
   { ok, sortie } et se sert de rapport() pour ecrire ses lignes comme les autres.
 */
 import { readFileSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
+import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { dirname, join, extname } from 'node:path';
 
 export const RACINE = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -127,4 +129,24 @@ function fini(){
 ${source}
 ${script}
 </script>`;
+}
+
+// Un serveur qui sert le depot tel quel, pour les bancs pilotes qui chargent une VRAIE page.
+// Indispensable : sous file://, une importmap et un module ES sont refuses. Rendu tel quel
+// plutot que copie dans chaque banc - demo.mjs a le sien, anterieur, on ne le touche pas.
+const TYPES_SERVIS = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
+  '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
+  '.json': 'application/json; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg',
+  '.svg': 'image/svg+xml', '.webp': 'image/webp', '.geojson': 'application/json; charset=utf-8' };
+
+export function serveurDepot(racine){
+  return createServer(async (req, res) => {
+    let chemin = decodeURIComponent(req.url.split('?')[0]);
+    if(chemin.endsWith('/')) chemin += 'index.html';
+    try{
+      const corps = await readFile(join(racine, chemin));
+      res.writeHead(200, { 'Content-Type': TYPES_SERVIS[extname(chemin)] || 'application/octet-stream' });
+      res.end(corps);
+    }catch(_){ res.writeHead(404); res.end('introuvable'); }
+  });
 }

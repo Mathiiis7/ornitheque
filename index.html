@@ -40,7 +40,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=247">
+<link rel="modulepreload" href="app.js?v=248">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -73,6 +73,13 @@
 // il doit exister des la premiere ligne, avant meme que le module soit telecharge.
 document.documentElement.setAttribute('data-splash', 'on');</script>
 
+<!-- Region d'annonce pour les lecteurs d'ecran. Un seul point de passage pour tout ce que
+     l'appli veut dire sans l'ecrire a l'ecran : arrivee d'un message, fin d'une analyse,
+     nombre de resultats. aria-atomic parce qu'on relit la phrase entiere, jamais un morceau.
+     Elle reste vide au repos : une region vide n'annonce rien, c'est ce qu'on veut.
+     Alimentee par annonce() dans app.js - ne pas y ecrire directement. -->
+<div id="a11yAnnonce" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></div>
+
 <!-- Splash pendant que Firebase resout l'etat auth (evite le flash de l'ecran de connexion) -->
 <div id="authSplash" class="auth-splash">
   <img class="auth-splash-logo" src="assets/logos/huppe.png" alt="L’Ornithèque">
@@ -85,11 +92,14 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
       <h1>L’Ornithèque</h1>
       <p class="auth-gate-tag">Comparez vos life lists entre birders</p>
     </div>
-    <div class="auth-gate-tabs" role="tablist">
-      <button type="button" class="auth-gate-tab on" data-auth-tab="signin">Se connecter</button>
-      <button type="button" class="auth-gate-tab" data-auth-tab="signup">Créer un compte</button>
+    <!-- role="tab" sur chaque bouton, pas seulement "tablist" sur la rangee : une rangee
+         d'onglets sans onglet dedans ne s'annonce pas du tout. aria-selected est tenu a jour
+         par _authGateSyncTab() dans app.js, en meme temps que la classe .on. -->
+    <div class="auth-gate-tabs" role="tablist" aria-label="Se connecter ou créer un compte">
+      <button type="button" class="auth-gate-tab on" data-auth-tab="signin" role="tab" id="authGateTabSignin" aria-selected="true" aria-controls="authGateForm">Se connecter</button>
+      <button type="button" class="auth-gate-tab" data-auth-tab="signup" role="tab" id="authGateTabSignup" aria-selected="false" aria-controls="authGateForm">Créer un compte</button>
     </div>
-    <form class="auth-gate-form" id="authGateForm" autocomplete="on" onsubmit="return false;">
+    <form class="auth-gate-form" id="authGateForm" role="tabpanel" aria-labelledby="authGateTabSignin" autocomplete="on" onsubmit="return false;">
       <div class="auth-gate-field">
         <label for="authGateEmail">Email</label>
         <input type="email" id="authGateEmail" placeholder="vous@exemple.fr" autocomplete="email" required>
@@ -115,7 +125,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
       </label>
       <button type="button" class="auth-gate-cta" id="authGateSubmit">Se connecter</button>
       <button type="button" class="auth-gate-forgot" id="authGateForgot">Mot de passe oublié ?</button>
-      <div class="auth-gate-msg" id="authGateMsg"></div>
+      <div class="auth-gate-msg" id="authGateMsg" role="alert"></div>
     </form>
   </div>
 </div>
@@ -254,8 +264,8 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
       <div class="eyebrow">Connexion</div>
       <p class="help" style="margin:4px 0 12px;">Crée ton compte (ou connecte-toi) pour retrouver ta liste et ton identité sur <b>tous tes appareils</b>. Ta liste actuelle sur cet appareil sera conservée.</p>
       <div class="auth-fields">
-        <input type="email" id="authEmail" placeholder="Email" autocomplete="email">
-        <input type="password" id="authPass" placeholder="Mot de passe (6 caractères min.)" autocomplete="current-password">
+        <input type="email" id="authEmail" aria-label="Adresse e-mail" placeholder="Email" autocomplete="email">
+        <input type="password" id="authPass" aria-label="Mot de passe" placeholder="Mot de passe (6 caractères min.)" autocomplete="current-password">
       </div>
       <label style="display:flex; align-items:flex-start; gap:8px; margin:8px 0 12px; font-size:12px; color:var(--ink-3); cursor:pointer;">
         <input type="checkbox" id="authConsent" name="consent" style="margin-top:3px; flex-shrink:0;">
@@ -266,7 +276,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         <button class="btn ghost" id="authSignin">J'ai déjà un compte</button>
         <button class="linkbtn" id="authReset">Mot de passe oublié ?</button>
       </div>
-      <div class="auth-msg" id="authMsg"></div>
+      <div class="auth-msg" id="authMsg" role="alert"></div>
     </div>
     <div id="authInfo" style="display:none;">
       <div class="eyebrow">Connexion</div>
@@ -353,7 +363,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         <div class="small" id="dropSmall">ou cliquez pour parcourir votre ordinateur</div>
       </label>
       <div class="intake-actions" id="intakeActions">
-        <span class="mystatus" id="myStatus"></span>
+        <span class="mystatus" id="myStatus" role="status"></span>
       </div>
       <div class="me-secondary" style="display:none;" id="meSecondary">
         <button class="btn-remove-list" id="removeMineBtn" title="Retire ta liste et quitte la ligue">
@@ -370,7 +380,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         <p class="help" style="margin:6px 0 10px;">Pour une espèce vue mais pas encore dans votre export eBird. Tapez son nom (français ou scientifique) et choisissez dans la liste.</p>
         <div class="manual-row">
           <div class="manual-search">
-            <input type="text" id="manualSearch" placeholder="Ex. « merle noir », « aegithalos »…" autocomplete="off">
+            <input type="text" id="manualSearch" aria-label="Chercher une espèce à ajouter" placeholder="Ex. « merle noir », « aegithalos »…" autocomplete="off">
             <div class="manual-suggest" id="manualSuggest"></div>
           </div>
           <select id="manualCountry" title="Pays d'observation">
@@ -388,9 +398,9 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         </div>
         <div class="manual-row" style="margin-top:8px;">
           <button class="btn" id="manualPlaceBtn" type="button">🗺️ Choisir un lieu sur la carte</button>
-          <span id="manualPlaceStatus" class="manual-msg" style="min-height:0;"></span>
+          <span id="manualPlaceStatus" class="manual-msg" role="status" style="min-height:0;"></span>
         </div>
-        <div id="manualMsg" class="manual-msg"></div>
+        <div id="manualMsg" class="manual-msg" role="status"></div>
       </div>
     </details>
 
@@ -403,7 +413,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
           <button type="button" class="pick-map-close" id="pickMapClose" aria-label="Fermer">✕</button>
         </div>
         <div class="pick-map-search">
-          <input type="search" id="pickMapSearch" placeholder="🔎 Rechercher un lieu (ex. Camargue, Bois de Vincennes)" autocomplete="off">
+          <input type="search" id="pickMapSearch" aria-label="Chercher un lieu" placeholder="🔎 Rechercher un lieu (ex. Camargue, Bois de Vincennes)" autocomplete="off">
           <button type="button" class="btn tiny" id="pickMapSearchBtn">Rechercher</button>
         </div>
         <div id="pickMapEl" class="pick-map-el"></div>
@@ -498,7 +508,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
       <div class="controls">
         <!-- Barre principale : ce qu'on utilise le plus (recherche + tri) toujours visible. -->
         <div class="ctrl-main">
-          <div class="search matrix-search" style="position:relative;">🔎<input type="text" id="q" placeholder="Filtrer une espèce…" autocomplete="off"><div class="map-search-suggest" id="matrixSearchSuggest"></div></div>
+          <div class="search matrix-search" style="position:relative;">🔎<input type="text" id="q" aria-label="Filtrer les espèces du tableau" placeholder="Filtrer une espèce…" autocomplete="off"><div class="map-search-suggest" id="matrixSearchSuggest"></div></div>
           <div class="seg" id="sortSeg">
             <button data-sort="rarity" class="on">Par rareté</button>
             <button data-sort="name">A → Z</button>
@@ -569,10 +579,10 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
       </div>
       <div class="map-search">
         <div class="map-search-input-wrap">
-          <input type="search" id="mapSearch" placeholder="🔎 Filtrer par nom d'espèce" autocomplete="off">
+          <input type="search" id="mapSearch" aria-label="Filtrer la carte par nom d'espèce" placeholder="🔎 Filtrer par nom d'espèce" autocomplete="off">
           <div class="map-search-suggest" id="mapSearchSuggest"></div>
         </div>
-        <span class="map-search-count" id="mapSearchCount"></span>
+        <span class="map-search-count" id="mapSearchCount" role="status"></span>
       </div>
       <div class="map-controls" id="mapCtrlsMine">
         <select class="filt-sel" id="mapPlayerSel" aria-label="Filtrer par personne">
@@ -704,7 +714,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         <label id="mapEbAbundanceLbl" class="explorer-lbl" style="display:none;align-items:center;gap:4px;cursor:pointer;" title="Colore chaque département selon la densité d'oiseaux de cette espèce (données Cornell Status & Trends, ~264 espèces disponibles). Rouge = beaucoup, jaune/vert = peu.">
           <input type="checkbox" id="mapEbAbundance" style="vertical-align:middle;"> Colorer les départements
         </label>
-        <span class="map-count" id="mapEbCount"></span>
+        <span class="map-count" id="mapEbCount" role="status"></span>
       </div>
       <div id="mapCountryHint" class="help" style="display:none; font-size:11.5px; margin:-4px 0 6px; color:var(--ink-3);"></div>
       <div class="map-controls" id="mapCtrlsAbundance" style="display:none;">
@@ -729,7 +739,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         <label class="explorer-lbl" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;" title="Ajoute des points verts sur les hotspots eBird où l'espèce a été vue dans les 30 derniers jours">
           <input type="checkbox" id="mapAbShowHs" style="vertical-align:middle;"> Points obs 30j
         </label>
-        <span class="map-count" id="mapAbCount"></span>
+        <span class="map-count" id="mapAbCount" role="status"></span>
       </div>
       <div id="mapAbHint" class="help" style="display:none; margin:2px 0 8px; font-size:11.5px; line-height:1.4;"></div>
       <div id="mapNote" class="help" style="margin:6px 0 8px; display:none;"></div>
@@ -738,9 +748,9 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
       <div class="map-timeline" id="mapTimeline" style="display:none;">
         <button class="btn tiny" id="mapTlPlay" title="Lancer l'animation dans le temps">▶</button>
         <div class="tl-sliders">
-          <label class="tl-lbl">Du</label>
+          <label class="tl-lbl" for="mapTlStart">Du</label>
           <input type="range" id="mapTlStart" min="0" max="0" value="0" step="1">
-          <label class="tl-lbl">au</label>
+          <label class="tl-lbl" for="mapTlEnd">au</label>
           <input type="range" id="mapTlEnd" min="0" max="0" value="0" step="1">
         </div>
         <span class="tl-label" id="mapTlLabel">-</span>
@@ -797,13 +807,13 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
       <div class="chat-reply-bar" id="chatReplyBar" hidden></div>
       <div class="chat-reply-bar" id="chatEditBar" hidden></div>
       <form class="chat-compose" id="chatForm" autocomplete="off">
-        <input id="chatName" class="chat-name" placeholder="Votre nom" maxlength="24">
+        <input id="chatName" aria-label="Votre nom dans le tchat" class="chat-name" placeholder="Votre nom" maxlength="24">
         <label class="chat-imgbtn" title="Ajouter une image">🖼️<input type="file" id="chatImgInput" accept="image/*" class="visually-hidden"></label>
         <button type="button" class="chat-imgbtn" id="chatEmojiBtn" title="Emoji">😊</button>
         <button type="button" class="chat-imgbtn" id="chatVoiceBtn" title="Note vocale (15s max)">🎤</button>
         <button type="button" class="chat-imgbtn" id="chatGifBtn" title="GIF">🎬</button>
         <div class="chat-input-wrap">
-          <input id="chatText" class="chat-input" placeholder="Votre message…" maxlength="500">
+          <input id="chatText" aria-label="Votre message" class="chat-input" placeholder="Votre message…" maxlength="500">
           <div id="chatMentionPop" class="mention-pop"></div>
         </div>
         <button type="submit" class="btn chat-send">Envoyer</button>
@@ -820,7 +830,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         <label class="btn ghost" id="photoAddLabel">🖼️ Ajouter des photos<input type="file" id="photoInput" accept="image/*" multiple class="visually-hidden"></label>
         <div class="photo-draft" id="photoDraft" style="display:none;">
           <div class="photo-draft-thumbs" id="photoDraftThumbs"></div>
-          <input id="photoCaption" placeholder="Une légende (commune à toutes)…" maxlength="200">
+          <input id="photoCaption" aria-label="Légende des photos" placeholder="Une légende (commune à toutes)…" maxlength="200">
           <div class="photo-draft-actions">
             <button type="button" class="btn" id="photoPublish">Publier</button>
             <button type="button" class="btn ghost" id="photoCancel">Annuler</button>
@@ -871,7 +881,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
           <p class="help" style="margin-top:2px;">Proposez une amélioration, votez pour celles qui vous plaisent. Les plus populaires en haut.</p></div>
       </div>
       <form class="req-form" id="reqForm" autocomplete="off">
-        <textarea id="reqText" placeholder="Votre idée d'amélioration (ex. : ajouter un trophée pour X, améliorer Y…)" maxlength="500" rows="2"></textarea>
+        <textarea id="reqText" aria-label="Votre idée d'amélioration" placeholder="Votre idée d'amélioration (ex. : ajouter un trophée pour X, améliorer Y…)" maxlength="500" rows="2"></textarea>
         <button type="submit" class="btn">Proposer</button>
       </form>
       <div class="req-list" id="reqList"><p class="help" style="margin:0;">Chargement…</p></div>
@@ -885,7 +895,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         <div id="pkdxCounter" style="font:700 14px system-ui; color:var(--ink-2);">- / -</div>
       </div>
       <div class="pkdx-ctrls" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:10px 0 14px;">
-        <input type="search" id="pkdxSearch" placeholder="Rechercher (nom fr ou sci)…" style="flex:1; min-width:180px; padding:9px 12px; border:1px solid var(--line-2); border-radius:8px; background:var(--surface-2); color:var(--ink); font:14px system-ui;">
+        <input type="search" id="pkdxSearch" aria-label="Rechercher dans le birdydex" placeholder="Rechercher (nom fr ou sci)…" style="flex:1; min-width:180px; padding:9px 12px; border:1px solid var(--line-2); border-radius:8px; background:var(--surface-2); color:var(--ink); font:14px system-ui;">
         <!-- Pays du Birdydex : ne s'applique qu'au Birdydex mais est aussi utilise
              pour piloter le pays global (autres onglets suivent). Anciennement dans
              le header, deplace ici le 2026-09-21. -->
@@ -1096,7 +1106,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   <div id="gifPop" class="gif-pop">
     <div class="gif-pop-inner">
       <div class="gif-pop-header">
-        <input type="search" id="gifSearch" placeholder="🔎 Rechercher un GIF…" autocomplete="off">
+        <input type="search" id="gifSearch" aria-label="Rechercher un GIF" placeholder="🔎 Rechercher un GIF…" autocomplete="off">
         <button type="button" id="gifPopClose" title="Fermer">✕</button>
       </div>
       <div class="gif-pop-grid" id="gifPopGrid"><div class="gif-pop-empty">Chargement…</div></div>
@@ -1127,14 +1137,16 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
              plutôt que dans la seule carte Rareté. -->
         <div class="sm-geo" id="smHeaderGeo"></div>
       </div>
-      <nav class="sm-tabs" role="tablist">
-        <button type="button" class="sm-tab on" data-sm-tab="info">📝 Info</button>
-        <button type="button" class="sm-tab" data-sm-tab="map">📍 Carte & observations</button>
-        <button type="button" class="sm-tab" data-sm-tab="sound">🎵 Sons</button>
+      <!-- Meme remarque qu'a l'ecran de connexion : role="tab" sur chaque bouton, sinon la
+           rangee ne s'annonce pas. aria-selected suit la classe .on dans _smSetTab(). -->
+      <nav class="sm-tabs" role="tablist" aria-label="Sections de la fiche espèce">
+        <button type="button" class="sm-tab on" data-sm-tab="info" role="tab" id="smTabInfo" aria-selected="true" aria-controls="smPanelInfo">📝 Info</button>
+        <button type="button" class="sm-tab" data-sm-tab="map" role="tab" id="smTabMap" aria-selected="false" aria-controls="smPanelMap">📍 Carte & observations</button>
+        <button type="button" class="sm-tab" data-sm-tab="sound" role="tab" id="smTabSound" aria-selected="false" aria-controls="smPanelSound">🎵 Sons</button>
       </nav>
       <div class="sm-scroll">
         <!-- Onglet Carte -->
-        <div class="sm-panel" data-sm-panel="map" hidden>
+        <div class="sm-panel" id="smPanelMap" data-sm-panel="map" role="tabpanel" tabindex="0" aria-labelledby="smTabMap" hidden>
           <div class="sm-card" style="padding:12px;">
           <div class="sm-map-wrap" id="smMapWrap" hidden style="margin:0;">
             <div class="sm-map-header" style="margin-bottom:8px;">
@@ -1183,7 +1195,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
           </div>
         </div>
         <!-- Onglet Sons -->
-        <div class="sm-panel" data-sm-panel="sound" hidden>
+        <div class="sm-panel" id="smPanelSound" data-sm-panel="sound" role="tabpanel" tabindex="0" aria-labelledby="smTabSound" hidden>
           <div class="sm-card">
             <div class="sm-audio-wrap">
               <div class="sm-audio-row" id="smSongRow" hidden></div>
@@ -1193,7 +1205,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
           </div>
         </div>
         <!-- Onglet Info (par defaut) : photo + description + freq + liens -->
-        <div class="sm-panel" data-sm-panel="info">
+        <div class="sm-panel" id="smPanelInfo" data-sm-panel="info" role="tabpanel" tabindex="0" aria-labelledby="smTabInfo">
           <!-- Photo card en haut : image entiere, ratio 16/9, credit dessous -->
           <div class="sm-card sm-photo-card" id="smPhotoCard" hidden>
             <img id="smHeroImg" alt="" src="" onerror="this.closest('.sm-photo-card').hidden=true">
@@ -1254,4 +1266,4 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=247"></script>
+<script type="module" src="app.js?v=248"></script>

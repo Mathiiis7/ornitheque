@@ -27,6 +27,9 @@ const state = { people: [], onlySpecies: true, sort:'rarity',
 let lastFamKey = '', lastTierKey = '', lastPlayerKey = '', lastCountryKey = '';
 let myUid = null, leagueId = null, unsub = null, unsubLeague = null, iAmInLeague = false;
 let unsubChat = null, lastChatMsgs = [];
+// null tant qu'aucun rendu du tchat n'a eu lieu : le premier rendu ne doit rien annoncer,
+// c'est l'historique, pas de l'arrivage. Voir renderChat().
+let _chatIdsVus = null;
 let unsubTyping = null, typingMap = new Map(), _typingSelfTimer = null;
 let _chatLimit = 200;
 let unsubPresence = null, onlineMap = new Map(), presenceTimer = null, presenceWired = false;
@@ -60,6 +63,26 @@ let realPeople = [];
 let goalHeader = 'Objectif (fin de l\'été)';   // intitulé partagé de la colonne objectif
 
 const $ = s=>document.querySelector(s);
+
+/* ---------------- annonce aux lecteurs d'ecran ----------------
+   Tout ce que l'appli veut dire sans l'ecrire a l'ecran passe par ici : arrivee d'un
+   message, fin de l'analyse du fichier, nombre de resultats. La region #a11yAnnonce est
+   visuellement masquee mais lue par NVDA, JAWS et VoiceOver.
+
+   Deux precautions qui ne se devinent pas :
+   - on VIDE la region avant d'ecrire, sinon deux annonces identiques a la suite ne sont
+     lues qu'une fois : le lecteur ne voit aucun changement de texte et se tait ;
+   - l'ecriture est repoussee d'un tour de boucle, sinon le vidage et l'ecriture se
+     confondent en une seule mutation et la precaution precedente ne sert a rien. */
+let _annonceTimer = null;
+function annonce(texte, urgent = false){
+  const zone = document.getElementById('a11yAnnonce');
+  if(!zone || !texte) return;
+  zone.setAttribute('aria-live', urgent ? 'assertive' : 'polite');
+  zone.textContent = '';
+  clearTimeout(_annonceTimer);
+  _annonceTimer = setTimeout(() => { zone.textContent = texte; }, 60);
+}
 
 /* ---------------- French bird names (scientific -> FR) ----------------
    Source: Wikipédia FR « Liste des oiseaux / passereaux en France métropolitaine »
@@ -6171,6 +6194,23 @@ function _autoLink(escText){
 }
 function renderChat(msgs){
   const box=$('#chatMessages'); if(!box) return;
+  // Annonce des messages qui ARRIVENT. Pas de role="log" sur la boite : elle est reecrite
+  // entierement a chaque rafraichissement, donc un lecteur d'ecran relirait les cent
+  // messages a chaque fois. On compare aux ids precedents et on ne dit que le nouveau.
+  // Le premier rendu ne dit rien (on arrive sur une conversation, pas sur une nouvelle),
+  // et ses propres messages non plus : on sait ce qu'on vient d'ecrire.
+  if(_chatIdsVus){
+    const neufs = msgs.filter(m => m && m.id && !_chatIdsVus.has(m.id) && m.uid !== myUid && !m.deleted);
+    const dernier = neufs[neufs.length - 1];
+    if(dernier){
+      const qui = (realPeople.find(p => p.id === dernier.uid) || {}).name || dernier.name || 'Quelqu\'un';
+      const quoi = (dernier.text || '').trim()
+        || (dernier.image ? 'a envoyé une photo' : dernier.voice ? 'a envoyé une note vocale' : dernier.gif ? 'a envoyé un GIF' : 'a envoyé un message');
+      const reste = neufs.length > 1 ? ' (et ' + (neufs.length - 1) + ' autre' + (neufs.length > 2 ? 's' : '') + ')' : '';
+      annonce(qui + ' : ' + quoi + reste);
+    }
+  }
+  _chatIdsVus = new Set(msgs.map(m => m && m.id).filter(Boolean));
   lastChatMsgs = msgs;
   const byId = new Map(realPeople.map(p=>[p.id, p.name]));   // nom autoritatif par uid (anti-usurpation)
   const statusById = new Map(realPeople.map(p=>[p.id, p.status || '']));
@@ -6233,9 +6273,9 @@ function renderChat(msgs){
     // Actions : Répondre (tous), Éditer (mine + <5min + texte seul), Supprimer (mine OU admin)
     const canEdit = mine && !isDeleted && t && (now - t.getTime() < EDIT_WINDOW_MS) && !safeImg && !safeVoice && !safeGif;
     const canDelete = !isDeleted && (mine || isAdmin());
-    const replyBtn = `<button class="msg-act msg-reply" data-id="${esc(m.id)}" title="Répondre">↪</button>`;
-    const editBtn = canEdit ? `<button class="msg-act msg-edit" data-id="${esc(m.id)}" title="Éditer">✏️</button>` : '';
-    const delBtn = canDelete ? `<button class="msg-act msg-del" data-id="${esc(m.id)}" title="Supprimer">🗑️</button>` : '';
+    const replyBtn = `<button class="msg-act msg-reply" data-id="${esc(m.id)}" title="Répondre" aria-label="Répondre à ce message">↪</button>`;
+    const editBtn = canEdit ? `<button class="msg-act msg-edit" data-id="${esc(m.id)}" title="Éditer" aria-label="Éditer mon message">✏️</button>` : '';
+    const delBtn = canDelete ? `<button class="msg-act msg-del" data-id="${esc(m.id)}" title="Supprimer" aria-label="Supprimer ce message">🗑️</button>` : '';
     return `<div class="msg${mine?' mine':''}${mentionsMe?' mentions-me':''}${isDeleted?' msg-is-deleted':''}" data-msg-id="${esc(m.id)}">
       <div class="msg-header">${avatarHtml}<div class="msg-name">${esc(nm)}${guestTag}${statusTag}</div></div>
       <div class="msg-bubble${emojiOnly?' emoji-only':''}">${deletedNote}${replyHtml}${imgHtml}${voiceHtml}${gifHtml}${txtHtml}</div>
@@ -10393,6 +10433,10 @@ async function handleFiles(fileList){
   const f=[...fileList].find(x=>/\.csv$/i.test(x.name)||x.type==='text/csv') || fileList[0];
   if(!f) return;
   if(!myUid){ $('#myStatus').textContent='Connexion en cours, réessayez dans un instant…'; return; }
+  // Lire puis analyser un export eBird prend plusieurs secondes sur une grosse liste, et
+  // l'ecran ne bougeait pas d'un pixel pendant ce temps : rien ne disait que le fichier
+  // avait ete pris. #myStatus porte role="status", donc cette ligne s'ecrit ET s'annonce.
+  $('#myStatus').textContent = 'Analyse de ' + f.name + '…';
   let text; try{ text=await f.text(); }catch(e){ $('#myStatus').textContent='Lecture du fichier impossible.'; return; }
   const parsed=ingest(f.name, text);
   if(!parsed){ $('#myStatus').textContent='Fichier non reconnu (est-ce bien un export eBird ?)'; return; }
@@ -10456,6 +10500,9 @@ async function handleFiles(fileList){
     // « … enregistrement », la liste enregistree mais invisible (2026-09-28). Un membre qui
     // re-importe n'en a pas besoin : ses abonnements vivent deja.
     if(!iAmInLeague) subscribe();
+    // Le retour de Firestore vide #myStatus et repeint la page : la reussite ne laisse donc
+    // aucune trace lisible. On l'annonce a part, avec le chiffre qui compte.
+    annonce('Liste enregistrée : ' + parsed.species.size + ' espèces.');
   }
   catch(e){ showError(e); $('#myStatus').textContent=''; }
 }
@@ -14717,7 +14764,13 @@ async function _extractDominantColor(url, existingImg){
 function _smSetTab(tab){
   const validTabs = ['map','sound','info'];
   if(!validTabs.includes(tab)) tab = 'map';
-  document.querySelectorAll('.sm-tab').forEach(b => b.classList.toggle('on', b.dataset.smTab === tab));
+  // aria-selected suit la classe .on : sans lui, les trois onglets s'annoncent identiques et
+  // rien ne dit lequel est ouvert.
+  document.querySelectorAll('.sm-tab').forEach(b => {
+    const actif = b.dataset.smTab === tab;
+    b.classList.toggle('on', actif);
+    b.setAttribute('aria-selected', actif ? 'true' : 'false');
+  });
   document.querySelectorAll('.sm-panel').forEach(p => p.hidden = (p.dataset.smPanel !== tab));
   try{ localStorage.setItem('mb-sm-tab', tab); }catch(_){}
   // Refresh la carte quand on retourne sur l'onglet Carte (Leaflet a besoin de recalculer
@@ -16322,7 +16375,15 @@ try{
   }
 }catch(_){ }
 function _authGateSyncTab(){
-  document.querySelectorAll('.auth-gate-tab').forEach(b => b.classList.toggle('on', b.dataset.authTab === _authGateMode));
+  // aria-selected suit la classe .on, et le formulaire dit de quel onglet il depend : sans
+  // ca, rien n'annonce si on est en train de se connecter ou de creer un compte.
+  document.querySelectorAll('.auth-gate-tab').forEach(b => {
+    const actif = b.dataset.authTab === _authGateMode;
+    b.classList.toggle('on', actif);
+    b.setAttribute('aria-selected', actif ? 'true' : 'false');
+  });
+  const form = $('#authGateForm');
+  if(form) form.setAttribute('aria-labelledby', _authGateMode === 'signin' ? 'authGateTabSignin' : 'authGateTabSignup');
   const cta = $('#authGateSubmit');
   if(cta) cta.textContent = _authGateMode === 'signin' ? 'Se connecter' : 'Créer mon compte';
   const consent = $('#authGateConsentWrap');
@@ -17993,7 +18054,7 @@ async function _quizStart(){
     stage.innerHTML = `
       <div class="qz-play">
         <div class="qz-player">
-          <button type="button" class="qz-play-btn" id="quizPlayBtn">▶</button>
+          <button type="button" class="qz-play-btn" id="quizPlayBtn" aria-label="Écouter le son">▶</button>
           <div class="qz-progress"><div class="qz-progress-fill" id="quizProgressFill"></div></div>
         </div>
         <p class="qz-prompt">Quelle espèce est-ce ?</p>
@@ -18196,7 +18257,7 @@ async function _quizDailyRenderQuestion(){
     <div class="qz-play">
       <div class="qz-session-progress qz-daily-progress">🎪 Défi du jour · Question <b>${_quizDailyActive.current + 1}</b> / ${_QUIZ_DAILY_LEN} <button type="button" class="qz-challenge-exit-btn" id="quizChallengeExit" title="Abandonner (progression perdue)">← Quitter</button></div>
       <div class="qz-player">
-        <button type="button" class="qz-play-btn" id="quizPlayBtn">▶</button>
+        <button type="button" class="qz-play-btn" id="quizPlayBtn" aria-label="Écouter le son">▶</button>
         <div class="qz-progress"><div class="qz-progress-fill" id="quizProgressFill"></div></div>
       </div>
       <p class="qz-prompt">Quelle espèce est-ce ?</p>
@@ -18483,7 +18544,7 @@ async function _quizWeeklyRenderQuestion(){
     <div class="qz-play">
       <div class="qz-session-progress qz-weekly-progress">🏅 Défi hebdo · Question <b>${_quizWeeklyActive.current + 1}</b> / ${_QUIZ_WEEKLY_LEN} <button type="button" class="qz-challenge-exit-btn" id="quizChallengeExit" title="Abandonner (progression perdue)">← Quitter</button></div>
       <div class="qz-player">
-        <button type="button" class="qz-play-btn" id="quizPlayBtn">▶</button>
+        <button type="button" class="qz-play-btn" id="quizPlayBtn" aria-label="Écouter le son">▶</button>
         <div class="qz-progress"><div class="qz-progress-fill" id="quizProgressFill"></div></div>
       </div>
       <p class="qz-prompt">Quelle espèce est-ce ?</p>

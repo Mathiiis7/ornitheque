@@ -2165,4 +2165,46 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     /* Et le numero rend 4 px de son rembourrage : sans ca les deux se touchaient encore,
        a 0,3 px pres, sur la plus etroite des cartes. */
     .pkdx-card .pkdx-num { padding:1px 4px; } }
-
+
+  /* ================= cibles tactiles =================
+     Au doigt, une cible doit faire 44 px d'ECRAN (Apple HIG, Material, WCAG 2.5.5). Comme
+     body porte zoom:0.85, il faut l'ecrire 52 px : 52 x 0,85 = 44,2.
+     Mesure avant correction (rapport Impeccable du 2026-09-29) : pastilles de rarete a
+     17 px d'ecran, actions d'un message a 18, onglets de la fiche a 36.
+     Tout est enferme dans pointer:coarse - l'affichage a la souris ne bouge pas d'un pixel,
+     et toutes les mesures de la barre de la Carte restent valables la ou elles ont ete faites.
+     Bloc en fin de fichier : a specificite egale, la derniere regle ecrite gagne. */
+  @media (pointer: coarse) {
+
+    /* Les pastilles de palier sont peintes dans une boite de taille double ramenee de
+       moitie (voir le bloc .rar-chip plus haut). Pour 52 px rendus : boite 104, marge
+       negative 26 pour rendre 52 a la mise en page, corps a l'avenant. Elles passent alors
+       sur deux rangees au telephone - inevitable : 13 cibles de 44 px demandent 572 px de
+       large, un telephone en fait 375. */
+    .rar-chip[data-tier], .rar-chip[data-rar], .tier-chip.tier-rond {
+      width:104px; min-width:104px; height:104px; margin:-26px; font-size:52px; }
+    /* Meme calcul pour les jetons ronds de statut exotique. */
+    .rar-chip[data-cat], .pkdx-exo { width:104px; min-width:104px; height:104px; margin:-26px; font-size:62px; }
+    /* « Tout » et « Vide » sont des mots, pas des jetons : ils grandissent par leur hauteur. */
+    .rar-chip, .tier-chip { min-height:52px; }
+    .rar-chips { gap:6px; }
+
+    /* Les actions d'un message etaient en opacity:0 jusqu'au survol. Au doigt il n'y a pas
+       de survol : repondre, editer, supprimer et meme lire l'heure etaient inatteignables.
+       Elles restent donc affichees. Le cout visuel est faible : editer et supprimer ne
+       paraissent que sur ses propres messages et moins de cinq minutes, donc la plupart des
+       messages ne portent qu'un seul bouton, « Repondre ». */
+    .msg-actions, .msg .msg-actions { opacity:1; }
+    .msg-time, .msg .msg-time { opacity:1; }
+    .msg-act { min-width:52px; min-height:52px; font-size:22px; border-radius:50%; }
+    .msg-actions { gap:8px; }
+    /* Le « + » des reactions et les pastilles deja posees vivent dans la meme rangee et
+       avaient le meme defaut : 22 px ecrits, 18,7 a l'ecran. Les laisser a 22 a cote d'une
+       action de 52 aurait donne une rangee bancale autant qu'inatteignable. */
+    .react-add { width:52px; height:52px; font-size:22px; }
+    .react-chip { min-height:52px; padding:1px 14px; font-size:15px; border-radius:26px; }
+    .react-bar { gap:8px; }
+
+    /* Onglets de la fiche espece : 36 px d'ecran mesures, 52 ecrits les portent a 44. */
+    .species-modal .sm-tab { min-height:52px; }
+  }
