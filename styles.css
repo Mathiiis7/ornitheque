@@ -10,13 +10,18 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     --surface-3: #dde4e2;
     --ink: #15201e;
     --ink-2: #47534f;
-    --ink-3: #7c8783;
+    --ink-3: #616966;
     /* Encre des elements poses sur un fond BLANC FIXE (pastilles de l'en-tete de fiche,
        bouton fermer, fleches de navigation). Elle ne doit JAMAIS suivre le theme : ces
        fonds restent blancs en sombre, et --ink y devient clair. Mesure le 2026-09-29 sur
        la fiche espece en sombre : 1,10:1 avec --ink, 16,04:1 avec celle-ci.
        A ne PAS redeclarer dans les blocs sombres plus bas. */
     --ink-sur-blanc: #15201e;
+    /* Meme raison, en gris secondaire : le numero pose sur la vignette du Birdydex a une
+       pilule blanche a 85 %, donc claire dans les deux themes. Mesure le 2026-09-29 :
+       --ink-3 sombre sur cette pilule donne 2,94:1 sur 466 vignettes ; celui-ci donne
+       4,53:1. A ne PAS redeclarer dans les blocs sombres plus bas. */
+    --ink-3-sur-blanc: #5b6361;
     --line: rgba(21,32,30,0.10);
     --line-2: rgba(21,32,30,0.16);
     --accent: #0b7c77;
@@ -40,7 +45,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   @media (prefers-color-scheme: dark) {
     :root {
       --bg:#0d1513; --surface:#131f1d; --surface-2:#1a2827; --surface-3:#223231;
-      --ink:#e9f1ef; --ink-2:#a7b6b2; --ink-3:#74827e;
+      --ink:#e9f1ef; --ink-2:#a7b6b2; --ink-3:#8b9c97;
       --line:rgba(233,241,239,0.10); --line-2:rgba(233,241,239,0.16);
       --accent:#2bbcb0; --accent-ink:#54cfc4; --accent-2:#e08a4e; --gold:#e0bc59;
       --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
@@ -52,7 +57,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   }
   :root[data-theme="dark"] {
     --bg:#0d1513; --surface:#131f1d; --surface-2:#1a2827; --surface-3:#223231;
-    --ink:#e9f1ef; --ink-2:#a7b6b2; --ink-3:#74827e;
+    --ink:#e9f1ef; --ink-2:#a7b6b2; --ink-3:#8b9c97;
     --line:rgba(233,241,239,0.10); --line-2:rgba(233,241,239,0.16);
     --accent:#2bbcb0; --accent-ink:#54cfc4; --accent-2:#e08a4e; --gold:#e0bc59;
     --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
@@ -63,7 +68,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   }
   :root[data-theme="light"] {
     --bg:#eef2f1; --surface:#ffffff; --surface-2:#e7eceb; --surface-3:#dde4e2;
-    --ink:#15201e; --ink-2:#47534f; --ink-3:#7c8783;
+    --ink:#15201e; --ink-2:#47534f; --ink-3:#616966;
     --line:rgba(21,32,30,0.10); --line-2:rgba(21,32,30,0.16);
     --accent:#0b7c77; --accent-ink:#075a56; --accent-2:#c05e33; --gold:#b98d22;
     --s0:#2a78d6; --s1:#1baf7a; --s2:#eda100; --s3:#008300;
@@ -2084,7 +2089,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
        reserve 220px pour eviter les sauts au scroll. Enorme gain sur 720 cartes. */
     content-visibility:auto; contain-intrinsic-size:220px; }
   .pkdx-card:hover { transform:translateY(-2px); box-shadow:0 6px 14px rgba(0,0,0,.12); border-color:var(--accent); }
-  .pkdx-card .pkdx-num { position:absolute; top:6px; left:8px; font:700 10px ui-monospace, monospace; color:var(--ink-3); background:rgba(255,255,255,.85); padding:1px 6px; border-radius:8px; z-index:2; }
+  .pkdx-card .pkdx-num { position:absolute; top:6px; left:8px; font:700 10px ui-monospace, monospace; color:var(--ink-3-sur-blanc); background:rgba(255,255,255,.85); padding:1px 6px; border-radius:8px; z-index:2; }
   /* Seule exception au carre commun : dans la grille, le rond se pose sur la photo sans
      entrer en concurrence avec le numero d espece, qui est deja un rectangle de texte. */
   /* right:6px et non 8px : la photo commence a 8px (padding de la carte), donc a 8px la
