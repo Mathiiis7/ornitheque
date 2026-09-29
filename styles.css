@@ -1650,6 +1650,13 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .map-search-suggest-item .ss-sci { font-size:11.5px; color:var(--ink-3); font-style:italic; margin-left:auto; }
   .map-search-suggest-item .ss-hint { font-size:10px; color:var(--ink-3); }
   .explorer-lbl { font-size:12px; font-weight:600; color:var(--ink-3); }
+  /* Dans la barre de la Carte, le mot ENVELOPPE son reglage : ils forment un seul element
+     de la rangee et ne peuvent donc plus se separer au passage a la ligne. Avant, « Source »
+     finissait une ligne et ses deux boutons commencaient la suivante, et les coupures
+     changeaient avec la largeur de la fenetre.
+     La regle est limitee a .map-controls : .explorer-lbl sert AUSSI aux reglages du quiz,
+     ou .qz-settings lui donne une colonne. */
+  .map-controls .explorer-lbl { display:inline-flex; align-items:center; gap:6px; }
   .ex-empty { padding:12px; color:var(--ink-3); font-size:13px; text-align:center; }
   .ex-error { padding:12px; color:#c33; font-size:13px; }
   .map-el .leaflet-container { font:inherit; }

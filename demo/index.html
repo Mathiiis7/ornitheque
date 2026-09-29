@@ -90,7 +90,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=246">
+<link rel="modulepreload" href="app.js?v=247">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -653,7 +653,9 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
           <option value="TR">Turquie</option>
           <option value="IS">Islande</option>
         </select>
-        <label class="explorer-lbl">Région</label>
+        <!-- Le menu vit DANS son etiquette : ils ne peuvent plus se separer au passage a
+             la ligne, et cliquer sur le mot deroule le menu sans avoir besoin d'un for. -->
+        <label class="explorer-lbl">Région
         <select class="filt-sel" id="mapEbRegion">
           <option value="FR" selected>Toutes les régions</option>
           <option value="FR-ARA">Auvergne-Rhône-Alpes</option>
@@ -670,31 +672,38 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
           <option value="FR-PAC">Provence-Alpes-Côte d'Azur</option>
           <option value="FR-GES">Grand Est</option>
         </select>
-        <label class="explorer-lbl" id="mapEbDeptLbl" style="display:none;">Département</label>
+        </label>
+        <label class="explorer-lbl" id="mapEbDeptLbl" style="display:none;">Département
         <select class="filt-sel" id="mapEbDept" style="display:none;">
           <option value="" selected>Tous les départements</option>
         </select>
-        <label class="explorer-lbl" id="mapEbSourceLbl" style="display:none;">Source</label>
-        <div class="seg" id="mapEbSource" style="display:none; margin-right:8px;">
+        </label>
+        <span class="explorer-lbl" id="mapEbSourceLbl" style="display:none;">Source
+        <div class="seg" id="mapEbSource" role="group" aria-label="Source des données" style="display:none; margin-right:8px;">
           <button type="button" data-source="ebird" class="on">eBird 30 j</button>
           <button type="button" data-source="gbif">GBIF (mois)</button>
         </div>
-        <label class="explorer-lbl" id="mapEbDaysLbl">Derniers</label>
+        </span>
+        <label class="explorer-lbl" id="mapEbDaysLbl">Derniers
         <select class="filt-sel" id="mapEbDays">
           <option value="7">7 jours</option>
           <option value="14" selected>14 jours</option>
           <option value="30">30 jours</option>
         </select>
-        <label class="explorer-lbl" id="mapEbYearMinLbl" style="display:none;">De</label>
-        <input type="number" id="mapEbYearMin" style="display:none; width:60px; font-size:12px; padding:3px 6px; border:1px solid var(--line-2); border-radius:6px;" min="1970" max="2026" value="2024">
-        <label class="explorer-lbl" id="mapEbYearMaxLbl" style="display:none;">à</label>
-        <input type="number" id="mapEbYearMax" style="display:none; width:60px; font-size:12px; padding:3px 6px; border:1px solid var(--line-2); border-radius:6px;" min="1970" max="2026" value="2025">
-        <label class="explorer-lbl" id="mapEbSortLbl" style="display:none;">Trier par</label>
+        </label>
+        <label class="explorer-lbl" id="mapEbYearMinLbl" style="display:none;">De
+        <input type="number" id="mapEbYearMin" style="width:60px; font-size:12px; padding:3px 6px; border:1px solid var(--line-2); border-radius:6px;" min="1970" max="2026" value="2024">
+        </label>
+        <label class="explorer-lbl" id="mapEbYearMaxLbl" style="display:none;">à
+        <input type="number" id="mapEbYearMax" style="width:60px; font-size:12px; padding:3px 6px; border:1px solid var(--line-2); border-radius:6px;" min="1970" max="2026" value="2025">
+        </label>
+        <label class="explorer-lbl" id="mapEbSortLbl" style="display:none;">Trier par
         <select class="filt-sel" id="mapEbSort" style="display:none;">
           <option value="todo" selected>Espèces à cocher pour moi</option>
           <option value="recent">Activité 30 jours</option>
         </select>
-        <label class="explorer-lbl" id="mapEbMonthLbl" style="display:none;" title="Filtre les espèces à celles actives ce mois-là en France (bar chart eBird nationaux). Ne re-charge PAS l'API - filtre client-side.">Mois</label>
+        </label>
+        <label class="explorer-lbl" id="mapEbMonthLbl" style="display:none;" title="Filtre les espèces à celles actives ce mois-là en France (bar chart eBird nationaux). Ne re-charge PAS l'API - filtre client-side.">Mois
         <select class="filt-sel" id="mapEbMonth" style="display:none;">
           <option value="0" selected>Tous</option>
           <option value="1">janvier</option><option value="2">février</option>
@@ -704,8 +713,11 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
           <option value="9">septembre</option><option value="10">octobre</option>
           <option value="11">novembre</option><option value="12">décembre</option>
         </select>
-        <label class="explorer-lbl" id="mapEbRarityLbl" style="display:none;" title="Clique un ou plusieurs niveaux - sinon toutes les raretés">Rareté</label>
-        <div id="mapEbRarityChips" class="rar-chips" style="display:none;">
+        </label>
+        <!-- Ici le mot habille un GROUPE de boutons, pas un seul reglage : c'est un span
+             avec role="group", pas un label, qui n'habillerait que le premier bouton. -->
+        <span class="explorer-lbl" id="mapEbRarityLbl" style="display:none;" title="Clique un ou plusieurs niveaux - sinon toutes les raretés">Rareté
+        <div id="mapEbRarityChips" class="rar-chips" role="group" aria-label="Filtrer par rareté" style="display:none;">
           <button type="button" class="rar-chip rar-exo on" data-rar="exo" title="Parc semi-libre / échappé (tier 0)">0</button>
           <button type="button" class="rar-chip on" data-rar="1" title="Omniprésent">1</button>
           <button type="button" class="rar-chip on" data-rar="2" title="Très commun">2</button>
@@ -720,13 +732,15 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
           <button type="button" class="rar-chip" data-rar-all title="Cocher toutes les raretés">Tout</button>
           <button type="button" class="rar-chip" data-rar-none title="Décocher toutes les raretés">Vide</button>
         </div>
-        <label class="explorer-lbl" id="mapEbMinTodoLbl" style="display:none;" title="N'affiche que les hotspots où il te manque au moins N espèces">Cacher hotspots avec moins de</label>
-        <div id="mapEbMinTodoBox" style="display:none; align-items:center; gap:0;">
+        </span>
+        <span class="explorer-lbl" id="mapEbMinTodoLbl" style="display:none;" title="N'affiche que les hotspots où il te manque au moins N espèces">Cacher hotspots avec moins de
+        <div id="mapEbMinTodoBox" role="group" aria-label="Nombre minimum d'espèces à cocher" style="display:none; align-items:center; gap:0;">
           <button type="button" class="btn tiny" id="mapEbMinTodoDec" style="padding:2px 8px; font-size:15px; border-radius:6px 0 0 6px;" title="−1">−</button>
           <input type="number" id="mapEbMinTodo" min="0" max="500" value="0" step="1" style="width:52px; font-size:12px; padding:3px 4px; border:1px solid var(--line-2); border-left:none; border-right:none; border-radius:0; text-align:center; -moz-appearance:textfield;" title="Espèces à cocher minimum">
           <button type="button" class="btn tiny" id="mapEbMinTodoInc" style="padding:2px 8px; font-size:15px; border-radius:0 6px 6px 0;" title="+1">+</button>
         </div>
-        <span id="mapEbMinTodoSuffix" class="explorer-lbl" style="display:none;">espèces à cocher</span>
+        <span id="mapEbMinTodoSuffix" style="display:none;">espèces à cocher</span>
+        </span>
         <button type="button" class="btn tiny" id="mapDrawStart" style="display:none;" title="Clic sur la carte pour poser les sommets, puis « Fermer » (ou double-clic).">✏️ Dessiner une zone</button>
         <button type="button" class="btn tiny" id="mapDrawFinish" style="display:none;" title="Ferme le polygone (au moins 3 sommets requis)">✅ Fermer</button>
         <button type="button" class="btn tiny" id="mapDrawClear" style="display:none;" title="Efface le polygone et revient au filtre région/département">🗑️ Effacer</button>
@@ -1286,5 +1300,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=246"></script>
+<script type="module" src="app.js?v=247"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans votre navigateur.</span></div>
