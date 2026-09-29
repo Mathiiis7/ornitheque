@@ -164,6 +164,17 @@ n'affichait RIEN, pas même son titre.
 capture d'écran regardée de près - surtout pour l'alignement, les tailles et les écarts.
 Voir `tools/verif/`.
 
+**Le démarrage est fini, ne pas le rouvrir sans nouveau chiffre.** Après la séparation des
+photos, huit chargements mesurés le 2026-09-29 sur le site en ligne, connecté, cache chaud :
+écran à jour entre 899 et 2 952 ms, **médiane 1 875 ms** (7 284 ms avant). Ce qui reste se
+décompose en 380 ms pour reconnaître le compte et **1 411 ms d'attente de la liste des
+membres**, fil principal occupé à 0 %. Cette attente varie d'un facteur 4 d'un chargement à
+l'autre pour des données identiques : **ce n'est donc pas le volume.** À 15,7 Mbps mesurés,
+les 275 Ko de fiches ne pèsent que 137 ms ; le reste est le temps que Firestore met à ouvrir
+son canal. Alléger les listes d'espèces ferait gagner moins que le bruit de mesure, pour un
+risque réel sur le cœur de l'appli. Le poids d'`app.js` (641 Ko servis, jusqu'à 3,3 s) ne se
+paie qu'au premier chargement et après chaque mise en ligne, jamais en usage courant.
+
 **Dire « je ne sais pas ».** Le nom exact d'une table, d'un fichier de données, d'une zone
 eBird : ça se vérifie en une commande. Ne jamais le deviner.
 
