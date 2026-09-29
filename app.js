@@ -14961,7 +14961,6 @@ function openSpeciesModal(sci){
       }
     }
     if(photoCard) photoCard.hidden = false;
-    if(photoCap) photoCap.textContent = 'Photo : ' + p.credit;
     if(cred) cred.textContent = 'Photo : ' + p.credit;
   });
   // Sons : chant + cri, chaque section a un lecteur + sonogramme + menu deroulant multi-enregistrements.
