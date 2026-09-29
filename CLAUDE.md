@@ -150,45 +150,18 @@ sessions après la disparition de la bulle qu'il annonçait.
 
 ## Les bancs de mesure
 
-`tools/verif/` contient des pages qui font tourner les VRAIES fonctions d'`app.js` dans un
-vrai navigateur et impriment des chiffres. Tout rejouer :
+Après toute retouche de l'entête du panneau, des sélecteurs, des pastilles ou des cartes :
+`node tools/verif/tous.mjs`, chaque banc finit par `CONFORME` ou `DÉFAUT`. **Un crochet le fait
+tout seul** : `.claude/hooks/verif-avant-fin.mjs`, branché sur l'événement `Stop`, rejoue tous les
+bancs et refuse de laisser une réponse finir tant qu'un banc est en défaut, dès qu'`app.js`,
+`index.html` ou `styles.css` sont modifiés et pas encore commités. Après une retouche
+d'`index.html` : `node tools/build/genere-demo.mjs`. Le reste (bancs demo, trophees, firestore,
+en écrire un) : skill `bancs-de-mesure`.
 
-```
-node tools/verif/tous.mjs
-```
-
-Le banc `demo` est à part : il vérifie que `demo/index.html` n'a pas pris de retard sur
-`index.html`, puis charge la démo dans un vrai navigateur et envoie un message dans son chat.
-Après toute retouche d'`index.html`, relancer `node tools/build/genere-demo.mjs`.
-
-Chaque banc affiche ses mesures et se termine par `CONFORME` ou `DÉFAUT`. Les lancer après
-toute retouche de l'entête du panneau, des sélecteurs, des pastilles ou des cartes : ils
-attrapent les régressions qu'une capture d'écran ne montre pas.
-
-**Un crochet les lance tout seul.** `.claude/hooks/verif-avant-fin.mjs`, branché sur
-l'événement `Stop` dans `.claude/settings.json` : si `app.js`, `index.html` ou `styles.css`
-sont modifiés au moment où une réponse se termine, il rejoue `tous.mjs` et refuse de laisser
-finir tant qu'un banc est en défaut. Tout rejouer coûte 11,5 s mesurés le 2026-09-29, d'où le
-choix de ne pas deviner quel banc concerne quel fichier - deviner raterait la régression à
-distance. Il ne se déclenche pas deux fois de suite (`stop_hook_active`), et il se tait dès que
-le travail est commité, `git status` étant sa seule source.
-
-Pour en ajouter un : copier le plus proche, il n'y a qu'un contrat - appeler `fini()` à la
-fin, après avoir empilé ses vérifications avec `verif(libellé, valeur, ok)`.
-
-Un banc peut aussi piloter le navigateur lui-même, quand une page à regarder ne suffit pas :
-il exporte `mesure({ navigateur })` au lieu de `html()`, et rend `{ ok, sortie }` avec
-`rapport()`. C'est le cas de `trophees`, qui charge `app.js` en entier avec Firebase bouchonné
-(`tools/verif/bouchons/`, branchés par une importmap) et choisit l'ordre d'arrivée des
-snapshots : c'est le seul moyen d'exercer le démarrage CONNECTÉ sans compte et sans toucher à
-la vraie ligue, et il a attrapé quatre `TypeError` qui étaient en production. Il avance
-l'horloge au lieu d'attendre, sinon la détection de trophées lui coûterait 14 secondes.
-
-`firestore` se sert du même montage pour compter ce qu’une session coûte en lectures : 14
-abonnements ouverts à la connexion, aucun doublon, et surtout **une lecture par client abonné**
-à chaque document modifié. Avec 50 connectés, une frappe dans le chat coûte 50 lectures, soit
-1 000 frappes par jour avant le plafond gratuit de 50 000. C’est ce plafond-là qui cédera le
-premier si l'appli marche, bien avant la bande passante de GitHub Pages.
+**Le plafond qui cédera le premier est Firestore, pas GitHub Pages.** Chaque document modifié
+coûte **une lecture par client abonné** : à 50 connectés, une frappe dans le chat coûte 50
+lectures, soit 1 000 frappes par jour avant le plafond gratuit de 50 000. Mesuré par le banc
+`firestore`, qui compte aussi les 14 abonnements ouverts à la connexion.
 
 ## Données eBird
 
@@ -199,38 +172,6 @@ tous les appels par un serveur à nous, donc de quitter GitHub Pages. Décision 
 2026-09-28 : on ne change rien, le jeton ne lit que des données eBird publiques, pas le
 compte ni les listes. Le cookie, lui, reste hors dépôt - c'est lui le vrai secret.
 
-Les fréquences viennent des bar charts eBird, fenêtre 2019-2026, **et exigent un compte** :
-l'URL `barchartData` redirige vers la connexion. Le cookie se colle dans un fichier hors
-dépôt, désigné par `EBIRD_COOKIE_FILE`. Les statuts exotiques, eux, se lisent sur la page
-publique sans aucun compte.
-
-La dernière année de la fenêtre est toujours incomplète. Les poids des quinzaines sont donc
-ramenés à l'année - voir `tools/build/annees-par-quinzaine.mjs`, qui explique pourquoi et
-donne les mesures. **Là où l'effort sert à pondérer le temps, il est ramené à l'année ; là où
-il sert à recombiner des comptes en fréquence, il reste brut.**
-
-**Repasser l'injecteur fait partie du scrape, pas d'une étape facultative.**
-`inject-exotic-by-region.mjs` avait deux jours de retard le 2026-09-27 : la Grande-Bretagne,
-la Hongrie, la Slovénie et la Lettonie avaient **zéro zone** dans `app.js` alors que leurs
-fichiers générés étaient pleins. Leurs cartes de statut s'affichaient vides à l'écran, et
-rien ne le signalait.
-
-**La liste des zones d'un pays se demande à eBird, jamais à `zones-agregees.json`** :
-`https://api.ebird.org/v2/ref/region/list/subnational1/XX.json`, jeton `dbflh4atmsom`. Le
-fichier local ignorait cinq zones lettonnes, et c'étaient les cinq plus grosses, de 147 à
-241 espèces : jamais demandées, donc jamais récoltées, pendant des mois.
-
-**Le mur anti-robot refuse le mode invisible.** Mesuré le 2026-09-28 sur le même témoin à la
-minute près : en `headless`, eBird rend « impossible de déterminer si vous êtes un robot » et
-0 espèce ; en fenêtre visible, SI-061 rend ses 295 espèces. Une zone qui répond 0 en mode
-invisible ne dit rien sur la zone, seulement sur le mur - c'est ce qui a fait conclure à tort
-à un bridage. Deux commandes répondent désormais : `tools/build/etat-exotiques.mjs` pour ce
-qui manque face aux listes eBird, `tools/build/verifie-zones-vides.mjs` pour trancher zone par
-zone.
-
-**« Zone vide » ou « scrape raté » : seule la page barchart ouverte dans un vrai navigateur
-tranche.** Les deux sondes de l'API mentent, chacune à sa façon : `obs/recent` donne 0 pour
-une commune rurale en septembre, et `spplist` compte toute l'histoire d'eBird quand le bar
-chart s'arrête à la fenêtre courante. Et ne jamais conclure au bridage sans avoir chargé un
-témoin connu dans la même minute : le 2026-09-27, le scraper échouait partout pendant que
-LV-022 rendait ses 228 espèces en trois secondes.
+Récolte et vérification des données (bar charts, fréquences, injecteur, zones, mur anti-robot) :
+skill `donnees-ebird`. Le piège qui a déjà fait conclure à tort : eBird refuse le mode invisible,
+donc **0 espèce en `headless` ne dit rien sur la zone, seulement sur le mur anti-robot**.

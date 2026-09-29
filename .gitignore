@@ -7,6 +7,7 @@
 !.claude/settings.json
 !.claude/launch.json
 !.claude/hooks/
+!.claude/skills/
 # settings.local.json est le fichier par machine (permissions accordées ici) et worktrees/
 # l'espace de travail des sessions : ni l'un ni l'autre ne veut dire quoi que ce soit ailleurs.
 
