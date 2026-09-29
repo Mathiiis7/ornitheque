@@ -10429,6 +10429,9 @@ $('#copyLinkBtn').addEventListener('click',async()=>{
 $('#inviteBtn')?.addEventListener('click', doInvite);
 
 const fileInput=$('#file'), drop=$('#drop');
+// Liste analysee qui attend un prenom pour partir. Voir handleFiles() : plutot que d'ouvrir
+// une fenetre du navigateur, on renvoie au champ visible et on garde le travail deja fait.
+let _depotEnAttente = null;
 async function handleFiles(fileList){
   const f=[...fileList].find(x=>/\.csv$/i.test(x.name)||x.type==='text/csv') || fileList[0];
   if(!f) return;
@@ -10450,14 +10453,32 @@ async function handleFiles(fileList){
   // NOM_ABSENT reste le dernier filet, pour les lignes deja enregistrees ainsi.
   let name = ($('#myName').value.trim()) || cleanName(parsed.defaultName, state.people.length+1);
   if(name === NOM_ABSENT){
-    name = (prompt('Ton prénom ?\n\nIl s\'affichera dans le classement de la ligue.') || '').trim().slice(0, 24);
-    if(!name){
-      $('#myStatus').textContent = 'Il faut un prénom pour rejoindre la ligue.';
-      $('#myName').focus();
-      return;
+    // Le champ « Ton prénom » est visible juste au-dessus : on y renvoie, au lieu d'ouvrir
+    // par-dessus une fenetre du navigateur qu'on ne peut ni styler, ni annoncer, ni fermer
+    // sans perdre le fichier. La liste deja analysee est mise de cote et le depot repart
+    // tout seul des qu'un prenom est saisi - sans ca il faudrait redeposer le fichier.
+    _depotEnAttente = parsed;
+    $('#myStatus').textContent = 'Encore ton prénom : écris-le juste au-dessus, puis appuie sur Entrée.';
+    const inp = $('#myName');
+    inp.classList.add('attend-saisie');
+    // Le champ vit dans « Ma liste ». Si on est ailleurs, l'onglet est en display:none : ni
+    // le message ni le champ ne se voient, et focus() ne prend pas sur un element non affiche.
+    // On y ramene avant de demander quoi que ce soit.
+    if(getComputedStyle($('#viewLoad')).display === 'none'){
+      document.querySelector('.tab[data-view="load"]')?.click();
     }
+    inp.focus();
+    inp.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    return;
   }
+  await _enregistreListe(parsed, name);
+}
+
+// La moitie du depot qui suit le prenom. Fonction a part parce qu'on y revient par deux
+// chemins : le depot direct, et la reprise apres qu'un prenom a enfin ete saisi.
+async function _enregistreListe(parsed, name){
   $('#myName').value = name;
+  $('#myName').classList.remove('attend-saisie');
   // Préserver les coords GPS déjà connues : si l'espèce était déjà là avec lat/lon
   // et que le nouveau CSV ne fournit pas de coords (ex. life list simple),
   // on garde les anciennes. La liste des espèces reste dictée par le CSV.
@@ -10523,6 +10544,16 @@ function _nameIsUnlocked(me){
   if(!me || !me.joinedAt) return true;                 // pas encore inscrit → toujours modifiable
   return (Date.now() - me.joinedAt*1000) < NAME_GRACE_MS;
 }
+// Reprise du depot laisse en attente faute de prenom. Sur 'change' (Entree ou sortie du
+// champ) plutot que sur chaque frappe : reprendre a la premiere lettre enverrait « M ».
+$('#myName').addEventListener('change', async e => {
+  if(!_depotEnAttente) return;
+  const nm = e.target.value.trim().slice(0, 24);
+  if(!nm){ $('#myStatus').textContent = 'Il faut un prénom pour rejoindre la ligue.'; return; }
+  const parsed = _depotEnAttente;
+  _depotEnAttente = null;
+  await _enregistreListe(parsed, nm);
+});
 $('#myName').addEventListener('change',async e=>{
   const nm=(e.target.value.trim())||'Joueur';
   e.target.value=nm;

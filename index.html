@@ -40,7 +40,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=248">
+<link rel="modulepreload" href="app.js?v=249">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -978,15 +978,6 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         <h3 style="margin:20px 0 8px; font-size:16px; color:var(--ink);">🐛 Feedback</h3>
         <p style="margin:0;">Une aberration de tier, un chart bizarre, une idée de feature ? Utilise l'onglet <b>💡 Requêtes</b> (dans le menu ☰) pour signaler.</p>
 
-        <h3 style="margin:24px 0 8px; font-size:16px; color:var(--ink);">📊 Tableau de bord interne</h3>
-        <p style="margin:0 0 10px;">L'état complet de l'app en temps réel : sources de données, couverture par pays, features en prod, méthodes de calcul, backlog, plafonds data, maintenance. Mis à jour automatiquement à chaque évolution.</p>
-        <div style="margin-top:12px;">
-          <a href="https://claude.ai/code/artifact/437344f3-b6f8-404d-aa00-c40e010402ba" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:10px; padding:12px 20px; background:var(--accent); color:white; border-radius:8px; text-decoration:none; font-weight:600; font-size:14px; box-shadow:0 2px 8px rgba(0,0,0,.15); transition:transform .1s;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
-            📊 Ouvrir le dashboard →
-          </a>
-        </div>
-        <p style="margin:8px 0 0; font-size:12px; color:var(--ink-3);">S'ouvre dans un nouvel onglet (claude.ai n'autorise pas l'embed).</p>
-
         <h3 style="margin:24px 0 8px; font-size:16px; color:var(--ink);">🔒 Confidentialité (RGPD)</h3>
         <p style="margin:0 0 8px;"><b>Data collectée</b> : email (Firebase Auth), nom d'affichage, life list eBird (espèces + lieux d'observation + dates), messages du tchat, photos uploadées, commentaires, réactions emoji, statistiques quiz.</p>
         <p style="margin:0 0 8px;"><b>Finalité</b> : partager sa liste d'oiseaux entre amis, comparer les cochages, tchatter, débloquer des trophées. Aucune revente, aucune publicité, aucun tracking commercial.</p>
@@ -1266,4 +1257,4 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=248"></script>
+<script type="module" src="app.js?v=249"></script>

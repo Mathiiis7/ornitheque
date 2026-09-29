@@ -4,7 +4,8 @@
 
   CE QU IL A DEJA RATE
   - trois `cursor:help` ecrits a la main plus bas dans la feuille annulaient la regle
-    generale, a specificite egale ;
+    generale, a specificite egale ; trois autres dormaient encore dans le quiz, trouves le
+    2026-09-29 - .qz-pill, .qz-daily-streak et .qz-stats-scope, tous les trois avec un title ;
   - un attribut vide - title="" sur un GIF sans titre - donnait un « ? » et aucune bulle ;
   - le nom de zone gardait son data-tip meme entier, donc le « ? » promettait une
     explication que rien ne suivait.
@@ -40,6 +41,9 @@ export function html(){
   <span id="nue">texte sans infobulle</span>
   <span data-tip="" id="vide">attribut vide</span>
   <span title="" id="vide2">title vide</span>
+  <span class="qz-pill" title="Taux de bonnes réponses" id="pastilleQuiz">🎯 <b>72%</b></span>
+  <div class="qz-daily-streak" title="Jours consécutifs joués" id="serieQuiz">🔥 <b>3</b></div>
+  <span class="qz-stats-scope" title="Classement séparé par difficulté" id="porteeQuiz">🟢 Facile</span>
   <input value="un champ" id="champ">
 </div>`,
     source: `const POINT_CHAUD = ${JSON.stringify(m[2] + ',' + m[3])};`,
@@ -66,7 +70,8 @@ const suite = () => {
   }
 
   for (const [id, attendu] of [['bulle','aide'], ['jeton','aide'], ['bouton','main'],
-      ['nue','normal'], ['vide','normal'], ['vide2','normal'], ['champ','texte']]) {
+      ['nue','normal'], ['vide','normal'], ['vide2','normal'], ['champ','texte'],
+      ['pastilleQuiz','aide'], ['serieQuiz','aide'], ['porteeQuiz','aide']]) {
     const el = document.getElementById(id);
     const vu = curseur(el);
     verif(el.textContent.trim() || 'champ de saisie', vu, vu === attendu);

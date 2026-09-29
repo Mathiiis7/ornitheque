@@ -335,6 +335,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .me-name input { display:block; margin-top:5px; background:var(--surface-2); border:1px solid var(--line-2);
     border-radius:9px; padding:8px 11px; font:inherit; color:var(--ink); font-size:14px; width:240px; max-width:100%; }
   .me-name input:focus { outline:3px solid var(--accent); }
+  /* Le champ reclame son contenu : une liste a ete deposee sans prenom et attend. Le bord
+     epais suffit a designer l endroit, le texte de #myStatus dit quoi faire. Remplace la
+     fenetre prompt() du navigateur, qui se posait par-dessus le champ qu elle demandait. */
+  .me-name input.attend-saisie { border-color:var(--accent); border-width:2px;
+    box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
   .profile { margin-top:18px; padding-top:18px; border-top:1px solid var(--line); }
   .prof-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; }
   .prof-grid label { font-size:12.5px; color:var(--ink-2); font-weight:600; display:flex; flex-direction:column; gap:5px; }
@@ -1092,7 +1097,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .qz-mode:hover:not(.on) { color:var(--ink); }
   .qz-topbar { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; }
   .qz-stats-line { display:inline-flex; gap:6px; flex-wrap:wrap; }
-  .qz-pill { display:inline-flex; align-items:baseline; gap:5px; padding:6px 12px; background:var(--surface-2); border-radius:14px; font:600 13px/1.2 system-ui; color:var(--ink); cursor:help; }
+  .qz-pill { display:inline-flex; align-items:baseline; gap:5px; padding:6px 12px; background:var(--surface-2); border-radius:14px; font:600 13px/1.2 system-ui; color:var(--ink); }
   /* Les enfants ne captent pas les evenements souris : le title du parent s'affiche
      de maniere fiable sur toute la surface (sinon flicker/retard sur changement de child). */
   .qz-pill > * { pointer-events:none; line-height:1.2; }
@@ -1100,7 +1105,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .qz-pill-lbl { font-size:10.5px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.3px; font-weight:700; margin-left:2px; }
   .qz-pill-sub { font-size:10.5px; color:var(--ink-3); font-weight:600; margin-left:4px; opacity:.85; text-transform:uppercase; letter-spacing:.3px; }
   /* Petit label qui indique de quel bucket (type de son) proviennent les stats affichees */
-  .qz-stats-scope { display:inline-flex; align-items:center; padding:3px 10px; border-radius:12px; background:color-mix(in srgb,var(--accent) 12%,transparent); color:var(--accent-ink); font:700 11px/1 system-ui; letter-spacing:.2px; margin-right:2px; cursor:help; }
+  .qz-stats-scope { display:inline-flex; align-items:center; padding:3px 10px; border-radius:12px; background:color-mix(in srgb,var(--accent) 12%,transparent); color:var(--accent-ink); font:700 11px/1 system-ui; letter-spacing:.2px; margin-right:2px; }
   /* Chips dans le panneau reglages du quiz : hint entre parentheses en petit */
   .qz-settings .person-chip .fp-hint { font-size:10.5px; font-weight:600; margin-left:4px; opacity:.75; }
   .qz-settings .fp-section { margin-bottom:10px; }
@@ -1205,7 +1210,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .qz-daily-sub { font-size:11.5px; color:var(--ink-3); font-weight:500; margin-left:6px; }
   .qz-daily-status { font-size:12.5px; color:var(--ink-2); }
   .qz-daily-right { display:flex; align-items:center; gap:10px; flex:none; }
-  .qz-daily-streak { padding:6px 12px; background:color-mix(in srgb,#f97316 12%,var(--surface)); color:#c2410c; border-radius:999px; font:600 13px/1 system-ui; cursor:help; }
+  .qz-daily-streak { padding:6px 12px; background:color-mix(in srgb,#f97316 12%,var(--surface)); color:#c2410c; border-radius:999px; font:600 13px/1 system-ui; }
   .qz-daily-streak b { font-weight:800; }
   .qz-daily-btn { padding:10px 18px; border:none; background:var(--accent); color:#fff; border-radius:10px; font:700 13px/1 system-ui; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.15); }
   .qz-daily-btn:hover:not(:disabled) { filter:brightness(1.08); transform:translateY(-1px); }
@@ -1389,7 +1394,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .species-modal .sm-map-gbif-ctrl[hidden] { display:none; }
   .species-modal .sm-map-gbif-ctrl label { display:inline-flex; align-items:center; gap:4px; }
   .species-modal .sm-map-gbif-ctrl label[hidden] { display:none; }
-  .species-modal .sm-map-gbif-ctrl select, .species-modal .sm-map-gbif-ctrl input { font-size:12px; padding:2px 6px; border:1px solid var(--line); border-radius:6px; background:var(--surface-1); color:var(--ink-1); }
+  .species-modal .sm-map-gbif-ctrl select, .species-modal .sm-map-gbif-ctrl input { font-size:12px; padding:2px 6px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink-2); }
   .species-modal .sm-map-gbif-ctrl input[type=number] { width:64px; }
   .species-modal .sm-obs ul { margin:0; padding-left:18px; font-size:13.5px; color:var(--ink-2); line-height:1.55; }
   .species-modal .sm-obs .help { margin:6px 0; font-size:13px; color:var(--ink-3); }
