@@ -1,0 +1,19 @@
+{
+  "enabledPlugins": {
+    "impeccable@impeccable": true
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/verif-avant-fin.mjs\"",
+            "timeout": 180
+          }
+        ]
+      }
+    ]
+  }
+}

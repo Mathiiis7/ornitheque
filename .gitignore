@@ -1,5 +1,14 @@
-# Notes internes de l'assistant — ne pas publier
-.claude/
+# Outils de travail de l'assistant. Le DOSSIER reste exclu par défaut, et on nomme les
+# exceptions : ce que Claude Code déposera là demain (états locaux, caches, journaux) ne
+# partira pas dans le dépôt public sans qu'on l'ait décidé. C'est la leçon de
+# /notes-privees/, plus bas. `.claude/*` et non `.claude/` : git ne descend pas dans un
+# dossier exclu, une négation sous `.claude/` ne serait jamais lue.
+.claude/*
+!.claude/settings.json
+!.claude/launch.json
+!.claude/hooks/
+# settings.local.json est le fichier par machine (permissions accordées ici) et worktrees/
+# l'espace de travail des sessions : ni l'un ni l'autre ne veut dire quoi que ce soit ailleurs.
 
 # Outil local de création de badge — ne pas publier
 createur-badge.html
