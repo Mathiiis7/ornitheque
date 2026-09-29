@@ -128,6 +128,9 @@ function assemble(a){
 }
 
 export function getFirestore(){ return { __db: true }; }
+// app.js passe par initializeFirestore depuis le 2026-09-29, pour pouvoir demander
+// experimentalForceLongPolling. Le bouchon ignore le reglage, il n a pas de reseau.
+export function initializeFirestore(){ return { __db: true }; }
 export function collection(...a){ return ref(assemble(a)); }
 export function doc(...a){ return ref(assemble(a)); }
 export function orderBy(champ, sens){ return { __contrainte: 'orderBy', champ, sens: sens || 'asc' }; }

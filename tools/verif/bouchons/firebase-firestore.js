@@ -46,6 +46,9 @@ window.__lectures = { abonnements: [], ponctuelles: [], docsLivres: 0 };
 function compter(quoi, r){ window.__lectures.ponctuelles.push(quoi + ' ' + ((r && r.__chemin) || '?')); }
 
 export function getFirestore(){ return { __db: true }; }
+// app.js passe par initializeFirestore depuis le 2026-09-29, pour pouvoir demander
+// experimentalForceLongPolling. Le bouchon ignore le reglage, il n a pas de reseau.
+export function initializeFirestore(){ return { __db: true }; }
 export function collection(...a){ return ref(morceaux(a)); }
 export function doc(...a){ return ref(morceaux(a)); }
 export function query(r){ return r; }

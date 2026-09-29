@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, EmailAuthProvider, linkWithCredential } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, deleteField, collection, onSnapshot, serverTimestamp, addDoc, query, orderBy, limit, where, getDocs, writeBatch }
+import { initializeFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, deleteField, collection, onSnapshot, serverTimestamp, addDoc, query, orderBy, limit, where, getDocs, writeBatch }
   from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 /* ---------------- Firebase ---------------- */
@@ -14,7 +14,16 @@ const firebaseConfig = {
 };
 const fbApp = initializeApp(firebaseConfig);
 const auth = getAuth(fbApp);
-const db = getFirestore(fbApp);
+// experimentalForceLongPolling : Firestore essaie d'abord un canal en flux continu, et
+// bascule tout seul en interrogation repetee s'il le juge bloque. Chez Mathis cette bascule
+// echoue et coute une attente exponentielle a CHAQUE chargement - mesure le 2026-09-29 :
+// premiere tentative a 5 303 ms qui ne rend rien, 6,4 s de silence, seconde tentative a
+// 11 761 ms qui livre les 275 Ko en 82 ms. Le serveur et le reseau sont hors de cause.
+// Reproduit en navigation privee, donc sans extension : ce n'est pas son poste.
+// On saute donc la tentative vouee a l'echec et on demande l'interrogation repetee d'emblee -
+// celle sur laquelle le SDK finissait de toute facon. Le reglage interdit d'etre combine avec
+// experimentalAutoDetectLongPolling, actif par defaut : le poser suffit a le desactiver.
+const db = initializeFirestore(fbApp, { experimentalForceLongPolling: true });
 
 /* ---------------- state ---------------- */
 const SERIES_N = 8;
