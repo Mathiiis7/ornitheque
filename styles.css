@@ -73,6 +73,25 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   }
 
   * { box-sizing: border-box; }
+
+  /* Un seul anneau de focus pour tout ce qui se rejoint au clavier. Ecrit en :where(),
+     donc a specificite ZERO : n'importe quelle regle de focus deja ecrite plus bas gagne
+     sans avoir a etre retouchee, et ajouter un composant demain le fait entrer tout seul.
+     Le navigateur en dessinait bien un par defaut, mais mesure le 2026-09-29 : 0,9px de
+     large, parce que body porte zoom:0.85. C'est trop fin pour se voir sur une pastille.
+     3px et non 2 : Chrome arrondit outline-width au pixel entier AVANT d'appliquer le
+     zoom. Mesure le 2026-09-29 sur la meme pastille : 2px et 2,5px ecrits rendent tous
+     les deux 1,88px, 3px et 3,5px rendent tous les deux 2,82px. Ecrire 2,5px ne servait
+     donc a rien. 3px ecrits font 2,55px reels, au-dessus du minimum de 2px.
+     Couleur --accent : mesure le meme jour, 4,23:1 au pire sur les fonds clairs de
+     l'appli et 6,48:1 sur les sombres, la le seuil d'un indicateur non textuel etant 3:1.
+     Le decalage sort l'anneau de l'element : il reste visible sur un bouton rempli
+     d'accent, ou un anneau colle au bord se fondrait dans le fond. */
+  :where(a[href], button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+  }
+
   /* Tout ce qui porte une infobulle prend le curseur « aide » : le point d'interrogation
      annonce qu'il y a quelque chose a lire, ce qui est precisement le role de l'infobulle.
      Seule la pastille exotique des vignettes l'avait.
@@ -166,7 +185,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .auth-gate-field { display:flex; flex-direction:column; gap:6px; }
   .auth-gate-field label { font-size:13px; font-weight:700; color:var(--ink-2); text-transform:uppercase; letter-spacing:.5px; }
   .auth-gate-field input { padding:14px 16px; border:1.5px solid var(--line-2); border-radius:11px; font:inherit; font-size:16px; background:var(--surface-2); color:var(--ink); transition:border-color .12s, background .12s; }
-  .auth-gate-field input:focus { outline:none; border-color:var(--accent); background:var(--surface); }
+  /* La bordure qui change de couleur ne suffit pas : 1,5px, et le seul signal est la
+     couleur. L'anneau s'ajoute par-dessus plutot que de remplacer. */
+  .auth-gate-field input:focus { outline:3px solid var(--accent); outline-offset:2px; border-color:var(--accent); background:var(--surface); }
   .auth-gate-consent { display:flex; align-items:flex-start; gap:8px; font-size:12px; color:var(--ink-3); line-height:1.4; cursor:pointer; }
   .auth-gate-consent input { flex:0 0 auto; margin-top:2px; }
   .auth-gate-cta { padding:15px; border:none; background:var(--accent); color:#fff; border-radius:11px; font:800 16px system-ui; cursor:pointer; margin-top:6px; transition:filter .12s, transform .1s; }
@@ -234,9 +255,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .drop:hover { border-color:color-mix(in srgb, var(--accent) 50%, var(--line-2)); }
   /* Les quatre champs de fichier sont masques visuellement : l'anneau de focus doit donc se dessiner
      sur l'element visible, sinon le clavier atteint une cible qu'on ne voit pas. */
-  #file:focus-visible + .drop { outline:2px solid var(--accent); outline-offset:3px; }
+  #file:focus-visible + .drop { outline:3px solid var(--accent); outline-offset:3px; }
   .btn:has(input[type=file]:focus-visible),
-  .chat-imgbtn:has(input[type=file]:focus-visible) { outline:2px solid var(--accent); outline-offset:2px; }
+  .chat-imgbtn:has(input[type=file]:focus-visible) { outline:3px solid var(--accent); outline-offset:2px; }
   .drop.drag { border-color:var(--accent); background:color-mix(in srgb, var(--accent) 12%, var(--surface-2)); transform:scale(1.01); }
   .drop-icon { font-size:38px; margin-bottom:6px; opacity:.75; }
   .drop .big { font-size:16px; font-weight:700; color:var(--ink); }
@@ -308,13 +329,13 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .me-name label { font-size:12.5px; color:var(--ink-2); font-weight:600; }
   .me-name input { display:block; margin-top:5px; background:var(--surface-2); border:1px solid var(--line-2);
     border-radius:9px; padding:8px 11px; font:inherit; color:var(--ink); font-size:14px; width:240px; max-width:100%; }
-  .me-name input:focus { outline:2px solid var(--accent); }
+  .me-name input:focus { outline:3px solid var(--accent); }
   .profile { margin-top:18px; padding-top:18px; border-top:1px solid var(--line); }
   .prof-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; }
   .prof-grid label { font-size:12.5px; color:var(--ink-2); font-weight:600; display:flex; flex-direction:column; gap:5px; }
   .prof-grid input, .prof-grid select { background:var(--surface-2); border:1px solid var(--line-2);
     border-radius:9px; padding:8px 11px; font:inherit; color:var(--ink); font-size:14px; font-weight:400; }
-  .prof-grid input:focus, .prof-grid select:focus { outline:2px solid var(--accent); }
+  .prof-grid input:focus, .prof-grid select:focus { outline:3px solid var(--accent); }
   .mystatus { font-size:13px; color:var(--accent-ink); font-weight:600; }
   .join-row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:16px; }
   .join-row .search { max-width:280px; }
@@ -329,7 +350,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .manual-row { display:flex; flex-wrap:wrap; gap:8px; align-items:stretch; }
   .manual-search { position:relative; flex:1 1 220px; min-width:180px; }
   .manual-search input { width:100%; box-sizing:border-box; padding:9px 12px; border:1px solid var(--line-2); border-radius:10px; font:inherit; background:var(--surface); color:var(--ink); }
-  .manual-search input:focus { outline:2px solid var(--accent); outline-offset:1px; }
+  .manual-search input:focus { outline:3px solid var(--accent); outline-offset:1px; }
   .manual-row select, .manual-row input[type=date] { padding:9px 10px; border:1px solid var(--line-2); border-radius:10px; font:inherit; background:var(--surface); color:var(--ink); }
   .manual-suggest { position:absolute; top:100%; left:0; right:0; margin-top:2px; background:var(--surface); border:1px solid var(--line); border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,.08); z-index:10; max-height:280px; overflow-y:auto; display:none; }
   .manual-suggest.open { display:block; }
@@ -351,7 +372,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .pick-map-close:hover { color:var(--ink); }
   .pick-map-search { display:flex; gap:6px; padding:10px 16px; border-bottom:1px solid var(--line); }
   .pick-map-search input { flex:1; padding:8px 12px; border:1px solid var(--line-2); border-radius:10px; font:inherit; background:var(--surface); color:var(--ink); }
-  .pick-map-search input:focus { outline:2px solid var(--accent); outline-offset:1px; }
+  .pick-map-search input:focus { outline:3px solid var(--accent); outline-offset:1px; }
   .pick-map-el { flex:1; min-height:360px; }
   .pick-map-actions { display:flex; align-items:center; gap:10px; padding:12px 16px; border-top:1px solid var(--line); flex-wrap:wrap; }
   .pick-map-coords { flex:1; font-size:12.5px; color:var(--ink-2); font-family:var(--mono); }
@@ -418,7 +439,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .board-sheet .who-cell .who-name { background:none; border:0; padding:0; margin:0; font:inherit;
     color:inherit; cursor:pointer; text-align:left; }
   .board-sheet .who-cell .who-name:hover { text-decoration:underline; }
-  .board-sheet .who-cell .who-name:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:3px; }
+  .board-sheet .who-cell .who-name:focus-visible { outline:3px solid var(--accent); outline-offset:2px; border-radius:3px; }
   .c-num { text-align:right !important; font-variant-numeric:tabular-nums; }
   .board-sheet .c-txt { min-width:120px; max-width:190px; white-space:normal; font-size:13px; vertical-align:top; }
   /* Hauteur uniforme des lignes du board : posée en JS après render (--rowh) sur chaque tr. */
@@ -500,7 +521,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     border:1px solid var(--line-2); border-radius:9px; padding:7px 11px; }
   .search input { border:none; background:transparent; color:var(--ink); font:inherit; font-size:14px;
     width:100%; }
+  /* Le champ est sans bordure a l'interieur d'une boite qui en a une : l'anneau se
+     dessine donc AUTOUR de la boite, sinon il flotte au milieu. L'outline:none du
+     champ n'est plus une suppression seche, il deplace l'anneau d'un cran. */
   .search input:focus { outline:none; }
+  .search:focus-within { outline:3px solid var(--accent); outline-offset:2px; }
   .seg { display:flex; border:1px solid var(--line-2); border-radius:9px; overflow:hidden; }
   .seg button { border:none; background:var(--surface); color:var(--ink-2); font:inherit; font-size:12.5px;
     padding:7px 11px; cursor:pointer; }
@@ -508,7 +533,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .filt-sel { border:1px solid var(--line-2); background:var(--surface); color:var(--ink-2); font:inherit;
     font-size:12.5px; padding:7px 10px; border-radius:9px; cursor:pointer; max-width:200px; }
   .filt-sel:hover { border-color:var(--accent); }
-  .filt-sel:focus { outline:2px solid var(--accent); }
+  .filt-sel:focus { outline:3px solid var(--accent); }
   /* Custom region picker (fiches especes) : dropdown riche avec bars d'abondance. */
   .reg-picker { position:relative; display:inline-block; }
   .reg-picker-trigger { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line-2); background:var(--surface); color:var(--ink-2); font:inherit; font-size:11px; padding:4px 8px; border-radius:6px; cursor:pointer; font-weight:600; }
@@ -859,7 +884,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .gif-pop-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; overflow-y:auto; flex:1; padding-right:2px; }
   .gif-pop-empty { grid-column:1/-1; text-align:center; color:var(--ink-3); padding:24px; font-size:13px; }
   .gif-item { padding:0; border:none; border-radius:8px; overflow:hidden; cursor:pointer; background:var(--surface-2); aspect-ratio:1/1; }
-  .gif-item:hover { outline:2px solid var(--accent); }
+  .gif-item:hover { outline:3px solid var(--accent); }
   .gif-item img { width:100%; height:100%; object-fit:cover; display:block; }
   .gif-pop-footer { font-size:10px; color:var(--ink-3); text-align:center; margin-top:8px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; }
   /* Preview du GIF selectionne dans le compose */
@@ -1416,7 +1441,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .feed-tag { display:inline-block; margin-left:6px; font-size:10.5px; color:var(--ink-3); background:var(--surface-2); padding:1px 7px; border-radius:9px; vertical-align:middle; }
   .req-form { display:flex; gap:10px; margin:6px 0 16px; }
   .req-form textarea { flex:1; padding:10px 12px; border:1px solid var(--line-2); border-radius:10px; font:inherit; background:var(--surface); color:var(--ink); resize:vertical; min-height:44px; line-height:1.4; }
-  .req-form textarea:focus { outline:2px solid var(--accent); outline-offset:1px; }
+  .req-form textarea:focus { outline:3px solid var(--accent); outline-offset:1px; }
   .req-form .btn { align-self:flex-end; }
   .req-list { display:flex; flex-direction:column; gap:10px; }
   .req-item { display:flex; gap:12px; padding:12px 14px; border:1px solid var(--line); border-radius:12px; background:var(--surface-2); align-items:flex-start; }
@@ -1601,7 +1626,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .map-search { display:flex; align-items:center; gap:8px; margin:0 0 10px; }
   .map-search-input-wrap { position:relative; flex:1; }
   .map-search input { width:100%; box-sizing:border-box; padding:8px 12px; border:1px solid var(--line-2); border-radius:10px; font:inherit; background:var(--surface); color:var(--ink); }
-  .map-search input:focus { outline:2px solid var(--accent); outline-offset:1px; }
+  .map-search input:focus { outline:3px solid var(--accent); outline-offset:1px; }
   .map-search-count { font-size:12px; color:var(--ink-3); font-weight:600; min-width:80px; }
   .map-search-suggest { position:absolute; top:100%; left:0; right:0; margin-top:4px; background:var(--surface); border:1px solid var(--line); border-radius:10px; box-shadow:0 4px 14px rgba(0,0,0,.14); display:none; max-height:min(60vh, 480px); overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; z-index:2000; }
   .map-search-suggest.open { display:block; }
@@ -1640,7 +1665,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .cmt-item .cmt-del:hover { color:#c33; }
   .cmt-form { display:flex; gap:5px; align-items:center; }
   .cmt-input { flex:1; font:inherit; font-size:12.5px; padding:6px 10px; border:1px solid var(--line-2); border-radius:14px; background:var(--surface); color:var(--ink); }
-  .cmt-input:focus { outline:2px solid var(--accent); outline-offset:1px; }
+  .cmt-input:focus { outline:3px solid var(--accent); outline-offset:1px; }
   .cmt-send { font-size:13px; padding:5px 11px; border-radius:14px; border:1px solid var(--accent); background:var(--accent); color:#fff; cursor:pointer; }
   .cmt-send:hover { filter:brightness(.95); }
   .cmt-send:disabled { opacity:.6; cursor:not-allowed; }
