@@ -90,8 +90,33 @@ function _top(etape){
       + (_chrono.poids ? '\n   reçu : ' + _chrono.poids.membres + ' membre(s), '
           + _chrono.poids.especes + ' espèces au total, ' + _chrono.poids.ko + ' Ko avant compression'
           + ' — soit ' + Math.round(_chrono.poids.ko * 1024 / Math.max(1, _chrono.poids.especes))
-          + ' octets par espèce' : ''));
+          + ' octets par espèce' : '')
+      + _chronoReseau());
   }
+}
+
+/* Le detail de ce que les serveurs Google ont fait pendant l'attente. 275 Ko recus en 7,8 s
+   (mesure chez Mathis le 2026-09-29) ne sont pas un probleme de debit : 50 Ko compresses
+   passent en un clin d'oeil. Restent trois suspects, que seule la chronologie des requetes
+   separe - un long silence avant la premiere requete, une requete unique interminable, ou une
+   volee de requetes courtes qui se relancent l'une l'autre.
+   Le canal WebChannel de Firestore passe par XHR : il apparait donc dans performance, sans
+   qu'on ait a instrumenter le SDK. */
+function _chronoReseau(){
+  try{
+    const groupes = [['firestore', /firestore\.googleapis/], ['connexion', /identitytoolkit|securetoken/]];
+    const lignes = [];
+    for(const [nom, motif] of groupes){
+      const r = performance.getEntriesByType('resource').filter(x => motif.test(x.name));
+      if(!r.length) continue;
+      const debut = Math.round(Math.min(...r.map(x => x.startTime)));
+      const fin = Math.round(Math.max(...r.map(x => x.responseEnd)));
+      const pire = r.reduce((a, b) => (b.duration > a.duration ? b : a));
+      lignes.push('   ' + nom + ' : ' + r.length + ' requête(s), de ' + debut + ' à ' + fin
+        + ' ms, la plus longue ' + Math.round(pire.duration) + ' ms');
+    }
+    return lignes.length ? '\n' + lignes.join('\n') : '';
+  }catch(_){ return ''; }
 }
 window.__chrono = _chrono;
 
