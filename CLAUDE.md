@@ -60,14 +60,23 @@ l'encombrement sur le disque, pas ce que GitHub Pages sert.
 **`node --check app.js` ne marche pas** : la commande suppose du CommonJS et `app.js` est un
 module. Utiliser `node --input-type=module --check < app.js`.
 
-**Les fins de ligne sont MÉLANGÉES dans le dépôt**, et ce fichier se trompait sur la
-répartition jusqu'au 2026-09-29. Compté, pas supposé : `app.js`, `index.html` et ce
-`CLAUDE.md` sont en **CRLF** ; `styles.css`, `service-worker.js` et `tools/` en **LF**.
-Un script qui découpe sur `\n` seul laisse un `\r` traîner en fin de ligne, un script qui
-découpe sur `\r\n` en dur ne voit qu'une seule ligne dans `styles.css`. Détecter le
-séparateur, ne jamais le supposer, et réécrire avec celui du fichier - c'est exactement la
-panne que la section « Déployer » redoute pour les deux occurrences d'`app.js?v=`.
-La commande qui tranche :
+**Les fins de ligne sont mélangées DANS LE DOSSIER DE TRAVAIL, jamais dans le dépôt.** Ce
+fichier a raconté deux versions fausses avant celle-ci, la dernière le 2026-09-29. La vraie :
+`core.autocrlf` vaut `true` et il n'y a pas de `.gitattributes`, donc **git stocke tout en LF**
+et rend du CRLF au moment de sortir un fichier. Ce qui varie, c'est le dossier de travail : un
+fichier fraîchement sorti de git est en CRLF, un fichier réécrit par un de nos scripts garde ce
+que le script a écrit - d'où `app.js` et `index.html` en CRLF mais `styles.css` et
+`service-worker.js` en LF, mesuré ce jour-là.
+
+Conséquences, dans cet ordre d'importance :
+1. **Un script qui modifie un fichier lit le séparateur dans le fichier, il ne l'écrit pas de
+   mémoire.** Découper sur `\n` seul laisse un `\r` en fin de ligne ; découper sur `\r\n` en dur
+   ne voit qu'une seule ligne dans un fichier en LF, et ne remplace donc qu'UNE des deux
+   occurrences d'`app.js?v=` - la panne que la section « Déployer » redoute.
+2. Mélanger les deux dans un même fichier ne casse rien et ne se voit pas dans `git diff`
+   (git normalise), mais ça fait crier `git add`. C'est un signal utile, pas une alerte.
+
+La commande qui tranche, sur le dossier de travail :
 
 ```
 node -e "const b=require('fs').readFileSync(process.argv[1]);let c=0,l=0;for(let i=0;i<b.length;i++)if(b[i]===10){b[i-1]===13?c++:l++};console.log('CRLF='+c,'LF='+l)" FICHIER
