@@ -10353,16 +10353,24 @@ async function saveMyList(name, speciesMap, regions){
     // navigateur nettoye, un autre appareil, ou un compte cree avant l'invitation.
     // Sans lui la regle d'entree refuse le depot sans rien expliquer : on le redemande
     // plutot que de laisser quelqu'un dehors avec un message incomprehensible.
-    if(!codeInv){
+    // Un admin entre sans code : la regle Firestore le dit deja (« allow create : ... ||
+    // isAdmin() »), c'etait l'appli qui reclamait le code avant meme d'essayer. Mathis s'est
+    // enferme dehors de sa propre ligue le 2026-09-29 en retirant sa liste pour tester : son
+    // code d'invitation n'existe pas, il n'est entre par aucune invitation.
+    if(!codeInv && !isAdmin()){
       const saisi = prompt('Ton code d\'invitation ?\n\nL\'entree dans la ligue se fait sur invitation. Demande un code a la personne qui t\'a parle de la ligue.');
       const v = await _verifieCodeInvitation(saisi);
       if(!v.ok) throw new Error(v.message);
       codeInv = v.code;
       try{ localStorage.setItem('mb-invite', codeInv); }catch(_){ }
     }
-    try{ await updateDoc(doc(db, 'leagues', leagueId, 'invites', codeInv),
-      { usedBy: myUid, usedAt: serverTimestamp() }); }catch(_){ }
-    payload.invite = codeInv;
+    // Sans code - donc un admin - il n'y a ni invitation a marquer comme prise, ni champ
+    // « invite » a poser. Un doc(..., '') leverait, et le champ vide serait un faux code.
+    if(codeInv){
+      try{ await updateDoc(doc(db, 'leagues', leagueId, 'invites', codeInv),
+        { usedBy: myUid, usedAt: serverTimestamp() }); }catch(_){ }
+      payload.invite = codeInv;
+    }
   }
   await setDoc(ref, payload, {merge:true});
   // APRES la fiche, et pas avant : depuis l audit du 2026-09-28 la collection accounts
