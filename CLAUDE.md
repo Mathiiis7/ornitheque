@@ -21,7 +21,9 @@ service-worker.js le cache
 tools/build/      les générateurs de données (Node, ESM)
 tools/verif/      les bancs de mesure - voir plus bas
 data/             les données générées, publiées telles quelles
-demo/             la démo du portfolio, générée - voir MODE-DEMO.md
+demo/             la démo du portfolio, générée - voir notes-privees/MODE-DEMO.md
+docs/             les documents de travail publiés avec le dépôt
+notes-privees/    les notes gardées hors du dépôt public, exclues par .gitignore
 ```
 
 ## Voir le résultat avant de pousser

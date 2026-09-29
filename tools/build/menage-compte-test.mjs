@@ -14,7 +14,7 @@
 
   Les DEUX suppressions comptent. Retirer la seule fiche laisserait le code au nom de ce
   compte, qui pourrait donc revenir tout seul : c est le defaut d exclusion trouve a l audit
-  du 2026-09-28, voir AUDIT-SECURITE.md.
+  du 2026-09-28, voir notes-privees/AUDIT-SECURITE.md.
 
   Passe par le Admin SDK, donc AU-DESSUS des regles Firestore. Lancer une sauvegarde avant :
   node tools/build/backup-firestore.mjs

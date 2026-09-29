@@ -121,7 +121,7 @@ service cloud.firestore {
       //
       // Effet de bord connu : le garde-fou anti-doublon de app.js:10150, qui prevenait un
       // revenant connecte avec un autre compte qu une ligne existait deja a son nom, ne voit
-      // plus rien avant inscription. Voir ACCES-LIGUE.md.
+      // plus rien avant inscription. Voir notes-privees/ACCES-LIGUE.md.
       //
       // - Ecriture : chacun sa fiche (upload lifelist), admins peuvent tout.
       // ------------------------------------------------------------

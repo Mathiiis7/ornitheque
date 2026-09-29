@@ -66,12 +66,13 @@ tools/build/exotic-per-country-scraped.generated.js
 # pas du site. GitHub Pages sert tout ce qui est suivi.
 .impeccable/
 
-# Plans de travail gardes en local : ACCES-LIGUE.md decrit une faiblesse encore ouverte,
-# et le depot est public. A pousser quand les deux portes seront fermees (2026-09-28).
-/ACCES-LIGUE.md
-/MODE-DEMO.md
-/AUDIT-SECURITE.md
-# RESUME-PROJET.md est le dossier de presentation pour le portfolio. Hors depot par
-# coherence avec les trois au-dessus : il resume ce qu ils contiennent, dont le mecanisme
-# d invitation et les resultats de l audit. Le publier se decide, ca ne se subit pas.
-/RESUME-PROJET.md
+# Notes gardees en local, hors du depot public : ACCES-LIGUE.md decrit une faiblesse
+# encore ouverte, AUDIT-SECURITE.md les resultats de l audit, MODE-DEMO.md le montage de
+# la demo, et RESUME-PROJET.md le dossier de portfolio qui resume les trois. A pousser
+# quand les deux portes seront fermees (2026-09-28) - ca se decide, ca ne se subit pas.
+#
+# C est le DOSSIER qui est exclu, plus les quatre noms de fichiers. Avant le rangement du
+# 2026-09-29 chaque fichier avait sa ligne, et une note ajoutee a cote serait partie dans
+# le depot public sans que rien ne le signale. La regle par dossier couvre aussi celles
+# de demain.
+/notes-privees/
