@@ -7,11 +7,19 @@
      a injecter du code, il ne peut pas exfiltrer vers un domaine hors liste).
      'unsafe-inline' pour script est necessaire pour les qq handlers inline
      (~13 dans le code) - tolerable vu que l'audit esc() est clean. -->
+<!-- www.google.com dans img-src n est PAS une image du site : c est la sonde du SDK Firestore.
+     Lu dans le code livre (firebase-firestore.js 10.12.5) : sur une erreur de transport, le
+     canal WebChannel charge //www.google.com/images/cleardot.gif comme <img> pour savoir si le
+     reseau repond encore. Bloquee par la CSP, la sonde echoue, le SDK en conclut que la
+     connexion est morte et repart en attente exponentielle.
+     Mesure chez Mathis le 2026-09-29, avant correction : compte reconnu a 7,6 s, puis 53 s
+     d attente avant le premier snapshot - une minute pour voir sa propre liste. Le rendu, lui,
+     prend 21 ms. Ce n etait donc pas une lenteur mais une panne, et elle venait d ici. -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'self';
   script-src 'self' 'unsafe-inline' https://www.gstatic.com https://unpkg.com;
   style-src 'self' 'unsafe-inline' https://unpkg.com;
-  img-src 'self' data: blob: https://upload.wikimedia.org https://thumb.wikimedia.org https://fr.wikipedia.org https://en.wikipedia.org https://static.inaturalist.org https://inaturalist-open-data.s3.amazonaws.com https://odata-inpn.mnhn.fr https://mathiiis7.github.io https://*.tile.openstreetmap.org https://server.arcgisonline.com https://flagcdn.com https://firebasestorage.googleapis.com https://xeno-canto.org https://cdn.download.ams.birds.cornell.edu https://base-prod.rspb-prod.magnolia-platform.com https://i.ytimg.com https://*.giphy.com;
+  img-src 'self' data: blob: https://www.google.com https://upload.wikimedia.org https://thumb.wikimedia.org https://fr.wikipedia.org https://en.wikipedia.org https://static.inaturalist.org https://inaturalist-open-data.s3.amazonaws.com https://odata-inpn.mnhn.fr https://mathiiis7.github.io https://*.tile.openstreetmap.org https://server.arcgisonline.com https://flagcdn.com https://firebasestorage.googleapis.com https://xeno-canto.org https://cdn.download.ams.birds.cornell.edu https://base-prod.rspb-prod.magnolia-platform.com https://i.ytimg.com https://*.giphy.com;
   connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.firebaseio.com https://www.gstatic.com https://unpkg.com https://api.ebird.org https://ebird.org https://api.gbif.org https://api.inaturalist.org https://xeno-canto.org https://fr.wikipedia.org https://en.wikipedia.org https://*.wikipedia.org https://upload.wikimedia.org https://odata-inpn.mnhn.fr https://mathiiis7.github.io https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org https://server.arcgisonline.com https://api.giphy.com;
   font-src 'self' data:;
   media-src 'self' data: blob: https://xeno-canto.org https://static.inaturalist.org;
@@ -40,7 +48,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=251">
+<link rel="modulepreload" href="app.js?v=252">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -1257,4 +1265,4 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=251"></script>
+<script type="module" src="app.js?v=252"></script>
