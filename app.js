@@ -10459,7 +10459,8 @@ async function handleFiles(fileList){
   }
   catch(e){ showError(e); $('#myStatus').textContent=''; }
 }
-drop.addEventListener('click',()=>fileInput.click());
+// Pas de gestionnaire de clic ici : #drop est une <label for="file">, le navigateur ouvre le
+// selecteur tout seul. Le rajouter ouvrirait DEUX fois la fenetre de choix de fichier.
 fileInput.addEventListener('change',e=>{ handleFiles(e.target.files); fileInput.value=''; });
 ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('drag');}));
 ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('drag');}));

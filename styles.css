@@ -214,12 +214,23 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     color:var(--ink-3); }
   h2 { font-family:var(--serif); font-weight:600; font-size:21px; margin:0; }
 
+  /* Masquage visuel qui GARDE l'element dans l'ordre de tabulation, contrairement a [hidden]
+     (display:none en sort). C'est ce qui rend les quatre envois de fichier atteignables au clavier. */
+  .visually-hidden { position:absolute; width:1px; height:1px; margin:-1px; padding:0;
+    overflow:hidden; clip-path:inset(50%); white-space:nowrap; border:0; }
+
   /* ---------- intake / dropzone ---------- */
   #leaguebar { margin-top:22px; padding:22px; }
-  .drop { border:2px dashed var(--line-2); border-radius:14px; padding:32px 22px; text-align:center;
+  /* display:block parce que .drop est une <label>, qui serait inline par defaut */
+  .drop { display:block; border:2px dashed var(--line-2); border-radius:14px; padding:32px 22px; text-align:center;
     background:linear-gradient(180deg, var(--surface-2), color-mix(in srgb, var(--accent) 4%, var(--surface-2)));
     transition:border-color .15s, background .15s, transform .1s; cursor:pointer; }
   .drop:hover { border-color:color-mix(in srgb, var(--accent) 50%, var(--line-2)); }
+  /* Les quatre champs de fichier sont masques visuellement : l'anneau de focus doit donc se dessiner
+     sur l'element visible, sinon le clavier atteint une cible qu'on ne voit pas. */
+  #file:focus-visible + .drop { outline:2px solid var(--accent); outline-offset:3px; }
+  .btn:has(input[type=file]:focus-visible),
+  .chat-imgbtn:has(input[type=file]:focus-visible) { outline:2px solid var(--accent); outline-offset:2px; }
   .drop.drag { border-color:var(--accent); background:color-mix(in srgb, var(--accent) 12%, var(--surface-2)); transform:scale(1.01); }
   .drop-icon { font-size:38px; margin-bottom:6px; opacity:.75; }
   .drop .big { font-size:16px; font-weight:700; color:var(--ink); }
