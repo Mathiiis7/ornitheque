@@ -8,39 +8,42 @@ Deployée sur GitHub Pages : [mathiiis7.github.io/ornitheque](https://mathiiis7.
 
 ```
 ornitheque/
-├── index.html              structure HTML (squelette + link CSS + script)
-├── styles.css              toute la CSS de l'app
-├── app.js                  module JS principal (Firebase + logique métier)
-├── service-worker.js       PWA cache stale-while-revalidate
-├── manifest.json           PWA manifest (nom, icône, thème)
-├── logo.png                icône PWA
+├── index.html              le squelette HTML et les <template>
+├── styles.css              toute la CSS
+├── app.js                  le code, et les tables qui servent partout
+├── service-worker.js       le cache (stale-while-revalidate)
+├── manifest.json           nom, icônes et thème de l'app installable
+├── CLAUDE.md               les consignes de travail sur ce dépôt
 │
 ├── assets/
-│   └── icons/              23 icônes de trophées (aigle, roi, kimono, etc.)
+│   ├── trophies/           182 images de trophées
+│   ├── icons/              32 icônes d'espèces et de badges
+│   └── logos/              le logo et ses déclinaisons
 │
-├── data/                   toutes les données statiques servies au client
-│   ├── avonet_traits.json  traits écologiques + morphologiques de 10 584 espèces
-│   ├── range-index.json    manifest cartes de répartition Cornell S&T
-│   ├── range/              PNGs heatmap d'abondance par espèce
-│   ├── generated/          data intermédiaire (gitignored, générée par tools/build/)
-│   └── countries/          data par pays
-│       ├── fr/
-│       │   ├── abundance_st_by_region.json
-│       │   ├── abundance_dept.json
-│       │   ├── abundance_dept_mean.json
-│       │   └── freq_by_region.json
-│       ├── es/, gb/, it/, me/, pt/  (même structure minimale)
+├── data/                   les données servies au client
+│   ├── regions-<cc>-simplified.json   contours régionaux de 48 pays
+│   ├── avonet_traits.json  traits écologiques de 10 584 espèces
+│   ├── range-index.json    l'index des cartes de répartition
+│   └── countries/<cc>/     fréquences et abondances, pays par pays
+│
+├── demo/                   la démo du portfolio, générée
+│   └── bouchons/           Firebase simulé, pour qu'elle tourne sans compte
+│
+├── docs/                   les documents de travail publiés avec le dépôt
 │
 └── tools/
-    ├── build/              scripts Node.js de build data (18 scripts .mjs)
-    ├── config/             firestore.rules + geojson français
-    ├── docs/               guides markdown
-    ├── ebirdst/            scripts R pour Cornell Status & Trends
-    │                       (build-abundance-by-region-multi.R, build-range-maps.R)
-    ├── logs/               logs de builds passés (gitignored)
-    ├── ebird-barcharts-raw/ barcharts bruts eBird (gitignored)
-    └── createur-badge.html  outil perso génération badge
+    ├── build/              les générateurs de données (Node, ESM)
+    ├── verif/              les bancs de mesure
+    ├── ebirdst/            les scripts R pour Cornell Status & Trends
+    ├── config/             firestore.rules et les contours sources
+    └── generateur-trophees.html   outil local de fabrication des badges
 ```
+
+Deux choses ne sont pas dans cette arborescence, et c'est voulu. **Les cartes de
+répartition** (`range/` et `range-weekly/`, 250 Mo) vivent dans le dépôt séparé
+[ornitheque-data](https://github.com/Mathiiis7/ornitheque-data) : les garder ici aurait
+ralenti chaque opération sur le code. **`notes-privees/`** reste hors du dépôt, exclu par
+`.gitignore` — le dépôt est public.
 
 ## Sources de données
 
