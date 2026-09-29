@@ -78,6 +78,26 @@ const $ = s=>document.querySelector(s);
    Cout : quatre appels a performance.now(). Ca reste en place, un chrono qu'on retire est
    un chrono qu'on n'a pas quand on en a besoin. */
 const _chrono = {};
+
+/* Les taches longues du fil principal. Mesure chez Mathis le 2026-09-29 : entre la derniere
+   requete Firestore (1 620 ms) et l'arrivee des donnees (9 792 ms), AUCUNE requete. Le reseau
+   n'attendait donc rien. Or JavaScript n'a qu'un seul fil : si celui-ci est occupe, la reponse
+   de Firestore reste en file et ne peut pas etre traitee, quand bien meme elle est arrivee.
+   Un observateur « longtask » liste tout blocage de plus de 50 ms. S'ils remplissent le trou,
+   le coupable est notre propre demarrage, pas Firestore.
+
+   Deux choses verifiees dans le navigateur avant de s'y fier :
+   - un observateur ne voit JAMAIS la tache qui l'a cree. L'evaluation d'app.js elle-meme
+     echappe donc a la mesure ; la fenetre qui nous interesse, elle, vient bien apres.
+   - les entrees « longtask » ne sont pas gardees dans le tampon de performance :
+     getEntriesByType('longtask') rend toujours zero. Seul un observateur les recoit, d'ou
+     le tableau tenu a la main. */
+const _taches = [];
+try{
+  new PerformanceObserver(l => { for(const t of l.getEntries()) _taches.push(
+    { debut: Math.round(t.startTime), duree: Math.round(t.duration) }); })
+    .observe({ entryTypes: ['longtask'] });
+}catch(_){ }
 function _top(etape){
   if(_chrono[etape] !== undefined) return;        // seul le premier passage compte
   _chrono[etape] = Math.round(performance.now());
@@ -101,12 +121,26 @@ function _top(etape){
       const r = performance.getEntriesByType('resource')
         .filter(x => /firestore\.googleapis|identitytoolkit|securetoken|www\.google\.com/.test(x.name))
         .sort((a, b) => a.startTime - b.startTime);
-      if(!r.length) return;
-      console.info('⏱ Ornithèque · le détail des échanges avec Google\n'
+      if(r.length) console.info('⏱ Ornithèque · le détail des échanges avec Google\n'
         + r.map(x => '   ' + String(Math.round(x.startTime)).padStart(6) + ' → '
             + String(Math.round(x.responseEnd)).padStart(6) + ' ms  ('
             + String(Math.round(x.duration)).padStart(5) + ' ms)  '
             + x.name.replace(/^https:\/\//, '').replace(/\?.*$/, '')).join('\n'));
+
+      // Ce que le fil principal faisait pendant ce temps. On ne garde que la fenetre qui
+      // nous interesse - de la pose des abonnements a l'arrivee des donnees - et on dit
+      // combien de ces millisecondes ont ete passees a calculer plutot qu'a attendre.
+      const a = _chrono.abos, b = _chrono.snapshot;
+      const dedans = _taches.filter(t => t.debut + t.duree > a && t.debut < b);
+      const occupe = dedans.reduce((s, t) => s + t.duree, 0);
+      console.info('⏱ Ornithèque · le fil principal entre ' + a + ' et ' + b + ' ms ('
+        + (b - a) + ' ms d\'attente)\n'
+        + '   occupé ' + occupe + ' ms sur ' + (b - a) + ', soit '
+        + Math.round(100 * occupe / Math.max(1, b - a)) + ' %\n'
+        + (dedans.length
+            ? dedans.sort((x, y) => y.duree - x.duree).slice(0, 8)
+                .map(t => '   ' + String(t.duree).padStart(6) + ' ms  à partir de ' + t.debut + ' ms').join('\n')
+            : '   aucun blocage de plus de 50 ms'));
     }, 5000);
   }
 }
