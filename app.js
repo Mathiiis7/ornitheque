@@ -64,6 +64,33 @@ let goalHeader = 'Objectif (fin de l\'été)';   // intitulé partagé de la col
 
 const $ = s=>document.querySelector(s);
 
+/* ---------------- chrono de demarrage ----------------
+   « Ca prend tres longtemps a revenir » ne se repare pas sans savoir OU passent les
+   secondes. Quatre reperes sur le chemin du demarrage, comptes depuis l'ouverture de la
+   page (performance.now() part de la, pas du chargement du script), et UNE ligne dans la
+   console quand le dernier tombe.
+
+   Mesure du 2026-09-29, avec Firebase bouchonne : peindre le classement d'une ligue de 15
+   membres a 400 especes chacun coute 286 ms, et 103 ms sans les coordonnees d'observation.
+   Le travail du navigateur n'est donc pas en cause ; ce qui reste, c'est l'aller-retour
+   avec Firestore, et c'est lui que ces reperes datent.
+
+   Cout : quatre appels a performance.now(). Ca reste en place, un chrono qu'on retire est
+   un chrono qu'on n'a pas quand on en a besoin. */
+const _chrono = {};
+function _top(etape){
+  if(_chrono[etape] !== undefined) return;        // seul le premier passage compte
+  _chrono[etape] = Math.round(performance.now());
+  if(etape === 'rendu'){
+    console.info('⏱ Ornithèque · compte reconnu ' + _chrono.auth + ' ms'
+      + ' · abonnements posés ' + _chrono.abos + ' ms'
+      + ' · liste reçue ' + _chrono.snapshot + ' ms'
+      + ' · écran à jour ' + _chrono.rendu + ' ms'
+      + '   (millisecondes depuis l\'ouverture de la page)');
+  }
+}
+window.__chrono = _chrono;
+
 /* ---------------- annonce aux lecteurs d'ecran ----------------
    Tout ce que l'appli veut dire sans l'ecrire a l'ecran passe par ici : arrivee d'un
    message, fin de l'analyse du fichier, nombre de resultats. La region #a11yAnnonce est
@@ -5935,6 +5962,7 @@ function _retireSplash(){
 setTimeout(_retireSplash, _SPLASH_PLAFOND);
 
 function applySnapshot(snap){
+  _top('snapshot');
   // Le contenu est la : l ecran d attente peut partir (pas avant son plancher).
   _retireSplash();
   hideError();
@@ -5965,9 +5993,11 @@ function applySnapshot(snap){
   if(typeof _lockMyNameIfSet==='function') _lockMyNameIfSet();
   if(typeof _refreshChatWriteAccess==='function') _refreshChatWriteAccess();
   rebuild();
+  _top('rendu');
 }
 
 function subscribe(){
+  _top('abos');
   if(unsub){ unsub(); unsub=null; }
   unsub = onSnapshot(collection(db,'leagues',leagueId,'members'), applySnapshot,
     // Depuis le 2026-09-28 les regles reservent la liste des membres aux membres : un refus
@@ -16602,6 +16632,7 @@ document.addEventListener('click', e => {
 });
 let _uidPrecedent = null;   // le dernier compte vu, pour detecter un changement (voir plus bas)
 onAuthStateChanged(auth, user=>{
+  _top('auth');
   // L app ne demarre que pour un vrai compte. Elle signait en anonyme des qu une page
   // s ouvrait sans session : un compte Firebase par visite - huit en huit jours dans la
   // console - et, plus genant, boot() tournait pour eux. Le portail masque bien l interface
