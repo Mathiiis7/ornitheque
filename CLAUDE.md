@@ -245,3 +245,9 @@ compte ni les listes. Le cookie, lui, reste hors dépôt - c'est lui le vrai sec
 Récolte et vérification des données (bar charts, fréquences, injecteur, zones, mur anti-robot) :
 skill `donnees-ebird`. Le piège qui a déjà fait conclure à tort : eBird refuse le mode invisible,
 donc **0 espèce en `headless` ne dit rien sur la zone, seulement sur le mur anti-robot**.
+
+**xeno-canto fait pareil**, et l'appli le cache bien : sans agent utilisateur ordinaire, un
+navigateur invisible n'obtient rien, l'appli bascule sur son recours iNaturalist dont les
+enregistrements n'ont pas de sonagramme, et l'écran annonce « Pas de spectrogramme » comme si
+l'espèce n'en avait pas. Diagnostiqué à tort comme un défaut de l'appli le 2026-09-30 - voir
+`docs/VIDEO-PRESENTATION.md`.
