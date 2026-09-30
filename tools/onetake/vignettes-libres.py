@@ -35,7 +35,13 @@ DEMARRAGE_MS = 8000
 
 # Les licences qu'on peut mettre dans un fichier video diffuse. CC BY-NC-ND est exclue : elle
 # interdit toute modification, et un film qui recadre et anime EST une modification.
-LIBRES = {"cc0", "pd", "cc-by", "cc-by-sa", "cc-by-nc", "cc-by-nc-sa"}
+# Les licences compatibles avec le film. CC BY-SA en est EXCLUE, et ce n'est pas une
+# prudence : le chant de l'hirondelle que l'appli fait ecouter impose « pas d'usage
+# commercial », or CC BY-SA interdit d'ajouter cette restriction a une oeuvre qui la reprend.
+# Les deux ne peuvent pas cohabiter. CC BY-NC-ND est exclue aussi : elle interdit toute
+# modification, et recadrer ou animer en est une. Constate le 2026-09-30 : 29 des 125
+# vignettes du mur sont en CC BY-SA.
+LIBRES = {"cc0", "pd", "cc-by", "cc-by-nc", "cc-by-nc-sa"}
 
 
 def vignettes_affichees():
@@ -134,7 +140,7 @@ def remplacante(sci):
         return None
     j = lis("https://api.inaturalist.org/v1/observations?per_page=5&quality_grade=research"
             f"&order_by=votes&photos=true&taxon_id={tid}"
-            "&photo_license=cc0,cc-by,cc-by-sa,cc-by-nc,cc-by-nc-sa")
+            "&photo_license=cc0,cc-by,cc-by-nc,cc-by-nc-sa")
     for obs in (j or {}).get("results") or []:
         for ph in obs.get("photos") or []:
             lic = normalise(ph.get("license_code"))
