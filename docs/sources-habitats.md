@@ -3,8 +3,13 @@
 Recherche faite le 2026-09-30, après le passage d'AVONET à BIRDBASE. Elle répond à une
 question simple : **est-ce qu'il existe mieux que BIRDBASE pour dire où vit un oiseau ?**
 
-Réponse courte : **non, pas aujourd'hui, pas pour ce site.** Deux sources sont plus fines,
-mais l'une est juridiquement fermée et l'autre ne couvre que l'Europe. Le détail suit.
+Réponse courte : **non, pas pour couvrir le monde.** Les sources plus fines sont soit fermées
+juridiquement, soit limitées à l'Europe. En revanche, **deux compléments européens libres
+existent**, et l'un d'eux rendrait le milieu agricole. Le détail suit.
+
+Ce document a été écrit en deux fois. La première version ne regardait que les compilations
+scientifiques mondiales ; Mathis a demandé si on avait aussi regardé du côté français et
+européen, et c'est là qu'est apparue la source officielle de la Directive Oiseaux.
 
 ## Ce qu'on demande à une source
 
@@ -33,6 +38,8 @@ Six critères, dans l'ordre où ils nous éliminent des candidats.
 | Birds of the World | continu | tous | texte rédigé | abonnement payant | écarté |
 | eBird Status & Trends | 2023 | 2 980 | classes satellite | clé + demande d'accès | écarté |
 | Storchová & Hořák | 2018 | **499, Europe** | **15, dont montagne et toundra** | oui | **domaine public** | complément possible |
+| **EUNIS / Directive Oiseaux** | continu | **493, Europe** | 11 + 13 en hiver, **dont agricole** | oui, 2,11 | **CC BY** | **complément possible** |
+| Cahiers d'habitats Oiseaux (MNHN) | 2000s | ~130, annexe I | texte rédigé | Licence Ouverte | hors format |
 | EltonTraits | 2014 | 9 993 | pas d'habitat | libre | hors sujet |
 | Wikidata / GBIF / Map of Life | continu | variable | épars ou dérivé de l'IUCN | variable | écarté |
 
@@ -117,6 +124,59 @@ anti-robot. Les colonnes ci-dessus viennent de la documentation du paquet R `tra
 d'une lecture du fichier. Avant toute décision, il faudra le récupérer à la main et mesurer sa
 couverture réelle sur les oiseaux de France.
 
+### EUNIS et la Directive Oiseaux : la source officielle européenne
+
+Celle-ci a failli m'échapper : la première version de ce document ne regardait que les
+compilations scientifiques mondiales, et pas les sources publiques, françaises ou européennes.
+C'est Mathis qui a posé la question.
+
+Tous les six ans, chaque État membre rapporte à Bruxelles l'état de ses oiseaux au titre de
+l'**article 12 de la Directive Oiseaux**. L'Agence européenne pour l'environnement publie le
+résultat, et sa base EUNIS relie chaque espèce à ses milieux. Mesuré directement sur son
+interface le 2026-09-30 :
+
+- **493 espèces** pour les milieux de **nidification**, 11 classes, **2,11 milieux par espèce** ;
+- **202 espèces** pour les milieux d'**hivernage**, 13 classes.
+
+Les onze classes : mosaïques agricoles, terres cultivées, prairie, landes et fourrés, forêt,
+rivières et lacs, zones humides, littoral, eaux de transition, urbain, végétation clairsemée.
+
+**Deux choses qu'elle a et que personne d'autre n'a :**
+
+1. **Le milieu agricole**, séparé en « mosaïques agricoles » et « terres cultivées ». C'est
+   exactement la catégorie que L'Ornithèque a perdue le 2026-09-30, et la plus parlante ici :
+   l'alouette des champs, le bruant jaune, la pie-grièche sont des oiseaux de campagne cultivée,
+   pas des oiseaux de « prairie » ni de « milieu modifié par l'homme ».
+2. **La distinction entre là où l'oiseau niche et là où il hiverne.** Aucune autre source ne
+   l'a. La barge à queue noire niche en prairie humide et hiverne sur les vasières : une source
+   qui n'en donne qu'un seul jeu se trompe forcément la moitié de l'année.
+
+**Licence : CC BY.** L'AEE autorise la réutilisation, commerciale ou non, sans demande
+préalable, à condition de la citer comme source.
+
+**Ses limites, et elles comptent :** 493 espèces d'Europe contre 11 589 dans le monde ; onze
+classes contre quinze, plus grossières (la toundra, les éboulis et les falaises sont fondus
+dans une seule « végétation clairsemée ») ; et 2,11 milieux par espèce contre 2,81 chez
+BIRDBASE. Ce n'est pas un remplaçant, c'est un complément européen.
+
+**Non vérifié** : la fiche d'une espèce affiche aussi « habitats les plus préférés » et « peut
+aussi se rencontrer dans », qui ressemblent à la distinction adapté/marginal de l'IUCN. Ces
+deux champs ne se sont pas chargés et je n'ai pas trouvé leur source. À creuser avant toute
+décision.
+
+### Les sources françaises
+
+**Les cahiers d'habitats Oiseaux** du Muséum national d'histoire naturelle, écrits pour
+l'application de la Directive Oiseaux, décrivent l'habitat de chaque espèce de l'annexe I -
+une centaine d'oiseaux. C'est du texte rédigé par des spécialistes, pas une table de
+catégories : très riche à lire, inexploitable pour remplir une pastille.
+
+**TaxRef** (la taxonomie) et **HabRef** (la typologie des habitats) sont en Licence Ouverte,
+mais HabRef décrit les habitats eux-mêmes et ne dit pas quel oiseau vit dedans.
+
+Il n'existe pas, au 2026-09-30, de table française espèce-habitat librement téléchargeable qui
+couvrirait toute l'avifaune de France.
+
 ### Les autres
 
 **Birds of the World** (Cornell) : la description la plus riche qui existe, en texte rédigé.
@@ -150,9 +210,21 @@ résultat, pas un résultat décevant.
 - ses quatre taxonomies règlent le problème qui coûte le plus cher en pratique ;
 - une deuxième source indépendante le confirme à 93,5 %.
 
-**Le seul gain possible est européen et facultatif** : Storchová & Hořák, en domaine public,
-rendrait la toundra et la montagne aux 499 oiseaux d'Europe. C'est un complément, pas un
-remplacement - et il romprait la règle de la source unique posée le 2026-09-30.
+**Les gains possibles sont européens et facultatifs**, et il y en a deux, tous deux libres :
+
+| | Storchová & Hořák | EUNIS / Directive Oiseaux |
+|---|---|---|
+| Oiseaux | 499 d'Europe | 493 d'Europe |
+| Ce qu'elle rend | **toundra, prairies de montagne**, feuillus/conifères | **milieu agricole**, nidification vs hivernage |
+| Finesse | 15 classes | 11 classes, plus grossières |
+| Licence | domaine public | CC BY |
+| Autorité | un manuel de référence | déclaration officielle des États |
+| Vérifiée ? | non, fichier inaccessible | oui, mesurée le 2026-09-30 |
+
+Les deux ensemble rendraient les cinq catégories perdues. Mais chacune rompt la règle de la
+source unique posée le 2026-09-30, et aucune ne dit rien des 10 700 oiseaux hors d'Europe :
+un merle français aurait quatre milieux fins et un merle indien deux milieux grossiers, dans
+la même liste. C'est ce genre d'incohérence que la règle de la source unique évite.
 
 **À refaire quand** : si l'IUCN change ses conditions, ou si une source mondiale libre publie
 des habitats avec une distinction adapté/marginal. Rien de tel n'existait au 2026-09-30.
