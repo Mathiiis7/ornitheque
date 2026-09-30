@@ -22,6 +22,7 @@
 
   Usage : node tools/build/merge-freq-regions-fr.mjs [--dry]
 */
+import { EBIRD_API_KEY } from './cle-ebird.mjs';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -68,7 +69,7 @@ function pondere(valeurs, poids) {
 console.log('Taxonomie eBird (locale=fr_FR)...');
 const tax = await (await fetch(
   'https://api.ebird.org/v2/ref/taxonomy/ebird?fmt=json&locale=fr_FR&cat=species',
-  { headers: { 'X-eBirdApiToken': 'dbflh4atmsom' } }
+  { headers: { 'X-eBirdApiToken': EBIRD_API_KEY } }
 )).json();
 const parNom = {};
 for (const t of tax) if (t.sciName && t.comName) parNom[norm(t.comName)] = t.sciName.toLowerCase();

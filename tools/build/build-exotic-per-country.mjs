@@ -32,7 +32,7 @@ import { dirname, join } from 'node:path';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const OUT = join(__dir, 'exotic-per-country.generated.js');
-const KEY = 'dbflh4atmsom';
+import { EBIRD_API_KEY as KEY } from './cle-ebird.mjs';
 const COUNTRIES = ['FR', 'ME', 'ES', 'IT', 'GB', 'PT', 'CH', 'NO', 'GR', 'IS', 'LK', 'NA', 'AU', 'NZ', 'US', 'CA'];
 
 // Fenetre d'echantillonnage historique : 12 dates (une par mois de l'annee ecoulee)

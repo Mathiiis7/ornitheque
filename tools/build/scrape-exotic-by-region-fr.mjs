@@ -7,6 +7,7 @@
   Sortie : tools/build/exotic-by-region-fr.generated.js
   Format : { "FR-XX": { "sci name": "N|P|X", ... }, ... }
 */
+import { EBIRD_API_KEY } from './cle-ebird.mjs';
 import { chromium } from 'playwright';
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -77,7 +78,7 @@ for(const region of FR_REGIONS) {
 // Convertit speciesCode -> sciName via l'API taxonomy eBird.
 console.log('\nFetching eBird taxonomy...');
 const tax = await (await fetch('https://api.ebird.org/v2/ref/taxonomy/ebird?fmt=json&locale=fr_FR&cat=species', {
-  headers: { 'X-eBirdApiToken': 'dbflh4atmsom' }
+  headers: { 'X-eBirdApiToken': EBIRD_API_KEY }
 })).json();
 const codeToSci = {};
 for(const t of tax) codeToSci[t.speciesCode] = (t.sciName || '').toLowerCase();

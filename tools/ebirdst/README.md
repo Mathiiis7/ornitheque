@@ -24,13 +24,13 @@ Deps automatiques : `terra`, `sf`, `dplyr`, `stringr`, `httr` (~50 MB).
 
 ### Notes API ebirdst 4.x (apprises pendant le setup, 26/08/2026)
 
-- **Format de cle S&T** : 12 chars (ex: `obfvm9uetmhe`), meme famille que la cle
+- **Format de cle S&T** : 12 chars (ex: `abcd1234efgh`), meme famille que la cle
   eBird API v2 mais token separe. La cle S&T se retrouve sur
   https://science.ebird.org/en/status-and-trends/download-data (login eBird).
 - **`.Renviron`** : PAS de guillemets autour de la valeur, sinon R garde les
   apostrophes dans la valeur et ebirdst envoie un token invalide. Bonne forme :
   ```
-  EBIRDST_KEY=obfvm9uetmhe
+  EBIRDST_KEY=<ta-cle-cornell>
   ```
 - **`load_raster()`** : le param `period` accepte uniquement `"weekly"`,
   `"seasonal"` ou `"full-year"`. Pour les especes residentes, `"full-year"`
@@ -46,8 +46,15 @@ Deps automatiques : `terra`, `sf`, `dplyr`, `stringr`, `httr` (~50 MB).
 
 ### 3. Cle Cornell (tu l'as deja, expire 26/01/2027)
 La cle Status & Trends est differente de la cle eBird API v2.
-Doit etre fournie une fois via variable d'environnement `EBIRDST_KEY`,
-ou sauvee dans `~/.Renviron` pour persistence :
+Les deux cles vivent dans `Documents\.Renviron`, hors de tout depot, sans guillemets :
+```
+EBIRDST_KEY=<ta-cle-cornell>
+EBIRD_API_KEY=<ton-jeton-api>
+```
+Les scripts R le lisent en en-tete, les scripts Node via `tools/build/cle-ebird.mjs`.
+Jamais de cle en clair dans un fichier du depot (retirees le 2026-09-30).
+
+Autres facons, si besoin :
 
 Option persistente (une fois pour toutes) :
 ```r

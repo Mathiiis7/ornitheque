@@ -9,6 +9,7 @@
   Usage : node tools/build/scrape-ebird-exotic.mjs
   Sortie : tools/build/exotic-per-country-scraped.generated.js
 */
+import { EBIRD_API_KEY } from './cle-ebird.mjs';
 import { chromium } from 'playwright';
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -146,7 +147,7 @@ for(const cc of RUN_COUNTRIES) {
 // Convertit speciesCode -> sciName via l'API taxonomy eBird (une seule requete pour toutes les especes).
 console.log('\nFetching eBird taxonomy...');
 const tax = await (await fetch('https://api.ebird.org/v2/ref/taxonomy/ebird?fmt=json&locale=fr_FR&cat=species', {
-  headers: { 'X-eBirdApiToken': 'dbflh4atmsom' }
+  headers: { 'X-eBirdApiToken': EBIRD_API_KEY }
 })).json();
 const codeToSci = {};
 for(const t of tax) codeToSci[t.speciesCode] = (t.sciName || '').toLowerCase();

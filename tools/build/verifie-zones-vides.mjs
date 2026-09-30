@@ -27,7 +27,7 @@ import { dirname, join } from 'node:path';
 import { chromium } from 'playwright';
 
 const RACINE = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const JETON = 'dbflh4atmsom';
+import { EBIRD_API_KEY as JETON } from './cle-ebird.mjs';
 const TEMOIN = { zone: 'SI-061', minimum: 200 };   // rendait 295 le 2026-09-28
 
 const VIDES_CONNUES = new Set([

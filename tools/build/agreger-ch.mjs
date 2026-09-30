@@ -26,7 +26,7 @@ import { fileURLToPath } from 'node:url';
 const __dir = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dir, '..', '..');
 const RAW = join(ROOT, 'tools', 'ebird-barcharts-raw');
-const TOKEN = 'dbflh4atmsom';   // meme jeton que les autres scripts eBird du dossier
+import { EBIRD_API_KEY as TOKEN } from './cle-ebird.mjs';   // meme jeton que les autres scripts eBird du dossier
 
 // Les 7 grandes regions. Table verifiee le 2026-09-26 : 26 cantons cites, 26 uniques, 26
 // retrouves dans Natural Earth, et chaque groupe forme un bloc geographique compact.

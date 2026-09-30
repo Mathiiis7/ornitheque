@@ -6,6 +6,7 @@
   Sortie : tools/build/exotic-by-dep-fr.generated.js
   Format : { "FR-XXX-YY": { sciName: "N|P|X" } }
 */
+import { EBIRD_API_KEY } from './cle-ebird.mjs';
 import { chromium } from 'playwright';
 import { writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -88,7 +89,7 @@ console.log(`Scrape de ${FR_DEPS.length} departements FR (~${Math.round(FR_DEPS.
 // interruption en cours de route (Ctrl+C, veille) perdait les 50 minutes deja passees.
 console.log('Fetching eBird taxonomy...');
 const tax = await (await fetch('https://api.ebird.org/v2/ref/taxonomy/ebird?fmt=json&locale=fr_FR&cat=species', {
-  headers: { 'X-eBirdApiToken': 'dbflh4atmsom' }
+  headers: { 'X-eBirdApiToken': EBIRD_API_KEY }
 })).json();
 const codeToSci = {};
 for(const t of tax) codeToSci[t.speciesCode] = (t.sciName || '').toLowerCase();

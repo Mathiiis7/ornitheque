@@ -30,8 +30,12 @@ suppressPackageStartupMessages({
 .cat_orig <- cat
 cat <- function(...) { .cat_orig(...); flush.console() }
 
-EBIRD_API_KEY <- "dbflh4atmsom"
-Sys.setenv(EBIRDST_KEY = "obfvm9uetmhe")
+# Cles lues dans Documents\.Renviron, jamais dans le depot
+for (.f in c(Sys.getenv("R_ENVIRON_USER"), file.path(Sys.getenv("USERPROFILE"), c("Documents", ""), ".Renviron")))
+  if (!nzchar(Sys.getenv("EBIRD_API_KEY")) && nzchar(.f) && file.exists(.f)) readRenviron(.f)
+EBIRD_API_KEY <- Sys.getenv("EBIRD_API_KEY")
+if (!nzchar(EBIRD_API_KEY) || !nzchar(Sys.getenv("EBIRDST_KEY")))
+  stop("Cles eBird absentes : ajouter EBIRD_API_KEY et EBIRDST_KEY dans ~/.Renviron (voir tools/ebirdst/README.md)")
 
 fetch_country_species <- function(cc) {
   url <- paste0("https://api.ebird.org/v2/product/spplist/", cc)

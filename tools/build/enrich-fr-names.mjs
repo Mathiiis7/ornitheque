@@ -23,7 +23,7 @@ import { dirname, join } from 'node:path';
 const __dir = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dir, '..');
 const HTML_PATH = join(ROOT, 'index.html');
-const EBIRD_KEY = 'dbflh4atmsom';
+import { EBIRD_API_KEY as EBIRD_KEY } from './cle-ebird.mjs';
 
 console.log('[1] Extract FR_NAMES actuel de index.html...');
 const html = readFileSync(HTML_PATH, 'utf8');

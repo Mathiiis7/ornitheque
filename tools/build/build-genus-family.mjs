@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url';
 const __dir = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dir, '..', '..');
 const APP_JS = path.join(ROOT, 'app.js');
-const EBIRD_KEY = 'dbflh4atmsom';
+import { EBIRD_API_KEY as EBIRD_KEY } from './cle-ebird.mjs';
 
 console.log('Fetch taxonomie eBird...');
 const r = await fetch('https://api.ebird.org/v2/ref/taxonomy/ebird?fmt=json&locale=fr_FR', {

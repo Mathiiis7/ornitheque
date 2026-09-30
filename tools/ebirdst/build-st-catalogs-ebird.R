@@ -15,7 +15,11 @@ suppressMessages({
 
 OUT_DIR   <- "C:/Users/mathi/Documents/Projets/ornitheque/data/countries"
 CACHE_DIR <- "C:/Users/mathi/Documents/Projets/clc/cache_frac"
-EBIRD_KEY <- "dbflh4atmsom"
+# Jeton lu dans Documents\.Renviron, jamais dans le depot
+for (.f in c(Sys.getenv("R_ENVIRON_USER"), file.path(Sys.getenv("USERPROFILE"), c("Documents", ""), ".Renviron")))
+  if (!nzchar(Sys.getenv("EBIRD_API_KEY")) && nzchar(.f) && file.exists(.f)) readRenviron(.f)
+EBIRD_KEY <- Sys.getenv("EBIRD_API_KEY")
+if (!nzchar(EBIRD_KEY)) stop("Jeton EBIRD_API_KEY absent : l'ajouter dans ~/.Renviron (voir tools/ebirdst/README.md)")
 
 # Backbone : code S&T -> sci_name_lowercase
 runs <- ebirdst::ebirdst_runs

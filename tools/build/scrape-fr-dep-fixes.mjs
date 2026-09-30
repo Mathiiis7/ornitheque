@@ -3,6 +3,7 @@
   scrape-fr-dep-fixes.mjs - Re-scrape 5 dep FR avec les BONS codes eBird
   (correction du scrape initial qui avait de mauvais prefixes region).
 */
+import { EBIRD_API_KEY } from './cle-ebird.mjs';
 import { chromium } from 'playwright';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -68,7 +69,7 @@ for(const { wrong, correct } of FIXES) {
 // Convertit speciesCode -> sciName via API taxonomy
 console.log('\nFetching eBird taxonomy...');
 const tax = await (await fetch('https://api.ebird.org/v2/ref/taxonomy/ebird?fmt=json&locale=fr&cat=species', {
-  headers: { 'X-eBirdApiToken': 'dbflh4atmsom' }
+  headers: { 'X-eBirdApiToken': EBIRD_API_KEY }
 })).json();
 const codeToSci = {};
 for(const t of tax) codeToSci[t.speciesCode] = (t.sciName || '').toLowerCase();

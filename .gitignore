@@ -101,3 +101,9 @@ tools/habitats-sans-milieu.txt
 # analyses. Gros, regenerables, et ce n est pas le site. Seule la video finale, une fois
 # allegee, entre dans le depot.
 .onetake/
+
+# Cles eBird (EBIRD_API_KEY, EBIRDST_KEY) : elles vivent dans Documents\.Renviron, hors de
+# tout depot, lu par tools/build/cle-ebird.mjs et par l en-tete des scripts R. Ces lignes
+# rattrapent une copie posee par megarde dans le projet (2026-09-30).
+.Renviron
+.env

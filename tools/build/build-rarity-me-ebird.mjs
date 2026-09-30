@@ -20,6 +20,7 @@
   Sortie : tools/real-rarity-me-ebird.generated.js
   Aussi : diff avec REAL_RARITY_ME (GBIF) pour évaluer l'écart.
 */
+import { EBIRD_API_KEY } from './cle-ebird.mjs';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -92,7 +93,7 @@ console.log(`Bar chart ME : ${Object.keys(bar).length} taxons.`);
 // 2) Fetch eBird taxonomy pour mapper FR name -> sciName.
 console.log('Fetching eBird taxonomy (locale=fr_FR) ...');
 const tax = await (await fetch('https://api.ebird.org/v2/ref/taxonomy/ebird?fmt=json&locale=fr_FR&cat=species', {
-  headers: { 'X-eBirdApiToken': 'dbflh4atmsom' }
+  headers: { 'X-eBirdApiToken': EBIRD_API_KEY }
 })).json();
 const frToSci = {};   // norm(comName FR) -> sciName lowercase
 for(const t of tax) if(t.sciName && t.comName) frToSci[norm(t.comName)] = t.sciName.toLowerCase();

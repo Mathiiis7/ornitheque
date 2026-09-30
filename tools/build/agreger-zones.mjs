@@ -29,7 +29,7 @@ const RAW = join(ROOT, 'tools', 'ebird-barcharts-raw');
 const SD = join(ROOT, 'tools', 'build');
 const carte = JSON.parse(readFileSync(join(SD, 'zones-agregees.json'), 'utf8'));
 
-const TOKEN = 'dbflh4atmsom';
+import { EBIRD_API_KEY as TOKEN } from './cle-ebird.mjs';
 const tax = await (await fetch('https://api.ebird.org/v2/ref/taxonomy/ebird?fmt=json&locale=fr_FR&cat=species',
   { headers: { 'X-eBirdApiToken': TOKEN } })).json();
 const parNom = new Map();

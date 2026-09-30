@@ -23,7 +23,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const RACINE = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const JETON = 'dbflh4atmsom';
+import { EBIRD_API_KEY as JETON } from './cle-ebird.mjs';
 
 // Verifie zone par zone, le 2026-09-28 : barchartData repond 500 et l'API donne 0 observation
 // sur 30 jours. Ne pas les relancer, et ne pas les compter comme manquantes.

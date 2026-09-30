@@ -23,7 +23,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 const __dir = dirname(fileURLToPath(import.meta.url));
 
-const EBIRD_KEY = 'dbflh4atmsom';
+import { EBIRD_API_KEY as EBIRD_KEY } from './cle-ebird.mjs';
 
 // Familles → catégories app.
 const FAMILY_TO_CATS = {

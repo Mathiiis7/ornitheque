@@ -22,7 +22,7 @@ fichiers générés étaient pleins. Leurs cartes de statut s'affichaient vides 
 rien ne le signalait.
 
 **La liste des zones d'un pays se demande à eBird, jamais à `zones-agregees.json`** :
-`https://api.ebird.org/v2/ref/region/list/subnational1/XX.json`, jeton `dbflh4atmsom`. Le
+`https://api.ebird.org/v2/ref/region/list/subnational1/XX.json`, jeton `EBIRD_API_KEY` (dans `Documents\.Renviron`). Le
 fichier local ignorait cinq zones lettonnes, et c'étaient les cinq plus grosses, de 147 à
 241 espèces : jamais demandées, donc jamais récoltées, pendant des mois.
 
