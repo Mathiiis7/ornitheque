@@ -38,6 +38,8 @@ exige.
 | Écran d'accueil | Image fixe, la vidéo se lance au clic | 2026-09-30 |
 | Source des images | Le mode démo, jamais la vraie ligue | 2026-09-30 |
 | Allure | Celle de l'Ornithèque, `.onetake/look-ornitheque.json` | 2026-09-30 |
+| Définition finale | **1080p60** - aucune image agrandie, donc rien de flou | 2026-09-30 |
+| Musique | **Discrète, atmosphérique** - morceaux à proposer, licence à vérifier | 2026-09-30 |
 
 ### Le découpage, avec ses durées
 
@@ -112,6 +114,20 @@ APRÈS l'ouverture.
 **Les vignettes du Birdydex sont en chargement différé.** Sans attendre qu'elles arrivent, on
 photographie un mur de cases grises - et ça ne se voit pas dans le nom du fichier, seulement
 dans son poids : 244 Ko sans les photos, 1,9 Mo avec. Le script attend 20 images chargées.
+
+**`--resume` garde l'image abîmée par l'interruption.** Le rendu arrêté en cours laisse une
+dernière image écrite à moitié ; la reprise la trouve sur le disque, la croit faite et ne la
+refait pas. ffmpeg la refuse ensuite (« chunk too big »), sans que le rendu échoue : il annonce
+900 images et le fichier n'en contient que **899**. Vu le 2026-09-30. Le contrôle qui l'attrape,
+et qu'il faut faire après toute reprise :
+
+```
+ffprobe -v error -count_frames -select_streams v:0 -show_entries stream=nb_read_frames -of default=nw=1 FICHIER.mp4
+```
+
+À la moindre image manquante, refaire le rendu sans `--resume` : **8 min 33 pour 900 images en
+1080p30** sur 8 fils, mesuré le 2026-09-30 (3 200 captures). Une reprise qui ne refait qu'un
+tiers du film ne coûte que 2 min 11 - d'où la tentation, et le piège.
 
 **`look.py from-shot` se fait avoir par les photos.** Sur trois captures il proposait le bleu
 ciel de la photo d'hirondelle (#5c8cf4, 3,57 % des pixels) comme couleur d'accent, quand le
@@ -247,7 +263,25 @@ Et quatre sections de la seconde moitié finissaient leur animation à mi-parcou
 l'écran figé : le rassemblement des points, la pousse des barres, la distribution des réponses
 du quiz et l'arrivée des bulles occupent maintenant toute leur durée.
 
-**Le rendu corrigé n'a pas été refait** : mis en pause à 377 images sur 900.
+## Le brouillon corrigé, et ce que la mesure a répondu
+
+Rendu le 2026-09-30 à 16 h 12 : 900 images, **3 200 captures** (contre 2 002), 8 min 33 sur
+8 fils. Verdict de l'oracle : **PASS sur les huit critères**, continuité 1,00, immobilité 51,9 %,
+pic 73 px par image, son à −8 dBFS sans écrêtage.
+
+**Mais la carte d'énergie est identique au caractère près à celle du premier brouillon.** Les
+deux films ont été passés au même contrôle l'un après l'autre pour en être sûr : seules
+l'immobilité (0,522 → 0,519) et le silence (0,788 → 0,791) bougent, de moins que le bruit de
+mesure. Les corrections ont bien changé le film - 60 % de captures en plus, donc bien plus de
+mouvement à l'intérieur des images, donc un flou plus juste - mais elles n'ont **rien
+redistribué** : les quatre salves d'énergie restent toutes avant 12,2 s.
+
+La planche de contact de la seconde moitié montre pourquoi, et ce n'est pas un défaut
+d'animation : l'année de migration enchaîne des cartes du monde en fondu, et un fondu ne fait
+bouger presque aucun pixel d'une image à l'autre, même quand l'image change beaucoup. Idem pour
+les barres du classement et les bulles du chat, petits objets sur un grand cadre. **La mesure
+d'énergie ne sait pas voir ça.** Deux moments restent malgré tout un peu nus à l'écran : les
+points seuls sur fond blanc vers 22 s, et la première bulle du chat vers 27,5 s.
 
 ## Le son
 
@@ -279,7 +313,8 @@ $V .claude/skills/onetake/scripts/verify_promo.py .onetake/brouillon.mp4 \
 ```
 
 Ajouter `--resume` au rendu s'il a été interrompu : les images déjà faites sont gardées dans
-`.onetake/_frames`. Pour refaire les matériaux depuis zéro, dans cet ordre :
+`.onetake/_frames`. **Compter les images du fichier obtenu après toute reprise** - voir le
+piège plus haut, la reprise garde l'image à moitié écrite par l'interruption. Pour refaire les matériaux depuis zéro, dans cet ordre :
 `captures.py`, `materiaux.py`, **`credits.py`** (il écarte les images non libres), `decoupes.py`.
 
 Si `.claude/skills/onetake/` ou `.onetake/venv/` ont disparu (ils sont hors du dépôt), tout se
@@ -292,11 +327,12 @@ qu'en IPv4, et `localhost` se résout en IPv6 ici. Le navigateur invisible écho
 ### Ce qui reste
 
 1. Refaire le rendu du brouillon corrigé, revérifier la carte d'énergie, **le faire valider**.
-2. La musique : rien n'est téléchargé, deux ou trois morceaux libres à proposer avec leur
-   licence.
-3. Le rendu final. **Attention à la définition** : la plus grande image du film fait 1 506 px
-   (la photo) et les cartes de migration 500 px. Un rendu en 4K les agrandirait de 3 à 8 fois.
-   À trancher avec Mathis : 1080p60, 1440p, ou 4K assumé flou sur les cartes.
+2. La musique : **ambiance discrète et atmosphérique**, tranché le 2026-09-30. Rien n'est
+   encore téléchargé : deux ou trois morceaux à proposer avec leur licence, qui doit être
+   compatible CC BY-NC-SA (donc jamais un « ND », pas de modification interdite).
+3. Le rendu final **en 1080p60**, tranché le 2026-09-30 : la plus grande image du film fait
+   1 506 px et les cartes de migration 500 px, un 4K les aurait agrandies de 3 à 8 fois.
+   1 800 images au lieu de 900, prévoir environ le double du temps du brouillon.
 4. La version allégée pour le web, son poids mesuré, exclue du cache hors ligne.
 5. L'écran d'accueil : image de couverture, lecture au clic, testé sur ordinateur et en
    largeur téléphone. Puis `node tools/build/genere-demo.mjs` et `node tools/verif/tous.mjs`.
@@ -309,9 +345,10 @@ qu'en IPv4, et `localhost` se résout en IPv6 ici. Le navigateur invisible écho
 3. **Reconstruire les écrans en HTML** dans le repère des prises (3840×2160 à deux pixels par
    point, donc 1920×1080 utiles). C'est le gros du travail : le skill ne filme pas l'écran.
 4. **Brouillon 1080p30**, passer l'oracle (`probe.py`, `verify_promo.py`), le faire valider.
-5. **Rendu final 4K60.** Durée à mesurer avant de promettre : la documentation du skill donne
-   0,2 s par capture et un exemple à 2 480 captures en 103 s sur 8 fils. Une vidéo de 30 s en
-   4K60 fait 1 800 images, plusieurs captures chacune pour le flou.
+5. **Rendu final 1080p60** (le 4K est écarté, voir « Ce qui est tranché »). Durée à mesurer
+   avant de promettre : la documentation du skill donne 0,2 s par capture et un exemple à
+   2 480 captures en 103 s sur 8 fils. Une vidéo de 30 s à 60 images par seconde en fait
+   1 800, plusieurs captures chacune pour le flou.
 6. **Version allégée pour le web**, son poids mesuré, exclue du cache hors ligne du service
    worker.
 7. **Écran d'accueil** : image de couverture, lecture au clic, testé sur ordinateur et en
@@ -320,8 +357,9 @@ qu'en IPv4, et `localhost` se résout en IPv6 ici. Le navigateur invisible écho
 
 ## Ce qui est en suspens
 
-- **La musique.** Libre de droits par défaut chez le skill (Pixabay, Free Music Archive). Rien
-  n'est téléchargé : deux ou trois morceaux à proposer avec leur licence, et Mathis tranche.
+- **La musique.** L'ambiance est tranchée (discrète, atmosphérique) ; le morceau ne l'est pas.
+  Libre de droits par défaut chez le skill (Pixabay, Free Music Archive). Rien n'est
+  téléchargé : deux ou trois morceaux à proposer avec leur licence, et Mathis tranche.
 - **Les photos d'oiseaux** viennent de Wikimedia et d'iNaturalist, sous leurs propres licences.
   L'appli les crédite à l'écran ; une vidéo qui les montre devra les créditer aussi, ou
   reconstruire le mur avec des vignettes floutées.
