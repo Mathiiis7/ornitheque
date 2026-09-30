@@ -252,12 +252,12 @@ function pointA(t, p, i) {
   if (t < T.CLASSEMENT) return { x: pos.x, y: pos.y, a: k };
 
   // Le rassemblement : chaque point rejoint une barre, repartis dans l'ordre.
-  const j = ssstep(T.CLASSEMENT, T.CLASSEMENT + 2.0, t);
+  const j = ssstep(T.CLASSEMENT, T.CLASSEMENT + 2.6, t);
   const b = cadreBarre(i % BARRES.length);
   const u = ((i * 2654435761) % 1000) / 1000;         // repartition fixe, sans hasard
   const v = ((i * 40503) % 1000) / 1000;
   const cible = { x: b.x + u * b.w, y: b.y + v * b.h };
-  return { x: lerp(pos.x, cible.x, j), y: lerp(pos.y, cible.y, j), a: 1 - ssstep(T.CLASSEMENT + 1.4, T.CLASSEMENT + 2.2, t) };
+  return { x: lerp(pos.x, cible.x, j), y: lerp(pos.y, cible.y, j), a: 1 - ssstep(T.CLASSEMENT + 2.0, T.CLASSEMENT + 2.8, t) };
 }
 
 // Le bouton rond : celui du lecteur de la fiche, puis celui du quiz. Le meme objet dans
@@ -432,9 +432,16 @@ function dessineMonde(g, t) {
   if (IMG.aire) g.drawImage(IMG.aire, c.x, c.y, c.w, c.h);
 
   const k = clamp(seg(t, T.ANNEE, T.PIC_POSE), 0, 1);
-  const idx = Math.min(SEMAINES.length - 1, Math.floor(k * SEMAINES.length));
+  const pos = k * (SEMAINES.length - 1);
+  const idx = Math.min(SEMAINES.length - 1, Math.floor(pos));
+  const suiv = Math.min(SEMAINES.length - 1, idx + 1);
+  const u = pos - idx;
   const im = IMG['m' + semaineA(idx)];
+  const im2 = IMG['m' + semaineA(suiv)];
   if (im) g.drawImage(im, c.x, c.y, c.w, c.h);
+  if (im2 && u > 0.002) {
+    g.save(); g.globalAlpha = a * u; g.drawImage(im2, c.x, c.y, c.w, c.h); g.restore();
+  }
 
   // Le mois, la ou l'appli l'affiche : sous la carte.
   if (t >= T.ANNEE && t < T.RARETE) {
@@ -467,7 +474,7 @@ function dessineCarteRarete(g, t) {
 
 // --- Les points : le porteur des passages 19,2 et 21,0 ------------------------------
 function dessinePoints(g, t) {
-  if (t < T.RARETE || t > T.CLASSEMENT + 2.4) return;
+  if (t < T.RARETE || t > T.CLASSEMENT + 3.0) return;
   g.save();
   for (let i = 0; i < POINTS.length; i++) {
     const p = POINTS[i];
@@ -483,7 +490,7 @@ function dessinePoints(g, t) {
 
 // --- Le classement : les barres nees des points -------------------------------------
 function dessineClassement(g, t) {
-  const a = ssstep(T.CLASSEMENT + 1.3, T.CLASSEMENT + 2.3, t)
+  const a = ssstep(T.CLASSEMENT + 1.6, T.CLASSEMENT + 2.9, t)
           * (1 - ssstep(T.QUIZ, T.QUIZ + 0.6, t));
   if (a <= 0.002) return;
   g.save();
@@ -523,7 +530,7 @@ function dessineQuiz(g, t) {
   g.fillText(D.quiz.question, 960, 566);
 
   D.quiz.reponses.forEach((r, i) => {
-    const ka = ssstep(T.QUIZ + 0.5 + i * 0.09, T.QUIZ + 0.95 + i * 0.09, t);
+    const ka = ssstep(T.QUIZ + 0.55 + i * 0.2, T.QUIZ + 1.15 + i * 0.2, t);
     if (ka <= 0.002) return;
     const y = 606 + i * 92;
     g.save();
@@ -554,7 +561,7 @@ function dessineChat(g, t) {
   g.fillStyle = L.mute; g.font = police('text', 22); g.textAlign = 'left';
   g.fillText('La ligue papote', 496, 306);
   msgs.forEach((m, i) => {
-    const ka = ssstep(T.CHAT + 0.45 + i * 0.18, T.CHAT + 1.05 + i * 0.18, t);
+    const ka = ssstep(T.CHAT + 0.55 + i * 0.5, T.CHAT + 1.35 + i * 0.5, t);
     if (ka <= 0.002) return;
     const y = 530 + i * 130;
     g.save();
@@ -720,6 +727,33 @@ window.__motion = (t0, t1) => {
   px = Math.max(px, Math.abs(m1.zoom - m0.zoom) * Math.hypot(GW, GH) / 2);
   return px;
 };
+
+// Ce que le son doit accompagner. La partition lit CETTE liste plutot que des instants
+// recopies a la main : si un moment bouge, son bruitage bouge avec lui.
+// Moins d'evenements que de moments : un son par contact, pas un son par element.
+window.__events = () => ({
+  T: DUR,
+  events: [
+    { t: T.APPROCHE,          kind: 'air',    pan: 0,     v: 0.45 },  // l'approche demarre
+    { t: T.FICHE,             kind: 'bubble', pan: 0,     v: 0.70 },  // la carte s'ouvre en fiche
+    { t: T.CHANT,             kind: 'wood',   pan: -0.35, v: 0.80 },  // le bouton se pose
+    { t: T.IRIS,              kind: 'air',    pan: 0,     v: 1.00 },  // le monde s'ouvre
+    { t: T.RARETE,            kind: 'sub',    pan: 0,     v: 0.90 },  // la tache se contracte
+    { t: T.POINTS_POSE,       kind: 'glass',  pan: 0.1,   v: 0.55 },  // les points se posent
+    { t: T.CLASSEMENT,        kind: 'air',    pan: 0,     v: 0.45 },  // le rassemblement
+    { t: T.CLASSEMENT + 2.9,  kind: 'glass',  pan: 0,     v: 0.60 },  // les barres s'arretent
+    { t: T.QUIZ,              kind: 'wood',   pan: 0,     v: 0.70 },  // le bouton du quiz
+    { t: T.CHAT,              kind: 'bubble', pan: -0.20, v: 0.70 },  // la premiere bulle
+    { t: T.CHAT + 0.75,       kind: 'bubble', pan: 0.15,  v: 0.55 },
+    { t: T.CHAT + 1.25,       kind: 'bubble', pan: -0.10, v: 0.50 },
+    { t: T.LOGO,              kind: 'sub',    pan: 0,     v: 0.80 },  // le repli sur le logo
+  ],
+  // Le chant de l'hirondelle lui-meme, pendant que le sonagramme se dessine. Ce n'est pas
+  // un bruitage : c'est l'enregistrement que l'appli fait ecouter.
+  chant: { t: T.CHANT, jusqua: T.IRIS + 0.6, fichier: 'assets/chant.mp3' },
+  // Les silences voulus, que l'oracle verifie : l'ouverture et la pose sur le pic.
+  silences: [[0, T.APPROCHE], [T.PIC_POSE + 0.3, T.RARETE]],
+});
 
 window.__seek = async t => {
   const cv = document.getElementById('cv');
