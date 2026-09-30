@@ -173,6 +173,44 @@ sur-réagit aux petits détails. Donc allonger les repos au premier passage du c
 que d'y croire d'avance. Et les repos sont immobiles POUR DE VRAI : un lent travelling pendant
 une pause compte comme du mouvement, c'est ce qui a fait échouer un des films du skill.
 
+## Les licences, vérifiées à la source
+
+Relevé le 2026-09-30 par `tools/onetake/credits.py`, qui remonte à l'origine de chaque image
+réellement servie par l'appli. Le détail nominatif est dans [VIDEO-CREDITS.md](VIDEO-CREDITS.md),
+régénéré par le script.
+
+**Ce que ça change, et ce n'est pas un détail :**
+
+1. **Le film portera CC BY-NC-SA**, parce que c'est la licence du chant que l'appli sert
+   vraiment (Olivier SWIFT, xeno-canto 1149071, enregistré dans les Yvelines). Sur 300
+   enregistrements d'hirondelle sondés, **deux seulement** échappent à la clause « pas
+   d'usage commercial », et aucun à « partage à l'identique ». La clause non commerciale ne
+   coûte rien de plus : le skill qui fabrique le film est lui-même non commercial.
+2. **Quelques vignettes du Birdydex sont sous tous droits réservés** et sortent du film. Les
+   afficher dans l'appli est un lien vers l'adresse d'origine ; les mettre dans un fichier
+   vidéo en ferait une copie diffusée. Entre 20 et 25 vignettes sur 30 passent le contrôle
+   selon les jours, et le script supprime les fichiers des autres.
+3. **On ne peut donc PAS filmer la capture du mur du Birdydex.** Cette image contient les
+   photos écartées. Le mur doit être reconstruit à partir des seules vignettes autorisées -
+   ce qui reste fidèle, puisque l'appli n'affiche de photo que pour les espèces cochées et
+   montre des silhouettes grises pour les autres.
+4. **La photo de l'hirondelle passe** : Ad Konings, iNaturalist, CC BY-NC. Elle est créditée.
+5. **Les cartes de migration** appartiennent au Cornell Lab (eBird Status & Trends), usage non
+   commercial avec attribution, exactement comme dans l'appli.
+
+**Un piège de méthode à connaître** : iNaturalist change la photo par défaut d'une espèce d'un
+jour à l'autre. Le nombre de vignettes retenues varie donc d'une exécution à l'autre, et une
+licence relevée aujourd'hui peut décrire une AUTRE photo demain. Le script compare l'identifiant
+de la photo téléchargée à celui que l'API renvoie et écarte les désaccords. Conséquence
+pratique : **relancer `credits.py` juste après `materiaux.py`, et construire le film à partir
+de ce qui reste sur le disque**, jamais à partir d'une liste écrite à la main.
+
+Première version du script : il cherchait l'identifiant de la photo parmi les douze
+`taxon_photos` du taxon, n'en trouvait que quatre sur vingt-neuf, et déclarait les autres
+« tous droits réservés ». Fausse alerte. Le bon appel est celui que fait l'appli elle-même,
+`taxa/autocomplete` puis `default_photo` (`app.js:11987`), dont la réponse porte déjà la
+licence et l'attribution.
+
 ## Où vivront les fichiers du film
 
 Le skill fait copier `lib/motion.js` à côté de la composition. Ce fichier est à lui, sous

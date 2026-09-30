@@ -18,7 +18,7 @@ import sys
 
 from playwright.sync_api import sync_playwright
 
-URL = "http://localhost:8765/demo/"
+URL = "http://127.0.0.1:8765/demo/"
 SORTIE = pathlib.Path(".onetake/refs")
 LARGEUR, HAUTEUR = 1920, 1080
 
