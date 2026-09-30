@@ -319,7 +319,7 @@ d'Akacie. La règle vaut pour la suite : **aucun oiseau dans le fond sonore.**
 
 **Le dosage, mesuré et non estimé.** Sonies relevées avant mélange : bruitages −21,6 LUFS,
 nappe −15,1, feuilles −37,1. Les deux fonds passent par `loudnorm` puis un gain fixe (−6 dB
-pour la nappe, −9 dB pour les feuilles). Résultat : **−24,4 LUFS, crête −6,5 dBFS, aucun
+pour la nappe, −15 dB pour les feuilles). Résultat : **−24,4 LUFS, crête −6,5 dBFS, aucun
 écrêtage**, et le fond n'ajoute que 0,7 à 1 dB aux moments où le chant et les bruitages
 parlent - il ne les couvre donc pas.
 

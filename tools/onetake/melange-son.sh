@@ -38,7 +38,7 @@ ffmpeg -v error -y \
   -ss 15 -t 30 -i "$FEUILLES" \
   -filter_complex "\
 [1:a]loudnorm=I=-24:TP=-9:LRA=7,volume=-6dB,afade=t=in:st=0:d=2,afade=t=out:st=27:d=3,aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo[nappe];\
-[2:a]loudnorm=I=-24:TP=-9:LRA=7,volume=-9dB,afade=t=in:st=0:d=1.5,afade=t=out:st=27:d=3,aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo[feuilles];\
+[2:a]loudnorm=I=-24:TP=-9:LRA=7,volume=-15dB,afade=t=in:st=0:d=1.5,afade=t=out:st=27:d=3,aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo[feuilles];\
 [0:a]aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo[sfx];\
 [sfx][nappe][feuilles]amix=inputs=3:duration=first:normalize=0[out]" \
   -map "[out]" -c:a pcm_s16le "$SORTIE"
