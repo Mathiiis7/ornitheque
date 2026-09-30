@@ -43,7 +43,9 @@ def main():
     REFS.mkdir(parents=True, exist_ok=True)
     subs, _, n_choisis = S.charge()
     print(f"{len(subs)} substituts prets, {n_choisis} choisis a la main\n")
-    reperes = {}
+    # On complete le fichier, on ne le remplace pas : les cadres des panneaux et le
+    # bloc de la carte sont mesures par d'autres scripts.
+    reperes = json.loads(SORTIE.read_text(encoding="utf-8")) if SORTIE.exists() else {}
 
     with sync_playwright() as p:
         nav = p.chromium.launch_persistent_context(
@@ -70,21 +72,31 @@ def main():
         page.wait_for_function(
             """() => [...document.querySelectorAll('.pkdx-img img')]
                      .filter(i => i.naturalWidth > 0).length >= 20""", timeout=40000)
+
+        # « Vues seulement » : sans ce filtre, le mur compte 466 cases dont 254 vides, et la
+        # descente vers la huppe traverse cinquante rangees de cases grises. Avec, elle en
+        # traverse dix et chacune porte une photo. C'est un filtre de l'appli, pas un
+        # arrangement pour le film - le bouton est a l'ecran.
+        page.click("#pkdxOwned")
+        page.wait_for_timeout(900)
+        page.evaluate(
+            """() => {
+                const it = [...document.querySelectorAll('.cp-item, [data-value]')]
+                    .find(e => /Vues seulement/i.test(e.textContent || ''));
+                if (!it) throw new Error('choix « Vues seulement » absent du selecteur');
+                it.click();
+            }""")
+        page.wait_for_timeout(2500)
         # Faire venir toutes les vignettes (chargement differe) avant de viser la huppe.
         for _ in range(14):
             page.mouse.wheel(0, 2500)
             page.wait_for_timeout(500)
         page.wait_for_timeout(2000)
 
-        # Amener la vignette de la huppe au centre de l'ecran, puis la mesurer.
-        rect = page.evaluate(
-            """(sci) => {
-                const c = document.querySelector('.pkdx-card[data-sci="' + sci + '"]');
-                if (!c) return null;
-                c.scrollIntoView({block: 'center'});
-                return null;
-            }""", SCI)
-        page.wait_for_timeout(2500)
+        # La position de la huppe DANS LA PAGE, pas dans l'ecran : la prise est une seule
+        # image haute, et la camera y descend.
+        page.evaluate("() => window.scrollTo(0, 0)")
+        page.wait_for_timeout(1500)
         rect = page.evaluate(
             """(sci) => {
                 const c = document.querySelector('.pkdx-card[data-sci="' + sci + '"]');
@@ -92,16 +104,20 @@ def main():
                 const r = c.getBoundingClientRect();
                 const img = c.querySelector('.pkdx-img img');
                 const ri = img ? img.getBoundingClientRect() : r;
-                return {carte: {x: r.left, y: r.top, w: r.width, h: r.height},
-                        photo: {x: ri.left, y: ri.top, w: ri.width, h: ri.height}};
+                const sx = window.scrollX, sy = window.scrollY;
+                return {carte: {x: r.left + sx, y: r.top + sy, w: r.width, h: r.height},
+                        photo: {x: ri.left + sx, y: ri.top + sy, w: ri.width, h: ri.height},
+                        page: {h: document.documentElement.scrollHeight}};
             }""", SCI)
         if not rect:
             print("DEFAUT : vignette de la huppe introuvable dans le mur")
             nav.close()
             return 1
         chemin = REFS / "1b-mur-huppe.png"
-        page.screenshot(path=str(chemin))
-        reperes["mur"] = {"prise": chemin.name,
+        hauteur = min(rect["carte"]["y"] + rect["carte"]["h"] + 420, rect["page"]["h"])
+        page.screenshot(path=str(chemin), full_page=True,
+                        clip={"x": 0, "y": 0, "width": LARGEUR, "height": hauteur})
+        reperes["mur"] = {"prise": chemin.name, "hauteur": round(hauteur * DPR),
                           "carte": en_prise(rect["carte"]), "photo": en_prise(rect["photo"])}
         print(f"  {chemin.name} : vignette de la huppe a "
               f"{reperes['mur']['carte']['x']},{reperes['mur']['carte']['y']} "

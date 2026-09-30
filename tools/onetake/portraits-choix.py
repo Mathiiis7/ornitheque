@@ -44,12 +44,16 @@ CHOIX = {
     "streptopelia decaocto": (5, "collier noir bien visible sur la nuque"),
     "streptopelia turtur": (4, "sur une branche, motif des ailes et du cou lisible"),
     "apus apus": (2, "en vol, ailes en faux - c'est ainsi qu'on le voit toujours"),
+    # Entrees le 2026-09-30, quand les cases sans photo ont rejoint les cases a remplacer.
+    "tachymarptis melba": (1, "en vol, ventre blanc bien visible : c'est ce qui le distingue"),
+    "porphyrio porphyrio": (4, "sur l'eau, bec rouge et plumage bleu, oiseau entier"),
 }
 
 
 def main():
     index = json.loads(INDEX.read_text(encoding="utf-8"))
-    choisis, defauts = {}, []
+    choisis = json.loads(SORTIE.read_text(encoding="utf-8")) if SORTIE.exists() else {}
+    defauts = []
     for sci, (rang, pourquoi) in CHOIX.items():
         liste = index.get(sci) or []
         if rang >= len(liste):

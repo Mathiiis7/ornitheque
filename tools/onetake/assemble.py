@@ -34,6 +34,17 @@ def main():
     ko = (FILM / "donnees.js").stat().st_size // 1024
     print(f"  donnees.js  {ko} Ko")
 
+    # reperes.js : les rectangles mesures dans le navigateur (reperes.py, prises-libres.py).
+    # Les recopier a la main dans la composition les figeait : une prise refaite et le film
+    # cadrait a cote sans qu'aucune erreur ne le dise.
+    rep = pathlib.Path(".onetake/reperes.json")
+    if rep.exists():
+        (FILM / "reperes.js").write_text(
+            "window.REPERES = " + rep.read_text(encoding="utf-8") + ";\n", encoding="utf-8")
+        print(f"  reperes.js  {(FILM / 'reperes.js').stat().st_size} octets")
+    else:
+        sys.exit("manque .onetake/reperes.json : lancer reperes.py")
+
     # look.js : les huit couleurs et les trois polices, sous-ensemblees et incorporees.
     # Indispensable en file://, ou une police distante n'arrive jamais et ou le canvas
     # retombe en silence sur une police du systeme.
@@ -49,7 +60,7 @@ def main():
     if r.returncode != 0:
         sys.exit("look.py apply a echoue")
 
-    manquants = [n for n in ("comp.html", "motion.js", "donnees.js", "look.js")
+    manquants = [n for n in ("comp.html", "motion.js", "donnees.js", "look.js", "reperes.js")
                  if not (FILM / n).exists()]
     if manquants:
         sys.exit("manque dans le dossier de fabrication : " + ", ".join(manquants))

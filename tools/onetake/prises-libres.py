@@ -30,6 +30,7 @@ DEMARRAGE_MS = 8000
 UA = S.UA
 
 IMAGES_VUES = {}
+CADRES = {}
 
 
 def prise(page, nom, attente=1500):
@@ -44,6 +45,22 @@ def prise(page, nom, attente=1500):
             .map(i => i.getAttribute('src') || '')
             .filter(s => !s.startsWith('data:'))""")
     IMAGES_VUES[nom] = sorted(set(vues))
+    # Le plus grand panneau visible : c'est lui que le film cadre. Une carte Leaflet
+    # l'emporte quand elle est plus grande - sur l'ecran des observations, c'est elle
+    # qui porte le sens.
+    CADRES[nom] = page.evaluate(
+        """() => {
+            const vus = [...document.querySelectorAll('.panel, .leaflet-container, .sm-panel')]
+                .map(e => [e, e.getBoundingClientRect()])
+                .filter(([e, r]) => r.width > 200 && r.height > 120
+                                    && r.top < innerHeight && r.bottom > 0)
+                .sort((a, b) => b[1].width * b[1].height - a[1].width * a[1].height);
+            if (!vus.length) return null;
+            const r = vus[0][1];
+            return {x: Math.round(Math.max(0, r.left) * 2), y: Math.round(Math.max(0, r.top) * 2),
+                    w: Math.round(Math.min(r.width, innerWidth) * 2),
+                    h: Math.round(Math.min(r.height, innerHeight) * 2)};
+        }""")
     print(f"  {chemin}  ({chemin.stat().st_size // 1024} Ko)"
           + (f"  ·  {len(IMAGES_VUES[nom])} image(s) exterieure(s)" if vues else "  ·  aucune image exterieure"))
     for s in IMAGES_VUES[nom][:6]:
@@ -158,6 +175,14 @@ def main():
 
     (pathlib.Path(".onetake/images-des-prises.json")).write_text(
         json.dumps(IMAGES_VUES, ensure_ascii=False, indent=1), encoding="utf-8")
+    rep = pathlib.Path(".onetake/reperes.json")
+    reperes = json.loads(rep.read_text(encoding="utf-8")) if rep.exists() else {}
+    reperes["panneaux"] = CADRES
+    rep.write_text(json.dumps(reperes, ensure_ascii=False, indent=1), encoding="utf-8")
+    print("")
+    print("cadres des panneaux :")
+    for nom, c in CADRES.items():
+        print(f"  {nom:<20} {c}")
     if erreurs:
         print("\nerreurs de page pendant les prises :")
         for e in erreurs[:10]:

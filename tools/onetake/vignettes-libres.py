@@ -26,7 +26,11 @@ import urllib.parse
 from playwright.sync_api import sync_playwright
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
-from credits import LICENCES, lis, normalise, photo_commons  # noqa: E402
+from credits import LICENCES as _LICENCES, lis, normalise, photo_commons  # noqa: E402
+
+# Une case sans photo n'a pas de licence : elle a un manque. On la range avec les
+# interdites, parce que la reponse est la meme - lui poser une photo libre.
+LICENCES = {**_LICENCES, "absente": ("aucune photo affichee (emoji de l'appli)", 5)}
 
 URL = "http://127.0.0.1:8765/demo/"
 SORTIE = pathlib.Path(".onetake/vignettes-libres.json")
@@ -92,20 +96,30 @@ def vignettes_affichees():
         vues = page.evaluate(
             """() => [...document.querySelectorAll('.pkdx-card')].map(c => {
                 const img = c.querySelector('.pkdx-img img');
+                const boite = c.querySelector('.pkdx-img');
+                // Une case cochee dont la photo n'est jamais arrivee garde l'emoji de
+                // l'appli. Ce n'est pas un choix : le chargeur cesse d'observer la case
+                // AVANT de savoir si la requete a reussi, donc une requete ratee n'est
+                // jamais rejouee. 18 cases dans ce cas le 2026-09-30, et iNaturalist a
+                // pourtant une photo pour chacune. Le film leur en pose une.
+                const emoji = !!(boite && !img && (boite.textContent || '').trim());
                 return {
                     sci: c.dataset.sci || '',
                     nom: (c.querySelector('.pkdx-name') || {}).textContent || '',
                     src: (img && img.currentSrc) || (img && img.src) || '',
                     chargee: !!(img && img.naturalWidth > 0),
+                    emoji,
                 };
             })"""
         )
         nav.close()
-        return [v for v in vues if v["chargee"] and v["src"]]
+        return [v for v in vues if (v["chargee"] and v["src"]) or v["emoji"]]
 
 
 def licence_servie(v):
     """La licence de la photo REELLEMENT affichee pour cette espece."""
+    if v.get("emoji"):
+        return "absente", "", "aucune photo affichee"
     src = v["src"]
     if "wikimedia.org" in src:
         parts = urllib.parse.unquote(src.split("?")[0]).split("/")

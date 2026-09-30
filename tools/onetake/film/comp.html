@@ -10,6 +10,7 @@
 
 <script src="motion.js"></script>
 <script src="donnees.js"></script>
+<script src="reperes.js"></script>
 <script src="look.js"></script>
 <script>
 // =============================================================================
@@ -28,7 +29,7 @@
 // calculer le flou de mouvement, donc aucune valeur ne doit dependre des appels precedents.
 // =============================================================================
 
-const FPS = 30, DUR = 30;
+const FPS = 30, DUR = 38;
 window.__meta = { dur: DUR, fps: FPS, w: 1920, h: 1080 };
 
 const W = 1920, H = 1080;
@@ -40,67 +41,98 @@ const L = (window.LOOK && window.LOOK.color) ? window.LOOK.color : {
 };
 const police = (r, px) => (window.LOOK && window.LOOK.font)
   ? window.LOOK.font(r, px)
-  : (r === 'display' ? `${px}px Georgia, serif` : `${px}px "Segoe UI", system-ui, sans-serif`);
+  : (r === 'display' ? px + 'px Georgia, serif' : px + 'px "Segoe UI", system-ui, sans-serif');
 
-// --- Les reperes mesures, en pixels de prise --------------------------------------
-// tools/onetake/reperes.py les releve dans le navigateur. Les recopier ici les fige : si
-// l'appli bouge, on relance le script et on remplace ce bloc.
+// --- Les reperes mesures, en pixels de prise ---------------------------------------
+// reperes.py et prises-libres.py les relevent dans le navigateur. Les recopier ici les
+// fige : si l'appli bouge, on relance les scripts et on remplace ce bloc.
+// Les reperes viennent de reperes.js, ecrit par assemble.py depuis les mesures du
+// navigateur. Rien n'est recopie a la main : une prise refaite et le film suit.
+const MES = window.REPERES || {};
+const DEC = (MES.mur && MES.mur.decoupe) ? MES.mur.decoupe : { x: 0, y: 0 };
+const demi = r => ({ x: r.x / 2, y: r.y / 2, w: r.w / 2, h: r.h / 2 });
+const moins = (r, d) => ({ x: r.x - d.x, y: r.y - d.y, w: r.w, h: r.h });
+const PAN = MES.panneaux || {};
 const R = {
-  carteHuppe: { x: 1789, y: 903, w: 262, h: 353 },   // la vignette dans le mur
-  photoFiche: { x: 2523, y: 351, w: 1288, h: 724 },  // l'en-tete de la fiche
-  bloc:       { x: 2521, y: 647, w: 1292, h: 1193 }, // « Ou et quand la trouver », prise cadree
+  carteLong:  demi(MES.mur.carte),              // la huppe dans mur-long (moitie)
+  carteHuppe: moins(MES.mur.carte, DEC),        // la huppe dans le decoupage plein
+  photoFiche: MES.fiche.photo,
+  bloc:       MES.carte.bloc,
+  panRarete:  PAN['4-carte-rarete'],
+  // Sur l'ecran du classement, le plus grand panneau visible est « Qui a vu quoi », qui
+  // descend sous l'ecran. Le film cadre le tableau du dessus : meme largeur, mais depuis
+  // le haut du panneau.
+  panClass:   { x: PAN['5-classement'].x, y: 300, w: PAN['5-classement'].w,
+                h: PAN['5-classement'].w * 9 / 16 },
+  panQuiz:    PAN['6b-quiz-question'],
+  panChat:    PAN['7-chat'],
 };
 const PLEIN = { x: 0, y: 0, w: 3840, h: 2160 };
-const MIG = { w: 3512, h: 1682 };                    // les semaines sont cadrees sur la carte
+const CADRE_MIG = { x: 900, y: 110, w: 2600, h: 1462 };   // Europe, Afrique, Asie
 
-// --- La feuille de plans ----------------------------------------------------------
-// Les repos sont les intervalles ou la camera ne bouge pas DU TOUT : l'oracle exige un quart
-// d'images immobiles, et il compte un lent travelling pendant une pause comme du mouvement.
+// --- La feuille de plans ------------------------------------------------------------
+// Les repos sont les intervalles ou la camera ne bouge pas DU TOUT : l'oracle exige un
+// quart d'images immobiles, et il compte un lent travelling pendant une pause comme du
+// mouvement. Duree portee a 38 s le 2026-09-30 : a 30 s, chaque ecran passait trop vite
+// pour qu'on lise ce qu'il montre.
 const T = {
-  MUR: 0.0, APPROCHE: 2.0, FICHE: 6.0, FICHE_FIN: 8.4, FICHE_POSE: 9.2,
-  CARTE: 9.2, CARTE_FIN: 10.4, CARTE_POSE: 11.0,
-  GIRONDE: 11.0, GIRONDE_FIN: 12.0, GIRONDE_POSE: 12.6,
-  SONS: 12.6, SONS_FIN: 13.6, SONS_POSE: 14.2,
-  MONDE: 14.2, ANNEE: 15.0, ANNEE_FIN: 20.2, PIC_POSE: 21.6,
-  RARETE: 21.6, RARETE_FIN: 22.6, RARETE_POSE: 23.0,
-  CLASSEMENT: 23.0, CLASSEMENT_FIN: 25.6, CLASSEMENT_POSE: 26.2,
-  QUIZ: 26.2, QUIZ_FIN: 27.4, QUIZ_POSE: 27.8,
-  CHAT: 27.8, CHAT_FIN: 29.0,
-  LOGO: 29.0, FIN: 30.0,
+  HAUT: 0.0, DESCENTE: 2.2, ZOOM: 4.6,
+  FICHE: 8.0, FICHE_FIN: 10.4, FICHE_POSE: 11.2,
+  CARTE: 11.2, CARTE_FIN: 12.6, CARTE_POSE: 13.2,
+  GIRONDE: 13.2, GIRONDE_FIN: 14.4, GIRONDE_POSE: 15.0,
+  SONS: 15.0, SONS_FIN: 16.2, SONS_POSE: 16.8,
+  MONDE: 16.8, ANNEE: 17.6, ANNEE_FIN: 23.2, PIC_POSE: 24.8,
+  RARETE: 24.8, RARETE_FIN: 26.4, RARETE_POSE: 26.9,
+  CLASSEMENT: 26.9, CLASSEMENT_FIN: 29.8, CLASSEMENT_POSE: 30.5,
+  QUIZ: 30.5, QUIZ_FIN: 32.2, QUIZ_POSE: 32.7,
+  CHAT: 32.7, CHAT_FIN: 34.6, CHAT_POSE: 35.2,
+  LOGO: 35.2, FIN: 38.0,
 };
-const FONDU = 0.45;   // duree du fondu d'un plan sur le precedent
+const FONDU = 0.45;
 
-// Un cadre 16/9 centre sur un rectangle, avec de l'air autour (marge = 1 pour coller pile).
 function cadre(r, marge) {
   const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
-  let h = Math.max(r.h * marge, (r.w * marge) * 9 / 16);
-  let w = h * 16 / 9;
+  const h = Math.max(r.h * marge, (r.w * marge) * 9 / 16), w = h * 16 / 9;
   return { x: cx - w / 2, y: cy - h / 2, w, h };
 }
-// Ramene un cadre dans les bornes de l'image : une camera qui deborde montre du noir.
 function dedans(c, im) {
   const w = Math.min(c.w, im.w), h = w * 9 / 16;
   return { x: clamp(c.x, 0, im.w - w), y: clamp(c.y, 0, im.h - h), w, h };
 }
-// Un zoom autour du centre d'un cadre : sert aux poussees lentes.
 function serre(c, k) {
   return { x: c.x + c.w * (1 - k) / 2, y: c.y + c.h * (1 - k) / 2, w: c.w * k, h: c.h * k };
 }
 
-const CADRE_MUR = dedans(cadre(R.carteHuppe, 1.25), { w: 3840, h: 2160 });
-const CADRE_PHOTO = { ...R.photoFiche };
+// L'ouverture : en haut du Birdydex, puis on descend jusqu'a la rangee de la huppe.
+const HAUT_MUR = { x: 0, y: 0, w: 1920, h: 1080 };
+const BAS_MUR = { x: 0, y: R.carteLong.y + R.carteLong.h / 2 - 540, w: 1920, h: 1080 };
+// Le decoupage pleine definition reprend EXACTEMENT ou la descente s'arrete : le fondu
+// entre les deux images ne se voit donc pas, il n'y a rien a raccorder.
+const REPRISE = { x: 0, y: clamp((BAS_MUR.y * 2) - DEC.y, 0, 2160), w: 3840, h: 2160 };
+const CADRE_HUPPE = dedans(cadre(R.carteHuppe, 1.25), { w: 3840, h: 2160 });
 const CADRE_BLOC = dedans(cadre(R.bloc, 1.06), { w: 3840, h: 2160 });
-const CADRE_MIG = { x: 900, y: 110, w: 2600, h: 1462 };   // Europe, Afrique, Asie
 
-// --- Les plans ---------------------------------------------------------------------
-// cles : [instant, cadre camera]. La camera interpole d'une cle a la suivante.
-// porteur : le rectangle, dans la capture, de l'objet qui traverse le passage.
+// Chaque panneau devient un cadre 16/9 qui le contient en entier.
+const PRISE = { w: 3840, h: 2160 };
+const CADRE_RARETE = dedans(cadre(R.panRarete, 1.02), PRISE);
+const CADRE_CLASS = dedans(cadre(R.panClass, 1.02), PRISE);
+const CADRE_QUIZ = dedans(cadre(R.panQuiz, 1.04), PRISE);
+const CADRE_CHAT = dedans(cadre(R.panChat, 1.04), PRISE);
+
 const PLANS = [
-  { nom: 'mur', img: 'mur', porteur: R.carteHuppe, cles: [
-      [T.MUR, PLEIN], [T.APPROCHE, PLEIN], [T.FICHE, CADRE_MUR]] },
+  { nom: 'murHaut', img: 'murLong', porteur: null, cles: [
+      // La descente atteint sa position finale AVANT le debut du fondu : pendant le
+      // fondu, les deux images montrent alors exactement le meme cadrage, et le
+      // raccord entre l'image longue et le decoupage plein ne se voit pas.
+      [T.HAUT, HAUT_MUR], [T.DESCENTE, HAUT_MUR], [T.ZOOM - FONDU, BAS_MUR],
+      [T.ZOOM, BAS_MUR]] },
+
+  { nom: 'murHuppe', img: 'murHuppe', porteur: R.carteHuppe, cles: [
+      [T.ZOOM, REPRISE], [T.FICHE, CADRE_HUPPE]] },
 
   { nom: 'fiche', img: 'fiche', porteur: R.photoFiche, cles: [
-      [T.FICHE, CADRE_PHOTO], [T.FICHE_FIN, PLEIN], [T.FICHE_POSE, PLEIN]] },
+      [T.FICHE, { x: R.photoFiche.x, y: R.photoFiche.y, w: R.photoFiche.w, h: R.photoFiche.h }],
+      [T.FICHE_FIN, PLEIN], [T.FICHE_POSE, PLEIN]] },
 
   { nom: 'carte', img: 'carteFr', porteur: R.bloc, cles: [
       [T.CARTE, CADRE_BLOC], [T.CARTE_FIN, serre(CADRE_BLOC, 0.94)],
@@ -108,8 +140,8 @@ const PLANS = [
 
   // Le clic : meme cadrage que la vue France, pour que seul le contenu change.
   { nom: 'gironde', img: 'carteGironde', porteur: R.bloc, cles: [
-      [T.GIRONDE, serre(CADRE_BLOC, 0.94)], [T.GIRONDE_FIN, serre(CADRE_BLOC, 0.78)],
-      [T.GIRONDE_POSE, serre(CADRE_BLOC, 0.78)]] },
+      [T.GIRONDE, serre(CADRE_BLOC, 0.94)], [T.GIRONDE_FIN, serre(CADRE_BLOC, 0.80)],
+      [T.GIRONDE_POSE, serre(CADRE_BLOC, 0.80)]] },
 
   { nom: 'sons', img: 'sons', porteur: { x: 2560, y: 300, w: 1260, h: 460 }, cles: [
       [T.SONS, { x: 2450, y: 250, w: 1390, h: 782 }],
@@ -121,25 +153,25 @@ const PLANS = [
       [T.PIC_POSE, CADRE_MIG]] },
 
   { nom: 'rarete', img: 'rarete', porteur: null, cles: [
-      [T.RARETE, PLEIN], [T.RARETE_FIN, serre(PLEIN, 0.88)],
-      [T.RARETE_POSE, serre(PLEIN, 0.88)]] },
+      [T.RARETE, CADRE_RARETE], [T.RARETE_FIN, serre(CADRE_RARETE, 0.88)],
+      [T.RARETE_POSE, serre(CADRE_RARETE, 0.88)]] },
 
   { nom: 'classement', img: 'classement', porteur: null, cles: [
-      [T.CLASSEMENT, serre(PLEIN, 0.96)], [T.CLASSEMENT_FIN, serre(PLEIN, 0.82)],
-      [T.CLASSEMENT_POSE, serre(PLEIN, 0.82)]] },
+      [T.CLASSEMENT, CADRE_CLASS], [T.CLASSEMENT_FIN, serre(CADRE_CLASS, 0.84)],
+      [T.CLASSEMENT_POSE, serre(CADRE_CLASS, 0.84)]] },
 
   { nom: 'quiz', img: 'quiz', porteur: null, cles: [
-      [T.QUIZ, serre(PLEIN, 0.94)], [T.QUIZ_FIN, serre(PLEIN, 0.86)],
-      [T.QUIZ_POSE, serre(PLEIN, 0.86)]] },
+      [T.QUIZ, CADRE_QUIZ], [T.QUIZ_FIN, serre(CADRE_QUIZ, 0.88)],
+      [T.QUIZ_POSE, serre(CADRE_QUIZ, 0.88)]] },
 
   { nom: 'chat', img: 'chat', porteur: null, cles: [
-      [T.CHAT, serre(PLEIN, 0.94)], [T.CHAT_FIN, serre(PLEIN, 0.84)]] },
+      [T.CHAT, CADRE_CHAT], [T.CHAT_FIN, serre(CADRE_CHAT, 0.86)],
+      [T.CHAT_POSE, serre(CADRE_CHAT, 0.86)]] },
 
   { nom: 'logo', logo: true, porteur: null, cles: [
       [T.LOGO, PLEIN], [T.FIN, PLEIN]] },
 ];
 
-// Debut visible d'un plan : son fondu commence avant sa premiere cle.
 const debut = i => i === 0 ? 0 : PLANS[i].cles[0][0] - FONDU;
 const finVisible = i => i === PLANS.length - 1 ? DUR : PLANS[i + 1].cles[0][0];
 
@@ -168,9 +200,6 @@ function alphaDe(i, t) {
   return clamp((t - d) / FONDU, 0, 1);
 }
 
-// La semaine montree a l'instant t, en nombre reel : la partie decimale sert au fondu entre
-// deux semaines. Sans ce fondu, deux images sur trois etaient identiques pendant l'annee -
-// 3,4 s d'immobilite involontaire au milieu du plus long moment du film (mesure le 29/09).
 const SEMAINES = 52;
 function semaineA(t) {
   if (t <= T.ANNEE) return 0;
@@ -291,7 +320,7 @@ window.__motion = (t0, t1) => {
 window.__events = () => ({
   T: DUR,
   events: [
-    { t: T.APPROCHE,      kind: 'air',    pan: 0,     v: 0.45 },  // l'approche demarre
+    { t: T.DESCENTE,      kind: 'air',    pan: 0,     v: 0.45 },  // l'approche demarre
     { t: T.FICHE,         kind: 'bubble', pan: 0,     v: 0.70 },  // la vignette devient fiche
     { t: T.CARTE,         kind: 'glass',  pan: 0.10,  v: 0.50 },  // la carte de presence
     { t: T.GIRONDE,       kind: 'wood',   pan: -0.25, v: 0.75 },  // le clic sur le departement
@@ -309,7 +338,7 @@ window.__events = () => ({
   // c'est l'enregistrement que l'appli fait ecouter.
   chant: { t: T.SONS, jusqua: T.ANNEE + 0.6, fichier: 'assets/chant.mp3' },
   // Les silences voulus, que l'oracle verifie : l'ouverture et la pose sur le pic.
-  silences: [[0, T.APPROCHE], [T.ANNEE_FIN + 0.3, T.RARETE]],
+  silences: [[0, T.DESCENTE], [T.ANNEE_FIN + 0.3, T.RARETE]],
 });
 
 window.__seek = async t => seek(t);
@@ -325,7 +354,8 @@ function charge(cle, url) {
 
 window.__ready = (async () => {
   const jobs = [
-    charge('mur', 'assets/mur.jpg'),
+    charge('murLong', 'assets/mur-long.jpg'),
+    charge('murHuppe', 'assets/mur-huppe.jpg'),
     charge('fiche', 'assets/fiche.jpg'),
     charge('carteFr', 'assets/carte-fr.jpg'),
     charge('carteGironde', 'assets/carte-gironde.jpg'),
