@@ -418,6 +418,44 @@ ce qui n'est pas une erreur : la mesure EBU R128 écarte les passages trop faibl
 continu fait entrer dans le calcul tous les silences qui en étaient exclus. Ne pas chercher à
 « rattraper » ce chiffre.
 
+## Où reprendre : les cinq reproches du 2026-10-01
+
+Le film remonté sur les vraies captures est rendu (`.onetake/captures.mp4`, 38 s, 1 140 images,
+aucune erreur). Mathis l'a regardé. **Cinq reproches, et ils commandent la suite.**
+
+**1. « C'est un diaporama, sans originalité ni animation, et on ne voit pas assez longtemps
+chaque fonctionnalité. »** L'oracle disait exactement cela et je l'avais mal défendu : son
+critère de continuité tombe à **0,00 sur 11 passages, aucun porteur**, là où il exige 0,5. Un
+fondu entre deux captures cadrées sur le même objet ne suffit pas - ni pour la mesure, ni pour
+l'œil. Ce qu'il faut : un vrai raccord, où l'objet garde sa taille et sa place d'une capture à
+l'autre, et de l'animation à l'intérieur des plans plutôt qu'un simple zoom lent. Le zoom sur
+la vignette est aussi trop faible : la vignette source ne fait que 231 px, un vrai raccord la
+montrera molle une demi-seconde - c'est le prix, et il se décide.
+
+**2. Aucun texte ne présente les parties.** Il attend ce que font les vidéos de présentation :
+une phrase qui nomme la fonctionnalité et donne envie - « un catalogue des oiseaux du monde
+entier », « des quiz sur les chants ». Le film actuel n'a que son logo final. C'est du texte
+animé (kinetic type), et c'est justement ce que le skill sait faire.
+
+**3. Les enchaînements ne sont pas fluides.** Même cause que le reproche 1 : un fondu de 0,45 s
+entre deux images fixes n'est pas un mouvement, c'est un remplacement adouci.
+
+**4. « Le skill n'est peut-être pas le bon outil ? »** Il l'est. Sa raison d'être est exactement
+ce qui manque ici - texte animé, gestes qui déclenchent les réactions, mouvements qui se
+portent d'un plan au suivant, flou de mouvement réel. **C'est moi qui l'ai employé comme un
+diaporamateur** : des captures posées, une caméra qui zoome lentement, aucun de ses outils de
+mouvement (ressorts, entrées, contacts, portés). La réponse n'est pas de changer d'outil, c'est
+de s'en servir - et de relire `.claude/skills/onetake/` avant d'écrire la prochaine composition.
+
+**5. La photo de la huppe n'est pas au format.** Elle ne remplit ni le cadre 16/9 de la fiche
+(`tools/onetake/photo-fiche.py` la pose entière avec son propre flou en fond, donc deux bandes
+floues sur les côtés), ni le carré de la vignette du Birdydex. Deux pistes : chercher une photo
+de huppe **horizontale** parmi les candidates libres (`.onetake/candidats/upupa-epops-commons/`,
+17 candidates), ou recadrer celle-ci sur l'oiseau au lieu de la letterboxer.
+
+Tout le reste est en place et validé par lui : le mur filmable, les sept écrans, la Gironde
+sélectionnée, les 52 semaines de migration, les 18 portraits choisis à la main.
+
 ## Reprendre le travail
 
 Mis en pause le 2026-09-30, pendant le rendu du brouillon corrigé.
