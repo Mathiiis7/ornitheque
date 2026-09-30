@@ -37,6 +37,7 @@ exige.
 | Fil conducteur | « Une carte devient un monde » | 2026-09-30 |
 | Écran d'accueil | Image fixe, la vidéo se lance au clic | 2026-09-30 |
 | Source des images | Le mode démo, jamais la vraie ligue | 2026-09-30 |
+| Allure | Celle de l'Ornithèque, `.onetake/look-ornitheque.json` | 2026-09-30 |
 
 ### Le découpage, avec ses durées
 
@@ -117,6 +118,69 @@ ciel de la photo d'hirondelle (#5c8cf4, 3,57 % des pixels) comme couleur d'accen
 sarcelle de l'appli n'en pesait que 0,20 %. L'allure de `.onetake/look-ornitheque.json` est donc
 écrite à la main depuis `styles.css`, et passe le contrôle de contraste du skill : encre
 14,80:1, gris 5,00:1, accent 4,47:1, second 3,80:1.
+
+## La feuille de plans
+
+Écrite le 2026-09-30. Trente secondes, huit sections, **aucune coupe franche** : chaque section
+naît de la précédente. La colonne « ce qui survit » est la plus importante du tableau - c'est
+elle que l'oracle mesure, et c'est elle qui décide si le film est un plan-séquence ou un
+diaporama.
+
+**L'ordre de deux moments a changé** par rapport au découpage validé : la rareté passe AVANT le
+classement. Raison mécanique, pas éditoriale - les taches rouges de la carte de migration se
+contractent naturellement en points sur la France, et les points s'alignent ensuite en barres
+de classement. Dans l'autre sens il aurait fallu que des barres redeviennent des points, ce qui
+ne se raccorde pas.
+
+| t | Section | Ce qui bouge | Ce qui est immobile | Ce qui survit au passage |
+|---|---|---|---|---|
+| 0 – 2,0 | Le mur, pose | rien | **tout** (repos, 2,0 s) | - |
+| 2,0 – 6,0 | Le mur, approche | la caméra pousse vers la carte de l'hirondelle ; le compteur 212/466 monte | le mur | **la carte de l'hirondelle** |
+| 6,0 – 8,4 | La fiche s'ouvre | la carte grandit, sa photo devient l'en-tête de la fiche ; les panneaux s'assemblent autour | la photo, jamais recadrée | **la photo** |
+| 8,4 – 9,0 | La fiche, pose | rien | tout (repos, 0,6 s) | la photo |
+| 9,0 – 10,2 | Le chant | le bouton rond se pose sur la photo, le sonagramme se dessine de gauche à droite | la photo | **la photo** |
+| 10,2 – 11,0 | Le chant, pose | rien | tout (repos, 0,8 s) | la photo |
+| 11,0 – 12,2 | La carte s'ouvre | un iris s'ouvre depuis le centre de la photo ; le ciel bleu de la photo devient l'océan de la carte | - | **le bleu**, qui ne quitte pas l'écran |
+| 12,2 – 17,4 | L'année défile | 52 semaines en 5,2 s : l'Europe rougit, se vide, l'Afrique se remplit | le cadre, la caméra ne bouge pas | **la tache rouge sur l'Europe** |
+| 17,4 – 19,2 | Le pic, pose | rien | tout (repos, 1,8 s) | la tache rouge |
+| 19,2 – 20,6 | La rareté | la tache se contracte sur la France et se résout en points colorés ; la légende 1-10 glisse | - | **les points** |
+| 20,6 – 21,0 | Les points, pose | rien | tout (repos, 0,4 s) | les points |
+| 21,0 – 24,2 | Le classement | les points montent et s'alignent en rangées ; les cinq nombres défilent jusqu'à 389, 318, 274, 212, 156 ; les coches de « Qui a vu quoi » traversent | - | **la rangée du haut** |
+| 24,2 – 25,0 | Le classement, pose | rien | tout (repos, 0,8 s) | la rangée du haut |
+| 25,0 – 26,5 | Le quiz | la rangée devient la barre de progression ; le bouton rond y atterrit ; quatre réponses se distribuent | - | **le bouton rond** |
+| 26,5 – 27,0 | Le quiz, pose | rien | tout (repos, 0,5 s) | le bouton rond |
+| 27,0 – 29,0 | Le chat | le bouton rond devient une bulle ; trois bulles montent | - | **une bulle** |
+| 29,0 – 30,0 | Le logo | la bulle se replie en huppe ; le nom se pose | tout après 29,2 (repos, 0,8 s) | - |
+
+**Les rimes de forme**, qui font tenir la chaîne sans rien inventer : le bouton rond de lecture
+de la fiche et celui du quiz sont le MÊME objet dans l'appli ; le bleu du ciel de la photo
+d'hirondelle et le bleu de l'océan de la carte de migration se ressemblent déjà. On s'en sert,
+on ne les fabrique pas.
+
+**Ce que ça doit donner, sur les mesures de l'oracle :**
+
+| Mesure | Exigence | Ce que la feuille prévoit |
+|---|---|---|
+| Rapport entre le plus long et le plus court plan | ≥ 4× | 5,2 s contre 0,4 s, soit 13× |
+| Variation des durées | ≥ 0,25 | 0,72 sur les 17 sections |
+| Images totalement immobiles | ≥ 25 % | 7,7 s sur 30, soit 25,7 % |
+| Une plage immobile d'au moins 1 s | oui | deux : 2,0 s et 1,8 s |
+| Score de continuité | ≥ 0,5, idéalement ≥ 0,7 | sept passages, tous portés |
+
+Les 25 % d'immobilité sont **tout juste atteints sur le papier**, à 0,7 point près, et la
+mesure sera plus sévère que le calcul : l'oracle lit l'énergie sur une image réduite et
+sur-réagit aux petits détails. Donc allonger les repos au premier passage du contrôle plutôt
+que d'y croire d'avance. Et les repos sont immobiles POUR DE VRAI : un lent travelling pendant
+une pause compte comme du mouvement, c'est ce qui a fait échouer un des films du skill.
+
+## Où vivront les fichiers du film
+
+Le skill fait copier `lib/motion.js` à côté de la composition. Ce fichier est à lui, sous
+licence PolyForm Noncommercial, et le dépôt est public : il ne doit pas y entrer.
+
+- `tools/onetake/film/comp.html` - **notre** travail, suivi par git ;
+- `.onetake/film/` - le dossier de fabrication, hors dépôt, où sont copiés au moment du rendu
+  la composition, `motion.js` du skill et le `look.js` fabriqué depuis l'allure.
 
 ## Reprendre le travail
 
