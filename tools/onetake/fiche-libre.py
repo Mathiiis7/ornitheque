@@ -28,7 +28,9 @@ from portraits import LIBRES, candidates, commons  # noqa: E402
 URL = "http://127.0.0.1:8765/demo/"
 REFS = pathlib.Path(".onetake/refs")
 PHOTOS = pathlib.Path(".onetake/remplacantes")
-SCI = "hirundo rustica"
+# L'espece du film. La huppe fasciee a remplace l'hirondelle rustique le 2026-09-30 : c'est
+# l'oiseau du logo, et le film se termine sur une forme qui se replie en huppe.
+SCI = sys.argv[1] if len(sys.argv) > 1 else "upupa epops"
 LARGEUR, HAUTEUR = 1920, 1080
 DEMARRAGE_MS = 8000
 UA = S.UA
@@ -66,17 +68,17 @@ def main():
             }""")
         page.wait_for_timeout(2000)
         page.evaluate(
-            """() => {
+            """(mot) => {
                 const i = document.getElementById('pkdxSearch');
-                i.value = 'rustica'; i.dispatchEvent(new Event('input',{bubbles:true}));
-            }""")
+                i.value = mot; i.dispatchEvent(new Event('input',{bubbles:true}));
+            }""", SCI.split()[1])
         page.wait_for_timeout(1500)
         page.evaluate(
-            """() => {
-                const c = document.querySelector('.pkdx-card[data-sci="hirundo rustica"]');
-                if (!c) throw new Error('carte hirondelle absente du Birdydex');
+            """(sci) => {
+                const c = document.querySelector('.pkdx-card[data-sci="' + sci + '"]');
+                if (!c) throw new Error('carte absente du Birdydex : ' + sci);
                 c.click();
-            }""")
+            }""", SCI)
         page.wait_for_timeout(4000)
 
         # Le profil garde le dernier onglet visite : la fiche s'ouvrait sur Sons, d'ou deux
@@ -93,10 +95,8 @@ def main():
         # La photo REELLEMENT affichee en tete de fiche, et sa licence, lues maintenant.
         src = page.evaluate(
             """() => {
-                const im = [...document.querySelectorAll('img')]
-                    .filter(i => i.naturalWidth > 200 && !/xeno-canto|spectrogram/.test(i.src))
-                    .sort((a,b) => b.naturalWidth*b.naturalHeight - a.naturalWidth*a.naturalHeight);
-                return im.length ? im[0].getAttribute('src') : '';
+                const i = document.getElementById('smHeroImg');
+                return i ? i.getAttribute('src') : '';
             }""")
         print(f"  adresse servie : {src[:110]}")
         info = origine(src, SCI) or {}
@@ -109,7 +109,7 @@ def main():
             print("  -> incompatible, on cherche un portrait libre")
             c, chemin = portrait_libre(SCI)
             if not c:
-                print("DEFAUT : aucun portrait libre trouve pour l'hirondelle")
+                print("DEFAUT : aucun portrait libre trouve")
                 nav.close()
                 return 1
             remplacee = c
@@ -123,7 +123,26 @@ def main():
         print(f"{poses} image(s) substituee(s) dans la page")
         page.wait_for_timeout(2500)
 
-        chemin = REFS / "2-fiche-hirondelle-libre.png"
+        chemin = REFS / "2-fiche-libre.png"
+        page.screenshot(path=str(chemin))
+        print(f"  {chemin}  ({chemin.stat().st_size // 1024} Ko)")
+
+        # Le bloc « Ou et quand la trouver » en entier : la carte de France ET les barres
+        # mensuelles dessous, qui sortaient coupees de la prise precedente.
+        trouve = page.evaluate(
+            """() => {
+                const c = document.getElementById('smOuQuandCard');
+                if (!c || c.hidden) return 0;
+                const h = c.getBoundingClientRect().height;
+                c.scrollIntoView({block: h < window.innerHeight - 60 ? 'center' : 'start'});
+                return Math.round(h);
+            }""")
+        page.wait_for_timeout(2000)
+        if not trouve:
+            print("  ATTENTION : bloc « Ou et quand la trouver » absent, cadrage non fait")
+        else:
+            print(f"  bloc « Ou et quand la trouver » : {trouve} px de haut, cadre")
+        chemin = REFS / "2c-fiche-carte-libre.png"
         page.screenshot(path=str(chemin))
         print(f"  {chemin}  ({chemin.stat().st_size // 1024} Ko)")
 
