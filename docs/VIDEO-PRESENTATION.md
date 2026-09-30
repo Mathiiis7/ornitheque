@@ -241,6 +241,37 @@ Deux pièges payés ici :
 - **la plus grande image de la page n'est pas l'oiseau, c'est le sonagramme de xeno-canto.** Le
   contrôle de licence portait donc sur le mauvais fichier, et concluait « inconnue ».
 
+### L'espèce du film : la huppe fasciée
+
+Changée le 2026-09-30, à la place de l'hirondelle rustique. C'est **l'oiseau du logo** : le film
+se termine déjà sur une forme qui se replie en huppe, la boucle se ferme d'elle-même. Elle a tout
+ce qu'il faut - carte de migration hebdomadaire (une des 304), chant au sonagramme régulier
+(le « houp-houp-houp », Esperanza Poveda, Espagne), place dans le Birdydex de la démo.
+
+**Sa photo servie par l'appli est en CC BY-SA, donc incompatible** : remplacée par celle de
+Shantanu Kuveskar (Wikimedia, CC BY), choisie par Mathis parmi quatre. Elle est verticale
+(750×1000) et la fiche affiche ses photos en `aspect-ratio:16/9` avec `object-fit:cover`
+(`styles.css:1021`) : telle quelle, l'appli lui coupait la huppe et la queue.
+`tools/onetake/photo-fiche.py` fabrique donc une image 16/9 qui contient l'oiseau **entier**, son
+propre flou en fond - une modification que CC BY autorise, à condition de créditer.
+
+**L'espèce du film n'était pas dans la mesure du mur**, donc son portrait choisi était ignoré, et
+sa photo interdite se retrouvait à l'écran derrière l'écran de migration. `substituts.py` ajoute
+désormais toute espèce choisie à la main, mesurée ou non.
+
+### Les sept écrans, pris sur le vrai site
+
+`mur-libre.py` (le mur), `fiche-libre.py` (la fiche, sa carte, ses sons), `prises-libres.py` (les
+cinq autres : migration, carte de rareté, classement, quiz, tchat). **Chaque prise liste les
+images qu'elle contient** - une image qu'on n'a pas vue est une licence qu'on n'a pas vérifiée.
+Après correction, il ne reste dans les cinq derniers écrans que les tuiles OpenStreetMap (ODbL,
+créditées dans le coin de la carte), les cartes eBird du dépôt `ornitheque-data` et notre logo.
+
+**Le bloc « Où et quand la trouver » est pris deux fois** : une fois pour la France entière, une
+fois **avec la Gironde sélectionnée**, pour que le film montre ce que le clic apporte - le détail
+mois par mois d'une zone. Les zones de la carte ne portent pas leur nom, on les vise aussi par
+leur code (`33`).
+
 ## Les licences, vérifiées à la source
 
 Relevé le 2026-09-30 par `tools/onetake/credits.py`, qui remonte à l'origine de chaque image

@@ -42,6 +42,14 @@ def charge():
     for x in a_remplacer:
         if x["sci"] in choisis:
             x["remplacante"] = choisis[x["sci"]]
+    # Une espece choisie a la main qui n'etait PAS dans la mesure du mur doit quand meme etre
+    # substituee : l'espece du film ne figure pas forcement parmi les vignettes chargees, et
+    # sa photo se retrouvait pourtant a l'ecran - derriere l'ecran de migration, le
+    # 2026-09-30, sous une licence incompatible.
+    connues = {x["sci"] for x in a_remplacer}
+    for sci, c in choisis.items():
+        if sci not in connues:
+            a_remplacer.append({"sci": sci, "nom": sci, "remplacante": c})
 
     PHOTOS.mkdir(parents=True, exist_ok=True)
     substituts, manquantes = {}, []
@@ -63,9 +71,11 @@ def charge():
 def installe(page, substituts):
     """Pose les substituts dans la page ouverte, et les repose apres chaque re-rendu.
 
-    Deux endroits portent une photo d'espece : la vignette du mur (.pkdx-img img, reperee par
-    data-sci sur la carte) et l'en-tete de la fiche d'espece, qui n'a pas de data-sci - on la
-    reconnait a son adresse, qui est celle que la mesure a relevee.
+    Trois endroits portent une photo d'espece : la vignette du mur (.pkdx-img img, reperee par
+    data-sci sur la carte), l'en-tete de la fiche (#smHeroImg, qui n'a pas de data-sci : on
+    passe l'espece attendue dans la cle « hero »), et n'importe quelle image dont l'adresse est
+    listee dans « parUrl ». L'en-tete a ete oublie une premiere fois : l'ecran de migration
+    laisse voir la fiche DERRIERE lui, et sa photo interdite avec.
     """
     return page.evaluate(
         """(subs) => {
@@ -77,6 +87,10 @@ def installe(page, substituts):
                     if (!d) continue;
                     const img = c.querySelector('.pkdx-img img');
                     if (img && img.src !== d) { img.src = d; img.srcset = ''; n++; }
+                }
+                const hero = document.getElementById('smHeroImg');
+                if (hero && parSci[subs.hero] && hero.src !== parSci[subs.hero]) {
+                    hero.src = parSci[subs.hero]; hero.srcset = ''; n++;
                 }
                 for (const img of document.querySelectorAll('img')) {
                     const d = parUrl[img.getAttribute('src') || ''];
