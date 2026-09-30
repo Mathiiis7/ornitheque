@@ -11978,7 +11978,12 @@ async function _fetchWikiPhoto(sci){
     _writeCacheIfChanged(res);
     return res;
   }
-  if(_spPhotoCache.has(key)) return _spPhotoCache.get(key);
+  // Un ECHEC n'est pas une reponse : on ne le lit pas comme telle. Le cache gardait la
+  // valeur nulle d'une recherche ratee et la rendait a chaque appel suivant, y compris aux
+  // visites d'apres puisqu'il est persiste dans le navigateur : une coupure reseau d'une
+  // seconde condamnait donc une espece a son emoji pour toujours, sans rien pour en sortir.
+  const enCache = _spPhotoCache.get(key);
+  if(enCache) return enCache;
   const frNm = FR_NAMES[key] || '';
   // iNaturalist : essaie sci name puis alias GBIF/SCI puis nom FR.
   const tryINat = async (q)=>{
@@ -12042,8 +12047,11 @@ async function _fetchWikiPhoto(sci){
   if(!res && altSci) res = await tryWiki('en', altSci);
   if(!res && frNm) res = await tryWikiSearch('fr', frNm);
   if(!res) res = await tryWikiSearch('en', sci);
-  _spPhotoCache.set(key, res);
-  _spPhotoCachePersist();
+  // On n'enregistre QUE ce qui a abouti : garder l'echec revenait a le graver.
+  if(res){
+    _spPhotoCache.set(key, res);
+    _spPhotoCachePersist();
+  }
   return res;
 }
 // Cle xeno-canto API v3 (Mathis). La v2 a ete fermee en 2024, v3 exige une cle par compte.
@@ -17891,6 +17899,24 @@ function _photoCarteConnue(sci){
   const c = _spPhotoCache.get(k);
   return (c && (c.thumb || c.url)) || '';
 }
+// Une demande de photo qui echoue n'etait jamais rejouee : la case cessait d'etre observee
+// avant qu'on sache si la demande avait abouti. Deux reprises, a 2 s puis 6 s : assez pour
+// passer un ralentissement de l'API, trop peu pour la marteler si elle refuse vraiment.
+// C'est le filet, pas la reparation : la vraie faute etait d'ENREGISTRER l'echec (voir
+// _fetchWikiPhoto). Mesure du 2026-10-01 : amenee dans le champ, une case restee a l'emoji
+// recupere sa photo normalement, donc le mecanisme d'observation, lui, fonctionne.
+const _PKDX_REPRISES = [2000, 6000];
+function _pkdxReessayer(io, el){
+  const n = Number(el.dataset.pkdxTry || 0);
+  if(n >= _PKDX_REPRISES.length) return;
+  el.dataset.pkdxTry = String(n + 1);
+  setTimeout(() => {
+    // Ne rien redemander pour une case que la grille a remplacee entre-temps, ni pour une
+    // case qui a fini par recevoir sa photo.
+    if(!el.isConnected || el.querySelector('img')) return;
+    io.observe(el);
+  }, _PKDX_REPRISES[n]);
+}
 function _pkdxLazyPhotos(){
   const els = document.querySelectorAll('#pkdxGrid .pkdx-img[data-pkdx-lazy]');
   if(!els.length || !('IntersectionObserver' in window)) return;
@@ -17910,8 +17936,9 @@ function _pkdxLazyPhotos(){
         // Grille Birdydex : utilise thumb (~500px) pas la full res (1-5 MB). Full res
         // reservee a la fiche espece qui ouvre au clic.
         const src = p?.thumb || p?.url;
-        if(src){ el.innerHTML = `<img loading="lazy" src="${esc(src)}" alt="${esc(sci)}" onerror="this.parentElement.textContent='🐦'">`; }
-      }).catch(()=>{});
+        if(src){ el.innerHTML = `<img loading="lazy" src="${esc(src)}" alt="${esc(sci)}" onerror="this.parentElement.textContent='🐦'">`; return; }
+        _pkdxReessayer(io, el);
+      }).catch(() => _pkdxReessayer(io, el));
     }
   }, { rootMargin:'200px' });
   els.forEach(el => io.observe(el));
