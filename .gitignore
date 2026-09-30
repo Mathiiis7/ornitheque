@@ -90,3 +90,14 @@ tools/build/exotic-per-country-scraped.generated.js
 # BIRDBASE : source des milieux de vie, 6,7 Mo, retelechargeable depuis son DOI.
 tools/birdbase.xlsx
 tools/habitats-sans-milieu.txt
+
+# onetake : le skill qui fabrique la video de presentation, installe le 2026-09-30 dans
+# .claude/skills/onetake. Exclu du depot pour deux raisons : il pese 141 Mo (galerie et
+# exemples video), et sa licence PolyForm Noncommercial n autorise pas n importe quelle
+# redistribution. Il se reinstalle en une commande, notee dans qg/skills-et-extensions.md.
+# Ligne necessaire parce que `!.claude/skills/` plus haut rouvre tout le dossier.
+.claude/skills/onetake/
+# Les fichiers de travail du rendu : images intermediaires, brouillons 1080p, sons,
+# analyses. Gros, regenerables, et ce n est pas le site. Seule la video finale, une fois
+# allegee, entre dans le depot.
+.onetake/
