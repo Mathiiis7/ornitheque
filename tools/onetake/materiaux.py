@@ -200,6 +200,14 @@ def main():
                         couleur: p.getAttribute('fill') || '',
                     };
                 }).filter(p => p.r > 1 && p.r < 40);
+                // Leaflet laisse plusieurs <path> au meme endroit : 1 349 elements pour 26
+                // observations reelles, releve le 2026-09-30. On garde une position unique.
+                const vus = new Set();
+                const uniques = pts.filter(p => {
+                    const cle = p.x.toFixed(4) + ',' + p.y.toFixed(4);
+                    if (vus.has(cle)) return false;
+                    vus.add(cle); return true;
+                });
                 const legende = [...c.parentElement.querySelectorAll('*')]
                     .filter(e => e.children.length === 0 && /^\\d+ /.test(e.textContent.trim()))
                     .map(e => e.textContent.trim()).slice(0, 10);
