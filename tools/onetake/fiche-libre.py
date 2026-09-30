@@ -150,6 +150,17 @@ def main():
             print("  ATTENTION : bloc « Ou et quand la trouver » absent, cadrage non fait")
         else:
             print(f"  bloc « Ou et quand la trouver » : {trouve} px de haut, cadre")
+        bloc = page.evaluate(
+            """() => {
+                const c = document.getElementById('smOuQuandCard');
+                if (!c) return null;
+                const r = c.getBoundingClientRect();
+                return {x: r.left, y: r.top, w: r.width, h: r.height};
+            }""")
+        chemin = REFS / "2d-fiche-carte-france.png"
+        page.screenshot(path=str(chemin))
+        print(f"  {chemin}  ({chemin.stat().st_size // 1024} Ko)")
+
         zone = page.evaluate(
             """(q) => {
                 const zones = [...document.querySelectorAll('#smRarityMap [data-zone]')];
@@ -196,6 +207,14 @@ def main():
         page.screenshot(path=str(chemin))
         print(f"  {chemin}  ({chemin.stat().st_size // 1024} Ko)")
         nav.close()
+
+    rep = pathlib.Path(".onetake/reperes.json")
+    reperes = json.loads(rep.read_text(encoding="utf-8")) if rep.exists() else {}
+    reperes["carte"] = {"prise_france": "2d-fiche-carte-france.png",
+                        "prise_gironde": "2c-fiche-carte-libre.png",
+                        "bloc": {k: round(v * 2) for k, v in bloc.items()} if bloc else None}
+    rep.write_text(json.dumps(reperes, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"  reperes du bloc : {reperes['carte']['bloc']}")
 
     (pathlib.Path(".onetake/fiche-licence.json")).write_text(json.dumps(
         {"photo_servie": info, "remplacee_par": remplacee}, ensure_ascii=False, indent=1),
