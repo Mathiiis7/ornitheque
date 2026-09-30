@@ -7,7 +7,7 @@
   listes sont donc vraisemblables, et les fiches d espece s affichent puisque les cles sont
   celles du vrai jeu de donnees.
 
-  Genere le 2026-09-29 a partir d une date figee : relancer le generateur sans
+  Genere le 2026-09-30 a partir d une date figee : relancer le generateur sans
   toucher a rien redonne le meme fichier, sinon le mode verification crierait au retard a
   chaque execution.
 */

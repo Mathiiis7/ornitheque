@@ -1666,180 +1666,23 @@ const EXOTIC_STATUS_BY_DEP_FR = {"FR-ARA-01":{"anser indicus":"N","anser cygnoid
 // traitent deja. Regenerable : node tools/build/sortir-habitats.mjs
 let HABITATS = {};
 // 'aerial' retire de la liste 2026-09-23 : masque partout, cf. HABITATS_MASQUES.
-const HABITAT_CATS = ["forest","woodland","shrubland","grassland","tundra","agricole","wetland","riverine","mangrove","marine","coastal","rock","cave","montane","desert","humanmod"];
-const HABITAT_LABELS = {"forest":"🌲 Forêt","woodland":"🌳 Bois / savane arborée","shrubland":"🌿 Arbustif / matorral","grassland":"🌾 Prairies / steppe","tundra":"❄️ Toundra","agricole":"🌻 Milieu agricole","wetland":"🪺 Zones humides","riverine":"💧 Rivières / eau douce","mangrove":"🌴 Mangrove","marine":"🌊 Marin (pélagique)","coastal":"🏖️ Littoral / côte","rock":"🪨 Rocher / falaises","cave":"🕳️ Cavernes","montane":"🏔️ Montagne / altitude","desert":"🏜️ Désert","humanmod":"🏙️ Modifié par l'homme","aerial":"🌬️ Aériens (martinets, hirondelles)"};
-// HABITAT_OVERRIDES remplace entierement les milieux d'une espece. Il est vide depuis le
-// 2026-09-29 et le mecanisme reste : ses onze entrees sont passees dans HABITAT_ADDITIONS,
-// plus bas. Elles corrigeaient AVONET, qui ne donnait qu'un milieu par espece et se
-// trompait souvent ; BIRDBASE en donne plusieurs et les classe, si bien que remplacer
-// appauvrissait - le Faucon pelerin gardait 4 milieux la ou BIRDBASE en donne 7.
-// A ne ressortir que pour une vraie erreur de la source, pas pour un manque.
+// Toundra, milieu agricole, mangrove, cavernes et montagne retires le 2026-09-30. Ils ne
+// venaient pas de la source mais de corrections ecrites a la main, et l'appli ne tient plus
+// qu'une seule source pour les milieux - c'est le choix de Mathis, pour la coherence.
+// 114 oiseaux les portaient, dont l'aigle royal et l'alouette des champs.
+const HABITAT_CATS = ["forest", "woodland", "shrubland", "grassland", "wetland", "riverine", "marine", "coastal", "rock", "desert", "humanmod"];
+const HABITAT_LABELS = {"forest": "🌲 Forêt", "woodland": "🌳 Bois / savane arborée", "shrubland": "🌿 Arbustif / matorral", "grassland": "🌾 Prairies / steppe", "wetland": "🪺 Zones humides", "riverine": "💧 Rivières / eau douce", "marine": "🌊 Marin (pélagique)", "coastal": "🏖️ Littoral / côte", "rock": "🪨 Rocher / falaises", "desert": "🏜️ Désert", "humanmod": "🏙️ Modifié par l'homme", "aerial": "🌬️ Aériens (martinets, hirondelles)"};
+// HABITAT_OVERRIDES remplacait entierement les milieux d'une espece, HABITAT_ADDITIONS les
+// completait. Les deux sont vides depuis le 2026-09-30 : les milieux viennent de BIRDBASE
+// et de lui seul. Leurs entrees corrigeaient AVONET, qui n'en donnait qu'un par espece et se
+// trompait souvent ; BIRDBASE en donne 2,81 en moyenne et les classe par ordre de preference.
+// Les deux mecanismes restent en place, a ne ressortir que pour une vraie erreur de la source.
 const HABITAT_OVERRIDES = {};
-const HABITAT_ADDITIONS = {
-  // ----- MONTANE (montagne / altitude) -----
-  "aquila chrysaetos":["montane"],
-  "lagopus muta":["montane"],"tetrao tetrix":["montane"],"alectoris graeca":["montane"],
-  "nucifraga caryocatactes":["montane"],"pyrrhocorax pyrrhocorax":["montane"],
-  "pyrrhocorax graculus":["montane"],"tichodroma muraria":["montane"],
-  "prunella collaris":["montane"],"turdus torquatus":["montane"],
-  "montifringilla nivalis":["montane"],"anthus spinoletta":["montane"],
-  "emberiza cia":["montane"],"loxia curvirostra":["montane"],
-  "tetrastes bonasia":["montane"],"aegolius funereus":["montane"],
-  "glaucidium passerinum":["montane"],"picus canus":["montane"],
-  "picoides tridactylus":["montane"],"ptyonoprogne rupestris":["montane"],
-  "carduelis citrinella":["montane"],"sitta whiteheadi":["montane"],
-  // ----- AGRICOLE (milieu agricole) -----
-  "alauda arvensis":["agricole"],"emberiza calandra":["agricole"],
-  "miliaria calandra":["agricole"],"perdix perdix":["agricole"],
-  "alectoris rufa":["agricole"],"coturnix coturnix":["agricole"],
-  "burhinus oedicnemus":["agricole"],"vanellus vanellus":["agricole"],
-  "saxicola rubetra":["agricole"],"saxicola rubicola":["agricole"],
-  "anthus pratensis":["agricole"],"anthus campestris":["agricole"],
-  "motacilla flava":["agricole"],"emberiza citrinella":["agricole"],
-  "emberiza hortulana":["agricole"],"passer montanus":["agricole"],
-  "milvus migrans":["agricole"],"milvus milvus":["agricole"],
-  "falco tinnunculus":["agricole"],"falco naumanni":["agricole"],
-  "circus pygargus":["agricole"],"circus cyaneus":["agricole"],
-  "ciconia ciconia":["agricole"],
-  "sturnus vulgaris":["agricole"],"corvus frugilegus":["agricole"],
-  "corvus monedula":["agricole"],"linaria cannabina":["agricole"],
-  "carduelis carduelis":["agricole"],"chloris chloris":["agricole"],
-  "serinus serinus":["agricole"],"sylvia communis":["agricole"],
-  "curruca communis":["agricole"],"lanius collurio":["agricole"],
-  "lanius senator":["agricole"],"upupa epops":["agricole"],
-  "athene noctua":["agricole"],"asio otus":["agricole"],
-  "tyto alba":["agricole"],"streptopelia turtur":["agricole"],
-  "streptopelia decaocto":["agricole"],
-  // ----- Multi-habitat curated (species dont AVONET donne 1 mais qui vivent dans 2) -----
-  "anas platyrhynchos":["wetland","humanmod"],   // canard colvert : parcs urbains + zones humides
-  "cygnus olor":["wetland","humanmod"],
-  "podiceps cristatus":["wetland","riverine"],
-  "ardea cinerea":["wetland","riverine"],
-  "phalacrocorax carbo":["wetland","coastal","riverine"],
-  "alcedo atthis":["riverine","wetland"],
-  "cinclus cinclus":["riverine","montane"],       // cincle de montagne + rivière
-  "motacilla cinerea":["riverine","montane"],
-  "dryocopus martius":["forest","montane"],       // pic noir vosgien/pyrenéen
-  "picus viridis":["forest","agricole"],          // pic vert : bois + prairies
-  "sitta europaea":["forest","humanmod"],
-  "parus major":["forest","humanmod"],
-  "cyanistes caeruleus":["forest","humanmod"],
-  "erithacus rubecula":["forest","humanmod"],
-  "turdus merula":["forest","humanmod"],
-  "turdus philomelos":["forest","humanmod"],
-  "hirundo rustica":["agricole","aerial"],
-  "delichon urbicum":["humanmod","aerial"],
-  "riparia riparia":["riverine","aerial"],
-  "apus apus":["humanmod","aerial"],
-  "corvus corone":["forest","humanmod","agricole"],
-  "corvus corax":["montane","rock"],
-  "columba palumbus":["forest","humanmod","agricole"],
-  "columba livia":["rock","humanmod"],
-  // ----- TUNDRA (correction AVONET qui n'a pas cette categorie) -----
-  // AVONET classe les tetras arctiques + Harfang en 'Grassland' (= agricole/steppe
-  // chez nous), ce qui est faux. On les remet en tundra + montane pour refleter
-  // leur ecologie reelle (hautes latitudes/altitudes, milieu ouvert froid).
-  "lagopus muta":["tundra","montane","rock"],
-  "lagopus lagopus":["tundra"],
-  "bubo scandiacus":["tundra"],"nyctea scandiaca":["tundra"],
-  // Pour tout le reste (Calidris, Labbes, Plongeons, Bernaches, Eiders, Pluviers,
-  // Bruants des neiges, Alouette haussecol, etc.) on laisse AVONET decider :
-  // Coastal / Marine / Wetland selon le cas. AVONET fait le bon choix contextuel.
-  // ----- MANGROVE (IUCN cat 1.7) -----
-  "egretta gularis":["mangrove","coastal"],
-  "todiramphus chloris":["mangrove"],"todiramphus sanctus":["mangrove"],
-  "halcyon senegalensis":["mangrove"],"ceyx melanurus":["mangrove"],
-  "amazona amazonica":["mangrove"],"amazona festiva":["mangrove"],
-  "leucophaeus atricilla":["mangrove","coastal"],
-  "eudocimus ruber":["mangrove"],"phoeniconaias minor":["mangrove","wetland"],
-  "aramus guarauna":["mangrove","wetland"],
-  "anhinga anhinga":["mangrove","wetland"],
-  "pandionoides paulini":["mangrove"],
-  "cinnyris mangrovei":["mangrove"],"myzomela erythrocephala":["mangrove"],
-  "gerygone levigaster":["mangrove"],"rhipidura phasiana":["mangrove"],
-  // ----- CAVE / SUBTERRANEAN (IUCN cat 7) -----
-  "steatornis caripensis":["cave"],   // Oilbird (le plus emblematique)
-  "aerodramus fuciphagus":["cave","aerial"],
-  "aerodramus maximus":["cave","aerial"],
-  "aerodramus vanikorensis":["cave","aerial"],
-  "collocalia esculenta":["cave","aerial"],
-  "collocalia linchi":["cave","aerial"],
-  "chaetura pelagica":["cave","aerial"],
-  "cypseloides niger":["cave","aerial"],
-  "streptoprocne zonaris":["cave","aerial"],
-  "hydropsalis torquata":["cave"],
-  // ----- Additions supplementaires (verif AVONET post-v106) -----
-  // Grands goelands : cotier + urbain (colonies sur toits, poubelles).
-  "larus michahellis":["humanmod","coastal"],
-  "larus argentatus":["humanmod","coastal"],
-  "larus fuscus":["humanmod","coastal"],
-  "larus marinus":["humanmod","coastal"],
-  // Mouette rieuse : wetland + cotier + urbain (parcs, decharges).
-  "chroicocephalus ridibundus":["coastal","humanmod","agricole"],
-  // Herons cendres/blancs : wetland + riverine + cotier + agricole (chasse en champs).
-  "ardea cinerea":["riverine","coastal","agricole"],
-  "ardea alba":["riverine","coastal"],
-  "egretta garzetta":["riverine","coastal"],
-  "bubulcus ibis":["agricole","wetland"],
-  // Flamant rose : wetland + cotier (lagunes camarguaises).
-  "phoenicopterus roseus":["coastal"],
-  // Spatule blanche : wetland + cotier.
-  "platalea leucorodia":["coastal"],
-  // Grue cendree : wetland en migration + agricole (champs de maïs en hivernage).
-  "grus grus":["agricole"],
-  // Cormoran huppe deja override mais Grand cormoran seulement AVONET wetland - add cotier + riverine
-  "phalacrocorax carbo":["coastal","riverine"],
-  // Fous et pelagiques : deja marine, mais ajout aerial pour ceux qui manquent.
-  // (deja OK pour la plupart)
-  // Goelands rieurs / mouettes marines
-  "rissa tridactyla":["coastal"],   // niche sur falaises cotieres, pas juste pelagique
-  // Alcides : niche sur falaises cotieres, forage marine.
-  "fratercula arctica":["coastal","rock"],
-  "alca torda":["coastal","rock"],
-  "uria aalge":["coastal","rock"],
-  "cepphus grylle":["coastal","rock"],
-  // Sternes : nichent plages/wetland, forage marin/cotier.
-  "sterna paradisaea":["coastal"],
-  "sternula albifrons":["coastal","wetland"],
-  "thalasseus sandvicensis":["coastal","wetland"],
-  "chlidonias niger":["wetland","riverine"],
-  "chlidonias hybrida":["wetland","riverine"],
-  // Effraie / Chouette hulotte / Chevêche : rurales et agricoles.
-  "strix aluco":["forest","humanmod","agricole"],
-  "athene noctua":["agricole","humanmod"],   // deja agricole
-  // Traquet motteux, pipit spioncelle : montagne + agricole.
-  "oenanthe oenanthe":["grassland","montane","rock"],
-  "anthus spinoletta":["montane","grassland"],   // deja montane via ADDITIONS
-  // Rougequeue noir : rocher/falaise + urbain.
-  "phoenicurus ochruros":["rock","humanmod"],
-  // ----- Les onze anciens OVERRIDES, devenus des complements le 2026-09-29 -----
-  // Ce qu'ils apportent encore, BIRDBASE ne l'ayant pas : la montagne pour cinq d'entre
-  // eux, le milieu agricole pour deux, les rivieres du balbuzard et les falaises du
-  // gypaete. Le reste fait doublon avec la source, et c'est voulu.
-  // ----- Rapaces mal classes par AVONET -----
-  // Balbuzard pecheur : rapace piscivore de rivieres/lacs/estuaires, pas pelagique.
-  "pandion haliaetus":["riverine","coastal","wetland"],
-  // Buse variable : rapace le plus commun de France, TOUS milieux. AVONET dit "grassland".
-  "buteo buteo":["forest","woodland","agricole","montane"],
-  // Buse pattue : arctique, mais quand en France = agricole/prairies/marais.
-  "buteo lagopus":["agricole","grassland","wetland"],
-  // Faucon pelerin : falaises + villes (cathedrales) + cotes, pas prairies.
-  "falco peregrinus":["rock","coastal","humanmod","montane","aerial"],
-  // Pygargue a queue blanche : rapace piscivore, lacs + cotes + rivieres, pas rock/aerial.
-  "haliaeetus albicilla":["coastal","wetland","riverine"],
-  // Vautour fauve : falaises + montagne, chasse en zone ouverte mais pas classe "grassland".
-  "gyps fulvus":["montane","rock"],
-  // Vautour moine : forets de montagne + soar en montagne.
-  "aegypius monachus":["montane","forest"],
-  // Gypaete barbu : deja montane via ADDITIONS mais AVONET donne shrubland - override.
-  "gypaetus barbatus":["montane","rock"],
-  // Cormoran huppe : cotier, niche sur falaises et forage pres du rivage, pas pelagique.
-  "gulosus aristotelis":["coastal","rock"],
-  // Sterne pierregarin : cotiere/wetland, pas pelagique.
-  "sterna hirundo":["coastal","wetland","aerial"],
-  // Courlis cendre : wetland + coastal + prairies, pas juste grassland.
-  "numenius arquata":["wetland","coastal","grassland"],
-};
+// HABITAT_ADDITIONS completait les milieux d'une espece. Vide depuis le 2026-09-30 : les
+// milieux viennent de BIRDBASE et de lui seul. Ses 151 entrees portaient la montagne, le
+// milieu agricole, la toundra, la mangrove et les cavernes, que BIRDBASE ne connait pas ;
+// ces cinq categories sont parties avec elles. Le mecanisme reste, la table est vide.
+const HABITAT_ADDITIONS = {};
 // Milieux masques partout : chips de la fiche, filtre Birdydex, index inverses, trophees.
 // 'aerial' decrit un mode de deplacement (martinets, hirondelles) plutot qu'un milieu, et
 // n'aide pas a savoir ou chercher l'oiseau. Les 820 especes concernees en ont toutes au
