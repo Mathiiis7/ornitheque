@@ -26,24 +26,15 @@ def main():
     shutil.copy2(SKILL / "lib" / "motion.js", FILM / "motion.js")
     print(f"  comp.html et motion.js -> {FILM}")
 
-    # Les donnees en <script> et non en fetch : le rendu ouvre la page en file://, ou une
+    # composants.js : les morceaux du site et leurs rectangles, mesures dans le navigateur par
+    # composants.py. En <script> et non en fetch : le rendu ouvre la page en file://, ou une
     # requete vers un fichier voisin est refusee, alors qu'une balise script passe.
-    d = json.loads((FILM / "donnees.json").read_text(encoding="utf-8"))
-    (FILM / "donnees.js").write_text(
-        "window.DATA = " + json.dumps(d, ensure_ascii=False) + ";\n", encoding="utf-8")
-    ko = (FILM / "donnees.js").stat().st_size // 1024
-    print(f"  donnees.js  {ko} Ko")
-
-    # reperes.js : les rectangles mesures dans le navigateur (reperes.py, prises-libres.py).
-    # Les recopier a la main dans la composition les figeait : une prise refaite et le film
-    # cadrait a cote sans qu'aucune erreur ne le dise.
-    rep = pathlib.Path(".onetake/reperes.json")
-    if rep.exists():
-        (FILM / "reperes.js").write_text(
-            "window.REPERES = " + rep.read_text(encoding="utf-8") + ";\n", encoding="utf-8")
-        print(f"  reperes.js  {(FILM / 'reperes.js').stat().st_size} octets")
-    else:
-        sys.exit("manque .onetake/reperes.json : lancer reperes.py")
+    comp = pathlib.Path(".onetake/composants.json")
+    if not comp.exists():
+        sys.exit("manque .onetake/composants.json : lancer composants.py")
+    (FILM / "composants.js").write_text(
+        "window.COMP = " + comp.read_text(encoding="utf-8") + ";\n", encoding="utf-8")
+    print(f"  composants.js  {(FILM / 'composants.js').stat().st_size // 1024} Ko")
 
     # look.js : les huit couleurs et les trois polices, sous-ensemblees et incorporees.
     # Indispensable en file://, ou une police distante n'arrive jamais et ou le canvas
@@ -60,7 +51,7 @@ def main():
     if r.returncode != 0:
         sys.exit("look.py apply a echoue")
 
-    manquants = [n for n in ("comp.html", "motion.js", "donnees.js", "look.js", "reperes.js")
+    manquants = [n for n in ("comp.html", "motion.js", "composants.js", "look.js")
                  if not (FILM / n).exists()]
     if manquants:
         sys.exit("manque dans le dossier de fabrication : " + ", ".join(manquants))

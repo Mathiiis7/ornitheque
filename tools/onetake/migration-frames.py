@@ -105,6 +105,10 @@ def main():
             return 1
         semaines = info["max"] + 1
         cadre = info["cadre"]
+        ctrl = page.evaluate(
+            """() => { const r = document.getElementById('migFsSlider').parentElement
+                          .getBoundingClientRect();
+                       return {x: r.left, y: r.top, width: r.width, height: r.height}; }""")
         print(f"{semaines} semaines, carte {round(cadre['width'])}x{round(cadre['height'])} points CSS")
 
         for w in range(semaines):
@@ -126,10 +130,26 @@ def main():
             page.wait_for_timeout(260)
             f = SORTIE / f"w{w:02d}.jpg"
             page.screenshot(path=str(f), type="jpeg", quality=86, clip=cadre)
+            # La barre du bas (curseur et « Sem 27 ») avance avec les semaines : sans elle,
+            # le film montrerait une carte qui defile sous un curseur immobile (2026-10-01).
+            page.screenshot(path=str(SORTIE / f"c{w:02d}.jpg"), type="jpeg", quality=90,
+                            clip=ctrl)
             if w % 10 == 0 or w == semaines - 1:
                 print(f"  w{w:02d}  {f.stat().st_size // 1024} Ko")
 
         nav.close()
+    # Demi-definition pour le film : la carte y est affichee a un pixel ecran par point CSS,
+    # donc la pleine definition (deux pixels par point) ne servirait a rien et pesait 23 Mo
+    # decodes par semaine, 52 fois, dans chacun des huit navigateurs du rendu.
+    from PIL import Image
+    demi = SORTIE.parent / "mig-s"
+    demi.mkdir(exist_ok=True)
+    for f in SORTIE.glob("w*.jpg"):
+        im = Image.open(f)
+        im.resize((im.width // 2, im.height // 2), Image.LANCZOS).save(demi / f.name, quality=88)
+    for f in SORTIE.glob("c*.jpg"):
+        im = Image.open(f)
+        im.save(demi / f.name, quality=90)
     total = sum(f.stat().st_size for f in SORTIE.glob("*.jpg")) // 1024
     print(f"\n{len(list(SORTIE.glob('*.jpg')))} semaines, {total} Ko au total\n{SORTIE}")
     return 0

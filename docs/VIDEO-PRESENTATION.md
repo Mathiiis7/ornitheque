@@ -418,6 +418,49 @@ ce qui n'est pas une erreur : la mesure EBU R128 écarte les passages trop faibl
 continu fait entrer dans le calcul tous les silences qui en étaient exclus. Ne pas chercher à
 « rattraper » ce chiffre.
 
+## Le montage par composants (2026-10-01) - réponse aux cinq reproches
+
+**Idée retenue par Mathis : « le site se monte sous la main », un mot par partie** (Collectionne,
+Écoute, Suis, Compare, Devine). Écartées : un seul plan où la caméra traverse le site, et la
+huppe qui saute d'une fonction à l'autre.
+
+**Le principe.** Plus de captures entières avec une caméra qui zoome : chaque écran est
+construit. `tools/onetake/composants.py` amène le site dans chaque état (`pilote.py` porte les
+gestes), cache les morceaux (`visibility:hidden`) pour photographier le FOND, les remontre pour
+photographier le TOUT, puis découpe chaque morceau à sa place exacte : 36 vignettes du mur, le
+champ de recherche tapé lettre par lettre, le tiroir de la fiche (en-tête, onglets, photo,
+description, bloc Où et quand), les deux sonagrammes, les rangées du classement, le lecteur et
+les quatre réponses du quiz, les bulles du tchat. Rectangles dans `.onetake/composants.json`,
+images dans `.onetake/film/assets/c/`. Tout est le vrai site au pixel près.
+
+**Où chaque reproche est traité :**
+1. Diaporama : une main clique, le morceau correspondant arrive en ressort (cause visible).
+   Raccord réel : la vignette de la huppe GRANDIT jusqu'à la photo d'en-tête du tiroir, qui
+   glisse en même temps. Le clic sur la Gironde ouvre un iris depuis le point cliqué. Le sonagramme
+   se dessine de gauche à droite pendant que le chant joue. Les 52 semaines de migration ont
+   maintenant leur barre de curseur qui avance avec elles (`migration-frames.py` la capture).
+   Chaque fonction reste 4 à 7 s à l'écran.
+2. Texte : un mot énorme par partie dans le bandeau du haut, lettres en ressort.
+3. Enchaînements : la caméra suit la cible, les morceaux d'une partie sortent en lévitation
+   pendant que ceux de la suivante entrent ; plus aucun fondu de 0,45 s entre deux images fixes.
+4. Le skill : on s'en sert enfin (ressorts, entrées, raccords, flou de mouvement réel).
+5. Photo de la huppe : remplacée par la **n° 13 des candidates, Tareq Uddin Ahmed, Wikimedia
+   Commons, CC BY**, horizontale et téléchargée en 1920 px (`photo-horizontale.py`). Elle remplit
+   le cadre 16/9 de la fiche ET le carré de la vignette, sans bandes floues. **Le crédit de
+   Shantanu Kuveskar doit disparaître de la liste des crédits et celui-ci y entrer** (à faire
+   dans `credits.py` / `docs/VIDEO-CREDITS.md`).
+
+**Durée : 48 s** (38 s avant), le temps par fonction étant le premier reproche. Oracle du skill
+sur le premier rendu : **PASS**, 54 % d'images immobiles, plus long repos 6,7 s.
+**Limite connue** : le critère de continuité affiche « 0 passage », donc le PASS de ce critère
+ne prouve rien ; les porteurs (`__track`) ne sont pas lus par `probe.py` tel quel. La carte de
+migration paraît immobile à l'oracle (l'énergie d'une carte qui change de couleur est faible) alors
+qu'elle défile bien à l'œil.
+
+**Rendu** : 4 navigateurs seulement (la machine a 7,6 Go), `--samples-max 24 --gap 16` pour que
+l'ouverture de la fiche ne montre pas de bandes, environ 10 minutes pour le 1080p30.
+`melange-son.sh` prend maintenant la durée en variable (`DUR`, 48 par défaut).
+
 ## Où reprendre : les cinq reproches du 2026-10-01
 
 Le film remonté sur les vraies captures est rendu (`.onetake/captures.mp4`, 38 s, 1 140 images,
