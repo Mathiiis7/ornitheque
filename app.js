@@ -1688,6 +1688,12 @@ const HABITAT_ADDITIONS = {};
 // n'aide pas a savoir ou chercher l'oiseau. Les 820 especes concernees en ont toutes au
 // moins un autre, aucune ne se retrouve sans milieu.
 const HABITATS_MASQUES = new Set(['aerial']);
+// Combien de milieux la fiche espece montre. BIRDBASE les classe par ordre de preference :
+// couper par la fin retire le plus marginal, jamais le principal. Trois, decide le
+// 2026-09-30 : les oiseaux de France en portent 4,03 en moyenne et 107 d'entre eux six ou
+// plus, ce qui faisait quatre rangees de pastilles au telephone. Le FILTRE du birdydex, lui,
+// continue de les voir tous - sinon « modifie par l'homme » tombait de 395 a 220 oiseaux.
+const MILIEUX_MONTRES = 3;
 function habitatsOf(sci){
   const key = (sci||"").trim().toLowerCase();
   // Override total AVONET (cas ou la classification de base est fausse).
@@ -12841,7 +12847,11 @@ function _renderSpeciesInfoChips(key){
   const fam = familyOf(key); if(fam) chips.push(`<span class="chip" title="Famille taxonomique">${esc(fam)}</span>`);
   const habs = (typeof habitatsOf === 'function') ? habitatsOf(key) : null;
   if(Array.isArray(habs)){
-    for(const h of habs){ const lbl = (typeof HABITAT_LABELS === 'object' && HABITAT_LABELS[h]) ? HABITAT_LABELS[h] : h; chips.push(`<span class="chip">${esc(lbl)}</span>`); }
+    // Seulement les MILIEUX_MONTRES premiers : BIRDBASE les classe par ordre de preference,
+    // donc couper par la fin retire le plus marginal. Mesure du 2026-09-30 sur les 610
+    // oiseaux de France : 4,03 milieux par oiseau, et 107 d'entre eux en ont 6 ou plus, ce
+    // qui remplissait quatre rangees de pastilles au telephone.
+    for(const h of habs.slice(0, MILIEUX_MONTRES)){ const lbl = (typeof HABITAT_LABELS === 'object' && HABITAT_LABELS[h]) ? HABITAT_LABELS[h] : h; chips.push(`<span class="chip">${esc(lbl)}</span>`); }
   }
   box.innerHTML = chips.join('');
 }
