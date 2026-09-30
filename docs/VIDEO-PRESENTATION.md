@@ -118,11 +118,38 @@ sarcelle de l'appli n'en pesait que 0,20 %. L'allure de `.onetake/look-ornithequ
 écrite à la main depuis `styles.css`, et passe le contrôle de contraste du skill : encre
 14,80:1, gris 5,00:1, accent 4,47:1, second 3,80:1.
 
+## Reprendre le travail
+
+Mis en pause le 2026-09-30. Tout ce qui est installé et mesuré est ci-dessus ; la conversation
+n'est plus nécessaire pour continuer.
+
+**La seule chose en attente est le choix de l'allure.** Quatre candidates présentées à Mathis
+ce jour-là, sans réponse :
+
+| Candidate | Où la voir | Ce qu'elle vaut ici |
+|---|---|---|
+| **Celle de l'Ornithèque** (recommandée) | `.onetake/look-ornitheque.json` | Le film ressemble à l'appli. Contraste : PASS sur les quatre couleurs |
+| `paper` | 1re case de la planche | Beaucoup d'air, mais neutre : ça pourrait être n'importe quel produit |
+| `ember` | 6e case | La meilleure avec des photos d'oiseaux, mais elle renie le sarcelle de l'appli |
+| `dusk` | 2e case | Les sonagrammes magenta y seraient superbes, mais l'appli est claire : le visiteur tombe de haut |
+
+La planche des six préréglages : `.claude/skills/onetake/gallery/sheets/looks.png`.
+La planche de contact des neuf prises : `.onetake/planche-refs.png`.
+
+Les commandes, à relancer telles quelles (l'enrobage UTF-8 n'est pas optionnel) :
+
+```
+export PYTHONUTF8=1 PYTHONIOENCODING=utf-8
+.onetake/venv/Scripts/python.exe tools/onetake/captures.py        # refaire les prises
+.onetake/venv/Scripts/python.exe tools/onetake/planche-refs.py    # la planche de contact
+```
+
+Si `.claude/skills/onetake/` ou `.onetake/venv/` ont disparu (ils sont hors du dépôt), tout se
+réinstalle avec le `git clone` et le `pip install` de la section « Ce qui est installé ».
+
 ## Ce qui reste à faire
 
-1. **Choisir l'allure** : la planche des six préréglages est dans
-   `.claude/skills/onetake/gallery/sheets/looks.png`, l'allure maison dans
-   `.onetake/look-ornitheque.json`.
+1. **Choisir l'allure** - voir le tableau juste au-dessus.
 2. **Écrire la feuille de plans** : `t · moment · ce qui bouge · ce qui est immobile · ce qui
    survit au passage`.
 3. **Reconstruire les écrans en HTML** dans le repère des prises (3840×2160 à deux pixels par
