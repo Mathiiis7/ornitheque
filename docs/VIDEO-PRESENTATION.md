@@ -39,7 +39,7 @@ exige.
 | Source des images | Le mode démo, jamais la vraie ligue | 2026-09-30 |
 | Allure | Celle de l'Ornithèque, `.onetake/look-ornitheque.json` | 2026-09-30 |
 | Définition finale | **1080p60** - aucune image agrandie, donc rien de flou | 2026-09-30 |
-| Musique | **Discrète, atmosphérique** - morceaux à proposer, licence à vérifier | 2026-09-30 |
+| Musique | **Nappe CC0 + vent dans les feuilles CC0**, aucun oiseau dedans | 2026-09-30 |
 
 ### Le découpage, avec ses durées
 
@@ -295,6 +295,46 @@ n'y a souvent que du vent.
 Les deux silences voulus sont vérifiés après coup : une traînée de réverbération peut les
 remplir sans qu'on l'entende.
 
+### La musique et le fond de forêt
+
+Choisis le 2026-09-30 : une nappe très en retrait et du vent dans les feuilles en continu.
+**Les deux sont en CC0** - domaine public, aucun crédit obligatoire, aucune contrainte sur la
+licence du film.
+
+| | Source | Fichier |
+|---|---|---|
+| Nappe | John Bartmann, *sweet-embrace-master* (4 min 04), Free Music Archive | `.onetake/musique/nappe-bartmann.mp3` |
+| Feuilles | Borgory, *Soft Wind in the Trees - Leaves rustle* (2 min 27), Freesound | `.onetake/musique/feuilles-borgory.mp3` |
+
+**Toute musique « forêt » n'est pas bonne à prendre** : la plupart contiennent déjà des chants
+d'oiseaux, ce qui poserait une espèce quelconque à côté de l'hirondelle que l'appli fait
+entendre. Écarté pour cette raison, et pour sa clause non commerciale : *Autumn Forest Wind*
+d'Akacie. La règle vaut pour la suite : **aucun oiseau dans le fond sonore.**
+
+**Deux pièges de téléchargement, payés le 2026-09-30 :**
+- la page `/track/<nom>/download/` de FMA renvoie du HTML, pas un MP3. Le vrai fichier est dans
+  le `data-track-info` de la page du morceau, champ `fileUrl`, sur `files.freemusicarchive.org` ;
+- Freesound demande un compte pour le fichier d'origine, mais sert son écoute en MP3 152 kbps
+  sans connexion (`cdn.freesound.org/previews/...-hq.mp3`). Largement assez pour un fond.
+
+**Le dosage, mesuré et non estimé.** Sonies relevées avant mélange : bruitages −21,6 LUFS,
+nappe −15,1, feuilles −37,1. Les deux fonds passent par `loudnorm` puis un gain fixe (−6 dB
+pour la nappe, −9 dB pour les feuilles). Résultat : **−24,4 LUFS, crête −6,5 dBFS, aucun
+écrêtage**, et le fond n'ajoute que 0,7 à 1 dB aux moments où le chant et les bruitages
+parlent - il ne les couvre donc pas.
+
+**Deux pièges de dosage :**
+- `alimiter` remonte le niveau tout seul (`level` vaut `true` par défaut) : le premier mélange
+  est ressorti à −0,4 dBFS au lieu d'être limité. Ne pas s'en servir comme d'une sécurité ;
+- **un enregistrement de vent a des crêtes très hautes pour une sonie très basse.** Remonter
+  les feuilles de +4 dB pour les rendre audibles amenait leurs rafales à −2,9 dBFS. C'est ce
+  que `loudnorm` corrige et qu'un simple gain ne corrige pas.
+
+**Et la sonie du mélange est PLUS BASSE que celle des bruitages seuls** (−24,4 contre −21,6),
+ce qui n'est pas une erreur : la mesure EBU R128 écarte les passages trop faibles, et un fond
+continu fait entrer dans le calcul tous les silences qui en étaient exclus. Ne pas chercher à
+« rattraper » ce chiffre.
+
 ## Reprendre le travail
 
 Mis en pause le 2026-09-30, pendant le rendu du brouillon corrigé.
@@ -357,9 +397,9 @@ qu'en IPv4, et `localhost` se résout en IPv6 ici. Le navigateur invisible écho
 
 ## Ce qui est en suspens
 
-- **La musique.** L'ambiance est tranchée (discrète, atmosphérique) ; le morceau ne l'est pas.
-  Libre de droits par défaut chez le skill (Pixabay, Free Music Archive). Rien n'est
-  téléchargé : deux ou trois morceaux à proposer avec leur licence, et Mathis tranche.
+- **La musique est réglée** - voir « La musique et le fond de forêt ». Reste l'écoute de
+  Mathis sur le mélange, et le choix de la fenêtre de 30 s prise dans la nappe (actuellement
+  de 40 s à 70 s du morceau, choisie pour éviter l'introduction, pas pour ce qu'elle raconte).
 - **Les photos d'oiseaux** viennent de Wikimedia et d'iNaturalist, sous leurs propres licences.
   L'appli les crédite à l'écran ; une vidéo qui les montre devra les créditer aussi, ou
   reconstruire le mur avec des vignettes floutées.
