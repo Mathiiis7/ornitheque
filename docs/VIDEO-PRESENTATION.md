@@ -220,34 +220,86 @@ licence PolyForm Noncommercial, et le dépôt est public : il ne doit pas y entr
 - `.onetake/film/` - le dossier de fabrication, hors dépôt, où sont copiés au moment du rendu
   la composition, `motion.js` du skill et le `look.js` fabriqué depuis l'allure.
 
+## Le premier brouillon, et ce qu'il a appris
+
+Rendu le 2026-09-30 en 1080p30 : 900 images, 2 002 captures sur 8 fils, **4 min 22 s**. Le
+verdict de l'oracle est **PASS sur les huit critères** :
+
+| Critère | Exigence | Mesuré |
+|---|---|---|
+| Variation des durées | ≥ 0,25 | **0,72** |
+| Images immobiles | ≥ 25 % | **52 %**, plus longue plage 7,25 s |
+| Salves | au moins une | **quatre** |
+| Continuité | ≥ 0,5 | **1,00**, trois passages, aucun nu |
+| Courbes | flou sous 80 px/image | pic **73 px/image**, obturateur 180° |
+| Son | pas d'écrêtage | pic −8 dBFS, 0 écrêtage |
+
+**Mais la carte d'énergie a montré ce qu'aucun critère n'attrape** : toute l'énergie dans les
+douze premières secondes, presque rien après. Un film qui s'essouffle passe quand même tous
+les contrôles.
+
+La cause principale : les 52 semaines de migration **sautaient** d'une image à l'autre, donc
+deux images sur trois étaient identiques pendant l'année - 3,4 s d'immobilité involontaire au
+milieu du plus long moment du film. Elles s'enchaînent depuis en fondu. C'est un lissage
+d'affichage entre deux mesures réelles, pas une donnée inventée.
+
+Et quatre sections de la seconde moitié finissaient leur animation à mi-parcours en laissant
+l'écran figé : le rassemblement des points, la pousse des barres, la distribution des réponses
+du quiz et l'arrivée des bulles occupent maintenant toute leur durée.
+
+**Le rendu corrigé n'a pas été refait** : mis en pause à 377 images sur 900.
+
+## Le son
+
+`tools/onetake/partition.py`. Les instants ne sont pas recopiés à la main : ils sont lus dans
+la composition par `window.__events()`, donc un moment déplacé emporte son bruitage avec lui.
+Treize bruitages - souffle, bois, verre, grave, bulles - dans une seule réverbération, plus
+**le chant de l'hirondelle** lui-même, celui que l'appli fait écouter. Le script cherche la
+fenêtre la plus chantante de l'enregistrement de 39 s plutôt que d'en prendre le début, où il
+n'y a souvent que du vent.
+
+Les deux silences voulus sont vérifiés après coup : une traînée de réverbération peut les
+remplir sans qu'on l'entende.
+
 ## Reprendre le travail
 
-Mis en pause le 2026-09-30. Tout ce qui est installé et mesuré est ci-dessus ; la conversation
-n'est plus nécessaire pour continuer.
-
-**La seule chose en attente est le choix de l'allure.** Quatre candidates présentées à Mathis
-ce jour-là, sans réponse :
-
-| Candidate | Où la voir | Ce qu'elle vaut ici |
-|---|---|---|
-| **Celle de l'Ornithèque** (recommandée) | `.onetake/look-ornitheque.json` | Le film ressemble à l'appli. Contraste : PASS sur les quatre couleurs |
-| `paper` | 1re case de la planche | Beaucoup d'air, mais neutre : ça pourrait être n'importe quel produit |
-| `ember` | 6e case | La meilleure avec des photos d'oiseaux, mais elle renie le sarcelle de l'appli |
-| `dusk` | 2e case | Les sonagrammes magenta y seraient superbes, mais l'appli est claire : le visiteur tombe de haut |
-
-La planche des six préréglages : `.claude/skills/onetake/gallery/sheets/looks.png`.
-La planche de contact des neuf prises : `.onetake/planche-refs.png`.
-
-Les commandes, à relancer telles quelles (l'enrobage UTF-8 n'est pas optionnel) :
+Mis en pause le 2026-09-30, pendant le rendu du brouillon corrigé.
 
 ```
 export PYTHONUTF8=1 PYTHONIOENCODING=utf-8
-.onetake/venv/Scripts/python.exe tools/onetake/captures.py        # refaire les prises
-.onetake/venv/Scripts/python.exe tools/onetake/planche-refs.py    # la planche de contact
+V=.onetake/venv/Scripts/python.exe
+
+$V tools/onetake/assemble.py      # reunit comp, motion.js, donnees et allure
+$V tools/onetake/partition.py     # refait le son
+$V .claude/skills/onetake/scripts/render.py .onetake/film/comp.html \
+     --out .onetake/brouillon.mp4 --sfx .onetake/film/son.wav
+$V .claude/skills/onetake/scripts/verify_promo.py .onetake/brouillon.mp4 \
+     --comp .onetake/film/comp.html \
+     --shots 0,2.0,6.0,8.4,9.0,10.2,11.0,12.2,17.4,19.2,20.6,21.0,24.2,25.0,26.5,27.0,29.0
 ```
+
+Ajouter `--resume` au rendu s'il a été interrompu : les images déjà faites sont gardées dans
+`.onetake/_frames`. Pour refaire les matériaux depuis zéro, dans cet ordre :
+`captures.py`, `materiaux.py`, **`credits.py`** (il écarte les images non libres), `decoupes.py`.
 
 Si `.claude/skills/onetake/` ou `.onetake/venv/` ont disparu (ils sont hors du dépôt), tout se
 réinstalle avec le `git clone` et le `pip install` de la section « Ce qui est installé ».
+
+**Le serveur local doit répondre sur `127.0.0.1`, pas `localhost`** : `http-server` n'écoute
+qu'en IPv4, et `localhost` se résout en IPv6 ici. Le navigateur invisible échouait en
+`ERR_CONNECTION_REFUSED` alors que la page s'ouvrait très bien à la main.
+
+### Ce qui reste
+
+1. Refaire le rendu du brouillon corrigé, revérifier la carte d'énergie, **le faire valider**.
+2. La musique : rien n'est téléchargé, deux ou trois morceaux libres à proposer avec leur
+   licence.
+3. Le rendu final. **Attention à la définition** : la plus grande image du film fait 1 506 px
+   (la photo) et les cartes de migration 500 px. Un rendu en 4K les agrandirait de 3 à 8 fois.
+   À trancher avec Mathis : 1080p60, 1440p, ou 4K assumé flou sur les cartes.
+4. La version allégée pour le web, son poids mesuré, exclue du cache hors ligne.
+5. L'écran d'accueil : image de couverture, lecture au clic, testé sur ordinateur et en
+   largeur téléphone. Puis `node tools/build/genere-demo.mjs` et `node tools/verif/tous.mjs`.
 
 ## Ce qui reste à faire
 
