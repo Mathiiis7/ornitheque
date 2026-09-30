@@ -33,11 +33,19 @@ PHOTOS = pathlib.Path(".onetake/remplacantes")
 SCI = sys.argv[1] if len(sys.argv) > 1 else "upupa epops"
 LARGEUR, HAUTEUR = 1920, 1080
 DEMARRAGE_MS = 8000
+# Un departement selectionne sur la deuxieme prise de la carte : le bloc apparait deux fois
+# dans le film, et la deuxieme doit montrer ce que le clic apporte.
+DEPARTEMENT = "Gironde"
+DEPARTEMENT_CODE = "33"
 UA = S.UA
 
 
 def portrait_libre(sci):
-    """Une photo compatible de l'espece, Commons d'abord."""
+    """Une photo compatible de l'espece. Celle qu'on a choisie a la main passe avant."""
+    choisis = json.loads(S.CHOISIS.read_text(encoding="utf-8")) if S.CHOISIS.exists() else {}
+    c = choisis.get(sci)
+    if c and c.get("fichier") and pathlib.Path(c["fichier"]).exists():
+        return c, pathlib.Path(c["fichier"])
     for c in commons(sci, 30) + candidates(sci, 12):
         if c["licence"] not in LIBRES:
             continue
@@ -142,6 +150,24 @@ def main():
             print("  ATTENTION : bloc « Ou et quand la trouver » absent, cadrage non fait")
         else:
             print(f"  bloc « Ou et quand la trouver » : {trouve} px de haut, cadre")
+        zone = page.evaluate(
+            """(q) => {
+                const zones = [...document.querySelectorAll('#smRarityMap [data-zone]')];
+                const texte = z => [...z.attributes].map(a => a.name + '=' + a.value).join(' ')
+                    + ' ' + (z.textContent || '');
+                const cible = zones.find(z => new RegExp(q.nom, 'i').test(texte(z)))
+                    || zones.find(z => (z.getAttribute('data-zone') || '') === q.code);
+                if (!cible) return zones.length
+                    ? 'absente parmi ' + zones.length + ' zones ; exemple : '
+                      + texte(zones[0]).slice(0, 200)
+                    : 'aucune zone';
+                cible.dispatchEvent(new MouseEvent('click', {bubbles: true}));
+                return 'ok';
+            }""",
+            {"nom": DEPARTEMENT, "code": DEPARTEMENT_CODE})
+        print(f"  selection du departement {DEPARTEMENT} : {zone}")
+        page.wait_for_timeout(2000)
+
         chemin = REFS / "2c-fiche-carte-libre.png"
         page.screenshot(path=str(chemin))
         print(f"  {chemin}  ({chemin.stat().st_size // 1024} Ko)")
