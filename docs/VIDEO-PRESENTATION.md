@@ -189,6 +189,58 @@ sur-réagit aux petits détails. Donc allonger les repos au premier passage du c
 que d'y croire d'avance. Et les repos sont immobiles POUR DE VRAI : un lent travelling pendant
 une pause compte comme du mouvement, c'est ce qui a fait échouer un des films du skill.
 
+## Changement de méthode : on filme le vrai site (2026-09-30)
+
+La première version du film **redessinait** les écrans - c'est ce que fait le skill par défaut,
+il ne filme pas l'écran. Mathis attendait l'inverse : une vidéo qui parcourt le site. Comparaison
+faite écran par écran, la reconstruction perdait la barre de navigation, le champ de recherche,
+les filtres, les pastilles de rareté, les codes d'espèces et, sur la fiche, ses trois onglets.
+**On repart donc des vraies captures**, animées par le skill : ce qu'on voit est le site au
+pixel près, et les enchaînements sont conservés.
+
+### Les photos interdites : remplacées, pas évitées
+
+Le mur du Birdydex ne pouvait pas être filmé tel quel. La réponse n'est pas de le reconstruire
+mais de **remplacer les photos interdites par d'autres photos libres de la même espèce**, au
+moment de la prise seulement - l'appli n'est pas touchée. Mesuré par
+`tools/onetake/vignettes-libres.py` : **128 vignettes affichées, 58 compatibles, 70 à remplacer,
+70 remplaçables.** Aucune exception.
+
+**La règle de licence a d'abord été fausse, et c'était grave.** Elle acceptait CC BY-SA. Or le
+chant d'hirondelle impose « pas d'usage commercial », et CC BY-SA **interdit d'ajouter cette
+restriction** à une œuvre qui la reprend : les deux ne peuvent pas cohabiter. 29 vignettes de
+plus étaient donc concernées, et le film serait parti en infraction sans que ça se voie. Les
+licences acceptées sont désormais `cc0, pd, cc-by, cc-by-nc, cc-by-nc-sa` - ni BY-SA, ni BY-NC-ND
+(qui interdit toute modification, or recadrer et animer en est une).
+
+**Le choix automatique de la remplaçante ne vaut rien.** iNaturalist classe par votes, et un vote
+récompense la photo remarquable, pas le portrait qui sert à reconnaître l'oiseau : il proposait un
+canard domestique huppé pour le colvert, un troupeau de plusieurs milliers d'oiseaux pour la nette
+rousse, une oie cendrée bec ouvert face caméra, un martinet posé sur la couverture d'un centre de
+soins. Les **15 vignettes qui passent à l'écran** sont donc choisies à la main sur planches
+(`portraits-planches.py`, puis `portraits-choix.py`), les 55 autres gardent le choix automatique.
+
+Le critère retenu : le trait qui nomme l'espèce doit être visible - le collier de la tourterelle
+turque, le tubercule du cygne, la huppe du fuligule morillon - et **toutes les vignettes à la même
+distance de l'oiseau** : un gros plan de tête écrase ses voisines une fois recadré en carré.
+
+**Deux pièges de source :** les catégories de Wikimedia Commons contiennent n'importe quoi - une
+hirondelle rustique et deux graphiques dans celle du martinet noir, une page de texte scannée, des
+cartes de répartition ; et l'inverse existe, la macreuse noire n'y a que du lointain en noir et
+blanc quand iNaturalist a un portrait net.
+
+### La fiche d'espèce
+
+`tools/onetake/fiche-libre.py`. Photo servie le 2026-09-30 : **Ad Konings, iNaturalist, CC BY-NC**,
+compatible, rien à remplacer - mais la vérification se refait **à chaque prise**, iNaturalist
+changeant la photo par défaut d'une espèce d'un jour à l'autre.
+
+Deux pièges payés ici :
+- **le profil garde le dernier onglet visité.** La fiche s'ouvrait sur « Sons », et les deux prises
+  sortaient identiques au bit près sans qu'une seule erreur n'apparaisse. On pose l'onglet voulu ;
+- **la plus grande image de la page n'est pas l'oiseau, c'est le sonagramme de xeno-canto.** Le
+  contrôle de licence portait donc sur le mauvais fichier, et concluait « inconnue ».
+
 ## Les licences, vérifiées à la source
 
 Relevé le 2026-09-30 par `tools/onetake/credits.py`, qui remonte à l'origine de chaque image
