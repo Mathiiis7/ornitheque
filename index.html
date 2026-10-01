@@ -48,7 +48,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=268">
+<link rel="modulepreload" href="app.js?v=269">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -583,7 +583,6 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         <button data-mode="mine" class="on">📍 Observations de la ligue</button>
         <button data-mode="missing">🐦 Observés récemment</button>
         <button data-mode="hotspots">🏞️ Top hotspots</button>
-        <button data-mode="abundance" style="display:none;">🗺️ Où trouver</button>
       </div>
       <div class="map-search">
         <div class="map-search-input-wrap">
@@ -719,37 +718,9 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         <label id="mapEbShowObservedLbl" class="explorer-lbl" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;" title="Afficher aussi les espèces déjà dans ta life list (utile pour vérifier si tes obs sont cohérentes avec la localisation)">
           <input type="checkbox" id="mapEbShowObserved" style="vertical-align:middle;"> Inclure déjà observés
         </label>
-        <label id="mapEbAbundanceLbl" class="explorer-lbl" style="display:none;align-items:center;gap:4px;cursor:pointer;" title="Colore chaque département selon la densité d'oiseaux de cette espèce (données Cornell Status & Trends, ~264 espèces disponibles). Rouge = beaucoup, jaune/vert = peu.">
-          <input type="checkbox" id="mapEbAbundance" style="vertical-align:middle;"> Colorer les départements
-        </label>
         <span class="map-count" id="mapEbCount" role="status"></span>
       </div>
       <div id="mapCountryHint" class="help" style="display:none; font-size:11.5px; margin:-4px 0 6px; color:var(--ink-3);"></div>
-      <div class="map-controls" id="mapCtrlsAbundance" style="display:none;">
-        <div class="seg" id="mapAbView" style="margin-right:8px;">
-          <button type="button" data-view="abs" class="on" title="Couleur = abondance réelle (même échelle pour toutes espèces). Un oiseau rare reste pâle même dans son meilleur dept - signal honnête.">📍 Absolu</button>
-          <button type="button" data-view="rank" title="Couleur = position (rang) du dept parmi les autres pour CETTE espèce. Le meilleur dept est toujours rouge, même si l'espèce est rare partout - utile pour repérer où tenter.">🎯 Top des dept</button>
-        </div>
-        <div class="seg" id="mapAbMetric" style="margin-right:8px;">
-          <button type="button" data-metric="max" class="on" title="Meilleur pixel du dept - capte les hotspots (côtes, marais, etc.)">🔥 Peak</button>
-          <button type="button" data-metric="mean" title="Moyenne des pixels du dept - densité globale (dilue le signal côtier)">📊 Moyenne</button>
-        </div>
-        <label class="explorer-lbl" for="mapAbMonth">Mois</label>
-        <select class="filt-sel" id="mapAbMonth">
-          <option value="0" selected>Toute l'année (pic)</option>
-          <option value="1">janvier</option><option value="2">février</option>
-          <option value="3">mars</option><option value="4">avril</option>
-          <option value="5">mai</option><option value="6">juin</option>
-          <option value="7">juillet</option><option value="8">août</option>
-          <option value="9">septembre</option><option value="10">octobre</option>
-          <option value="11">novembre</option><option value="12">décembre</option>
-        </select>
-        <label class="explorer-lbl" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;" title="Ajoute des points verts sur les hotspots eBird où l'espèce a été vue dans les 30 derniers jours">
-          <input type="checkbox" id="mapAbShowHs" style="vertical-align:middle;"> Points obs 30j
-        </label>
-        <span class="map-count" id="mapAbCount" role="status"></span>
-      </div>
-      <div id="mapAbHint" class="help" style="display:none; margin:2px 0 8px; font-size:11.5px; line-height:1.4;"></div>
       <div id="mapNote" class="help" style="margin:6px 0 8px; display:none;"></div>
       <div id="mapEl" class="map-el"></div>
       <div id="mapDrawResults" style="display:none; margin-top:10px; max-height:360px; overflow:auto; border:1px solid var(--line); border-radius:8px; padding:8px 12px; background:var(--surface-2);"></div>
@@ -1267,4 +1238,4 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=268"></script>
+<script type="module" src="app.js?v=269"></script>
