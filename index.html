@@ -48,7 +48,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=269">
+<link rel="modulepreload" href="app.js?v=270">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -929,7 +929,6 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         <p style="margin:0 0 10px;">Le niveau vient d'une seule source, le <b>bar chart eBird</b> du pays sur <b>2019-2026</b> : la part des listes d'observation qui mentionnent l'espèce.</p>
         <p style="margin:0 0 10px;">La valeur retenue est la moyenne des <b>48 quinzaines</b> de l'année, <b>pondérée par le nombre de listes</b> de chacune — l'effort d'observation varie fortement selon la saison, jusqu'à un facteur 3 entre novembre et mai. Autrement dit : la chance de rencontrer l'espèce lors d'une sortie prise au hasard dans l'année.</p>
         <p style="margin:0 0 10px;">C'est volontairement une mesure de <b>fréquence de rencontre</b>, pas d'effectif : une espèce discrète mais répandue sera mieux classée qu'une espèce nombreuse sur trois sites. Et un migrateur absent la moitié de l'année ne peut pas être « omniprésent », même s'il est partout en juin.</p>
-        <p style="margin:0 0 10px;">Deux ajustements subsistent : un <b>repli</b> sur le modèle eBird Status &amp; Trends quand une espèce n'a aucun bar chart dans le pays, et quelques <b>tiers forcés à la main</b> pour des populations très localisées que la moyenne nationale écrase.</p>
 
         <h3 style="margin:20px 0 8px; font-size:16px; color:var(--ink);">📍 Sélecteur région (fiche espèce)</h3>
         <p style="margin:0 0 8px;">Sur chaque fiche espèce, tu peux choisir un département. L'histogramme de saisonnalité se met à jour pour montrer où et quand l'espèce est présente <b>dans cette zone</b>.</p>
@@ -1238,4 +1237,4 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=269"></script>
+<script type="module" src="app.js?v=270"></script>
