@@ -4,10 +4,11 @@
 1. **Le logo d'abord, avant toute vidéo** : il n'aime pas vraiment la huppe actuelle. Reprendre le
    travail sur le logo (voir la mémoire « Logo : deux candidats retenus » : 1-oiseau-plat et
    3-tete-sarcelle-clair, dans `assets/logos/candidats/`, non suivis par git).
-2. **La démo, ensuite** : ses 1 349 cochages ne tombent que sur 12 lieux GPS, c'est bizarre sur la
-   carte. Étaler les observations de la démo sur beaucoup plus de lieux (générateur :
-   `tools/build/genere-demo.mjs`, données `demo/donnees.js`), puis relancer
-   `tools/onetake/v2-carte.py`.
+2. **FAIT le 02/10 : la démo étalée.** 337 points sur 84 départements au lieu de 10. Chaque membre
+   a 8 coins dans son département (Indre, Bouches-du-Rhône, Jura, Gironde, Finistère) et 2 dans
+   chaque département visité ; l'espèce va là où eBird la donne fréquente ce mois-là
+   (`freq_by_region.json`), points tirés dans les vrais contours, nommés par le département.
+   `v2-carte.py` relancé (1 349 points lus) ; le film n'est pas encore réassemblé.
 3. **La vidéo, après** :
    - la police ne lui plaît pas (aujourd'hui Instrument Serif, via `.onetake/look-ornitheque.json`) :
      proposer 2-3 polices ;

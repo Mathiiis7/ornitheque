@@ -76,26 +76,103 @@ const ESPECES = Object.entries(FREQ)
 if(ESPECES.length < 500) throw new Error('seulement ' + ESPECES.length + ' especes utilisables, attendu au moins 500');
 const sansRarete = ESPECES.filter(s => REAL_RARITY[s] === undefined).length;
 
-// Lieux reels, pour que la carte des observations ne soit pas vide. Coordonnees arrondies
-// au centieme : c est une demo, pas un releve.
-const LIEUX = [
-  { l: 'Parc ornithologique du Pont de Gau, Camargue', la: 43.51, lo: 4.41 },
-  { l: 'Baie de Somme, Le Crotoy',                     la: 50.22, lo: 1.63 },
-  { l: 'Forêt de Fontainebleau',                       la: 48.40, lo: 2.70 },
-  { l: 'Marais de Brière',                             la: 47.37, lo: -2.18 },
-  { l: 'Étang de Lindre, Moselle',                      la: 48.77, lo: 6.75 },
-  { l: 'Pic du Midi de Bigorre, Hautes-Pyrénées',       la: 42.94, lo: 0.14 },
-  { l: 'Lac du Der-Chantecoq',                          la: 48.58, lo: 4.76 },
-  { l: 'Pointe du Raz, Finistère',                      la: 48.04, lo: -4.74 },
-  { l: 'Réserve de la Bassée, Seine-et-Marne',          la: 48.41, lo: 3.32 },
-  { l: 'Calanques de Marseille',                        la: 43.21, lo: 5.44 },
-];
-
 // Tirage deterministe : le meme fichier sort a chaque execution, sinon le mode verification
 // annoncerait un retard a chaque fois.
 function pseudo(n){ const x = Math.sin(n * 12.9898) * 43758.5453; return x - Math.floor(x); }
+function graineDe(texte){ let h = 0; for(const c of texte) h = (h * 31 + c.charCodeAt(0)) % 9973; return h; }
 
-function listeDe(graine, combien){
+/* ============================================================
+   Les lieux
+   ============================================================ */
+// Jusqu au 2026-10-02, dix lieux fixes tires au hasard : 1 349 cochages empiles sur dix points,
+// et un Macareux aussi probable a Fontainebleau qu a la Pointe du Raz. Ca se voyait sur la carte.
+// Chaque membre a maintenant ses coins : plusieurs dans son departement, deux dans chaque
+// departement visite. Une espece va dans le coin ou freq_by_region (frequence eBird par
+// departement et par mois) la donne la plus frequente ce mois-la. Les points tombent dans le
+// vrai contour du departement ; le nom affiche est celui du departement, faute de nom de site
+// qu on puisse affirmer pour un point tire au hasard.
+const FREQ_DEP = JSON.parse(readFileSync(f('data/countries/fr/freq_by_region.json'), 'utf8'));
+const CONTOURS = JSON.parse(readFileSync(f('tools/config/departements-fr.geojson'), 'utf8'));
+
+// Paris n a pas de frequences a lui dans freq_by_region : sans elles, aucune espece n irait y
+// tomber, on le laisse de cote. Plus de cinq departements manquants voudrait dire autre chose.
+const DEPS = CONTOURS.features.map(ft => {
+  const cle = Object.keys(FREQ_DEP).find(k => k.endsWith('-' + ft.properties.code));
+  const polygones = ft.geometry.type === 'Polygon' ? [ft.geometry.coordinates] : ft.geometry.coordinates;
+  return cle && { cle, nom: ft.properties.nom, polygones };
+}).filter(Boolean);
+if(DEPS.length < 91) throw new Error('seulement ' + DEPS.length + ' departements avec frequences');
+const DEP = Object.fromEntries(DEPS.map(d => [d.cle, d]));
+
+function dansAnneau(lon, lat, anneau){
+  let dedans = false;
+  for(let i = 0, j = anneau.length - 1; i < anneau.length; j = i++){
+    const [xi, yi] = anneau[i], [xj, yj] = anneau[j];
+    if((yi > lat) !== (yj > lat) && lon < (xj - xi) * (lat - yi) / (yj - yi) + xi) dedans = !dedans;
+  }
+  return dedans;
+}
+const dansDep = (lon, lat, d) =>
+  d.polygones.some(p => dansAnneau(lon, lat, p[0]) && !p.slice(1).some(trou => dansAnneau(lon, lat, trou)));
+
+// Arrondi au millieme (une centaine de metres) puis reteste : arrondir au centieme pouvait
+// pousser un point cotier dans la mer.
+function pointDans(d, graine){
+  const tous = d.polygones.flatMap(p => p[0]);
+  const lons = tous.map(p => p[0]), lats = tous.map(p => p[1]);
+  const [x0, x1, y0, y1] = [Math.min(...lons), Math.max(...lons), Math.min(...lats), Math.max(...lats)];
+  for(let essai = 0; essai < 1000; essai++){
+    const lo = Math.round((x0 + pseudo(graine + essai * 1.37) * (x1 - x0)) * 1000) / 1000;
+    const la = Math.round((y0 + pseudo(graine * 1.91 + essai * 2.71 + 0.5) * (y1 - y0)) * 1000) / 1000;
+    if(dansDep(lo, la, d)) return { la, lo };
+  }
+  throw new Error('aucun point trouve dans ' + d.nom);
+}
+
+function coinsDe(m){
+  const coins = [];
+  const ajoute = (cle, combien, poids) => {
+    for(let k = 0; k < combien; k++){
+      coins.push({ cle, poids, l: DEP[cle].nom, ...pointDans(DEP[cle], graineDe(cle) + k * 97 + m.graine * 7919) });
+    }
+  };
+  if(!DEP[m.chezSoi]) throw new Error('departement inconnu : ' + m.chezSoi);
+  ajoute(m.chezSoi, 8, 4);
+  // Plus la liste est longue, plus son auteur a voyage.
+  const visites = DEPS.map(d => d.cle).filter(c => c !== m.chezSoi)
+    .sort((a, b) => pseudo(graineDe(a) + m.graine * 53) - pseudo(graineDe(b) + m.graine * 53))
+    .slice(0, Math.round(m.especes / 12));
+  for(const cle of visites) ajoute(cle, 2, 1);
+  return coins;
+}
+
+const frequence = (cle, sci, mois) => (FREQ_DEP[cle][sci] || [])[mois - 1] || 0;
+
+function tireSelon(poids, tirage){
+  const total = poids.reduce((a, b) => a + b, 0);
+  if(total === 0) return -1;
+  let seuil = tirage * total;
+  for(let i = 0; i < poids.length; i++){ seuil -= poids[i]; if(seuil < 0) return i; }
+  return poids.length - 1;
+}
+
+function coinPour(m, coins, sci, mois, tirage){
+  const i = tireSelon(coins.map(c => frequence(c.cle, sci, mois) * c.poids), tirage);
+  if(i >= 0) return coins[i];
+  // L espece n est dans aucun de ses coins ce mois-la : une sortie ailleurs, la ou elle est.
+  // Le coin s ajoute aux siens, une espece suivante pourra y etre vue aussi.
+  let j = tireSelon(DEPS.map(d => frequence(d.cle, sci, mois)), tirage);
+  if(j < 0) j = tireSelon(DEPS.map(d => (FREQ_DEP[d.cle][sci] || []).reduce((a, b) => a + b, 0)), tirage);
+  if(j < 0) return coins[Math.floor(tirage * coins.length)];
+  const cle = DEPS[j].cle;
+  const coin = { cle, poids: 1, l: DEP[cle].nom, ...pointDans(DEP[cle], graineDe(cle) + 5003 + m.graine * 7919) };
+  coins.push(coin);
+  return coin;
+}
+
+function listeDe(m){
+  const { graine, especes: combien } = m;
+  const coins = coinsDe(m);
   const out = [];
   for(let i = 0; i < ESPECES.length && out.length < combien; i++){
     // Les especes communes entrent presque toujours, les rares de moins en moins : une life
@@ -103,9 +180,9 @@ function listeDe(graine, combien){
     const chance = 0.55 + 0.45 * (1 - i / ESPECES.length);
     if(pseudo(i * 7 + graine * 101) > chance) continue;
     const sci = ESPECES[i];
-    const lieu = LIEUX[Math.floor(pseudo(i + graine * 13) * LIEUX.length)];
     const jour = 1 + Math.floor(pseudo(i * 3 + graine) * 27);
     const mois = 1 + Math.floor(pseudo(i * 5 + graine * 2) * 12);
+    const lieu = coinPour(m, coins, sci, mois, pseudo(i + graine * 13));
     let annee = 2020 + Math.floor(pseudo(i * 11 + graine * 3) * 7);
     // Une observation dans le futur se verrait tout de suite. On recule d une annee plutot
     // que de raboter, pour garder des cochages recents : une demo ou personne n a rien vu
@@ -128,19 +205,19 @@ const ts = ms => ({ __horodatage: ms });      // remplace par un vrai objet dans
 const MEMBRES = [
   { id: UID_MOI,      nom: 'Vous',      especes: 212, graine: 1, statut: 'En quête du Guêpier',
     but: 'Passer les 250 espèces cette année', reve: 'Le Gypaète barbu en vol',
-    rare: 'Marouette ponctuée, Brenne, 2023', avatar: '🦅', jours: 400 },
+    rare: 'Marouette ponctuée, Brenne, 2023', avatar: '🦅', jours: 400, chezSoi: 'FR-CVL-36' },   // la Brenne de sa rareté
   { id: 'demo-claire', nom: 'Claire',   especes: 318, graine: 2, statut: 'Camargue tous les week-ends',
     but: 'Finir les limicoles de la façade atlantique', reve: 'Une Aigrette des récifs',
-    rare: 'Bécassine double, baie de Somme, 2024', avatar: '🦩', jours: 900 },
+    rare: 'Bécassine double, baie de Somme, 2024', avatar: '🦩', jours: 900, chezSoi: 'FR-PAC-13' },   // la Camargue
   { id: 'demo-hugo',   nom: 'Hugo',     especes: 274, graine: 3, statut: 'Sorties au petit matin',
     but: 'Photographier les dix pics de France', reve: 'Le Grand Tétras',
-    rare: 'Chevêchette d’Europe, Jura, 2022', avatar: '🦉', jours: 700 },
+    rare: 'Chevêchette d’Europe, Jura, 2022', avatar: '🦉', jours: 700, chezSoi: 'FR-BFC-39' },   // le Jura
   { id: 'demo-lina',   nom: 'Lina',     especes: 156, graine: 4, statut: 'Débutante assumée',
     but: 'Reconnaître dix chants sans tricher', reve: 'Un Martin-pêcheur de près',
-    rare: 'Torcol fourmilier, jardin, 2025', avatar: '🐦', jours: 120 },
+    rare: 'Torcol fourmilier, jardin, 2025', avatar: '🐦', jours: 120, chezSoi: 'FR-NAQ-33' },
   { id: 'demo-samir',  nom: 'Samir',    especes: 389, graine: 5, statut: 'Compte les Pouillots',
     but: 'Boucler les 400', reve: 'Une Sittelle corse chez elle',
-    rare: 'Rollier d’Europe, Crau, 2021', avatar: '🐧', jours: 1500 },
+    rare: 'Rollier d’Europe, Crau, 2021', avatar: '🐧', jours: 1500, chezSoi: 'FR-BRE-29' },
 ];
 
 const DONNEES = {};
@@ -151,7 +228,7 @@ DONNEES['leagues/' + LIGUE] = {
 
 for(const m of MEMBRES){
   DONNEES['leagues/' + LIGUE + '/members/' + m.id] = {
-    name: m.nom, species: listeDe(m.graine, m.especes),
+    name: m.nom, species: listeDe(m),
     goal: m.but, dream: m.reve, rare: m.rare, status: m.statut, avatar: m.avatar,
     fav: '', regions: ['FR-11', 'FR-93', 'FR-75', 'FR-53'],
     joinedAt: ts(MAINTENANT - m.jours * JOUR), updatedAt: ts(MAINTENANT - 2 * JOUR),
