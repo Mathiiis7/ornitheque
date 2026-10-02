@@ -1,0 +1,427 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>L'Ornitheque - film de presentation, deroule v2</title>
+<style>
+  html,body{margin:0;background:#000;overflow:hidden}
+  #stage{position:fixed;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0}
+  canvas{display:block;width:1920px;height:1080px}
+</style>
+<div id="stage"><canvas id="cv" width="1920" height="1080"></canvas></div>
+
+<script src="motion.js"></script>
+<script src="donnees-v2.js"></script>
+<script src="look.js"></script>
+<script>
+// =============================================================================
+// L'Ornitheque - deroule v2 (docs/VIDEO-DEROULE-V2.md), moments 1 et 2.
+//
+//   1. Ouverture : la huppe se dessine facette par facette (contour trace, puis aplat), le nom
+//      s'ecrit, un temps calme.
+//   2. Observer : l'oeil de la huppe ouvre un iris sur la carte ; la huppe et son nom se rangent
+//      en haut a gauche et RESTENT (c'est ce qui survit au passage). Les observations de la
+//      demo arrivent une a une, des photos d'especes surgissent puis vont se ranger dans le
+//      compteur, qui monte a 212 (le total reel du Birdydex de la demo, 212 / 466).
+//
+// Tout est une fonction PURE du temps : le rendu rappelle seek(t) plusieurs fois autour de
+// chaque image pour le flou de mouvement. Aucun hasard hors OM.rng a graine fixe.
+// =============================================================================
+
+const FPS = 30, DUR = 16.8;
+window.__meta = { dur: DUR, fps: FPS, w: 1920, h: 1080 };
+const W = 1920, H = 1080;
+const { clamp, lerp, ssstep, spring } = OM;
+const E = OM.ease;
+const seg = (a, b, t) => clamp((t - a) / (b - a), 0, 1);
+
+const L = (window.LOOK && window.LOOK.color) ? window.LOOK.color : {
+  ground: '#eef2f1', deep: '#dde4e2', card: '#ffffff', line: '#d8dddc',
+  mute: '#616966', ink: '#15201e', accent: '#0b7c77', accent2: '#c05e33',
+};
+const police = (r, px) => (window.LOOK && window.LOOK.font)
+  ? window.LOOK.font(r, px)
+  : (r === 'display' ? px + 'px Georgia, serif' : px + 'px "Segoe UI", system-ui, sans-serif');
+
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const IM = {};
+
+// --- La feuille de plans --------------------------------------------------------------------
+const T = {
+  DESSIN: 0.45, DESSIN_FIN: 3.35,     // les facettes se dessinent
+  NOM: 3.45,                          // le nom s'ecrit
+  REPOS1: 4.5,                        // repos immobile jusqu'a RANGE
+  RANGE: 5.5, RANGE_FIN: 7.1,         // la huppe se range, l'iris s'ouvre depuis son oeil
+  PHRASE: 7.1,                       // la phrase du moment
+  PT0: 7.7, PT_DUREE: 7.0,  // les observations arrivent
+  CPT0: 7.9, CPT1: 15.4,              // le compteur
+  PUSH0: 7.1, PUSH1: 15.2,            // la lente avancee sur la carte
+};
+// photos d'especes : instant d'apparition, indice du point qui la fait surgir, carte du mur
+const PHOTOS = [
+  { t: 8.9,  pt: 2,   carte: 0  },
+  { t: 10.0,  pt: 4,   carte: 5  },
+  { t: 11.3, pt: 6,   carte: 11 },
+  { t: 12.6, pt: 8,   carte: 18 },
+  { t: 13.7, pt: 10,  carte: 26 },
+];
+const PHOTO_TENUE = 1.05, PHOTO_VOL = 0.65;
+const COMPTEUR = { x: 80, base: 985 };      // coin bas gauche
+const TOTAL = 212, SUR = 466;
+
+// --- La huppe : facettes --------------------------------------------------------------------
+const FAC = window.V2.facettes;            // { w, h, f: [{ c, p, a }] }
+const BEC = [890, 665], OEIL = [704, 629];
+const ordre = FAC.f.map((f, i) => {
+  let cx = 0, cy = 0; f.p.forEach(q => { cx += q[0]; cy += q[1]; });
+  cx /= f.p.length; cy /= f.p.length;
+  return { i, d: Math.hypot(cx - BEC[0], cy - BEC[1]) };
+}).sort((a, b) => a.d - b.d);
+const rang = {}; ordre.forEach((o, k) => { rang[o.i] = k; });
+FAC.f.forEach(f => {
+  let L2 = 0;
+  for (let k = 0; k < f.p.length; k++) {
+    const a = f.p[k], b = f.p[(k + 1) % f.p.length];
+    L2 += Math.hypot(b[0] - a[0], b[1] - a[1]);
+  }
+  f.len = L2;
+});
+const NF = FAC.f.length;
+const STAG = (T.DESSIN_FIN - T.DESSIN - 0.6) / NF;
+
+// Pose de la huppe : grande au centre-gauche, puis rangee en haut a gauche.
+const POSE_A = { s: 0.80, x: 150, y: 110 };          // x, y : coin haut gauche du dessin
+const POSE_B = { s: 0.092, x: 52, y: 26 };
+function poseHuppe(t) {
+  const k = E.cubicInOut(seg(T.RANGE, T.RANGE_FIN, t));
+  return { s: lerp(POSE_A.s, POSE_B.s, k), x: lerp(POSE_A.x, POSE_B.x, k), y: lerp(POSE_A.y, POSE_B.y, k), k };
+}
+const versEcranHuppe = (P, u, v) => [P.x + u * P.s, P.y + v * P.s];
+
+function dessineHuppe(t) {
+  const P = poseHuppe(t);
+  ctx.save();
+  ctx.translate(P.x, P.y);
+  ctx.scale(P.s, P.s);
+  ctx.lineJoin = 'round';
+  for (const f of FAC.f) {
+    const k = rang[FAC.f.indexOf(f)];
+    const ts = T.DESSIN + k * STAG;
+    if (t < ts) continue;
+    const trace = E.cubicOut(seg(ts, ts + 0.55, t));
+    const remplit = E.quartOut(seg(ts + 0.38, ts + 0.8, t));
+    const estompe = seg(ts + 0.62, ts + 1.0, t);
+    const path = new Path2D();
+    f.p.forEach((q, j) => (j ? path.lineTo(q[0], q[1]) : path.moveTo(q[0], q[1])));
+    path.closePath();
+    if (remplit > 0) {
+      ctx.globalAlpha = remplit;
+      ctx.fillStyle = f.c;
+      ctx.fill(path);
+    }
+    if (estompe < 1) {
+      ctx.globalAlpha = 1 - estompe;
+      ctx.strokeStyle = L.ink;
+      ctx.lineWidth = 3.4 / P.s;
+      ctx.setLineDash([f.len * trace, f.len + 10]);
+      ctx.lineDashOffset = 0;
+      ctx.stroke(path);
+      ctx.setLineDash([]);
+    }
+  }
+  ctx.restore();
+}
+
+// --- Le nom ---------------------------------------------------------------------------------
+const NOM = 'L’Ornithèque';
+const largNom = {};
+function xsNom(px) {
+  const key = Math.round(px * 4);
+  if (largNom[key]) return largNom[key];
+  ctx.save(); ctx.font = police('display', px);
+  const xs = []; for (let i = 0; i <= NOM.length; i++) xs.push(ctx.measureText(NOM.slice(0, i)).width);
+  ctx.restore();
+  return (largNom[key] = xs);
+}
+const NOM_A = { px: 168, x: 1000, base: 590 };
+const NOM_B = { px: 50, x: 168, base: 78 };
+function poseNom(t) {
+  const k = E.cubicInOut(seg(T.RANGE + 0.05, T.RANGE_FIN, t));
+  return { px: lerp(NOM_A.px, NOM_B.px, k), x: lerp(NOM_A.x, NOM_B.x, k), base: lerp(NOM_A.base, NOM_B.base, k) };
+}
+function dessineNom(t) {
+  if (t < T.NOM) return;
+  const P = poseNom(t);
+  const xs = xsNom(P.px);
+  ctx.save();
+  ctx.font = police('display', P.px);
+  ctx.textBaseline = 'alphabetic';
+  for (let i = 0; i < NOM.length; i++) {
+    const g = OM.letterDrop(t, T.NOM, i, { stagger: 0.05, dist: 70, squash: 0.0075 });
+    if (g.op <= 0.01) continue;
+    ctx.save();
+    ctx.globalAlpha = g.op;
+    ctx.translate(P.x + xs[i], P.base + g.y * (P.px / NOM_A.px));
+    ctx.scale(g.sx, g.sy);
+    ctx.fillStyle = (i === 0 || i === 1) ? L.ink : L.ink;
+    ctx.fillText(NOM[i], 0, 0);
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+// --- La carte et ses observations ------------------------------------------------------------
+const CARTE_W = 2940, CARTE_H = 1522;              // la capture, en pixels de l'ecran
+const S0 = H / CARTE_H;                            // la carte couvre le cadre
+const OFFX = -(CARTE_W * S0 - W) / 2;
+const FOCUS = [1180, 540];
+function camCarte(t) {
+  const k = E.sineInOut(seg(T.PUSH0, T.PUSH1, t));
+  return { z: 1 + 0.055 * k, fx: FOCUS[0], fy: FOCUS[1] };
+}
+const versCarte = (C, x, y) => [FOCUS[0] + (x - FOCUS[0]) * C.z, FOCUS[1] + (y - FOCUS[1]) * C.z];
+
+// La demo n'a que 12 lieux : les 1 349 cochages de la carte « Afficher tous les cochages » se
+// superposent aux memes coordonnees GPS (une liste = un lieu, les petits ecarts viennent du zoom). On dessine un point par lieu,
+// de la couleur la plus frequente a cet endroit, et on ne pretend pas en montrer plus.
+const LIEUX = {};
+window.V2.points.pts.filter(p => p.tag === 'path').forEach(p => {
+  const k = Math.round(p.x / 8) + ',' + Math.round(p.y / 8);
+  const l = LIEUX[k] || (LIEUX[k] = { x: p.x, y: p.y, n: 0, f: {} });
+  l.n++; l.f[p.fill] = (l.f[p.fill] || 0) + 1;
+});
+const PTS = Object.keys(LIEUX).sort().map(k => {
+  const l = LIEUX[k];
+  return { x: l.x, y: l.y, n: l.n, fill: Object.keys(l.f).sort((a, b) => l.f[b] - l.f[a])[0] };
+});
+const PTX = PTS.map(p => p.x * 2 * S0 + OFFX), PTY = PTS.map(p => p.y * 2 * S0);
+const NP = PTS.length;
+// ordre d'arrivee : melange a graine fixe
+const rng = OM.rng(11);
+const melange = PTS.map((_, i) => i);
+for (let i = NP - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [melange[i], melange[j]] = [melange[j], melange[i]]; }
+const tArrive = new Array(NP);
+melange.forEach((idx, n) => {
+  tArrive[idx] = T.PT0 + T.PT_DUREE * Math.pow(n / (NP - 1), 1.15);
+});
+// les points qui font surgir une photo arrivent juste avant elle
+PHOTOS.forEach(ph => { ph.idx = melange[Math.min(ph.pt, NP - 1)]; tArrive[ph.idx] = Math.min(tArrive[ph.idx], ph.t - 0.25); });
+const PT_FIN = Math.max(...tArrive);
+
+function dessineCarte(t) {
+  if (t < T.RANGE) return;
+  const C = camCarte(t);
+  const [ex, ey] = versEcranHuppe(poseHuppe(t), OEIL[0], OEIL[1]);
+  const R = E.expoIn(seg(T.RANGE, T.RANGE_FIN, t)) * 2400;
+  ctx.save();
+  ctx.beginPath(); ctx.arc(ex, ey, R, 0, Math.PI * 2); ctx.clip();
+  ctx.translate(FOCUS[0], FOCUS[1]); ctx.scale(C.z, C.z); ctx.translate(-FOCUS[0], -FOCUS[1]);
+  const im = IM['carte'];
+  if (im) ctx.drawImage(im, 4, 4, im.width - 8, im.height - 8, OFFX + 4 * S0, 4 * S0, (CARTE_W - 8) * S0, (CARTE_H - 8) * S0);
+  // les observations
+  const r0 = 11;
+  for (let i = 0; i < NP; i++) {
+    const tau = t - tArrive[i];
+    if (tau <= 0) continue;
+    const k = spring(tau, 0.5, 30);
+    const r = r0 * k;
+    if (r < 0.2) continue;
+    ctx.beginPath(); ctx.arc(PTX[i], PTY[i], r + 2.5, 0, 6.2832);
+    ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fill();
+    ctx.beginPath(); ctx.arc(PTX[i], PTY[i], r, 0, 6.2832);
+    ctx.fillStyle = PTS[i].fill; ctx.fill();
+  }
+  ctx.restore();
+  // voile : la phrase et le compteur se lisent sur une carte chargee en noms de villes
+  const v = ctx.createLinearGradient(0, 0, 980, 0);
+  v.addColorStop(0, 'rgba(238,242,241,0.78)'); v.addColorStop(0.55, 'rgba(238,242,241,0.5)'); v.addColorStop(1, 'rgba(238,242,241,0)');
+  ctx.save();
+  ctx.beginPath(); ctx.arc(ex, ey, R, 0, Math.PI * 2); ctx.clip();
+  ctx.fillStyle = v; ctx.fillRect(0, 0, 980, H);
+  ctx.restore();
+}
+
+// --- La phrase ------------------------------------------------------------------------------
+const PHRASE = ['Note chaque', 'oiseau que', 'tu vois.'];
+const PH_PX = 118, PH_X = 74, PH_Y0 = 330, PH_PAS = 128;
+function dessinePhrase(t) {
+  if (t < T.PHRASE) return;
+  ctx.save();
+  ctx.font = police('display', PH_PX);
+  ctx.textBaseline = 'alphabetic';
+  let n = 0;
+  PHRASE.forEach((ligne, li) => {
+    for (let i = 0; i < ligne.length; i++, n++) {
+      const g = OM.letterDrop(t, T.PHRASE + li * 0.12, i, { stagger: 0.04, dist: 60, squash: 0.0075 });
+      if (g.op <= 0.01) continue;
+      const x = PH_X + ctx.measureText(ligne.slice(0, i)).width;
+      ctx.save();
+      ctx.globalAlpha = g.op;
+      ctx.translate(x, PH_Y0 + li * PH_PAS + g.y);
+      ctx.scale(g.sx, g.sy);
+      ctx.fillStyle = (li === PHRASE.length - 1) ? L.accent : L.ink;
+      ctx.fillText(ligne[i], 0, 0);
+      ctx.restore();
+    }
+  });
+  ctx.restore();
+}
+
+// --- Les photos qui surgissent puis vont dans le compteur -----------------------------------
+const CARTE_PX = 0.52;  // les cartes du mur font 274 x 339 : 0,52 -> 142 x 176
+function etatPhoto(ph, t) {
+  const C = camCarte(t);
+  const [px, py] = versCarte(C, PTX[ph.idx], PTY[ph.idx]);
+  const cible = [COMPTEUR.x + 120, COMPTEUR.base - 80];
+  const t1 = ph.t + PHOTO_TENUE, t2 = t1 + PHOTO_VOL;
+  const arrive = spring(t - ph.t, 0.55, 22);
+  const vol = E.expoInOut(seg(t1, t2, t));
+  // petit arc : le vol passe au-dessus de la ligne droite
+  const dx = cible[0] - px, dy = cible[1] - py;
+  const x = px + dx * vol, y = py + dy * vol - Math.sin(vol * Math.PI) * 120 - (1 - arrive) * -26 - 70 * arrive * (1 - vol);
+  const s = CARTE_PX * arrive * lerp(1, 0.16, vol);
+  const op = (1 - seg(t2 - 0.08, t2, t)) * clamp(arrive * 1.6, 0, 1);
+  return { x, y, s, op, vol, atterri: t >= t2 };
+}
+function dessinePhotos(t) {
+  for (const ph of PHOTOS) {
+    if (t < ph.t || t > ph.t + PHOTO_TENUE + PHOTO_VOL + 0.02) continue;
+    const e = etatPhoto(ph, t);
+    const im = IM['m' + ph.carte];
+    if (!im || e.op <= 0.01 || e.s <= 0.005) continue;
+    const w = im.width * e.s, h = im.height * e.s;
+    ctx.save();
+    ctx.globalAlpha = e.op;
+    // ombre portee, pour que la photo se detache de la carte
+    ctx.shadowColor = 'rgba(21,32,30,0.35)'; ctx.shadowBlur = 24 * e.s; ctx.shadowOffsetY = 8 * e.s;
+    ctx.drawImage(im, e.x - w / 2, e.y - h, w, h);
+    ctx.restore();
+  }
+}
+
+// --- Le compteur ----------------------------------------------------------------------------
+function valeurCompteur(t) {
+  return Math.round(TOTAL * E.sineInOut(seg(T.CPT0, T.CPT1, t)));
+}
+function dessineCompteur(t) {
+  if (t < T.CPT0 - 0.3) return;
+  const entree = ssstep(T.CPT0 - 0.3, T.CPT0 + 0.2, t);
+  const v = valeurCompteur(t);
+  // chaque photo qui arrive dans le compteur le fait tressaillir
+  let pouls = 0;
+  for (const ph of PHOTOS) {
+    const ta = ph.t + PHOTO_TENUE + PHOTO_VOL;
+    if (t > ta) pouls = Math.max(pouls, 0.07 * Math.exp(-(t - ta) * 9) * Math.cos((t - ta) * 26));
+  }
+  const px = 150, base = COMPTEUR.base, droite = COMPTEUR.x;
+  ctx.save();
+  ctx.globalAlpha = entree;
+  ctx.textBaseline = 'alphabetic';
+  ctx.font = police('display', px);
+  let cell = 0; for (let d = 0; d <= 9; d++) cell = Math.max(cell, ctx.measureText(String(d)).width);
+  const s = String(v);
+  const blocW = cell * 3;
+  ctx.translate(droite, base);
+  ctx.translate(blocW / 2, -px * 0.3); ctx.scale(1 + pouls, 1 + pouls); ctx.translate(-blocW / 2, px * 0.3);
+  ctx.textAlign = 'center';
+  ctx.fillStyle = (v === TOTAL) ? L.accent : L.ink;
+  for (let i = 0; i < s.length; i++) ctx.fillText(s[i], blocW - (s.length - i - 0.5) * cell, 0);
+  ctx.font = police('display', 60);
+  ctx.textAlign = 'left';
+  ctx.fillStyle = L.mute;
+  ctx.fillText('/ ' + SUR, blocW + 24, 0);
+  ctx.font = police('text', 28);
+  ctx.fillText('espèces vues', 8, 52);
+  ctx.restore();
+}
+
+// --- Une image -------------------------------------------------------------------------------
+function seek(t) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = L.ground;
+  ctx.fillRect(0, 0, W, H);
+  dessineCarte(t);
+  dessinePhrase(t);
+  dessineCompteur(t);
+  dessinePhotos(t);
+  dessineHuppe(t);
+  dessineNom(t);
+  return true;
+}
+
+// --- Ce que l'oracle suit --------------------------------------------------------------------
+window.__track = t => {
+  const out = {};
+  const P = poseHuppe(t);
+  out.huppe = { x: P.x, y: P.y, w: FAC.w * P.s, h: FAC.h * P.s, op: 1 };
+  if (t >= T.NOM) {
+    const N = poseNom(t);
+    out.nom = { x: N.x, y: N.base - N.px, w: xsNom(N.px)[NOM.length], h: N.px * 1.2, op: 1 };
+  }
+  PHOTOS.forEach((ph, k) => {
+    if (t < ph.t || t > ph.t + PHOTO_TENUE + PHOTO_VOL) return;
+    const e = etatPhoto(ph, t);
+    out['photo' + k] = { x: e.x - 70 * e.s / CARTE_PX, y: e.y - 170 * e.s / CARTE_PX, w: 140 * e.s / CARTE_PX, h: 170 * e.s / CARTE_PX, op: e.op };
+  });
+  if (t >= T.RANGE) { const C = camCarte(t); out.carte = { x: -(C.z - 1) * 600, y: -(C.z - 1) * 300, w: W * C.z, h: H * C.z, op: 1 }; }
+  return out;
+};
+window.__motion = (t0, t1) => {
+  const A = window.__track(t0), B = window.__track(t1);
+  let px = 0;
+  for (const k of Object.keys(A)) {
+    if (!B[k]) continue;
+    px = Math.max(px, Math.hypot(B[k].x - A[k].x, B[k].y - A[k].y),
+      Math.hypot((B[k].x + B[k].w) - (A[k].x + A[k].w), (B[k].y + B[k].h) - (A[k].y + A[k].h)));
+  }
+  const cours = t => (t >= T.DESSIN && t < T.DESSIN_FIN + 0.9) || (t >= T.NOM && t < T.NOM + 0.9) ||
+    (t >= T.PHRASE && t < T.PHRASE + 1.2) || (t >= T.PT0 && t < PT_FIN + 0.4);
+  if (cours(t0) || cours(t1)) px = Math.max(px, 24);
+  return px;
+};
+window.__events = () => ({
+  T: DUR,
+  events: [
+    { t: T.DESSIN + 0.2,  kind: 'air',    pan: 0,    v: 0.40 },
+    { t: T.NOM,           kind: 'wood',   pan: 0.2,  v: 0.55 },
+    { t: T.RANGE + 0.3,   kind: 'air',    pan: 0,    v: 0.60 },
+    { t: T.PHRASE,        kind: 'wood',   pan: -0.3, v: 0.45 },
+    ...PHOTOS.map(ph => ({ t: ph.t, kind: 'glass', pan: -0.1, v: 0.45 })),
+    ...PHOTOS.map(ph => ({ t: ph.t + PHOTO_TENUE + PHOTO_VOL, kind: 'bubble', pan: -0.5, v: 0.40 })),
+  ],
+  silences: [[0, 0.4], [T.REPOS1, T.RANGE], [15.5, DUR]],
+});
+window.__seek = async t => seek(t);
+
+function charge(cle, src) {
+  return new Promise(res => {
+    const im = new Image();
+    im.onload = () => { IM[cle] = im; res(); };
+    im.onerror = () => { console.warn('image absente : ' + src); res(); };
+    im.src = src;
+  });
+}
+window.__ready = (async () => {
+  const jobs = [charge('carte', 'carte-fond.png')];
+  PHOTOS.forEach(ph => jobs.push(charge('m' + ph.carte, '../film/assets/c/mur-carte-' + ph.carte + '.png')));
+  await Promise.all(jobs);
+  await document.fonts.ready;
+  return seek(0);
+})();
+
+const q = new URLSearchParams(location.search);
+if (q.has('play')) {
+  window.__ready.then(() => {
+    const t0 = performance.now();
+    const boucle = () => { seek(((performance.now() - t0) / 1000) % DUR); requestAnimationFrame(boucle); };
+    boucle();
+  });
+} else if (q.has('t')) {
+  window.__ready.then(() => seek(parseFloat(q.get('t'))));
+}
+function ajuste() {
+  const s = Math.min(innerWidth / W, innerHeight / H);
+  document.getElementById('stage').style.transform = 'scale(' + s + ')';
+}
+addEventListener('resize', ajuste); ajuste();
+</script>
