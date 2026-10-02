@@ -1,5 +1,21 @@
 # En cours - 2026-10-02 (soir)
 
+**Retours de Mathis sur le brouillon v2 (moments 1 et 2), dans l'ordre où on les traite :**
+1. **Le logo d'abord, avant toute vidéo** : il n'aime pas vraiment la huppe actuelle. Reprendre le
+   travail sur le logo (voir la mémoire « Logo : deux candidats retenus » : 1-oiseau-plat et
+   3-tete-sarcelle-clair, dans `assets/logos/candidats/`, non suivis par git).
+2. **La démo, ensuite** : ses 1 349 cochages ne tombent que sur 12 lieux GPS, c'est bizarre sur la
+   carte. Étaler les observations de la démo sur beaucoup plus de lieux (générateur :
+   `tools/build/genere-demo.mjs`, données `demo/donnees.js`), puis relancer
+   `tools/onetake/v2-carte.py`.
+3. **La vidéo, après** :
+   - la police ne lui plaît pas (aujourd'hui Instrument Serif, via `.onetake/look-ornitheque.json`) :
+     proposer 2-3 polices ;
+   - les photos d'oiseaux qui surgissent : « top », mais leur cadre est carré alors que les cases du
+     Birdydex ont des coins arrondis -> découper la carte avec le même arrondi ;
+   - ça manque de rythme : plus de contraste entre moments rapides et pauses.
+   Le reste du brouillon lui va.
+
 **Vidéo, déroulé v2 : moments 1 et 2 construits, brouillon 16,8 s** (`.onetake/v2-brouillon.mp4`,
 1080p30, sans son, oracle PASS). Phrases choisies par Mathis : colonne A de
 `docs/VIDEO-DEROULE-V2.md`. La huppe se dessine facette par facette (59, tirées de l'image
