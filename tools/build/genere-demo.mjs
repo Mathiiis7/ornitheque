@@ -320,7 +320,7 @@ const donneesJs = `/*
   listes sont donc vraisemblables, et les fiches d espece s affichent puisque les cles sont
   celles du vrai jeu de donnees.${sansRarete ? '\n  (' + sansRarete + ' especes sans indice de rarete connu : leur pastille restera neutre.)' : ''}
 
-  Genere le ${new Date().toISOString().slice(0, 10)} a partir d une date figee : relancer le generateur sans
+  Genere a partir d une date figee, le ${new Date(MAINTENANT).toISOString().slice(0, 10)} : relancer le generateur sans
   toucher a rien redonne le meme fichier, sinon le mode verification crierait au retard a
   chaque execution.
 */

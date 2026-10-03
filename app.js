@@ -3759,8 +3759,6 @@ const TROPHIES = [
     info:s=>s.hotPhotos>0 ? `${s.hotPhotos} photo${s.hotPhotos>1?'s':''} qui claque${s.hotPhotos>1?'nt':''}` : '',
   }),
   // -- Trophees one-shot (binaires, pas de tiers) --
-  { theme:'communaute',  icon:ICONS.kimono, name:"T'ia mis le kimono", desc:"Faire une observation avec le T-shirt Merlin (preuve à l'appui)", special:'vote', voteId:'kimono', voteThreshold:3, test:s=>(s.kimonoVotes||0)>=3 },
-  { theme:'communaute',  icon:ICONS.mort, name:'Le Nécrophile', desc:'Observer un oiseau décédé #ripstayproud (preuve demandée)', special:'vote', voteId:'necrophile', voteThreshold:3, test:s=>(s.necrophileVotes||0)>=3 },
   { theme:'groupe',      icon:ICONS.picNoirBadge, name:'Pic noir', desc:'Observer le Pic noir (Maël ne l’a pas)', test:s=>s.blackWoodpecker, exotic:true, speciesFamilyKey:'picNoir', list:s=>s.blackWoodpecker ? [{ name:frName('dryocopus martius','Pic noir'), sci:'dryocopus martius', owned:true }] : [] },
   { theme:'groupe',      icon:ICONS.pelagic,    name:'Oiseau pélagique',  desc:'Observer un albatros, un puffin, un pétrel ou un océanite (Procellariiformes)',      test:s=>s.hasPelagic,     exotic:true, speciesFamilyKey:'pelagics',     list:s=>[...(s.pelagicsSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
   { theme:'groupe',      icon:ICONS.jaseur,     name:'Jaseur',            desc:'Observer un jaseur (Bombycillidae) — boréal, d\'Amérique ou du Japon',                test:s=>s.hasWaxwing,     exotic:true, speciesFamilyKey:'waxwings',     list:s=>[...(s.waxwingsSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
@@ -3771,12 +3769,19 @@ const TROPHIES = [
   { theme:'groupe',      icon:ICONS.perroquet, name:'Perroquet exotique', desc:'Observer un perroquet, une perruche ou un cacatoès (hors Perruche à collier férale)', test:s=>s.hasExoticParrot, exotic:true, speciesFamilyKey:'exoticParrots', list:s=>[...(s.exoticParrotsSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
   { theme:'groupe',      icon:ICONS.toucan,    name:'Toucan',             desc:'Observer un toucan (Ramphastidae)',                                                  test:s=>s.hasToucan,      exotic:true, speciesFamilyKey:'toucans',      list:s=>[...(s.toucansSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
   { theme:'groupe',      icon:ICONS.calao,     name:'Calao',              desc:'Observer un calao (Bucerotidae ou Bucorvidae)',                                      test:s=>s.hasHornbill,    exotic:true, speciesFamilyKey:'hornbills',    list:s=>[...(s.hornbillsSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
-  { theme:'localisation',icon:ICONS.huitre, name:'Bourriche d’huître', desc:'Observer un oiseau à La Teste-de-Buch', test:s=>s.locTeste },
   { theme:'groupe',      icon:ICONS.penguinBadge, name:'Pingouin, manchot & cousins', desc:'Observer un pingouin, un manchot ou un cousin (macareux, guillemot…)', test:s=>s.hasPenguin, exotic:true, speciesFamilyKey:'penguins',
     list:s=> [
       ...ALCID_CATALOG.filter(m=>s.alcidOwnedSet.has(m.sci)).map(m=>({ name:m.name, sci:m.sci, owned:true })),
       ...MANCHOT_CATALOG.filter(m=>s.manchotOwnedSet && s.manchotOwnedSet.has(m.sci)).map(m=>({ name:m.name, sci:m.sci, owned:true })),
     ] },
+];
+// Trophees speciaux mis de cote le 2026-10-03, a la demande de Mathis : ils ne sont plus a
+// jour, on les reprendra avec la refonte de la page des trophees. Hors de TROPHIES, ils ne
+// s'affichent plus, ne comptent plus dans le total et ne recoivent plus de votes.
+const TROPHEES_EN_PAUSE = [
+  { theme:'communaute',  icon:ICONS.kimono, name:"T'ia mis le kimono", desc:"Faire une observation avec le T-shirt Merlin (preuve à l'appui)", special:'vote', voteId:'kimono', voteThreshold:3, test:s=>(s.kimonoVotes||0)>=3 },
+  { theme:'communaute',  icon:ICONS.mort, name:'Le Nécrophile', desc:'Observer un oiseau décédé #ripstayproud (preuve demandée)', special:'vote', voteId:'necrophile', voteThreshold:3, test:s=>(s.necrophileVotes||0)>=3 },
+  { theme:'localisation',icon:ICONS.huitre, name:'Bourriche d’huître', desc:'Observer un oiseau à La Teste-de-Buch', test:s=>s.locTeste },
   { theme:'groupe',      icon:ICONS.kangourou, name:'Wallaby', desc:'Observer le Martin-chasseur à dos de feu', test:s=>s.hasFireKingfisher },
   { theme:'communaute',  icon:ICONS.bebe, name:'Gros Bébé', desc:'Observer des oiseaux avec Samuel Fillion (preuve demandée)', special:'vote', voteId:'grosBebe', voteThreshold:3, voteSelfCheck:()=>/sam/i.test(myMemberName()||''), test:s=>(s.grosBebeVotes||0)>=3 },
 ];
