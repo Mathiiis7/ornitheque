@@ -12,8 +12,8 @@ portfolio. Fabriqué avec le skill **onetake** (github.com/feitangyuan/onetake),
 .onetake/refs/            les neuf prises de référence, EXCLU du dépôt
 .onetake/profil/          le profil Chromium gardé entre deux séries de prises
 .onetake/look-ornitheque.json   l'allure tirée de styles.css
-tools/onetake/captures.py       le script des prises de référence (suivi par git)
-tools/onetake/planche-refs.py   la planche de contact des neuf prises
+outils/onetake/captures.py       le script des prises de référence (suivi par git)
+outils/onetake/planche-refs.py   la planche de contact des neuf prises
 ```
 
 Le skill est exclu du dépôt pour deux raisons : son poids, et sa licence PolyForm
@@ -203,7 +203,7 @@ pixel près, et les enchaînements sont conservés.
 Le mur du Birdydex ne pouvait pas être filmé tel quel. La réponse n'est pas de le reconstruire
 mais de **remplacer les photos interdites par d'autres photos libres de la même espèce**, au
 moment de la prise seulement - l'appli n'est pas touchée. Mesuré par
-`tools/onetake/vignettes-libres.py` : **128 vignettes affichées, 58 compatibles, 70 à remplacer,
+`outils/onetake/vignettes-libres.py` : **128 vignettes affichées, 58 compatibles, 70 à remplacer,
 70 remplaçables.** Aucune exception.
 
 **La règle de licence a d'abord été fausse, et c'était grave.** Elle acceptait CC BY-SA. Or le
@@ -231,7 +231,7 @@ blanc quand iNaturalist a un portrait net.
 
 ### La fiche d'espèce
 
-`tools/onetake/fiche-libre.py`. Photo servie le 2026-09-30 : **Ad Konings, iNaturalist, CC BY-NC**,
+`outils/onetake/fiche-libre.py`. Photo servie le 2026-09-30 : **Ad Konings, iNaturalist, CC BY-NC**,
 compatible, rien à remplacer - mais la vérification se refait **à chaque prise**, iNaturalist
 changeant la photo par défaut d'une espèce d'un jour à l'autre.
 
@@ -252,7 +252,7 @@ ce qu'il faut - carte de migration hebdomadaire (une des 304), chant au sonagram
 Shantanu Kuveskar (Wikimedia, CC BY), choisie par Mathis parmi quatre. Elle est verticale
 (750×1000) et la fiche affiche ses photos en `aspect-ratio:16/9` avec `object-fit:cover`
 (`styles.css:1021`) : telle quelle, l'appli lui coupait la huppe et la queue.
-`tools/onetake/photo-fiche.py` fabrique donc une image 16/9 qui contient l'oiseau **entier**, son
+`outils/onetake/photo-fiche.py` fabrique donc une image 16/9 qui contient l'oiseau **entier**, son
 propre flou en fond - une modification que CC BY autorise, à condition de créditer.
 
 **L'espèce du film n'était pas dans la mesure du mur**, donc son portrait choisi était ignoré, et
@@ -274,7 +274,7 @@ leur code (`33`).
 
 ## Les licences, vérifiées à la source
 
-Relevé le 2026-09-30 par `tools/onetake/credits.py`, qui remonte à l'origine de chaque image
+Relevé le 2026-09-30 par `outils/onetake/credits.py`, qui remonte à l'origine de chaque image
 réellement servie par l'appli. Le détail nominatif est dans [VIDEO-CREDITS.md](VIDEO-CREDITS.md),
 régénéré par le script.
 
@@ -315,7 +315,7 @@ licence et l'attribution.
 Le skill fait copier `lib/motion.js` à côté de la composition. Ce fichier est à lui, sous
 licence PolyForm Noncommercial, et le dépôt est public : il ne doit pas y entrer.
 
-- `tools/onetake/film/comp.html` - **notre** travail, suivi par git ;
+- `outils/onetake/film/comp.html` - **notre** travail, suivi par git ;
 - `.onetake/film/` - le dossier de fabrication, hors dépôt, où sont copiés au moment du rendu
   la composition, `motion.js` du skill et le `look.js` fabriqué depuis l'allure.
 
@@ -368,7 +368,7 @@ points seuls sur fond blanc vers 22 s, et la première bulle du chat vers 27,5 s
 
 ## Le son
 
-`tools/onetake/partition.py`. Les instants ne sont pas recopiés à la main : ils sont lus dans
+`outils/onetake/partition.py`. Les instants ne sont pas recopiés à la main : ils sont lus dans
 la composition par `window.__events()`, donc un moment déplacé emporte son bruitage avec lui.
 Treize bruitages - souffle, bois, verre, grave, bulles - dans une seule réverbération, plus
 **le chant de l'hirondelle** lui-même, celui que l'appli fait écouter. Le script cherche la
@@ -425,7 +425,7 @@ continu fait entrer dans le calcul tous les silences qui en étaient exclus. Ne 
 huppe qui saute d'une fonction à l'autre.
 
 **Le principe.** Plus de captures entières avec une caméra qui zoome : chaque écran est
-construit. `tools/onetake/composants.py` amène le site dans chaque état (`pilote.py` porte les
+construit. `outils/onetake/composants.py` amène le site dans chaque état (`pilote.py` porte les
 gestes), cache les morceaux (`visibility:hidden`) pour photographier le FOND, les remontre pour
 photographier le TOUT, puis découpe chaque morceau à sa place exacte : 36 vignettes du mur, le
 champ de recherche tapé lettre par lettre, le tiroir de la fiche (en-tête, onglets, photo,
@@ -491,7 +491,7 @@ mouvement (ressorts, entrées, contacts, portés). La réponse n'est pas de chan
 de s'en servir - et de relire `.claude/skills/onetake/` avant d'écrire la prochaine composition.
 
 **5. La photo de la huppe n'est pas au format.** Elle ne remplit ni le cadre 16/9 de la fiche
-(`tools/onetake/photo-fiche.py` la pose entière avec son propre flou en fond, donc deux bandes
+(`outils/onetake/photo-fiche.py` la pose entière avec son propre flou en fond, donc deux bandes
 floues sur les côtés), ni le carré de la vignette du Birdydex. Deux pistes : chercher une photo
 de huppe **horizontale** parmi les candidates libres (`.onetake/candidats/upupa-epops-commons/`,
 17 candidates), ou recadrer celle-ci sur l'oiseau au lieu de la letterboxer.
@@ -507,8 +507,8 @@ Mis en pause le 2026-09-30, pendant le rendu du brouillon corrigé.
 export PYTHONUTF8=1 PYTHONIOENCODING=utf-8
 V=.onetake/venv/Scripts/python.exe
 
-$V tools/onetake/assemble.py      # reunit comp, motion.js, donnees et allure
-$V tools/onetake/partition.py     # refait le son
+$V outils/onetake/assemble.py      # reunit comp, motion.js, donnees et allure
+$V outils/onetake/partition.py     # refait le son
 $V .claude/skills/onetake/scripts/render.py .onetake/film/comp.html \
      --out .onetake/brouillon.mp4 --sfx .onetake/film/son.wav
 $V .claude/skills/onetake/scripts/verify_promo.py .onetake/brouillon.mp4 \
@@ -539,7 +539,7 @@ qu'en IPv4, et `localhost` se résout en IPv6 ici. Le navigateur invisible écho
    1 800 images au lieu de 900, prévoir environ le double du temps du brouillon.
 4. La version allégée pour le web, son poids mesuré, exclue du cache hors ligne.
 5. L'écran d'accueil : image de couverture, lecture au clic, testé sur ordinateur et en
-   largeur téléphone. Puis `node tools/build/genere-demo.mjs` et `node tools/verif/tous.mjs`.
+   largeur téléphone. Puis `node outils/build/genere-demo.mjs` et `node outils/verif/tous.mjs`.
 
 ## Ce qui reste à faire
 
@@ -556,8 +556,8 @@ qu'en IPv4, et `localhost` se résout en IPv6 ici. Le navigateur invisible écho
 6. **Version allégée pour le web**, son poids mesuré, exclue du cache hors ligne du service
    worker.
 7. **Écran d'accueil** : image de couverture, lecture au clic, testé sur ordinateur et en
-   largeur téléphone. Après la retouche d'`index.html` : `node tools/build/genere-demo.mjs`
-   puis `node tools/verif/tous.mjs`.
+   largeur téléphone. Après la retouche d'`index.html` : `node outils/build/genere-demo.mjs`
+   puis `node outils/verif/tous.mjs`.
 
 ## Ce qui est en suspens
 

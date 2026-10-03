@@ -1,6 +1,6 @@
 # Le generique du film de presentation
 
-Genere par `tools/onetake/credits.py`, a partir des adresses reellement servies par
+Genere par `outils/onetake/credits.py`, a partir des adresses reellement servies par
 l'appli en mode demo. **Ne pas modifier a la main** : relancer le script.
 
 **Le film porte donc la licence CC BY-NC-SA, attribution, pas commercial, partage a l'identique**, parce que

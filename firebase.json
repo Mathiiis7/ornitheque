@@ -1,5 +1,5 @@
 {
   "firestore": {
-    "rules": "tools/config/firestore.rules"
+    "rules": "outils/config/firestore.rules"
   }
 }

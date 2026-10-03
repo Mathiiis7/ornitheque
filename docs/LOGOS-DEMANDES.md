@@ -27,10 +27,10 @@ arrêté.
 
 Deux outils l'accompagnent, tous deux sans aucune dépendance :
 
-- `tools/build/prepare-logo.mjs` - enlève un fond uni, recadre, pose sur une tuile arrondie,
+- `outils/build/prepare-logo.mjs` - enlève un fond uni, recadre, pose sur une tuile arrondie,
   et peut **remplacer des couleurs** (`--palette "#C05E33>#0B7C77"`), ce qui permet d'accorder
   une image à la palette du site sans rien regénérer.
-- `tools/build/icones-logo.mjs` - refabrique les icônes 192 et 512 du manifeste.
+- `outils/build/icones-logo.mjs` - refabrique les icônes 192 et 512 du manifeste.
 
 ## Réglages, à chaque envoi
 

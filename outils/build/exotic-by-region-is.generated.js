@@ -1,0 +1,4 @@
+// Genere par scrape-exotic-by-region-multi.mjs (Playwright + Chromium headless).
+// Ne pas editer a la main. Regenerable : node outils/build/scrape-exotic-by-region-multi.mjs IS
+// Format : { "IS-YY": { sciName: category } } avec N=Naturalized, P=Provisional, X=Escapee.
+export const EXOTIC_STATUS_BY_REGION_IS = {"IS-1":{"branta canadensis":"N","aix galericulata":"N","streptopelia roseogrisea":"X"},"IS-2":{},"IS-3":{"branta canadensis":"N","aix galericulata":"N"},"IS-4":{"anser indicus":"X","branta canadensis":"N"},"IS-5":{"branta canadensis":"N"},"IS-6":{"branta canadensis":"N","tadorna ferruginea":"P","aix galericulata":"N","oxyura jamaicensis":"N"},"IS-7":{"anser canagicus":"X","branta canadensis":"N","cygnus atratus":"X","tadorna ferruginea":"P","aix galericulata":"N","oxyura jamaicensis":"N"},"IS-8":{"branta canadensis":"N","aix galericulata":"N"}};

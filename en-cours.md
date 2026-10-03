@@ -35,7 +35,7 @@ inventer des données. Reste : moments 3 à 9, son, crédits, retouches de Mathi
 `docs/VIDEO-DEROULE-V2.md` (9 moments, ~60 s, ouverture sur la huppe qui se dessine, tranché
 le 02/10). Prochaines étapes : voir à quoi ressemble le gain d'un trophée, vérifier les
 observations récentes dans la démo, proposer 2-3 variantes par phrase, écrire le fil qui relie
-les moments. Le compteur validé vient de `tools/onetake/essai-compteur.py`.
+les moments. Le compteur validé vient de `outils/onetake/essai-compteur.py`.
 
 ---
 

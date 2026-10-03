@@ -16,15 +16,15 @@ createur-badge.html
 
 # Outils rareté : on garde le générateur (build-rarity.mjs) et l'audit (rarity-data.json),
 # mais pas le cache GBIF ni le fichier intermédiaire (régénérables)
-tools/rarity-cache.json
-tools/real-rarity.generated.js
-tools/real-freq-monthly.generated.js
-tools/real-freq-monthly-by-region.generated.js
-tools/real-abundance-dept.generated.js
-tools/build/exotic-per-country.generated.js
-tools/build/real-rarity-*-ebird.generated.js
-tools/scratch-new-species.json
-tools/ebirdst-target-codes.txt
+outils/rarity-cache.json
+outils/real-rarity.generated.js
+outils/real-freq-monthly.generated.js
+outils/real-freq-monthly-by-region.generated.js
+outils/real-abundance-dept.generated.js
+outils/build/exotic-per-country.generated.js
+outils/build/real-rarity-*-ebird.generated.js
+outils/scratch-new-species.json
+outils/ebirdst-target-codes.txt
 
 # Divers
 *.log
@@ -32,35 +32,35 @@ Thumbs.db
 .DS_Store
 
 # Firebase Admin SDK service account key (SECRET, ne JAMAIS pusher)
-tools/config/firebase-admin-key.json
+outils/config/firebase-admin-key.json
 # Backups Firestore locaux (peuvent contenir des data perso RGPD)
-tools/backups/
+outils/backups/
 # npm
 node_modules/
 package-lock.json
 node_modules/
 
 # Caches et fichiers intermediaires jamais lus par le site
-tools/logs/
-tools/ebird-barcharts-raw/
+outils/logs/
+outils/ebird-barcharts-raw/
 # Bar charts annuels, jetables apres comptage (compter-annees-presence.mjs)
-tools/ebird-barcharts-annees/
-tools/*-cache.json
-tools/*-progress.json
-tools/rarity-data.json
-tools/rarity-data-ebird.json
-tools/redlist.json
-tools/avonet.xlsx
+outils/ebird-barcharts-annees/
+outils/*-cache.json
+outils/*-progress.json
+outils/rarity-data.json
+outils/rarity-data-ebird.json
+outils/redlist.json
+outils/avonet.xlsx
 
 # Fichiers persos hors app (images de tests)
 clown.png
 tente.png
 étoile.png
-tools/real-abundance-dept-mean.generated.js
-tools/habitats.generated.js
-tools/habitats-audit.json
-tools/.iucn-key
-tools/iucn-habitats-cache.json
+outils/real-abundance-dept-mean.generated.js
+outils/habitats.generated.js
+outils/habitats-audit.json
+outils/.iucn-key
+outils/iucn-habitats-cache.json
 
 # Build artifacts : jamais fetches par le site en runtime (data inline dans app.js).
 # Servent uniquement de source de sync pour les scripts locaux.
@@ -70,7 +70,7 @@ data/generated/
 # (95 MB de PNGs, ne devraient pas alourdir le main repo)
 data/range/
 data/range-weekly/
-tools/build/exotic-per-country-scraped.generated.js
+outils/build/exotic-per-country-scraped.generated.js
 
 # Etat local de l extension Impeccable (detecteur coupe le 2026-09-28) : outil de travail,
 # pas du site. GitHub Pages sert tout ce qui est suivi.
@@ -88,8 +88,8 @@ tools/build/exotic-per-country-scraped.generated.js
 /notes-privees/
 
 # BIRDBASE : source des milieux de vie, 6,7 Mo, retelechargeable depuis son DOI.
-tools/birdbase.xlsx
-tools/habitats-sans-milieu.txt
+outils/birdbase.xlsx
+outils/habitats-sans-milieu.txt
 
 # onetake : le skill qui fabrique la video de presentation, installe le 2026-09-30 dans
 # .claude/skills/onetake. Exclu du depot pour deux raisons : il pese 141 Mo (galerie et
@@ -103,7 +103,7 @@ tools/habitats-sans-milieu.txt
 .onetake/
 
 # Cles eBird (EBIRD_API_KEY, EBIRDST_KEY) : elles vivent dans Documents\.Renviron, hors de
-# tout depot, lu par tools/build/cle-ebird.mjs et par l en-tete des scripts R. Ces lignes
+# tout depot, lu par outils/build/cle-ebird.mjs et par l en-tete des scripts R. Ces lignes
 # rattrapent une copie posee par megarde dans le projet (2026-09-30).
 .Renviron
 .env

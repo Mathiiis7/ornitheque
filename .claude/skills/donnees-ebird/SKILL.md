@@ -11,7 +11,7 @@ dépôt, désigné par `EBIRD_COOKIE_FILE`. Les statuts exotiques, eux, se lisen
 publique sans aucun compte.
 
 La dernière année de la fenêtre est toujours incomplète. Les poids des quinzaines sont donc
-ramenés à l'année - voir `tools/build/annees-par-quinzaine.mjs`, qui explique pourquoi et
+ramenés à l'année - voir `outils/build/annees-par-quinzaine.mjs`, qui explique pourquoi et
 donne les mesures. **Là où l'effort sert à pondérer le temps, il est ramené à l'année ; là où
 il sert à recombiner des comptes en fréquence, il reste brut.**
 
@@ -30,8 +30,8 @@ fichier local ignorait cinq zones lettonnes, et c'étaient les cinq plus grosses
 minute près : en `headless`, eBird rend « impossible de déterminer si vous êtes un robot » et
 0 espèce ; en fenêtre visible, SI-061 rend ses 295 espèces. Une zone qui répond 0 en mode
 invisible ne dit rien sur la zone, seulement sur le mur - c'est ce qui a fait conclure à tort
-à un bridage. Deux commandes répondent désormais : `tools/build/etat-exotiques.mjs` pour ce
-qui manque face aux listes eBird, `tools/build/verifie-zones-vides.mjs` pour trancher zone par
+à un bridage. Deux commandes répondent désormais : `outils/build/etat-exotiques.mjs` pour ce
+qui manque face aux listes eBird, `outils/build/verifie-zones-vides.mjs` pour trancher zone par
 zone.
 
 **« Zone vide » ou « scrape raté » : seule la page barchart ouverte dans un vrai navigateur

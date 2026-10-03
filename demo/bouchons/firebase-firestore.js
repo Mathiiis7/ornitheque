@@ -1,7 +1,7 @@
 /*
   Demo du portfolio : bouchon de firebase-firestore, VIVANT.
 
-  C est la difference de fond avec le bouchon des bancs (tools/verif/bouchons/), qui compte
+  C est la difference de fond avec le bouchon des bancs (outils/verif/bouchons/), qui compte
   les ecritures et les jette. Ici elles sont appliquees a une petite base tenue en memoire,
   et les abonnes du chemin touche sont rappeles aussitot. Resultat : le visiteur ecrit dans
   le chat et son message apparait, coche une espece et le classement bouge. Rien ne sort
@@ -66,7 +66,7 @@ function snapshot(docs){
     exists: () => arr.length > 0,
     // arr[0].data est une FONCTION (le SDK rend les donnees par appel) : il faut l appeler,
     // sinon un getDoc sur un document existant rend la fonction elle-meme. Attrape le
-    // 2026-09-29 par le banc photos, sur le bouchon jumeau de tools/verif/.
+    // 2026-09-29 par le banc photos, sur le bouchon jumeau de outils/verif/.
     data: () => (arr.length ? arr[0].data() : undefined),
     id: arr.length ? arr[0].id : 'inconnu',
     metadata: { fromCache: false, hasPendingWrites: false }

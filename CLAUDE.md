@@ -13,18 +13,48 @@ Avant de sortir une autre table, mesurer : créer 1,87 Mo de données en mémoir
 l'octet téléchargé avant le premier rendu, pas dans le temps d'analyse. Je m'étais trompé
 en croyant l'inverse.
 
+## Rangement
+
+Règles communes : `~/Documents/Projets/qg/structure/rangement.md`. Mis en place le 2026-10-04
+(`tools/` est devenu `outils/`). Rien d'autre à la racine que ce qui suit.
+
 ```
-app.js            tout le code, et les tables qui servent partout
-styles.css        toute la CSS
-index.html        le squelette et les <template>
-service-worker.js le cache
-tools/build/      les générateurs de données (Node, ESM)
-tools/verif/      les bancs de mesure - voir plus bas
-data/             les données générées, publiées telles quelles
-demo/             la démo du portfolio, générée - voir notes-privees/MODE-DEMO.md
-docs/             les documents de travail publiés avec le dépôt
-notes-privees/    les notes gardées hors du dépôt public, exclues par .gitignore
+le produit, servi en ligne - ne jamais déplacer ni renommer (chaque fichier a une adresse)
+  index.html        le squelette et les <template>
+  app.js            tout le code, et les tables qui servent partout
+  styles.css        toute la CSS
+  service-worker.js le cache
+  manifest.json     le manifeste de l'appli installable
+  assets/           images, logos, polices
+  data/             les données générées, publiées telles quelles
+  demo/             la démo du portfolio, générée - voir notes-privees/MODE-DEMO.md
+
+exigé à la racine par un outil
+  README.md                   GitHub l'affiche
+  _config.yml                 Jekyll (GitHub Pages) : retire docs/, outils/, CLAUDE.md, en-cours.md du site
+  .gitignore, .git/           git
+  .claude/                    Claude Code (réglages, crochet, skills)
+  firebase.json, .firebaserc  Firebase ; firebase.json pointe vers outils/config/firestore.rules
+  package.json, package-lock.json, node_modules/   Node, pour les scripts d'outils/
+  .impeccable/, .onetake/     ateliers locaux de deux extensions, ignorés par git
+
+la base commune
+  CLAUDE.md, en-cours.md
+  docs/             les documents de travail - sur GitHub, pas sur le site
+  outils/           les scripts - sur GitHub, pas sur le site
+    build/            les générateurs de données (Node, ESM)
+    verif/            les bancs de mesure - voir plus bas
+    ebirdst/          les scripts R (chemins absolus en dur)
+    onetake/          la vidéo de présentation
+  archives/         pas encore créé : à ouvrir le jour où un chantier fini doit y aller
+
+propre au projet
+  notes-privees/    notes gardées hors du dépôt public, exclues par .gitignore
 ```
+
+**Un fichier ignoré qui vit dans `outils/` s'ignore sous ce nom-là.** La clé Firebase et les
+sauvegardes Firestore (données personnelles) sont dans `.gitignore` sous `outils/...` : renommer
+un dossier sans corriger `.gitignore` les rendrait visibles pour git.
 
 ## Voir le résultat avant de pousser
 
@@ -46,7 +76,7 @@ sinon les visiteurs gardent l'ancienne version en cache :
 2. `app.js?v=NNN` dans `index.html` - **il y a DEUX occurrences**, le `modulepreload` et le
    `<script>`. En oublier une ne casse rien tout de suite, ce qui est pire.
 
-**Le poids publié se mesure avec `node tools/build/poids-publie.mjs`, jamais avec `du`.**
+**Le poids publié se mesure avec `node outils/build/poids-publie.mjs`, jamais avec `du`.**
 `du -sh` compte ce que `.gitignore` exclut : il annonçait 469 Mo le 2026-09-28 et m'a fait
 alerter à tort sur le plafond de 1 Go de GitHub Pages. Le vrai chiffre est **95,4 Mo, 9 % du
 plafond**. Les cartes de répartition vivent dans le dépôt séparé
@@ -84,7 +114,7 @@ node -e "const b=require('fs').readFileSync(process.argv[1]);let c=0,l=0;for(let
 
 **Une importmap ne s'applique PAS à un `<link rel="modulepreload">`.** Le preload garde l'URL
 écrite telle quelle. La démo détournait bien les trois modules Firebase vers ses bouchons, et
-les téléchargeait quand même depuis gstatic. Invisible à l'œil, attrapé par `tools/verif/demo.mjs`
+les téléchargeait quand même depuis gstatic. Invisible à l'œil, attrapé par `outils/verif/demo.mjs`
 le 2026-09-28.
 
 **`index.html` n'a ni `<head>` ni `<body>`**, les deux sont implicites. Un générateur qui
@@ -96,7 +126,7 @@ cherche l'un ou l'autre échoue - c'est déjà arrivé deux fois. L'ancre fiable
 échappements, passer par les outils Write / Edit, jamais par `cat <<'FIN'`.
 
 **Un accent grave dans un littéral de gabarit le referme** - y compris dans un commentaire à
-l'intérieur. Les générateurs de `tools/verif/` en sont pleins : y écrire « la variable ok »
+l'intérieur. Les générateurs de `outils/verif/` en sont pleins : y écrire « la variable ok »
 et non « la variable \`ok\` ». Ça m'a coûté deux erreurs de syntaxe le même jour.
 
 **`body { zoom: 0.85 }`.** `getBoundingClientRect` renvoie donc des pixels ÉCRAN, alors que
@@ -162,7 +192,7 @@ n'affichait RIEN, pas même son titre.
 
 **Mesurer avant d'affirmer.** Un banc de mesure qui imprime des chiffres vaut mieux qu'une
 capture d'écran regardée de près - surtout pour l'alignement, les tailles et les écarts.
-Voir `tools/verif/`.
+Voir `outils/verif/`.
 
 **Le démarrage est fini, ne pas le rouvrir sans nouveau chiffre.** Après la séparation des
 photos, huit chargements mesurés le 2026-09-29 sur le site en ligne, connecté, cache chaud :
@@ -198,11 +228,11 @@ sessions après la disparition de la bulle qu'il annonçait.
 ## Les bancs de mesure
 
 Après toute retouche de l'entête du panneau, des sélecteurs, des pastilles ou des cartes :
-`node tools/verif/tous.mjs`, chaque banc finit par `CONFORME` ou `DÉFAUT`. **Un crochet le fait
+`node outils/verif/tous.mjs`, chaque banc finit par `CONFORME` ou `DÉFAUT`. **Un crochet le fait
 tout seul** : `.claude/hooks/verif-avant-fin.mjs`, branché sur l'événement `Stop`, rejoue tous les
 bancs et refuse de laisser une réponse finir tant qu'un banc est en défaut, dès qu'`app.js`,
 `index.html` ou `styles.css` sont modifiés et pas encore commités. Après une retouche
-d'`index.html` : `node tools/build/genere-demo.mjs`. Le reste (bancs demo, trophees, firestore,
+d'`index.html` : `node outils/build/genere-demo.mjs`. Le reste (bancs demo, trophees, firestore,
 photos, en écrire un) : skill `bancs-de-mesure`.
 
 **Une cible tactile s'écrit 52 px pour en faire 44.** `body` porte `zoom:0.85`, donc le seuil
@@ -223,7 +253,7 @@ fait croire à une panne. D'où `MIGRATION_PAUSE_MS` et `_ecrireEnMigrant()` : u
 pour tout traitement de masse.
 
 **Un bouchon de snapshot rend `data` comme une fonction.** Dans les deux bouchons Firestore
-(`tools/verif/bouchons/` et `demo/bouchons/`), `snapshot(docs)` construisait `data: () =>
+(`outils/verif/bouchons/` et `demo/bouchons/`), `snapshot(docs)` construisait `data: () =>
 arr[0].data` - or `arr[0].data` EST la fonction, pas les données. Un `getDoc` sur un document
 existant rendait donc la fonction elle-même, et les vignettes arrivaient vides sans une seule
 erreur. Corrigé le 2026-09-29 dans les deux, attrapé par le banc `photos`.

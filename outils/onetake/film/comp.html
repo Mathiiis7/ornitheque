@@ -1,0 +1,700 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>L'Ornitheque - film de presentation</title>
+<style>
+  html,body{margin:0;background:#000;overflow:hidden}
+  #stage{position:fixed;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0}
+  canvas{display:block;width:1920px;height:1080px}
+</style>
+<div id="stage"><canvas id="cv" width="1920" height="1080"></canvas></div>
+
+<script src="motion.js"></script>
+<script src="composants.js"></script>
+<script src="look.js"></script>
+<script>
+// =============================================================================
+// L'Ornitheque - le site se monte sous la main.
+//
+// Reproche du 2026-10-01 : le film precedent posait des captures entieres et bougeait la
+// camera dessus, un diaporama. Ici chaque ecran est CONSTRUIT : le fond du site (sans ses
+// morceaux) est une image, chaque morceau - vignette, fiche, onglet, sonagramme, reponse de
+// quiz, bulle de chat - en est une autre, posee a sa place exacte par outils/onetake/composants.py.
+// Une main clique, le morceau correspondant arrive. On voit la cause de chaque effet.
+//
+// Tout est encore le vrai site, pixel pour pixel. Les coordonnees sont celles de la fenetre
+// de la demo (1920x1080 points CSS) : le MONDE. La camera y est un point, un zoom, et l'endroit
+// de l'ecran ou ce point doit tomber.
+//
+// seek(t) est PUR : le rendu le rappelle plusieurs fois autour de chaque instant pour le flou
+// de mouvement. Aucune valeur ne depend des appels precedents, aucun hasard.
+// =============================================================================
+
+const FPS = 30, DUR = 48.0;
+window.__meta = { dur: DUR, fps: FPS, w: 1920, h: 1080 };
+
+const W = 1920, H = 1080;
+const { clamp, lerp, ssstep, spring } = OM;
+const C = window.COMP;
+
+const L = (window.LOOK && window.LOOK.color) ? window.LOOK.color : {
+  ground: '#eef2f1', deep: '#dde4e2', card: '#ffffff', line: '#d8dddc',
+  mute: '#616966', ink: '#15201e', accent: '#0b7c77', accent2: '#c05e33',
+};
+const police = (r, px) => (window.LOOK && window.LOOK.font)
+  ? window.LOOK.font(r, px)
+  : (r === 'display' ? px + 'px Georgia, serif' : px + 'px "Segoe UI", system-ui, sans-serif');
+
+// --- La mise en page : un bandeau pour le mot, une scene pour le site -----------------
+const BANDE = 215;                 // hauteur du bandeau du mot
+const AY = BANDE + (H - BANDE) / 2; // ou tombe le point vise par la camera
+const VUE = { w: 1920, h: 1050 };   // la fenetre de la demo, sans son bandeau du bas
+
+// --- La feuille de plans : tous les instants, en un seul endroit ---------------------
+// Les repos sont les intervalles ou RIEN ne bouge : l'oracle exige un quart d'images
+// immobiles, et il compte un lent travelling pendant une pause comme du mouvement.
+const T = {
+  // Collectionne - le mur
+  MOT1: 0.2, FOND: 0.7, CARTES: 1.0, PAS_CARTE: 0.035,
+  MAIN1: 3.1, CLIC_CHAMP: 4.3, SAISIE: 4.55, PAS_LETTRE: 0.17,
+  SORTIE_MUR: 5.55, RESULTATS: 5.8, CLIC_HUPPE: 7.0,
+  // Ecoute - la fiche, le chant
+  OUVRE: 7.0, MOT2: 7.75, CLIC_SONS: 10.3, SONS_RANGS: 10.5, SONO: 11.1,
+  // Suis - la carte de presence, l'annee, la rarete
+  MOT3: 15.4, CLIC_INFO: 15.5, DEFILE: 16.5, DEFILE_FIN: 17.4,
+  CLIC_GIRONDE: 18.9, IRIS_FIN: 19.7, CLIC_ANIM: 21.7,
+  MODALE: 21.7, SEMAINES: 22.9, SEMAINES_FIN: 27.7, MODALE_SORTIE: 29.2,
+  CLIC_CARTE: 30.6,
+  // Compare - le classement, le tchat
+  MOT4: 32.0, CLIC_CLASS: 32.5, CLIC_FAB: 36.0,
+  // Devine - le quiz
+  MOT5: 39.4, CLIC_QUIZ: 39.8, CLIC_REPONSE: 42.4,
+  // Le logo
+  LOGO: 44.2,
+};
+const MOTS = [
+  { txt: 'Collectionne.', t0: T.MOT1, t1: T.MOT2 - 0.35 },
+  { txt: 'Écoute.',  t0: T.MOT2, t1: T.MOT3 - 0.35 },
+  { txt: 'Suis.',         t0: T.MOT3, t1: T.MOT4 - 0.35 },
+  { txt: 'Compare.',      t0: T.MOT4, t1: T.MOT5 - 0.35 },
+  { txt: 'Devine.',       t0: T.MOT5, t1: T.LOGO - 0.1 },
+];
+
+// --- Les reperes, tous mesures dans le navigateur par composants.py --------------------
+const item = (etat, cle, i = 0) => C[etat].items[cle][i];
+const centre = r => [r.x + r.w / 2, r.y + r.h / 2];
+const ONGLET = { classement: [439.5, 106.5], carte: [529.5, 106.5], quiz: [815.5, 106.5] };
+const SAISIE = C._saisie;                       // le champ de recherche
+const HUPPE = C.recherche.items.carte.find(c => c.sci === 'upupa epops');
+const HUPPE_PHOTO = { x: HUPPE.x + 8, y: HUPPE.y + 7.5, w: 116, h: 116 };
+const HERO = item('fiche', 'photo');            // la photo d'en-tete, dans le tiroir au repos
+const TIROIR = { x: 1246.8, w: 673.2 };         // le tiroir de la fiche
+const FENETRE = { x: 1246.8, y: 163, w: 673.2, h: 887 };   // la zone defilante du tiroir
+const DEFILEMENT = 531;                         // de combien le bloc Ou et quand remonte
+const ONG_INFO = [1366, 137], ONG_SONS = [1800, 137];
+const GIRONDE = [C._gironde.x, C._gironde.y];
+const BTN_ANIM = C._oq.btn ? [C._oq.btn.x + C._oq.btn.w / 2, C._oq.btn.y + C._oq.btn.h / 2] : [1854, 831];
+const FAB = item('mur', 'fab');
+const FAB_CHAT = [FAB.x + FAB.w / 2, FAB.y + FAB.h - 23];
+const BARRES = C._sono.filter(b => b.h > 90);   // les deux sonagrammes (chant, cri)
+const CARTE_MIG = C._mig;
+const SEMAINES = 52;
+
+// --- La camera : un point du monde, un zoom, et l'endroit de l'ecran ou il tombe -----
+// key = [t, x, y, zoom]. Le zoom s'interpole en logarithme, le reste en lineaire, avec une
+// courbe douce qui part et arrive au repos : c'est ce qui fait un repos immobile POUR DE VRAI.
+const CAM = [
+  [0.0, 960, 575, 0.90],
+  [T.MAIN1, 960, 575, 0.90],
+  [T.CLIC_CHAMP - 0.1, 700, 300, 1.35],
+  [T.SORTIE_MUR - 0.15, 700, 300, 1.35],
+  [T.RESULTATS + 0.9, 800, 395, 1.55],
+  [T.OUVRE, 800, 395, 1.55],
+  [T.OUVRE + 1.75, 1583, 400, 1.22],
+  [T.CLIC_SONS - 0.2, 1583, 400, 1.22],
+  [T.CLIC_SONS + 0.75, 1583, 420, 1.45],
+  [T.MOT3 - 0.5, 1583, 420, 1.45],
+  [T.DEFILE - 0.2, 1583, 480, 1.25],
+  [T.CLIC_GIRONDE - 0.3, 1583, 560, 1.25],
+  [T.CLIC_ANIM - 0.2, 1583, 560, 1.25],
+  [T.MODALE + 0.9, 960, 553, 0.92],
+  [T.MODALE_SORTIE - 0.2, 960, 553, 0.92],
+  [T.MODALE_SORTIE + 1.0, 960, 640, 1.0],
+  [T.CLIC_CLASS - 0.1, 960, 640, 1.0],
+  [T.CLIC_CLASS + 1.4, 960, 440, 1.3],
+  [T.CLIC_FAB - 0.6, 960, 440, 1.3],
+  [T.CLIC_FAB + 0.9, 960, 520, 1.25],
+  [T.CLIC_QUIZ - 0.1, 960, 520, 1.25],
+  [T.CLIC_QUIZ + 0.9, 960, 520, 1.3],
+  [T.LOGO, 960, 560, 1.0],
+];
+function camera(t) {
+  if (t <= CAM[0][0]) return { x: CAM[0][1], y: CAM[0][2], z: CAM[0][3] };
+  const n = CAM.length;
+  if (t >= CAM[n - 1][0]) return { x: CAM[n - 1][1], y: CAM[n - 1][2], z: CAM[n - 1][3] };
+  let i = 0;
+  while (CAM[i + 1][0] < t) i++;
+  const a = CAM[i], b = CAM[i + 1];
+  const u = OM.ease.cubicInOut(clamp((t - a[0]) / (b[0] - a[0]), 0, 1));
+  return { x: lerp(a[1], b[1], u), y: lerp(a[2], b[2], u),
+           z: Math.exp(lerp(Math.log(a[3]), Math.log(b[3]), u)) };
+}
+// monde -> ecran, et retour
+const versEcran = (c, x, y) => [960 + (x - c.x) * c.z, AY + (y - c.y) * c.z];
+
+// --- Les images ------------------------------------------------------------------------
+const IM = {};
+const ctx = document.getElementById('cv').getContext('2d');
+
+// Pose une image dans le MONDE. Par defaut elle garde sa taille naturelle divisee par deux
+// (les prises sont a deux pixels par point). Options : w, h, a (opacite), s (echelle autour du
+// centre), dx, dy, src [sx,sy,sw,sh] en pixels d'image, clip [x,y,w,h] du monde, rond [cx,cy,r].
+function pose(src, x, y, o = {}) {
+  const im = IM[src];
+  if (!im || !im.width) return;
+  const a = o.a === undefined ? 1 : o.a;
+  if (a <= 0.001) return;
+  const w = o.w !== undefined ? o.w : im.width / 2, h = o.h !== undefined ? o.h : im.height / 2;
+  ctx.save();
+  if (o.clip) { ctx.beginPath(); ctx.rect(o.clip[0], o.clip[1], o.clip[2], o.clip[3]); ctx.clip(); }
+  if (o.rond) { ctx.beginPath(); ctx.arc(o.rond[0], o.rond[1], Math.max(0.01, o.rond[2]), 0, 7); ctx.clip(); }
+  ctx.globalAlpha = a;
+  const s = o.s === undefined ? 1 : o.s;
+  ctx.translate(x + w / 2 + (o.dx || 0), y + h / 2 + (o.dy || 0));
+  ctx.scale(s, s * (o.sy === undefined ? 1 : o.sy));
+  if (o.src) ctx.drawImage(im, o.src[0], o.src[1], o.src[2], o.src[3], -w / 2, -h / 2, w, h);
+  else ctx.drawImage(im, -w / 2, -h / 2, w, h);
+  ctx.restore();
+}
+const poseItem = (r, o = {}) => pose(r.src, r.x, r.y, { w: r.w, h: r.h, ...o });
+// Un fond : la fenetre entiere de la demo, le bandeau du bas en moins.
+// Le fond ne garde que la colonne de l'appli (x 297 a 1623) : le reste de la fenetre porte
+// l'etiquette du selecteur de logo de la demo, qui n'a rien a faire dans le film. La modale de
+// migration, elle, occupe toute la fenetre.
+const fond = (nom, o = {}) => nom === 'mig'
+  ? pose(C[nom].fond, 0, 0, { w: VUE.w, h: VUE.h, src: [0, 0, 3840, 2100], ...o })
+  : pose(C[nom].fond, 297, 0, { w: 1326, h: VUE.h, src: [594, 0, 2652, 2100], ...o });
+
+// L'entree d'un morceau : il monte en ressort, sans fondu lent.
+function entree(t, t0, o = {}) {
+  const p = OM.popIn(t, t0, { rise: 26, s0: 0.95, ds: 0.05, ...o });
+  return { a: p.op, s: p.s, dy: p.dy };
+}
+const apres = (t, t0) => t >= t0;
+
+// --- La main ----------------------------------------------------------------------------
+// Elle suit des points du MONDE : la camera peut bouger sans que la main quitte sa cible.
+// [t, x, y] ; chaque clic est liste a part.
+const MAIN = [
+  [T.MAIN1 - 0.2, 1500, 900],
+  [T.CLIC_CHAMP, ...centre(SAISIE)],
+  [T.CLIC_CHAMP + 1.0, SAISIE.x + 330, SAISIE.y + 90],
+  [T.CLIC_HUPPE - 0.35, ...centre(HUPPE_PHOTO)],
+  [T.CLIC_HUPPE, ...centre(HUPPE_PHOTO)],
+  [T.CLIC_HUPPE + 0.8, 1760, 700],
+  [T.CLIC_SONS - 0.45, ...ONG_SONS],
+  [T.CLIC_SONS, ...ONG_SONS],
+  [T.CLIC_SONS + 1.0, 1700, 640],
+  [T.CLIC_INFO - 0.4, ...ONG_INFO],
+  [T.CLIC_INFO, ...ONG_INFO],
+  [T.CLIC_INFO + 0.9, 1700, 600],
+  [T.CLIC_GIRONDE - 0.5, ...GIRONDE],
+  [T.CLIC_GIRONDE, ...GIRONDE],
+  [T.CLIC_ANIM - 0.45, ...BTN_ANIM],
+  [T.CLIC_ANIM, ...BTN_ANIM],
+  [T.CLIC_ANIM + 0.9, 1200, 600],
+  [T.CLIC_CARTE - 0.5, ...ONGLET.carte],
+  [T.CLIC_CARTE, ...ONGLET.carte],
+  [T.CLIC_CARTE + 0.8, 1100, 700],
+  [T.CLIC_CLASS - 0.5, ...ONGLET.classement],
+  [T.CLIC_CLASS, ...ONGLET.classement],
+  [T.CLIC_CLASS + 0.8, 1100, 760],
+  [T.CLIC_FAB - 0.6, 1100, 760],
+  [T.CLIC_FAB, ...FAB_CHAT],
+  [T.CLIC_FAB + 0.8, 1500, 900],
+  [T.CLIC_QUIZ - 0.5, ...ONGLET.quiz],
+  [T.CLIC_QUIZ, ...ONGLET.quiz],
+  [T.CLIC_QUIZ + 0.7, 1100, 700],
+  [T.CLIC_REPONSE - 0.5, 960, 600],
+  [T.CLIC_REPONSE, 960, 580],
+  [T.CLIC_REPONSE + 0.7, 1100, 800],
+].map(([t, x, y]) => ({ t, x, y }));
+const CLICS = [T.CLIC_CHAMP, T.CLIC_HUPPE, T.CLIC_SONS, T.CLIC_INFO, T.CLIC_GIRONDE,
+               T.CLIC_ANIM, T.CLIC_CARTE, T.CLIC_CLASS, T.CLIC_FAB, T.CLIC_QUIZ, T.CLIC_REPONSE];
+const MAIN_VISIBLE = [[T.MAIN1 - 0.3, T.CLIC_HUPPE + 0.7], [T.CLIC_SONS - 0.5, T.CLIC_SONS + 0.8],
+  [T.CLIC_INFO - 0.5, T.CLIC_INFO + 0.8], [T.CLIC_GIRONDE - 0.6, T.CLIC_ANIM + 0.8],
+  [T.CLIC_CARTE - 0.6, T.CLIC_CARTE + 0.7], [T.CLIC_CLASS - 0.6, T.CLIC_CLASS + 0.7],
+  [T.CLIC_FAB - 0.7, T.CLIC_FAB + 0.7], [T.CLIC_QUIZ - 0.6, T.CLIC_QUIZ + 0.6],
+  [T.CLIC_REPONSE - 0.6, T.CLIC_REPONSE + 0.6]];
+function mainEtat(t) {
+  let a = 0;
+  for (const [t0, t1] of MAIN_VISIBLE) {
+    a = Math.max(a, ssstep(t0, t0 + 0.25, t) * (1 - ssstep(t1 - 0.25, t1, t)));
+  }
+  const p = OM.spline(MAIN, t);
+  let s = 1, anneau = -1;
+  for (const c of CLICS) {
+    const d = t - c;
+    if (d >= 0 && d < 0.14) s = 0.84;
+    if (d >= 0 && d < 0.55) anneau = d / 0.55;
+  }
+  return { x: p[0], y: p[1], a, s, anneau };
+}
+function dessineMain(t, cam) {
+  const m = mainEtat(t);
+  if (m.a <= 0.01) return;
+  const [sx, sy] = versEcran(cam, m.x, m.y);
+  ctx.save();
+  ctx.globalAlpha = m.a;
+  if (m.anneau >= 0) {
+    ctx.strokeStyle = L.accent;
+    ctx.globalAlpha = m.a * (1 - m.anneau) * 0.9;
+    ctx.lineWidth = 4 * (1 - m.anneau) + 1;
+    ctx.beginPath();
+    ctx.arc(sx, sy, 14 + m.anneau * 46, 0, 7);
+    ctx.stroke();
+    ctx.globalAlpha = m.a;
+  }
+  ctx.translate(sx, sy);
+  ctx.scale(m.s * 1.25, m.s * 1.25);
+  // La fleche du pointeur : pointe sur la cible, ombre portee douce pour qu'elle se lise
+  // sur le blanc comme sur les photos.
+  ctx.shadowColor = 'rgba(0,0,0,0.35)';
+  ctx.shadowBlur = 8; ctx.shadowOffsetY = 3;
+  ctx.beginPath();
+  ctx.moveTo(0, 0); ctx.lineTo(0, 21); ctx.lineTo(5.2, 16.4); ctx.lineTo(8.6, 24.6);
+  ctx.lineTo(12, 23.2); ctx.lineTo(8.6, 15.2); ctx.lineTo(15.4, 15.2); ctx.closePath();
+  ctx.fillStyle = '#fff'; ctx.fill();
+  ctx.shadowColor = 'transparent';
+  ctx.lineWidth = 1.6; ctx.strokeStyle = L.ink; ctx.lineJoin = 'round'; ctx.stroke();
+  ctx.restore();
+}
+
+// --- Le mot ------------------------------------------------------------------------------
+// Un mot par partie, enorme, dans le bandeau. Ses lettres tombent en ressort ; a la fin de la
+// partie elles remontent et s'effacent, decalees, pour laisser la place au mot suivant.
+const TAILLE_MOT = 150;
+const largeurs = {};
+function lettres(txt) {
+  if (largeurs[txt]) return largeurs[txt];
+  ctx.save();
+  ctx.font = police('display', TAILLE_MOT);
+  const xs = [];
+  for (let i = 0; i < txt.length; i++) xs.push(ctx.measureText(txt.slice(0, i)).width);
+  ctx.restore();
+  return (largeurs[txt] = xs);
+}
+function dessineMot(t) {
+  for (const m of MOTS) {
+    if (t < m.t0 || t > m.t1 + 0.6) continue;
+    const xs = lettres(m.txt);
+    ctx.save();
+    ctx.font = police('display', TAILLE_MOT);
+    ctx.textBaseline = 'alphabetic';
+    for (let i = 0; i < m.txt.length; i++) {
+      const g = OM.letterDrop(t, m.t0, i, { stagger: 0.045, dist: 80, squash: 0.0075 });
+      const sortie = ssstep(m.t1 + i * 0.02, m.t1 + i * 0.02 + 0.3, t);
+      const a = g.op * (1 - sortie);
+      if (a <= 0.01) continue;
+      ctx.save();
+      ctx.globalAlpha = a;
+      ctx.translate(96 + xs[i], 172 + g.y - sortie * 44);
+      ctx.scale(g.sx, g.sy);
+      ctx.fillStyle = (i === m.txt.length - 1) ? L.accent : L.ink;
+      ctx.fillText(m.txt[i], 0, 0);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+}
+
+// --- Les scenes ---------------------------------------------------------------------------
+// Le tiroir de la fiche. Il glisse depuis la droite en ressort, et tout ce qu'il porte avec lui.
+const dxTiroir = t => {
+  const entree_ = 1 - spring(t - T.OUVRE - 0.05, 0.82, 15);
+  const sortie = ssstep(T.MODALE_SORTIE + 0.1, T.MODALE_SORTIE + 0.6, t);
+  return TIROIR.w * Math.max(entree_, sortie) + 0;
+};
+const tiroirVisible = t => t >= T.OUVRE && t < T.MODALE_SORTIE + 0.65;
+
+// Les onglets du tiroir : Info jusqu'au clic sur Sons, Sons ensuite, Info au clic suivant.
+const ongletActif = t => (t >= T.CLIC_SONS && t < T.CLIC_INFO) ? 'sons' : 'info';
+
+function sceneMur(t) {
+  // Le mur jusqu'a ce que la recherche le resserre, puis les resultats.
+  const avant = t < T.SORTIE_MUR + 0.6;
+  if (t >= T.FOND) {
+    const e = entree(t, T.FOND, { rise: 18 });
+    fond('mur', { a: e.a, s: e.s, dy: e.dy });
+    const cartes = C.mur.items.carte;
+    if (avant) {
+      cartes.forEach((c, i) => {
+        const e1 = entree(t, T.CARTES + i * T.PAS_CARTE);
+        const s = OM.liftOut(t, T.SORTIE_MUR + (i % 9) * 0.02 + Math.floor(i / 9) * 0.03, { dur: 0.3, dist: 60 });
+        poseItem(c, { a: e1.a * s.op, s: e1.s * s.s, dy: e1.dy + s.dy });
+      });
+    }
+    // Le champ de recherche : l'image correspond a ce qui est tape, pas a un masque.
+    const n = clamp(Math.floor((t - T.SAISIE) / T.PAS_LETTRE) + 1, 0, 5);
+    const nn = t < T.SAISIE ? (t >= T.CLIC_CHAMP ? 0 : -1) : n;
+    if (nn >= 0) pose('c/recherche-saisie-' + nn + '.png', SAISIE.x, SAISIE.y, { w: SAISIE.w, h: SAISIE.h });
+    if (t >= T.RESULTATS - 0.05) {
+      C.recherche.items.carte.forEach((c, i) => {
+        const e2 = entree(t, T.RESULTATS + i * 0.06);
+        const presse = (c === HUPPE) ? OM.press(t, T.CLIC_HUPPE, { depth: 0.1 }).s : 1;
+        poseItem(c, { a: e2.a, s: e2.s * presse, dy: e2.dy });
+      });
+    }
+  }
+  poseItem(FAB, { a: ssstep(T.FOND + 0.3, T.FOND + 0.7, t) * (1 - ssstep(T.OUVRE, T.OUVRE + 0.3, t)) });
+}
+
+// La vignette de la huppe devient la photo d'en-tete du tiroir : le raccord de tout le film.
+function tuile(t) {
+  const t0 = T.OUVRE;
+  const k = spring(t - t0 - 0.02, 0.78, 13);
+  const dx = dxTiroir(t);
+  const B = { x: HERO.x + dx, y: HERO.y, w: HERO.w, h: HERO.h };
+  const r = { x: lerp(HUPPE_PHOTO.x, B.x, k), y: lerp(HUPPE_PHOTO.y, B.y, k),
+              w: lerp(HUPPE_PHOTO.w, B.w, k), h: lerp(HUPPE_PHOTO.h, B.h, k) };
+  return { k, r };
+}
+function poseTuile(t) {
+  if (t < T.OUVRE || (t >= T.CLIC_SONS + 0.3 && t < T.CLIC_INFO)) return;
+  if (t >= T.CLIC_INFO) return;
+  const { k, r } = tuile(t);
+  const so = OM.liftOut(t, T.CLIC_SONS, { dur: 0.28, dist: 50 });
+  // La vignette (un carre de 232 px) grossit jusqu'a 16/9 : on la cadre en « cover », et la
+  // photo nette d'en-tete la remplace en fondu sur la seconde moitie du trajet.
+  const s = 232, hh = s * r.h / r.w;
+  const nette = ssstep(0.45, 0.9, k);
+  pose(HUPPE.src, r.x, r.y, { w: r.w, h: r.h, a: (1 - nette) * so.op, dy: so.dy,
+    src: [16, 15 + Math.max(0, (232 - hh) / 2), 232, Math.min(232, hh)] });
+  pose(item('fiche', 'photo').src, r.x, r.y, { w: r.w, h: r.h, a: nette * so.op, dy: so.dy });
+}
+
+function sceneTiroir(t) {
+  if (!tiroirVisible(t)) return;
+  const dx = dxTiroir(t);
+  const tab = ongletActif(t);
+  const fondSrc = tab === 'sons' ? C.sons.fond : C.fiche.fond;
+  // Le tiroir nu : tout ce qui est a droite de la ligne TIROIR.x dans le fond de la fiche.
+  pose(fondSrc, TIROIR.x, 0, { w: TIROIR.w, h: VUE.h, dx, src: [TIROIR.x * 2, 0, TIROIR.w * 2, VUE.h * 2] });
+  const o0 = T.OUVRE + 0.3;
+  poseItem(item('fiche', 'entete'), { dx, ...entree(t, o0) });
+  poseItem(item('fiche', 'nav'), { dx, ...entree(t, o0 + 0.05) });
+  const ong = tab === 'sons' ? item('sons', 'onglets') : item('fiche', 'onglets');
+  poseItem(ong, { dx, ...entree(t, o0 + 0.1) });
+  const fen = [FENETRE.x + dx, FENETRE.y, FENETRE.w, FENETRE.h];
+
+  const pileInfo = t < T.CLIC_SONS + 0.35 || t >= T.CLIC_INFO;
+  const soPile = (t >= T.CLIC_SONS && t < T.CLIC_INFO) ? OM.liftOut(t, T.CLIC_SONS, { dur: 0.28, dist: 50 }) : { op: 1, dy: 0 };
+  if (pileInfo) {
+    // Le re-clic sur Info : tout revient en cascade. Le premier passage arrive avec le tiroir.
+    const t1 = t >= T.CLIC_INFO ? T.CLIC_INFO : T.OUVRE;
+    const d = t >= T.CLIC_INFO ? 0.12 : 0.85;
+    const defile = DEFILEMENT * OM.ease.cubicInOut(clamp((t - T.DEFILE) / (T.DEFILE_FIN - T.DEFILE), 0, 1));
+    const sortie = t >= T.CLIC_SONS && t < T.CLIC_INFO ? 1 : 0;
+    const eDesc = entree(t, t1 + d + 0.15), eBas = entree(t, t1 + d + 0.3);
+    // La photo est la tuile tant qu'elle voyage ; ensuite la photo d'en-tete, qui defile.
+    if (t >= T.CLIC_INFO) {
+      const e = entree(t, t1 + d);
+      poseItem(item('fiche', 'photo'), { dx, dy: e.dy - defile, a: e.a, s: e.s, clip: fen });
+    }
+    poseItem(item('fiche', 'desc'), { dx, dy: eDesc.dy - defile + soPile.dy, a: eDesc.a * soPile.op, s: eDesc.s, clip: fen });
+    // Le bas du tiroir, tel qu'il est une fois defile : la carte de France, puis la Gironde.
+    const bas = item('oq', 'bas');
+    const by = bas.y + (DEFILEMENT - defile);
+    poseItem(bas, { dx, dy: by - bas.y + eBas.dy + soPile.dy, a: eBas.a * soPile.op, clip: fen });
+    if (t >= T.CLIC_GIRONDE) {
+      const r = OM.ease.expoOut(clamp((t - T.CLIC_GIRONDE) / (T.IRIS_FIN - T.CLIC_GIRONDE), 0, 1)) * 760;
+      const g = item('gironde', 'bas');
+      poseItem(g, { dx, dy: by - g.y, clip: fen, rond: [GIRONDE[0] + dx, GIRONDE[1] + (by - bas.y), r] });
+    }
+  }
+  if (t >= T.CLIC_SONS && t < T.CLIC_INFO + 0.3) {
+    // L'onglet Sons : les deux enregistrements arrivent nus, puis chaque sonagramme se dessine.
+    const rangs = [item('sons-nu', 'chant'), item('sons-nu', 'cri')];
+    const pleins = [item('sons', 'chant'), item('sons', 'cri')];
+    rangs.forEach((r, i) => {
+      const e0 = entree(t, T.SONS_RANGS + i * 0.15);
+      const sx = OM.liftOut(t, T.CLIC_INFO, { dur: 0.28, dist: 50 });
+      const e = { a: e0.a * sx.op, s: e0.s, dy: e0.dy + sx.dy };
+      poseItem(r, { dx, ...e, clip: fen });
+      const t0 = T.SONO + i * 0.5, t1 = t0 + 2.4;
+      const f = clamp((t - t0) / (t1 - t0), 0, 1);
+      if (f > 0) {
+        const b = BARRES[i];
+        // Le trait avance a vitesse reguliere, comme la lecture du chant.
+        poseItem(pleins[i], { dx, ...e, clip: [b.x + dx - 6, r.y, (b.w + 12) * f, r.h] });
+      }
+    });
+  }
+}
+
+// La fenetre de migration : elle s'ouvre du bouton Animation, l'annee defile sur 52 semaines.
+function sceneMigration(t) {
+  if (t < T.MODALE || t > T.MODALE_SORTIE + 0.5) return;
+  const a = ssstep(T.MODALE, T.MODALE + 0.4, t) * (1 - ssstep(T.MODALE_SORTIE, T.MODALE_SORTIE + 0.4, t));
+  ctx.save();
+  ctx.globalAlpha = a;
+  ctx.fillStyle = '#171717';
+  ctx.fillRect(-2000, -2000, 6000, 6000);
+  ctx.restore();
+  const e = entree(t, T.MODALE + 0.05, { rise: 30, s0: 0.93, ds: 0.07 });
+  const s = OM.ease.linear(clamp((t - T.SEMAINES) / (T.SEMAINES_FIN - T.SEMAINES), 0, 1)) * (SEMAINES - 1);
+  const i = Math.min(SEMAINES - 1, Math.floor(s)), j = Math.min(SEMAINES - 1, i + 1), f = s - i;
+  const pad = n => String(n).padStart(2, '0');
+  const o = { a: e.a * a, s: e.s, dy: e.dy };
+  fond('mig', o);
+  const m = CARTE_MIG;
+  pose('mig-s/w' + pad(i) + '.jpg', m.x, m.y, { w: m.w, h: m.h, ...o });
+  if (j !== i && f > 0.001) pose('mig-s/w' + pad(j) + '.jpg', m.x, m.y, { w: m.w, h: m.h, ...o, a: o.a * f });
+  pose('mig-s/c' + pad(Math.round(s)) + '.jpg', 82, 951, { w: 1757, h: 46, ...o });
+}
+
+function sceneVues(t) {
+  // Les quatre vues qu'on atteint en cliquant un onglet ou le bouton du tchat. Chacune : le fond
+  // d'abord, puis ses morceaux un a un.
+  const vues = [
+    { nom: 'carte', t0: T.CLIC_CARTE, t1: T.CLIC_CLASS },
+    { nom: 'classement', t0: T.CLIC_CLASS, t1: T.CLIC_FAB },
+    { nom: 'chat', t0: T.CLIC_FAB, t1: T.CLIC_QUIZ },
+    { nom: 'quiz', t0: T.CLIC_QUIZ, t1: T.LOGO },
+  ];
+  let v = null;
+  for (const x of vues) if (t >= x.t0 && t < x.t1) v = x;
+  if (!v) return;
+  const d = t - v.t0;
+  const sortie = OM.liftOut(t, v.t1 - 0.3, { dur: 0.3, dist: 50 });
+  const g = { a: sortie.op };
+  fond(v.nom, g);
+  if (v.nom === 'carte') {
+    poseItem(item('carte', 'carte'), { ...entree(t, v.t0 + 0.15, { rise: 40 }), a: entree(t, v.t0 + 0.15).a * sortie.op });
+  } else if (v.nom === 'classement') {
+    poseItem(item('classement', 'table'), { a: 0 });
+    C.classement.items.rang.forEach((r, i) => {
+      const e = entree(t, v.t0 + 0.15 + i * 0.12, { rise: 34 });
+      poseItem(r, { ...e, a: e.a * sortie.op });
+    });
+  } else if (v.nom === 'chat') {
+    C.chat.items.msg.forEach((r, i) => {
+      const moi = r.x > 900;
+      const e = entree(t, v.t0 + 0.2 + i * 0.32, { rise: 30 });
+      poseItem(r, { ...e, dx: moi ? (1 - e.a) * 120 : -(1 - e.a) * 60, a: e.a * sortie.op });
+    });
+    const e = entree(t, v.t0 + 1.6);
+    poseItem(item('chat', 'saisie'), { ...e, a: e.a * sortie.op });
+  } else if (v.nom === 'quiz') {
+    const el = entree(t, v.t0 + 0.2, { rise: 30 });
+    poseItem(item('quiz', 'lecteur'), { ...el, a: el.a * sortie.op });
+    C.quiz.items.choix.forEach((r, i) => {
+      const e = entree(t, v.t0 + 0.5 + i * 0.13, { rise: 30 });
+      const choisi = i === 1 ? OM.press(t, T.CLIC_REPONSE, { depth: 0.06 }).s : 1;
+      poseItem(r, { ...e, s: e.s * choisi, a: e.a * sortie.op });
+    });
+    // L'anneau de la bonne reponse : le seul etat que la capture ne montre pas, dessine.
+    if (t >= T.CLIC_REPONSE) {
+      const r = C.quiz.items.choix[1];
+      const k = clamp((t - T.CLIC_REPONSE) / 0.45, 0, 1);
+      ctx.save();
+      ctx.strokeStyle = L.accent; ctx.lineWidth = 3; ctx.globalAlpha = 0.85 * (1 - 0.6 * k);
+      ctx.strokeRect(r.x - 3 - k * 4, r.y - 3 - k * 4, r.w + 6 + k * 8, r.h + 6 + k * 8);
+      ctx.restore();
+    }
+  }
+  poseItem(FAB, { a: sortie.op });
+}
+
+function dessineLogo(t) {
+  if (t < T.LOGO) return;
+  const a = ssstep(T.LOGO, T.LOGO + 0.35, t);
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalAlpha = a;
+  ctx.fillStyle = L.ground;
+  ctx.fillRect(0, 0, W, H);
+  ctx.globalAlpha = 1;
+  const im = IM.huppe;
+  if (im && im.width) {
+    const p = OM.popIn(t, T.LOGO + 0.15, { rise: 50, s0: 0.8, ds: 0.2 });
+    const h = 260 * p.s, w = h * im.width / im.height;
+    ctx.globalAlpha = p.op;
+    ctx.drawImage(im, W / 2 - w / 2, H / 2 - h - 6 + p.dy, w, h);
+  }
+  const nom = 'L’Ornithèque';
+  ctx.font = police('display', 92);
+  ctx.textBaseline = 'alphabetic';
+  const tot = ctx.measureText(nom).width;
+  for (let i = 0; i < nom.length; i++) {
+    const g = OM.letterDrop(t, T.LOGO + 0.55, i, { stagger: 0.04, dist: 50 });
+    if (g.op <= 0.01) continue;
+    const x = W / 2 - tot / 2 + ctx.measureText(nom.slice(0, i)).width;
+    ctx.save();
+    ctx.globalAlpha = g.op;
+    ctx.translate(x, H / 2 + 96 + g.y);
+    ctx.scale(g.sx, g.sy);
+    ctx.fillStyle = L.ink;
+    ctx.fillText(nom[i], 0, 0);
+    ctx.restore();
+  }
+  ctx.font = police('text', 28);
+  ctx.fillStyle = L.mute;
+  ctx.textAlign = 'center';
+  ctx.globalAlpha = ssstep(T.LOGO + 1.5, T.LOGO + 2.0, t);
+  ctx.fillText('la liste, la carte, le chant', W / 2, H / 2 + 152);
+  ctx.restore();
+}
+
+// --- L'image -------------------------------------------------------------------------------
+function seek(t) {
+  t = clamp(t, 0, DUR - 1e-6);
+  const cam = camera(t);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = L.ground;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, BANDE, W, H - BANDE);
+  ctx.clip();
+  ctx.setTransform(cam.z, 0, 0, cam.z, 960 - cam.x * cam.z, AY - cam.y * cam.z);
+  sceneMur(t);
+  sceneTiroir(t);
+  poseTuile(t);
+  sceneMigration(t);
+  sceneVues(t);
+  ctx.restore();
+
+  // Le haut de la scene se fond dans le bandeau au lieu d'etre coupe net.
+  const g = ctx.createLinearGradient(0, BANDE, 0, BANDE + 46);
+  g.addColorStop(0, L.ground); g.addColorStop(1, 'rgba(238,242,241,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, BANDE, W, 46);
+
+  dessineMot(t);
+  dessineMain(t, cam);
+  dessineLogo(t);
+  return true;
+}
+
+// --- Ce que l'oracle suit ------------------------------------------------------------------
+// Les porteurs : ce qui survit a un passage et bouge. Une meme cle sur deux plans voisins dit a
+// l'oracle que l'objet traverse le passage.
+window.__track = t => {
+  const out = {};
+  const cam = camera(t);
+  const box = (r, dx = 0, dy = 0) => {
+    const [x, y] = versEcran(cam, r.x + dx, r.y + dy);
+    return { x, y, w: r.w * cam.z, h: r.h * cam.z };
+  };
+  const m = mainEtat(t);
+  if (m.a > 0.05) { const [x, y] = versEcran(cam, m.x, m.y); out.main = { x: x - 10, y: y - 10, w: 40, h: 40, op: m.a }; }
+  if (t >= T.OUVRE && t < T.CLIC_INFO + 0.5) {
+    const { r } = tuile(t);
+    out.photo = { ...box(r), op: 1 };
+  }
+  if (tiroirVisible(t)) out.tiroir = { ...box({ x: TIROIR.x, y: 0, w: TIROIR.w, h: VUE.h }, dxTiroir(t)), op: 1 };
+  if (t >= T.MODALE && t < T.MODALE_SORTIE + 0.4) out.modale = { ...box({ x: 0, y: 0, w: VUE.w, h: VUE.h }), op: 1 };
+  if (t >= T.LOGO) out.logo = { x: 560, y: 300, w: 800, h: 480, op: 1 };
+  out.cam = { x: -cam.x * cam.z + 960, y: -cam.y * cam.z + AY, w: W * cam.z, h: H * cam.z, op: 1 };
+  return out;
+};
+
+window.__motion = (t0, t1) => {
+  const A = window.__track(t0), B = window.__track(t1);
+  let px = 0;
+  for (const k of Object.keys(A)) {
+    if (!B[k]) continue;
+    px = Math.max(px, Math.hypot(B[k].x - A[k].x, B[k].y - A[k].y),
+      Math.hypot((B[k].x + B[k].w) - (A[k].x + A[k].w), (B[k].y + B[k].h) - (A[k].y + A[k].h)));
+  }
+  // Les cascades de morceaux et les lettres du mot bougent sans porteur : on leur reserve au
+  // moins une dizaine de pixels d'etalement quand l'une d'elles est en cours.
+  const cours = t => {
+    const tt = [T.FOND, T.CARTES, T.SORTIE_MUR, T.RESULTATS, T.OUVRE + 0.3, T.SONS_RANGS, T.CLIC_INFO, T.MODALE,
+      T.CLIC_CARTE, T.CLIC_CLASS, T.CLIC_FAB, T.CLIC_QUIZ, T.LOGO, ...MOTS.map(m => m.t0), ...MOTS.map(m => m.t1)];
+    return tt.some(x => t >= x && t < x + 0.9);
+  };
+  if (cours(t0) || cours(t1)) px = Math.max(px, 30);
+  if (t1 > T.SEMAINES && t0 < T.SEMAINES_FIN) px = Math.max(px, 26 * Math.abs(t1 - t0) * 10);
+  return px;
+};
+
+// --- Le son --------------------------------------------------------------------------------
+// La partition lit CETTE liste plutot que des instants recopies a la main : un moment deplace
+// emporte son bruitage avec lui.
+window.__events = () => ({
+  T: DUR,
+  events: [
+    { t: T.FOND,           kind: 'air',    pan: 0,     v: 0.50 },
+    { t: T.CLIC_CHAMP,     kind: 'wood',   pan: -0.3,  v: 0.55 },
+    { t: T.RESULTATS,      kind: 'glass',  pan: -0.1,  v: 0.45 },
+    { t: T.CLIC_HUPPE,     kind: 'wood',   pan: -0.1,  v: 0.75 },
+    { t: T.OUVRE + 0.35,   kind: 'bubble', pan: 0.2,   v: 0.70 },
+    { t: T.CLIC_SONS,      kind: 'wood',   pan: 0.3,   v: 0.65 },
+    { t: T.CLIC_INFO,      kind: 'wood',   pan: 0.2,   v: 0.55 },
+    { t: T.CLIC_GIRONDE,   kind: 'glass',  pan: 0.15,  v: 0.60 },
+    { t: T.CLIC_ANIM,      kind: 'sub',    pan: 0,     v: 0.90 },
+    { t: T.SEMAINES,       kind: 'air',    pan: 0,     v: 0.80 },
+    { t: T.CLIC_CARTE,     kind: 'wood',   pan: -0.2,  v: 0.60 },
+    { t: T.CLIC_CLASS,     kind: 'wood',   pan: -0.2,  v: 0.60 },
+    { t: T.CLIC_FAB,       kind: 'bubble', pan: 0.3,   v: 0.65 },
+    { t: T.CLIC_FAB + 0.7, kind: 'bubble', pan: -0.2,  v: 0.50 },
+    { t: T.CLIC_QUIZ,      kind: 'wood',   pan: 0,     v: 0.60 },
+    { t: T.CLIC_REPONSE,   kind: 'glass',  pan: 0,     v: 0.70 },
+    { t: T.LOGO,           kind: 'sub',    pan: 0,     v: 0.80 },
+  ],
+  // Le chant de la huppe, pendant que les sonagrammes se dessinent. Ce n'est pas un bruitage :
+  // c'est l'enregistrement que l'appli fait ecouter.
+  chant: { t: T.SONO, jusqua: T.SONO + 4.2, fichier: 'assets/chant.mp3' },
+  silences: [[0, 0.6], [T.SEMAINES_FIN + 0.3, T.MODALE_SORTIE - 0.1]],
+});
+
+window.__seek = async t => seek(t);
+
+function charge(src) {
+  return new Promise(res => {
+    const im = new Image();
+    im.onload = () => { IM[src] = im; res(); };
+    im.onerror = () => { console.warn('image absente : ' + src); res(); };
+    im.src = 'assets/' + src;
+  });
+}
+window.__ready = (async () => {
+  const srcs = new Set();
+  (function parcours(o) {
+    if (!o || typeof o !== 'object') return;
+    for (const v of Object.values(o)) {
+      if (typeof v === 'string' && /^c\/.*\.(png|jpg)$/.test(v)) srcs.add(v);
+      else parcours(v);
+    }
+  })(C);
+  for (let n = 0; n < 6; n++) srcs.add('c/recherche-saisie-' + n + '.png');
+  for (let w = 0; w < SEMAINES; w++) {
+    srcs.add('mig-s/w' + String(w).padStart(2, '0') + '.jpg');
+    srcs.add('mig-s/c' + String(w).padStart(2, '0') + '.jpg');
+  }
+  await Promise.all([...srcs].map(charge));
+  IM.huppe = IM['huppe.png'] || null;
+  await charge('huppe.png'); IM.huppe = IM['huppe.png'];
+  await document.fonts.ready;
+  return seek(0);
+})();
+
+const q = new URLSearchParams(location.search);
+if (q.has('play')) {
+  window.__ready.then(() => {
+    const t0 = performance.now();
+    const boucle = () => { seek(((performance.now() - t0) / 1000) % DUR); requestAnimationFrame(boucle); };
+    boucle();
+  });
+} else if (q.has('t')) {
+  window.__ready.then(() => seek(parseFloat(q.get('t'))));
+}
+function ajuste() {
+  const s = Math.min(innerWidth / W, innerHeight / H);
+  document.getElementById('stage').style.transform = 'scale(' + s + ')';
+}
+addEventListener('resize', ajuste); ajuste();
+</script>

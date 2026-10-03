@@ -1,0 +1,9 @@
+# Réglage de Jekyll, l'outil par lequel GitHub Pages publie ce dépôt (pas de .nojekyll).
+# Ces dossiers et fichiers restent sur GitHub, avec leur historique, mais ne sont plus servis
+# par le site : ce sont nos notes et nos scripts, pas des pages. Avant le 2026-10-04,
+# tools/config/firestore.rules et docs/NOMS.md répondaient en ligne.
+exclude:
+  - docs/
+  - outils/
+  - CLAUDE.md
+  - en-cours.md

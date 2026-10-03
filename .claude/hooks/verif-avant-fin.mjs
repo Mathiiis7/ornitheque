@@ -3,7 +3,7 @@
   verif-avant-fin.mjs - crochet Stop : empeche d annoncer un travail fini sans l avoir verifie.
 
   Quand une reponse se termine et qu app.js, index.html ou styles.css ont change (git status),
-  ce script rejoue « node tools/verif/tous.mjs ». Si un banc sort en DEFAUT, il rend le code 2 :
+  ce script rejoue « node outils/verif/tous.mjs ». Si un banc sort en DEFAUT, il rend le code 2 :
   Claude Code refuse alors de s arreter et relit le message ecrit sur stderr.
 
   POURQUOI TOUT REJOUER, ET PAS SEULEMENT LES BANCS DU FICHIER TOUCHE
@@ -114,7 +114,7 @@ if(json.stop_hook_active === true) process.exit(0);
 const changes = fichiersChanges();
 if(!changes.length) process.exit(0);
 
-const res = spawnSync(process.execPath, [join(RACINE, 'tools', 'verif', 'tous.mjs')],
+const res = spawnSync(process.execPath, [join(RACINE, 'outils', 'verif', 'tous.mjs')],
   { cwd: RACINE, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
 
 if(res.status === 0) process.exit(0);
@@ -122,8 +122,8 @@ if(res.status === 0) process.exit(0);
 const message = [];
 message.push('Travail non vérifié. Fichiers modifiés : ' + changes.join(', ') + '.');
 message.push(res.status === 1
-  ? 'node tools/verif/tous.mjs sort en défaut :'
-  : 'node tools/verif/tous.mjs ne s\'est pas terminé normalement (code ' + res.status + ') :');
+  ? 'node outils/verif/tous.mjs sort en défaut :'
+  : 'node outils/verif/tous.mjs ne s\'est pas terminé normalement (code ' + res.status + ') :');
 message.push('');
 
 const utiles = lignesUtiles(String(res.stdout || ''));
@@ -136,9 +136,9 @@ else {
 // Le banc demo compare demo/index.html a index.html : quand il tombe, c est souvent que le
 // generateur n a pas ete repasse.
 if(changes.includes('index.html')){
-  message.push('', 'index.html a changé : repasser aussi « node tools/build/genere-demo.mjs ».');
+  message.push('', 'index.html a changé : repasser aussi « node outils/build/genere-demo.mjs ».');
 }
-message.push('', 'Rejouer : node tools/verif/tous.mjs');
+message.push('', 'Rejouer : node outils/verif/tous.mjs');
 
 process.stderr.write(message.join('\n') + '\n');
 process.exit(2);

@@ -1,20 +1,20 @@
 ---
 name: bancs-de-mesure
-description: "Lancer, lire ou écrire un banc de mesure de tools/verif/ (tous.mjs, demo, trophees, firestore). À utiliser après toute retouche de l'entête du panneau, des sélecteurs, des pastilles, des cartes ou d'index.html, et avant d'ajouter un banc."
+description: "Lancer, lire ou écrire un banc de mesure de outils/verif/ (tous.mjs, demo, trophees, firestore). À utiliser après toute retouche de l'entête du panneau, des sélecteurs, des pastilles, des cartes ou d'index.html, et avant d'ajouter un banc."
 ---
 
 # Les bancs de mesure
 
-`tools/verif/` contient des pages qui font tourner les VRAIES fonctions d'`app.js` dans un
+`outils/verif/` contient des pages qui font tourner les VRAIES fonctions d'`app.js` dans un
 vrai navigateur et impriment des chiffres. Tout rejouer :
 
 ```
-node tools/verif/tous.mjs
+node outils/verif/tous.mjs
 ```
 
 Le banc `demo` est à part : il vérifie que `demo/index.html` n'a pas pris de retard sur
 `index.html`, puis charge la démo dans un vrai navigateur et envoie un message dans son chat.
-Après toute retouche d'`index.html`, relancer `node tools/build/genere-demo.mjs`.
+Après toute retouche d'`index.html`, relancer `node outils/build/genere-demo.mjs`.
 
 Chaque banc affiche ses mesures et se termine par `CONFORME` ou `DÉFAUT`. Les lancer après
 toute retouche de l'entête du panneau, des sélecteurs, des pastilles ou des cartes : ils
@@ -34,7 +34,7 @@ fin, après avoir empilé ses vérifications avec `verif(libellé, valeur, ok)`.
 Un banc peut aussi piloter le navigateur lui-même, quand une page à regarder ne suffit pas :
 il exporte `mesure({ navigateur })` au lieu de `html()`, et rend `{ ok, sortie }` avec
 `rapport()`. C'est le cas de `trophees`, qui charge `app.js` en entier avec Firebase bouchonné
-(`tools/verif/bouchons/`, branchés par une importmap) et choisit l'ordre d'arrivée des
+(`outils/verif/bouchons/`, branchés par une importmap) et choisit l'ordre d'arrivée des
 snapshots : c'est le seul moyen d'exercer le démarrage CONNECTÉ sans compte et sans toucher à
 la vraie ligue, et il a attrapé quatre `TypeError` qui étaient en production. Il avance
 l'horloge au lieu d'attendre, sinon la détection de trophées lui coûterait 14 secondes.

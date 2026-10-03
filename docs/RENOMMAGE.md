@@ -144,7 +144,7 @@ reprendra l'ancien nom.
 |---|---|
 | `app.js` ligne 12286 | `WEEKLY_DATA_BASE` → `https://mathiiis7.github.io/<nom>-data` |
 | `.gitignore` ligne 59 | le commentaire qui cite l'ancien nom |
-| `tools/ebirdst/DEPLOY-MIGRATION.md` | six mentions de l'ancien nom |
+| `outils/ebirdst/DEPLOY-MIGRATION.md` | six mentions de l'ancien nom |
 
 C'est **la seule adresse de données du projet** : les lignes 12224, 12370 et 12491 d'`app.js`
 la réutilisent, elles n'en ont pas d'autre. Vérifié par recherche sur tout le dépôt.
@@ -196,10 +196,10 @@ au renommage. C'est voulu : c'est notre page qui prend le relais, et elle, elle 
 | `index.html` | 9 endroits : titre de l'onglet, nom iOS, trois textes de remplacement d'images, deux titres, l'à-propos, le pied de page |
 | `manifest.json` | `name` et `short_name` |
 | `app.js` | 3 messages vus par l'utilisateur : accès suspendu (5887), texte et titre de partage (10229-10230) |
-| `tools/build/genere-demo.mjs` ligne 148 | le nom de la ligue de démonstration |
-| `tools/createur-badge.html`, `tools/generateur-trophees.html` | leurs titres |
+| `outils/build/genere-demo.mjs` ligne 148 | le nom de la ligue de démonstration |
+| `outils/createur-badge.html`, `outils/generateur-trophees.html` | leurs titres |
 
-Puis `node tools/build/genere-demo.mjs`, parce que `demo/index.html` et `demo/donnees.js` sont
+Puis `node outils/build/genere-demo.mjs`, parce que `demo/index.html` et `demo/donnees.js` sont
 **générés** : on ne les modifie jamais à la main.
 
 ### 8. Les documents - MOI
@@ -214,8 +214,8 @@ Puis `node tools/build/genere-demo.mjs`, parce que `demo/index.html` et `demo/do
 Dans cet ordre, et je te dis ce que chacun a donné :
 
 1. `node --input-type=module --check < app.js` - la syntaxe tient
-2. `node tools/verif/tous.mjs` - les 9 bancs de mesure, dont celui de la démo
-3. `node tools/build/poids-publie.mjs` - le poids publié n'a pas bougé
+2. `node outils/verif/tous.mjs` - les 9 bancs de mesure, dont celui de la démo
+3. `node outils/build/poids-publie.mjs` - le poids publié n'a pas bougé
 4. **localhost:8765**, rechargé deux fois - tu regardes
 5. Une fois poussé : `https://mathiiis7.github.io/Ligue_des_Plumes/` renvoie bien vers le
    nouveau site, et `.../Ligue_des_Plumes/demo/` vers la nouvelle démo
@@ -226,7 +226,7 @@ Dans cet ordre, et je te dis ce que chacun a donné :
 
 **Deux choses cassent au renommage du dossier, et elles doivent être réglées AVANT.**
 
-- **17 scripts R de `tools/ebirdst/` contiennent le chemin absolu en dur**
+- **17 scripts R de `outils/ebirdst/` contiennent le chemin absolu en dur**
   (`C:/Users/mathi/Documents/Projets/Ligue_des_Plumes/...`), plus 3 lignes de
   `DEPLOY-MIGRATION.md`. Ce sont les outils de la migration des habitats IUCN, encore en
   attente : si on ne les corrige pas, ils échoueront le jour où tu reprendras ce chantier,

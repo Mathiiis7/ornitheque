@@ -1,5 +1,5 @@
 /*
-  La fausse ligue de la demo. FICHIER GENERE par tools/build/genere-demo.mjs : ne pas
+  La fausse ligue de la demo. FICHIER GENERE par outils/build/genere-demo.mjs : ne pas
   modifier a la main, la prochaine execution ecraserait tout.
 
   Les 599 especes disponibles viennent de data/countries/fr/freq_48.json, triees de la plus

@@ -31,7 +31,7 @@ ornitheque/
 │
 ├── docs/                   les documents de travail publiés avec le dépôt
 │
-└── tools/
+└── outils/
     ├── build/              les générateurs de données (Node, ESM)
     ├── verif/              les bancs de mesure
     ├── ebirdst/            les scripts R pour Cornell Status & Trends
@@ -59,20 +59,20 @@ ralenti chaque opération sur le code. **`notes-privees/`** reste hors du dépô
 
 ```bash
 # Regenerer la donnée par pays (nécessite cookie eBird actif)
-EBIRD_COOKIE="..." node tools/build/download-bar-charts-regional.mjs
+EBIRD_COOKIE="..." node outils/build/download-bar-charts-regional.mjs
 
 # Regenerer abundance Cornell par pays (nécessite clé ebirdst)
-Rscript tools/ebirdst/build-abundance-by-region-multi.R
+Rscript outils/ebirdst/build-abundance-by-region-multi.R
 
 # Regenerer cartes de répartition Cornell (mode world = tout, demo = 3 espèces)
-Rscript tools/ebirdst/build-range-maps.R
-Rscript tools/ebirdst/build-range-maps.R demo
+Rscript outils/ebirdst/build-range-maps.R
+Rscript outils/ebirdst/build-range-maps.R demo
 
 # Regenerer traits Avonet
-node tools/build/build-avonet-traits.mjs
+node outils/build/build-avonet-traits.mjs
 
 # Regenerer IUCN redlist mondial
-node tools/build/enrich-redlist-global-full.mjs
+node outils/build/enrich-redlist-global-full.mjs
 ```
 
 ## Architecture technique
