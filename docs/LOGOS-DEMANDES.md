@@ -2,7 +2,7 @@
 
 Document de travail, 2026-09-28. À supprimer une fois le logo arrêté.
 Le choix du nom est dans `NOMS.md`, l'outil et ses prix dans
-`~/Documents/Projets/qg/savoir/quiver-ai.md`.
+`~/Documents/0-Claude/qg/savoir/quiver-ai.md`.
 
 **Où on en est au 29/09** : onze envois, le style est trouvé, **deux pistes sont retenues sur la
 forme**, et **le nom est arrêté - L'Ornithèque**, audité et clos dans `NOMS.md` le 29/09.

@@ -15,7 +15,7 @@ en croyant l'inverse.
 
 ## Rangement
 
-Règles communes : `~/Documents/Projets/qg/structure/rangement.md`. Mis en place le 2026-10-04
+Règles communes : `~/Documents/0-Claude/qg/structure/rangement.md`. Mis en place le 2026-10-04
 (`tools/` est devenu `outils/`). Rien d'autre à la racine que ce qui suit.
 
 ```
