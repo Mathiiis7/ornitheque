@@ -53,9 +53,11 @@ propre au projet
 
 hors du projet, mais qui en dépend - à corriger si un chemin bouge
   tâche Windows « Backup Firestore Ligue Plumes »   le 9 de chaque mois à 00:09,
-                    doit lancer node outils/build/backup-firestore.mjs depuis la racine.
-                    ENCORE CASSÉE au 2026-10-04 : elle pointe vers Ligue_des_Plumes et
-                    tools/, n'a jamais tourné. Créée en administrateur, la corriger
+                    lance node outils/build/backup-firestore.mjs depuis la racine
+                    (C:\Users\mathi\Documents\0-Claude\ornitheque). Corrigée le 2026-10-04
+                    par le QG ; a tourné une fois ce jour-là, résultat 0
+                    (outils/backups/firestore-2026-10-04-0852.json), prochaine le 2026-10-09.
+                    Créée en administrateur, la modifier
                     demande une fenêtre élevée (Set-ScheduledTask refuse sinon).
 ```
 
