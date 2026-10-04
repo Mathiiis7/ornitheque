@@ -13,7 +13,7 @@ suppressMessages({
   library(jsonlite); library(ebirdst); library(httr2)
 })
 
-OUT_DIR   <- "C:/Users/mathi/Documents/Projets/ornitheque/data/countries"
+OUT_DIR   <- "C:/Users/mathi/Documents/0-Claude/1-App/ornitheque/data/countries"
 CACHE_DIR <- "C:/Users/mathi/Documents/Projets/clc/cache_frac"
 # Jeton lu dans Documents\.Renviron, jamais dans le depot
 for (.f in c(Sys.getenv("R_ENVIRON_USER"), file.path(Sys.getenv("USERPROFILE"), c("Documents", ""), ".Renviron")))

@@ -120,7 +120,7 @@ cat(sprintf("\nPhase A terminee en %.1f min\n", as.numeric(Sys.time() - t0, unit
 cat("\n=== PHASE B : croisement especes x pays ===\n")
 
 EBIRDST_DIR <- "C:/Users/mathi/AppData/Roaming/R/data/R/ebirdst/2023"
-OUT_DIR <- "C:/Users/mathi/Documents/Projets/ornitheque/data/countries"
+OUT_DIR <- "C:/Users/mathi/Documents/0-Claude/1-App/ornitheque/data/countries"
 
 # Chargement mapping code_ebird -> sci_name via ebirdst_runs
 library(ebirdst)
