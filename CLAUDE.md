@@ -50,6 +50,13 @@ la base commune
 
 propre au projet
   notes-privees/    notes gardées hors du dépôt public, exclues par .gitignore
+
+hors du projet, mais qui en dépend - à corriger si un chemin bouge
+  tâche Windows « Backup Firestore Ligue Plumes »   le 9 de chaque mois à 00:09,
+                    doit lancer node outils/build/backup-firestore.mjs depuis la racine.
+                    ENCORE CASSÉE au 2026-10-04 : elle pointe vers Ligue_des_Plumes et
+                    tools/, n'a jamais tourné. Créée en administrateur, la corriger
+                    demande une fenêtre élevée (Set-ScheduledTask refuse sinon).
 ```
 
 **Un fichier ignoré qui vit dans `outils/` s'ignore sous ce nom-là.** La clé Firebase et les
