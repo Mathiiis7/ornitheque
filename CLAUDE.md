@@ -15,7 +15,7 @@ en croyant l'inverse.
 
 ## Rangement
 
-Règles communes : `~/Documents/0-Claude/qg/structure/rangement.md`. Mis en place le 2026-10-04
+Règles communes : `~/Documents/0-Claude/0-QG/qg/structure/rangement.md`. Mis en place le 2026-10-04
 (`tools/` est devenu `outils/`). Rien d'autre à la racine que ce qui suit.
 
 ```
@@ -44,7 +44,7 @@ la base commune
   outils/           les scripts - sur GitHub, pas sur le site
     build/            les générateurs de données (Node, ESM)
     verif/            les bancs de mesure - voir plus bas
-    ebirdst/          les scripts R (chemins absolus en dur)
+    ebirdst/          les scripts R (chemins absolus en dur ; Projets/clc n'existe plus)
     onetake/          la vidéo de présentation
   archives/         pas encore créé : à ouvrir le jour où un chantier fini doit y aller
 
@@ -54,7 +54,7 @@ propre au projet
 hors du projet, mais qui en dépend - à corriger si un chemin bouge
   tâche Windows « Backup Firestore Ligue Plumes »   le 9 de chaque mois à 00:09,
                     lance node outils/build/backup-firestore.mjs depuis la racine
-                    (C:\Users\mathi\Documents\0-Claude\ornitheque). Corrigée le 2026-10-04
+                    (C:\Users\mathi\Documents\0-Claude\1-App\ornitheque). Corrigée le 2026-10-04
                     par le QG ; a tourné une fois ce jour-là, résultat 0
                     (outils/backups/firestore-2026-10-04-0852.json), prochaine le 2026-10-09.
                     Créée en administrateur, la modifier
