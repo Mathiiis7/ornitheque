@@ -8,65 +8,70 @@ Arrow 2 : https://app.quiver.ai. Document de travail, à supprimer une fois le l
 
 Réglages pour les deux : **Arrow 2, effort High, 4 propositions.** Prix attendu : 0,40 à 1,20 $ chacun.
 
-### Envoi 1 sur 2 - les poses
+### Envoi 1 sur 2 - les poses (retouche n° 3)
 
-1. Joindre le fichier : `notes-privees/mascotte/mascotte-poses.svg`
+1. Joindre le fichier : `notes-privees/mascotte/retouche-2.svg` (la dernière planche, la meilleure)
 2. Copier-coller ce texte :
 
 ```text
-Redraw this kingfisher character sheet: keep the same character, the same
-five poses, the same layout and the same palette, but make it cleaner and
-more faithful to a real adult MALE common kingfisher (Alcedo atthis). This is
-a refinement of the existing drawing, not a new design.
+Refine this kingfisher character sheet and extend it to NINE poses, in a
+3 x 3 grid. Keep the same character, the same five existing poses, the same
+palette and the same flat style. This is a refinement, not a new design.
 
-CONSISTENCY, the most important rule: the five birds are the SAME bird. Every
-bird carries exactly the markings listed below, no more, no fewer. Before
-finishing, check each of the five birds against this list one by one. Do not
-add any marking that is not on the list: no dots, no speckles, no feather
-lines, no extra stripes.
+THE NINE POSES:
+1. perched in side profile (keep);
+2. looking through binoculars held with the tips of its folded wings (keep;
+   no arms, no elbow, no hand);
+3. diving head first (keep; the feet tucked against the belly, not floating);
+4. flying (keep, but fix the wings, see below);
+5. holding a small notebook in its bill (keep, but fix the body, see below);
+6. NEW: perched, holding a small silver-grey fish crosswise in its bill;
+7. NEW: happy, both wings raised high above the head, beak slightly open;
+8. NEW: puzzled, head tilted to one side, one wing tip raised to its cheek;
+9. NEW: wearing a pair of headphones over the head, eyes half closed,
+   listening.
 
-THE MARKINGS, on every bird where that part is visible:
-1. bill: long straight dagger, ENTIRELY black, about as long as the head;
-2. crown and nape: plain teal;
+CONSISTENCY, the most important rule: the nine birds are the SAME bird. Same
+body size, same belly, same head size, same bill length. Every bird carries
+exactly these markings, where that part is visible, and no others: no dots,
+no speckles, no feather lines.
+1. bill: long straight dagger, entirely black, about as long as the head;
+2. head: SMOOTH and ROUNDED, plain teal crown and nape. NO crest, no spiky or
+   jagged nape: a kingfisher has a sleek round head;
 3. a small orange spot between the bill and the eye;
 4. an orange ear patch behind the eye;
 5. a teal moustache stripe under the ear patch, from the bill base to the neck;
 6. a white patch on the side of the neck, and a white throat;
-7. wing: plain teal, with one light-teal band along its leading edge;
-8. a light-teal stripe down the middle of the back, when the back is visible;
-9. a short dark-teal tail;
-10. orange underparts from the breast to the vent;
-11. short vermilion legs and feet, attached to the belly.
+7. folded wing: plain teal with one light-teal band along its leading edge,
+   sitting HIGH on the side of the body, covering the back: no orange above
+   the wing;
+8. a short dark-teal tail;
+9. orange underparts from the breast to the vent;
+10. short vermilion legs and feet, attached under the belly.
 
-CLEAN-UP:
-- no gaps between shapes: adjacent colour areas meet exactly or overlap, with
-  no background showing through anywhere inside a bird, in particular between
-  the nape and the wing. Build each bird on one solid base silhouette, then
-  lay the colour areas on top;
-- confident, smooth joins, without tiny steps, notches or stray points;
-- shape: dumpy body, big head, short tail.
+FIX THE FLYING POSE: each wing shows both colours. Along the leading edge and
+the top of the wing, a teal band; the inner half of the wing, near the body,
+rufous orange; only the tips of the long flight feathers grey-brown with pale
+edges, covering less than a third of the wing. The two wings match.
 
-THE FLYING POSE: both wings are raised above the back and BOTH show their
-underside, the same way, so the two wings match. On each wing: the inner
-part, near the body and along the leading edge, is rufous and covers about a
-third of the wing; the long flight feathers are grey-brown with pale grey
-edges. No teal on the underside of the wings.
+FIX THE NOTEBOOK POSE: the same slim body as the perched bird, not a bigger
+belly; the wing sits high on the side, like in pose 1.
 
-THE BINOCULARS POSE: the bird has NO arms. It holds the binoculars up to its
-eyes with the tips of its folded wings, the long flight feathers curling
-around the binoculars like feathered fingers. The wings keep the shape and
-the colours of a wing all the way from the shoulder to the tip: no elbow, no
-forearm, no hand.
+CLEAN-UP: no gaps between shapes, in particular between the nape and the back
+and between the head and the wing: adjacent colour areas meet exactly or
+overlap. Build each bird on one solid base silhouette, then lay the colour
+areas on top. Smooth joins, no tiny steps or stray points.
 
 KEEP: flat vector, solid colours, no outlines, no gradients, no shading, no
 text. The eye stays a white circle with a black dot. Palette exactly: #0B7C77
 teal, #2BBCB0 light teal, #086660 dark teal, #C05E33 orange, #F0EEE6
 off-white, #15201E black, #33403D bill highlight, #C8452B vermilion for the
-legs only, #9E4523 rufous for the underwing coverts, #6B645C grey-brown and
-#B7B2AA pale grey for the underside of the flight feathers, #B98D22 gold for
-the binoculars and notebook. Transparent background.
+legs only, #9E4523 rufous for the underwing, #6B645C grey-brown and #B7B2AA
+pale grey for the flight feather tips, #B98D22 gold for the binoculars and
+the notebook, #9AA3A6 silver-grey for the fish, #15201E for the headphones.
+Transparent background.
 VARIATIONS: four proposals, each a faithful refinement; vary only how the
-shapes are joined, never the poses, the markings or the character.
+new poses are drawn, never the character.
 ```
 
 ### Envoi 2 sur 2 - la tuile du logo
@@ -124,6 +129,7 @@ L'outil et ses prix : `~/Documents/0-Claude/0-QG/qg/savoir/quiver-ai.md`. Le nom
 | Style | trouvé : l'oiseau simple en formes primitives (section 4) |
 | Espèce | **le martin-pêcheur mâle**, choisi le 2026-10-05 |
 | Premier envoi | fait : poses de la planche 4 et tuile de la planche 3 retenues, assemblées et recalées sur la charte par `outils/build/mascotte.mjs` |
+| Retouche High n° 2 | `notes-privees/mascotte/retouche-2.svg`, bien meilleure (plus de points, même oiseau, jumelles du bout des ailes). Restait : ailes en vol trop grises, aile basse et gros ventre de l'oiseau au carnet, nuque en dents de scie, raccords nuque/dos, pattes de la plongée détachées. Retouche n° 3 : ces corrections + 4 poses (poisson, content, perplexe, casque) |
 | Retouche High n° 1 | `notes-privees/mascotte/retouche-1.svg`, refusée : points bleus présents sur certains oiseaux et pas d'autres, une aile bleue et une grise en vol, trous revenus (nuque/aile, pattes de la plongée détachées). Demande refaite : liste fermée de 11 marques, aucun point, les deux ailes par-dessous en vol |
 | Logo en place | la huppe, tant que rien d'autre n'est arrêté |
 | Prochaine étape | les deux envois en High, en haut de ce document |
