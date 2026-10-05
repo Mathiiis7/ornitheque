@@ -52,6 +52,12 @@ part, near the body and along the leading edge, is rufous and covers about a
 third of the wing; the long flight feathers are grey-brown with pale grey
 edges. No teal on the underside of the wings.
 
+THE BINOCULARS POSE: the bird has NO arms. It holds the binoculars up to its
+eyes with the tips of its folded wings, the long flight feathers curling
+around the binoculars like feathered fingers. The wings keep the shape and
+the colours of a wing all the way from the shoulder to the tip: no elbow, no
+forearm, no hand.
+
 KEEP: flat vector, solid colours, no outlines, no gradients, no shading, no
 text. The eye stays a white circle with a black dot. Palette exactly: #0B7C77
 teal, #2BBCB0 light teal, #086660 dark teal, #C05E33 orange, #F0EEE6
