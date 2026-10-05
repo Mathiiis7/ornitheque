@@ -1,8 +1,8 @@
 # L’Ornithèque
 
-Webapp de comparaison de listes d'observations d'oiseaux entre amis, basée sur les données eBird / Cornell Status & Trends / xeno-canto / Avonet.
+Webapp de comparaison de listes d'observations d'oiseaux entre amis, basée sur les données eBird, GBIF, xeno-canto et AVONET.
 
-Deployée sur GitHub Pages : [mathiiis7.github.io/ornitheque](https://mathiiis7.github.io/ornitheque/)
+Déployée sur GitHub Pages : [mathiiis7.github.io/ornitheque](https://mathiiis7.github.io/ornitheque/)
 
 ## Structure du projet
 
@@ -23,7 +23,7 @@ ornitheque/
 ├── data/                   les données servies au client
 │   ├── regions-<cc>-simplified.json   contours régionaux de 48 pays
 │   ├── avonet_traits.json  traits écologiques de 10 584 espèces
-│   ├── range-index.json    l'index des cartes de répartition
+│   ├── cartes-index.json   l'index des cartes de répartition
 │   └── countries/<cc>/     fréquences et abondances, pays par pays
 │
 ├── demo/                   la démo du portfolio, générée
@@ -42,12 +42,12 @@ Deux choses ne sont pas dans cette arborescence, et c'est voulu. **Les cartes de
 répartition** (`cartes/`, 82,7 Mo) vivent dans le dépôt séparé
 [ornitheque-data](https://github.com/Mathiiis7/ornitheque-data) : les garder ici aurait
 ralenti chaque opération sur le code. **`notes-privees/`** reste hors du dépôt, exclu par
-`.gitignore` — le dépôt est public.
+`.gitignore` : le dépôt est public.
 
 ## Sources de données
 
 - **eBird API v2** : liste d'espèces par région, catégorie exotique
-- **eBird bar chart** : fréquence d'observation mensuelle par région (via scraping cookie session)
+- **eBird bar chart** : fréquence d'observation mensuelle par région, téléchargée depuis eBird
 - **Observations eBird publiées sur GBIF** (CC BY 4.0) : les cartes de répartition, méthode dans `docs/sources-cartes.md`
 - **xeno-canto API v3** : sons (chants + cris) par espèce
 - **Avonet dataset** (Tobias et al. 2022) : traits écologiques et morphologiques
@@ -57,7 +57,7 @@ ralenti chaque opération sur le code. **`notes-privees/`** reste hors du dépô
 ## Commandes utiles
 
 ```bash
-# Regenerer la donnée par pays (nécessite cookie eBird actif)
+# Regénérer la donnée par pays (session eBird ouverte requise)
 EBIRD_COOKIE="..." node outils/build/download-bar-charts-regional.mjs
 
 # Regenerer les cartes de répartition (dans ../ornitheque-data/cartes)
@@ -77,6 +77,3 @@ node outils/build/enrich-redlist-global-full.mjs
 - **PWA** : installable sur écran d'accueil (mobile + desktop)
 - **Lazy loading** : les grosses data (freq régionale, avonet traits, range maps) sont fetch à la demande
 
-## Dashboard interne
-
-Documentation vivante de tout ce qui existe / à faire : [dashboard](https://claude.ai/code/artifact/437344f3-b6f8-404d-aa00-c40e010402ba)

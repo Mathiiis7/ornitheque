@@ -192,6 +192,16 @@ function listeDe(m){
     out.push({ k: sci, c: FR_NAMES[sci], s: sci, d, l: lieu.l, o: 1, f: 1, co: 'FR',
                la: lieu.la, lo: lieu.lo, a: Date.UTC(annee, mois - 1, jour) });
   }
+  // L espece « la plus rare » de la fiche doit etre dans la liste : le Classement affichait
+  // la Chevechette de Hugo, que « Qui a vu quoi » ne lui donnait pas (vu le 2026-10-06).
+  // Elle prend la place de la derniere tiree, pour garder le compte.
+  if(m.rareSci && !out.some(x => x.k === m.rareSci)){
+    if(!DEP[m.rareDep]) throw new Error('departement inconnu : ' + m.rareDep);
+    const { la, lo } = pointDans(DEP[m.rareDep], graineDe(m.rareDep) + 7001 + graine * 7919);
+    const a = Date.UTC(m.rareAn, 4, 15);
+    out[out.length - 1] = { k: m.rareSci, c: FR_NAMES[m.rareSci], s: m.rareSci,
+      d: m.rareAn + '-05-15', l: DEP[m.rareDep].nom, o: 1, f: 1, co: 'FR', la, lo, a };
+  }
   return out;
 }
 
@@ -203,21 +213,21 @@ const MAINTENANT = Date.UTC(2026, 8, 28);     // date figee : le fichier ne doit
 const ts = ms => ({ __horodatage: ms });      // remplace par un vrai objet dans donnees.js
 
 const MEMBRES = [
-  { id: UID_MOI,      nom: 'Vous',      especes: 212, graine: 1, statut: 'En quête du Guêpier',
+  { id: UID_MOI,      nom: 'Alex',      especes: 212, graine: 1, statut: 'En quête du Guêpier',
     but: 'Passer les 250 espèces cette année', reve: 'Le Gypaète barbu en vol',
-    rare: 'Marouette ponctuée, Brenne, 2023', avatar: '🦅', jours: 400, chezSoi: 'FR-CVL-36' },   // la Brenne de sa rareté
+    rare: 'Marouette ponctuée, Brenne, 2023', rareSci: 'porzana porzana', rareDep: 'FR-CVL-36', rareAn: 2023, avatar: '🦅', jours: 400, chezSoi: 'FR-CVL-36' },   // la Brenne de sa rareté
   { id: 'demo-claire', nom: 'Claire',   especes: 318, graine: 2, statut: 'Camargue tous les week-ends',
     but: 'Finir les limicoles de la façade atlantique', reve: 'Une Aigrette des récifs',
-    rare: 'Bécassine double, baie de Somme, 2024', avatar: '🦩', jours: 900, chezSoi: 'FR-PAC-13' },   // la Camargue
+    rare: 'Bécassine double, baie de Somme, 2024', rareSci: 'gallinago media', rareDep: 'FR-HDF-80', rareAn: 2024, avatar: '🦩', jours: 900, chezSoi: 'FR-PAC-13' },   // la Camargue
   { id: 'demo-hugo',   nom: 'Hugo',     especes: 274, graine: 3, statut: 'Sorties au petit matin',
     but: 'Photographier les dix pics de France', reve: 'Le Grand Tétras',
-    rare: 'Chevêchette d’Europe, Jura, 2022', avatar: '🦉', jours: 700, chezSoi: 'FR-BFC-39' },   // le Jura
+    rare: 'Chevêchette d’Europe, Jura, 2022', rareSci: 'glaucidium passerinum', rareDep: 'FR-BFC-39', rareAn: 2022, avatar: '🦉', jours: 700, chezSoi: 'FR-BFC-39' },   // le Jura
   { id: 'demo-lina',   nom: 'Lina',     especes: 156, graine: 4, statut: 'Débutante assumée',
     but: 'Reconnaître dix chants sans tricher', reve: 'Un Martin-pêcheur de près',
-    rare: 'Torcol fourmilier, jardin, 2025', avatar: '🐦', jours: 120, chezSoi: 'FR-NAQ-33' },
+    rare: 'Torcol fourmilier, jardin, 2025', rareSci: 'jynx torquilla', rareDep: 'FR-NAQ-33', rareAn: 2025, avatar: '🐦', jours: 120, chezSoi: 'FR-NAQ-33' },
   { id: 'demo-samir',  nom: 'Samir',    especes: 389, graine: 5, statut: 'Compte les Pouillots',
     but: 'Boucler les 400', reve: 'Une Sittelle corse chez elle',
-    rare: 'Rollier d’Europe, Crau, 2021', avatar: '🐧', jours: 1500, chezSoi: 'FR-BRE-29' },
+    rare: 'Rollier d’Europe, Crau, 2021', rareSci: 'coracias garrulus', rareDep: 'FR-PAC-13', rareAn: 2021, avatar: '🐧', jours: 1500, chezSoi: 'FR-BRE-29' },
 ];
 
 const DONNEES = {};
@@ -243,11 +253,11 @@ for(const id of ['demo-claire', 'demo-samir']){
 
 const CHAT = [
   ['demo-claire', 'Claire', 'Guêpiers de retour sur la carrière ce matin, une quinzaine 🐝', 260],
-  ['demo-samir',  'Samir',  'Jalouse. Moi c’est pouillot véloce, pouillot véloce et pouillot véloce.', 240],
+  ['demo-samir',  'Samir',  'Jaloux. Moi c’est pouillot véloce, pouillot véloce et pouillot véloce.', 240],
   ['demo-hugo',   'Hugo',   'Quelqu’un a déjà coché la Chevêchette ailleurs que dans le Jura ?', 180],
   ['demo-lina',   'Lina',   'Je viens de dépasser les 150 ! Merci pour les conseils sur les chants 🙏', 120],
   ['demo-claire', 'Claire', 'Bravo Lina 🎉 la suite c’est les limicoles, et là ça pique', 110],
-  [UID_MOI,       'Vous',   'Sortie Camargue le week-end prochain si quelqu’un veut se joindre', 40],
+  [UID_MOI,       'Alex',   'Sortie Camargue le week-end prochain si quelqu’un veut se joindre', 40],
 ];
 CHAT.forEach(([uid, nom, texte, minutes], i) => {
   DONNEES['leagues/' + LIGUE + '/chat/msg-' + (i + 1)] =

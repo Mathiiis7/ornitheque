@@ -77,9 +77,10 @@ propres polices. On n'embarque pas son italique : les noms latins restent en Pal
 texte ont été refusés : on garde ces tailles.
 
 **Ce qui se lit fait 14 px écrits au minimum** (étiquettes, notes, en-têtes de colonnes), 15 px pour
-un intitulé de groupe : décidé le 2026-10-05, Mathis trouvait les 12-13 px « très petits ». Les pages
-revues depuis la suivent (Ma liste, Classement) ; les autres descendent encore à 11 px, à reprendre
-au fil de la revue.
+un intitulé de groupe : décidé le 2026-10-05, Mathis trouvait les 12-13 px « très petits ». Depuis
+le 2026-10-06, toutes les pages la suivent. Restent plus petits, exprès : les vignettes du Birdydex
+(nom 12,5 px, latin 10 px, il n'y a pas la place) et les pastilles de rareté du filtre (« Tout »,
+« Vide », 12 px dans 22 px de haut). Les petites étiquettes en capitales font 13 px.
 
 **Le modèle de tout tableau est celui des espèces de Ma liste** (`.mylist-th`, `.mylist-row`) :
 en-têtes et étiquettes en 13 px gras, capitales, espacement 0,4 px, `--ink-3` ; texte en 14 px, le
@@ -110,6 +111,39 @@ textes en 800 y sont descendus. Seules les pastilles rondes chiffrées (rareté,
   s'ajoute à droite d'un titre doit rester moins haut que lui.
 - **Pas d'animation en changeant de page** : la page s'affiche d'un coup. Le fondu glissé du
   Classement a été retiré le 2026-10-05.
+
+## Schémas récurrents
+
+Relevés et alignés le 2026-10-06 en mesurant les douze pages de la démo, page par page : un même
+élément avait jusqu'à cinq tailles selon la page. **Un élément qui revient a le même aspect partout**,
+et tout nouvel élément qui revient s'ajoute ici. Les valeurs sont écrites dans `styles.css`, les
+règles communes dans le bloc « Schémas communs », juste avant celui du doigt.
+
+| Schéma | Où il revient | Valeurs |
+|---|---|---|
+| **Police** | partout | `--sans` pour tout le texte ; jamais `system-ui` écrit en dur, ni la police du navigateur (Arial) ou de Leaflet (Helvetica) : `button, input, select, textarea` et `.leaflet-container` héritent. Codes et noms de fichiers en `--mono`. |
+| **Titre de page** | les douze onglets | voir plus haut ; même hauteur partout, 165 px d'écran mesurés le 2026-10-06. Le panneau de l'À propos avait 24 px de marge en haut au lieu de 20 : son titre tombait 3,4 px plus bas. |
+| **Premier bloc sous le titre** | toutes les pages | **12 px** sous le titre (Trophées en avait 14, À propos 16, Profil 18). |
+| **Phrase d'introduction** | Ma liste, Fil, Requêtes, Classement | 14 px, 400, `--ink-3`, juste sous le titre. |
+| **Texte d'aide, état vide** (`.help`, « Aucune photo… ») | Trophées, Photos, Carte, Quiz, Tchat, À propos | 14 px, `--ink-3`. Plus aucune taille écrite à la main par-dessus. |
+| **Ligne de méta** (auteur, date, heure, compteur) | Fil, Tchat, Requêtes, Quiz, Carte | 14 px, `--ink-3` ; le nom de l'auteur en 600, `--ink-2`. |
+| **Petite étiquette en capitales** | en-têtes de tableaux, AVATAR, RARETÉ, NIVEAU, EN COURS, titres des cartes de la fiche | 13 px, 700, capitales, espacement 0,4 px, `--ink-3`. Le modèle est `.mylist-th`. |
+| **Contrôle de filtre** : liste déroulante (`.filt-sel`, `.cp-btn`), choix collés (`.seg`), jetons de personne (`.whochip`, `.person-chip`), modes du Quiz, bouton Filtres | Classement, Birdydex, Carte, Trophées, Quiz, Fil | **34 px de haut**, texte 14 px en 600. Coins de 9 px pour les rectangles, ronds pour les jetons. Avant : de 27 à 37 px, de 12 à 13 px. |
+| **Choisir une personne** | Trophées, Classement (jetons), Carte, Fil (liste) | premier choix « Tout le monde » partout (la Carte disait « Toutes les personnes ») ; soi-même suivi de « (toi) ». |
+| **Choisir une rareté** | Carte, Fil, Birdydex | toujours de 1 (le plus commun) à 10 (le plus rare) ; la Carte allait de 10 à 1. |
+| **Petit titre de bloc** | Ma liste, Profil, À propos | `.bloc-titre` : Source Serif 4, 17 px, 600. Les titres de l'À propos étaient en Segoe UI 16 px. Les emojis devant les titres de blocs restent (décidé par Mathis le 2026-10-06). |
+
+## Ton des textes
+
+- **On tutoie, partout** (décidé par Mathis le 2026-10-06) : « Charge ta liste », « Ton message… »,
+  « Alex (toi) ». L'appli mélangeait « tu » (Ma liste, Quiz, À propos) et « vous » (Profil, Photos,
+  Trophées, Carte, connexion).
+- Pas d'anglicisme quand le français existe (« repli » et non « fallback », « Données collectées »
+  et non « Data collectée »). Les mots du métier restent : life list, birder, bar chart.
+- Pas de tiret cadratin : un trait d'union ou deux-points.
+- Ni nom de personne réelle ni blague privée dans un texte de l'appli ou dans le code : tout est
+  public, sur le site comme sur GitHub. Les trophées en pause, qui en contenaient, vivent dans
+  `notes-privees/TROPHEES-EN-PAUSE.md`.
 
 ## Composants
 

@@ -1,3 +1,18 @@
+# FAIT le 2026-10-06 (commité, PAS poussé) : relecture « recruteur » et schémas communs, v720, app.js?v=297
+Suite de la revue : la prochaine page qu'il choisira. Il regarde en local, puis on pousse.
+
+- Infos privées retirées du public : trophées en pause (nom complet d'un ami) déplacés dans
+  notes-privees/TROPHEES-EN-PAUSE.md, « Maël ne l'a pas » ôté du Pic noir, prénoms du banc de perf
+  neutres, README remis à jour (plus de Cornell S&T ni de lien vers un tableau privé). L'historique
+  git garde l'ancienne version : le réécrire reste son choix (non fait).
+- Toute l'appli au tutoiement ; visiteur de la démo renommé Alex (« Alex (toi) ») ; espèces « la plus
+  rare » des fiches de la démo ajoutées à leurs listes ; « Jalouse » -> « Jaloux » (Samir).
+- À propos : ni « par email » sans adresse, ni double authentification invérifiable ; anglicismes ôtés.
+- Schémas alignés sur toutes les pages, écrits dans la charte (section « Schémas récurrents ») :
+  police unique, 14 px minimum, contrôles de filtre à 34 px, 12 px sous le titre, raretés 1 -> 10.
+- Emojis des titres de blocs et du menu : GARDÉS (son choix).
+
+---
 # Page Classement TERMINÉE le 2026-10-05 (validée par Mathis), EN LIGNE - v719, app.js?v=296
 Suite de la revue page par page : la prochaine page qu'il choisira.
 
@@ -253,7 +268,7 @@ Décisions :
   descendent pas plus bas : il faut le téléchargement SQL.
 
 Où on en est :
-- compte GBIF créé par Mathis (identifiant piebavarde49). Je n'utilise jamais son mot de passe :
+- compte GBIF créé par Mathis (identifiant dans notes-privees, pas ici : ce fichier est public). Je n'utilise jamais son mot de passe :
   c'est LUI qui lance la demande, curl lui demande le mot de passe ;
 - requête prête et validée par GBIF : `notes-privees/essai-cartes/gbif-requete.json`
   (espèce × mois × case de 0,25° via GBIF_DMSGCode(900), eBird seul, depuis 2015) ;

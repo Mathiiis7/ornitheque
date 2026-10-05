@@ -2654,7 +2654,7 @@ function renderMembers(){
     return `<div class="pcard${p.isMe?' is-me':''}${online?' is-online':''}" style="--series:var(--s${p.si})">
       <div class="pcard-avatar-wrap">${_avatarHtml(p.avatar||'', p.name||'?', 44)}${online?'<span class="pcard-online-dot" title="en ligne"></span>':''}</div>
       <div class="pcard-body">
-        <div class="pcard-name">${esc(p.name)}${p.isMe?'<span class="youtag">vous</span>':''}</div>
+        <div class="pcard-name">${esc(p.name)}${p.isMe?'<span class="youtag">toi</span>':''}</div>
         ${statusLine}
         <div class="pcard-stats">
           <span class="pcard-count">${nb}</span> <span class="pcard-unit">espèces</span>
@@ -2724,7 +2724,7 @@ function ouvrirFicheJoueur(uid){
       + '<button type="button" class="cp-modal-close" aria-label="Fermer">×</button></div>'
     + '<div style="display:flex; align-items:center; gap:12px; padding:2px 0 10px;">'
       + _avatarHtml(p.avatar || '', p.name || '?', 52)
-      + '<div><div style="font:700 17px system-ui;">' + esc(p.name) + (p.isMe ? ' <span class="youtag">vous</span>' : '') + '</div>'
+      + '<div><div style="font:700 17px var(--sans);">' + esc(p.name) + (p.isMe ? ' <span class="youtag">toi</span>' : '') + '</div>'
       + (p.status ? '<div style="font-size:12.5px; color:var(--ink-2); margin-top:2px;">' + esc(p.status) + '</div>' : '')
       + '</div></div>'
     + '<div class="cp-list">'
@@ -2866,7 +2866,7 @@ function parseDate(s){
 // page, que Mathis trouvait hors du style du site.
 function _bulleTri(mode){
   if(mode==='count') return '<p>Classement par <b>nombre d\'espèces</b> observées, sans pondération.</p>';
-  if(mode==='league') return '<p>Points = somme de <b>100 ÷ (nombre d\'amis ayant vu l\'espèce)</b>. Vue par vous seul = 100 ; vue par tous = peu.</p>';
+  if(mode==='league') return '<p>Points = somme de <b>100 ÷ (nombre d\'amis ayant vu l\'espèce)</b>. Vue par toi seul = 100 ; vue par tous = peu.</p>';
   // Bareme semantique par tier : la part des listes eBird du pays qui mentionnent
   // l'espece sur 2019-2026, moyenne des 48 quinzaines ponderee par le nombre de listes
   // de chacune.
@@ -2919,7 +2919,7 @@ function renderBoard(){
     </tr></thead>
     <tbody>${ranked.map((p,i)=>`<tr class="${i<3?'podium-'+(i+1):''}">
       <td class="c-rank">${i===0?'★':(i+1)}</td>
-      <td class="who-cell" style="--series:var(--s${p.si})"><span class="who-in"><span class="dot"></span>${isOnline(p.id)?'<span class="pname-dot" title="en ligne"></span>':''}<button type="button" class="who-name" data-fiche-joueur="${esc(p.id)}" title="Voir la fiche de ${esc(p.name)}">${esc(p.name)}</button>${p.isMe?'<span class="youtag">vous</span>':''}</span></td>
+      <td class="who-cell" style="--series:var(--s${p.si})"><span class="who-in"><span class="dot"></span>${isOnline(p.id)?'<span class="pname-dot" title="en ligne"></span>':''}<button type="button" class="who-name" data-fiche-joueur="${esc(p.id)}" title="Voir la fiche de ${esc(p.name)}">${esc(p.name)}</button>${p.isMe?'<span class="youtag">toi</span>':''}</span></td>
       ${scoreTd(p)}
       <td class="c-txt">${parseInt(p.goal,10)>0 ? `${p.total} / ${parseInt(p.goal,10)}` : cell(p.goal)}</td>
       <td class="c-txt">${cell(p.fav)}</td>
@@ -3072,7 +3072,7 @@ function renderMatrix({universe,N}){
   if(plKey!==lastPlayerKey){
     lastPlayerKey=plKey;
     const boxMain=$('#playerMainChips'), boxCmp=$('#playerCompareChips');
-    const chipHtml = (p, on, extraCls) => `<button type="button" class="person-chip${on?' on':''}${extraCls||''}" data-player="${esc(p.id)}" style="--series:var(--s${p.si})"><span class="dot"></span>${esc(p.name)}${p.isMe?' (vous)':''}</button>`;
+    const chipHtml = (p, on, extraCls) => `<button type="button" class="person-chip${on?' on':''}${extraCls||''}" data-player="${esc(p.id)}" style="--series:var(--s${p.si})"><span class="dot"></span>${esc(p.name)}${p.isMe?' (toi)':''}</button>`;
     if(boxMain) boxMain.innerHTML = state.people.map(p=>chipHtml(p, state.playerMain===p.id, state.playerMain===p.id?' main':'')).join('');
     // Panel « À comparer » : on masque la personne deja selectionnee comme principale
     // (se comparer a soi-meme n'a pas de sens). Message vide si la principale est le
@@ -3688,9 +3688,9 @@ const TROPHIES = [
     info:s=>s.hotPhotos>0 ? `${s.hotPhotos} photo${s.hotPhotos>1?'s':''} qui claque${s.hotPhotos>1?'nt':''}` : '',
   }),
   // -- Trophees one-shot (binaires, pas de tiers) --
-  { theme:'groupe',      icon:ICONS.picNoirBadge, name:'Pic noir', desc:'Observer le Pic noir (Maël ne l’a pas)', test:s=>s.blackWoodpecker, exotic:true, speciesFamilyKey:'picNoir', list:s=>s.blackWoodpecker ? [{ name:frName('dryocopus martius','Pic noir'), sci:'dryocopus martius', owned:true }] : [] },
+  { theme:'groupe',      icon:ICONS.picNoirBadge, name:'Pic noir', desc:'Observer le Pic noir', test:s=>s.blackWoodpecker, exotic:true, speciesFamilyKey:'picNoir', list:s=>s.blackWoodpecker ? [{ name:frName('dryocopus martius','Pic noir'), sci:'dryocopus martius', owned:true }] : [] },
   { theme:'groupe',      icon:ICONS.pelagic,    name:'Oiseau pélagique',  desc:'Observer un albatros, un puffin, un pétrel ou un océanite (Procellariiformes)',      test:s=>s.hasPelagic,     exotic:true, speciesFamilyKey:'pelagics',     list:s=>[...(s.pelagicsSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
-  { theme:'groupe',      icon:ICONS.jaseur,     name:'Jaseur',            desc:'Observer un jaseur (Bombycillidae) — boréal, d\'Amérique ou du Japon',                test:s=>s.hasWaxwing,     exotic:true, speciesFamilyKey:'waxwings',     list:s=>[...(s.waxwingsSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
+  { theme:'groupe',      icon:ICONS.jaseur,     name:'Jaseur',            desc:'Observer un jaseur (Bombycillidae) : boréal, d\'Amérique ou du Japon',                test:s=>s.hasWaxwing,     exotic:true, speciesFamilyKey:'waxwings',     list:s=>[...(s.waxwingsSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
   { theme:'groupe',      icon:ICONS.engoulevent, name:'Engoulevent & cousins', desc:'Observer un engoulevent, un ibijau, un podarge ou un guacharo',                test:s=>s.hasNightjar,    exotic:true, speciesFamilyKey:'nightjars',    list:s=>[...(s.nightjarsSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
   { theme:'groupe',      icon:ICONS.pieGrieche, name:'Pie-grièche',       desc:'Observer une pie-grièche (Laniidae)',                                                test:s=>s.hasShrike,      exotic:true, speciesFamilyKey:'shrikes',      list:s=>[...(s.shrikesSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
   { theme:'groupe',      icon:ICONS.colibri,   name:'Colibri',            desc:'Observer un colibri (Trochilidae)',                                                  test:s=>s.hasHummingbird, exotic:true, speciesFamilyKey:'hummingbirds', list:s=>[...(s.hummingbirdsSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
@@ -3704,16 +3704,9 @@ const TROPHIES = [
       ...MANCHOT_CATALOG.filter(m=>s.manchotOwnedSet && s.manchotOwnedSet.has(m.sci)).map(m=>({ name:m.name, sci:m.sci, owned:true })),
     ] },
 ];
-// Trophees speciaux mis de cote le 2026-10-03, a la demande de Mathis : ils ne sont plus a
-// jour, on les reprendra avec la refonte de la page des trophees. Hors de TROPHIES, ils ne
-// s'affichent plus, ne comptent plus dans le total et ne recoivent plus de votes.
-const TROPHEES_EN_PAUSE = [
-  { theme:'communaute',  icon:ICONS.kimono, name:"T'ia mis le kimono", desc:"Faire une observation avec le T-shirt Merlin (preuve à l'appui)", special:'vote', voteId:'kimono', voteThreshold:3, test:s=>(s.kimonoVotes||0)>=3 },
-  { theme:'communaute',  icon:ICONS.mort, name:'Le Nécrophile', desc:'Observer un oiseau décédé #ripstayproud (preuve demandée)', special:'vote', voteId:'necrophile', voteThreshold:3, test:s=>(s.necrophileVotes||0)>=3 },
-  { theme:'localisation',icon:ICONS.huitre, name:'Bourriche d’huître', desc:'Observer un oiseau à La Teste-de-Buch', test:s=>s.locTeste },
-  { theme:'groupe',      icon:ICONS.kangourou, name:'Wallaby', desc:'Observer le Martin-chasseur à dos de feu', test:s=>s.hasFireKingfisher },
-  { theme:'communaute',  icon:ICONS.bebe, name:'Gros Bébé', desc:'Observer des oiseaux avec Samuel Fillion (preuve demandée)', special:'vote', voteId:'grosBebe', voteThreshold:3, voteSelfCheck:()=>/sam/i.test(myMemberName()||''), test:s=>(s.grosBebeVotes||0)>=3 },
-];
+// Trophees speciaux mis de cote le 2026-10-03, a la demande de Mathis. Leur definition est
+// gardee hors du depot (notes-privees/TROPHEES-EN-PAUSE.md) depuis le 2026-10-06 : elle
+// nommait de vrais amis, et ce fichier est public. Leurs statistiques restent calculees ici.
 const OWL_G=/^(strix|otus|athene|asio|bubo|tyto|aegolius|glaucidium|surnia|ketupa)$/;
 const RAPTOR_G=/^(accipiter|astur|buteo|aquila|circus|milvus|falco|pernis|circaetus|pandion|haliaeetus|gyps|aegypius|gypaetus|neophron|clanga|hieraaetus|elanus|torgos)$/;
 // Anatidae strict : canards, oies, cygnes, tadornes, harles, fuligules, macreuses...
@@ -5388,12 +5381,12 @@ function renderTrophies(data){
   const people = state.people;
   if(!people.length){
     if(who) who.innerHTML='';
-    grid.innerHTML='<p class="help" style="margin-top:0;">Chargez votre liste pour commencer à débloquer des trophées 🏆</p>';
+    grid.innerHTML='<p class="help" style="margin-top:0;">Charge ta liste pour commencer à débloquer des trophées 🏆</p>';
     summary.textContent=''; return;
   }
   let sel = people.find(p=>p.id===trophyPlayerId) || people.find(p=>p.isMe) || people[0];
   trophyPlayerId = sel.id;
-  if(who) who.innerHTML = people.map(p=>`<button class="whochip ${p.id===sel.id?'on':''}" data-id="${esc(p.id)}" style="--series:var(--s${p.si})"><span class="dot"></span>${esc(p.name)}${p.isMe?' (vous)':''}</button>`).join('');
+  if(who) who.innerHTML = people.map(p=>`<button class="whochip ${p.id===sel.id?'on':''}" data-id="${esc(p.id)}" style="--series:var(--s${p.si})"><span class="dot"></span>${esc(p.name)}${p.isMe?' (toi)':''}</button>`).join('');
   if(!_statsPretes(people)) return;
   const s=statsFor(sel, data.N);
   let unlocked=0;
@@ -5612,7 +5605,7 @@ function renderTrophies(data){
       const votes = voterUids?.size || 0;
       stateTxt = ok ? `Validé ✓ · ${votes} votes` : `${votes} / ${threshold} votes`;
       const canSelfVote = t.voteSelfCheck ? t.voteSelfCheck() : false;
-      if(sel.id === myUid && !canSelfVote){ extra = `<div class="vote-note">🗳️ Les autres votent pour vous</div>`; }
+      if(sel.id === myUid && !canSelfVote){ extra = `<div class="vote-note">🗳️ Les autres votent pour toi</div>`; }
       else if(myMemberName()){
         const iVoted = voterUids?.has(myUid);
         extra = `<button class="vote-btn${iVoted?' voted':''}" data-vote-target="${esc(sel.id)}" data-vote-trophy="${esc(voteId)}">${iVoted?'✓ Voté - retirer':'Valider ✅'}</button>`;
@@ -5714,7 +5707,7 @@ function renderTrophies(data){
         <div class="tro-oneshots-grid">${oneShotCards}</div>
       </div>` : ''}
     </div>`;
-  const label = sel.isMe ? 'Vous avez' : esc(sel.name)+' a';
+  const label = sel.isMe ? 'Tu as' : esc(sel.name)+' a';
   summary.textContent = `${label} débloqué ${unlocked} trophée${unlocked>1?'s':''} sur ${TROPHIES.length}`;
 }
 
@@ -6247,8 +6240,8 @@ function reactionBar(target, opts){
   if(rm){
     const byUid=new Map(realPeople.map(p=>[p.id,p.name]));
     for(const [emoji,voters] of rm){ if(voters.size>0 && !excludeEmojis.has(emoji)){ const mine=voters.has(myUid);
-      const names=[...voters].map(uid=>uid===myUid?'vous':(byUid.get(uid)||'Invité'))
-        .sort((a,b)=>a==='vous'?-1:b==='vous'?1:a.localeCompare(b,'fr'));
+      const names=[...voters].map(uid=>uid===myUid?'toi':(byUid.get(uid)||'Invité'))
+        .sort((a,b)=>a==='toi'?-1:b==='toi'?1:a.localeCompare(b,'fr'));
       const tip = names.join(', ');
       chips+=`<button class="react-chip${mine?' mine':''}" data-target="${esc(target)}" data-emoji="${esc(emoji)}" title="${esc(tip)}">${emoji} ${voters.size}</button>`; } }
   }
@@ -6262,7 +6255,7 @@ function heartButton(target){
   const mine = !!(myUid && voters?.has(myUid));
   const byUid = new Map(realPeople.map(p=>[p.id,p.name]));
   const tip = voters && voters.size
-    ? [...voters].map(uid=>uid===myUid?'vous':(byUid.get(uid)||'Invité')).sort((a,b)=>a==='vous'?-1:b==='vous'?1:a.localeCompare(b,'fr')).join(', ')
+    ? [...voters].map(uid=>uid===myUid?'toi':(byUid.get(uid)||'Invité')).sort((a,b)=>a==='toi'?-1:b==='toi'?1:a.localeCompare(b,'fr')).join(', ')
     : (myUid ? 'Aimer cette photo' : 'Connecte-toi pour aimer');
   const disabled = myUid ? '' : ' disabled';
   return `<button class="heart-btn${mine?' liked':''}" data-heart-target="${esc(target)}" title="${esc(tip)}"${disabled}>`
@@ -6381,7 +6374,7 @@ function _setModalImage(previewSrc, fullSpec){
 function renderPhotos(){
   const grid=$('#photoGrid'); if(!grid) return;
   const byId=new Map(realPeople.map(p=>[p.id,p.name]));
-  if(!photos.length){ grid.innerHTML='<p class="help" style="grid-column:1/-1;margin:0;">Aucune photo pour l\'instant. Partagez la première ! 📸</p>'; return; }
+  if(!photos.length){ grid.innerHTML='<p class="help" style="grid-column:1/-1;margin:0;">Aucune photo pour l\'instant. Partage la première ! 📸</p>'; return; }
   grid.innerHTML=photos.map(ph=>{
     const authoritative=byId.get(ph.uid);
     const nm=authoritative||ph.name||'Invité';
@@ -6558,7 +6551,7 @@ function renderFeed(){
   if(psel && pKey !== _feedPeopleKey){
     _feedPeopleKey = pKey;
     psel.innerHTML = '<option value="any">Tout le monde</option>' +
-      realPeople.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}${p.isMe?' (vous)':''}</option>`).join('');
+      realPeople.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}${p.isMe?' (toi)':''}</option>`).join('');
     if(!realPeople.some(p=>p.id===feedPerson)) feedPerson = 'any';
     psel.value = feedPerson;
   }
@@ -6605,7 +6598,7 @@ function renderFeed(){
     const filtered = feedPerson!=='any' || feedTier!=='any';
     el.innerHTML = filtered
       ? '<p class="help" style="margin:0;">Aucune observation correspondant aux filtres.</p>'
-      : '<p class="help" style="margin:0;">Aucune observation pour le moment. Chargez vos listes ! 🐦</p>';
+      : '<p class="help" style="margin:0;">Aucune observation pour le moment. Charge ta liste ! 🐦</p>';
     return;
   }
   let lastSeen=0; try{ lastSeen = +localStorage.getItem('mb-seen-feed')||0; }catch(_){ }
@@ -6642,7 +6635,7 @@ function renderRequests(){
     const time = t ? t.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'}) : '';
     const author = byUidName.get(r.uid) || r.name || 'Invité';
     return `<div class="req-item ${r.status==='done'?'done':''}">
-      <button type="button" class="req-vote ${r.iVoted?'on':''}" data-vote="${esc(r.id)}" ${myUid?'':'disabled'} title="${r.iVoted?'Retirer votre vote':'Voter pour cette idée'}">
+      <button type="button" class="req-vote ${r.iVoted?'on':''}" data-vote="${esc(r.id)}" ${myUid?'':'disabled'} title="${r.iVoted?'Retirer ton vote':'Voter pour cette idée'}">
         <span class="n">${r.votes}</span><span class="u">${r.votes<=1?'vote':'votes'}</span>
       </button>
       <div class="req-body">
@@ -7114,12 +7107,12 @@ function _fillMapSelects(pts){
   const pl=$('#mapPlayerSel'); if(pl){
     const cur=pl.value||'all';
     const names=[...new Map(pts.map(p=>[p.uid, p.who])).entries()].sort((a,b)=>a[1].localeCompare(b[1],'fr'));
-    pl.innerHTML='<option value="all">Toutes les personnes</option>'+names.map(([uid,nm])=>`<option value="${esc(uid)}">${esc(nm)}</option>`).join('');
+    pl.innerHTML='<option value="all">Tout le monde</option>'+names.map(([uid,nm])=>`<option value="${esc(uid)}">${esc(nm)}</option>`).join('');
     if([...pl.options].some(o=>o.value===cur)) pl.value=cur;
   }
   const ti=$('#mapTierSel'); if(ti){
     const cur=ti.value||'any';
-    const tiers=[...new Set(pts.map(p=>p.w))].sort((a,b)=>b-a);
+    const tiers=[...new Set(pts.map(p=>p.w))].sort((a,b)=>a-b);
     ti.innerHTML='<option value="any">Toutes les raretés</option>'+tiers.map(w=>`<option value="${w}">${w} · ${REAL_LABELS[w]||('niveau '+w)}</option>`).join('');
     if([...ti.options].some(o=>o.value===cur)) ti.value=cur;
   }
@@ -7638,7 +7631,7 @@ async function _renderModeMissing(){
   if(cnt) cnt.textContent = nObs
     ? (heavy ? `${nObs} obs · ${nSp.size} espèce${nSp.size>1?'s':''}${rarLbl?' '+rarLbl:''}${zoneLbl}${srcLbl}`
              : `${nSp.size} espèce${nSp.size>1?'s':''} à cocher${rarLbl?' ('+rarLbl+')':''}${zoneLbl}${srcLbl}`)
-    : (rarLbl ? `Aucune espèce ${rarLbl} à cocher${zoneLbl}${srcLbl}` : `Rien à cocher${zoneLbl}${srcLbl} - vous les avez toutes ! 🎯`);
+    : (rarLbl ? `Aucune espèce ${rarLbl} à cocher${zoneLbl}${srcLbl}` : `Rien à cocher${zoneLbl}${srcLbl} - tu les as toutes ! 🎯`);
   _fitLayer(_lyrMissing);
   _mapApplyFilter();
   _populateMissingResultsPanel();
@@ -7733,7 +7726,7 @@ async function _renderModeMissingGbif(){
   if(!res || !res.points){
     if(cnt){
       if(res && res.empty){
-        cnt.textContent = 'Vous avez toutes les espèces de la liste FR ! 🎯';
+        cnt.textContent = 'Tu as toutes les espèces de la liste FR ! 🎯';
       } else {
         // Hint sur le lag GBIF : mois trop récent (ce mois-ci ou mois passé sur année courante).
         const now = new Date();
@@ -7942,7 +7935,7 @@ function _drawClear(){
 function _renderDrawResultsPanel(speciesRows){
   const res = $('#mapDrawResults'); if(!res) return;
   if(!speciesRows.length){
-    res.innerHTML = '<div class="help" style="font-size:12.5px;">Aucune espèce trouvée dans cette zone. Essaie une autre période, source ou zone.</div>';
+    res.innerHTML = '<div class="help">Aucune espèce trouvée dans cette zone. Essaie une autre période, source ou zone.</div>';
     res.style.display = ''; res.dataset.hasResults = '1';
     return;
   }
@@ -7952,7 +7945,7 @@ function _renderDrawResultsPanel(speciesRows){
     return (a.name||'').localeCompare(b.name||'', 'fr');
   });
   const country = (ebFilter && ebFilter.country) || 'FR';
-  const html = '<div style="font-size:10.5px !important; margin-bottom:4px; color:var(--ink-2);">Cliquez une espèce pour voir sa fiche</div>' +
+  const html = '<div style="font-size:14px; margin-bottom:4px; color:var(--ink-3);">Clique sur une espèce pour voir sa fiche</div>' +
     '<ul style="list-style:none; margin:0; padding:0; font-size:11px !important;">' +
     rows.map(r => {
       const w = rarityForCountry(r.sci, country);
@@ -9229,7 +9222,7 @@ async function _loadHotspotsLayer(region){
       const monthTag = monthFilter ? ` · <b>${toDoShown}</b> actifs en ${MONTH_NAMES[monthFilter]}` : '';
       const cntLine = (hotspotSort==='total')
         ? `<b>${n}</b> espèces observées ici (all-time)`
-        : `<b>${n}</b> espèces ${scope} · <b>${h.mySp}</b> vues par vous · <b>${h.toDo}</b> à cocher${monthTag}`;
+        : `<b>${n}</b> espèces ${scope} · <b>${h.mySp}</b> vues par toi · <b>${h.toDo}</b> à cocher${monthTag}`;
       // Liste dépliable, triée par rareté DESC. En mode "total" pas de liste (pas d'enrichissement).
       let missingBlock = '';
       if(hotspotSort!=='total' && filteredMiss.length){
@@ -9276,7 +9269,7 @@ async function _loadHotspotsLayer(region){
           ? `% = part des listes eBird ${scope} qui notent l'espèce en ${MONTH_NAMES[monthShown]}`
           : `% = pic annuel de la freq eBird ${scope}`;
         const label = monthFilter ? `👀 Espèces manquantes actives en ${MONTH_NAMES[monthFilter]} (${items.length})`
-                                  : `👀 Espèces qui vous manquent ici (${items.length})`;
+                                  : `👀 Espèces qui te manquent ici (${items.length})`;
         missingBlock = `<details class="hs-miss"><summary>${label}</summary><div class="hs-hint">${esc(hint)}</div><ul class="p-list">${rows}</ul></details>`;
       }
       // Distance à vol d'oiseau depuis userPos (si géolocalisation faite).
@@ -9516,11 +9509,11 @@ function renderStats(me){
   const rankBestYear  = state.people.length>1 ? _rankInLeague(me, p => { const s=p._active?_timeStatsFor(p._active):null; return s?(s.bestYear?s.bestYear[1]:0):0; }) : null;
   const rankTxt = r => r ? ` <span class="stat-rank">${r.rank}${r.rank===1?'ᵉʳ':'ᵉ'}/${r.n}</span>` : '';
 
-  box.innerHTML=`<h3 class="bloc-titre" style="margin-bottom:10px;">Vos statistiques</h3>
+  box.innerHTML=`<h3 class="bloc-titre" style="margin-bottom:10px;">Tes statistiques</h3>
     <div class="stat-tiles">
       <div class="stat-tile"><div class="stat-num">${total}</div><div class="stat-lbl">espèces</div></div>
       <div class="stat-tile"><div class="stat-num">${state.people.length>1?('#'+rank):'-'}</div><div class="stat-lbl">au classement</div></div>
-      <div class="stat-tile"><div class="stat-num small"><span class="sp-link" data-sci="${esc(_nameToSci(rareName)||'')}">${esc(rareName)}</span></div><div class="stat-lbl">votre plus rare${rareTier?' · '+esc(rareTier.label):''}</div></div>
+      <div class="stat-tile"><div class="stat-num small"><span class="sp-link" data-sci="${esc(_nameToSci(rareName)||'')}">${esc(rareName)}</span></div><div class="stat-lbl">ta plus rare${rareTier?' · '+esc(rareTier.label):''}</div></div>
     </div>`+
     goalHtml+
     // Bloc temporel : courbe + meilleur mois + meilleure année
@@ -9534,7 +9527,7 @@ function renderStats(me){
            <div class="stat-time-cell"><div class="stat-time-lbl">Année record</div><div class="stat-time-val">${esc(bestYearLabel)}${rankTxt(rankBestYear)}</div><div class="stat-time-sub">${bestYearCount} nouvelle${bestYearCount>1?'s':''} espèce${bestYearCount>1?'s':''} cette année-là</div></div>
          </div>`
       : '')+
-    (fams.length?`<div class="stat-fam-title">Vos familles</div><div class="stat-fams">`+fams.map(([f,n])=>`<div class="stat-fam"><div class="stat-fam-row"><span>${esc(f)}</span><span>${n}</span></div><div class="stat-fam-bar"><div style="width:${Math.round(n/maxFam*100)}%"></div></div></div>`).join('')+`</div>`:'')+
+    (fams.length?`<div class="stat-fam-title">Tes familles</div><div class="stat-fams">`+fams.map(([f,n])=>`<div class="stat-fam"><div class="stat-fam-row"><span>${esc(f)}</span><span>${n}</span></div><div class="stat-fam-bar"><div style="width:${Math.round(n/maxFam*100)}%"></div></div></div>`).join('')+`</div>`:'')+
     _renderPersonalTimeline(active);
 }
 // Timeline personnelle : liste chronologique des jalons majeurs (1ere espece, 100e/500e/1000e,
@@ -9755,8 +9748,8 @@ async function doInvite(){
 function updateChatIdentity(){
   const ni=$('#chatName'); if(!ni) return;
   const mn=myMemberName();
-  if(mn){ if(document.activeElement!==ni) ni.value=mn; ni.readOnly=true; ni.classList.add('locked'); ni.title='Votre nom de la ligue (non modifiable)'; }
-  else { ni.readOnly=false; ni.classList.remove('locked'); ni.title=''; ni.placeholder='Votre nom (invité)'; if(!ni.value) ni.value=localStorage.getItem('mb-chatname')||''; }
+  if(mn){ if(document.activeElement!==ni) ni.value=mn; ni.readOnly=true; ni.classList.add('locked'); ni.title='Ton nom de la ligue (non modifiable)'; }
+  else { ni.readOnly=false; ni.classList.remove('locked'); ni.title=''; ni.placeholder='Ton nom (invité)'; if(!ni.value) ni.value=localStorage.getItem('mb-chatname')||''; }
 }
 function fillProfile(me){
   const prof=$('#profile'); if(!prof) return;
@@ -9875,7 +9868,7 @@ async function saveMyList(name, speciesMap, regions){
    reste pour les vraies pannes. */
 function _txtAccesMembres(err, technique){
   return (err && err.code === 'permission-denied')
-    ? 'Déposez votre liste eBird dans l\'onglet « Ma liste » pour rejoindre la ligue et voir cette page.'
+    ? 'Dépose ta liste eBird dans l\'onglet « Ma liste » pour rejoindre la ligue et voir cette page.'
     : technique;
 }
 function showError(err){
@@ -9883,9 +9876,9 @@ function showError(err){
   let msg;
   if(err && err.code==='permission-denied'){
     msg = `⚠️ Accès à la base refusé. Les <b>règles de sécurité Firestore</b> ne sont pas encore configurées. `+
-          `Collez les règles fournies dans la console Firebase (Firestore → Règles), puis rechargez.`;
+          `Colle les règles fournies dans la console Firebase (Firestore → Règles), puis recharge.`;
   } else if(err && err.code && err.code.startsWith('auth/')){
-    msg = `⚠️ Problème de connexion (<code>${err.code}</code>). Si vous testez en local, vérifiez que le domaine est autorisé dans Firebase → Authentication → Settings.`;
+    msg = `⚠️ Problème de connexion (<code>${err.code}</code>). Si tu testes en local, vérifie que le domaine est autorisé dans Firebase → Authentication → Settings.`;
   } else {
     msg = `⚠️ Une erreur est survenue : <code>${esc(err?.code||err?.message||String(err))}</code>`;
   }
@@ -9978,7 +9971,7 @@ let _depotEnAttente = null;
 async function handleFiles(fileList){
   const f=[...fileList].find(x=>/\.csv$/i.test(x.name)||x.type==='text/csv') || fileList[0];
   if(!f) return;
-  if(!myUid){ $('#myStatus').textContent='Connexion en cours, réessayez dans un instant…'; return; }
+  if(!myUid){ $('#myStatus').textContent='Connexion en cours, réessaie dans un instant…'; return; }
   // Lire puis analyser un export eBird prend plusieurs secondes sur une grosse liste, et
   // l'ecran ne bougeait pas d'un pixel pendant ce temps : rien ne disait que le fichier
   // avait ete pris. #myStatus porte role="status", donc cette ligne s'ecrit ET s'annonce.
@@ -10107,7 +10100,7 @@ $('#myName').addEventListener('change',async e=>{
   // Verrou : après la fenêtre de grâce (24h post-inscription), nom non modifiable (sauf admin).
   if(oldName && oldName!==nm && !_nameIsUnlocked(me)){
     e.target.value = oldName;
-    alert('Votre nom est verrouillé (24 h après votre inscription). Contactez l\'admin pour un changement.');
+    alert('Ton nom est verrouillé (24 h après ton inscription). Contacte l\'admin pour un changement.');
     return;
   }
   if(oldName===nm) return;
@@ -10257,8 +10250,8 @@ document.addEventListener('pointerdown', e => {
 function _refreshChatWriteAccess(){
   const canWrite = iAmInLeague;
   const chatText=$('#chatText'), chatName=$('#chatName'), photoInput=$('#photoInput'), photoPub=$('#photoPublish'), photoLbl=$('#photoAddLabel');
-  const hint = 'Chargez votre life list eBird pour écrire';
-  if(chatText){ chatText.disabled = !canWrite; chatText.placeholder = canWrite ? 'Votre message…' : hint; }
+  const hint = 'Charge ta life list eBird pour écrire';
+  if(chatText){ chatText.disabled = !canWrite; chatText.placeholder = canWrite ? 'Ton message…' : hint; }
   if(chatName){ chatName.disabled = !canWrite; }
   if(photoInput){ photoInput.disabled = !canWrite; }
   if(photoPub){ photoPub.disabled = !canWrite; }
@@ -10266,7 +10259,7 @@ function _refreshChatWriteAccess(){
 }
 
 async function saveProfile(patch){
-  if(!iAmInLeague){ $('#myStatus').textContent='Chargez d\'abord votre liste pour remplir votre fiche.'; return; }
+  if(!iAmInLeague){ $('#myStatus').textContent='Charge d\'abord ta liste pour remplir ta fiche.'; return; }
   try{ await updateDoc(doc(db,'leagues',leagueId,'members',myUid), patch); }catch(err){ showError(err); }
 }
 $('#profGoal').addEventListener('change',e=>saveProfile({goal:e.target.value.trim()}));
@@ -10325,7 +10318,7 @@ $('#removeMineBtn').addEventListener('click',async()=>{
   // L'avertissement n'est pas decoratif : retirer sa liste SUPPRIME la fiche, et y revenir
   // est donc une creation, qui exige un code depuis le 2026-09-28. Les membres entres avant
   // l'invitation n'en ont aucun : sans cette phrase, un clic les met dehors sans retour.
-  if(!confirm('Retirer votre liste de cette ligue ?\n\nAttention : l\'entrée dans la ligue se fait sur invitation. Pour revenir, il te faudra un nouveau code.')) return;
+  if(!confirm('Retirer ta liste de cette ligue ?\n\nAttention : l\'entrée dans la ligue se fait sur invitation. Pour revenir, il te faudra un nouveau code.')) return;
   try{
     await deleteDoc(doc(db,'leagues',leagueId,'members',myUid));
     $('#myStatus').textContent='';
@@ -10417,7 +10410,7 @@ function _openPickMap(){
     }
     // marqueur si déjà un point choisi
     if(_pickLat!=null && _pickLon!=null){ _setPickPoint(_pickLat, _pickLon, _pickName, false); }
-    else { if(_pickMarker){ _pickMarker.remove(); _pickMarker=null; } $('#pickMapConfirm').disabled=true; $('#pickMapCoords').textContent='Cliquez sur la carte pour placer un point.'; }
+    else { if(_pickMarker){ _pickMarker.remove(); _pickMarker=null; } $('#pickMapConfirm').disabled=true; $('#pickMapCoords').textContent='Clique sur la carte pour placer un point.'; }
     setTimeout(()=>{ try{ _pickMap.invalidateSize(); }catch(_){} }, 60);
   }, 60);
 }
@@ -10492,7 +10485,7 @@ function renderManualSuggestions(list){
   box.innerHTML = list.map(e=>{
     const already = mine.has(e.sci);
     return `<div class="manual-suggest-item" data-sci="${esc(e.sci)}">
-      <span>${esc(e.fr)}</span>${already?'<span class="tag">déjà dans votre liste</span>':''}
+      <span>${esc(e.fr)}</span>${already?'<span class="tag">déjà dans ta liste</span>':''}
       <span class="sci">${esc(e.sci)}</span>
     </div>`;
   }).join('');
@@ -10528,16 +10521,16 @@ $('#manualCountry')?.addEventListener('change', e=>{
 });
 $('#manualAddBtn')?.addEventListener('click', async ()=>{
   const msg=$('#manualMsg'); msg.textContent=''; msg.className='manual-msg';
-  if(!manualPickedSci){ msg.className='manual-msg err'; msg.textContent='Choisissez une espèce dans la liste.'; return; }
-  if(!myUid){ msg.className='manual-msg err'; msg.textContent='Connexion en cours, réessayez.'; return; }
+  if(!manualPickedSci){ msg.className='manual-msg err'; msg.textContent='Choisis une espèce dans la liste.'; return; }
+  if(!myUid){ msg.className='manual-msg err'; msg.textContent='Connexion en cours, réessaie.'; return; }
   const me = realPeople.find(p=>p.id===myUid);
-  if(!me){ msg.className='manual-msg err'; msg.textContent='Chargez d\'abord votre liste principale.'; return; }
+  if(!me){ msg.className='manual-msg err'; msg.textContent='Charge d\'abord ta liste principale.'; return; }
   const key = manualPickedSci; // sci déjà en lowercase
-  if(me.species.has(key)){ msg.className='manual-msg err'; msg.textContent='Cette espèce est déjà dans votre liste.'; return; }
+  if(me.species.has(key)){ msg.className='manual-msg err'; msg.textContent='Cette espèce est déjà dans ta liste.'; return; }
   // pays
   const co = $('#manualCountry').value;
   let country = 'FR';
-  if(co==='OTHER'){ const pick=$('#manualCountryPick').value; if(!pick){ msg.className='manual-msg err'; msg.textContent='Choisissez un pays.'; return; } country=pick; }
+  if(co==='OTHER'){ const pick=$('#manualCountryPick').value; if(!pick){ msg.className='manual-msg err'; msg.textContent='Choisis un pays.'; return; } country=pick; }
   const date = $('#manualDate').value || '';   // YYYY-MM-DD
   const sciProper = MANUAL_INDEX.find(x=>x.sci===key).sci.split(' ').map((w,i)=>i===0?w[0].toUpperCase()+w.slice(1):w).join(' ');
   // Lieu + coords : viennent du picker cartographique (modal Leaflet)
@@ -11050,10 +11043,10 @@ $('#chatForm')?.addEventListener('submit',async e=>{
   const text=$('#chatText').value.trim();
   const mn=myMemberName();
   const name = mn || $('#chatName').value.trim() || localStorage.getItem('mb-chatname') || '';
-  if(!myUid){ showError(new Error('Connexion en cours, réessayez dans un instant.')); return; }
+  if(!myUid){ showError(new Error('Connexion en cours, réessaie dans un instant.')); return; }
   // H : chat réservé aux membres. Les invités doivent charger leur life list pour écrire.
   if(!iAmInLeague){
-    showError(new Error('Chat réservé aux membres. Chargez votre life list eBird pour rejoindre la ligue et pouvoir écrire.'));
+    showError(new Error('Chat réservé aux membres. Charge ta life list eBird pour rejoindre la ligue et pouvoir écrire.'));
     return;
   }
   if(!name){ $('#chatName').focus(); return; }
@@ -11159,7 +11152,7 @@ $('#reqForm')?.addEventListener('submit', async e=>{
   e.preventDefault();
   const ti=$('#reqText'); const text=(ti?.value||'').trim();
   if(!text) return;
-  if(!myUid){ showError(new Error('Connexion en cours, réessayez.')); return; }
+  if(!myUid){ showError(new Error('Connexion en cours, réessaie.')); return; }
   if(!_rateLimit('request', 5)){ showError(new Error('Trop de requêtes envoyées récemment (limite : 5/min). Attends un peu.')); return; }
   const name = myMemberName() || localStorage.getItem('mb-chatname') || 'Invité';
   const payload = { uid:myUid, name, text, status:'todo', createdAt:serverTimestamp() };
@@ -11171,7 +11164,7 @@ $('#reqForm')?.addEventListener('submit', async e=>{
 $('#reqList')?.addEventListener('click', async e=>{
   const vote=e.target.closest('button[data-vote]');
   if(vote){
-    if(!myUid){ showError(new Error('Connexion en cours, réessayez.')); return; }
+    if(!myUid){ showError(new Error('Connexion en cours, réessaie.')); return; }
     const id=vote.dataset.vote; const ref=doc(db,'leagues',leagueId,'requestVotes', id+'__'+myUid);
     const has=reqVotesMap.get(id)?.has(myUid);
     try{ if(has) await deleteDoc(ref); else await setDoc(ref, { requestId:id, uid:myUid, createdAt:serverTimestamp() }); }
@@ -11205,7 +11198,7 @@ function _mnClose(){ const p=$('#chatMentionPop'); if(p){ p.classList.remove('op
 function _mnRenderUI(){
   const p=$('#chatMentionPop'); if(!p) return;
   p.innerHTML = _mnMatches.map((m,i)=>{
-    const self = m.uid===myUid?'<span class="self">vous</span>':'';
+    const self = m.uid===myUid?'<span class="self">toi</span>':'';
     return `<div class="mention-pop-item ${i===_mnActive?'active':''}" data-idx="${i}" style="--series:var(--s${m.si})">
       <span class="dot"></span>${esc(m.name)}${self}</div>`;
   }).join('');
@@ -11276,10 +11269,10 @@ $('#photoDraftThumbs')?.addEventListener('click', e=>{ const b=e.target.closest(
 $('#photoCancel')?.addEventListener('click', ()=>{ photoDrafts=[]; $('#photoCaption').value=''; renderPhotoDrafts(); });
 $('#photoPublish')?.addEventListener('click', async ()=>{
   if(!photoDrafts.length) return;
-  if(!myUid){ showError(new Error('Connexion en cours, réessayez.')); return; }
+  if(!myUid){ showError(new Error('Connexion en cours, réessaie.')); return; }
   // H : photos réservées aux membres
   if(!iAmInLeague){
-    showError(new Error('Publication de photos réservée aux membres. Chargez votre life list eBird pour rejoindre la ligue.'));
+    showError(new Error('Publication de photos réservée aux membres. Charge ta life list eBird pour rejoindre la ligue.'));
     return;
   }
   // Rate limit : max 10 photos publiees par minute (couvre les batches de 2-5)
@@ -13217,7 +13210,7 @@ function _majDetailsCalcul(k, cc, isExo, cat){
     // c'est la seule explication de la mesure que porte la fiche.
     const bloc = (titre, corps) => corps
       ? `<div style="margin-top:11px;">`
-        + `<div style="font:700 10px/1.3 system-ui; letter-spacing:.6px; text-transform:uppercase; color:var(--ink-3); margin-bottom:4px;">${titre}</div>`
+        + `<div style="font:700 10px/1.3 var(--sans); letter-spacing:.6px; text-transform:uppercase; color:var(--ink-3); margin-bottom:4px;">${titre}</div>`
         + `<div style="font-size:12px; color:var(--ink-2); line-height:1.5;">${corps}</div></div>`
       : '';
 
@@ -14785,7 +14778,7 @@ function openSpeciesModal(sci){
   let lastTab = 'info';
   try{ lastTab = localStorage.getItem('mb-sm-tab') || 'info'; }catch(_){}
   _smSetTab(lastTab);
-  _openSpeciesModalSuite(sci, key, modal);
+  _openSpeciesModalSuite(sci, key, modal, _wasOpen, _savedScroll);
 }
 function _peindreEnteteFiche(hdr, sci){
   if(hdr){
@@ -14816,7 +14809,9 @@ function _peindreEnteteFiche(hdr, sci){
     hdr.classList.toggle('sm-header-dark-text', lum > 0.62);
   }
 }
-function _openSpeciesModalSuite(sci, key, modal){
+// _wasOpen et _savedScroll viennent de openSpeciesModal : depuis la coupure en deux du
+// 2026-10-05, la suite ne les voyait plus et chaque ouverture de fiche jetait une erreur.
+function _openSpeciesModalSuite(sci, key, modal, _wasOpen, _savedScroll){
   // Purge le registre audios de la fiche precedente (evite fuite memoire quand on
   // enchaine plusieurs fiches sans jamais fermer le modal).
   if(typeof _xaAudios !== 'undefined'){
@@ -14898,7 +14893,7 @@ function _openSpeciesModalSuite(sci, key, modal){
       const clickHint = x.hasCoords ? ' style="cursor:pointer; padding:6px 8px; border-radius:6px; transition:background .1s;" onmouseover="this.style.background=\'var(--surface-2)\'" onmouseout="this.style.background=\'\'"' : ' style="padding:6px 8px;"';
       const dataUid = x.hasCoords ? ` data-sm-friend-uid="${esc(x.uid)}"` : '';
       const pin = x.hasCoords ? '📍 ' : '';
-      return `<li${clickHint}${dataUid}>${pin}<b>${esc(x.name)}${x.isMe?' (vous)':''}</b>${flag}${multi} · ${d}${loc}</li>`;
+      return `<li${clickHint}${dataUid}>${pin}<b>${esc(x.name)}${x.isMe?' (toi)':''}</b>${flag}${multi} · ${d}${loc}</li>`;
     }).join('') + '</ul>';
   }
   // Mini carte des observations du groupe pour cette espece (marqueurs par membre avec coords).
@@ -17240,7 +17235,7 @@ function _pkdxRender(){
       const cls = 'rar-chip' + (on ? ' on' : '');
       return `<button type="button" class="${cls}" data-cat="${g.join(',')}" style="${bgStyle}" title="${esc(g.map(c => libelleExo(c, true)).join(' / '))}">${g.join('/')}</button>`;
     }).join('');
-    chipsBox.innerHTML = '<span style="font-size:11px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.5px; font-weight:700; align-self:center; margin-right:6px;">Rareté</span>'
+    chipsBox.innerHTML = '<span style="font-size:13px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.4px; font-weight:700; align-self:center; margin-right:6px;">Rareté</span>'
       + chipsHtml
       + '<button type="button" class="rar-chip" data-tier-all title="Cocher toutes les raretés">Tout</button>'
       + '<button type="button" class="rar-chip" data-tier-none title="Décocher toutes les raretés">Vide</button>'
@@ -18870,7 +18865,7 @@ window._perfBench = (action = 'all', opts = {}) => {
   // Genere fake state DETERMINISTE (seed base sur i) : hash reproductible entre appels.
   const allSpecies = Object.keys(REAL_RARITY || {}).slice(0, 200);
   if(!allSpecies.length){ return { error: 'REAL_RARITY vide, attends que app.js finisse de charger' }; }
-  const fakeNames = ['Mathis','Clement','Sam','Olivier','Mael','Paul','Guillaume','Antonin','Genevieve','Dingovelos'];
+  const fakeNames = ['Alice','Bruno','Chloe','David','Emma','Felix','Gaelle','Hugo','Ines','Jules'];
   realPeople.length = 0;
   state.people = [];
   for(let i = 0; i < nUsers; i++){

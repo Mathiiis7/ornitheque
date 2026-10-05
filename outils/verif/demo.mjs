@@ -117,7 +117,7 @@ export async function mesure({ navigateur, RACINE }){
     verif('bandeau de demonstration', etat.bandeau ? 'present' : 'ABSENT', etat.bandeau);
     verif('base href', etat.basePointeRacine, etat.basePointeRacine === '../');
     verif('service worker neutralise', etat.swNeutralise ? 'oui' : 'NON', etat.swNeutralise);
-    for(const nomJoueur of ['Vous', 'Claire', 'Hugo', 'Lina', 'Samir']){
+    for(const nomJoueur of ['Alex', 'Claire', 'Hugo', 'Lina', 'Samir']){
       verif('au classement : ' + nomJoueur, etat.texteClassement.includes(nomJoueur) ? 'present' : 'ABSENT',
             etat.texteClassement.includes(nomJoueur));
     }
