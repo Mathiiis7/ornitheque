@@ -91,6 +91,55 @@ a branch or scenery behind the poses, a different bird from one pose to the next
 **Si la planche sort brouillonne**, la couper en deux envois : d'abord la tuile seule (reprendre
 la demande « icône carrée » des archives en changeant l'oiseau et la palette), puis les poses.
 
+### 2 bis. La retouche en High (décidée le 2026-10-05)
+
+Envoi fait : Mathis a retenu les poses de la planche 4 et la tuile de la planche 3, assemblées et
+recalées sur la charte par `outils/build/mascotte.mjs` (section 3). Plutôt que de garder mes
+rustines, on redemande à Arrow 2, effort **High**, de redessiner proprement à partir de nos fichiers.
+**Deux envois séparés**, une seule mission par image. Prix attendu : 0,40 à 1,20 $ chacun.
+
+**Envoi A** - joindre `notes-privees/mascotte/mascotte-poses.svg` :
+
+```text
+Redraw this kingfisher character sheet, keeping the same character, the same
+five poses, the same layout and the same palette. This is a clean-up pass, not
+a new design.
+
+FIX:
+- no gaps between shapes: adjacent colour areas must meet exactly or overlap,
+  with no thin slivers of background showing through anywhere inside a bird.
+  Build each bird on one solid base silhouette, then lay the colour areas on top;
+- smoother joins: where the cheek patch, the white neck patch, the throat and
+  the wing meet, the edges must flow into each other, without tiny steps,
+  notches or stray points;
+- legs and feet: bright vermilion #C8452B, short and clean, three toes each;
+- keep the long straight dagger bill, the big head and the short tail.
+
+KEEP: flat vector, solid colours, no outlines, no gradients, no shading, no
+text. Palette exactly: #0B7C77 teal, #2BBCB0 light teal, #086660 dark teal,
+#C05E33 orange, #F0EEE6 off-white, #15201E black, #33403D bill highlight,
+#B98D22 gold for the binoculars and notebook. Transparent background.
+VARIATIONS: four proposals, each a faithful clean-up; vary only how the
+shapes are joined, never the poses or the character.
+```
+
+**Envoi B** - joindre `notes-privees/mascotte/mascotte-tuile.svg` :
+
+```text
+Redraw this square app tile of a kingfisher head, keeping the same crop, the
+same profile facing right, the same long black bill running off the right edge
+and the same palette. This is a clean-up pass, not a new design.
+
+FIX: no gaps between shapes, adjacent colour areas meet exactly or overlap;
+smooth, confident joins between the crown, the orange cheek, the white neck
+patch and the throat; the eye a clean white circle with a black dot.
+KEEP: flat vector, solid colours, no outlines, no gradients, no shading, no
+text, white #FFFFFF tile background filling the whole square, no rounded
+corners drawn inside the canvas. Palette exactly: #0B7C77, #2BBCB0, #C05E33,
+#F0EEE6, #15201E.
+VARIATIONS: four proposals, vary only the joins and the exact crop.
+```
+
 **Pour retoucher** une proposition presque bonne, plutôt que relancer :
 « Change only [un élément] to [nouvelle consigne]. Keep the silhouette, the colours and the
 composition exactly as they are. »
