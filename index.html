@@ -49,7 +49,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=281">
+<link rel="modulepreload" href="app.js?v=282">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -197,6 +197,8 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
     <button type="button" class="ham-item" data-view="profil">👤 Profil</button>
     <button type="button" class="ham-item" data-view="requests">💡 Requêtes</button>
     <button type="button" class="ham-item" data-view="about">ℹ️ À propos</button>
+    <!-- Sans data-view : ce n'est pas une page, il ouvre la fenetre #inviteDialog -->
+    <button type="button" class="ham-item" id="hamInvite">📨 Inviter des amis</button>
     <div class="ham-divider"></div>
     <div class="ham-account" id="hamAccount">
       <div class="ham-account-info" id="hamAccountInfo" hidden>
@@ -207,6 +209,24 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
       <button type="button" class="ham-item ham-signout" id="hamSignout" hidden>🚪 Se déconnecter</button>
     </div>
   </div>
+  <!-- Inviter des amis : ouvert depuis le menu ☰ (#hamInvite). Les identifiants sont ceux de
+       l'ancien bloc de la page Ma liste, le code qui les branche n'a pas bouge. -->
+  <dialog class="invite-dialog" id="inviteDialog" aria-labelledby="inviteDialogTitle">
+    <div class="invite-dialog-head">
+      <h3 class="bloc-titre" id="inviteDialogTitle">Inviter des amis</h3>
+      <button type="button" class="invite-dialog-close" id="inviteDialogClose" aria-label="Fermer">✕</button>
+    </div>
+    <p class="invite-dialog-help">Envoie ce lien à qui veut rejoindre la ligue. L'entrée se fait avec un code d'invitation.</p>
+    <code id="shareLink" class="invite-link"></code>
+    <div class="invite-actions">
+      <!-- Admin seulement : l'entree dans la ligue se fait sur code depuis le 2026-09-28,
+           et Mathis est seul a en creer. Affiche par _majBoutonInvitation(). -->
+      <button class="btn tiny" id="newInviteBtn" hidden>🔑 Créer un code</button>
+      <button class="btn tiny" id="copyLinkBtn">🔗 Copier</button>
+      <button class="btn tiny" id="inviteBtn">📨 Envoyer</button>
+    </div>
+    <p class="help" id="inviteCodeBox" hidden style="margin:10px 0 0;"></p>
+  </dialog>
   <!-- Boutons flottants Fil + Photos + Tchat, positionnes en bas a droite -->
   <div id="fabStack" style="position:fixed; right:20px; bottom:20px; display:flex; flex-direction:column; gap:10px; z-index:1600;">
     <button type="button" id="fabFeed" title="Fil" style="position:relative; width:54px; height:54px; border-radius:50%; border:none; background:var(--warn, #d97a1c); color:#fff; font-size:22px; line-height:1; padding:0; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,.25); display:grid; place-items:center; transition:transform .15s;">📰</button>
@@ -300,23 +320,10 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
       </div>
     </div>
 
-    <!-- Invite : compact card -->
-    <div class="invite-card">
-      <div class="invite-text">
-        <div class="invite-label">📨 Inviter des amis</div>
-        <code id="shareLink"></code>
-      </div>
-      <div class="invite-actions">
-        <!-- Admin seulement : l'entree dans la ligue se fait sur code depuis le 2026-09-28,
-             et Mathis est seul a en creer. Affiche par _majBoutonInvitation(). -->
-        <button class="btn tiny" id="newInviteBtn" hidden>🔑 Créer un code</button>
-        <button class="btn tiny" id="copyLinkBtn">🔗 Copier</button>
-        <button class="btn tiny" id="inviteBtn">📨 Envoyer</button>
-      </div>
-    </div>
-    <p class="help" id="inviteCodeBox" hidden style="margin:6px 0 0;"></p>
-
-    <!-- Guide d'import : 3 etapes horizontales visuelles -->
+    <!-- Guide d'import : 3 etapes horizontales visuelles. Le bloc « Inviter des amis » qui
+         etait au-dessus vit depuis le 2026-10-05 dans le menu ☰ (#inviteDialog) : il n'avait
+         rien a faire sur la page de sa propre liste (remarque de Mathis). -->
+    <h3 class="bloc-titre import-titre">Récupérer ta liste eBird</h3>
     <div class="import-steps">
       <div class="import-step">
         <div class="import-step-num">1</div>
@@ -344,7 +351,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
     </div>
     <details class="import-guide-advanced">
       <summary>💡 Variante avec GPS (nécessaire pour la carte 📍)</summary>
-      <p style="margin:8px 0 0; font-size:12.5px; color:var(--ink-2);">Par email : <a href="https://ebird.org/downloadMyData" target="_blank" rel="noopener">ebird.org/downloadMyData</a> → <b>« Submit »</b> → attendez l'email → <code>MyEBirdData.csv</code>. Ce fichier contient les coordonnées GPS de chaque observation, ce qui permet d'afficher vos oiseaux sur la carte.</p>
+      <p>Par email : <a href="https://ebird.org/downloadMyData" target="_blank" rel="noopener">ebird.org/downloadMyData</a> → <b>« Submit »</b> → attendez l'email → <code>MyEBirdData.csv</code>. Ce fichier contient les coordonnées GPS de chaque observation, ce qui permet d'afficher vos oiseaux sur la carte.</p>
     </details>
 
     <div class="onboarding" id="onboarding" style="display:none;">
@@ -428,6 +435,18 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
           <button type="button" class="btn" id="pickMapConfirm" disabled>Valider</button>
         </div>
       </div>
+    </div>
+
+    <!-- Ta liste, en entier, sous le bloc de chargement (demande de Mathis le 2026-10-05).
+         Le champ de recherche reste HORS de #myListBody : applySnapshot() redessine le tableau
+         a chaque changement d'un membre de la ligue, et effacerait ce qu'on est en train de taper. -->
+    <div class="mylist" id="myList" hidden>
+      <div class="mylist-head">
+        <h3 class="bloc-titre">Mes espèces <span class="bloc-titre-note" id="myListCount"></span></h3>
+        <input type="search" id="myListSearch" class="mylist-search" aria-label="Chercher dans ma liste" placeholder="Chercher une espèce, un lieu…" autocomplete="off">
+      </div>
+      <p class="mylist-note">Date et lieu de la première observation - en France quand l'espèce y a été vue. Les plus récentes en premier.</p>
+      <div class="mylist-body" id="myListBody"></div>
     </div>
 
     <!-- Liste des membres retiree de la page 'Ma liste' : redondant avec le Classement. -->
@@ -1235,4 +1254,4 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=281"></script>
+<script type="module" src="app.js?v=282"></script>

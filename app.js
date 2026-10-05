@@ -5860,6 +5860,7 @@ function applySnapshot(snap){
   const dropSmall = $('#dropSmall');
   if(dropSmall) dropSmall.textContent = me ? 'Cliquez pour remplacer votre liste' : 'ou cliquez pour parcourir votre ordinateur';
   fillProfile(me);
+  renderMyList(me || null);
   if(typeof _lockMyNameIfSet==='function') _lockMyNameIfSet();
   if(typeof _refreshChatWriteAccess==='function') _refreshChatWriteAccess();
   rebuild();
@@ -9906,6 +9907,59 @@ $('#copyLinkBtn').addEventListener('click',async()=>{
   }catch(e){ /* clipboard blocked */ }
 });
 $('#inviteBtn')?.addEventListener('click', doInvite);
+// Inviter des amis : depuis le 2026-10-05, une fenetre ouverte par le menu ☰ et non plus un
+// bloc en tete de Ma liste. <dialog> gere tout seul Echap, le fond et le retour du focus.
+$('#hamInvite')?.addEventListener('click', () => {
+  const m = document.getElementById('hamburgerMenu'); if(m) m.hidden = true;
+  const d = $('#inviteDialog'); if(d && !d.open) d.showModal();
+});
+$('#inviteDialogClose')?.addEventListener('click', () => $('#inviteDialog')?.close());
+// Clic sur le fond (hors de la boite) : ferme, comme les autres fenetres de l'appli
+$('#inviteDialog')?.addEventListener('click', e => { if(e.target === e.currentTarget) e.currentTarget.close(); });
+
+// Ma liste, en entier, sous le bloc de chargement. Redessinee a chaque snapshot des membres
+// (donc aussi quand un AUTRE membre change) : le champ de recherche vit hors de #myListBody
+// et sa valeur est relue ici, sinon chaque mise a jour de la ligue effacerait la frappe.
+let _myListMe = null;
+function renderMyList(me){
+  if(me !== undefined) _myListMe = me;
+  me = _myListMe;
+  const wrap = $('#myList'), body = $('#myListBody');
+  if(!wrap || !body) return;
+  wrap.hidden = !me;
+  if(!me) return;
+  const rows = [...me.species.values()].map(v => {
+    const pd = parseDate(v.date);
+    const nom = frName(v.sci, v.common);
+    return { v, nom, ord: pd ? pd.ord : 0,
+      date: pd ? String(pd.ord).replace(/^(\d{4})(\d\d)(\d\d)$/, '$3/$2/$1') : '',
+      q: _mapNorm(nom + ' ' + v.sci + ' ' + (v.loc || '')) };
+  });
+  // Les plus recentes en premier, les especes sans date a la fin, puis par nom
+  rows.sort((a, b) => (b.ord - a.ord) || a.nom.localeCompare(b.nom, 'fr'));
+  const n = rows.length;
+  $('#myListCount').textContent = '· ' + n;
+  const q = _mapNorm(($('#myListSearch')?.value || '').trim());
+  const vus = q ? rows.filter(r => r.q.includes(q)) : rows;
+  const tete = '<div class="mylist-row mylist-th"><span class="mylist-sp">Espèce</span>'
+    + '<span class="mylist-date">Date</span><span class="mylist-loc">Lieu</span></div>';
+  if(!vus.length){
+    body.innerHTML = tete + '<div class="mylist-empty">Aucune espèce ne correspond à « ' + esc($('#myListSearch').value.trim()) + ' ».</div>';
+    return;
+  }
+  body.innerHTML = tete + vus.map(({ v, nom, date }) => {
+    // Pas de fiche pour les « sp. » et les hybrides : openSpeciesModal ne les connait pas
+    const n1 = v.nonSpecies || !v.sci
+      ? '<span>' + esc(nom) + '</span>'
+      : '<a href="#" class="sp-link" data-sci="' + esc(v.sci) + '">' + esc(nom) + '</a>';
+    const lat = v.sci && v.sci !== nom ? '<span class="mylist-lat">' + esc(v.sci) + '</span>' : '';
+    const lieu = (v.country ? flagImg(v.country) : '') + esc(v.loc || '');
+    return '<div class="mylist-row"><span class="mylist-sp">' + n1 + lat + '</span>'
+      + '<span class="mylist-date">' + (date || '-') + '</span>'
+      + '<span class="mylist-loc">' + (lieu || '-') + '</span></div>';
+  }).join('');
+}
+$('#myListSearch')?.addEventListener('input', () => renderMyList());
 
 const fileInput=$('#file'), drop=$('#drop');
 // Liste analysee qui attend un prenom pour partir. Voir handleFiles() : plutot que d'ouvrir
@@ -15409,7 +15463,7 @@ document.addEventListener('click', e=>{
     // Pool contextuel : depuis Birdydex, Cette semaine ou le Classement (tbody/cards),
     // on suit l'ordre DOM affiche (respecte tri + filtres en cours). Depuis les autres
     // contextes (popups carte, modal amis...), fallback sur ordre taxonomique global.
-    const contextEl = sp.closest('#viewPokedex, .pkdx-grid, #tbody, #matrixCards, #tmodalBody, .tmodal-list, .tmodal-country-body');
+    const contextEl = sp.closest('#myListBody, #viewPokedex, .pkdx-grid, #tbody, #matrixCards, #tmodalBody, .tmodal-list, .tmodal-country-body');
     if(contextEl){
       const siblings = Array.from(contextEl.querySelectorAll('.sp-link[data-sci]')).map(el => el.dataset.sci);
       setSpeciesNavPool([...new Set(siblings)], sp.dataset.sci);
