@@ -48,7 +48,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=272">
+<link rel="modulepreload" href="app.js?v=273">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -177,10 +177,10 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   <nav class="tabs">
     <button class="tab on" data-view="load">Ma liste</button>
     <button class="tab" data-view="ranking">Classement</button>
-    <button class="tab" data-view="map">📍 Carte</button>
-    <button class="tab" data-view="pokedex">📖 Birdydex</button>
-    <button class="tab" data-view="trophies">🏆 Trophées</button>
-    <button class="tab" data-view="quiz">🎵 Quiz</button>
+    <button class="tab" data-view="map">Carte</button>
+    <button class="tab" data-view="pokedex">Birdydex</button>
+    <button class="tab" data-view="trophies">Trophées</button>
+    <button class="tab" data-view="quiz">Quiz</button>
     <!-- Tabs secondaires dispos via le menu hamburger a droite (Profil/Fil/Requetes) et
          via les FAB flottants en bas (Chat, Photos). Restent des <button.tab data-view> pour
          reutiliser toute la logique de switch existante. -->
@@ -269,7 +269,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   <div id="viewLoad">
   <section class="panel auth-box" id="authBox" style="display:none; padding:18px 20px; margin-bottom:16px;">
     <div id="authForm">
-      <div class="eyebrow">Connexion</div>
+      <h3 class="bloc-titre">Connexion</h3>
       <p class="help" style="margin:4px 0 12px;">Crée ton compte (ou connecte-toi) pour retrouver ta liste et ton identité sur <b>tous tes appareils</b>. Ta liste actuelle sur cet appareil sera conservée.</p>
       <div class="auth-fields">
         <input type="email" id="authEmail" aria-label="Adresse e-mail" placeholder="Email" autocomplete="email">
@@ -287,7 +287,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
       <div class="auth-msg" id="authMsg" role="alert"></div>
     </div>
     <div id="authInfo" style="display:none;">
-      <div class="eyebrow">Connexion</div>
+      <h3 class="bloc-titre">Connexion</h3>
       <div class="auth-info-row">
         <span>Connecté : <b id="authWho"></b></span>
         <button class="linkbtn" id="authSignout">Se déconnecter</button>
@@ -298,8 +298,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   <section class="panel" id="leaguebar" style="display:none;">
     <div class="league-head">
       <div>
-        <div class="eyebrow">La ligue</div>
-        <h2>Ma liste</h2>
+        <h2 class="page-title">Ma liste</h2>
       </div>
     </div>
 
@@ -444,7 +443,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
 
   <div id="viewProfil" style="display:none;">
     <section class="panel" style="padding:20px; margin-top:22px;">
-      <div class="section-head"><div><div class="eyebrow">Vous</div><h2>👤 Mon profil</h2></div></div>
+      <div class="section-head"><div><h2 class="page-title">Mon profil</h2></div></div>
       <div id="profilEmpty" class="onboarding" style="margin:6px 0 0;">
         <h3>👤 Votre profil se construit avec votre liste</h3>
         <ol>
@@ -454,7 +453,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         </ol>
       </div>
       <div class="profile" id="profile" style="display:none;">
-        <div class="eyebrow" style="margin-bottom:10px;">Votre fiche <span style="text-transform:none;font-weight:400;color:var(--ink-3);">- visible dans le classement par tout le groupe</span></div>
+        <h3 class="bloc-titre" style="margin-bottom:10px;">Votre fiche <span class="bloc-titre-note">- visible dans le classement par tout le groupe</span></h3>
         <div class="prof-grid">
           <label>Objectif (nombre d'espèces)<input type="number" id="profGoal" min="1" max="2000" placeholder="ex. 100"></label>
           <label>Espèce préférée<select id="profFav"><option value="">- aucune -</option></select></label>
@@ -484,7 +483,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   <section id="results">
     <div class="panel" id="board">
       <div class="section-head">
-        <div><div class="eyebrow">Le classement</div><h2>Qui mène la Ligue ?</h2>
+        <div><h2 class="page-title">Qui mène la Ligue ?</h2>
           <p id="boardExplain"></p></div>
       </div>
       <div class="seg" id="boardModes" style="margin-bottom:4px;">
@@ -510,7 +509,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
 
     <div class="panel" id="matrix">
       <div class="section-head">
-        <div><div class="eyebrow">Le détail</div><h2>Qui a vu quoi</h2></div>
+        <div><h2>Qui a vu quoi</h2></div>
         <div class="country-badge" id="countryBadge" style="display:none;"></div>
       </div>
       <div class="controls">
@@ -573,7 +572,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   <div id="viewMap" style="display:none;">
     <section class="panel" style="padding:20px; margin-top:22px;">
       <div class="section-head">
-        <div><div class="eyebrow">Où on birde</div><h2>📍 Carte des observations</h2></div>
+        <div><h2 class="page-title">Carte des observations</h2></div>
       </div>
       <details class="import-guide" style="margin:0 0 12px;">
         <summary>📍 Comment afficher vos observations sur la carte ?</summary>
@@ -749,7 +748,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   <div id="viewTrophies" style="display:none;">
     <section class="panel" style="padding:20px; margin-top:22px;">
       <div class="section-head">
-        <div><div class="eyebrow">Récompenses</div><h2>Trophées</h2>
+        <div><h2 class="page-title">Trophées</h2>
           <p id="trophySummary"></p></div>
       </div>
       <div class="who-select" id="trophyWho"></div>
@@ -767,7 +766,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   <div id="viewChat" style="display:none;">
     <section class="panel chat-panel" style="padding:20px; margin-top:22px;">
       <div class="section-head">
-        <div><div class="eyebrow">La ligue papote</div><h2>💬 Tchat</h2></div>
+        <div><h2 class="page-title">Tchat</h2></div>
       </div>
       <div class="chat-online" id="chatOnline"></div>
       <div class="chat-box" id="chatMessages"><div class="chat-empty">Chargement…</div></div>
@@ -803,7 +802,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   <div id="viewPhotos" style="display:none;">
     <section class="panel" style="padding:20px; margin-top:22px;">
       <div class="section-head">
-        <div><div class="eyebrow">Le mur d'observation</div><h2>📸 Photos</h2></div>
+        <div><h2 class="page-title">Photos</h2></div>
       </div>
       <div class="photo-upload">
         <label class="btn ghost" id="photoAddLabel">🖼️ Ajouter des photos<input type="file" id="photoInput" accept="image/*" multiple class="visually-hidden"></label>
@@ -823,7 +822,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   <div id="viewFeed" style="display:none;">
     <section class="panel" style="padding:20px; margin-top:22px;">
       <div class="section-head">
-        <div><div class="eyebrow">Quoi de neuf</div><h2>🆕 Le fil des observations</h2>
+        <div><h2 class="page-title">Le fil des observations</h2>
           <p class="help" style="margin-top:2px;">Les dernières observations de la ligue. <b>Nouveautés</b> = par date d'ajout (idéal pour ne rien louper) · <b>Chronologique</b> = par date d'observation.</p></div>
       </div>
       <div class="seg" id="feedModeSeg" style="margin:6px 0 8px;">
@@ -856,7 +855,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   <div id="viewRequests" style="display:none;">
     <section class="panel" style="padding:20px; margin-top:22px;">
       <div class="section-head">
-        <div><div class="eyebrow">Améliorer l'appli</div><h2>💡 Requêtes & suggestions</h2>
+        <div><h2 class="page-title">Requêtes & suggestions</h2>
           <p class="help" style="margin-top:2px;">Proposez une amélioration, votez pour celles qui vous plaisent. Les plus populaires en haut.</p></div>
       </div>
       <form class="req-form" id="reqForm" autocomplete="off">
@@ -870,8 +869,8 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   <div id="viewPokedex" style="display:none;">
     <section class="panel" style="padding:20px; margin-top:22px;">
       <div class="section-head">
-        <div><div class="eyebrow">Collection</div><h2>📖 Birdydex</h2></div>
-        <div id="pkdxCounter" style="font:700 14px system-ui; color:var(--ink-2);">- / -</div>
+        <div><h2 class="page-title">Birdydex</h2></div>
+        <div id="pkdxCounter" class="pkdx-compte">- / -</div>
       </div>
       <div class="pkdx-ctrls" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:10px 0 14px;">
         <input type="search" id="pkdxSearch" aria-label="Rechercher dans le birdydex" placeholder="Rechercher (nom fr ou sci)…" style="flex:1; min-width:180px; padding:9px 12px; border:1px solid var(--line-2); border-radius:8px; background:var(--surface-2); color:var(--ink); font:14px system-ui;">
@@ -910,7 +909,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   <div id="viewAbout" style="display:none;">
     <section class="panel" style="padding:24px; margin-top:22px; max-width:900px;">
       <div class="section-head">
-        <div><div class="eyebrow">Documentation</div><h2>ℹ️ À propos de L’Ornithèque</h2>
+        <div><h2 class="page-title">À propos de L’Ornithèque</h2>
           <p class="help" style="margin-top:2px;">Comment ça marche, d'où viennent les données, comment lire les indicateurs.</p></div>
       </div>
       <div class="about-body" style="font-size:14px; line-height:1.6; color:var(--ink); margin-top:16px;">
@@ -972,7 +971,9 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
 
   <div id="viewQuiz" style="display:none;">
     <section class="panel qz-panel">
-      <!-- Header : titre + mode switch pill -->
+      <!-- Seule page sans titre jusqu'au 2026-10-05 : ajoute a la demande de Mathis, a la meme
+           hauteur que les autres (meme section-head, meme padding haut de 20 px). -->
+      <div class="section-head"><div><h2 class="page-title">Quiz</h2></div></div>
       <!-- Defis communs : quotidien (5Q) et hebdo (20Q). Meme graine partagee pour tous -->
       <div class="qz-challenges">
         <div class="qz-daily-card" id="quizDailyCard" hidden>
@@ -1237,4 +1238,4 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=272"></script>
+<script type="module" src="app.js?v=273"></script>

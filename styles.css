@@ -3,6 +3,16 @@
    body[data-map-render="sharp"] = pixels nets (crisp-edges). */
 body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image-rendering: crisp-edges; }
 
+/* Source Serif 4 (Adobe, licence SIL OFL, voir assets/fonts/LICENSE-SourceSerif4.md), prise
+   telle quelle sur github.com/adobe-fonts/source-serif le 2026-10-02. Deux graisses seulement,
+   les deux que les titres utilisent : 79 + 80 Ko, contre 417 Ko pour la version variable. Pas
+   de sous-ensemble : la licence reserve le nom « Source » aux fichiers non modifies.
+   swap : le titre s'affiche tout de suite en Palatino, puis bascule. */
+@font-face { font-family:"Source Serif 4"; src:url("assets/fonts/SourceSerif4-Semibold.woff2") format("woff2");
+  font-weight:600; font-style:normal; font-display:swap; }
+@font-face { font-family:"Source Serif 4"; src:url("assets/fonts/SourceSerif4-Bold.woff2") format("woff2");
+  font-weight:700; font-style:normal; font-display:swap; }
+
 :root {
     --bg: #eef2f1;
     --surface: #ffffff;
@@ -38,6 +48,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     --t-all:#6b7f7a; --t-common:#2f9e6f; --t-uncommon:#c0891f;
     --t-rare:#df6b34; --t-unique:#c93f66;
 
+    /* Police des titres (nom de l'appli, titres de page) : Source Serif 4, servie par nous
+       puisque la CSP n'autorise que nos propres polices. Les noms latins en italique restent
+       sur --serif : on n'embarque pas la version italique. */
+    --titre: "Source Serif 4","Palatino Linotype","Iowan Old Style",Georgia,serif;
     --serif: "Palatino Linotype","Iowan Old Style","Hoefler Text",Georgia,"Times New Roman",serif;
     --sans: "Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
     --mono: "Cascadia Code",Consolas,"SF Mono",ui-monospace,Menlo,monospace;
@@ -232,7 +246,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .mark .edit-hint { position:absolute; inset:0; display:grid; place-items:center; border-radius:13px;
     background:rgba(0,0,0,.42); color:#fff; font-size:15px; opacity:0; transition:opacity .12s; }
   .mark:hover .edit-hint { opacity:1; }
-  h1 { font-family:var(--serif); font-weight:600; font-size:29px; margin:0; letter-spacing:.2px;
+  h1 { font-family:var(--titre); font-weight:700; font-size:29px; margin:0; letter-spacing:-.01em;
     text-wrap:balance; }
   .tag { color:var(--ink-2); font-size:14px; margin-top:2px; max-width:52ch; }
   .theme-btn { background:var(--surface); border:1px solid var(--line-2); color:var(--ink-2);
@@ -242,9 +256,18 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* ---------- panels ---------- */
   .panel { background:var(--surface); border:1px solid var(--line); border-radius:16px;
     box-shadow:var(--shadow); }
-  .eyebrow { text-transform:uppercase; letter-spacing:.14em; font-size:11px; font-weight:700;
-    color:var(--ink-3); }
-  h2 { font-family:var(--serif); font-weight:600; font-size:21px; margin:0; }
+  /* Les surtitres en capitales (.eyebrow) ont disparu le 2026-10-02 a la demande de Mathis.
+     Ceux qui etaient le seul nom de leur bloc (Connexion, Votre fiche, Vos statistiques)
+     sont devenus ce petit titre. */
+  .bloc-titre { font:600 17px var(--titre); color:var(--ink); margin:0; }
+  .bloc-titre-note { font:400 13px var(--sans); color:var(--ink-3); }
+  h2 { font-family:var(--titre); font-weight:600; font-size:21px; margin:0; }
+  /* Titre en tete de chaque page, sans surtitre ni emoji : repris de la maquette « guide de
+     terrain » choisie par Mathis le 2026-10-02 (notes-privees/maquettes/design-birdydex.html). */
+  /* Plus petit que le nom de l'appli (h1, 29 px / 24 px sur telephone) : a 30 px, le titre de
+     page lui volait la vedette, remarque de Mathis le 2026-10-02. */
+  h2.page-title { font-weight:700; font-size:24px; line-height:1.15; letter-spacing:-.01em; }
+  @media (max-width:560px){ h2.page-title { font-size:21px; } }
 
   /* Masquage visuel qui GARDE l'element dans l'ordre de tabulation, contrairement a [hidden]
      (display:none en sort). C'est ce qui rend les quatre envois de fichier atteignables au clavier. */
@@ -252,7 +275,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     overflow:hidden; clip-path:inset(50%); white-space:nowrap; border:0; }
 
   /* ---------- intake / dropzone ---------- */
-  #leaguebar { margin-top:22px; padding:22px; }
+  /* 20 px comme les autres pages : a 22, le titre « Ma liste » tombait 2 px plus bas (2026-10-05). */
+  #leaguebar { margin-top:22px; padding:20px; }
   /* display:block parce que .drop est une <label>, qui serait inline par defaut */
   .drop { display:block; border:2px dashed var(--line-2); border-radius:14px; padding:32px 22px; text-align:center;
     background:linear-gradient(180deg, var(--surface-2), color-mix(in srgb, var(--accent) 4%, var(--surface-2)));
@@ -429,8 +453,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
 
   /* ---------- results ---------- */
   #results { margin-top:22px; display:none; flex-direction:column; gap:22px; }
-  #results.show { display:flex; animation:rise .4s ease both; }
-  @keyframes rise { from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;} }
+  /* Plus d'apparition en fondu glisse : elle rejouait a chaque ouverture du Classement, seule
+     page a le faire. Retiree le 2026-10-05 a la demande de Mathis. */
+  #results.show { display:flex; }
 
   .section-head { display:flex; align-items:baseline; justify-content:space-between; gap:12px;
     margin-bottom:12px; flex-wrap:wrap; }
@@ -770,10 +795,12 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .tabs { display:flex; gap:4px; margin-top:22px; border-bottom:1px solid var(--line);
     overflow-x:auto; flex-wrap:nowrap; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
   .tabs::-webkit-scrollbar { display:none; }
-  .tab { border:none; background:transparent; color:var(--ink-2); font:inherit; font-weight:600;
+  /* Onglets au repos en graisse normale, l'actif seul en gras : repris de la maquette
+     « guide de terrain » le 2026-10-02, avec le retrait des emojis. */
+  .tab { border:none; background:transparent; color:var(--ink-2); font:inherit; font-weight:500;
     font-size:15px; padding:10px 16px; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px;
     flex:0 0 auto; white-space:nowrap; }
-  .tab.on { color:var(--accent-ink); border-bottom-color:var(--accent); }
+  .tab.on { color:var(--accent-ink); border-bottom-color:var(--accent); font-weight:600; }
   .tab:hover { color:var(--accent-ink); }
   .auth-fields { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
   .auth-fields input { flex:1; min-width:180px; padding:10px 12px; border:1px solid var(--line-2); border-radius:10px; font:inherit; background:var(--surface); color:var(--ink); }
@@ -2083,13 +2110,23 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   tr.missing { opacity:.5; }
   .mcard.missing { opacity:.55; }
   /* ============ POKEDEX GRID ============ */
-  /* En-tete de groupe, seulement en tri par milieu : la grille reste plate en tri par
-     famille et par rarete, ou les en-tetes n apprendraient rien. */
-  .pkdx-groupe { grid-column:1/-1; margin:14px 0 2px; padding:6px 2px 4px;
-    border-bottom:1px solid var(--line); font:700 13px system-ui; color:var(--ink-2);
-    text-transform:uppercase; letter-spacing:.4px; }
+  /* En-tete de groupe, en tri par famille et par milieu ; la grille reste plate en tri par
+     rarete. Les familles ont recu le leur le 2026-10-02, a la demande de Mathis (maquette
+     « guide de terrain ») : « Canards, oies et cygnes · 18 sur 20 ». */
+  .pkdx-groupe { grid-column:1/-1; margin:18px 0 2px; padding:6px 2px 6px;
+    border-bottom:1px solid var(--line); font:600 14px var(--sans); color:var(--ink-2); }
   .pkdx-groupe:first-child { margin-top:0; }
-  .pkdx-groupe-n { font-weight:600; color:var(--ink-3); letter-spacing:0; text-transform:none; }
+  .pkdx-groupe-n { font-weight:400; color:var(--ink-3); }
+  /* Compteur du Birdydex : le nombre d'especes vues en grand, dans la police des titres.
+     Interligne serre : .section-head aligne ses deux cotes sur la ligne de base, et le 26 px en
+     interligne normal montait plus haut que le titre, qu'il poussait de 4,8 px vers le bas ; le
+     titre du Birdydex tombait plus bas que celui des autres pages. Mesure le 2026-10-05 : encore
+     1 px de trop a 1, aligne a 0,95 et en dessous ; 0,9 garde une marge. */
+  .pkdx-compte { font:600 15px/1 var(--sans); color:var(--ink-2); }
+  .pkdx-compte strong { font:700 26px/.9 var(--titre); color:var(--accent-ink); }
+  /* Sur telephone le titre passe de 24 a 21 px : le compteur suit (26 -> 23), sinon il repousse
+     le titre de 1 px. Mesure le meme jour a 375 px : aligne a 24 px et en dessous. */
+  @media (max-width:560px){ .pkdx-compte strong { font-size:23px; } }
   /* 150 px et non 130 : sur une grille de 1474 px, 130 laissait tenir dix oiseaux par rangee
      et la photo tombait a 117 px - trop petite pour reconnaitre l'espece, alors que c'est
      tout ce qu'on demande a cette grille. A 150 on en a neuf, photo 135 px.

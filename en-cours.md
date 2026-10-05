@@ -1,3 +1,78 @@
+# Fait le 2026-10-05 : cartes GBIF en ligne (les deux dépôts poussés, démo en ligne vérifiée)
+
+Commits : `afd03b30` (ce dépôt : code, crédits, manifeste `data/cartes-index.json`, anciens
+manifestes Cornell retirés) et `43d29357` (`ornitheque-data` : 21 793 images dans `cartes/`).
+Le design reste NON commité dans le dossier de travail, à part (choix de Mathis : cartes seules).
+10 896 cartes (10 660 eBird, 236 présence seule, 39 espèces sans assez de données), 82,7 Mo.
+Vérifié dans la démo, ordinateur et téléphone : carte annuelle, animation 12 mois, espèce en présence.
+Tous les bancs CONFORME.
+
+**Pour mettre en ligne, dans cet ordre** : pousser `ornitheque-data`, attendre que
+`https://mathiiis7.github.io/ornitheque-data/cartes/hoopoe-a.png` réponde, puis pousser ce dépôt.
+FAIT : poussés dans cet ordre, puis `range/` et `range-weekly/` retirés d'`ornitheque-data` (250 Mo, vérifié en ligne : 404).
+Si le design doit partir en même temps, le commiter avant de pousser.
+
+Reste éventuel : `outils/build/build-range-gbif.mjs` (ancien générateur, écrit dans
+`data/range-index.json` qui n'existe plus) est obsolète.
+
+---
+
+# Fait le 2026-10-04 : rangement commun (e8041ead, poussé et contrôlé en ligne)
+
+`tools/` est devenu `outils/`, et `_config.yml` retire `docs/`, `outils/`, `CLAUDE.md` et
+`en-cours.md` du site. Le détail est dans la section « Rangement » de `CLAUDE.md`. Le dossier
+`tools/` vide a été supprimé après redémarrage. Reste :
+- la branche locale `sauvegarde/avant-rangement-2026-10-04` (la photo d'avant, design compris)
+  peut être supprimée quand Mathis aura validé le design.
+
+**Le même jour, `Documents\Projets` est devenu `Documents\0-Claude`.** Chemins corrigés partout
+(a049dadb), venv de `.onetake` recréé, tâche de sauvegarde Firestore réparée. Restent les scripts
+R de `outils/ebirdst/`, à corriger seulement si on les relance :
+- 5 ne dépendent que du chemin du projet et remarcheront une fois ce chemin corrigé :
+  `build-abundance-by-country.R`, `build-abundance-by-region-fr.R`,
+  `build-abundance-by-region-multi.R`, `build-abundance-multi-country.R`, `build-st-catalogs.R` ;
+- les 8 autres (et `run-parallel.ps1`) ont aussi besoin du dossier `clc` (CORINE, CGLC), qui a
+  disparu avant le renommage.
+
+# En cours - 2026-10-02 (nuit) : le design de l'appli, avant le logo
+
+**Poussé le 2026-10-03 (c30c0696)** : les 5 « Trophées spéciaux » (Kimono, Nécrophile,
+Bourriche d'huître, Wallaby, Gros Bébé) sont retirés de l'appli, gardés dans
+`TROPHEES_EN_PAUSE` d'`app.js`, à reprendre avec la refonte de la page des trophées.
+
+**EN PAUSE à la demande de Mathis.** Il reprendra par le style du site, « pas encore fini ».
+Repartir de là : lui demander ce qui le gêne encore, la liste ci-dessous est l'état exact.
+Tout est resté NON commité dans le dossier de travail : ne pas lancer de `git checkout` ni de
+`git clean` dessus.
+
+**Ordre décidé par Mathis** : juger le design de l'appli -> écrire une charte graphique ->
+choisir l'espèce de la mascotte -> fiche personnage Arrow 2 (plusieurs poses + tête en tuile
+pour le logo, sur UNE planche). L'espèce n'est pas choisie (« on va y réfléchir »).
+
+**Fait, NON commité, à faire valider en local** (puis monter CACHE_VERSION et les deux
+`app.js?v=` avant de commiter) :
+- maquettes de 3 styles du Birdydex : `notes-privees/maquettes/design-birdydex.html` (servie sur
+  localhost:8765/notes-privees/...). Il garde SON style, et emprunte au style A « guide de terrain » ;
+- onglets sans emojis, actif seul en gras ; titres de page `h2.page-title` (24 px, 21 px tel.)
+  sans emoji ni surtitre ; plus aucun `.eyebrow` (ceux qui étaient le seul nom d'un bloc sont
+  devenus `.bloc-titre`) ;
+- police des titres Source Serif 4 (`--titre`), 600 et 700 servis depuis `assets/fonts/`, licence OFL à côté ;
+- Birdydex : compteur « **212** espèces vues sur 466 », titres de famille « X · vues sur total ».
+
+**Le 2026-10-05** : essai de la charte commune des projets perso sur la démo (« inspiré » et
+« complète », `notes-privees/maquettes/charte/`) -> refusé, **Mathis garde le style actuel et veut
+une charte propre à l'Ornithèque** : ÉCRITE et commitée (a56b34cf), `docs/charte-graphique.md` ; noté au QG
+(`decisions.md` et `charte-graphique.md`, commit db4028c du dépôt qg). Ticket #12 laissé ouvert
+(reste l'espèce de la mascotte et le logo). Titres : essai plus petit / police du texte refusé, on
+garde. Corrigé, NON commité : titres de page tous à la même hauteur (Ma liste avait 2 px de marge
+en plus, le compteur du Birdydex poussait son titre de 4,8 px), titre « Quiz » ajouté (seule page
+sans titre), fondu glissé à l'ouverture du Classement retiré. Démo régénérée. Bancs CONFORME.
+
+**Question ouverte** : passer aussi en minuscules les petites étiquettes en capitales restantes
+(AVATAR, PROGRESSION AU FIL DU TEMPS, RARETÉ, INVITER DES AMIS, en-têtes de colonnes) ?
+
+---
+
 # En cours - 2026-10-02 (soir)
 
 **Retours de Mathis sur le brouillon v2 (moments 1 et 2), dans l'ordre où on les traite :**

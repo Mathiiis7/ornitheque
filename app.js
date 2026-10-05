@@ -9591,7 +9591,7 @@ function renderStats(me){
   const rankBestYear  = state.people.length>1 ? _rankInLeague(me, p => { const s=p._active?_timeStatsFor(p._active):null; return s?(s.bestYear?s.bestYear[1]:0):0; }) : null;
   const rankTxt = r => r ? ` <span class="stat-rank">${r.rank}${r.rank===1?'ᵉʳ':'ᵉ'}/${r.n}</span>` : '';
 
-  box.innerHTML=`<div class="eyebrow" style="margin-bottom:10px;">Vos statistiques</div>
+  box.innerHTML=`<h3 class="bloc-titre" style="margin-bottom:10px;">Vos statistiques</h3>
     <div class="stat-tiles">
       <div class="stat-tile"><div class="stat-num">${total}</div><div class="stat-lbl">espèces</div></div>
       <div class="stat-tile"><div class="stat-num">${state.people.length>1?('#'+rank):'-'}</div><div class="stat-lbl">au classement</div></div>
@@ -17225,7 +17225,7 @@ function _pkdxRender(){
     if(EXOTIQUES_EBIRD_PAR_PAYS[country] && EXOTIQUES_EBIRD_PAR_PAYS[country][s]) return true;
     return false;
   }).length;
-  if(counter) counter.textContent = `${totalOwned} / ${totalFR}${rows.length !== totalFR ? ` · filtré : ${rows.length}` : ''}`;
+  if(counter) counter.innerHTML = `<strong>${totalOwned}</strong> espèces vues sur ${totalFR}${rows.length !== totalFR ? ` · filtré : ${rows.length}` : ''}`;
   if(!rows.length){ grid.innerHTML = ''; empty.style.display = ''; return; }
   empty.style.display = 'none';
   // Skip rebuild grille si rows + owned inchange depuis dernier render (evite le
@@ -17268,7 +17268,9 @@ function _pkdxRender(){
   }
   const rowsHash = rows.length + '|' + country + '|' + zone + '|' + tri + '|'
     + rows.map(r => r.sci + (r.owned ? '1' : '0')).join(',');
-  if(rowsHash === _pkdxLastRowsHash && grid.children.length === rows.length){
+  // On compte les cartes et non les enfants : les titres de famille ou de milieu en sont
+  // aussi, et comparer les enfants refaisait la grille entiere a chaque passage.
+  if(rowsHash === _pkdxLastRowsHash && grid.querySelectorAll(':scope > .pkdx-card').length === rows.length){
     return;   // DOM deja a jour
   }
   _pkdxLastRowsHash = rowsHash;
@@ -17355,6 +17357,19 @@ function _pkdxRender(){
         + ' <span class="pkdx-groupe-n">' + lot.length + '</span></div>'
         + lot.map(carte).join('');
     }).join('');
+  } else if(tri === 'famille'){
+    // Un titre par famille, avec ce qu'on en a vu : « Canards, oies et cygnes · 18 sur 20 ».
+    // Les lignes arrivent deja dans l'ordre des familles (_pkdxAllSorted), on coupe donc a
+    // chaque changement. Le total compte les cases affichees, filtres compris.
+    const lots = [];
+    for(const r of rows){
+      const dernier = lots[lots.length - 1];
+      if(dernier && dernier.fam === r.fam) dernier.rows.push(r);
+      else lots.push({ fam:r.fam, rows:[r] });
+    }
+    grid.innerHTML = lots.map(l => '<div class="pkdx-groupe">' + esc(l.fam)
+      + ' <span class="pkdx-groupe-n">· ' + l.rows.filter(r => r.owned).length + ' sur ' + l.rows.length + '</span></div>'
+      + l.rows.map(carte).join('')).join('');
   } else {
     grid.innerHTML = rows.map(carte).join('');
   }
