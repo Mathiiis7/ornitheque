@@ -142,6 +142,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      85 % de l ecran : le reste tombait sur le blanc par defaut, une bande visible en bas de
      page, criante en theme sombre. */
   html { overflow-y: scroll; background:var(--bg); }
+  /* Le gras s'arrete a 700 partout. Par defaut <b> vaut « bolder » : dans un texte deja a 600,
+     le navigateur montait a 900 et « Download (csv) » se lisait mal (Mathis, 2026-10-05). Les
+     graisses 800 posees sur du texte sont descendues a 700 le meme jour ; seules les pastilles
+     rondes chiffrees (rarete, etapes) gardent 800, lisible a cette taille. */
+  b, strong { font-weight:700; }
   body { margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans);
     line-height:1.5; -webkit-font-smoothing:antialiased;
     /* zoom global 0.85 : rendu par defaut plus dense, comme si le user etait a 85% de zoom
@@ -196,7 +201,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* mix-blend-mode:multiply retire le 2026-10-05 : il effacait le fond blanc d'un ancien logo,
      et en theme sombre il noircissait l'oiseau. Le martin.svg a un fond transparent. */
   @keyframes auth-logo-bounce { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-6px); } }
-  .auth-gate-brand h1 { font-size:30px; margin:0; color:var(--ink); font-weight:800; letter-spacing:-.02em; }
+  .auth-gate-brand h1 { font-size:30px; margin:0; color:var(--ink); font-weight:700; letter-spacing:-.02em; }
   .auth-gate-tag { margin:8px 0 0; font-size:15px; color:var(--ink-3); }
   .auth-gate-tabs { display:flex; gap:4px; background:var(--surface-2); border-radius:10px; padding:4px; margin-bottom:22px; }
   .auth-gate-tab { flex:1; border:none; background:transparent; padding:11px 14px; font:600 15px system-ui; color:var(--ink-2); cursor:pointer; border-radius:8px; transition:all .12s; }
@@ -211,7 +216,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .auth-gate-field input:focus { outline:3px solid var(--accent); outline-offset:2px; border-color:var(--accent); background:var(--surface); }
   .auth-gate-consent { display:flex; align-items:flex-start; gap:8px; font-size:12px; color:var(--ink-3); line-height:1.4; cursor:pointer; }
   .auth-gate-consent input { flex:0 0 auto; margin-top:2px; }
-  .auth-gate-cta { padding:15px; border:none; background:var(--accent); color:#fff; border-radius:11px; font:800 16px system-ui; cursor:pointer; margin-top:6px; transition:filter .12s, transform .1s; }
+  .auth-gate-cta { padding:15px; border:none; background:var(--accent); color:#fff; border-radius:11px; font:700 16px system-ui; cursor:pointer; margin-top:6px; transition:filter .12s, transform .1s; }
   .auth-gate-cta:hover { filter:brightness(1.08); }
   .auth-gate-cta:active { transform:scale(.98); }
   .auth-gate-cta:disabled { opacity:.6; cursor:wait; }
@@ -325,9 +330,6 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     font-weight:800; font-size:14px; display:grid; place-items:center; margin-top:0; }
   .import-step-body { flex:1; min-width:0; }
   .import-step-title { font-size:15px; font-weight:600; color:var(--ink); line-height:1.35; }
-  /* <b> dans un titre deja a 600 : le navigateur montait a 900 (« bolder »), trop noir pour
-     « Download (csv) ». 700 suffit a le distinguer (remarque de Mathis le 2026-10-05). */
-  .import-step-title b { font-weight:700; }
   .import-step-sub { font-size:13px; color:var(--ink-2); margin-top:4px; line-height:1.4; }
   .import-step-link { display:inline-block; margin-top:4px; font-size:14px; color:var(--accent-ink); text-decoration:none; font-weight:600; }
   .import-step-link:hover { text-decoration:underline; }
@@ -438,7 +440,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .pcard-name { font-weight:700; font-size:14px; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:flex; align-items:center; gap:6px; }
   .pcard-status { font-size:11.5px; font-style:italic; color:var(--ink-3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .pcard-stats { font-size:12px; color:var(--ink-2); margin-top:2px; }
-  .pcard-count { font-weight:800; color:var(--ink); font-size:14px; }
+  .pcard-count { font-weight:700; color:var(--ink); font-size:14px; }
   .pcard-unit { font-size:11.5px; color:var(--ink-3); }
   .pcard-progress { height:4px; background:var(--surface); border-radius:2px; margin-top:6px; overflow:hidden; }
   .pcard-progress-fill { height:100%; background:linear-gradient(90deg, var(--series, var(--accent)), color-mix(in srgb, var(--series, var(--accent)) 70%, #fff)); border-radius:2px; transition:width .3s; }
@@ -1138,7 +1140,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* Les enfants ne captent pas les evenements souris : le title du parent s'affiche
      de maniere fiable sur toute la surface (sinon flicker/retard sur changement de child). */
   .qz-pill > * { pointer-events:none; line-height:1.2; }
-  .qz-pill b { color:var(--accent-ink); font-weight:800; }
+  .qz-pill b { color:var(--accent-ink); font-weight:700; }
   .qz-pill-lbl { font-size:10.5px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.3px; font-weight:700; margin-left:2px; }
   .qz-pill-sub { font-size:10.5px; color:var(--ink-3); font-weight:600; margin-left:4px; opacity:.85; text-transform:uppercase; letter-spacing:.3px; }
   /* Petit label qui indique de quel bucket (type de son) proviennent les stats affichees */
@@ -1198,7 +1200,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .qz-verdict-replay:hover { border-color:var(--accent); background:color-mix(in srgb,var(--accent) 8%,var(--surface)); }
   /* Progress badge en haut du player pendant une session Classe */
   .qz-session-progress { display:block; width:fit-content; margin:0 auto 12px; padding:6px 14px; background:color-mix(in srgb,var(--accent) 12%,var(--surface-2)); color:var(--accent-ink); border-radius:999px; font:700 13px/1 system-ui; letter-spacing:.2px; text-align:center; }
-  .qz-session-progress b { font-weight:800; font-size:14px; }
+  .qz-session-progress b { font-weight:700; font-size:14px; }
   .qz-empty-sub { color:var(--ink-3); font-size:12.5px; margin:-4px 0 12px; }
   /* Recap card affichee apres la 10eme question */
   .qz-recap { text-align:center; padding:24px 18px; border-radius:16px; background:var(--surface-2); }
@@ -1207,8 +1209,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .qz-recap.bad { background:color-mix(in srgb,#ef4444 10%,var(--surface-2)); }
   .qz-recap-emoji { font-size:54px; line-height:1; margin-bottom:6px; }
   .qz-recap-title { font-size:15px; font-weight:700; color:var(--ink-2); letter-spacing:.4px; text-transform:uppercase; margin-bottom:8px; }
-  .qz-recap-score { font-size:52px; line-height:1; color:var(--ink); font-weight:800; margin-bottom:8px; }
-  .qz-recap-score b { font-weight:800; }
+  .qz-recap-score { font-size:52px; line-height:1; color:var(--ink); font-weight:700; margin-bottom:8px; }
+  .qz-recap-score b { font-weight:700; }
   .qz-recap-total { font-size:26px; color:var(--ink-3); font-weight:600; }
   .qz-recap-diff-wrap { margin-bottom:12px; }
   .qz-recap-diff { display:inline-block; padding:4px 12px; border-radius:999px; font:700 12px/1 system-ui; }
@@ -1222,7 +1224,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   #quizProblemBanner { margin:8px 0 0; }
   .qz-problem-badge { padding:8px 14px; border:1px solid color-mix(in srgb,#ef4444 40%,var(--line-2)); background:color-mix(in srgb,#ef4444 8%,var(--surface)); color:var(--ink); border-radius:12px; font:600 13px/1.2 system-ui; cursor:pointer; display:inline-flex; align-items:center; gap:6px; width:100%; justify-content:center; }
   .qz-problem-badge:hover { background:color-mix(in srgb,#ef4444 14%,var(--surface)); }
-  .qz-problem-badge b { color:#b91c1c; font-weight:800; }
+  .qz-problem-badge b { color:#b91c1c; font-weight:700; }
   /* Carte 'especes a reviser' rendue dans le stage */
   .qz-problem { padding:16px; background:var(--surface-2); border-radius:12px; }
   .qz-problem-head { text-align:center; margin-bottom:12px; }
@@ -1232,7 +1234,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .qz-problem-list li { display:flex; justify-content:space-between; align-items:baseline; gap:12px; font-size:14px; padding:6px 8px; background:var(--surface); border-radius:6px; }
   .qz-prob-nm { font-weight:600; color:var(--ink); }
   .qz-prob-stat { font-size:12px; color:var(--ink-2); white-space:nowrap; }
-  .qz-prob-stat b { color:#b91c1c; font-weight:800; }
+  .qz-prob-stat b { color:#b91c1c; font-weight:700; }
   .qz-prob-pct { color:var(--ink-3); font-weight:500; margin-left:2px; }
   .qz-problem-actions { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
   /* Chip mode Expert : orange/rouge distinctif */
@@ -1243,12 +1245,12 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .qz-daily-card { display:flex; align-items:center; gap:14px; padding:12px 16px; background:linear-gradient(135deg, color-mix(in srgb,var(--accent) 18%,var(--surface-2)) 0%, color-mix(in srgb,var(--accent) 8%,var(--surface-2)) 100%); border:1px solid color-mix(in srgb,var(--accent) 30%,var(--line-2)); border-radius:14px; margin-bottom:14px; }
   .qz-daily-main { flex:1; min-width:0; }
   .qz-daily-titleline { font-size:15px; color:var(--ink); margin-bottom:2px; }
-  .qz-daily-titleline b { font-weight:800; }
+  .qz-daily-titleline b { font-weight:700; }
   .qz-daily-sub { font-size:11.5px; color:var(--ink-3); font-weight:500; margin-left:6px; }
   .qz-daily-status { font-size:12.5px; color:var(--ink-2); }
   .qz-daily-right { display:flex; align-items:center; gap:10px; flex:none; }
   .qz-daily-streak { padding:6px 12px; background:color-mix(in srgb,#f97316 12%,var(--surface)); color:#c2410c; border-radius:999px; font:600 13px/1 system-ui; }
-  .qz-daily-streak b { font-weight:800; }
+  .qz-daily-streak b { font-weight:700; }
   .qz-daily-btn { padding:10px 18px; border:none; background:var(--accent); color:#fff; border-radius:10px; font:700 13px/1 system-ui; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.15); }
   .qz-daily-btn:hover:not(:disabled) { filter:brightness(1.08); transform:translateY(-1px); }
   .qz-daily-btn:disabled { background:var(--line-2); color:var(--ink-3); cursor:default; box-shadow:none; }
@@ -1274,14 +1276,14 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .qz-lb-list { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:6px; }
   .qz-lb-list li { display:grid; grid-template-columns:32px 1fr auto auto auto; gap:10px; align-items:center; padding:8px 12px; background:var(--surface-2); border-radius:8px; font-size:13px; }
   .qz-lb-list li.me { background:color-mix(in srgb,var(--accent) 14%,var(--surface-2)); border:1px solid color-mix(in srgb,var(--accent) 30%,var(--line-2)); }
-  .qz-lb-rank { font-weight:800; color:var(--ink-3); text-align:center; }
+  .qz-lb-rank { font-weight:700; color:var(--ink-3); text-align:center; }
   .qz-lb-list li:nth-child(1) .qz-lb-rank { color:#eab308; }
   .qz-lb-list li:nth-child(2) .qz-lb-rank { color:#94a3b8; }
   .qz-lb-list li:nth-child(3) .qz-lb-rank { color:#a16207; }
   .qz-lb-name { font-weight:600; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .qz-lb-you { color:var(--accent-ink); font-size:11px; font-weight:600; }
   .qz-lb-metric { font-size:12px; color:var(--ink-2); text-align:right; white-space:nowrap; }
-  .qz-lb-metric b { color:var(--ink); font-weight:800; }
+  .qz-lb-metric b { color:var(--ink); font-weight:700; }
   .qz-lb-sub { font-size:10.5px; color:var(--ink-3); font-weight:500; margin-left:2px; }
   @media (max-width: 520px){
     .qz-lb-list li { grid-template-columns:28px 1fr auto; gap:8px; row-gap:2px; }
@@ -1504,7 +1506,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .req-vote { display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; border:1px solid var(--line); background:var(--surface); border-radius:10px; padding:5px 10px; font:inherit; color:var(--ink-2); min-width:52px; flex:none; }
   .req-vote:hover { border-color:var(--accent); color:var(--accent-ink); }
   .req-vote.on { background:color-mix(in srgb, var(--accent) 20%, var(--surface)); border-color:var(--accent); color:var(--accent-ink); }
-  .req-vote .n { font-size:15px; font-weight:800; }
+  .req-vote .n { font-size:15px; font-weight:700; }
   .req-vote .u { font-size:10px; }
   .req-body { flex:1; min-width:0; }
   .req-text { font-size:14px; color:var(--ink); line-height:1.5; white-space:pre-wrap; word-wrap:break-word; }
@@ -1656,7 +1658,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .map-el .leaflet-popup-content .hs-hint { font-size:10.5px; color:var(--ink-3); margin:0 0 4px; font-style:italic; }
   .map-el .leaflet-popup-content .hs-pct { font-size:11.5px; font-weight:700; color:var(--accent-ink); white-space:nowrap; margin-left:auto; }
   .map-el .map-legend { background:rgba(255,255,255,.95); border-radius:9px; padding:10px 12px; box-shadow:0 1px 4px rgba(0,0,0,.15); font-size:13px; line-height:1.4; color:#15201e; max-height:calc(100% - 40px); overflow-y:auto; }
-  .map-el .map-legend .ml-title { font-size:11.5px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; margin-bottom:7px; color:#47534f; }
+  .map-el .map-legend .ml-title { font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; margin-bottom:7px; color:#47534f; }
   .map-el .map-legend .ml-row { display:flex; align-items:center; gap:7px; padding:2px 0; }
   .map-el .map-legend .ml-dot { width:12px; height:12px; border-radius:50%; flex:none; border:1.5px solid #fff; box-shadow:0 0 0 .5px rgba(0,0,0,.2); }
   .map-el .map-legend .ml-dot.ml-hs { background:#1e6091; }
