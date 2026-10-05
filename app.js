@@ -2993,6 +2993,11 @@ function renderMatrix({universe,N}){
   // que styles.css donne a la 2e colonne, sinon elle tomberait sur le premier joueur.
   const avecRar = state.boardMode !== 'count';
   $('#matrix')?.classList.toggle('sans-rarete', !avecRar);
+  // Le tri « Par rarete » et le filtre de rarete partent avec la colonne (Mathis, meme soir) :
+  // ils triaient et filtraient sur ce qu'on ne voyait plus. Ils sont ignores, pas oublies -
+  // l'etat revient tel quel au retour sur un tri par rarete.
+  { const sg = $('#sortSeg'); if(sg) sg.style.display = avecRar ? '' : 'none';
+    const sec = $('#tierChips')?.closest('.fp-section'); if(sec) sec.style.display = avecRar ? '' : 'none'; }
 
   // option : ajouter tous les oiseaux de France non encore observés par le groupe
   let uni = universe;
@@ -3043,7 +3048,7 @@ function renderMatrix({universe,N}){
   // Familles présentes triées alpha : uniquement celles ayant >= 1 espece qui
   // passe le filtre tier courant (sinon on afficherait des familles vides apres
   // filtrage, ex : filtre 'tier 1-3' + famille 'Pouillots' → 0 obs).
-  const uniForFam = state.tierExcl?.size
+  const uniForFam = (avecRar && state.tierExcl?.size)
     ? uni.filter(u => !state.tierExcl.has(rarOf(u).id))
     : uni;
   const fams=[...new Set(uniForFam.map(u=>familyOf(u.sci)))].sort((a,b) => (FAMILY_ORDER[a] ?? 9999) - (FAMILY_ORDER[b] ?? 9999) || a.localeCompare(b, 'fr'));
@@ -3105,7 +3110,7 @@ function renderMatrix({universe,N}){
   const coBadge=$('#countryBadge'); if(coBadge) coBadge.style.display='none';
 
   let list=[...uni];
-  if(state.tierExcl.size) list=list.filter(u=>!state.tierExcl.has(rarOf(u).id));
+  if(avecRar && state.tierExcl.size) list=list.filter(u=>!state.tierExcl.has(rarOf(u).id));
   if(state.family && state.family !== 'any') list=list.filter(u=>familyOf(u.sci) === state.family);
   // Filtre lignes :
   //  - liste principale choisie  → seules les espèces qu'ELLE a vues (peu importe si
@@ -3140,7 +3145,7 @@ function renderMatrix({universe,N}){
   }
   if(state.q){ const q=state.q.toLowerCase();
     list=list.filter(u=>u.common.toLowerCase().includes(q)||(u.sci||'').toLowerCase().includes(q)); }
-  if(state.sort==='rarity'){
+  if(avecRar && state.sort==='rarity'){
     // localeCompare avec 'fr' explicit + sensitivity:'base' : tri alphabetique francais
     // stable independant de la locale navigateur (evite les ordres bizarres selon OS).
     if(rMode==='real') list.sort((a,b)=> rarOf(b).ord-rarOf(a).ord || a.common.localeCompare(b.common, 'fr', {sensitivity:'base'}));
@@ -15959,7 +15964,8 @@ $('#filtersReset')?.addEventListener('click', ()=>{
 // Compte les filtres actifs et met à jour le badge du bouton "Filtres".
 function _updateFiltersBadge(){
   let n = 0;
-  if(state.tierExcl && state.tierExcl.size) n++;
+  // Le filtre de rarete ne compte pas au tri « Nombre d'especes », ou il est masque et ignore.
+  if(state.boardMode !== 'count' && state.tierExcl && state.tierExcl.size) n++;
   if(state.family && state.family !== 'any') n++;
   if(state.playerMain) n++;
   if(state.playerCompareSet && state.playerCompareSet.size) n++;

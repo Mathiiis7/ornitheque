@@ -1,5 +1,5 @@
-# Page Classement TERMINÉE le 2026-10-05 (validée par Mathis), commitée, PAS poussée - v718, app.js?v=295
-Reste : pousser si Mathis le demande. Suite de la revue page par page : la prochaine page qu'il choisira.
+# Page Classement TERMINÉE le 2026-10-05 (validée par Mathis), EN LIGNE - v719, app.js?v=296
+Suite de la revue page par page : la prochaine page qu'il choisira.
 
 Ce qui a changé (détail dans les commits du 2026-10-05 et la charte) :
 - tableau des joueurs et « Qui a vu quoi » alignés sur le tableau de Ma liste (en-têtes 13 px capitales,
@@ -12,8 +12,7 @@ Ce qui a changé (détail dans les commits du 2026-10-05 et la charte) :
   les filtres ;
 - onglets : Birdydex avant Carte ; textes d'introduction des pages tous au style de Ma liste ;
 - fiche espèce : les habitats se chargent aussi hors Birdydex (ils manquaient depuis le 2026-09-28).
-Question laissée ouverte : au tri « Nombre d'espèces », masquer aussi le tri « Par rareté » et le
-filtre de rareté de « Qui a vu quoi » ? Pas de réponse.
+Au tri « Nombre d'espèces », le tri « Par rareté » et le filtre de rareté sont masqués et ignorés (oui de Mathis).
 
 # FAIT : onglets 15 -> 17 px, poussés le 2026-10-05 (qg#41 déjà fermé).
 
