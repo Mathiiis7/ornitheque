@@ -593,10 +593,14 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .c-rank { text-align:center !important; width:46px; font-variant-numeric:tabular-nums; color:var(--ink-3); }
   td.c-rank { font-weight:600; }
   td.strong { font-weight:700; color:var(--accent-ink); }
-  /* La case du score du premier restait bleu-vert au milieu d'une ligne doree :
-     td.on-metric l'emportait en specificite. La ligne entiere est doree. */
-  tr.lead td, .board-sheet tr.lead td.on-metric { background:color-mix(in srgb,var(--gold) 13%,var(--surface)) !important; }
-  tr.lead .c-rank { color:var(--gold); }
+  /* Podium : seule la case du rang des trois premiers prend l'or, l'argent ou le bronze ; le
+     reste de la ligne garde les couleurs normales (Mathis, 2026-10-05 - la ligne entiere du
+     premier etait doree). Le metal est pose a 45 % sur le fond du panneau, rang en --ink. */
+  .board-sheet { --argent:#9aa6ae; --bronze:#b8763f; }
+  .board-sheet tbody tr.podium-1 td.c-rank { background:color-mix(in srgb,var(--gold) 45%,var(--surface)) !important; }
+  .board-sheet tbody tr.podium-2 td.c-rank { background:color-mix(in srgb,var(--argent) 45%,var(--surface)) !important; }
+  .board-sheet tbody tr.podium-3 td.c-rank { background:color-mix(in srgb,var(--bronze) 45%,var(--surface)) !important; }
+  .board-sheet tbody tr[class*="podium-"] td.c-rank { color:var(--ink); font-weight:700; }
 
   /* rarest finds */
   .empty-note { color:var(--ink-3); font-size:13px; margin-top:12px; }

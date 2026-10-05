@@ -2917,7 +2917,7 @@ function renderBoard(){
       <th class="c-txt">Objectif</th><th class="c-txt">Espèce préférée</th>
       <th class="c-txt">La plus rare</th><th class="c-txt">Dernière acquisition</th><th class="c-txt">Espèce de rêve</th>
     </tr></thead>
-    <tbody>${ranked.map((p,i)=>`<tr class="${i===0?'lead':''}">
+    <tbody>${ranked.map((p,i)=>`<tr class="${i<3?'podium-'+(i+1):''}">
       <td class="c-rank">${i===0?'★':(i+1)}</td>
       <td class="who-cell" style="--series:var(--s${p.si})"><span class="who-in"><span class="dot"></span>${isOnline(p.id)?'<span class="pname-dot" title="en ligne"></span>':''}<button type="button" class="who-name" data-fiche-joueur="${esc(p.id)}" title="Voir la fiche de ${esc(p.name)}">${esc(p.name)}</button>${p.isMe?'<span class="youtag">vous</span>':''}</span></td>
       ${scoreTd(p)}
