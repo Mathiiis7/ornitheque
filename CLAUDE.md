@@ -233,6 +233,10 @@ une décision vient d'une mesure, ils donnent le chiffre.
 risquée : le dire, et attendre. Et ne jamais simplifier ni retirer un élément d'interface
 existant qui n'a pas été mentionné.
 
+**Le style a sa propre charte : `docs/charte-graphique.md`**, à lire avant de toucher à l'apparence.
+L'Ornithèque n'entre PAS dans la charte commune des projets perso (vert forêt, Figtree) : essayée
+sur la démo et refusée par Mathis le 2026-10-05.
+
 **Une classe partagée se touche avec précaution.** Réparer un composant en modifiant une
 classe que d'autres utilisent casse les autres en silence. `.cp-item` sert au sélecteur de
 pays ET au sélecteur générique : lui avoir donné la grille à six colonnes du premier a réduit
