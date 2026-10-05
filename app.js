@@ -16012,6 +16012,19 @@ $('#themeBtn').addEventListener('click',()=>{
   root.setAttribute('data-theme', isDark?'light':'dark');
 });
 
+// Logo de l'entete : la tete sur vert pale en clair, sur sapin en sombre (choix du 2026-10-05).
+// Une image ne voit pas le theme de la page, d'ou la bascule ici : elle suit le reglage de
+// l'appareil tant que le bouton Theme n'a pas ete touche, puis le bouton.
+const _mqSombre=matchMedia('(prefers-color-scheme: dark)');
+function _logoSelonTheme(){
+  const t=root.getAttribute('data-theme');
+  const sombre = t ? t==='dark' : _mqSombre.matches;
+  markEmoji.src = sombre ? 'assets/logos/logo-sombre.svg' : 'assets/logos/logo.svg';
+}
+_logoSelonTheme();
+_mqSombre.addEventListener('change', _logoSelonTheme);
+new MutationObserver(_logoSelonTheme).observe(root, { attributes:true, attributeFilter:['data-theme'] });
+
 // Global country button : sync + click ouvre le picker modal
 const _globalCcBtn = document.getElementById('globalCountryBtn');
 if(_globalCcBtn){
