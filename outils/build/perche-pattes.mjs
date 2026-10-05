@@ -12,8 +12,8 @@ const a = fs.readFileSync(DOS + 'planche-4.svg', 'utf8').split(/\r?\n/);
 if (!a[100].includes('m12.51 28.96') || !a[101].includes('m11.48 29.02')) throw new Error('planche-4.svg a changé');
 
 // Pattes de A : le haut des pattes est à y = 29, vers x = 12,5. Sous le ventre de D, le même point
-// est à (12,4 ; 22,05) : collées au ventre (à 22,4, Mathis les trouvait détachées). Échelle 0,9 : D est un peu plus fin que A.
-const POSE = 'translate(12.4 22.05) scale(0.9) translate(-12.5 -29)';
+// est à (12,4 ; 22,05) : collées au ventre (à 22,4, Mathis les trouvait détachées). Échelle 1,15 : à 0,9 Mathis les trouvait un peu petites.
+const POSE = 'translate(12.4 22.05) scale(1.15) translate(-12.5 -29)';
 const pattes = [
   a[100].replace('#BE5D31', '#B83A22'), // les deux pieds et la patte du fond, plus sombres
   a[101].replace('#D2763E', '#C8452B'), // la patte de devant, vermillon
