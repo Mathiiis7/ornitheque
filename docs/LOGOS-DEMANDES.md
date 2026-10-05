@@ -4,40 +4,57 @@ Arrow 2 : https://app.quiver.ai. Document de travail, à supprimer une fois le l
 
 ---
 
-## ▶ À ENVOYER (pas urgent) : l'essai d'une pose à partir du martin du logo
+## ▶ À ENVOYER : les jumelles devant les yeux (derniers crédits)
 
-Décidé le 2026-10-05 : **le martin Figma du logo est LA base**, l'ancien perché « E » est abandonné.
-But de cet essai : voir si Arrow 2 sait garder CE martin (ses points, ses couleurs, sa tête) en
-changeant seulement la pose. Si oui, on demande les autres poses une par une, de la même façon.
-Pose d'essai choisie : le poisson dans le bec, parce qu'elle change peu le corps (si Arrow rate
-celle-là, inutile d'essayer le vol ou la plongée).
+**Le martin Figma du logo est LA base** (décidé le 2026-10-05). Les poses qui ne demandent qu'un
+objet en plus se font sans Arrow, par-dessus son dessin : `outils/build/pose-jumelles.mjs` (jumelles
+pendues au cou). Arrow ne sert qu'aux poses qui obligent à redessiner l'aile ou le corps.
+
+**Premier essai raté (2026-10-05, poisson dans le bec)** : Arrow a redessiné un autre oiseau (petite
+tête, petit œil, bec vers le bas, posture droite, orange plus vif, joue orange inventée). Deux causes :
+« draw the same bird in a new pose » lui laisse tout refaire, et la description jointe était fausse
+(joue orange et moustache, que le martin de Mathis n'a pas). D'où cette demande : on lui fait
+MODIFIER l'image, on décrit l'oiseau tel qu'il est, et on liste ce qu'il n'a pas le droit de toucher.
 
 Réglages : **Arrow 2, effort High, 4 propositions.** Prix attendu : 0,40 à 1,20 $.
 
-1. Nouvelle demande. Joindre `assets/logos/sources/martin-figma.svg` (le martin entier du logo).
+1. Nouvelle demande. Joindre `assets/logos/sources/martin-figma.svg`.
 2. Copier-coller ce texte :
 
 ```text
-Use the attached kingfisher as the character model. Draw THE SAME BIRD -
-same body shape, same head, same bill, same eye, same wing, same light-teal
-dots on the crown and the wing, same colours, same flat style - in a new pose:
-perched upright on an invisible ground line, holding a small silver-grey fish
-crosswise in its bill, the fish's tail hanging down on one side.
+Edit the attached illustration. This is an existing character and it must
+stay recognisably the SAME drawing: copy its shapes, do not redraw it in
+your own style. Change ONLY what is listed under "THE CHANGE".
 
-KEEP FROM THE MODEL: the exact palette of the attached file, the number and
-placement of dots, the orange cheek patch with the teal moustache stripe
-below it, the cream neck patch, the short vermilion legs with thin toes. The
-eye stays a plain white circle with a solid black dot, no highlight.
-DO NOT: add dots, outlines, gradients, shading, text, a branch or a
-background. No gaps between shapes; adjacent colour areas meet exactly or
-overlap. Transparent background.
-VARIATIONS: four proposals; vary only the angle of the head and the size of
-the fish, never the bird itself.
+THE CHARACTER AS IT IS (do not alter): a kingfisher seen from the side,
+facing right, body leaning diagonally, head large and round. Crown and back
+teal #0B8282 covered with small light-teal #29C2BD dash-shaped dots. A BIG
+eye: white disc #FFFFFF with a large black pupil #120D0A and one small white
+highlight. A small orange #DD7E35 stripe running under the eye and a small
+orange spot in front of it. A cream #FAECC5 patch on the throat and on the
+side of the neck. A LONG, STRAIGHT, dark-grey #364042 bill pointing
+horizontally to the right, as long as the head is wide. Breast and belly
+orange #DD7E35. Wing teal #0B8282 with light-teal #29C2BD dots and a
+lighter #20B8AA / #12B2A5 leading edge. Short dark-teal tail pointing down
+to the left. Short vermilion #C8452B legs with thin toes.
+
+THE CHANGE: the bird looks through a small pair of dark-grey #364042
+binoculars. The near wing is raised and bent forward to hold the
+binoculars against the eye, the wingtip wrapped around them like a hand.
+The binoculars cover the eye; the bill stays fully visible, still long and
+horizontal, passing just below the binoculars. Everything else - head
+shape, crown dots, cream throat, orange breast, tail, legs, posture - stays
+exactly as in the attached file.
+
+DO NOT: shrink the head, shorten or tilt the bill, add an orange cheek
+patch, add a moustache stripe, brighten the orange, straighten the
+posture, add outlines, gradients, shading, text, a branch or a background.
+No gaps between shapes. Transparent background.
+VARIATIONS: four proposals; vary only how the wing holds the binoculars.
 ```
 
-Si c'est bon, les autres poses se demandent une par une avec le même texte, en ne changeant que la
-phrase de la pose (« in a new pose: ... »). Poses de la retouche 3, pour mémoire : vol, plongée,
-carnet, jumelles, casque, content, perplexe.
+Si le résultat garde bien l'oiseau, les autres poses qui touchent au corps (vol, plongée) se
+demandent avec le même texte, en ne changeant que le paragraphe « THE CHANGE ».
 
 ### Plus tard - la tuile du logo (après validation du perché)
 
