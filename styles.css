@@ -325,6 +325,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     font-weight:800; font-size:14px; display:grid; place-items:center; margin-top:0; }
   .import-step-body { flex:1; min-width:0; }
   .import-step-title { font-size:15px; font-weight:600; color:var(--ink); line-height:1.35; }
+  /* <b> dans un titre deja a 600 : le navigateur montait a 900 (« bolder »), trop noir pour
+     « Download (csv) ». 700 suffit a le distinguer (remarque de Mathis le 2026-10-05). */
+  .import-step-title b { font-weight:700; }
   .import-step-sub { font-size:13px; color:var(--ink-2); margin-top:4px; line-height:1.4; }
   .import-step-link { display:inline-block; margin-top:4px; font-size:14px; color:var(--accent-ink); text-decoration:none; font-weight:600; }
   .import-step-link:hover { text-decoration:underline; }
