@@ -34,13 +34,12 @@ ornitheque/
 └── outils/
     ├── build/              les générateurs de données (Node, ESM)
     ├── verif/              les bancs de mesure
-    ├── ebirdst/            les scripts R pour Cornell Status & Trends
     ├── config/             firestore.rules et les contours sources
     └── generateur-trophees.html   outil local de fabrication des badges
 ```
 
 Deux choses ne sont pas dans cette arborescence, et c'est voulu. **Les cartes de
-répartition** (`range/` et `range-weekly/`, 250 Mo) vivent dans le dépôt séparé
+répartition** (`cartes/`, 82,7 Mo) vivent dans le dépôt séparé
 [ornitheque-data](https://github.com/Mathiiis7/ornitheque-data) : les garder ici aurait
 ralenti chaque opération sur le code. **`notes-privees/`** reste hors du dépôt, exclu par
 `.gitignore` — le dépôt est public.
@@ -49,7 +48,7 @@ ralenti chaque opération sur le code. **`notes-privees/`** reste hors du dépô
 
 - **eBird API v2** : liste d'espèces par région, catégorie exotique
 - **eBird bar chart** : fréquence d'observation mensuelle par région (via scraping cookie session)
-- **Cornell Status & Trends (via R package ebirdst)** : abondance moyenne annuelle + weekly par pixel 9km
+- **Observations eBird publiées sur GBIF** (CC BY 4.0) : les cartes de répartition, méthode dans `docs/sources-cartes.md`
 - **xeno-canto API v3** : sons (chants + cris) par espèce
 - **Avonet dataset** (Tobias et al. 2022) : traits écologiques et morphologiques
 - **GBIF species API** : statut IUCN mondial
@@ -61,12 +60,8 @@ ralenti chaque opération sur le code. **`notes-privees/`** reste hors du dépô
 # Regenerer la donnée par pays (nécessite cookie eBird actif)
 EBIRD_COOKIE="..." node outils/build/download-bar-charts-regional.mjs
 
-# Regenerer abundance Cornell par pays (nécessite clé ebirdst)
-Rscript outils/ebirdst/build-abundance-by-region-multi.R
-
-# Regenerer cartes de répartition Cornell (mode world = tout, demo = 3 espèces)
-Rscript outils/ebirdst/build-range-maps.R
-Rscript outils/ebirdst/build-range-maps.R demo
+# Regenerer les cartes de répartition (dans ../ornitheque-data/cartes)
+node outils/build/cartes-gbif.mjs
 
 # Regenerer traits Avonet
 node outils/build/build-avonet-traits.mjs

@@ -626,8 +626,8 @@ const COUNTRIES_REG = {
     // Plus de table Status & Trends depuis le 2026-10-01 : les conditions de Cornell
     // interdisent de publier ses donnees dans un site sans accord ecrit, et la table ne
     // decidait plus rien - mesure faite, 0 espece sur 456 n'y gagnait son palier, sa place
-    // au catalogue ou au filtre par famille.
-    st: () => ({}),
+    // au catalogue ou au filtre par famille. Son dernier recours (et le champ st de chaque
+    // pays) a ete retire le 2026-10-05 ; les scripts sont dans archives/status-trends/.
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['FR'] || null,
     hasBarchart: true,
   },
@@ -635,7 +635,6 @@ const COUNTRIES_REG = {
     name: 'Monténégro', flagCode: 'ME',
     barTier: () => (typeof REAL_RARITY_ME_EBIRD !== 'undefined') ? REAL_RARITY_ME_EBIRD : {},
     monthly: () => _FREQ_MENSUELLE_PAYS['ME'] || {},
-    st: () => ({}),   // S&T retire : le bar chart etait deja seul a decider
     // eBird publie bien 21 communes pour le Montenegro - un commentaire affirmait ici le
     // contraire, et le pays est reste le seul sans carte regionale pour cette raison. Les
     // 21 communes font 658 km2 chacune, neuf fois plus fin qu un departement francais :
@@ -648,7 +647,6 @@ const COUNTRIES_REG = {
     name: 'Espagne', flagCode: 'ES',
     barTier: () => _RARETE_PAYS['ES'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['ES'] || {},
-    st: () => ({}),   // S&T retire : le bar chart etait deja seul a decider
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['ES'] || null,
     hasBarchart: true,
   },
@@ -656,7 +654,6 @@ const COUNTRIES_REG = {
     name: 'Italie', flagCode: 'IT',
     barTier: () => _RARETE_PAYS['IT'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['IT'] || {},
-    st: () => ({}),   // S&T retire : le bar chart etait deja seul a decider
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['IT'] || null,
     hasBarchart: true,
   },
@@ -664,7 +661,6 @@ const COUNTRIES_REG = {
     name: 'Royaume-Uni', flagCode: 'GB',
     barTier: () => _RARETE_PAYS['GB'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['GB'] || {},
-    st: () => ({}),   // S&T retire : le bar chart etait deja seul a decider
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['GB'] || null,
     hasBarchart: true,
   },
@@ -672,7 +668,6 @@ const COUNTRIES_REG = {
     name: 'Portugal', flagCode: 'PT',
     barTier: () => _RARETE_PAYS['PT'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['PT'] || {},
-    st: () => ({}),   // S&T retire : le bar chart etait deja seul a decider
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['PT'] || null,
     hasBarchart: true,
   },
@@ -683,7 +678,6 @@ const COUNTRIES_REG = {
     name: 'Suisse', flagCode: 'CH',
     barTier: () => _RARETE_PAYS['CH'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['CH'] || {},
-    st: () => ({}),   // table S&T jamais injectee pour ce pays
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['CH'] || null,
     hasBarchart: true,
   },
@@ -691,7 +685,6 @@ const COUNTRIES_REG = {
     name: 'Norvège', flagCode: 'NO',
     barTier: () => _RARETE_PAYS['NO'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['NO'] || {},
-    st: () => ({}),   // table S&T jamais injectee pour ce pays
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['NO'] || null,
     hasBarchart: true,
   },
@@ -699,7 +692,6 @@ const COUNTRIES_REG = {
     name: 'Grèce', flagCode: 'GR',
     barTier: () => _RARETE_PAYS['GR'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['GR'] || {},
-    st: () => ({}),   // table S&T jamais injectee pour ce pays
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['GR'] || null,
     hasBarchart: true,
   },
@@ -707,7 +699,6 @@ const COUNTRIES_REG = {
     name: 'Islande', flagCode: 'IS',
     barTier: () => _RARETE_PAYS['IS'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['IS'] || {},
-    st: () => ({}),   // table S&T jamais injectee pour ce pays
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['IS'] || null,
     hasBarchart: true,
   },
@@ -715,7 +706,6 @@ const COUNTRIES_REG = {
     name: 'Sri Lanka', flagCode: 'LK',
     barTier: () => _RARETE_PAYS['LK'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['LK'] || {},
-    st: () => ({}),   // S&T Cornell : pas de couverture Sri Lanka
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['LK'] || null,
     hasBarchart: true,
   },
@@ -723,7 +713,6 @@ const COUNTRIES_REG = {
     name: 'Namibie', flagCode: 'NA',
     barTier: () => _RARETE_PAYS['NA'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['NA'] || {},
-    st: () => ({}),   // S&T Cornell : pas de couverture Namibie
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['NA'] || null,
     hasBarchart: true,
   },
@@ -731,7 +720,6 @@ const COUNTRIES_REG = {
     name: 'Australie', flagCode: 'AU',
     barTier: () => _RARETE_PAYS['AU'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['AU'] || {},
-    st: () => ({}),   // table S&T jamais injectee pour ce pays
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['AU'] || null,
     hasBarchart: true,
   },
@@ -739,7 +727,6 @@ const COUNTRIES_REG = {
     name: 'Nouvelle-Zélande', flagCode: 'NZ',
     barTier: () => _RARETE_PAYS['NZ'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['NZ'] || {},
-    st: () => ({}),   // table S&T jamais injectee pour ce pays
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['NZ'] || null,
     hasBarchart: true,
   },
@@ -747,7 +734,6 @@ const COUNTRIES_REG = {
     name: 'États-Unis', flagCode: 'US',
     barTier: () => _RARETE_PAYS['US'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['US'] || {},
-    st: () => ({}),   // table S&T jamais injectee pour ce pays
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['US'] || null,
     hasBarchart: true,
   },
@@ -755,7 +741,6 @@ const COUNTRIES_REG = {
     name: 'Canada', flagCode: 'CA',
     barTier: () => _RARETE_PAYS['CA'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['CA'] || {},
-    st: () => ({}),   // table S&T jamais injectee pour ce pays
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['CA'] || null,
     hasBarchart: true,
   },
@@ -766,7 +751,6 @@ const COUNTRIES_REG = {
     name: "Allemagne", flagCode: 'DE',
     barTier: () => _RARETE_PAYS['DE'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['DE'] || {},
-    st: () => ({}),
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['DE'] || null,
     hasBarchart: true,
   },
@@ -774,7 +758,6 @@ const COUNTRIES_REG = {
     name: "Pays-Bas", flagCode: 'NL',
     barTier: () => _RARETE_PAYS['NL'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['NL'] || {},
-    st: () => ({}),
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['NL'] || null,
     hasBarchart: true,
   },
@@ -782,7 +765,6 @@ const COUNTRIES_REG = {
     name: "Belgique", flagCode: 'BE',
     barTier: () => _RARETE_PAYS['BE'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['BE'] || {},
-    st: () => ({}),
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['BE'] || null,
     hasBarchart: true,
   },
@@ -790,7 +772,6 @@ const COUNTRIES_REG = {
     name: "Autriche", flagCode: 'AT',
     barTier: () => _RARETE_PAYS['AT'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['AT'] || {},
-    st: () => ({}),
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['AT'] || null,
     hasBarchart: true,
   },
@@ -798,7 +779,6 @@ const COUNTRIES_REG = {
     name: "Pologne", flagCode: 'PL',
     barTier: () => _RARETE_PAYS['PL'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['PL'] || {},
-    st: () => ({}),
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['PL'] || null,
     hasBarchart: true,
   },
@@ -806,7 +786,6 @@ const COUNTRIES_REG = {
     name: "Tchéquie", flagCode: 'CZ',
     barTier: () => _RARETE_PAYS['CZ'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['CZ'] || {},
-    st: () => ({}),
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['CZ'] || null,
     hasBarchart: true,
   },
@@ -814,7 +793,6 @@ const COUNTRIES_REG = {
     name: "Slovaquie", flagCode: 'SK',
     barTier: () => _RARETE_PAYS['SK'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['SK'] || {},
-    st: () => ({}),
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['SK'] || null,
     hasBarchart: true,
   },
@@ -822,7 +800,6 @@ const COUNTRIES_REG = {
     name: "Hongrie", flagCode: 'HU',
     barTier: () => _RARETE_PAYS['HU'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['HU'] || {},
-    st: () => ({}),
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['HU'] || null,
     hasBarchart: true,
   },
@@ -830,7 +807,6 @@ const COUNTRIES_REG = {
     name: "Roumanie", flagCode: 'RO',
     barTier: () => _RARETE_PAYS['RO'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['RO'] || {},
-    st: () => ({}),
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['RO'] || null,
     hasBarchart: true,
   },
@@ -838,7 +814,6 @@ const COUNTRIES_REG = {
     name: "Bulgarie", flagCode: 'BG',
     barTier: () => _RARETE_PAYS['BG'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['BG'] || {},
-    st: () => ({}),
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['BG'] || null,
     hasBarchart: true,
   },
@@ -846,7 +821,6 @@ const COUNTRIES_REG = {
     name: "Croatie", flagCode: 'HR',
     barTier: () => _RARETE_PAYS['HR'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['HR'] || {},
-    st: () => ({}),
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['HR'] || null,
     hasBarchart: true,
   },
@@ -854,7 +828,6 @@ const COUNTRIES_REG = {
     name: "Serbie", flagCode: 'RS',
     barTier: () => _RARETE_PAYS['RS'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['RS'] || {},
-    st: () => ({}),
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['RS'] || null,
     hasBarchart: true,
   },
@@ -862,7 +835,6 @@ const COUNTRIES_REG = {
     name: "Bosnie-Herzégovine", flagCode: 'BA',
     barTier: () => _RARETE_PAYS['BA'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['BA'] || {},
-    st: () => ({}),
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['BA'] || null,
     hasBarchart: true,
   },
@@ -870,7 +842,6 @@ const COUNTRIES_REG = {
     name: "Albanie", flagCode: 'AL',
     barTier: () => _RARETE_PAYS['AL'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['AL'] || {},
-    st: () => ({}),
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['AL'] || null,
     hasBarchart: true,
   },
@@ -878,7 +849,6 @@ const COUNTRIES_REG = {
     name: "Slovénie", flagCode: 'SI',
     barTier: () => _RARETE_PAYS['SI'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['SI'] || {},
-    st: () => ({}),
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['SI'] || null,
     hasBarchart: true,
   },
@@ -886,7 +856,6 @@ const COUNTRIES_REG = {
     name: "Danemark", flagCode: 'DK',
     barTier: () => _RARETE_PAYS['DK'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['DK'] || {},
-    st: () => ({}),
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['DK'] || null,
     hasBarchart: true,
   },
@@ -894,7 +863,6 @@ const COUNTRIES_REG = {
     name: "Suède", flagCode: 'SE',
     barTier: () => _RARETE_PAYS['SE'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['SE'] || {},
-    st: () => ({}),
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['SE'] || null,
     hasBarchart: true,
   },
@@ -902,7 +870,6 @@ const COUNTRIES_REG = {
     name: "Finlande", flagCode: 'FI',
     barTier: () => _RARETE_PAYS['FI'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['FI'] || {},
-    st: () => ({}),
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['FI'] || null,
     hasBarchart: true,
   },
@@ -910,7 +877,6 @@ const COUNTRIES_REG = {
     name: "Estonie", flagCode: 'EE',
     barTier: () => _RARETE_PAYS['EE'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['EE'] || {},
-    st: () => ({}),
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['EE'] || null,
     hasBarchart: true,
   },
@@ -918,7 +884,6 @@ const COUNTRIES_REG = {
     name: "Lituanie", flagCode: 'LT',
     barTier: () => _RARETE_PAYS['LT'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['LT'] || {},
-    st: () => ({}),
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['LT'] || null,
     hasBarchart: true,
   },
@@ -926,7 +891,6 @@ const COUNTRIES_REG = {
     name: "Lettonie", flagCode: 'LV',
     barTier: () => _RARETE_PAYS['LV'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['LV'] || {},
-    st: () => ({}),
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['LV'] || null,
     hasBarchart: true,
   },
@@ -934,7 +898,6 @@ const COUNTRIES_REG = {
     name: "Biélorussie", flagCode: 'BY',
     barTier: () => _RARETE_PAYS['BY'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['BY'] || {},
-    st: () => ({}),
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['BY'] || null,
     hasBarchart: true,
   },
@@ -942,7 +905,6 @@ const COUNTRIES_REG = {
     name: "Ukraine", flagCode: 'UA',
     barTier: () => _RARETE_PAYS['UA'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['UA'] || {},
-    st: () => ({}),
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['UA'] || null,
     hasBarchart: true,
   },
@@ -950,7 +912,6 @@ const COUNTRIES_REG = {
     name: "Russie", flagCode: 'RU',
     barTier: () => _RARETE_PAYS['RU'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['RU'] || {},
-    st: () => ({}),
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['RU'] || null,
     hasBarchart: true,
   },
@@ -958,7 +919,6 @@ const COUNTRIES_REG = {
     name: "Irlande", flagCode: 'IE',
     barTier: () => _RARETE_PAYS['IE'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['IE'] || {},
-    st: () => ({}),
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['IE'] || null,
     hasBarchart: true,
   },
@@ -966,7 +926,6 @@ const COUNTRIES_REG = {
     name: "Malte", flagCode: 'MT',
     barTier: () => _RARETE_PAYS['MT'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['MT'] || {},
-    st: () => ({}),
     monthlyByRegion: () => null,
     zonesMesurables: false,
     hasBarchart: true,
@@ -975,7 +934,6 @@ const COUNTRIES_REG = {
     name: "Macédoine du Nord", flagCode: 'MK',
     barTier: () => _RARETE_PAYS['MK'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['MK'] || {},
-    st: () => ({}),
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['MK'] || null,
     hasBarchart: true,
   },
@@ -983,7 +941,6 @@ const COUNTRIES_REG = {
     name: "Luxembourg", flagCode: 'LU',
     barTier: () => _RARETE_PAYS['LU'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['LU'] || {},
-    st: () => ({}),
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['LU'] || null,
     hasBarchart: true,
   },
@@ -991,7 +948,6 @@ const COUNTRIES_REG = {
     name: "Chypre", flagCode: 'CY',
     barTier: () => _RARETE_PAYS['CY'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['CY'] || {},
-    st: () => ({}),
     // Chypre retrouve ses zones : 6 districts a 3 100 listes chacun, la meilleure densite
     // d Europe apres les Pays-Bas. Elle en avait ete privee tant que Keryneia, en Chypre du
     // Nord, n avait pas de contour - Natural Earth n en livre que les 5 du sud.
@@ -1002,7 +958,6 @@ const COUNTRIES_REG = {
     name: "Moldavie", flagCode: 'MD',
     barTier: () => _RARETE_PAYS['MD'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['MD'] || {},
-    st: () => ({}),
     monthlyByRegion: () => REAL_FREQ_MONTHLY_BY_REGION_MULTI['MD'] || null,
     hasBarchart: true,
   },
@@ -1010,7 +965,6 @@ const COUNTRIES_REG = {
     name: "Kosovo", flagCode: 'XK',
     barTier: () => _RARETE_PAYS['XK'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['XK'] || {},
-    st: () => ({}),
     monthlyByRegion: () => null,
     zonesMesurables: false,
     hasBarchart: true,
@@ -1019,7 +973,6 @@ const COUNTRIES_REG = {
     name: "Îles Féroé", flagCode: 'FO',
     barTier: () => _RARETE_PAYS['FO'] || {},
     monthly: () => _FREQ_MENSUELLE_PAYS['FO'] || {},
-    st: () => ({}),
     monthlyByRegion: () => null,
     zonesMesurables: false,
     hasBarchart: true,
@@ -1064,26 +1017,12 @@ function _isIsolatedXExotic(sci, cc){
 function _countryHasSpecies(cc, sci){
   const e = _countryEntry(cc); if(!e) return false;
   const k = (sci||'').toLowerCase();
-  const stEntry = e.st()[k];
-  // Espece consideree presente si :
-  //   - bar chart tier > 0
-  //   - OU S&T avec un composite tier ET une abondance reelle dans le pays
-  //
-  // Cette seconde condition testait seulement `stEntry.t > 0`, pour admettre les vagrants
-  // que Cornell modelise avec w=[0,0,...] mais t=10. Or ce t=10 est le plancher de la
-  // fonction de tier applique a une abondance nulle, pas une mesure : il admettait
-  // 50 especes au catalogue francais qui n'y ont rien a faire (Vautour oricou, Damier du
-  // Cap, Petrel geant...), toutes avec abondance ET valeurs hebdo strictement nulles.
-  // Meme garde que pour la rarete, cf. _stUtilisable.
+  // Espece consideree presente si le bar chart eBird du pays lui donne un palier. C'est la
+  // seule source depuis le retrait de Cornell Status & Trends (voir COUNTRIES_REG.FR) : la
+  // mesure du 2026-09-28 donnait deja 399 especes sur 456 entrees par leur bar chart, et
+  // zero par la seule table de Cornell.
   const hasBar = !!e.barTier()[k];
-  // La presence hebdomadaire S&T a ete retiree le 2026-09-28. Elle ne decidait plus rien :
-  // mesure sur les 456 especes de la table, 399 entrent au catalogue par leur bar chart eBird,
-  // ZERO par la seule presence hebdomadaire, zero par le seul tier. Les 52 valeurs de Cornell
-  // pesaient 24,6 Ko servis pour cette unique question oui/non, et l indicateur qui les avait
-  // remplacees 145 octets de plus. La table ne porte donc plus ni w ni p - voir
-  // outils/build/compacte-abondance-st.mjs.
-  const hasSTTier = _stUtilisable(stEntry);
-  if(!hasBar && !hasSTTier) return false;
+  if(!hasBar) return false;
   // Filtre X isolés : les échappés (X) qui n'apparaissent que sur ≤ 3 mois
   // et avec un max < 0.01% sont considérés comme "observations ponctuelles" et non
   // comme espèce présente. Empêche les Diamant de Gould et autres échappés de compagnie
@@ -1338,8 +1277,7 @@ function _openCountryPicker(currentCode, opts = {}){
       const nEspecesDe = (c) => {
         const r = COUNTRIES_REG[c];
         if(!r) return 0;
-        return Object.keys((r.barTier && r.barTier()) || {}).length
-            || Object.keys((r.st && r.st()) || {}).length;
+        return Object.keys((r.barTier && r.barTier()) || {}).length;
       };
       const maxEspeces = focusSci ? 0 : Math.max(1, ...Object.keys(COUNTRIES_REG).map(nEspecesDe));
       for(const cont of CONTINENT_ORDER){
@@ -2092,16 +2030,6 @@ function _horsAire(k, cc){
 // La fonction qui appliquait les overrides a disparu avec eux : ses six points d'appel
 // rendaient deja le palier du bar chart, elle ne faisait plus que le laisser passer.
 // Le S&T ne dit quelque chose d'une espece que si son abondance dans le pays est non nulle.
-// Une entree a zero sur les trois mesures (annuel, pic national, pic local) signifie que
-// Cornell possede un modele mondial pour cette espece mais n'en trouve aucune trace dans le
-// pays : le tier qui en sort est le plancher de la fonction (10), pas une mesure. Les 48
-// entrees de ce genre en France (Vautour oricou, Damier du Cap, Petrel geant...) venaient de
-// l'extraction S&T lancee sur les 11 170 noms de FR_NAMES, catalogue mondial.
-// Cette condition existait dans la logique de fusion ("S&T absent OU abd = 0 : bar chart")
-// et a ete perdue le 2026-09-23 en simplifiant vers un repli direct.
-function _stUtilisable(e){
-  return !!(e && e.t && ((e.a || 0) || (e.an || 0) || (e.al || 0)));
-}
 function rarityForCountry(sci, country){
   let k = (sci||'').trim().toLowerCase();
   if(SCI_ALIAS[k]) k = SCI_ALIAS[k];
@@ -2125,7 +2053,6 @@ function rarityForCountry(sci, country){
   // reste discutable, mais il releve d'un override cible par espece, pas d'une regle generale
   // appuyee sur une categorie de liste rouge qui mesure autre chose. La table REDLIST a
   // ete retiree de l'appli le 2026-09-24, avec l'affichage qu'elle alimentait.
-  const stEntry = reg.st()[k];
   const barTier = reg.barTier()[k];   // undefined si pas de bar chart pour ce pays
   // Exotiques : N (populations naturalisees) -> traitees comme les sauvages
   // (bar chart eBird local). Meme methode que
@@ -2146,8 +2073,7 @@ function rarityForCountry(sci, country){
     const cat = exoticCategoryInCountry(sci, c) || _exoticCategory(k);
     if(_isEstablishedExotic(cat)){
       if(barTier) return barTier;
-      if(_stUtilisable(stEntry)) return stEntry.t;
-      // N/P sans bar chart ni S&T : espece flaggee exotique par eBird mais frequence
+      // N/P sans bar chart : espece flaggee exotique par eBird mais frequence
       // trop basse pour etre agregee sur 7 ans. Retourne 0 = absente (le renderLine
       // affichera "Absente du bar chart" plutot que "Parc semi-libre" qui est trompeur).
       return 0;
@@ -2164,24 +2090,12 @@ function rarityForCountry(sci, country){
     if(barTier) return barTier;
     return 0;
   }
-  // Sauvages. Depuis le 2026-09-23 le bar chart eBird est la SEULE source du tier quand il
-  // existe, la fusion avec le S&T ayant ete retiree pour que l'echelle soit comparable
-  // entre pays.
-  //
-  // Le S&T reste un dernier recours, mais il ne sert plus rien aujourd'hui : depuis que les
-  // bar charts sont matches en nomenclature europeenne (locale=fr_FR) et que les alias de
-  // noms sont devenus un repli, plus aucune espece a abondance non nulle n'est privee de bar
-  // chart. Le Guillemot de Troil au Royaume-Uni, longtemps l'exemple de ce manque, a retrouve
-  // son tier 4. La branche est gardee comme filet pour un pays ou une espece a venir, pas
-  // parce qu'elle produit quelque chose.
-  //
-  // Regles :
-  //   - Bar chart present : bar chart pur, quel que soit le pays
-  //   - Pas de bar chart mais S&T : composite S&T
-  //   - Ni l'un ni l'autre : tier 0 (non calibree). Le badge "Hors aire" de la fiche dira
-  //     qu'on la mesure ailleurs, ce qui est tout ce qu'on sait.
+  // Sauvages : le bar chart eBird du pays est la SEULE source du tier, la meme partout pour
+  // que l'echelle soit comparable entre pays. La fusion avec Cornell Status & Trends a ete
+  // retiree le 2026-09-23, puis son dernier recours avec la table elle-meme (voir
+  // COUNTRIES_REG.FR). Sans bar chart : tier 0 (non calibree). Le badge "Hors aire" de la
+  // fiche dira qu'on la mesure ailleurs, ce qui est tout ce qu'on sait.
   if(barTier) return barTier;
-  if(_stUtilisable(stEntry)) return stEntry.t;
   return 0;
 }
 function sciColorForCountry(sci, country){
@@ -13027,11 +12941,9 @@ function _majDetailsCalcul(k, cc, isExo, cat){
   let detailsHtml = '';
   const isEstabExo = isExo && _isEstablishedExotic(cat);
   const canHaveDetails = (!isExo || isEstabExo);
-  // Data S&T + bar chart du pays courant (via registry pour multi-pays).
+  // Bar chart du pays courant (via registry pour multi-pays).
   const regCC = COUNTRIES_REG[cc];
-  const stEntry = (regCC && regCC.st) ? (regCC.st()[k] || null) : null;
   const ccBarTier = (regCC && regCC.barTier) ? (regCC.barTier()[k] || null) : null;
-  const ccName = (regCC && regCC.name) || cc;
   // Label source d'appui : bar chart eBird du pays (meme pour les exotiques N/P depuis
   // le fix 2026-09-21 qui abandonne GBIF pour utiliser le meme signal que les sauvages).
   const barSrcLabelCC = (cc === 'FR' ? 'Bar chart eBird FR 2019-2026' : ('Bar chart eBird ' + cc + ' 2019-2026'));
@@ -13040,10 +12952,8 @@ function _majDetailsCalcul(k, cc, isExo, cat){
   // "pic biweekly" : ni l'une ni l'autre n'existe plus, et il annoncait donc un calcul
   // fictif. Depuis le 2026-09-23 la rarete est une seule chose, la part des listes du
   // pays qui mentionnent l'espece, ponderee par l'effort d'observation de chaque
-  // quinzaine. Le S&T ne sert plus que de filet, quand aucun bar chart n'existe.
+  // quinzaine. Sans bar chart, le panneau le dit et n'invente rien.
   if(canHaveDetails){
-    const stSecours = !ccBarTier && typeof _stUtilisable === 'function' && _stUtilisable(stEntry);
-    const tierAffiche = ccBarTier || (stSecours ? stEntry.t : null);
     // Le panneau repond a trois questions, dans cet ordre : combien, depuis quand, d'ou
     // ca sort. Il ouvrait sur la source en capitales - la moins utile des trois -, puis
     // annoncait « Part des listes mentionnant l'espece » sans jamais donner le chiffre,
@@ -13078,7 +12988,6 @@ function _majDetailsCalcul(k, cc, isExo, cat){
       : (moisLu == null ? _valeurAnnuelleZone(serieLue, cc, zoneLue || null) : (serieLue[moisLu] || 0));
     const source = ccBarTier
       ? esc(barSrcLabelCC) + ', par quinzaines'
-      : stSecours ? ('eBird Status &amp; Trends, ' + esc(ccName))
       : ('Bar chart eBird ' + esc(cc) + ' : espèce absente');
     // La portee se dit avant le chiffre, sinon on ne sait pas de quoi il parle : « dans
     // les Yvelines », « en juin », ou les deux. C'est ce que la carte et la colonne des
@@ -13093,8 +13002,6 @@ function _majDetailsCalcul(k, cc, isExo, cat){
       ? (zoneLue
           ? "Sur eBird, chaque sortie donne une liste des oiseaux vus. Ici on regarde <b>" + esc(nomLu) + "</b>" + (quand ? ',' + quand : '') + " : on prend toutes les listes qui y ont été enregistrées depuis 2019" + compte
           : "Sur eBird, chaque sortie donne une liste des oiseaux vus. On prend toutes celles enregistrées " + esc(_auPays(cc)) + (quand ? ',' + quand + ',' : '') + " depuis 2019" + compte)
-      : stSecours
-      ? "Aucun bar chart eBird pour cette espèce dans ce pays. Le palier vient du modèle Status &amp; Trends de Cornell, seule source disponible."
       : "Aucune donnée de fréquence dans le bar chart eBird " + esc(cc) + ". L'espèce y est signalée mais trop peu notée pour être agrégée.";
     // Regularite : sur combien des 8 annees de la fenetre l'espece a ete observee dans ce
     // pays. C'est le critere qui decide de son entree au catalogue, il a sa place ici.
@@ -18840,7 +18747,6 @@ window._preloadAllPhotos = async (opts = {}) => {
     const reg = COUNTRIES_REG[cc];
     try{
       for(const sci of Object.keys(reg.monthly?.() || {})) species.add(sci.toLowerCase());
-      for(const sci of Object.keys(reg.st?.() || {})) species.add(sci.toLowerCase());
     }catch(_){}
   }
   const all = [...species];

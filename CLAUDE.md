@@ -45,10 +45,11 @@ la base commune
   outils/           les scripts - sur GitHub, pas sur le site
     build/            les générateurs de données (Node, ESM)
     verif/            les bancs de mesure - voir plus bas
-    ebirdst/          les scripts R (chemins absolus en dur ; Projets/clc n'existe plus)
     onetake/          la vidéo de présentation
   archives/         ce qui a servi, exclu du site par _config.yml (logos-huppe/ : l'ancien logo
-                    et son générateur ; logos-martin-entier/ : rendus PNG plus affichés)
+                    et son générateur ; logos-martin-entier/ : rendus PNG plus affichés ;
+                    status-trends/ : tout ce qui servait Cornell, scripts R compris, retiré
+                    le 2026-10-05 car ses conditions interdisent de publier ses données)
 
 propre au projet
   notes-privees/    notes gardées hors du dépôt public, exclues par .gitignore
