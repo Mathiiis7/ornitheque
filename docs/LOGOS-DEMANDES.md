@@ -36,6 +36,63 @@ Deux outils l'accompagnent, tous deux sans aucune dépendance :
 
 Arrow 2, effort **Medium**, **4 propositions**. Ne changer qu'une chose à la fois.
 
+## La mascotte : le martin-pêcheur (choisi le 2026-10-05)
+
+Choisi par Mathis parce qu'il porte les couleurs de la charte (`docs/charte-graphique.md`) : dos
+bleu-vert comme l'accent `#0b7c77`, ventre orange comme `--accent-2` `#c05e33`. Le vrai oiseau est
+un peu plus bleu : on accepte de le tirer vers le vert de la charte, c'est tout l'intérêt du choix.
+
+Ce qu'on demande : **une seule planche** avec plusieurs poses du même personnage et, à part, la
+tête en gros plan dans une tuile carrée pour le logo. Même style que plus bas (formes primitives),
+même règle de cadrage pour la tuile.
+
+```text
+Character sheet for a mascot: a common kingfisher (Alcedo atthis), on ONE
+single sheet, the same character drawn several times.
+
+ON THE SHEET:
+- five full-body poses of the same bird, in a row or a loose grid: perched in
+  side profile facing right; looking through a small pair of binoculars;
+  diving head first; flying with wings spread; holding a tiny notebook in its
+  bill, as if ticking a species off a list;
+- in the bottom right corner, a separate square app tile: the head only, in
+  close-up, in profile facing right, CROPPED by the square frame - the tip of
+  the bill runs off the right edge, the chest and the nape run off the bottom
+  edge. No margin inside the tile.
+
+SUBJECT: a kingfisher - a short plump body, a large head, a very long straight
+dagger-shaped black bill, a short stubby tail, tiny orange legs. Teal-blue
+crown and wings, a bright paler teal stripe down the back, orange cheeks and
+belly, a white throat and a white patch on the side of the neck.
+
+STYLE: simple flat vector illustration, friendly, built from a few primitive
+rounded shapes: one rounded teardrop for the body and head, a leaf-shaped wing
+laid on top in a deeper tone, a short tail of two triangles, one long tapering
+triangle for the bill, the eye a small white circle with a dark dot. Flat areas
+of solid colour, hard clean edges, no outlines, no gradients, no shading, no
+texture.
+CONSISTENCY: it is the SAME character in every pose - same proportions, same
+colours, same eye, same bill length. Only the pose changes.
+ACCURACY: simple shapes, but the proportions follow the real species - the
+oversized bill, the big head, the short tail. A bird a birder would name at a
+glance, never a generic round bird.
+PALETTE: #0B7C77 teal for the crown and wings, #2BBCB0 light teal for the back
+stripe, #C05E33 orange for the cheeks, belly and legs, #15201E black for the
+bill and the eye dot, #F0EEE6 off-white for the throat and neck patch,
+#B98D22 gold only for the binoculars and the notebook. Sheet background
+#EEF2F1 pale sage; the app tile background #FFFFFF white.
+VARIATIONS: make the four proposals genuinely different from one another - vary
+the bulk of the body, the size of the head, and how playful the poses are. Do
+not return four versions of the same sheet.
+AVOID: outlines, contour lines, gradients, shading, drop shadows, texture, text,
+words, letters, numbers, labels, signatures, realistic feather detail, facets,
+a branch or scenery behind the poses, a different bird from one pose to the next.
+```
+
+Si la planche entière coûte trop cher ou sort brouillonne, la couper en deux envois : d'abord la
+tuile seule (reprendre « La demande à envoyer - version icône carrée » en changeant l'oiseau et la
+palette), puis les poses.
+
 ## Le style retenu : l'oiseau simple en formes primitives
 
 Six ou sept formes, pas quarante facettes. La construction est toujours la même d'un oiseau à
