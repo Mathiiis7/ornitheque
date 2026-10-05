@@ -78,6 +78,10 @@ texte ont été refusés : on garde ces tailles.
 
 Le texte courant tourne autour de 12 à 15 px écrits. Les étiquettes descendent à 11 px.
 
+**Le gras s'arrête à 700.** Un mot en gras dans un texte déjà semi-gras montait à 900 et se lisait
+mal (« Download (csv) », remarque de Mathis le 2026-10-05) : `b, strong` sont fixés à 700, et les
+textes en 800 y sont descendus. Seules les pastilles rondes chiffrées (rareté, étapes) gardent 800.
+
 ## Mise en page
 
 - Page centrée, 1 560 px au plus (`.wrap`), marges de 24 px.
