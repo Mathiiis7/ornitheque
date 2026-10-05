@@ -507,7 +507,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   #viewRanking .seg button { font-size:14px; }
   /* Toute la page Classement suit le tableau des especes de Ma liste (.mylist-th, .mylist-row),
      mesure le 2026-10-05 : en-tetes et etiquettes en 13 px gras en capitales, espacement 0,4 px,
-     --ink-3 ; texte 14 px, nom en 600, le reste en --ink-2 ; noms latins 14 px en Palatino.
+     --ink-3 ; texte 14 px, nom en 600, le reste en --ink-2 ; noms latins 14 px, italique.
      Avant : sept tailles de 10 a 16 px, system-ui a cote de Segoe UI, en-tetes a 14 px. */
   #viewRanking thead th, #viewRanking .fp-title, #viewRanking .fp-title-inline {
     font:700 13px var(--sans); text-transform:uppercase; letter-spacing:.4px; color:var(--ink-3); vertical-align:middle; }
@@ -792,7 +792,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   tbody tr:nth-child(even) td { background:color-mix(in srgb,var(--surface-2) 45%,var(--surface)); }
   tbody tr:hover td { background:color-mix(in srgb,var(--accent) 8%,var(--surface)); }
   td.sp { font-weight:600; }
-  td.sp .sci { display:block; font-family:var(--serif); font-style:italic; font-weight:400;
+  td.sp .sci { display:block; font-family:var(--sans); font-style:italic; font-weight:400;
     color:var(--ink-3); font-size:12px; }
   td.pcol { text-align:center; padding:0; position:relative; }
   .abroad-mark { position:absolute; bottom:1px; right:1px; font-size:8px; line-height:1; pointer-events:none; }
@@ -830,7 +830,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     padding:12px 13px; background:var(--surface-2); }
   .mc-head { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
   .mc-sp { font-weight:600; font-size:14.5px; min-width:0; }
-  .mc-sci { display:block; font-family:var(--serif); font-style:italic; font-weight:400;
+  .mc-sci { display:block; font-family:var(--sans); font-style:italic; font-weight:400;
     color:var(--ink-3); font-size:12px; margin-top:1px; }
   .mc-count { flex:none; font-family:var(--mono); font-size:12.5px; font-variant-numeric:tabular-nums;
     color:var(--ink-2); background:var(--surface-3); border-radius:7px; padding:2px 8px; }
@@ -2312,7 +2312,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     color:var(--ink-3); text-transform:uppercase; letter-spacing:.4px; padding-top:7px; padding-bottom:7px; }
   .mylist-sp { min-width:0; }
   .mylist-sp .sp-link { font-weight:600; color:var(--ink); }
-  .mylist-sp .mylist-lat { display:block; font-family:var(--serif); font-style:italic; font-size:14px; color:var(--ink-3); }
+  .mylist-sp .mylist-lat { display:block; font-family:var(--sans); font-style:italic; font-size:14px; color:var(--ink-3); }
   .mylist-date { font-variant-numeric:tabular-nums; color:var(--ink-2); }
   .mylist-loc { min-width:0; color:var(--ink-2); font-size:14px; overflow-wrap:anywhere; }
   .mylist-loc img { vertical-align:-2px; margin-right:6px; }
@@ -2380,9 +2380,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .ml-dialog-close { width:52px; height:52px; }
   }
 
-  /* Une seule police pour TOUS les noms latins, partout : Palatino en italique (--serif, charte).
+  /* Une seule police pour TOUS les noms latins, partout : celle du texte, en italique (--sans).
      Chaque écran avait sa règle, et la moitié oubliait la police : « Pandion haliaetus » sortait
      en Palatino dans Ma liste, en Segoe UI dans la fiche, la carte, le quiz et le Birdydex.
+     Palatino essayé partout le 2026-10-06 et refusé par Mathis : on garde la police du texte.
      Écrite en dernier pour passer devant ces règles à spécificité égale ; les tailles restent les leurs. */
   .sci, .mc-sci, .sm-sci, .p-sci, .ss-sci, .qz-choice-sci, .qz-verdict-sci, .mylist-lat, .latin,
-  .pkdx-card .pkdx-sci { font-family:var(--serif); font-style:italic; }
+  .pkdx-card .pkdx-sci { font-family:var(--sans); font-style:italic; }

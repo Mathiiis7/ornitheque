@@ -55,12 +55,12 @@ le bouton « Thème »).
 | Usage | Variable | Police |
 |---|---|---|
 | Nom de l'appli, titres | `--titre` | **Source Serif 4**, 600 et 700, servie depuis `assets/fonts/` (licence OFL à côté) |
-| Noms latins (en italique) | `--serif` | Palatino Linotype, sinon Georgia |
+| Noms latins (en italique) | `--sans` | la police du texte, en italique, partout (Palatino refusé le 2026-10-06) |
 | Tout le reste | `--sans` | Segoe UI, sinon la police du système |
 | Codes, adresses | `--mono` | Cascadia Code, sinon Consolas |
 
 Source Serif 4 est servie par nous parce que la politique de sécurité de la page n'accepte que nos
-propres polices. On n'embarque pas son italique : les noms latins restent en Palatino.
+propres polices. On n'embarque pas son italique.
 
 ### Tailles des titres (pixels écrits, avant le zoom 0,85)
 
@@ -84,7 +84,7 @@ le 2026-10-06, toutes les pages la suivent. Restent plus petits, exprès : les v
 
 **Le modèle de tout tableau est celui des espèces de Ma liste** (`.mylist-th`, `.mylist-row`) :
 en-têtes et étiquettes en 13 px gras, capitales, espacement 0,4 px, `--ink-3` ; texte en 14 px, le
-nom en 600, le reste en `--ink-2` ; noms latins en 14 px Palatino. Le Classement y a été aligné le
+nom en 600, le reste en `--ink-2` ; noms latins en 14 px italique. Le Classement y a été aligné le
 2026-10-05 (il avait sept tailles, de 10 à 16 px, et deux polices).
 
 **Un tableau a une seule police et une seule taille**, et tout y est centré en hauteur : le
