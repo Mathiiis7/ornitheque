@@ -2379,3 +2379,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .ml-box, .tuto-ch, .tuto-nav .btn, .tuto-lien { min-height:52px; }
     .ml-dialog-close { width:52px; height:52px; }
   }
+
+  /* Une seule police pour TOUS les noms latins, partout : Palatino en italique (--serif, charte).
+     Chaque écran avait sa règle, et la moitié oubliait la police : « Pandion haliaetus » sortait
+     en Palatino dans Ma liste, en Segoe UI dans la fiche, la carte, le quiz et le Birdydex.
+     Écrite en dernier pour passer devant ces règles à spécificité égale ; les tailles restent les leurs. */
+  .sci, .mc-sci, .sm-sci, .p-sci, .ss-sci, .qz-choice-sci, .qz-verdict-sci, .mylist-lat, .latin,
+  .pkdx-card .pkdx-sci { font-family:var(--serif); font-style:italic; }

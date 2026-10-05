@@ -7953,7 +7953,7 @@ function _renderDrawResultsPanel(speciesRows){
       const rarDot = w ? `<span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:${sciColorForCountry(r.sci, country)}; margin-right:5px; vertical-align:middle;"></span>` : '';
       return `<li class="sp-link" data-sci="${esc(r.sci)}" style="padding:2px 4px; border-bottom:1px solid var(--line); cursor:pointer; display:flex; align-items:center; gap:4px; line-height:1.3; font-size:11px !important;">
         ${rarDot}
-        <span style="flex:1; font-size:11px !important;"><b style="font-size:11px !important; font-weight:600;">${esc(r.name)}</b>${badge} <span style="color:var(--ink-3); font-size:9.5px !important; font-style:italic;">${esc(r.sci)}</span></span>
+        <span style="flex:1; font-size:11px !important;"><b style="font-size:11px !important; font-weight:600;">${esc(r.name)}</b>${badge} <span class="latin" style="color:var(--ink-3); font-size:9.5px !important;">${esc(r.sci)}</span></span>
         <span style="color:var(--ink-2); font-size:10.5px !important; font-variant-numeric:tabular-nums;">${r.count} obs</span>
       </li>`;
     }).join('') + '</ul>';
@@ -12294,7 +12294,7 @@ async function _openMigrationFullscreen(sci){
       <div style="padding:14px 20px; display:flex; align-items:center; justify-content:space-between; gap:12px; border-bottom:1px solid var(--line);">
         <div>
           <div style="font-size:11px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.5px; font-weight:700;">🎞️ Migration mois par mois</div>
-          <div style="font-size:18px; font-weight:600; color:var(--ink); margin-top:2px;">${esc(spName)} <span style="font-weight:400; color:var(--ink-3); font-size:13px;">${esc(sci)}</span></div>
+          <div style="font-size:18px; font-weight:600; color:var(--ink); margin-top:2px;">${esc(spName)} <span class="latin" style="font-weight:400; color:var(--ink-3); font-size:13px;">${esc(sci)}</span></div>
         </div>
         <button type="button" id="migFsClose" title="Fermer (Échap)" style="border:none; background:var(--surface-2); font-size:20px; width:36px; height:36px; border-radius:50%; cursor:pointer;">✕</button>
       </div>
