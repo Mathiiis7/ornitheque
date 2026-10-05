@@ -1,50 +1,49 @@
-# Le logo, avec Arrow 2 (QuiverAI)
+# Le logo et la mascotte, avec Arrow 2
 
-Document de travail, 2026-09-28. À supprimer une fois le logo arrêté.
-Le choix du nom est dans `NOMS.md`, l'outil et ses prix dans
-`~/Documents/0-Claude/0-QG/qg/savoir/quiver-ai.md`.
+Arrow 2 (QuiverAI) : https://app.quiver.ai. Document de travail, à supprimer une fois le logo
+arrêté. L'outil et ses prix : `~/Documents/0-Claude/0-QG/qg/savoir/quiver-ai.md`. Le nom : `NOMS.md`.
 
-**Où on en est au 29/09** : onze envois, le style est trouvé, **deux pistes sont retenues sur la
-forme**, et **le nom est arrêté - L'Ornithèque**, audité et clos dans `NOMS.md` le 29/09.
+Sommaire :
+1. Où on en est
+2. À envoyer maintenant : la mascotte
+3. Quand une image revient
+4. Le style retenu
+5. Ce qu'on a appris
+6. Archives : la session huppe du 28-29/09
 
-Ce que le nom change ici : **l'espèce du logo est libre.** Ornithèque ne désigne pas un oiseau
-mais une collection, donc rien n'impose la huppe - elle reste légitime, c'est celle que le
-groupe connaît, mais n'importe quelle espèce conviendrait. C'est le point 0 de « Reste à faire »
-qui devient la seule question ouverte du dessin.
+---
 
-| Retenu | Fichier | Réserve |
-|---|---|---|
-| L'oiseau plat | `assets/logos/candidats/1-oiseau-plat.png` | l'espèce n'est pas arrêtée, et l'image vient de la planche Freepik : bonne pour comparer, pas pour devenir le logo |
-| La tête sarcelle sur tuile claire | `assets/logos/candidats/3-tete-sarcelle-clair.png` | ce ne sont pas les vraies couleurs de la huppe, et c'est la moins contrastée des tuiles |
+## 1. Où on en est
 
-## Le banc d'essai des logos, en local
+| Quoi | État |
+|---|---|
+| Nom | **L'Ornithèque**, arrêté le 29/09 (`NOMS.md`) |
+| Style | trouvé : l'oiseau simple en formes primitives (section 4) |
+| Espèce | **le martin-pêcheur**, choisi le 2026-10-05 |
+| Logo en place | la huppe, tant que rien d'autre n'est arrêté |
+| Prochaine étape | Mathis envoie la demande de la section 2 dans Arrow 2 |
 
-Depose des images dans `assets/logos/candidats/`, recharge **deux fois** localhost:8765, et
-clique sur le bouton en bas à gauche : il fait défiler les candidats dans **tous** les
-emplacements à la fois - entête, écran d'attente, écran de connexion, favicon. Il ne s'affiche
-que sur localhost, et il est marqué `BANC_LOGOS` dans `app.js`, à retirer quand le logo sera
-arrêté.
+Pourquoi le martin-pêcheur : il porte les couleurs de la charte (`docs/charte-graphique.md`), un
+dos bleu-vert comme l'accent `#0b7c77` et un ventre orange comme `--accent-2` `#c05e33`. Le vrai
+oiseau est un peu plus bleu : on le tire vers le vert de la charte, c'est l'intérêt du choix.
+L'espèce était libre, Ornithèque désignant une collection et pas un oiseau.
 
-Deux outils l'accompagnent, tous deux sans aucune dépendance :
+Candidats gardés de la session de septembre, pour comparer seulement :
 
-- `outils/build/prepare-logo.mjs` - enlève un fond uni, recadre, pose sur une tuile arrondie,
-  et peut **remplacer des couleurs** (`--palette "#C05E33>#0B7C77"`), ce qui permet d'accorder
-  une image à la palette du site sans rien regénérer.
-- `outils/build/icones-logo.mjs` - refabrique les icônes 192 et 512 du manifeste.
+| Fichier | Réserve |
+|---|---|
+| `assets/logos/candidats/1-oiseau-plat.png` | vient de la planche Freepik : bon pour comparer, pas pour devenir le logo |
+| `assets/logos/candidats/3-tete-sarcelle-clair.png` | la moins contrastée des tuiles |
 
-## Réglages, à chaque envoi
+---
 
-Arrow 2, effort **Medium**, **4 propositions**. Ne changer qu'une chose à la fois.
+## 2. À envoyer maintenant : la mascotte
 
-## La mascotte : le martin-pêcheur (choisi le 2026-10-05)
+**Réglages** : Arrow 2, effort **Medium**, **4 propositions**. Ne changer qu'une chose à la fois.
+**Prix attendu** : entre 0,40 et 1 $ (une planche à cinq poses est plus chargée qu'une tête).
 
-Choisi par Mathis parce qu'il porte les couleurs de la charte (`docs/charte-graphique.md`) : dos
-bleu-vert comme l'accent `#0b7c77`, ventre orange comme `--accent-2` `#c05e33`. Le vrai oiseau est
-un peu plus bleu : on accepte de le tirer vers le vert de la charte, c'est tout l'intérêt du choix.
-
-Ce qu'on demande : **une seule planche** avec plusieurs poses du même personnage et, à part, la
-tête en gros plan dans une tuile carrée pour le logo. Même style que plus bas (formes primitives),
-même règle de cadrage pour la tuile.
+Une seule planche : cinq poses du même personnage, et dans un coin la tête en tuile carrée pour le
+logo, coupée par le cadre (règle de cadrage, section 4).
 
 ```text
 Character sheet for a mascot: a common kingfisher (Alcedo atthis), on ONE
@@ -89,14 +88,37 @@ words, letters, numbers, labels, signatures, realistic feather detail, facets,
 a branch or scenery behind the poses, a different bird from one pose to the next.
 ```
 
-Si la planche entière coûte trop cher ou sort brouillonne, la couper en deux envois : d'abord la
-tuile seule (reprendre « La demande à envoyer - version icône carrée » en changeant l'oiseau et la
-palette), puis les poses.
+**Si la planche sort brouillonne**, la couper en deux envois : d'abord la tuile seule (reprendre
+la demande « icône carrée » des archives en changeant l'oiseau et la palette), puis les poses.
 
-## Le style retenu : l'oiseau simple en formes primitives
+**Pour retoucher** une proposition presque bonne, plutôt que relancer :
+« Change only [un élément] to [nouvelle consigne]. Keep the silhouette, the colours and the
+composition exactly as they are. »
 
-Six ou sept formes, pas quarante facettes. La construction est toujours la même d'un oiseau à
-l'autre - c'est elle qui fera plus tard la **famille d'icônes**, un oiseau par espèce :
+---
+
+## 3. Quand une image revient
+
+Dans l'ordre :
+
+1. **Vérifier le fond** : Arrow 2 rend souvent un fond blanc plein malgré la consigne.
+2. **Nettoyer** avec `outils/build/prepare-logo.mjs` : enlève un fond uni, recadre, pose sur une
+   tuile arrondie, et peut **remplacer des couleurs** (`--palette "#C05E33>#0B7C77"`) pour accorder
+   l'image à la charte sans rien regénérer.
+3. **Passer au banc d'essai** : déposer l'image dans `assets/logos/candidats/`, recharger **deux
+   fois** localhost:8765, cliquer le bouton en bas à gauche. Il fait défiler les candidats dans
+   tous les emplacements à la fois (entête, écran d'attente, écran de connexion, favicon de 16 px).
+   Local seulement, marqué `BANC_LOGOS` dans `app.js`, **à retirer quand le logo sera arrêté**.
+4. **Brancher** : `manifest.json`, favicon, écran d'accueil, entête, démo.
+   `outils/build/icones-logo.mjs` refabrique les icônes 192 et 512 du manifeste.
+5. Plus tard : décliner une famille d'icônes, un oiseau par espèce, avec le même style.
+
+---
+
+## 4. Le style retenu
+
+**L'oiseau simple en formes primitives.** Six ou sept formes, pas quarante facettes. La
+construction est la même d'un oiseau à l'autre, c'est elle qui fera la famille d'icônes :
 
 - le corps est **une seule goutte arrondie**, tête comprise, sans cou
 - l'aile est **une feuille posée dessus**, dans un ton plus soutenu
@@ -105,22 +127,76 @@ l'autre - c'est elle qui fera plus tard la **famille d'icônes**, un oiseau par 
 - les pattes sont **deux bâtons fins** à trois doigts
 - couleurs franches, aucun contour, aucun dégradé, aucune ombre
 
-**La règle ajoutée par Mathis** : dans la planche de référence, les six oiseaux ont le même
-corps, donc aucun n'est identifiable - défaut rédhibitoire pour un site d'observation. Donc
-**construction identique, mais proportions fidèles à l'espèce**. C'est la règle de Charley
-Harper : formes très simples, espèce juste.
+**La règle de Mathis : construction identique, mais proportions fidèles à l'espèce.** Dans la
+planche de référence, les six oiseaux avaient le même corps, donc aucun n'était identifiable,
+défaut rédhibitoire pour un site d'observation. C'est la règle de Charley Harper : formes très
+simples, espèce juste.
 
-## La règle de cadrage pour l'icône de l'appli
+**La règle de cadrage de l'icône** (trouvée le 28/09 sur un geai en gros plan que Mathis aime) :
+l'oiseau n'est pas centré avec de la marge, **il est coupé par le cadre**, le bec sort d'un côté,
+la nuque en bas. Ce débordement donne l'impression que l'image continue derrière la tuile. Et sur
+une tuile, **on veut un fond**.
 
-Trouvée le 28/09 sur une icône que Mathis aime : un geai en gros plan dans une tuile carrée.
-**L'oiseau n'est pas centré avec de la marge, il est coupé par le cadre** - le bec sort d'un
-côté, la nuque en bas. C'est ce débordement qui donne la fluidité et l'impression que l'image
-continue derrière la tuile.
+**Ce que l'appli dit d'elle-même** (regardée le 28/09) : fond vert-gris très clair, cartes
+blanches arrondies, ombres presque invisibles, titres en serif de livre, une seule couleur forte
+par petites touches. **L'identité du site est faite de retenue** : c'est pour ça que les mascottes
+en volume ou sportives sonnaient faux.
 
-Ça contredit la consigne « even padding on all four sides » utilisée dans tous les envois
-précédents, et ça règle le défaut du fond blanc : sur une tuile, **on veut un fond**.
+---
 
-## La demande à envoyer - version icône carrée
+## 5. Ce qu'on a appris
+
+- **Décrire une forme ne suffit pas, il faut décrire un style.** « Un rond, un bec, un œil
+  creusé » donne des logos propres et sans identité.
+- **Une contrainte de favicon dans la demande produit un logo plat.** « Au plus six formes »,
+  « lisible à 16 pixels » ont tout aplati. Dessiner riche, simplifier ensuite.
+- **Quatre propositions ne sont pas quatre idées.** Le bloc `VARIATIONS` les sépare vraiment,
+  mais seulement si la demande laisse de quoi varier : trop précise (envoi 9), il s'épuise.
+- **Le fond transparent n'est pas respecté** : jusqu'à 3 propositions sur 4 avec un fond blanc.
+- **Les couleurs imposées en hexadécimal sont très bien suivies.**
+- **Le prix suit la complexité de l'image, pas l'effort.** En Medium : 0,205 $ pour une tête
+  simple, 0,45 $ pour une illustration à facettes. **Annoncer une fourchette, jamais un chiffre** :
+  une demande limitée à dix formes, estimée à 0,2 $, en a coûté 0,345.
+- **Les banques d'images gratuites** (Freepik, devenu Magnific) interdisent d'en faire une marque
+  et de les donner à une IA. On les regarde, on décrit le style en mots, on n'envoie jamais l'image.
+
+---
+
+## 6. Archives : la session huppe du 28-29/09
+
+### Les styles écartés
+
+| Style | Verdict de Mathis |
+|---|---|
+| Aplat minimal, silhouette propre (envois 1 à 3) | « hyper basique », « simpliste » |
+| Tête détaillée en couleurs vraies (envoi 4) | « déjà mieux », mais pas l'identité |
+| Mascotte sportive rétro (envoi 5) | « une marque de vêtements », pas de l'observation |
+| Mascotte en volume et dégradés (envoi 6) | « ça colle pas à l'ADN du site » |
+| Trait continu minimal | écarté sur images de référence, sans envoi |
+| Gravure naturaliste du XIXe | écarté sur images de référence, sans envoi |
+| Géométrie taillée à facettes (envois 7 et 8) | trop savant ; « ça correspondrait pas au site » |
+
+**Le meilleur résultat : la tuile carrée (envoi 11).** Gros plan de la tête coupé par le cadre,
+crête débordant en haut, bec sortant à droite, gorge crème pour le contraste. Lisible en petit,
+identifiable, sans air de banque d'images. Le gabarit de la planche (envoi 10) marche aussi, mais
+fait illustration plus qu'identité.
+
+### Les prix mesurés (100 % = 5 $ par semaine)
+
+| Envoi | Effort | Restant avant → après | Coût |
+|---|---|---|---|
+| 2 - Ornithèque, la thèque | Low | 84,7 → 82,3 % | 0,12 $ |
+| 1 et 3 - le O, puis la huppe | Low | 82,3 → 77,6 % | 0,235 $, soit 0,12 $ l'envoi |
+| 4 - la huppe détaillée en couleurs | Medium | 77,6 → 73,5 % | 0,205 $ |
+| 5 - mascotte rétro | High | 73,5 → 67 % | 0,325 $ |
+| 6 - mascotte en volume et dégradés | High | 67 → 46,5 % | **1,02 $** |
+| 7 et 8 - profil complet, puis tête seule | Medium | 46,5 → 28,5 % | 0,90 $, soit 0,45 $ l'envoi |
+| 9 - la huppe en formes primitives | Medium | 28,5 → 21,6 % | 0,345 $ |
+| 10 et 11 - le gabarit de la planche, puis la tuile carrée | Medium | 21,6 → 5,1 % | 0,825 $, soit 0,41 $ l'envoi |
+
+Total : **3,09 $ pour onze envois**, soit 44 propositions.
+
+### Demande de l'envoi 11 : l'icône carrée (le modèle à reprendre pour une tuile)
 
 ```text
 Square app icon of a hoopoe bird, seen in close-up, head and upper chest only,
@@ -154,12 +230,11 @@ words, letters, numbers, signatures, a white margin around the bird, a rounded
 corner drawn inside the canvas, the whole bird seen at a distance.
 ```
 
-## L'autre demande - le gabarit de la planche, repris tel quel
+### Demande de l'envoi 10 : le gabarit de la planche, repris tel quel
 
-Test demandé par Mathis : reprendre **exactement le format de sa planche de référence** - même
-gabarit, même taille dans le cadre - quitte à ce que les proportions soient fausses pour
-l'espèce. C'est l'inverse exact de la règle de justesse écrite plus haut, et c'est voulu : ce
-test tranchera entre « joli » et « juste ».
+Test demandé par Mathis : reprendre exactement le format de sa planche de référence, quitte à
+fausser les proportions de l'espèce. L'inverse exact de la règle de justesse, voulu pour trancher
+entre « joli » et « juste ».
 
 ```text
 Simple flat vector illustration of a hoopoe bird, standing in strict side
@@ -200,89 +275,3 @@ AVOID: outlines, contour lines, gradients, shading, drop shadows, texture, text,
 words, letters, numbers, signatures, realistic feather detail, facets, small
 decorative details, a branch, any filled background.
 ```
-
-**Pour retoucher** plutôt que relancer, dès qu'une proposition est presque bonne :
-« Change only [un élément] to [nouvelle consigne]. Keep the silhouette, the colours and the
-composition exactly as they are. »
-
-## Ce qu'on a appris, et qui coûte cher à réapprendre
-
-**Décrire une forme ne suffit pas, il faut décrire un style.** Les trois premiers envois
-disaient « un rond, un bec, un œil creusé » : des logos propres et sans aucune identité.
-
-**Une contrainte de favicon écrite dans la demande produit un logo plat.** « Au plus six
-formes », « lisible à 16 pixels » ont aplati tous les premiers essais. Dessiner riche,
-simplifier ensuite à la main.
-
-**Quatre propositions ne sont pas quatre idées.** Sans consigne, elles sont quasi identiques.
-Le bloc `VARIATIONS` de la demande ci-dessus les a vraiment séparées - mais seulement quand la
-demande laisse de quoi varier.
-
-**Le fond transparent n'est pas respecté** : jusqu'à 3 propositions sur 4 arrivent avec un fond
-blanc plein, malgré la consigne écrite deux fois. À vérifier à chaque export.
-
-**Les couleurs imposées en hexadécimal, elles, sont très bien suivies.**
-
-**Le prix suit la complexité de l'image, pas le niveau d'effort.** Même en Medium : 0,205 $ pour
-une tête simple, 0,45 $ pour une illustration à facettes. En High : 0,325 $ pour un emblème
-plat, 1,02 $ pour un corps entier en dégradés.
-
-## Les prix mesurés, en pourcentage de la semaine (100 % = 5 $)
-
-| Envoi | Effort | Restant avant → après | Coût |
-|---|---|---|---|
-| 2 - Ornithèque, la thèque | Low | 84,7 → 82,3 % | 0,12 $ |
-| 1 et 3 - le O, puis la huppe | Low | 82,3 → 77,6 % | 0,235 $, soit 0,12 $ l'envoi |
-| 4 - la huppe détaillée en couleurs | Medium | 77,6 → 73,5 % | 0,205 $ |
-| 5 - mascotte rétro | High | 73,5 → 67 % | 0,325 $ |
-| 6 - mascotte en volume et dégradés | High | 67 → 46,5 % | **1,02 $** |
-| 7 et 8 - profil complet, puis tête seule | Medium | 46,5 → 28,5 % | 0,90 $, soit 0,45 $ l'envoi |
-| 9 - la huppe en formes primitives | Medium | 28,5 → 21,6 % | 0,345 $ |
-| 10 et 11 - le gabarit de la planche, puis la tuile carrée | Medium | 21,6 → 5,1 % | 0,825 $, soit 0,41 $ l'envoi |
-
-Total de la session : **3,09 $ pour onze envois**, soit 44 propositions. Il restait 5,1 % de la
-semaine, soit 0,26 $ - moins qu'un envoi. Remise à zéro le 3 octobre.
-
-**Le meilleur résultat de la session : la tuile carrée (envoi 11).** Gros plan de la tête coupé
-par le cadre, crête débordant en haut, bec sortant à droite, gorge crème pour le contraste.
-Lisible en petit, identifiable comme une huppe, et sans air de banque d'images. Le gabarit de
-la planche (envoi 10) marche aussi, mais il fait illustration plus qu'identité.
-
-**Estimer le prix d'un envoi à l'avance ne marche pas.** J'avais annoncé 0,2 $ pour l'envoi 9
-parce que la demande limitait à dix formes : il en a coûté 0,345 $. Le compte des formes ne
-prédit pas le nombre de jetons écrits. Annoncer une fourchette, jamais un chiffre.
-
-**Et le bloc VARIATIONS s'épuise quand la demande est trop précise** : sur l'envoi 9, qui décrit
-la construction forme par forme, les quatre propositions étaient de nouveau très proches.
-
-## Les styles écartés, et pourquoi
-
-| Style | Verdict de Mathis |
-|---|---|
-| Aplat minimal, silhouette propre (envois 1 à 3) | « hyper basique », « simpliste » |
-| Tête détaillée en couleurs vraies (envoi 4) | « déjà mieux », mais pas l'identité |
-| Mascotte sportive rétro (envoi 5) | « une marque de vêtements », pas de l'observation |
-| Mascotte en volume et dégradés (envoi 6) | « ça colle pas à l'ADN du site » |
-| Trait continu minimal | écarté sur images de référence, sans envoi |
-| Gravure naturaliste du XIXe | écarté sur images de référence, sans envoi |
-| Géométrie taillée à facettes (envois 7 et 8) | trop savant ; « ça correspondrait pas au site » |
-
-**Ce que l'appli dit d'elle-même** (regardée sur localhost:8765 le 28/09) : fond vert-gris très
-clair, cartes blanches arrondies, ombres presque invisibles, titres en serif de livre, noms
-scientifiques en italique, une seule couleur forte par petites touches. Nulle part un gros
-aplat ni un contraste violent. **L'identité du site est faite de retenue** - c'est pour cela
-que les deux mascottes sonnaient faux.
-
-**Les banques d'images gratuites** (Freepik, devenu Magnific) : leurs conditions interdisent
-d'en faire une marque et de les donner à une IA. On les regarde, on décrit le style en mots,
-on n'envoie jamais l'image.
-
-## Reste à faire
-
-0. **Choisir l'espèce de l'oiseau plat.** C'est la seule inconnue de la piste n° 1, et elle ne
-   coûte rien à trancher : le style est écrit, le sujet se change en un mot dans la demande.
-1. ~~Arrêter le nom~~ - **fait le 29/09 : L'Ornithèque.**
-2. Choisir une proposition, la retoucher par petites demandes ciblées.
-3. Nettoyer le SVG, vérifier le fond transparent, le passer au banc des 16 pixels.
-4. Le brancher dans `manifest.json`, le favicon, l'écran d'accueil, l'entête et la démo.
-5. Décliner la famille d'icônes avec le même bloc de style, un oiseau par espèce.
