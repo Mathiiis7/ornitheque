@@ -100,27 +100,59 @@ rustines, on redemande à Arrow 2, effort **High**, de redessiner proprement à 
 
 **Envoi A** - joindre `notes-privees/mascotte/mascotte-poses.svg` :
 
-```text
-Redraw this kingfisher character sheet, keeping the same character, the same
-five poses, the same layout and the same palette. This is a clean-up pass, not
-a new design.
+Ce que les sources confirment sur le martin-pêcheur d'Europe, mâle adulte (vérifié le 2026-10-05 sur
+[oiseaux.net](https://www.oiseaux.net/oiseaux/martin-pecheur.d.europe.html) et
+[Wikipedia](https://en.wikipedia.org/wiki/Common_kingfisher)) :
+- dessus bleu nuancé de vert ; **dos et croupion d'un bleu plus vif et plus clair** (l'éclair bleu en vol) ;
+- calotte « nettement mouchetée », couvertures des ailes plus sombres « ponctuées de bleu clair » ;
+- devant l'œil, une zone noirâtre avec **une tache rousse** ; derrière l'œil, une **joue rousse bordée de
+  bleu dessous** (la moustache) ; **collier blanc** sur le côté du cou ; gorge blanche à crème ;
+- dessous roux vif ; **pattes rouge vermillon**, petites ;
+- **bec du mâle entièrement noir** (la femelle a la base du bas du bec orange) ;
+- silhouette trapue, grosse tête, queue courte, long bec en dague. Œil sombre.
+- **Non trouvé** : la couleur du dessous des ailes. D'où la consigne de montrer l'aile par le dessus en vol.
 
-FIX:
-- no gaps between shapes: adjacent colour areas must meet exactly or overlap,
-  with no thin slivers of background showing through anywhere inside a bird.
-  Build each bird on one solid base silhouette, then lay the colour areas on top;
-- smoother joins: where the cheek patch, the white neck patch, the throat and
-  the wing meet, the edges must flow into each other, without tiny steps,
-  notches or stray points;
-- legs and feet: bright vermilion #C8452B, short and clean, three toes each;
-- keep the long straight dagger bill, the big head and the short tail.
+Le grand œil blanc à point noir n'est pas fidèle (l'œil réel est sombre), mais c'est le style retenu
+pour la famille d'icônes : gardé.
+
+```text
+Redraw this kingfisher character sheet: keep the same character, the same
+five poses, the same layout and the same palette, but make it cleaner and
+more faithful to a real adult MALE common kingfisher (Alcedo atthis). This is
+a refinement of the existing drawing, not a new design.
+
+CLEAN-UP:
+- no gaps between shapes: adjacent colour areas meet exactly or overlap, with
+  no thin slivers of background showing through anywhere inside a bird. Build
+  each bird on one solid base silhouette, then lay the colour areas on top;
+- confident, smooth joins: crown, cheek, neck patch, throat and wing flow into
+  each other, without tiny steps, notches or stray points;
+- the same character in all five poses: same proportions, same markings.
+
+SPECIES ACCURACY (adult male):
+- bill: long straight dagger, ENTIRELY black, about as long as the head;
+- head: teal crown with a few small pale-blue speckles; a small orange spot
+  between the bill and the eye; an orange ear patch behind the eye, bordered
+  below by a teal moustache stripe that runs from the bill base to the neck;
+  a white patch on the side of the neck; a white throat;
+- upperparts: teal wings with a few small pale-blue dots on the wing coverts;
+  a bright light-teal stripe running down the middle of the back to the rump;
+  a short dark-teal tail;
+- underparts: orange from the breast to the vent;
+- legs and feet: short, bright vermilion red;
+- shape: dumpy body, big head, short tail;
+- in the flying pose, show both wings from ABOVE (upper surface, teal), with
+  the bright back stripe visible between them.
 
 KEEP: flat vector, solid colours, no outlines, no gradients, no shading, no
-text. Palette exactly: #0B7C77 teal, #2BBCB0 light teal, #086660 dark teal,
-#C05E33 orange, #F0EEE6 off-white, #15201E black, #33403D bill highlight,
-#B98D22 gold for the binoculars and notebook. Transparent background.
-VARIATIONS: four proposals, each a faithful clean-up; vary only how the
-shapes are joined, never the poses or the character.
+text. The eye stays a white circle with a black dot. Palette exactly: #0B7C77
+teal, #2BBCB0 light teal, #086660 dark teal, #C05E33 orange, #F0EEE6
+off-white, #15201E black, #33403D bill highlight, #C8452B vermilion for the
+legs only, #B98D22 gold for the binoculars and notebook. Transparent
+background.
+VARIATIONS: four proposals, each a faithful refinement; vary only how the
+shapes are joined and how the markings are drawn, never the poses or the
+character.
 ```
 
 **Envoi B** - joindre `notes-privees/mascotte/mascotte-tuile.svg` :
@@ -133,6 +165,10 @@ and the same palette. This is a clean-up pass, not a new design.
 FIX: no gaps between shapes, adjacent colour areas meet exactly or overlap;
 smooth, confident joins between the crown, the orange cheek, the white neck
 patch and the throat; the eye a clean white circle with a black dot.
+SPECIES ACCURACY (adult male common kingfisher): the bill ENTIRELY black; a
+small orange spot between the bill and the eye; the orange ear patch behind
+the eye bordered below by a teal moustache stripe; a white patch on the side
+of the neck; a white throat; a few small pale-blue speckles on the crown.
 KEEP: flat vector, solid colours, no outlines, no gradients, no shading, no
 text, white #FFFFFF tile background filling the whole square, no rounded
 corners drawn inside the canvas. Palette exactly: #0B7C77, #2BBCB0, #C05E33,
