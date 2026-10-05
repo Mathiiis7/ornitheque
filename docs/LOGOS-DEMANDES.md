@@ -4,40 +4,40 @@ Arrow 2 : https://app.quiver.ai. Document de travail, à supprimer une fois le l
 
 ---
 
-## ▶ À ENVOYER MAINTENANT (1 envoi)
+## ▶ À ENVOYER (pas urgent) : l'essai d'une pose à partir du martin du logo
 
-Réglages : **Arrow 2, effort High, 4 propositions.** Prix attendu : 0,40 à 1,20 $ l'envoi.
+Décidé le 2026-10-05 : **le martin Figma du logo est LA base**, l'ancien perché « E » est abandonné.
+But de cet essai : voir si Arrow 2 sait garder CE martin (ses points, ses couleurs, sa tête) en
+changeant seulement la pose. Si oui, on demande les autres poses une par une, de la même façon.
+Pose d'essai choisie : le poisson dans le bec, parce qu'elle change peu le corps (si Arrow rate
+celle-là, inutile d'essayer le vol ou la plongée).
 
-### Envoi 1 - la pose de base (le perché), à valider avant toute autre pose
+Réglages : **Arrow 2, effort High, 4 propositions.** Prix attendu : 0,40 à 1,20 $.
 
-Décidé le 2026-10-05 : on fixe d'abord UN oiseau, le perché, puis les autres poses partent de lui.
-Base choisie : le perché de la retouche n° 3 (« D »), avec les pattes du premier envoi (« A »).
-Comparaison : http://localhost:8765/notes-privees/mascotte/perches.html
-
-1. Nouvelle demande, effort High. Joindre `notes-privees/mascotte/perche-base.svg` (le perché D seul,
-   reflet de l'œil déjà retiré par `outils/build/perche-base.mjs`).
+1. Nouvelle demande. Joindre `assets/logos/sources/martin-figma.svg` (le martin entier du logo).
 2. Copier-coller ce texte :
 
 ```text
-Refine this single kingfisher. Keep it exactly as it is - same pose, same
-proportions, same head, same bill, same eye, same colours - and change only
-the legs and feet.
+Use the attached kingfisher as the character model. Draw THE SAME BIRD -
+same body shape, same head, same bill, same eye, same wing, same light-teal
+dots on the crown and the wing, same colours, same flat style - in a new pose:
+perched upright on an invisible ground line, holding a small silver-grey fish
+crosswise in its bill, the fish's tail hanging down on one side.
 
-THE LEGS: two short, THIN legs, set a little apart under the belly, the far
-leg slightly darker than the near one. Each foot is small and delicate, with
-thin toes spread flat on an invisible ground line: toes pointing forward and
-one short toe pointing back. Vermilion #C8452B for the near leg, #9E3A22 for
-the far leg. No chunky block feet.
-
-ALSO: no gaps between shapes; adjacent colour areas meet exactly or overlap.
-The eye stays a plain white circle with a solid black dot, no highlight.
-KEEP: flat vector, solid colours, no outlines, no gradients, no shading, no
-text, transparent background.
-VARIATIONS: four proposals; vary only the legs and feet.
+KEEP FROM THE MODEL: the exact palette of the attached file, the number and
+placement of dots, the orange cheek patch with the teal moustache stripe
+below it, the cream neck patch, the short vermilion legs with thin toes. The
+eye stays a plain white circle with a solid black dot, no highlight.
+DO NOT: add dots, outlines, gradients, shading, text, a branch or a
+background. No gaps between shapes; adjacent colour areas meet exactly or
+overlap. Transparent background.
+VARIATIONS: four proposals; vary only the angle of the head and the size of
+the fish, never the bird itself.
 ```
 
-Ensuite, une fois ce perché validé : chaque autre pose se demande seule, avec ce perché joint comme
-modèle (« the same bird as the attached one, now [pose] »).
+Si c'est bon, les autres poses se demandent une par une avec le même texte, en ne changeant que la
+phrase de la pose (« in a new pose: ... »). Poses de la retouche 3, pour mémoire : vol, plongée,
+carnet, jumelles, casque, content, perplexe.
 
 ### Plus tard - la tuile du logo (après validation du perché)
 
