@@ -121,10 +121,20 @@ Le texte courant tourne autour de 12 à 15 px écrits. Les étiquettes descenden
 - **Mesurer plutôt que regarder** : alignements, tailles et contrastes passent par les bancs
   d'`outils/verif/`.
 
-## Pas encore tranché
+- **Les petites étiquettes restent en capitales** (AVATAR, PROGRESSION AU FIL DU TEMPS, RARETÉ,
+  INVITER DES AMIS, en-têtes de colonnes) : décidé par Mathis le 2026-10-05. La règle « pas de
+  capitales » ne vaut que pour les onglets et les titres de page.
 
-- **Les petites étiquettes encore en capitales** (AVATAR, PROGRESSION AU FIL DU TEMPS, RARETÉ,
-  INVITER DES AMIS, en-têtes de colonnes) : 38 règles dans `styles.css` et 6 styles écrits par
-  `app.js`. Les passer en minuscules ?
-- **Le logo** : la huppe reste en place. Ordre décidé par Mathis : charte, puis choix de l'espèce
-  de la mascotte, puis fiche personnage (plusieurs poses et une tête pour le logo).
+## Logo
+
+**Figé le 2026-10-05, on n'y touche plus.** La tête du martin-pêcheur, avec les points de la
+calotte et de l'aile, dans un cadre vert pâle `#d3e7e6` (`assets/logos/logo.svg`). En sombre, le
+cadre passe au sapin `#1d524e` (`logo-sombre.svg`, bascule dans `app.js`). Il apparaît dans
+l'entête, l'écran de connexion, l'écran d'attente, l'icône de l'onglet et l'icône de l'appli
+installée (`logo-192.png`, `logo-512.png`).
+
+- Source unique : `assets/logos/sources/martin-figma.svg`, retouchée par Mathis dans Figma. Tout se
+  refait avec `node outils/build/icones-martin.mjs`.
+- Le martin entier (`martin.svg`) n'est plus affiché. L'ancienne huppe est dans
+  `archives/logos-huppe/`.
+- Pas de mascotte en plusieurs poses : abandonné le 2026-10-05.
