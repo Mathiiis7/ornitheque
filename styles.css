@@ -499,8 +499,28 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      sortait la cellule du tableau : nom en haut, trait parasite dessous. Desormais une seule
      police, 14 px partout, tout centre en hauteur ; la flexbox vit dans .who-in. */
   .board-sheet td { font-size:14px; vertical-align:middle; }
-  #viewRanking thead th { font-size:14px; vertical-align:middle; }
   #viewRanking .seg button { font-size:14px; }
+  /* Toute la page Classement suit le tableau des especes de Ma liste (.mylist-th, .mylist-row),
+     mesure le 2026-10-05 : en-tetes et etiquettes en 13 px gras en capitales, espacement 0,4 px,
+     --ink-3 ; texte 14 px, nom en 600, le reste en --ink-2 ; noms latins 14 px en Palatino.
+     Avant : sept tailles de 10 a 16 px, system-ui a cote de Segoe UI, en-tetes a 14 px. */
+  #viewRanking thead th, #viewRanking .fp-title, #viewRanking .fp-title-inline {
+    font:700 13px var(--sans); text-transform:uppercase; letter-spacing:.4px; color:var(--ink-3); vertical-align:middle; }
+  #viewRanking thead th { padding:7px 14px; }
+  #viewRanking tbody td { padding-left:14px; padding-right:14px; }
+  #viewRanking tbody td.pcol { padding:0; }
+  #viewRanking td.sp, #viewRanking td.sp .sp-link { font-size:14px; }
+  #viewRanking td.sp .sci, #viewRanking .mc-sci { font-size:14px; }
+  #viewRanking .board-sheet td.c-txt, #viewRanking td.cnt { color:var(--ink-2); font-size:14px; }
+  #viewRanking td.pcol .chk { font-size:14px; }
+  #viewRanking .chip { font-size:13px; }
+  #viewRanking .youtag { font-size:12px; }
+  #viewRanking .fp-hint, #viewRanking .miss-toggle { font-size:14px; font-weight:400; text-transform:none; letter-spacing:0; color:var(--ink-3); }
+  #viewRanking .miss-toggle { color:var(--ink-2); }
+  #viewRanking .person-chip, #viewRanking .fp-reset, #viewRanking .filters-toggle, #viewRanking .rar-chip,
+  #viewRanking .filt-sel { font-family:var(--sans); font-size:14px; }
+  #viewRanking .mc-sp, #viewRanking .mc-person { font-size:14px; }
+  #viewRanking .mc-count { font-family:var(--sans); font-size:14px; }
   .board-sheet .who-cell { font-weight:600; }
   .board-sheet .who-in { display:flex; align-items:center; gap:9px; }
   .board-sheet .who-cell .dot { width:11px; height:11px; border-radius:50%; background:var(--series); flex:none; }
@@ -1655,7 +1675,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      deborde par-dessus les voisins (vu par Mathis le 2026-10-05). Ils redeviennent des
      etiquettes, a 14 px comme le reste du Classement. */
   #tierChips .rar-chip, #tierChips .rar-chip[data-tier] { width:auto; min-width:0; height:auto; margin:0;
-    transform:none; padding:6px 10px; border-radius:6px; font:600 14px/1.2 system-ui; }
+    transform:none; padding:6px 10px; border-radius:6px; font:600 14px/1.2 var(--sans); }
   /* Retire les flèches spinner natives sur #mapEbMinTodo (on a nos propres boutons +/-) */
   #mapEbMinTodo::-webkit-outer-spin-button, #mapEbMinTodo::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
   .map-count { margin-left:auto; font-size:12.5px; color:var(--ink-3); font-weight:600; }
@@ -2282,7 +2302,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .mylist-sp .sp-link { font-weight:600; color:var(--ink); }
   .mylist-sp .mylist-lat { display:block; font-family:var(--serif); font-style:italic; font-size:14px; color:var(--ink-3); }
   .mylist-date { font-variant-numeric:tabular-nums; color:var(--ink-2); }
-  .mylist-loc { min-width:0; color:var(--ink-2); font-size:13.5px; overflow-wrap:anywhere; }
+  .mylist-loc { min-width:0; color:var(--ink-2); font-size:14px; overflow-wrap:anywhere; }
   .mylist-loc img { vertical-align:-2px; margin-right:6px; }
   .mylist-empty { padding:16px 14px; font-size:14px; color:var(--ink-3); }
   @media (max-width:560px){

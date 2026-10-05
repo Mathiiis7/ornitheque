@@ -81,6 +81,11 @@ un intitulé de groupe : décidé le 2026-10-05, Mathis trouvait les 12-13 px «
 revues depuis la suivent (Ma liste, Classement) ; les autres descendent encore à 11 px, à reprendre
 au fil de la revue.
 
+**Le modèle de tout tableau est celui des espèces de Ma liste** (`.mylist-th`, `.mylist-row`) :
+en-têtes et étiquettes en 13 px gras, capitales, espacement 0,4 px, `--ink-3` ; texte en 14 px, le
+nom en 600, le reste en `--ink-2` ; noms latins en 14 px Palatino. Le Classement y a été aligné le
+2026-10-05 (il avait sept tailles, de 10 à 16 px, et deux polices).
+
 **Un tableau a une seule police et une seule taille**, et tout y est centré en hauteur : le
 Classement mélangeait Cascadia et Segoe UI, 11,5, 13 et 13,5 px, texte en haut et chiffres au
 milieu (corrigé le 2026-10-05).
