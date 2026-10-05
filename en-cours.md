@@ -1,3 +1,26 @@
+# En cours le 2026-10-05 (nuit) : revue de la charte page par page, avec Mathis
+
+Mathis parcourt le site et commente ; on corrige page par page. **Rien n'est poussé** depuis
+`8aa112da` : tout est commité sur `main`, il valide en local (localhost:8765) avant de pousser.
+v704, app.js?v=285.
+
+**Ma liste, refaite (fini sauf nouveau commentaire)** :
+- « Inviter des amis » quitte la page : ligne du menu ☰, ouvre une fenêtre `<dialog id="inviteDialog">`.
+- Guide d'import en blocs fléchés : deux départs (liste simple / avec GPS) → bloc de fin commun
+  « Dépose le fichier ici ». Il a refusé la version en deux cartes détaillées (« trop complexe »).
+- « Retirer ma liste » à côté du prénom ; tableau « Mes espèces » en bas (recherche, clic = fiche),
+  « Ajouter une espèce manuellement » dessous.
+- Petites étiquettes en capitales : GARDÉES (tranché).
+
+**Règles décidées ce soir** (dans la charte ou la mémoire) :
+- Première observation = la plus ancienne, tous pays confondus (`ingest()` ; `seenFR` lit `v.fr`).
+  Les listes déposées avant gardent l'ancienne date tant qu'elles ne sont pas redéposées.
+- Le gras s'arrête à 700 (`b, strong`), sauf les pastilles rondes chiffrées.
+
+**Suite** : continuer la revue sur les autres pages, au fil de ses commentaires.
+
+---
+
 # Fait le 2026-10-05 soir : logo et mascotte EN LIGNE (poussé, vérifié sur la démo en ligne)
 
 - `1ab89c0c` : le martin-pêcheur entier (retouché par Mathis dans Figma, source
