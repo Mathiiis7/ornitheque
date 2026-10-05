@@ -10,11 +10,13 @@ Réglages pour les deux : **Arrow 2, effort High, 4 propositions.** Prix attendu
 
 ### Envoi 1 sur 2 - les poses (retouche n° 4 : corrections ciblées)
 
-1. Joindre le fichier : `notes-privees/mascotte/retouche-3.svg` (la planche à 9 poses)
-2. Copier-coller ce texte :
+Dans la conversation d'Arrow 2 où est sortie la planche à 9 poses : sélectionner cette proposition-là,
+puis coller ce texte comme message suivant (rien à joindre). Hors de cette conversation, joindre
+`notes-privees/mascotte/retouche-3.svg`.
 
 ```text
-Fix this kingfisher character sheet. Change ONLY what is listed below.
+Fix the 9-pose kingfisher sheet you just made (the proposal I selected).
+Change ONLY what is listed below.
 Everything else stays exactly as it is: the character, the colours, the
 3 x 3 layout, and these poses, untouched: top left (perched), centre (notebook),
 bottom right (headphones).
