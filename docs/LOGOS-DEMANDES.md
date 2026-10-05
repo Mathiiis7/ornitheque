@@ -19,30 +19,38 @@ five poses, the same layout and the same palette, but make it cleaner and
 more faithful to a real adult MALE common kingfisher (Alcedo atthis). This is
 a refinement of the existing drawing, not a new design.
 
+CONSISTENCY, the most important rule: the five birds are the SAME bird. Every
+bird carries exactly the markings listed below, no more, no fewer. Before
+finishing, check each of the five birds against this list one by one. Do not
+add any marking that is not on the list: no dots, no speckles, no feather
+lines, no extra stripes.
+
+THE MARKINGS, on every bird where that part is visible:
+1. bill: long straight dagger, ENTIRELY black, about as long as the head;
+2. crown and nape: plain teal;
+3. a small orange spot between the bill and the eye;
+4. an orange ear patch behind the eye;
+5. a teal moustache stripe under the ear patch, from the bill base to the neck;
+6. a white patch on the side of the neck, and a white throat;
+7. wing: plain teal, with one light-teal band along its leading edge;
+8. a light-teal stripe down the middle of the back, when the back is visible;
+9. a short dark-teal tail;
+10. orange underparts from the breast to the vent;
+11. short vermilion legs and feet, attached to the belly.
+
 CLEAN-UP:
 - no gaps between shapes: adjacent colour areas meet exactly or overlap, with
-  no thin slivers of background showing through anywhere inside a bird. Build
-  each bird on one solid base silhouette, then lay the colour areas on top;
-- confident, smooth joins: crown, cheek, neck patch, throat and wing flow into
-  each other, without tiny steps, notches or stray points;
-- the same character in all five poses: same proportions, same markings.
+  no background showing through anywhere inside a bird, in particular between
+  the nape and the wing. Build each bird on one solid base silhouette, then
+  lay the colour areas on top;
+- confident, smooth joins, without tiny steps, notches or stray points;
+- shape: dumpy body, big head, short tail.
 
-SPECIES ACCURACY (adult male):
-- bill: long straight dagger, ENTIRELY black, about as long as the head;
-- head: teal crown with a few small pale-blue speckles; a small orange spot
-  between the bill and the eye; an orange ear patch behind the eye, bordered
-  below by a teal moustache stripe that runs from the bill base to the neck;
-  a white patch on the side of the neck; a white throat;
-- upperparts: teal wings with a few small pale-blue dots on the wing coverts;
-  a bright light-teal stripe running down the middle of the back to the rump;
-  a short dark-teal tail;
-- underparts: orange from the breast to the vent;
-- legs and feet: short, bright vermilion red;
-- shape: dumpy body, big head, short tail;
-- in the flying pose, the far wing is raised and seen from BELOW: its
-  underside is orange-rufous near the body (the underwing coverts), and its
-  long flight feathers are dusky grey-brown with pale grey edges. The near
-  wing is seen from above, teal, with the bright back stripe visible.
+THE FLYING POSE: both wings are raised above the back and BOTH show their
+underside, the same way, so the two wings match. On each wing: the inner
+part, near the body and along the leading edge, is rufous and covers about a
+third of the wing; the long flight feathers are grey-brown with pale grey
+edges. No teal on the underside of the wings.
 
 KEEP: flat vector, solid colours, no outlines, no gradients, no shading, no
 text. The eye stays a white circle with a black dot. Palette exactly: #0B7C77
@@ -52,8 +60,7 @@ legs only, #9E4523 rufous for the underwing coverts, #6B645C grey-brown and
 #B7B2AA pale grey for the underside of the flight feathers, #B98D22 gold for
 the binoculars and notebook. Transparent background.
 VARIATIONS: four proposals, each a faithful refinement; vary only how the
-shapes are joined and how the markings are drawn, never the poses or the
-character.
+shapes are joined, never the poses, the markings or the character.
 ```
 
 ### Envoi 2 sur 2 - la tuile du logo
@@ -72,7 +79,8 @@ patch and the throat; the eye a clean white circle with a black dot.
 SPECIES ACCURACY (adult male common kingfisher): the bill ENTIRELY black; a
 small orange spot between the bill and the eye; the orange ear patch behind
 the eye bordered below by a teal moustache stripe; a white patch on the side
-of the neck; a white throat; a few small pale-blue speckles on the crown.
+of the neck; a white throat; a plain teal crown. No dots, no speckles, no
+feather lines.
 KEEP: flat vector, solid colours, no outlines, no gradients, no shading, no
 text, white #FFFFFF tile background filling the whole square, no rounded
 corners drawn inside the canvas. Palette exactly: #0B7C77, #2BBCB0, #C05E33,
@@ -110,6 +118,7 @@ L'outil et ses prix : `~/Documents/0-Claude/0-QG/qg/savoir/quiver-ai.md`. Le nom
 | Style | trouvé : l'oiseau simple en formes primitives (section 4) |
 | Espèce | **le martin-pêcheur mâle**, choisi le 2026-10-05 |
 | Premier envoi | fait : poses de la planche 4 et tuile de la planche 3 retenues, assemblées et recalées sur la charte par `outils/build/mascotte.mjs` |
+| Retouche High n° 1 | `notes-privees/mascotte/retouche-1.svg`, refusée : points bleus présents sur certains oiseaux et pas d'autres, une aile bleue et une grise en vol, trous revenus (nuque/aile, pattes de la plongée détachées). Demande refaite : liste fermée de 11 marques, aucun point, les deux ailes par-dessous en vol |
 | Logo en place | la huppe, tant que rien d'autre n'est arrêté |
 | Prochaine étape | les deux envois en High, en haut de ce document |
 
