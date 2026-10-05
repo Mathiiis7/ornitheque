@@ -99,7 +99,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=290">
+<link rel="modulepreload" href="app.js?v=291">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -221,8 +221,8 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   <nav class="tabs">
     <button class="tab on" data-view="load">Ma liste</button>
     <button class="tab" data-view="ranking">Classement</button>
-    <button class="tab" data-view="map">Carte</button>
     <button class="tab" data-view="pokedex">Birdydex</button>
+    <button class="tab" data-view="map">Carte</button>
     <button class="tab" data-view="trophies">Trophées</button>
     <button class="tab" data-view="quiz">Quiz</button>
     <!-- Tabs secondaires dispos via le menu hamburger a droite (Profil/Fil/Requetes) et
@@ -613,12 +613,10 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
 
     <div class="panel" id="matrix">
       <div class="section-head">
-        <!-- Repliee par defaut (Mathis, 2026-10-05) : la grille fait des centaines de lignes et
-             repoussait tout le reste. Le titre est le bouton qui l'ouvre. -->
-        <div><h2><button type="button" class="pli-btn" id="matrixToggle" aria-expanded="false" aria-controls="matrixBody">Qui a vu quoi</button></h2></div>
+        <!-- Toujours affichee : essayee repliee le 2026-10-05, Mathis l'a voulue visible. -->
+        <div><h2>Qui a vu quoi</h2></div>
         <div class="country-badge" id="countryBadge" style="display:none;"></div>
       </div>
-      <div id="matrixBody" hidden>
       <div class="controls">
         <!-- Barre principale : ce qu'on utilise le plus (recherche + tri) toujours visible. -->
         <div class="ctrl-main">
@@ -672,7 +670,6 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         </table>
       </div>
       <div class="matrix-cards" id="matrixCards"></div>
-      </div><!-- /matrixBody -->
     </div>
   </section>
   </div><!-- /viewRanking -->
@@ -1345,5 +1342,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=290"></script>
+<script type="module" src="app.js?v=291"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans votre navigateur.</span></div>

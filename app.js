@@ -10233,13 +10233,6 @@ document.addEventListener('pointerdown', e => {
   const bulle = $('#triBulle');
   if(bulle && !bulle.hidden && !e.target.closest('#boardModes')) bulle.hidden = true;
 });
-// « Qui a vu quoi » est replie par defaut ; le titre l'ouvre et le referme.
-$('#matrixToggle')?.addEventListener('click', e => {
-  const ouvert = e.currentTarget.getAttribute('aria-expanded') !== 'true';
-  e.currentTarget.setAttribute('aria-expanded', String(ouvert));
-  $('#matrixBody').hidden = !ouvert;
-  $('#matrix').classList.toggle('ouvert', ouvert);
-});
 // H : désactive visuellement écriture chat + upload photo pour les non-membres.
 function _refreshChatWriteAccess(){
   const canWrite = iAmInLeague;

@@ -2139,15 +2139,6 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     font:800 10px system-ui; }
   .tb-nom { color:var(--ink); }
   .tb-part { color:var(--ink-3); text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
-  /* « Qui a vu quoi », repliee par defaut : le titre est un bouton, avec un chevron. */
-  .pli-btn { background:none; border:0; padding:0; margin:0; font:inherit; color:inherit; cursor:pointer;
-    display:inline-flex; align-items:center; gap:10px; text-align:left; }
-  .pli-btn::after { content:''; width:9px; height:9px; border-right:2px solid var(--ink-3); border-bottom:2px solid var(--ink-3);
-    transform:rotate(-45deg); transition:transform .15s; }
-  .pli-btn[aria-expanded="true"]::after { transform:rotate(45deg) translate(-2px,-2px); }
-  .pli-btn:hover { color:var(--accent-ink); }
-  .pli-btn:focus-visible { outline:3px solid var(--accent); outline-offset:3px; border-radius:4px; }
-  #matrix:not(.ouvert) .section-head { margin-bottom:0; }
   .tmodal-note { margin:0 0 4px; font-size:13px; color:var(--ink-2); }
   .tmodal-h { margin:14px 0 6px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-2); }
   .tmodal-h span { color:var(--ink-3); font-weight:400; }
@@ -2333,7 +2324,4 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     /* Ma liste : les box, les choix du tuto, ses boutons et les croix des fenetres. */
     .ml-box, .tuto-ch, .tuto-nav .btn, .tuto-lien { min-height:52px; }
     .ml-dialog-close { width:52px; height:52px; }
-
-    /* Classement : le titre qui deplie « Qui a vu quoi ». */
-    .pli-btn { min-height:52px; }
   }

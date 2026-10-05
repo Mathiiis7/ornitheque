@@ -1,7 +1,7 @@
 # À valider en local : page Classement (v708, app.js?v=288), commitée, PAS poussée
 
 Choix de Mathis le 2026-10-05 : garder toutes les colonnes du tableau mais le rendre cohérent ;
-« Qui a vu quoi » repliée sous la liste (le titre est le bouton) ; puis (même soir) plus de « ? » ni de
+« Qui a vu quoi » toujours affichée (repli essayé puis refusé) ; onglet Birdydex passé avant Carte ; puis (même soir) plus de « ? » ni de
 phrase sous le titre ni de barème sur la page : l'explication de chaque tri, et le barème de la
 rareté réelle en pastilles rondes, vivent dans une bulle au survol du bouton (#triBulle,
 _bulleTri() dans app.js ; au doigt, elle s'ouvre au choix du tri). v710, app.js?v=290.
