@@ -131,6 +131,10 @@ textes en 800 y sont descendus. Seules les pastilles rondes chiffrées (rareté,
 - **Le doigt** : une cible tactile s'écrit 52 px pour en faire 44 à l'écran, à cause du zoom. Tout
   ce qui concerne le doigt vit dans le bloc `@media (pointer: coarse)` en fin de `styles.css`, et
   l'affichage à la souris ne bouge pas.
+- **Une explication au survol** : le curseur devient un « ? » et la bulle attend un quart de
+  seconde (`DELAI_SURVOL`, 250 ms, dans `app.js` ; image du curseur dans `--curseur-aide`).
+  Décidé par Mathis le 2026-10-05 : la bulle des tris du Classement s'ouvrait sans délai et
+  sans « ? ». Un bouton qui explique au survol prend aussi le « ? ».
 - **Le focus clavier** : un anneau de 3 px d'accent, décalé hors de l'élément. Mesuré le
   2026-09-29 : 4,23:1 au pire en clair, 6,48:1 en sombre, pour un seuil de 3:1.
 - **Mode sombre partout**, vérifié à chaque retouche.

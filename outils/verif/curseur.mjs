@@ -20,7 +20,9 @@ export const quoi = 'le « ? » n apparaît que si une bulle suit';
 
 export function html(){
   const css = readFileSync(join(RACINE, 'styles.css'), 'utf8');
-  const m = /cursor: url\("(data:image\/svg\+xml,[^"]+)"\)\s*([\d.]+)\s*([\d.]+), help;/.exec(css);
+  // Depuis le 2026-10-05 l'image vit dans la variable --curseur-aide (reprise par les tris du
+  // Classement, seuls boutons a montrer le « ? » malgre leur clic, a la demande de Mathis).
+  const m = /--curseur-aide: url\("(data:image\/svg\+xml,[^"]+)"\)\s*([\d.]+)\s*([\d.]+), help;/.exec(css);
   if(!m) throw new Error('la règle du curseur est introuvable ou a changé de forme');
 
   return page({
