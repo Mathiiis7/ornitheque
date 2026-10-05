@@ -107,3 +107,6 @@ outils/habitats-sans-milieu.txt
 # rattrapent une copie posee par megarde dans le projet (2026-09-30).
 .Renviron
 .env
+
+# Jonction vers ../ornitheque-data/cartes pour voir les cartes en local avant de pousser le dépôt de données
+cartes-locales

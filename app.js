@@ -11921,10 +11921,10 @@ async function _renderSpeciesTraitsCard(key){
   const HD  = { 1:'🌲 Milieu dense', 2:'🌾 Semi-ouvert', 3:'🏞️ Très ouvert' };
   // Section Écologie
   const ecoLines = [];
-  // Check async si l'espece a des cartes migration hebdo dispo -> bouton anim plein ecran
-  let hasWeekly = false;
-  try{ const idx = await _loadWeeklyIndex(); hasWeekly = !!(idx && idx[k]); }catch(_){}
-  const animBtn = hasWeekly ? ` <button type="button" class="mig-fs-btn" data-sci="${esc(k)}" title="Animation migration en plein écran" style="margin-left:8px; padding:2px 8px; font-size:11px; border:none; background:var(--accent); color:white; border-radius:4px; cursor:pointer; font-weight:600;">🎞️ Animation</button>` : '';
+  // Check async si l'espece a des cartes mensuelles dispo -> bouton anim plein ecran
+  let hasMonthly = false;
+  try{ hasMonthly = !!_carteEntry(await _loadRangeIndex(), k); }catch(_){}
+  const animBtn = hasMonthly ? ` <button type="button" class="mig-fs-btn" data-sci="${esc(k)}" title="Animation migration en plein écran" style="margin-left:8px; padding:2px 8px; font-size:11px; border:none; background:var(--accent); color:white; border-radius:4px; cursor:pointer; font-weight:600;">🎞️ Animation</button>` : '';
   if(t.mi && MIG[t.mi])   ecoLines.push({ k:'Migration',      v: MIG[t.mi] + animBtn });
   if(t.tl && TL[t.tl]){
     // Skip le doublon si t.tn (niche precise) == label de la categorie (ex : 'Omnivore').
@@ -11983,21 +11983,130 @@ async function _renderSpeciesTraitsCard(key){
   `;
   box.hidden = false;
 }
-// Carte de repartition Cornell S&T (heatmap annuelle 9km). Lazy load du manifest global
-// puis affichage PNG statique cliquable qui ouvre une modal Leaflet interactive.
+// Cartes de repartition et de migration, depuis le 2026-10-05 : observations eBird publiees sur GBIF
+// (CC BY 4.0, DOI 10.15468/dl.c7y4kg), a la place de Cornell Status & Trends dont les conditions
+// interdisent l'usage sur un site sans accord ecrit. Detail et mesures : docs/sources-cartes.md.
+// FORMAT : par espece, deux PNG en niveaux de gris dans le depot separe ornitheque-data/cartes/ :
+// <code>-a.png (annee) et <code>-m.png (12 mois empiles), 1 pixel par case de 0,25 degre, 0 = pas de
+// valeur, 1..32 = rang de la frequence de signalement. Le navigateur les colore et les reechantillonne
+// en Mercator (Leaflet etire une image lineairement en Mercator, pas en latitude). Pourquoi pas des PNG
+// couleur : 2,7 Go pour 10 700 especes, contre ~100 Mo en niveaux de gris. Le manifeste
+// data/cartes-index.json donne, par nom scientifique, [code, i0, j0, largeur, hauteur, source] ou
+// (i0, j0) est la case nord-ouest de l'image dans la grille mondiale de 1440 x 720 cases.
+// Les rangs sont calcules mois par mois : chaque mois dit ou l'espece est la plus frequente CE mois-la.
+const CARTES_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+  ? 'cartes-locales'   // jonction vers ../ornitheque-data/cartes, ignoree par git : voir CLAUDE.md
+  : 'https://mathiiis7.github.io/ornitheque-data/cartes';
+const CARTES_VERSION = '20261005';
+const CARTES_CASE = 0.25, CARTES_NIV = 32;
+const CARTES_PALETTE = [[62, 168, 107], [168, 209, 85], [245, 197, 24], [240, 115, 58], [161, 20, 8]];
 let _rangeIndexCache = null;
 async function _loadRangeIndex(){
   if(_rangeIndexCache) return _rangeIndexCache;
   try{
-    const res = await fetch('data/range-index.json?v=20260830');
+    const res = await fetch('data/cartes-index.json?v=' + CARTES_VERSION);
     if(!res.ok) return (_rangeIndexCache = {});
     const raw = await res.json();
-    // Normalise en index case-insensitive (les cles R sont 'Pica pica' Title case,
-    // les sci passes par le modal peuvent etre 'pica pica' minuscules).
+    // Cles en minuscules : les noms passes par les fiches ne sont pas toujours en casse de titre.
     _rangeIndexCache = {};
-    for(const [k, v] of Object.entries(raw)) _rangeIndexCache[k.toLowerCase()] = v;
+    for(const [k, v] of Object.entries(raw)) _rangeIndexCache[k.toLowerCase()] = { code:v[0], i0:v[1], j0:v[2], w:v[3], h:v[4], src:v[5] };
   }catch(_){ _rangeIndexCache = {}; }
   return _rangeIndexCache;
+}
+// Entree du manifeste pour une espece, avec les memes alias que la carte des traits.
+function _carteEntry(idx, sci){
+  const k = (sci || '').toLowerCase().trim();
+  if(idx[k]) return idx[k];
+  const alt = (typeof SCI_ALIAS === 'object' && SCI_ALIAS[k]) || (typeof GBIF_SCI_ALIAS === 'object' && GBIF_SCI_ALIAS[k]) || null;
+  return alt ? (idx[alt.toLowerCase()] || null) : null;
+}
+// Cadre geographique de l'image : [[sud, ouest], [nord, est]]
+function _carteCadre(e){
+  const ouest = -180 + e.i0 * CARTES_CASE, nord = 90 - e.j0 * CARTES_CASE;
+  return [[nord - e.h * CARTES_CASE, ouest], [nord, ouest + e.w * CARTES_CASE]];
+}
+function _carteLireGris(url){
+  return new Promise((ok, ko) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';   // sans ca, le canvas serait « souille » et getImageData refuserait
+    img.onload = () => {
+      const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+      const g = c.getContext('2d', { willReadFrequently:true }); g.drawImage(img, 0, 0);
+      const d = g.getImageData(0, 0, c.width, c.height).data, o = new Uint8Array(c.width * c.height);
+      for(let k = 0; k < o.length; k++) o[k] = d[k * 4];
+      ok(o);
+    };
+    img.onerror = () => ko(new Error(url));
+    img.src = url;
+  });
+}
+// Une seule espece en memoire a la fois : grilles lues, images deja coloriees (URL de blob a rendre).
+let _carteMem = { code:null, an:null, mois:null, rendus:new Map() };
+function _carteOuvrir(e){
+  if(_carteMem.code !== e.code){
+    for(const p of _carteMem.rendus.values()) p.then(r => URL.revokeObjectURL(r.url)).catch(() => {});
+    _carteMem = { code:e.code, an:null, mois:null, rendus:new Map() };
+  }
+  return _carteMem;
+}
+// m = 0 : annee ; 1..12 : mois. Rend {url} d'une image PNG coloree, alignee en Mercator sur _carteCadre(e).
+function _carteImage(e, m){
+  const mem = _carteOuvrir(e);
+  if(mem.rendus.has(m)) return mem.rendus.get(m);
+  const p = (async () => {
+    if(m && !mem.mois) mem.mois = _carteLireGris(`${CARTES_BASE}/${e.code}-m.png?v=${CARTES_VERSION}`);
+    if(!m && !mem.an) mem.an = _carteLireGris(`${CARTES_BASE}/${e.code}-a.png?v=${CARTES_VERSION}`);
+    const grille = await (m ? mem.mois : mem.an);
+    const W = e.w, H = e.h;
+    const src = m ? grille.subarray((m - 1) * W * H, m * W * H) : grille;
+    const cadre = _carteCadre(e), sud = cadre[0][0], nord = cadre[1][0];
+    const mercY = phi => Math.log(Math.tan(Math.PI / 4 + (phi * Math.PI / 180) / 2));
+    const mN = mercY(nord), mS = mercY(sud);
+    const PX = W > 900 ? 2 : 3;   // pixels par case : 2 pour une espece mondiale (~2800 px de large), 3 sinon
+    const cw = W * PX, ch = Math.round(cw * (mN - mS) / (W * CARTES_CASE * Math.PI / 180));
+    const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+    const ctx = cv.getContext('2d'), out = ctx.createImageData(cw, ch), d = out.data;
+    const niv = new Float32Array(256);
+    for(let g = 1; g <= CARTES_NIV; g++) niv[g] = (g - 0.5) / CARTES_NIV;
+    // Palette precalculee en 1024 teintes (interpolation lineaire entre les 5 couleurs)
+    const pal = Array.from({ length:1024 }, (_, k) => {
+      const q = Math.min(0.9999, k / 1024) * 4, i = Math.floor(q), f = q - i;
+      return CARTES_PALETTE[i].map((c, z) => c + (CARTES_PALETTE[i + 1][z] - c) * f);
+    });
+    for(let y = 0; y < ch; y++){
+      const lat = (2 * Math.atan(Math.exp(mN - (y + 0.5) / ch * (mN - mS))) - Math.PI / 2) * 180 / Math.PI;
+      const v = (nord - lat) / CARTES_CASE, jf = Math.floor(v - 0.5), fv = v - 0.5 - jf;
+      for(let x = 0; x < cw; x++){
+        // interpolation bilinaire entre les centres des 4 cases voisines ; les cases vides ne comptent pas
+        const u = (x + 0.5) / cw * W, i = Math.floor(u - 0.5), fu = u - 0.5 - i;
+        let s = 0, w = 0;
+        for(let q = 0; q < 4; q++){
+          const ii = i + (q & 1), jj = jf + (q >> 1);
+          if(ii < 0 || ii >= W || jj < 0 || jj >= H) continue;
+          const g = src[jj * W + ii];
+          if(!g) continue;
+          const wt = ((q & 1) ? fu : 1 - fu) * ((q >> 1) ? fv : 1 - fv);
+          s += niv[g] * wt; w += wt;
+        }
+        if(w < 0.35) continue;   // bord de l'aire : liseré doux plutot qu'un escalier
+        const c = pal[Math.min(1023, (s / w * 1024) | 0)], o = (y * cw + x) * 4;
+        d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; d[o + 3] = 255 * Math.min(1, w / 0.6);
+      }
+    }
+    ctx.putImageData(out, 0, 0);
+    const blob = await new Promise(r => cv.toBlob(r, 'image/png'));
+    return { url:URL.createObjectURL(blob) };
+  })();
+  mem.rendus.set(m, p);
+  return p;
+}
+// Source et credit, a l'identique sur les deux cartes. 'e' : observations eBird, frequence corrigee
+// de l'effort ; 'p' : especes sans donnee eBird, carte de presence tiree des autres sources GBIF.
+function _carteSourceHtml(e){
+  const doi = e.src === 'p' ? '10.15468/dl.rb9sut' : '10.15468/dl.c7y4kg';
+  return e.src === 'p'
+    ? `Observations GBIF, toutes sources : <b>présence seulement</b>, sans correction de l'effort d'observation. <a href="https://doi.org/${doi}" target="_blank" rel="noopener">GBIF.org, DOI ${doi}</a>`
+    : `Observations eBird publiées sur GBIF (CC BY 4.0), cases de 28 km. <a href="https://doi.org/${doi}" target="_blank" rel="noopener">GBIF.org, DOI ${doi}</a>`;
 }
 // Carte interactive Leaflet embarquee directement dans la fiche espece (pas de modal).
 // Instance globale, destroy propre avant chaque nouvelle fiche pour eviter les leaks.
@@ -12009,23 +12118,22 @@ async function _renderSpeciesRangeCard(sci){
   box.hidden = true;
   box.innerHTML = '';
   const idx = await _loadRangeIndex();
-  const entry = idx[(sci || '').toLowerCase().trim()];
-  if(!entry || !entry.code) return;
-  const pngPath = `${WEEKLY_DATA_BASE}/range/${entry.code}.png?v=20260902`;
-  const [w, s, e, n] = (entry.bbox || [-180, -60, 180, 85]);
+  const entry = _carteEntry(idx, sci);
+  if(!entry) return;
   const mapId = 'smRangeMap';
   box.innerHTML = `
-    <div class="sm-card-title" style="display:flex; align-items:center; gap:8px;">Répartition <span style="font-size:10.5px; color:var(--ink-3); text-transform:none; font-weight:400; letter-spacing:0;">- ${entry._source === 'gbif' ? `GBIF (${entry._n||'?'} observations)` : 'Cornell Status & Trends (moyenne annuelle 9 km)'}</span></div>
+    <div class="sm-card-title" style="display:flex; align-items:center; gap:8px;">Répartition <span style="font-size:10.5px; color:var(--ink-3); text-transform:none; font-weight:400; letter-spacing:0;">- ${entry.src === 'p' ? 'GBIF, présence' : 'observations eBird, moyenne annuelle'}</span></div>
     <div id="${mapId}" class="sm-range-map" style="margin-top:6px; height:440px; border-radius:8px; overflow:hidden; background:var(--surface-3);"></div>
     <div style="margin-top:8px; display:flex; align-items:center; gap:10px; font-size:11px; color:var(--ink-2);">
       <span>Rare</span>
       <div style="flex:1; height:12px; border-radius:3px; background:linear-gradient(to right, #3ea86b, #a8d155, #f5c518, #f0733a, #a11408);"></div>
-      <span>Abondant</span>
+      <span>${entry.src === 'p' ? 'Beaucoup d\'observations' : 'Fréquent'}</span>
     </div>
     <div style="margin-top:4px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
-      <div style="font-size:10.5px; color:var(--ink-3);">Échelle relative à l'espèce (percentiles)</div>
+      <div style="font-size:10.5px; color:var(--ink-3);">${entry.src === 'p' ? 'Échelle relative à l\'espèce (percentiles du nombre d\'observations)' : 'Échelle relative à l\'espèce (percentiles de la fréquence de signalement)'}</div>
       <button type="button" data-map-render-toggle style="font-size:11px; padding:3px 8px; border:1px solid var(--line); background:var(--surface-2); border-radius:4px; cursor:pointer;">${document.body.dataset.mapRender === 'sharp' ? '🌊 Rendu flou' : '🔲 Rendu net'}</button>
     </div>
+    <div style="margin-top:6px; font-size:10.5px; color:var(--ink-3);">${_carteSourceHtml(entry)}</div>
   `;
   box.hidden = false;
   const mapEl = box.querySelector('#' + mapId);
@@ -12034,9 +12142,9 @@ async function _renderSpeciesRangeCard(sci){
     if(!mapEl.clientHeight) { setTimeout(() => _renderSpeciesRangeCard(sci), 100); return; }
     // Vue par defaut : zoom sur la data. minZoom calcule dynamiquement pour qu'au
     // dezoom max la Terre remplisse le container SANS zones grises.
-    const dataBounds = L.latLngBounds([[s, w], [n, e]]);
+    const dataBounds = L.latLngBounds(_carteCadre(entry));
     const worldBounds = L.latLngBounds([[-60, -180], [85, 180]]);
-    _rangeMapInstance = L.map(mapEl, {
+    const carte = _rangeMapInstance = L.map(mapEl, {
       zoomControl:true, maxBounds:worldBounds, maxBoundsViscosity:1.0,
       worldCopyJump:false, attributionControl:true, zoomSnap:0, zoomDelta:0.5
     });
@@ -12047,9 +12155,12 @@ async function _renderSpeciesRangeCard(sci){
       // Fix 2026-09-22 : errorTileUrl gris pour eviter le trait blanc quand une tuile
       // OSM 200 rate (server occasionnellement 404/timeout sur certaines colonnes).
       errorTileUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="256" height="256" fill="%23e6e6e6"/></svg>'
-    }).addTo(_rangeMapInstance);
-    L.imageOverlay(pngPath, dataBounds, { opacity:0.75, interactive:false, className:'sharp-overlay' }).addTo(_rangeMapInstance);
-    _rangeMapInstance.fitBounds(dataBounds);
+    }).addTo(carte);
+    carte.fitBounds(dataBounds);
+    // La grille est lue puis coloriee dans le navigateur : l'image arrive un instant apres la carte.
+    _carteImage(entry, 0).then(r => {
+      if(_rangeMapInstance === carte) L.imageOverlay(r.url, _carteCadre(entry), { opacity:0.75, interactive:false, className:'sharp-overlay' }).addTo(carte);
+    }).catch(() => {});
     // Meme calcul minZoom que la migration plein ecran : le monde touche les bords lateraux
     const recalcRangeMinZoom = () => {
       if(!_rangeMapInstance) return;
@@ -12068,138 +12179,14 @@ async function _renderSpeciesRangeCard(sci){
     }catch(_){}
   });
 }
-// Migration animee : 26 frames PNG hebdo (1 sur 2) par migrateur, timeline slider + autoplay.
-// Charge le manifest range-weekly, verifie si sci est dispo, monte une carte Leaflet
-// dediee + timeline. Preload les frames pour animation fluide.
-// STOCKAGE : les PNGs (~90 MB total) sont dans le repo SEPARE ornitheque-data
-// pour ne pas alourdir le repo main. Manifest reste dans le repo main (petit fichier).
-const WEEKLY_DATA_BASE = 'https://mathiiis7.github.io/ornitheque-data';
-let _weeklyIndexCache = null;
-async function _loadWeeklyIndex(){
-  if(_weeklyIndexCache) return _weeklyIndexCache;
-  try{
-    const res = await fetch('data/range-weekly-index.json?v=20260901');
-    if(!res.ok) return (_weeklyIndexCache = {});
-    const raw = await res.json();
-    _weeklyIndexCache = {};
-    for(const [k, v] of Object.entries(raw)) _weeklyIndexCache[k.toLowerCase()] = v;
-  }catch(_){ _weeklyIndexCache = {}; }
-  return _weeklyIndexCache;
-}
-let _migrationMapInstance = null;
-let _migrationPlayInterval = null;
-let _migrationOverlays = [];
-async function _renderSpeciesMigrationCard(sci){
-  const box = $('#smMigrationCard'); if(!box) return;
-  // Cleanup instance precedente
-  if(_migrationPlayInterval){ clearInterval(_migrationPlayInterval); _migrationPlayInterval = null; }
-  if(_migrationMapInstance){ try{ _migrationMapInstance.remove(); }catch(_){} _migrationMapInstance = null; }
-  _migrationOverlays = [];
-  box.hidden = true;
-  box.innerHTML = '';
-  const idx = await _loadWeeklyIndex();
-  const entry = idx[(sci || '').toLowerCase().trim()];
-  if(!entry || !entry.code || !entry.weeks || !entry.weeks.length) return;
-  const weeks = entry.weeks;
-  const [w, s, e, n] = (entry.bbox || [-25, -10, 45, 72]);
-  const mapId = 'smMigrationMap';
-  // Semaine -> mois FR approximatif (ISO 8601 semaine ~ commence lundi de la 1re semaine avec un jeudi de janvier)
-  const weekToLabel = wk => {
-    const monthStart = [1,5,9,14,18,22,27,31,36,40,44,49];
-    const monthNames = ['janv','fév','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'];
-    let m = 0; for(let i=0;i<12;i++) if(wk >= monthStart[i]) m = i;
-    return `${monthNames[m]}`;
-  };
-  box.innerHTML = `
-    <div class="sm-card-title" style="display:flex; align-items:center; gap:8px;">Migration semaine par semaine <span style="font-size:10.5px; color:var(--ink-3); text-transform:none; font-weight:400; letter-spacing:0;">- Cornell S&amp;T weekly</span></div>
-    <div id="${mapId}" class="sm-range-map" style="margin-top:6px; height:440px; border-radius:8px; overflow:hidden; background:var(--surface-3);"></div>
-    <div style="margin-top:10px; display:flex; align-items:center; gap:12px;">
-      <button type="button" id="smMigPlay" class="btn tiny" style="min-width:60px;">▶ Lire</button>
-      <input type="range" id="smMigSlider" min="0" max="${weeks.length-1}" value="0" step="1" style="flex:1; cursor:pointer;">
-      <span id="smMigLabel" style="font-family:ui-monospace,monospace; font-size:12px; color:var(--ink); min-width:80px; text-align:right;">Sem ${weeks[0]} · ${weekToLabel(weeks[0])}</span>
-    </div>
-    <div style="margin-top:8px; display:flex; align-items:center; gap:10px; font-size:11px; color:var(--ink-2);">
-      <span>Rare</span>
-      <div style="flex:1; height:12px; border-radius:3px; background:linear-gradient(to right, #3ea86b, #a8d155, #f5c518, #f0733a, #a11408);"></div>
-      <span>Abondant</span>
-    </div>
-    <div style="margin-top:4px; font-size:10.5px; color:var(--ink-3); text-align:center;">Vague migration : les couleurs sont normalisées sur l'année complète (une zone qui devient rouge = pic d'abondance à cette période)</div>
-  `;
-  box.hidden = false;
-  const mapEl = box.querySelector('#' + mapId);
-  const slider = box.querySelector('#smMigSlider');
-  const label = box.querySelector('#smMigLabel');
-  const playBtn = box.querySelector('#smMigPlay');
-  requestAnimationFrame(() => {
-    if(!mapEl.clientHeight) { setTimeout(() => _renderSpeciesMigrationCard(sci), 100); return; }
-    // Vue par defaut : zoom sur bbox espece. minZoom calcule dynamiquement pour
-    // qu'a l'echelle max de dezoom la Terre remplisse le container SANS zones
-    // grises. maxBounds = monde pour pan libre partout.
-    const dataBounds = L.latLngBounds([[s, w], [n, e]]);
-    const worldBounds = L.latLngBounds([[-60, -180], [85, 180]]);
-    _migrationMapInstance = L.map(mapEl, {
-      zoomControl:true, maxBounds:worldBounds, maxBoundsViscosity:1.0,
-      worldCopyJump:false, attributionControl:true
-    });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution:'© OpenStreetMap', maxZoom:12, noWrap:true,
-      bounds: [[-85.0511, -180], [85.0511, 180]]
-    }).addTo(_migrationMapInstance);
-    _migrationMapInstance.fitBounds(dataBounds);
-    setTimeout(() => {
-      if(!_migrationMapInstance) return;
-      _migrationMapInstance.invalidateSize();
-      // minZoom = plus petit zoom qui fait tenir le monde entier sans laisser
-      // de zones grises sur les cotes (fit exact du container au bbox monde).
-      const worldFitZoom = _migrationMapInstance.getBoundsZoom(worldBounds, true);
-      _migrationMapInstance.setMinZoom(worldFitZoom);
-      _migrationMapInstance.fitBounds(dataBounds);
-    }, 200);
-
-    // Preload toutes les frames pour animation fluide (~5-8 KB/frame * 52 = 300-400 KB)
-    const frameUrl = wk => `${WEEKLY_DATA_BASE}/range-weekly/${entry.code}/w${String(wk).padStart(2,'0')}.png?v=20260901`;
-    weeks.forEach(wk => { const img = new Image(); img.src = frameUrl(wk); });
-
-    // Single overlay swap - on modifie son src pour animer (evite de re-creer un ImageOverlay Leaflet a chaque frame)
-    let overlay = L.imageOverlay(frameUrl(weeks[0]), dataBounds, { opacity:0.78, interactive:false, className:'sm-mig-overlay' }).addTo(_migrationMapInstance);
-    const setFrame = i => {
-      const wk = weeks[i];
-      // Recree l'overlay (Leaflet API n'a pas de setUrl officiel stable, mais si dispo on l'utilise)
-      if(overlay.setUrl){ overlay.setUrl(frameUrl(wk)); }
-      else { _migrationMapInstance.removeLayer(overlay); overlay = L.imageOverlay(frameUrl(wk), dataBounds, { opacity:0.78, interactive:false }).addTo(_migrationMapInstance); }
-      label.textContent = `Sem ${wk} · ${weekToLabel(wk)}`;
-    };
-    slider.addEventListener('input', () => setFrame(+slider.value));
-    playBtn.addEventListener('click', () => {
-      if(_migrationPlayInterval){
-        clearInterval(_migrationPlayInterval); _migrationPlayInterval = null;
-        playBtn.textContent = '▶ Lire';
-      } else {
-        playBtn.textContent = '⏸ Pause';
-        _migrationPlayInterval = setInterval(() => {
-          let v = (+slider.value + 1) % weeks.length;
-          slider.value = String(v);
-          setFrame(v);
-        }, 350);   // 52 frames x 350ms = ~18s par cycle, lecture confortable
-      }
-    });
-  });
-}
-// Ouvre l'animation migration en plein ecran (modal overlay). Reutilise la meme
-// logique que la card in-fiche mais en viewport complet pour mieux voir la vague.
+// Migration animee, en plein ecran : 12 images (une par mois) lues dans <code>-m.png, timeline + lecture.
+// La carte en fiche a ete remplacee par le bouton « Animation » de la section Ecologie.
+const CARTES_MOIS = ['janv','fév','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'];
 let _migFsMap = null, _migFsPlay = null;
 async function _openMigrationFullscreen(sci){
-  const idx = await _loadWeeklyIndex();
-  const entry = idx[(sci || '').toLowerCase().trim()];
-  if(!entry || !entry.code || !entry.weeks || !entry.weeks.length) return;
-  const weeks = entry.weeks;
-  const [w, s, e, n] = (entry.bbox || [-25, -35, 55, 75]);
-  const weekToLabel = wk => {
-    const monthStart = [1,5,9,14,18,22,27,31,36,40,44,49];
-    const monthNames = ['janv','fév','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'];
-    let m = 0; for(let i=0;i<12;i++) if(wk >= monthStart[i]) m = i;
-    return monthNames[m];
-  };
+  const idx = await _loadRangeIndex();
+  const entry = _carteEntry(idx, sci);
+  if(!entry) return;
   const spName = frName(sci.toLowerCase(), '') || sci;
   // Cleanup precedent modal si existe
   const prev = document.getElementById('migFsModal'); if(prev) prev.remove();
@@ -12213,7 +12200,7 @@ async function _openMigrationFullscreen(sci){
     <div id="migFsContent" style="position:fixed; inset:5vh 5vw; z-index:2147483501; background:var(--surface); border-radius:12px; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.6);">
       <div style="padding:14px 20px; display:flex; align-items:center; justify-content:space-between; gap:12px; border-bottom:1px solid var(--line);">
         <div>
-          <div style="font-size:11px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.5px; font-weight:700;">🎞️ Migration semaine par semaine</div>
+          <div style="font-size:11px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.5px; font-weight:700;">🎞️ Migration mois par mois</div>
           <div style="font-size:18px; font-weight:600; color:var(--ink); margin-top:2px;">${esc(spName)} <span style="font-weight:400; color:var(--ink-3); font-size:13px;">${esc(sci)}</span></div>
         </div>
         <button type="button" id="migFsClose" title="Fermer (Échap)" style="border:none; background:var(--surface-2); font-size:20px; width:36px; height:36px; border-radius:50%; cursor:pointer;">✕</button>
@@ -12221,15 +12208,16 @@ async function _openMigrationFullscreen(sci){
       <div id="migFsMapEl" style="flex:1; background:var(--surface-3);"></div>
       <div style="padding:12px 20px; display:flex; align-items:center; gap:12px; border-top:1px solid var(--line);">
         <button type="button" id="migFsPlayBtn" class="btn tiny" style="min-width:80px;">▶ Lire</button>
-        <input type="range" id="migFsSlider" min="0" max="${weeks.length-1}" value="0" step="1" style="flex:1; cursor:pointer;">
-        <span id="migFsLabel" style="font-family:ui-monospace,monospace; font-size:13px; color:var(--ink); min-width:110px; text-align:right;">Sem ${weeks[0]} · ${weekToLabel(weeks[0])}</span>
+        <input type="range" id="migFsSlider" min="0" max="11" value="0" step="1" style="flex:1; cursor:pointer;">
+        <span id="migFsLabel" style="font-size:13px; color:var(--ink); min-width:60px; text-align:right;">${CARTES_MOIS[0]}</span>
       </div>
-      <div style="padding:8px 20px 14px; display:flex; align-items:center; gap:10px; font-size:11px; color:var(--ink-2);">
+      <div style="padding:8px 20px 4px; display:flex; align-items:center; gap:10px; font-size:11px; color:var(--ink-2);">
         <span>Rare</span>
         <div style="flex:1; height:12px; border-radius:3px; background:linear-gradient(to right, #3ea86b, #a8d155, #f5c518, #f0733a, #a11408);"></div>
-        <span>Abondant</span>
+        <span>${entry.src === 'p' ? 'Beaucoup d\'observations' : 'Fréquent'}</span>
         <button type="button" data-map-render-toggle style="margin-left:12px; font-size:11px; padding:3px 10px; border:1px solid var(--line); background:var(--surface-2); border-radius:4px; cursor:pointer;">${document.body.dataset.mapRender === 'sharp' ? '🌊 Rendu flou' : '🔲 Rendu net'}</button>
       </div>
+      <div style="padding:0 20px 12px; font-size:10.5px; color:var(--ink-3);">Les couleurs se comparent d'un lieu à l'autre au sein d'un même mois : elles disent où l'espèce est la plus fréquente ce mois-là, pas combien elle est nombreuse. Une zone qui se vide ou se remplit d'un mois à l'autre se lit à la carte. ${_carteSourceHtml(entry)}</div>
     </div>`;
   document.body.appendChild(modal);
   const closeModal = () => {
@@ -12249,11 +12237,11 @@ async function _openMigrationFullscreen(sci){
   const label = modal.querySelector('#migFsLabel');
   const playBtn = modal.querySelector('#migFsPlayBtn');
   requestAnimationFrame(() => {
-    const dataBounds = L.latLngBounds([[s, w], [n, e]]);
+    const dataBounds = L.latLngBounds(_carteCadre(entry));
     const worldBounds = L.latLngBounds([[-60, -180], [85, 180]]);
-    _migFsMap = L.map(mapEl, { zoomControl:true, maxBounds:worldBounds, maxBoundsViscosity:1.0, worldCopyJump:false, attributionControl:true, zoomSnap:0, zoomDelta:0.5 });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap', maxZoom:12, noWrap:true, bounds:[[-85.0511, -180], [85.0511, 180]] }).addTo(_migFsMap);
-    _migFsMap.fitBounds(dataBounds);
+    const carte = _migFsMap = L.map(mapEl, { zoomControl:true, maxBounds:worldBounds, maxBoundsViscosity:1.0, worldCopyJump:false, attributionControl:true, zoomSnap:0, zoomDelta:0.5 });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap', maxZoom:12, noWrap:true, bounds:[[-85.0511, -180], [85.0511, 180]] }).addTo(carte);
+    carte.fitBounds(dataBounds);
     // Recalcule minZoom plusieurs fois car le container prend un peu de temps a
     // avoir ses vraies dimensions (animation modal, transitions CSS). ResizeObserver
     // couvre aussi les redimensionnements fenetre.
@@ -12278,25 +12266,30 @@ async function _openMigrationFullscreen(sci){
       window._migFsResizeObs = new ResizeObserver(() => recalcMinZoom());
       window._migFsResizeObs.observe(mapEl);
     }catch(_){}
-    const frameUrl = wk => `${WEEKLY_DATA_BASE}/range-weekly/${entry.code}/w${String(wk).padStart(2,'0')}.png?v=20260901`;
-    weeks.forEach(wk => { const img = new Image(); img.src = frameUrl(wk); });
-    let overlay = L.imageOverlay(frameUrl(weeks[0]), dataBounds, { opacity:0.78, interactive:false, className:'sharp-overlay' }).addTo(_migFsMap);
-    const setFrame = i => {
-      const wk = weeks[i];
-      if(overlay.setUrl){ overlay.setUrl(frameUrl(wk)); }
-      else { _migFsMap.removeLayer(overlay); overlay = L.imageOverlay(frameUrl(wk), dataBounds, { opacity:0.78, interactive:false, className:'sharp-overlay' }).addTo(_migFsMap); }
-      label.textContent = `Sem ${wk} · ${weekToLabel(wk)}`;
+    // Les 12 images se colorient l'une apres l'autre (une centaine de ms chacune) ; l'image affichee
+    // est celle du mois demandé au moment ou elle est prete, jamais une image en retard.
+    let overlay = null, demande = 0;
+    const setFrame = async i => {
+      demande = i;
+      label.textContent = CARTES_MOIS[i];
+      try{
+        const r = await _carteImage(entry, i + 1);
+        if(_migFsMap !== carte || demande !== i) return;
+        if(overlay && overlay.setUrl){ overlay.setUrl(r.url); }
+        else { if(overlay) carte.removeLayer(overlay); overlay = L.imageOverlay(r.url, _carteCadre(entry), { opacity:0.78, interactive:false, className:'sharp-overlay' }).addTo(carte); }
+      }catch(_){}
     };
+    setFrame(0).then(() => { for(let m = 2; m <= 12; m++) _carteImage(entry, m).catch(() => {}); });
     slider.addEventListener('input', () => setFrame(+slider.value));
     playBtn.addEventListener('click', () => {
       if(_migFsPlay){ clearInterval(_migFsPlay); _migFsPlay = null; playBtn.textContent = '▶ Lire'; }
       else {
         playBtn.textContent = '⏸ Pause';
         _migFsPlay = setInterval(() => {
-          let v = (+slider.value + 1) % weeks.length;
+          let v = (+slider.value + 1) % 12;
           slider.value = String(v);
           setFrame(v);
-        }, 350);
+        }, 900);   // 12 images x 900 ms = ~11 s par cycle
       }
     });
   });
@@ -14731,7 +14724,7 @@ function openSpeciesModal(sci){
   // CONFUSION_GROUPS. Rendue direct.
   // Card 'A l'oreille' retiree a la demande utilisateur
   const smConf = $('#smConfuseCard'); if(smConf) smConf.innerHTML = '';
-  // Carte de repartition Cornell S&T + GBIF (rendu direct, plus de lazy load
+  // Carte de repartition eBird via GBIF (rendu direct, plus de lazy load
   // IntersectionObserver qui ne firait pas correctement selon le scroll container).
   _renderSpeciesRangeCard(sci);
   // Migration weekly card in-fiche desactivee : remplacee par le bouton "🎞️ Animation"

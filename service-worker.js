@@ -3,7 +3,7 @@
 //   puis rafraichit en background. Prochain reload = nouvelle version.
 // - Requetes cross-origin (Firestore, iNaturalist, xeno-canto, Wikipedia, etc.) : reseau seul.
 // - Bump CACHE_VERSION quand on veut invalider volontairement.
-const CACHE_VERSION = 'v685-2026-10-03-trophees-speciaux';
+const CACHE_VERSION = 'v686-2026-10-05-cartes-gbif';
 const CACHE_NAME = 'lmb-' + CACHE_VERSION;
 
 // Cache des fichiers de donnees, volontairement SANS CACHE_VERSION dans son nom.
@@ -76,8 +76,8 @@ self.addEventListener('fetch', (event) => {
   // du code deploye met plusieurs reloads a etre servie (stale-while-revalidate a un
   // reload de retard). Cout minimal grace au HTTP cache navigateur.
   if (url.pathname.endsWith('/app.js') || url.pathname.endsWith('/index.html') || url.pathname.endsWith('/styles.css') || url.pathname === '/ornitheque/') return;
-  // Ni le manifest range (evolue frequemment avec nouvelles especes generees).
-  if (url.pathname.endsWith('/data/range-index.json')) return;
+  // Ni le manifeste des cartes (evolue avec les especes generees).
+  if (url.pathname.endsWith('/data/cartes-index.json')) return;
   // Ni la demo du portfolio. Elle ne s enregistre pas elle-meme (son index.html neutralise
   // register), mais ce SW-ci est installe pour TOUTE l origine des qu on a visite le vrai
   // site : sans cette ligne il servirait une demo en cache, et un visiteur qui revient

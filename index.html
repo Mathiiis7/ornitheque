@@ -48,7 +48,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=271">
+<link rel="modulepreload" href="app.js?v=272">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -937,7 +937,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         <h3 style="margin:20px 0 8px; font-size:16px; color:var(--ink);">📚 Sources des données</h3>
         <ul style="margin:0 0 10px 0; padding-left:22px;">
           <li><b>eBird</b> (Cornell Lab of Ornithology) - la life list, le bar chart FR/région/département, la taxonomie</li>
-          <li><b>eBird Status &amp; Trends 2023</b> - modèle ML d'abondance (rasters hebdo par pixel 3 km). Ne sert plus à la rareté ; alimente les cartes d'abondance et l'histogramme hebdomadaire.</li>
+          <li><b>Observations eBird publiées sur GBIF</b> (<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>) - les cartes de répartition et de migration de la fiche espèce, en fréquence de signalement par case de 28 km. GBIF.org (1er octobre 2026), <a href="https://doi.org/10.15468/dl.c7y4kg" target="_blank" rel="noopener">doi:10.15468/dl.c7y4kg</a>. Pour les 236 espèces sans donnée eBird, carte de présence tirée des autres sources GBIF : <a href="https://doi.org/10.15468/dl.rb9sut" target="_blank" rel="noopener">doi:10.15468/dl.rb9sut</a>.</li>
           <li><b>GBIF</b> - données d'occurrence, utilisées par la carte d'observations de la fiche espèce</li>
           <li><b>xeno-canto</b> - chants et cris (onglet Quiz)</li>
           <li><b>Wikipedia</b> - descriptions et photos</li>
@@ -950,10 +950,10 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         <h3 style="margin:20px 0 8px; font-size:16px; color:var(--ink);">📅 Versions des données</h3>
         <ul style="margin:0 0 10px 0; padding-left:22px;">
           <li>Bar chart eBird : <b>2019-2026</b> (7 ans glissants)</li>
-          <li>S&amp;T Cornell : version <b>2023</b> (cartes d'abondance uniquement)</li>
+          <li>Cartes de répartition : observations eBird <b>2015-2026</b> via GBIF, téléchargées le <b>1er octobre 2026</b></li>
           <li>Génération data locale : <b>23 septembre 2026</b></li>
         </ul>
-        <p style="margin:0 0 10px; opacity:.85; font-size:12.5px;">Les données Cornell sont mises à jour tous les 1-2 ans. Le bar chart peut être re-téléchargé annuellement.</p>
+        <p style="margin:0 0 10px; opacity:.85; font-size:12.5px;">Les cartes se refont à partir d'un nouveau téléchargement GBIF. Le bar chart peut être re-téléchargé annuellement.</p>
 
         <h3 style="margin:20px 0 8px; font-size:16px; color:var(--ink);">🐛 Feedback</h3>
         <p style="margin:0;">Une aberration de tier, un chart bizarre, une idée de feature ? Utilise l'onglet <b>💡 Requêtes</b> (dans le menu ☰) pour signaler.</p>
@@ -1232,9 +1232,9 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </div>
 
   <footer>
-    L’Ornithèque · rareté mesurée sur les observations eBird 2019-2026 · données <b>Merlin / eBird / eBird Status &amp; Trends</b>, propriété du Cornell Lab of Ornithology.<br>
+    L’Ornithèque · rareté mesurée sur les observations eBird 2019-2026 · données <b>Merlin / eBird</b>, propriété du Cornell Lab of Ornithology ; cartes tirées des observations eBird publiées sur GBIF (CC BY 4.0).<br>
     Compte réservé aux membres · vos listes ne sont partagées qu'au sein de la ligue.
   </footer>
 </div>
 
-<script type="module" src="app.js?v=271"></script>
+<script type="module" src="app.js?v=272"></script>
