@@ -15909,41 +15909,10 @@ $('#countryChips')?.addEventListener('click', e=>{
 });
 $('#showMissing').addEventListener('change',e=>{ state.showMissing=e.target.checked; renderResults(); });
 
-// logo personnalisé (choisi depuis le site, enregistré sur cet appareil uniquement)
-const LOGO_KEY='mb-logo';
-const logoMark=$('#logoMark'), logoFile=$('#logoFile'), logoImg=$('#logoImg'), markEmoji=$('.mark-emoji');
-function showLogo(url){
-  if(url){ logoImg.src=url; logoImg.hidden=false; markEmoji.style.display='none'; logoMark.classList.add('has-custom-logo'); }
-  else { logoImg.hidden=true; logoImg.removeAttribute('src'); markEmoji.style.display=''; logoMark.classList.remove('has-custom-logo'); }
-}
-logoMark.addEventListener('click',()=>logoFile.click());
-logoFile.addEventListener('change',e=>{
-  const f=e.target.files && e.target.files[0]; logoFile.value=''; if(!f) return;
-  const rd=new FileReader();
-  rd.onload=()=>{
-    const img=new Image();
-    img.onload=()=>{
-      const max=160, scale=Math.min(1, max/Math.max(img.width,img.height));
-      const cw=Math.max(1,Math.round(img.width*scale)), ch=Math.max(1,Math.round(img.height*scale));
-      const c=document.createElement('canvas'); c.width=cw; c.height=ch;
-      c.getContext('2d').drawImage(img,0,0,cw,ch);
-      let url; try{ url=c.toDataURL('image/png'); }catch(_){ url=rd.result; }
-      try{ localStorage.setItem(LOGO_KEY,url); }catch(_){ }
-      showLogo(url);
-    };
-    img.onerror=()=>{ try{localStorage.setItem(LOGO_KEY,rd.result);}catch(_){ } showLogo(rd.result); };
-    img.src=rd.result;
-  };
-  rd.readAsDataURL(f);
-});
-function showDefaultLogo(){
-  // Default = meme SVG que .auth-splash-logo pour que le header soit calibre pareil que
-  // l'ecran de chargement (memes proportions, meme dessin de la huppe en vol).
-  logoMark.classList.remove('has-custom-logo');
-  logoImg.hidden=true; logoImg.removeAttribute('src');
-  markEmoji.style.display='';
-}
-try{ const saved=localStorage.getItem(LOGO_KEY); if(saved) showLogo(saved); else showDefaultLogo(); }catch(_){ showDefaultLogo(); }
+// Logo de l'entete. Le choix d'un logo personnel (clic sur la pastille) a ete retire le
+// 2026-10-05 a la demande de Mathis ; on efface l'image que certains appareils gardaient.
+const markEmoji=$('.mark-emoji');
+try{ localStorage.removeItem('mb-logo'); }catch(_){ }
 
 // --- Banc d'essai des logos - LOCALHOST UNIQUEMENT, invisible pour les visiteurs ---
 // Depose des images dans assets/logos/candidats/ : le bouton en bas a gauche les fait
@@ -16022,8 +15991,8 @@ function _logoSelonTheme(){
   const src = sombre ? 'assets/logos/logo-sombre.svg' : 'assets/logos/logo.svg';
   markEmoji.src = src;
   // L'écran de connexion porte le même logo depuis le 2026-10-05 (demande de Mathis).
-  const gate = document.querySelector('.auth-gate-logo');
-  if(gate) gate.src = src;
+  // L'ecran d'attente aussi, le meme jour.
+  document.querySelectorAll('.auth-gate-logo, .auth-splash-logo').forEach(img=>{ img.src = src; });
 }
 _logoSelonTheme();
 _mqSombre.addEventListener('change', _logoSelonTheme);

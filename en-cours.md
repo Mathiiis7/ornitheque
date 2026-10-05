@@ -8,7 +8,7 @@
 - Tout se refait avec `node outils/build/icones-martin.mjs` ; les essais de cadrage et de fonds avec
   `tete-martin.mjs` (sortie dans `assets/logos/candidats/`, non suivi).
 - Bancs CONFORME, vérifié en local ordinateur + téléphone, clair + sombre.
-- `09c858d1` (non poussé) : la tête encadrée aussi sur l'écran de connexion (suit clair/sombre), fond foncé à #d3e7e6 (accent à 18 %). L'écran d'attente garde le martin entier.
+- `09c858d1` puis le suivant (poussés) : la tête encadrée aussi sur les écrans de connexion et d'attente (suit clair/sombre), fond foncé à #d3e7e6 (accent à 18 %). Le choix d'un logo personnel en cliquant sur la pastille est retiré (v693, app.js?v=279).
 
 Reste : les poses de la mascotte (demandes Arrow 2 à réécrire avec
 le martin Figma joint, voir plus bas) ; la vidéo attend ce logo ; les fichiers huppe

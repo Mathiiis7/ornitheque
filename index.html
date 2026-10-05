@@ -49,7 +49,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=278">
+<link rel="modulepreload" href="app.js?v=279">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -91,7 +91,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
 
 <!-- Splash pendant que Firebase resout l'etat auth (evite le flash de l'ecran de connexion) -->
 <div id="authSplash" class="auth-splash">
-  <img class="auth-splash-logo" src="assets/logos/martin.svg" alt="L’Ornithèque">
+  <img class="auth-splash-logo" src="assets/logos/logo.svg" alt="L’Ornithèque">
 </div>
 
 <div id="authGate" class="auth-gate">
@@ -153,12 +153,9 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
 <div class="wrap">
   <header class="top">
     <div class="brand">
-      <div class="mark" id="logoMark" title="Cliquez pour choisir votre logo">
+      <div class="mark">
         <img class="mark-emoji" src="assets/logos/logo.svg" alt="L’Ornithèque">
-        <img id="logoImg" alt="Logo" hidden>
-        <span class="edit-hint">✎</span>
       </div>
-      <input type="file" id="logoFile" accept="image/*" hidden>
       <div>
         <h1>L’Ornithèque</h1>
       </div>
@@ -1238,4 +1235,4 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=278"></script>
+<script type="module" src="app.js?v=279"></script>
