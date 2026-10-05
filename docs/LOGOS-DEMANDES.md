@@ -146,7 +146,8 @@ Dans l'ordre :
 3. **Passer au banc d'essai** : déposer l'image dans `assets/logos/candidats/`, recharger **deux
    fois** localhost:8765, cliquer le bouton en bas à gauche. Il fait défiler les candidats dans
    tous les emplacements à la fois (entête, écran d'attente, écran de connexion, favicon de 16 px).
-   Local seulement, marqué `BANC_LOGOS` dans `app.js`, **à retirer quand le logo sera arrêté**.
+   Local seulement. **Retiré le 2026-10-05**, logo arrêté : le reprendre dans l'historique git
+   (bloc `BANC_LOGOS` d'`app.js`, commit c734a5ce) si un nouveau logo doit être essayé.
 4. **Brancher** : `manifest.json`, favicon, écran d'accueil, entête, démo.
    `outils/build/icones-logo.mjs` refabrique les icônes 192 et 512 du manifeste.
 5. Plus tard : décliner une famille d'icônes, un oiseau par espèce, avec le même style.

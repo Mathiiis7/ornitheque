@@ -15914,62 +15914,6 @@ $('#showMissing').addEventListener('change',e=>{ state.showMissing=e.target.chec
 const markEmoji=$('.mark-emoji');
 try{ localStorage.removeItem('mb-logo'); }catch(_){ }
 
-// --- Banc d'essai des logos - LOCALHOST UNIQUEMENT, invisible pour les visiteurs ---
-// Depose des images dans assets/logos/candidats/ : le bouton en bas a gauche les fait
-// defiler dans TOUS les emplacements a la fois - pastille de l'entete, ecran d'attente,
-// ecran de connexion, favicon. Juger un logo hors contexte ne sert a rien : un dessin
-// qui tient en 512 px peut disparaitre a 54, et l'inverse arrive aussi.
-// A retirer quand le logo sera arrete (cherche BANC_LOGOS).
-(function BANC_LOGOS(){
-  const local = ['localhost','127.0.0.1','::1'].includes(location.hostname);
-  if(!local) return;
-
-  const DOSSIER='assets/logos/candidats/';
-  const EXT=/\.(png|svg|jpg|jpeg|webp)$/i;
-  const ORIGINE='assets/logos/logo.svg';
-
-  // La liste vient de liste.json si le fichier existe, sinon du listage de dossier
-  // servi par http-server. Les deux echouent silencieusement : pas de dossier, pas de banc.
-  async function candidats(){
-    try{
-      const r=await fetch(DOSSIER+'liste.json',{cache:'no-store'});
-      if(r.ok) return (await r.json()).filter(n=>EXT.test(n));
-    }catch(_){ }
-    try{
-      const r=await fetch(DOSSIER,{cache:'no-store'});
-      if(!r.ok) return [];
-      const doc=new DOMParser().parseFromString(await r.text(),'text/html');
-      return [...doc.querySelectorAll('a[href]')]
-        .map(a=>a.getAttribute('href').split('/').pop())
-        .filter(n=>n && EXT.test(n));
-    }catch(_){ return []; }
-  }
-
-  function applique(url){
-    document.querySelectorAll('.mark-emoji, .auth-splash-logo, .auth-gate-logo')
-      .forEach(img=>{ img.src=url; img.style.display=''; });
-    document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]')
-      .forEach(l=>{ l.href=url; });
-  }
-
-  candidats().then(liste=>{
-    if(!liste.length) return;
-    const urls=[ORIGINE, ...liste.map(n=>DOSSIER+n)];
-    const noms=['original', ...liste];
-    let i=0;
-
-    const btn=document.createElement('button');
-    btn.type='button';
-    btn.style.cssText='position:fixed;left:10px;bottom:44px;z-index:9999;padding:7px 11px;'
-      +'border:1px solid rgba(0,0,0,.18);border-radius:8px;background:#fff;color:#15201e;'
-      +'font:600 12px system-ui;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.12)';
-    const etiquette=()=>{ btn.textContent=`Logo ${i+1}/${urls.length} - ${noms[i]}`; };
-    etiquette();
-    btn.title='Banc d’essai local : fait defiler les logos candidats';
-    btn.addEventListener('click',()=>{ i=(i+1)%urls.length; applique(urls[i]); etiquette(); });
-    document.body.appendChild(btn);
-  });
-})();
 
 
 // theme toggle
