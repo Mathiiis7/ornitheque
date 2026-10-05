@@ -2122,17 +2122,23 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .tmodal-box h3 { font-family:var(--serif); font-weight:600; margin:0 0 12px; }
   .tmodal-list { margin:0; padding-left:20px; color:var(--ink); }
   .tmodal-list li { margin:5px 0; }
-  /* Classement : les trois tris et le « ? » qui ouvre l'explication (fenetre #classementAide). */
-  .board-modes-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:6px; }
-  .aide-rond { flex:none; width:34px; height:34px; border-radius:50%; border:1px solid var(--line-2);
-    background:var(--surface); color:var(--ink-2); font:700 16px/1 var(--sans); cursor:pointer; }
-  .aide-rond:hover { background:var(--surface-2); color:var(--ink); }
-  .aide-rond:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
-  .classement-aide { font-size:14px; color:var(--ink-2); line-height:1.55; }
-  .classement-aide h4 { margin:16px 0 2px; font-size:15px; font-weight:700; color:var(--ink); }
-  .classement-aide h4:first-child { margin-top:10px; }
-  .classement-aide p { margin:4px 0; }
-  .classement-aide b { color:var(--ink); }
+  /* Classement : les trois tris ; l'explication de chacun vit dans une bulle au survol
+     (#triBulle, remplie par _bulleTri). Le « ? » et le bareme pose sur la page sont retires
+     le 2026-10-05 : Mathis les trouvait hors du style du site. */
+  .board-modes-row { position:relative; display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:6px; }
+  .tri-bulle { position:absolute; top:calc(100% + 8px); z-index:20; width:max-content; max-width:min(440px, calc(100vw - 48px));
+    padding:12px 14px; background:var(--surface); border:1px solid var(--line-2); border-radius:12px;
+    box-shadow:0 10px 30px rgba(0,0,0,.18); font-size:14px; line-height:1.5; color:var(--ink-2); }
+  .tri-bulle[hidden] { display:none; }
+  .tri-bulle p { margin:0; }
+  .tri-bulle b { color:var(--ink); }
+  .tb-titre { margin:12px 0 8px; font-size:14px; font-weight:600; color:var(--ink); }
+  .tb-grille { display:grid; grid-template-columns:auto 1fr auto; gap:5px 10px; align-items:center; }
+  /* Pastilles rondes chiffrees : les memes que sur les vignettes du Birdydex (.pkdx-tier) */
+  .tb-n { width:22px; height:22px; border-radius:50%; display:grid; place-items:center; color:#fff;
+    font:800 12px/1 var(--sans); text-shadow:0 1px 1px rgba(0,0,0,.3); }
+  .tb-nom { color:var(--ink); }
+  .tb-part { color:var(--ink-3); text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
   /* « Qui a vu quoi », repliee par defaut : le titre est un bouton, avec un chevron. */
   .pli-btn { background:none; border:0; padding:0; margin:0; font:inherit; color:inherit; cursor:pointer;
     display:inline-flex; align-items:center; gap:10px; text-align:left; }
@@ -2142,14 +2148,6 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .pli-btn:hover { color:var(--accent-ink); }
   .pli-btn:focus-visible { outline:3px solid var(--accent); outline-offset:3px; border-radius:4px; }
   #matrix:not(.ouvert) .section-head { margin-bottom:0; }
-  .real-scale { margin:2px 0 8px; padding:10px 12px; background:var(--surface-2); border:1px solid var(--line); border-radius:12px; }
-  .rs-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-2); margin-bottom:8px; }
-  .rs-title span { text-transform:none; font-weight:400; letter-spacing:0; color:var(--ink-3); }
-  .rs-items { display:flex; flex-wrap:wrap; gap:6px 16px; }
-  .rs-it { display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-2); white-space:nowrap; }
-  .rs-it i { width:12px; height:12px; border-radius:3px; flex:none; }
-  .rs-it b { font-weight:700; color:var(--ink); }
-  .rs-it em { font-style:normal; color:var(--ink-3); font-size:11px; }
   .tmodal-note { margin:0 0 4px; font-size:13px; color:var(--ink-2); }
   .tmodal-h { margin:14px 0 6px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-2); }
   .tmodal-h span { color:var(--ink-3); font-weight:400; }
@@ -2336,7 +2334,6 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .ml-box, .tuto-ch, .tuto-nav .btn, .tuto-lien { min-height:52px; }
     .ml-dialog-close { width:52px; height:52px; }
 
-    /* Classement : le « ? » et le titre qui deplie « Qui a vu quoi ». */
-    .aide-rond { width:52px; height:52px; font-size:20px; }
+    /* Classement : le titre qui deplie « Qui a vu quoi ». */
     .pli-btn { min-height:52px; }
   }

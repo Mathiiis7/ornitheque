@@ -99,7 +99,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=289">
+<link rel="modulepreload" href="app.js?v=290">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -595,37 +595,19 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   <section id="results">
     <div class="panel" id="board">
       <div class="section-head">
-        <div><h2 class="page-title">Qui mène la Ligue ?</h2>
-          <p id="boardExplain"></p></div>
+        <div><h2 class="page-title">Qui mène la Ligue ?</h2></div>
       </div>
-      <!-- L'explication ne tient plus de place sur la page : un « ? » a cote des trois tris
-           l'ouvre dans une fenetre (decide par Mathis le 2026-10-05, l'encart depliable est retire). -->
+      <!-- L'explication de chaque tri (et le bareme de la rarete reelle) s'affiche dans une bulle
+           au survol de son bouton : decide par Mathis le 2026-10-05, a la place de la phrase sous
+           le titre, du « ? » et du bareme pose sur la page. Remplie par _bulleTri() dans app.js. -->
       <div class="board-modes-row">
         <div class="seg" id="boardModes">
-          <button data-mode="count" class="on">Nombre d'espèces</button>
-          <button data-mode="league">Rareté (ligue)</button>
-          <button data-mode="real">Rareté réelle</button>
+          <button data-mode="count" class="on" aria-describedby="triBulle">Nombre d'espèces</button>
+          <button data-mode="league" aria-describedby="triBulle">Rareté (ligue)</button>
+          <button data-mode="real" aria-describedby="triBulle">Rareté réelle</button>
         </div>
-        <button type="button" class="aide-rond" id="classementAideBtn" aria-label="Comment marche le classement ?" title="Comment marche le classement ?">?</button>
+        <div class="tri-bulle" id="triBulle" role="tooltip" hidden></div>
       </div>
-      <dialog class="ml-dialog" id="classementAide" aria-labelledby="classementAideTitre">
-        <div class="ml-dialog-in">
-          <div class="ml-dialog-head">
-            <h3 class="bloc-titre" id="classementAideTitre">Comment marche le classement ?</h3>
-            <button type="button" class="ml-dialog-close" data-ferme aria-label="Fermer">✕</button>
-          </div>
-          <div class="classement-aide">
-            <h4>Nombre d'espèces</h4>
-            <p>Le plus simple : le <b>total d'espèces</b> observées, sans pondération. La course au plus grand nombre.</p>
-            <h4>Rareté (ligue)</h4>
-            <p>La rareté <b>au sein de votre groupe</b>. Chaque espèce rapporte <b>100 ÷ (nombre d'amis qui l'ont vue)</b>. Un oiseau que <b>toi seul</b> as coché vaut 100 points ; un oiseau vu par <b>tout le monde</b> n'en vaut presque plus. Ça récompense les listes originales, celles qui sortent du lot.</p>
-            <h4>Rareté réelle</h4>
-            <p>La rareté <b>de l'oiseau en France</b>, indépendamment de la ligue. Chaque espèce reçoit un poids de <b>1 (omniprésent) à 10 (exceptionnel)</b>, et ton score est la somme des poids de tes espèces.</p>
-            <p>Le poids vient du <b>bar chart eBird 2019-2026</b> : la part des listes d'observation qui mentionnent l'espèce, moyennée sur les 48 quinzaines de l'année et pondérée par le nombre de listes de chacune. Voir la page <b>À propos</b> pour le détail.</p>
-          </div>
-        </div>
-      </dialog>
-      <div class="real-scale" id="realScale" style="display:none;"></div>
       <div class="board-list" id="boardList"></div>
     </div>
 
@@ -1363,5 +1345,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=289"></script>
+<script type="module" src="app.js?v=290"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans votre navigateur.</span></div>

@@ -1,8 +1,10 @@
 # À valider en local : page Classement (v708, app.js?v=288), commitée, PAS poussée
 
 Choix de Mathis le 2026-10-05 : garder toutes les colonnes du tableau mais le rendre cohérent ;
-« Qui a vu quoi » repliée sous la liste (le titre est le bouton) ; l'explication derrière un « ? »
-à côté des trois tris, dans une fenêtre (#classementAide, emojis retirés).
+« Qui a vu quoi » repliée sous la liste (le titre est le bouton) ; puis (même soir) plus de « ? » ni de
+phrase sous le titre ni de barème sur la page : l'explication de chaque tri, et le barème de la
+rareté réelle en pastilles rondes, vivent dans une bulle au survol du bouton (#triBulle,
+_bulleTri() dans app.js ; au doigt, elle s'ouvre au choix du tri). v710, app.js?v=290.
 Fait : tableau en une police, 14 px partout, tout centré en hauteur (le nom du joueur sortait du
 tableau à cause d'un display:flex sur la cellule) ; ligne du premier entièrement dorée ; textes
 moins coupés (largeur max 260). Vérifié démo ordinateur sombre + téléphone clair. Bancs CONFORME.

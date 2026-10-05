@@ -2861,49 +2861,45 @@ function parseDate(s){
 }
 
 
+// Bulle de chaque tri du Classement, au survol (ou au focus clavier) de son bouton. Elle
+// remplace depuis le 2026-10-05 la phrase sous le titre, le « ? » et le bareme pose sur la
+// page, que Mathis trouvait hors du style du site.
+function _bulleTri(mode){
+  if(mode==='count') return '<p>Classement par <b>nombre d\'espèces</b> observées, sans pondération.</p>';
+  if(mode==='league') return '<p>Points = somme de <b>100 ÷ (nombre d\'amis ayant vu l\'espèce)</b>. Vue par vous seul = 100 ; vue par tous = peu.</p>';
+  // Bareme semantique par tier : la part des listes eBird du pays qui mentionnent
+  // l'espece sur 2019-2026, moyenne des 48 quinzaines ponderee par le nombre de listes
+  // de chacune.
+  //
+  // Les bornes se CALCULENT depuis _ANNUAL_THR, la table que annualFreqToTier applique
+  // vraiment. Elles etaient recopiees a la main, et les DIX etaient fausses : la legende
+  // annoncait « ≥ 23 % » la ou le seuil est a 24 %, « 0,004 – 0,18 % » la ou il vaut
+  // 0,2 – 0,75 %. Elles dataient d anciens seuils - le commentaire citait meme une
+  // constante THRESHOLDS qui n existe plus - et personne ne l avait vu pendant des mois.
+  // Trouve par Mathis le 2026-09-28, en regardant simplement le site.
+  // Une table ecrite a la main a cote d une table de code finit toujours par diverger ;
+  // celle-ci ne peut plus.
+  const _pcNum = x => (x * 100).toLocaleString('fr-FR', { maximumFractionDigits: 4 });
+  const RANGES = {};
+  _ANNUAL_THR.forEach(([lim, tier], i) => {
+    RANGES[tier] = i === 0
+      ? '≥ ' + _pcNum(lim) + ' %'
+      : _pcNum(lim) + ' – ' + _pcNum(_ANNUAL_THR[i - 1][0]) + ' %';
+  });
+  // Le dernier palier n a pas de borne basse : tout ce qui passe sous le dernier seuil.
+  RANGES[10] = '< ' + _pcNum(_ANNUAL_THR[_ANNUAL_THR.length - 1][0]) + ' %';
+  const ligne = (n, coul, nom, part) => `<span class="tb-n" style="background:${coul}">${n}</span><span class="tb-nom">${nom}</span><span class="tb-part">${part}</span>`;
+  const lignes = [1,2,3,4,5,6,7,8,9,10].map(w => ligne(w, realColor(w), REAL_LABELS[w], RANGES[w])).join('')
+    + ligne(0, '#7e8a99', 'Exotique', 'parcs, échappés');
+  return '<p>Points = <b>rareté réelle en France</b>, d\'après la fréquence des espèces sur les listes eBird : un oiseau vu à chaque sortie vaut 1, un oiseau rarement rencontré bien plus. Indépendant de la ligue.</p>'
+    + '<div class="tb-titre">Part des listes eBird qui mentionnent l\'espèce, 2019-2026</div>'
+    + '<div class="tb-grille">' + lignes + '</div>';
+}
 function renderBoard(){
   const mode=state.boardMode;
   const keyFn = mode==='count' ? (p=>p.total) : mode==='real' ? (p=>p.scoreReal||0) : (p=>p.score);
   const ranked=[...state.people].sort((a,b)=>keyFn(b)-keyFn(a));
-  const explain = mode==='count'
-    ? "Classement par nombre d'espèces observées."
-    : mode==='real'
-    ? "Points = rareté réelle en France, d'après la fréquence des espèces sur les listes eBird (un oiseau vu à chaque sortie vaut 1, un oiseau rarement rencontré bien plus) - indépendant de la ligue."
-    : "Points = somme de 100 ÷ (nombre d'amis ayant vu l'espèce). Vue par vous seul = 100 ; vue par tous = peu.";
-  const eb=$('#boardExplain'); if(eb) eb.textContent=explain;
   document.querySelectorAll('#boardModes button').forEach(b=>b.classList.toggle('on', b.dataset.mode===mode));
-  // Légende du barème de rareté réelle (visible seulement dans ce mode)
-  const rs=$('#realScale');
-  if(rs){
-    if(mode==='real'){
-      // Bareme semantique par tier : la part des listes eBird du pays qui mentionnent
-      // l'espece sur 2019-2026, moyenne des 48 quinzaines ponderee par le nombre de listes
-      // de chacune.
-      //
-      // Les bornes se CALCULENT depuis _ANNUAL_THR, la table que annualFreqToTier applique
-      // vraiment. Elles etaient recopiees a la main, et les DIX etaient fausses : la legende
-      // annoncait « ≥ 23 % » la ou le seuil est a 24 %, « 0,004 – 0,18 % » la ou il vaut
-      // 0,2 – 0,75 %. Elles dataient d anciens seuils - le commentaire citait meme une
-      // constante THRESHOLDS qui n existe plus - et personne ne l avait vu pendant des mois.
-      // Trouve par Mathis le 2026-09-28, en regardant simplement le site.
-      // Une table ecrite a la main a cote d une table de code finit toujours par diverger ;
-      // celle-ci ne peut plus.
-      const _pcNum = x => (x * 100).toLocaleString('fr-FR', { maximumFractionDigits: 4 });
-      const RANGES = {};
-      _ANNUAL_THR.forEach(([lim, tier], i) => {
-        RANGES[tier] = i === 0
-          ? '≥ ' + _pcNum(lim) + ' %'
-          : _pcNum(lim) + ' – ' + _pcNum(_ANNUAL_THR[i - 1][0]) + ' %';
-      });
-      // Le dernier palier n a pas de borne basse : tout ce qui passe sous le dernier seuil.
-      RANGES[10] = '< ' + _pcNum(_ANNUAL_THR[_ANNUAL_THR.length - 1][0]) + ' %';
-      const items = [1,2,3,4,5,6,7,8,9,10].map(w=>`<span class="rs-it"><i style="background:${realColor(w)}"></i><b>${w}</b> ${REAL_LABELS[w]} <em>${RANGES[w]}</em></span>`).join('')
-        + `<span class="rs-it" title="Exotique X/C ou parc semi-libre : hors barème rareté (tier 0)"><i style="background:#7e8a99"></i><b>0</b> Exotique <em>parcs, échappés, domestiques</em></span>`;
-      rs.innerHTML='<div class="rs-title">Barème de rareté réelle <span>- part des listes eBird qui mentionnent l&rsquo;espèce, 2019-2026, pondérée par l&rsquo;effort d&rsquo;observation de chaque quinzaine.</span></div>'+
-        '<div class="rs-items">'+items+'</div>';
-      rs.style.display='';
-    } else rs.style.display='none';
-  }
   const dash='<span class="muted">-</span>';
   const cell=v=>v?esc(v):dash;
   // Une seule colonne score selon le mode (comme le layout du mode count qui a des cellules
@@ -10210,14 +10206,33 @@ $('#ajoutDialog')?.addEventListener('cancel', e => {
 // Les trois fenetres : ✕ (et « Enregistrer ») portent data-ferme ; un clic sur le fond aussi.
 // La marge interieure est sur .ml-dialog-in et non sur la fenetre, sinon un clic dans la marge
 // viserait la fenetre elle-meme et la fermerait.
-document.querySelectorAll('#tutoDialog, #prenomDialog, #ajoutDialog, #classementAide').forEach(d => {
+document.querySelectorAll('#tutoDialog, #prenomDialog, #ajoutDialog').forEach(d => {
   d.addEventListener('click', e => {
     if(e.target === d || e.target.closest('[data-ferme]')) d.close();
   });
 });
-// Classement : le « ? » ouvre l'explication des trois tris (elle a sa fenetre depuis le
-// 2026-10-05, l'encart depliable est retire).
-$('#classementAideBtn')?.addEventListener('click', () => $('#classementAide')?.showModal());
+// Classement : la bulle de chaque tri, au survol ou au focus clavier de son bouton. Au doigt,
+// le toucher declenche aussi mouseenter : la bulle s'ouvre au choix du tri et part au toucher
+// suivant ailleurs.
+document.querySelectorAll('#boardModes button').forEach(b => {
+  const montre = () => {
+    const bulle = $('#triBulle'); if(!bulle) return;
+    bulle.innerHTML = _bulleTri(b.dataset.mode);
+    bulle.hidden = false;
+    // Sous son bouton, mais jamais au-dela du bord droit du panneau (telephone)
+    const rangee = bulle.parentElement;
+    bulle.style.left = Math.max(0, Math.min(b.offsetLeft, rangee.clientWidth - bulle.offsetWidth)) + 'px';
+  };
+  const cache = () => { const bulle = $('#triBulle'); if(bulle) bulle.hidden = true; };
+  b.addEventListener('mouseenter', montre); b.addEventListener('focus', montre);
+  b.addEventListener('mouseleave', cache); b.addEventListener('blur', cache);
+  b.addEventListener('keydown', e => { if(e.key === 'Escape') cache(); });
+});
+// Au doigt, rien ne garantit un mouseleave : un toucher ailleurs que sur les tris la referme.
+document.addEventListener('pointerdown', e => {
+  const bulle = $('#triBulle');
+  if(bulle && !bulle.hidden && !e.target.closest('#boardModes')) bulle.hidden = true;
+});
 // « Qui a vu quoi » est replie par defaut ; le titre l'ouvre et le referme.
 $('#matrixToggle')?.addEventListener('click', e => {
   const ouvert = e.currentTarget.getAttribute('aria-expanded') !== 'true';
