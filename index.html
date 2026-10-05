@@ -49,7 +49,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=284">
+<link rel="modulepreload" href="app.js?v=285">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -320,43 +320,33 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
       </div>
     </div>
 
-    <!-- Guide d'import : DEUX facons de recuperer sa liste, cote a cote (2026-10-05, demande de
-         Mathis : la variante avec GPS etait cachee dans un repli sous les etapes). La derniere
-         etape, deposer le fichier, est commune et sort des deux cartes.
-         Le bloc « Inviter des amis » qui etait au-dessus vit depuis le meme jour dans le menu ☰
-         (#inviteDialog) : il n'avait rien a faire sur la page de sa propre liste. -->
-    <h3 class="bloc-titre import-titre">Récupérer ta liste eBird <span class="bloc-titre-note">· deux façons</span></h3>
-    <div class="import-choix">
-      <div class="import-opt">
-        <div class="import-opt-head">
-          <span class="import-opt-titre">Liste simple</span>
-          <span class="import-opt-quand">tout de suite</span>
-        </div>
-        <ol class="import-opt-steps">
-          <li><span class="import-step-num">1</span><span>Ouvre <a href="https://ebird.org/lifelist?r=world&time=life" target="_blank" rel="noopener" class="import-step-link">ebird.org/lifelist ↗</a></span></li>
-          <li><span class="import-step-num">2</span><span>Clique <b>Download (csv)</b> : le fichier se télécharge directement</span></li>
-        </ol>
-        <p class="import-opt-effet">Toutes tes espèces, mais pas de points sur la carte.</p>
+    <!-- Guide d'import, version du 2026-10-05 voulue par Mathis : des blocs qui s'enchainent avec
+         des fleches, deux departs separes (liste simple / avec GPS) et un bloc de fin commun.
+         Grille : les deux rangees a gauche, une fleche, le bloc de fin sur les deux rangees.
+         Au telephone tout s'empile. Le bloc « Inviter des amis » qui etait au-dessus vit depuis le
+         meme jour dans le menu ☰ (#inviteDialog). -->
+    <h3 class="bloc-titre import-titre">Récupérer ta liste eBird</h3>
+    <div class="imp">
+      <div class="imp-rang">
+        <div class="imp-label">Liste simple</div>
+        <div class="imp-bloc"><span class="import-step-num">1</span><span>Ouvre <a href="https://ebird.org/lifelist?r=world&time=life" target="_blank" rel="noopener" class="import-step-link">ebird.org/lifelist ↗</a></span></div>
+        <div class="imp-fl" aria-hidden="true">→</div>
+        <div class="imp-bloc"><span class="import-step-num">2</span><span>Clique <b>Download (csv)</b></span></div>
       </div>
-      <div class="import-ou" aria-hidden="true">ou</div>
-      <div class="import-opt">
-        <div class="import-opt-head">
-          <span class="import-opt-titre">Liste complète, avec GPS</span>
-          <span class="import-opt-quand">par email</span>
-        </div>
-        <ol class="import-opt-steps">
-          <li><span class="import-step-num">1</span><span>Ouvre <a href="https://ebird.org/downloadMyData" target="_blank" rel="noopener" class="import-step-link">ebird.org/downloadMyData ↗</a></span></li>
-          <li><span class="import-step-num">2</span><span>Clique <b>Submit</b>, puis attends l'email d'eBird</span></li>
-          <li><span class="import-step-num">3</span><span>Télécharge le fichier <code>MyEBirdData.csv</code> qu'il contient</span></li>
-        </ol>
-        <p class="import-opt-effet">Chaque observation avec sa position : tes oiseaux apparaissent sur la carte 📍</p>
+      <div class="imp-ou">ou</div>
+      <div class="imp-rang">
+        <div class="imp-label">Avec GPS, pour la carte 📍</div>
+        <div class="imp-bloc"><span class="import-step-num">1</span><span>Ouvre <a href="https://ebird.org/downloadMyData" target="_blank" rel="noopener" class="import-step-link">ebird.org/downloadMyData ↗</a></span></div>
+        <div class="imp-fl" aria-hidden="true">→</div>
+        <div class="imp-bloc"><span class="import-step-num">2</span><span>Clique <b>Submit</b>, le fichier arrive par email</span></div>
       </div>
+      <div class="imp-fl imp-fl-fin" aria-hidden="true">→</div>
+      <div class="imp-bloc imp-fin"><span class="import-step-num">3</span><span><b>Dépose le fichier ici en dessous ↓</b><br>Tu rejoins la ligue 🎉</span></div>
     </div>
-    <p class="import-fin">Dans les deux cas, <b>dépose le fichier ici en dessous ↓</b> : tu rejoins la ligue automatiquement 🎉</p>
 
     <div class="onboarding" id="onboarding" style="display:none;">
       <h3>👋 Bienvenue dans la Ligue</h3>
-      <p style="margin:4px 0 0; color:var(--ink-2);">Entrez votre prénom + suivez l'une des deux façons ci-dessus. Toutes les infos restent entre les membres de votre ligue.</p>
+      <p style="margin:4px 0 0; color:var(--ink-2);">Entrez votre prénom + suivez les étapes ci-dessus. Toutes les infos restent entre les membres de votre ligue.</p>
     </div>
 
     <!-- Panneau upload : etat vide vs rempli -->
@@ -389,36 +379,6 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
       </div>
     </div>
 
-    <!-- Ajout manuel : bouton discret mais visible -->
-    <details class="manual-add" id="manualAdd" style="display:none;">
-      <summary>➕ Ajouter une espèce manuellement</summary>
-      <div class="manual-body">
-        <p class="help" style="margin:6px 0 10px;">Pour une espèce vue mais pas encore dans votre export eBird. Tapez son nom (français ou scientifique) et choisissez dans la liste.</p>
-        <div class="manual-row">
-          <div class="manual-search">
-            <input type="text" id="manualSearch" aria-label="Chercher une espèce à ajouter" placeholder="Ex. « merle noir », « aegithalos »…" autocomplete="off">
-            <div class="manual-suggest" id="manualSuggest"></div>
-          </div>
-          <select id="manualCountry" title="Pays d'observation">
-            <option value="FR">France</option>
-            <option value="OTHER">🌍 À l'étranger</option>
-          </select>
-          <input type="date" id="manualDate" title="Date (optionnelle)">
-          <button class="btn" id="manualAddBtn" disabled>Ajouter</button>
-        </div>
-        <div id="manualPicked" class="manual-picked" style="display:none;"></div>
-        <div id="manualCountryPickWrap" style="display:none; margin-top:8px;">
-          <select id="manualCountryPick" title="Choisir le pays">
-            <option value="">- Choisir un pays -</option>
-          </select>
-        </div>
-        <div class="manual-row" style="margin-top:8px;">
-          <button class="btn" id="manualPlaceBtn" type="button">🗺️ Choisir un lieu sur la carte</button>
-          <span id="manualPlaceStatus" class="manual-msg" role="status" style="min-height:0;"></span>
-        </div>
-        <div id="manualMsg" class="manual-msg" role="status"></div>
-      </div>
-    </details>
 
 
     <!-- Modal pour choisir un lieu sur la carte -->
@@ -451,6 +411,36 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
       </div>
       <p class="mylist-note">Date et lieu de la première observation. Les plus récentes en premier.</p>
       <div class="mylist-body" id="myListBody"></div>
+      <!-- Ajout manuel : sous le tableau de ses especes depuis le 2026-10-05 (demande de Mathis) -->
+      <details class="manual-add" id="manualAdd" style="display:none;">
+        <summary>➕ Ajouter une espèce manuellement</summary>
+        <div class="manual-body">
+          <p class="help" style="margin:6px 0 10px;">Pour une espèce vue mais pas encore dans votre export eBird. Tapez son nom (français ou scientifique) et choisissez dans la liste.</p>
+          <div class="manual-row">
+            <div class="manual-search">
+              <input type="text" id="manualSearch" aria-label="Chercher une espèce à ajouter" placeholder="Ex. « merle noir », « aegithalos »…" autocomplete="off">
+              <div class="manual-suggest" id="manualSuggest"></div>
+            </div>
+            <select id="manualCountry" title="Pays d'observation">
+              <option value="FR">France</option>
+              <option value="OTHER">🌍 À l'étranger</option>
+            </select>
+            <input type="date" id="manualDate" title="Date (optionnelle)">
+            <button class="btn" id="manualAddBtn" disabled>Ajouter</button>
+          </div>
+          <div id="manualPicked" class="manual-picked" style="display:none;"></div>
+          <div id="manualCountryPickWrap" style="display:none; margin-top:8px;">
+            <select id="manualCountryPick" title="Choisir le pays">
+              <option value="">- Choisir un pays -</option>
+            </select>
+          </div>
+          <div class="manual-row" style="margin-top:8px;">
+            <button class="btn" id="manualPlaceBtn" type="button">🗺️ Choisir un lieu sur la carte</button>
+            <span id="manualPlaceStatus" class="manual-msg" role="status" style="min-height:0;"></span>
+          </div>
+          <div id="manualMsg" class="manual-msg" role="status"></div>
+        </div>
+      </details>
     </div>
 
     <!-- Liste des membres retiree de la page 'Ma liste' : redondant avec le Classement. -->
@@ -1258,4 +1248,4 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=284"></script>
+<script type="module" src="app.js?v=285"></script>

@@ -324,25 +324,27 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      Tailles relevees le 2026-10-05 (« ecrit tres petit parfois », Mathis) : les sous-textes
      a 11,5 px ecrits faisaient 9,8 px a l'ecran avec le zoom 0,85. Plancher : 13 px ecrits. */
   .import-titre { margin-top:18px; }
-  /* Deux facons de recuperer sa liste, cote a cote ; empilees au telephone */
-  .import-choix { display:flex; align-items:stretch; gap:10px; margin-top:10px; }
-  .import-opt { flex:1 1 0; min-width:0; display:flex; flex-direction:column; padding:14px 16px;
-    background:var(--surface-2); border:1px solid var(--line-2); border-radius:12px; }
-  .import-opt-head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; flex-wrap:wrap; }
-  .import-opt-titre { font-size:15.5px; font-weight:700; color:var(--ink); }
-  .import-opt-quand { font-size:13px; color:var(--ink-3); }
-  .import-opt-steps { list-style:none; margin:10px 0 0; padding:0; display:flex; flex-direction:column; gap:8px; }
-  .import-opt-steps li { display:flex; align-items:flex-start; gap:10px; font-size:14.5px; color:var(--ink); line-height:1.4; }
-  .import-opt-steps .import-step-num { width:24px; height:24px; font-size:12.5px; }
-  .import-opt-steps .import-step-link { margin-top:0; }
-  .import-opt-steps code { font-family:var(--mono); font-size:13px; background:var(--surface); padding:1px 6px; border-radius:5px; }
-  /* margin-top:auto : les deux phrases d'effet s'alignent en bas des cartes malgre 2 et 3 etapes */
-  .import-opt-effet { margin:12px 0 0; margin-top:auto; padding-top:12px; font-size:13.5px; color:var(--ink-2); line-height:1.45; }
-  .import-ou { align-self:center; font-size:14px; font-weight:600; color:var(--ink-3); flex:0 0 auto; }
-  .import-fin { margin:12px 0 0; font-size:14.5px; color:var(--ink-2); }
-  .import-fin b { color:var(--ink); }
+  /* Guide d'import : deux rangees de blocs (liste simple / avec GPS) qui menent, par une fleche,
+     au bloc de fin commun. Colonnes : les rangees | la fleche | le bloc de fin sur toute la hauteur. */
+  .imp { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(170px,.42fr); column-gap:10px;
+    align-items:center; margin-top:10px; }
+  .imp-rang { grid-column:1; display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); column-gap:10px; align-items:stretch; }
+  .imp-label { grid-column:1 / -1; font-size:13px; font-weight:600; color:var(--ink-2); margin:0 0 5px 2px; }
+  .imp-bloc { display:flex; align-items:center; gap:10px; padding:11px 14px; background:var(--surface-2);
+    border:1px solid var(--line-2); border-radius:12px; font-size:14.5px; color:var(--ink); line-height:1.35; min-width:0; }
+  .imp-bloc .import-step-link { margin-top:0; }
+  .imp-fl { align-self:center; font-size:18px; color:var(--ink-3); }
+  .imp-ou { grid-column:1; font-size:13px; font-weight:600; color:var(--ink-3); margin:6px 0 4px 2px; }
+  .imp-fl-fin { grid-column:2; grid-row:1 / 4; }
+  .imp-fin { grid-column:3; grid-row:1 / 4; align-self:stretch; margin-top:23px;
+    background:color-mix(in srgb, var(--accent) 8%, var(--surface-2)); border-color:color-mix(in srgb, var(--accent) 30%, var(--line-2)); }
   @media (max-width:600px){
-    .import-choix { flex-direction:column; gap:6px; }
+    /* Au telephone : tout s'empile, les fleches pointent vers le bas */
+    .imp { grid-template-columns:minmax(0,1fr); }
+    .imp-rang { grid-template-columns:minmax(0,1fr); row-gap:4px; }
+    .imp-fl { justify-self:center; transform:rotate(90deg); }
+    .imp-fl-fin, .imp-fin { grid-column:1; grid-row:auto; }
+    .imp-fin { margin-top:0; }
   }
   .import-step-num { flex:0 0 auto; width:28px; height:28px; border-radius:50%; background:var(--accent); color:#fff;
     font-weight:800; font-size:14px; display:grid; place-items:center; margin-top:0; }
