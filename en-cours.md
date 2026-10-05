@@ -1,3 +1,25 @@
+# PROCHAIN TRAVAIL (décidé le 2026-10-05, pas commencé) : refonte de l'onglet Ma liste
+
+Décisions de Mathis (questions à choix, réponses fermes) :
+- L'onglet n'affiche plus que **la liste** (le tableau « Mes espèces » actuel), et au-dessus **quatre
+  petites box cliquables** : **Charger ma liste** (tuto), **Ajouter une espèce** (l'ajout manuel actuel,
+  dans une fenêtre au centre), **Mon prénom** (fenêtre pour changer le nom), **Retirer ma liste**
+  (confirmation).
+- Le bloc vert « 212 espèces chargées » est **retiré** : le nombre reste dans le titre de la liste.
+- Le **tuto** s'ouvre au centre et guide **une étape à la fois** : choix liste simple / avec GPS, puis
+  chaque étape seule avec « Suivant », jusqu'à la zone où déposer le fichier.
+- Le guide en blocs fléchés, la ligne prénom + retirer et le bloc vert disparaissent de la page.
+
+Points à tenir en le faisant :
+- Quelqu'un qui n'a PAS encore de liste : la page ne doit pas être vide - la box « Charger ma liste »
+  doit sauter aux yeux, et le prénom est exigé avant le dépôt (voir handleFiles / attend-saisie).
+- Garder les identifiants que le code branche (#file, #drop, #myName, #removeMineBtn, #manualAdd…)
+  ou suivre chaque usage dans app.js ; .onboarding est partagé avec Profil.
+- Maquetter d'abord si le doute porte sur l'aspect des box (règle des projets).
+- Textes à 14 px écrits minimum, pas d'emoji décoratif dans les intitulés.
+
+---
+
 # En cours le 2026-10-05 (nuit) : revue de la charte page par page, avec Mathis
 
 Mathis parcourt le site et commente ; on corrige page par page. **Rien n'est poussé** depuis
