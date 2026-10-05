@@ -86,7 +86,7 @@ textes en 800 y sont descendus. Seules les pastilles rondes chiffrées (rareté,
 
 - Page centrée, 1 560 px au plus (`.wrap`), marges de 24 px.
 - En haut : le logo et le nom, le bouton « Thème » à droite, puis la rangée d'onglets.
-- **Onglets** : du texte seul, sans emoji. Au repos en graisse normale, l'actif seul en gras (600),
+- **Onglets** : du texte seul, sans emoji, 17 px écrits (15 avant le 2026-10-05). Au repos en graisse normale, l'actif seul en gras (600),
   en `--accent-ink`, souligné de 2 px d'accent.
 - **Chaque page commence par un panneau** (`.panel`) : fond `--surface`, filet `--line`, coins de
   16 px, ombre `--shadow`, 22 px au-dessus, **20 px de marge intérieure en haut**.

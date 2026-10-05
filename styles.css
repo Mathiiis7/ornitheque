@@ -822,8 +822,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .tabs::-webkit-scrollbar { display:none; }
   /* Onglets au repos en graisse normale, l'actif seul en gras : repris de la maquette
      « guide de terrain » le 2026-10-02, avec le retrait des emojis. */
+  /* 17 px depuis le 2026-10-05 (15 avant) : « agrandir les titres legerement », Mathis, ticket qg#41 */
   .tab { border:none; background:transparent; color:var(--ink-2); font:inherit; font-weight:500;
-    font-size:15px; padding:10px 16px; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px;
+    font-size:17px; padding:10px 16px; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px;
     flex:0 0 auto; white-space:nowrap; }
   .tab.on { color:var(--accent-ink); border-bottom-color:var(--accent); font-weight:600; }
   .tab:hover { color:var(--accent-ink); }
