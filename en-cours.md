@@ -1,4 +1,7 @@
-# FAIT le 2026-10-05 (commité, PAS poussé) : refonte de l'onglet Ma liste, v706, app.js?v=286
+# À valider : onglets agrandis 15 -> 17 px (32a3dbc5, v707, app.js?v=287), commité, PAS poussé.
+Si Mathis valide en local : pousser, puis fermer qg#41 (`gh issue close 41 -R Mathiiis7/qg --reason completed`).
+
+# FAIT et EN LIGNE le 2026-10-05 (poussé, vérifié sur la démo en ligne) : refonte de l'onglet Ma liste, v706, app.js?v=286
 
 Maquette : `notes-privees/maquettes/ma-liste/` -> direction C retenue (box à pictogramme au trait),
 **titres seuls**, sans petite ligne (« ça surcharge »). Accueil : « Ajoute ta liste eBird et rejoins
