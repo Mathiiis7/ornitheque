@@ -1,5 +1,16 @@
-# À valider : onglets agrandis 15 -> 17 px (32a3dbc5, v707, app.js?v=287), commité, PAS poussé.
-Si Mathis valide en local : pousser, puis fermer qg#41 (`gh issue close 41 -R Mathiiis7/qg --reason completed`).
+# À valider en local : page Classement (v708, app.js?v=288), commitée, PAS poussée
+
+Choix de Mathis le 2026-10-05 : garder toutes les colonnes du tableau mais le rendre cohérent ;
+« Qui a vu quoi » repliée sous la liste (le titre est le bouton) ; l'explication derrière un « ? »
+à côté des trois tris, dans une fenêtre (#classementAide, emojis retirés).
+Fait : tableau en une police, 14 px partout, tout centré en hauteur (le nom du joueur sortait du
+tableau à cause d'un display:flex sur la cellule) ; ligne du premier entièrement dorée ; textes
+moins coupés (largeur max 260). Vérifié démo ordinateur sombre + téléphone clair. Bancs CONFORME.
+Restent à lui montrer : sur téléphone le « ? » passe à la ligne sous les trois tris (pas la place) ;
+l'étiquette « VOUS » reste à 10 px (classe partagée, pas touchée) ; la grille « Qui a vu quoi »
+garde ses tailles d'avant (11-13,5 px) sauf ses en-têtes.
+
+# FAIT : onglets 15 -> 17 px, poussés le 2026-10-05 (qg#41 déjà fermé).
 
 # FAIT et EN LIGNE le 2026-10-05 (poussé, vérifié sur la démo en ligne) : refonte de l'onglet Ma liste, v706, app.js?v=286
 

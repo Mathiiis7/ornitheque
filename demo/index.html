@@ -99,7 +99,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=287">
+<link rel="modulepreload" href="app.js?v=288">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -598,32 +598,45 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         <div><h2 class="page-title">Qui mène la Ligue ?</h2>
           <p id="boardExplain"></p></div>
       </div>
-      <div class="seg" id="boardModes" style="margin-bottom:4px;">
-        <button data-mode="count" class="on">Nombre d'espèces</button>
-        <button data-mode="league">Rareté (ligue)</button>
-        <button data-mode="real">Rareté réelle</button>
-      </div>
-      <details class="board-help">
-        <summary>Comment marche le classement ? 🏆</summary>
-        <div class="board-help-body">
-          <h4>🔢 Nombre d'espèces</h4>
-          <p>Le plus simple : le <b>total d'espèces</b> observées, sans pondération. La course au plus grand nombre.</p>
-          <h4>🥇 Rareté (ligue)</h4>
-          <p>La rareté <b>au sein de votre groupe</b>. Chaque espèce rapporte <b>100 ÷ (nombre d'amis qui l'ont vue)</b>. Un oiseau que <b>toi seul</b> as coché vaut 100 points ; un oiseau vu par <b>tout le monde</b> n'en vaut presque plus. Ça récompense les listes originales, celles qui sortent du lot.</p>
-          <h4>🌍 Rareté réelle</h4>
-          <p>La rareté <b>de l'oiseau en France</b>, indépendamment de la ligue. Chaque espèce reçoit un poids de <b>1 (omniprésent) à 10 (exceptionnel)</b>, et ton score est la somme des poids de tes espèces.</p>
-          <p>Le poids vient du <b>bar chart eBird 2019-2026</b> : la part des listes d'observation qui mentionnent l'espèce, moyennée sur les 48 quinzaines de l'année et pondérée par le nombre de listes de chacune. Voir la page <b>À propos</b> pour le détail.</p>
+      <!-- L'explication ne tient plus de place sur la page : un « ? » a cote des trois tris
+           l'ouvre dans une fenetre (decide par Mathis le 2026-10-05, l'encart depliable est retire). -->
+      <div class="board-modes-row">
+        <div class="seg" id="boardModes">
+          <button data-mode="count" class="on">Nombre d'espèces</button>
+          <button data-mode="league">Rareté (ligue)</button>
+          <button data-mode="real">Rareté réelle</button>
         </div>
-      </details>
+        <button type="button" class="aide-rond" id="classementAideBtn" aria-label="Comment marche le classement ?" title="Comment marche le classement ?">?</button>
+      </div>
+      <dialog class="ml-dialog" id="classementAide" aria-labelledby="classementAideTitre">
+        <div class="ml-dialog-in">
+          <div class="ml-dialog-head">
+            <h3 class="bloc-titre" id="classementAideTitre">Comment marche le classement ?</h3>
+            <button type="button" class="ml-dialog-close" data-ferme aria-label="Fermer">✕</button>
+          </div>
+          <div class="classement-aide">
+            <h4>Nombre d'espèces</h4>
+            <p>Le plus simple : le <b>total d'espèces</b> observées, sans pondération. La course au plus grand nombre.</p>
+            <h4>Rareté (ligue)</h4>
+            <p>La rareté <b>au sein de votre groupe</b>. Chaque espèce rapporte <b>100 ÷ (nombre d'amis qui l'ont vue)</b>. Un oiseau que <b>toi seul</b> as coché vaut 100 points ; un oiseau vu par <b>tout le monde</b> n'en vaut presque plus. Ça récompense les listes originales, celles qui sortent du lot.</p>
+            <h4>Rareté réelle</h4>
+            <p>La rareté <b>de l'oiseau en France</b>, indépendamment de la ligue. Chaque espèce reçoit un poids de <b>1 (omniprésent) à 10 (exceptionnel)</b>, et ton score est la somme des poids de tes espèces.</p>
+            <p>Le poids vient du <b>bar chart eBird 2019-2026</b> : la part des listes d'observation qui mentionnent l'espèce, moyennée sur les 48 quinzaines de l'année et pondérée par le nombre de listes de chacune. Voir la page <b>À propos</b> pour le détail.</p>
+          </div>
+        </div>
+      </dialog>
       <div class="real-scale" id="realScale" style="display:none;"></div>
       <div class="board-list" id="boardList"></div>
     </div>
 
     <div class="panel" id="matrix">
       <div class="section-head">
-        <div><h2>Qui a vu quoi</h2></div>
+        <!-- Repliee par defaut (Mathis, 2026-10-05) : la grille fait des centaines de lignes et
+             repoussait tout le reste. Le titre est le bouton qui l'ouvre. -->
+        <div><h2><button type="button" class="pli-btn" id="matrixToggle" aria-expanded="false" aria-controls="matrixBody">Qui a vu quoi</button></h2></div>
         <div class="country-badge" id="countryBadge" style="display:none;"></div>
       </div>
+      <div id="matrixBody" hidden>
       <div class="controls">
         <!-- Barre principale : ce qu'on utilise le plus (recherche + tri) toujours visible. -->
         <div class="ctrl-main">
@@ -677,6 +690,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         </table>
       </div>
       <div class="matrix-cards" id="matrixCards"></div>
+      </div><!-- /matrixBody -->
     </div>
   </section>
   </div><!-- /viewRanking -->
@@ -1349,5 +1363,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=287"></script>
+<script type="module" src="app.js?v=288"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans votre navigateur.</span></div>

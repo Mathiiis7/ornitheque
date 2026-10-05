@@ -2923,7 +2923,7 @@ function renderBoard(){
     </tr></thead>
     <tbody>${ranked.map((p,i)=>`<tr class="${i===0?'lead':''}">
       <td class="c-rank">${i===0?'★':(i+1)}</td>
-      <td class="who-cell" style="--series:var(--s${p.si})"><span class="dot"></span>${isOnline(p.id)?'<span class="pname-dot" title="en ligne"></span>':''}<button type="button" class="who-name" data-fiche-joueur="${esc(p.id)}" title="Voir la fiche de ${esc(p.name)}">${esc(p.name)}</button>${p.isMe?'<span class="youtag">vous</span>':''}</td>
+      <td class="who-cell" style="--series:var(--s${p.si})"><span class="who-in"><span class="dot"></span>${isOnline(p.id)?'<span class="pname-dot" title="en ligne"></span>':''}<button type="button" class="who-name" data-fiche-joueur="${esc(p.id)}" title="Voir la fiche de ${esc(p.name)}">${esc(p.name)}</button>${p.isMe?'<span class="youtag">vous</span>':''}</span></td>
       ${scoreTd(p)}
       <td class="c-txt">${parseInt(p.goal,10)>0 ? `${p.total} / ${parseInt(p.goal,10)}` : cell(p.goal)}</td>
       <td class="c-txt">${cell(p.fav)}</td>
@@ -10210,10 +10210,20 @@ $('#ajoutDialog')?.addEventListener('cancel', e => {
 // Les trois fenetres : ✕ (et « Enregistrer ») portent data-ferme ; un clic sur le fond aussi.
 // La marge interieure est sur .ml-dialog-in et non sur la fenetre, sinon un clic dans la marge
 // viserait la fenetre elle-meme et la fermerait.
-document.querySelectorAll('#tutoDialog, #prenomDialog, #ajoutDialog').forEach(d => {
+document.querySelectorAll('#tutoDialog, #prenomDialog, #ajoutDialog, #classementAide').forEach(d => {
   d.addEventListener('click', e => {
     if(e.target === d || e.target.closest('[data-ferme]')) d.close();
   });
+});
+// Classement : le « ? » ouvre l'explication des trois tris (elle a sa fenetre depuis le
+// 2026-10-05, l'encart depliable est retire).
+$('#classementAideBtn')?.addEventListener('click', () => $('#classementAide')?.showModal());
+// « Qui a vu quoi » est replie par defaut ; le titre l'ouvre et le referme.
+$('#matrixToggle')?.addEventListener('click', e => {
+  const ouvert = e.currentTarget.getAttribute('aria-expanded') !== 'true';
+  e.currentTarget.setAttribute('aria-expanded', String(ouvert));
+  $('#matrixBody').hidden = !ouvert;
+  $('#matrix').classList.toggle('ouvert', ouvert);
 });
 // H : désactive visuellement écriture chat + upload photo pour les non-membres.
 function _refreshChatWriteAccess(){

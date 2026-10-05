@@ -76,7 +76,14 @@ propres polices. On n'embarque pas son italique : les noms latins restent en Pal
 (remarque de Mathis le 2026-10-02). Le 2026-10-05, un essai plus petit et un essai dans la police du
 texte ont été refusés : on garde ces tailles.
 
-Le texte courant tourne autour de 12 à 15 px écrits. Les étiquettes descendent à 11 px.
+**Ce qui se lit fait 14 px écrits au minimum** (étiquettes, notes, en-têtes de colonnes), 15 px pour
+un intitulé de groupe : décidé le 2026-10-05, Mathis trouvait les 12-13 px « très petits ». Les pages
+revues depuis la suivent (Ma liste, Classement) ; les autres descendent encore à 11 px, à reprendre
+au fil de la revue.
+
+**Un tableau a une seule police et une seule taille**, et tout y est centré en hauteur : le
+Classement mélangeait Cascadia et Segoe UI, 11,5, 13 et 13,5 px, texte en haut et chiffres au
+milieu (corrigé le 2026-10-05).
 
 **Le gras s'arrête à 700.** Un mot en gras dans un texte déjà semi-gras montait à 900 et se lisait
 mal (« Download (csv) », remarque de Mathis le 2026-10-05) : `b, strong` sont fixés à 700, et les
