@@ -47,4 +47,33 @@ for (const t of TAILLES) {
   writeFileSync(join(DOSSIER, `martin-${t}.png`), png);
   console.log(`ecrit  assets/logos/martin-${t}.png  ${(png.length / 1024).toFixed(1)} Ko`);
 }
+
+// ---------- Le logo : la tête dans le cadre ----------
+// Choisi par Mathis le 2026-10-05 parmi les essais de tete-martin.mjs : le n° 17 (cadrage
+// entre « entière » et « serrée », zoomé de 5 %, oiseau descendu de 0,3), fond vert pâle
+// #ddedec (--accent à 14 % sur blanc). Coins à 20 % du côté, comme l'entête (11 px sur 54).
+//   logo.svg       entête et favicon, coins arrondis
+//   logo-NNN.png   manifeste et apple-touch-icon : carré PLEIN, sans arrondi, parce que le
+//                  téléphone découpe lui-même ses coins, et qu'iOS peint en noir les coins
+//                  transparents d'une icône.
+const L = { x: 10.05, y: 1.55, c: 13.3, fond: '#ddedec' };
+const formes = brut.replace(/<\/?svg[^>]*>/g, '').replace(/<rect[^>]*\/>/g, '').trim();
+const tuile = (rx) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${L.x} ${L.y} ${L.c} ${L.c}">
+<defs><clipPath id="cadre"><rect x="${L.x}" y="${L.y}" width="${L.c}" height="${L.c}" rx="${rx}"/></clipPath></defs>
+<g clip-path="url(#cadre)">
+<rect x="${L.x}" y="${L.y}" width="${L.c}" height="${L.c}" fill="${L.fond}"/>
+${formes}
+</g>
+</svg>
+`;
+const logo = tuile((L.c * 0.2).toFixed(2));
+writeFileSync(join(DOSSIER, 'logo.svg'), logo);
+console.log(`ecrit  assets/logos/logo.svg  ${(logo.length / 1024).toFixed(1)} Ko`);
+for (const t of TAILLES) {
+  await page.setViewportSize({ width: t, height: t });
+  await page.setContent(`<style>html,body{margin:0}svg{display:block;width:${t}px;height:${t}px}</style>${tuile(0)}`);
+  const png = await page.screenshot({ clip: { x: 0, y: 0, width: t, height: t } });
+  writeFileSync(join(DOSSIER, `logo-${t}.png`), png);
+  console.log(`ecrit  assets/logos/logo-${t}.png  ${(png.length / 1024).toFixed(1)} Ko`);
+}
 await browser.close();

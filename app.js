@@ -15957,7 +15957,7 @@ try{ const saved=localStorage.getItem(LOGO_KEY); if(saved) showLogo(saved); else
 
   const DOSSIER='assets/logos/candidats/';
   const EXT=/\.(png|svg|jpg|jpeg|webp)$/i;
-  const ORIGINE='assets/logos/martin.svg';
+  const ORIGINE='assets/logos/logo.svg';
 
   // La liste vient de liste.json si le fichier existe, sinon du listage de dossier
   // servi par http-server. Les deux echouent silencieusement : pas de dossier, pas de banc.
