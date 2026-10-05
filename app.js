@@ -16019,7 +16019,11 @@ const _mqSombre=matchMedia('(prefers-color-scheme: dark)');
 function _logoSelonTheme(){
   const t=root.getAttribute('data-theme');
   const sombre = t ? t==='dark' : _mqSombre.matches;
-  markEmoji.src = sombre ? 'assets/logos/logo-sombre.svg' : 'assets/logos/logo.svg';
+  const src = sombre ? 'assets/logos/logo-sombre.svg' : 'assets/logos/logo.svg';
+  markEmoji.src = src;
+  // L'écran de connexion porte le même logo depuis le 2026-10-05 (demande de Mathis).
+  const gate = document.querySelector('.auth-gate-logo');
+  if(gate) gate.src = src;
 }
 _logoSelonTheme();
 _mqSombre.addEventListener('change', _logoSelonTheme);
