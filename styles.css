@@ -513,7 +513,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   #viewRanking td.sp .sci, #viewRanking .mc-sci { font-size:14px; }
   #viewRanking .board-sheet td.c-txt, #viewRanking td.cnt { color:var(--ink-2); font-size:14px; }
   #viewRanking td.pcol .chk { font-size:14px; }
-  #viewRanking .chip { font-size:13px; }
+  /* Pastille de rarete de la grille : pleine, texte blanc, comme le filtre de rarete juste
+     au-dessus (Mathis, 2026-10-05 : « les couleurs ne correspondent pas »). Meme couleur de
+     depart (t.color), seul le rendu differait - teinte a 16 % et mot colore. */
+  #viewRanking .chip { font-size:13px; background:var(--tc); border-color:var(--tc); color:#fff; }
   #viewRanking .youtag { font-size:12px; }
   #viewRanking .fp-hint, #viewRanking .miss-toggle { font-size:14px; font-weight:400; text-transform:none; letter-spacing:0; color:var(--ink-3); }
   #viewRanking .miss-toggle { color:var(--ink-2); }

@@ -14751,6 +14751,23 @@ function openSpeciesModal(sci){
   // Header : degrade base sur la couleur du 1er habitat de l'espece. Un couleur par milieu
   // (foret=vert, eau=bleu, montagne=violet, urbain=gris, etc.).
   const hdr = modal.querySelector('.sm-header');
+  // Les milieux de vie ne se chargent plus au demarrage (2026-09-28) et seul le birdydex les
+  // reclamait : une fiche ouverte depuis le Classement ou la carte n'avait ni ses habitats ni
+  // la couleur d'entete qui en depend (vu par Mathis le 2026-10-05). La fiche les reclame
+  // elle-meme et se complete a leur arrivee, si elle montre toujours la meme espece.
+  if(!_habitatsPrets()) _chargerHabitats().then(() => {
+    if(!_habitatsPrets() || $('#smSci')?.textContent !== sci) return;
+    _peindreEnteteFiche(hdr, sci);
+    _renderSpeciesInfoChips(key);
+  }).catch(() => {});
+  _peindreEnteteFiche(hdr, sci);
+  // Restaure le dernier onglet visite (defaut : Info).
+  let lastTab = 'info';
+  try{ lastTab = localStorage.getItem('mb-sm-tab') || 'info'; }catch(_){}
+  _smSetTab(lastTab);
+  _openSpeciesModalSuite(sci, key, modal);
+}
+function _peindreEnteteFiche(hdr, sci){
   if(hdr){
     const habs = habitatsOf(sci) || [];
     // Palette adaptee aux 12 categories Avonet (migration 2026-08).
@@ -14778,10 +14795,8 @@ function openSpeciesModal(sci){
     const lum = (0.299*rr + 0.587*gg + 0.114*bb) / 255;
     hdr.classList.toggle('sm-header-dark-text', lum > 0.62);
   }
-  // Restaure le dernier onglet visite (defaut : Info).
-  let lastTab = 'info';
-  try{ lastTab = localStorage.getItem('mb-sm-tab') || 'info'; }catch(_){}
-  _smSetTab(lastTab);
+}
+function _openSpeciesModalSuite(sci, key, modal){
   // Purge le registre audios de la fiche precedente (evite fuite memoire quand on
   // enchaine plusieurs fiches sans jamais fermer le modal).
   if(typeof _xaAudios !== 'undefined'){
