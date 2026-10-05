@@ -110,7 +110,9 @@ Ce que les sources confirment sur le martin-pêcheur d'Europe, mâle adulte (vé
 - dessous roux vif ; **pattes rouge vermillon**, petites ;
 - **bec du mâle entièrement noir** (la femelle a la base du bas du bec orange) ;
 - silhouette trapue, grosse tête, queue courte, long bec en dague. Œil sombre.
-- **Non trouvé** : la couleur du dessous des ailes. D'où la consigne de montrer l'aile par le dessus en vol.
+- **Dessous de l'aile** : absent des sources écrites lues, constaté sur une photo apportée par Mathis
+  (mâle, aile levée) : roux près du corps, grandes plumes gris-brun bordées de gris clair. La pose en
+  vol montre donc une aile par-dessous.
 
 Le grand œil blanc à point noir n'est pas fidèle (l'œil réel est sombre), mais c'est le style retenu
 pour la famille d'icônes : gardé.
@@ -141,14 +143,17 @@ SPECIES ACCURACY (adult male):
 - underparts: orange from the breast to the vent;
 - legs and feet: short, bright vermilion red;
 - shape: dumpy body, big head, short tail;
-- in the flying pose, show both wings from ABOVE (upper surface, teal), with
-  the bright back stripe visible between them.
+- in the flying pose, the far wing is raised and seen from BELOW: its
+  underside is orange-rufous near the body (the underwing coverts), and its
+  long flight feathers are dusky grey-brown with pale grey edges. The near
+  wing is seen from above, teal, with the bright back stripe visible.
 
 KEEP: flat vector, solid colours, no outlines, no gradients, no shading, no
 text. The eye stays a white circle with a black dot. Palette exactly: #0B7C77
 teal, #2BBCB0 light teal, #086660 dark teal, #C05E33 orange, #F0EEE6
 off-white, #15201E black, #33403D bill highlight, #C8452B vermilion for the
-legs only, #B98D22 gold for the binoculars and notebook. Transparent
+legs only, #9E4523 rufous for the underwing coverts, #6B645C grey-brown and
+#B7B2AA pale grey for the underside of the flight feathers, #B98D22 gold for the binoculars and notebook. Transparent
 background.
 VARIATIONS: four proposals, each a faithful refinement; vary only how the
 shapes are joined and how the markings are drawn, never the poses or the
