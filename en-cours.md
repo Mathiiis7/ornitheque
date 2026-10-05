@@ -1,16 +1,19 @@
-# À valider en local : page Classement (v708, app.js?v=288), commitée, PAS poussée
+# Page Classement TERMINÉE le 2026-10-05 (validée par Mathis), commitée, PAS poussée - v718, app.js?v=295
+Reste : pousser si Mathis le demande. Suite de la revue page par page : la prochaine page qu'il choisira.
 
-Choix de Mathis le 2026-10-05 : garder toutes les colonnes du tableau mais le rendre cohérent ;
-« Qui a vu quoi » toujours affichée (repli essayé puis refusé) ; onglet Birdydex passé avant Carte ; puis (même soir) plus de « ? » ni de
-phrase sous le titre ni de barème sur la page : l'explication de chaque tri, et le barème de la
-rareté réelle en pastilles rondes, vivent dans une bulle au survol du bouton (#triBulle,
-_bulleTri() dans app.js ; au doigt, elle s'ouvre au choix du tri). v710, app.js?v=290.
-Fait : tableau en une police, 14 px partout, tout centré en hauteur (le nom du joueur sortait du
-tableau à cause d'un display:flex sur la cellule) ; ligne du premier entièrement dorée ; textes
-moins coupés (largeur max 260). Vérifié démo ordinateur sombre + téléphone clair. Bancs CONFORME.
-Restent à lui montrer : sur téléphone le « ? » passe à la ligne sous les trois tris (pas la place) ;
-l'étiquette « VOUS » reste à 10 px (classe partagée, pas touchée) ; la grille « Qui a vu quoi »
-garde ses tailles d'avant (11-13,5 px) sauf ses en-têtes.
+Ce qui a changé (détail dans les commits du 2026-10-05 et la charte) :
+- tableau des joueurs et « Qui a vu quoi » alignés sur le tableau de Ma liste (en-têtes 13 px capitales,
+  texte 14 px, une police) ; podium or/argent/bronze sur la seule case du rang ;
+- explication de chaque tri + barème de la rareté réelle dans une bulle au survol des boutons
+  (#triBulle, _bulleTri) ; plus de « ? », de phrase sous le titre ni de barème sur la page ;
+- règle générale du survol : curseur « ? » (--curseur-aide) et 250 ms (DELAI_SURVOL), dans la charte ;
+- « Qui a vu quoi » toujours affichée (repli refusé), sans colonne Rareté au tri « Nombre d'espèces » ;
+  filtres de rareté en étiquettes (ils étaient écrasés en ronds) ; pastilles du tableau pleines comme
+  les filtres ;
+- onglets : Birdydex avant Carte ; textes d'introduction des pages tous au style de Ma liste ;
+- fiche espèce : les habitats se chargent aussi hors Birdydex (ils manquaient depuis le 2026-09-28).
+Question laissée ouverte : au tri « Nombre d'espèces », masquer aussi le tri « Par rareté » et le
+filtre de rareté de « Qui a vu quoi » ? Pas de réponse.
 
 # FAIT : onglets 15 -> 17 px, poussés le 2026-10-05 (qg#41 déjà fermé).
 
