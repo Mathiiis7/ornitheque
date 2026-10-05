@@ -98,7 +98,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=273">
+<link rel="modulepreload" href="app.js?v=274">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -1044,7 +1044,6 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         </div>
       </div>
       <div class="qz-head">
-        <h2 class="qz-title">🎵 Quiz des chants</h2>
         <div class="qz-mode-switch">
           <button type="button" class="qz-mode on" data-quiz-mode="compete" title="Compte dans ton score et ton classement">🏆 Classé</button>
           <button type="button" class="qz-mode" data-quiz-mode="train" title="Pas compté dans le score, revoit les espèces que tu rates">🎯 Entraînement</button>
@@ -1284,5 +1283,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=273"></script>
+<script type="module" src="app.js?v=274"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans votre navigateur.</span></div>
