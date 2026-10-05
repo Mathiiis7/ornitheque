@@ -21,7 +21,8 @@ palette and the same flat style. This is a refinement, not a new design.
 THE NINE POSES:
 1. perched in side profile (keep);
 2. looking through binoculars held with the tips of its folded wings (keep;
-   no arms, no elbow, no hand);
+   no arms, no elbow, no hand). The eyepieces sit right ON THE EYE, covering
+   it; the bill passes UNDER the binoculars, it does not hold them;
 3. diving head first (keep; the feet tucked against the belly, not floating);
 4. flying (keep, but fix the wings, see below);
 5. holding a small notebook in its bill (keep, but fix the body, see below);
@@ -63,7 +64,9 @@ overlap. Build each bird on one solid base silhouette, then lay the colour
 areas on top. Smooth joins, no tiny steps or stray points.
 
 KEEP: flat vector, solid colours, no outlines, no gradients, no shading, no
-text. The eye stays a white circle with a black dot. Palette exactly: #0B7C77
+text. THE EYE, on every bird: one plain white circle with one solid black dot
+inside, nothing else - no cream ring, no small white highlight in the dot.
+Palette exactly: #0B7C77
 teal, #2BBCB0 light teal, #086660 dark teal, #C05E33 orange, #F0EEE6
 off-white, #15201E black, #33403D bill highlight, #C8452B vermilion for the
 legs only, #9E4523 rufous for the underwing, #6B645C grey-brown and #B7B2AA
