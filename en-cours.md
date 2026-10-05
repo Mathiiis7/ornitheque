@@ -16,10 +16,10 @@
 
 # Point fait avec Mathis le 2026-10-05 (nuit) : ce qui reste, trié
 
-- **Prochain sujet : les poses de la mascotte.** Le perché E à retoucher dans Canva n'existe plus :
-  Mathis confirme que **le martin Figma du logo (`assets/logos/sources/martin-figma.svg`) est LA
-  base**. Écrire une demande Arrow 2 par pose, ce martin joint (l'ancienne demande de
-  LOGOS-DEMANDES donnait des pattes minuscules). Puis décider où vont les poses dans l'appli.
+- **Poses de la mascotte : ABANDONNÉES le 2026-10-05** (« pas très utile »). Deux essais Arrow 2 à
+  partir du martin du logo (poisson, jumelles devant les yeux) n'ont pas gardé son dessin ; la pose
+  jumelles au cou faite sans Arrow (`outils/build/pose-jumelles.mjs`) reste dans
+  `notes-privees/mascotte/poses/`. Le martin reste le logo, sans poses.
 - **Vidéo : plus tard**, ticket [qg#39](https://github.com/Mathiiis7/qg/issues/39) avec toutes les retouches.
 - **Fait (2501dcdf, commité, PAS poussé)** : tout ce qui servait Cornell Status & Trends est aux
   archives (`archives/status-trends/` : scripts R, injecteurs, guide, 233 `st_by_species.json`) et le

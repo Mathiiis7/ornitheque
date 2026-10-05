@@ -4,7 +4,11 @@ Arrow 2 : https://app.quiver.ai. Document de travail, à supprimer une fois le l
 
 ---
 
-## ▶ À ENVOYER : les jumelles devant les yeux (derniers crédits)
+> **Poses de la mascotte abandonnées par Mathis le 2026-10-05.** La demande ci-dessous a été
+> envoyée une fois : Arrow a ajouté les jumelles mais redessiné l'oiseau (plumes en écailles, pattes
+> orange, queue longue). Gardée pour mémoire, plus rien à envoyer.
+
+## Envoyé : les jumelles devant les yeux (derniers crédits)
 
 **Le martin Figma du logo est LA base** (décidé le 2026-10-05). Les poses qui ne demandent qu'un
 objet en plus se font sans Arrow, par-dessus son dessin : `outils/build/pose-jumelles.mjs` (jumelles
