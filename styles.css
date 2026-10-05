@@ -2135,8 +2135,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .tb-titre { margin:12px 0 8px; font-size:14px; font-weight:600; color:var(--ink); }
   .tb-grille { display:grid; grid-template-columns:auto 1fr auto; gap:5px 10px; align-items:center; }
   /* Pastilles rondes chiffrees : les memes que sur les vignettes du Birdydex (.pkdx-tier) */
-  .tb-n { width:22px; height:22px; border-radius:50%; display:grid; place-items:center; color:#fff;
-    font:800 12px/1 var(--sans); text-shadow:0 1px 1px rgba(0,0,0,.3); }
+  .tb-n { width:20px; height:20px; border-radius:50%; display:grid; place-items:center; color:#fff;
+    font:800 10px system-ui; }
   .tb-nom { color:var(--ink); }
   .tb-part { color:var(--ink-3); text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
   /* « Qui a vu quoi », repliee par defaut : le titre est un bouton, avec un chevron. */
