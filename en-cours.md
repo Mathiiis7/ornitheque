@@ -12,9 +12,23 @@
 
 - **Logo définitif (2026-10-05, poussé)** : la tête avec les points de la calotte et de l'aile (motifs Arrow reportés puis retouchés par Mathis dans Figma, deuxième retouche le même soir : poitrine, bande crème, haut de l'aile) ; source unique `assets/logos/sources/martin-figma.svg`, l'outil des motifs est dans `archives/logos-motifs/`. Essais rangés dans `notes-privees/logos-candidats/`, huppe dans `archives/logos-huppe/`. v696.
 
-Reste : les poses de la mascotte (demandes Arrow 2 à réécrire avec
-le martin Figma joint, voir plus bas) ; la vidéo attend ce logo ; les fichiers huppe
-(`assets/logos/huppe*`) ne servent plus au site, à retirer quand il le dira.
+---
+
+# Point fait avec Mathis le 2026-10-05 (nuit) : ce qui reste, trié
+
+- **Prochain sujet : les poses de la mascotte.** Le perché E à retoucher dans Canva n'existe plus :
+  Mathis confirme que **le martin Figma du logo (`assets/logos/sources/martin-figma.svg`) est LA
+  base**. Écrire une demande Arrow 2 par pose, ce martin joint (l'ancienne demande de
+  LOGOS-DEMANDES donnait des pattes minuscules). Puis décider où vont les poses dans l'appli.
+- **Vidéo : plus tard**, ticket [qg#39](https://github.com/Mathiiis7/qg/issues/39) avec toutes les retouches.
+- **Fait (2501dcdf, commité, PAS poussé)** : tout ce qui servait Cornell Status & Trends est aux
+  archives (`archives/status-trends/` : scripts R, injecteurs, guide, 233 `st_by_species.json`) et le
+  dernier recours S&T est retiré d'`app.js` (~60 endroits, branches mortes). v697, app.js?v=281.
+  Bancs CONFORME, fiche vérifiée en France et en Espagne, téléphone compris.
+- **À lancer par Mathis** (suppression refusée au mode automatique) :
+  `git branch -D sauvegarde/avant-rangement-2026-10-04` et `git rm outils/build/build-range-gbif.mjs`.
+- Habitats IUCN : clos (BIRDBASE en ligne depuis le 30/09). Espèces sans carte : on n'y touche pas.
+- Restent ouverts : petites étiquettes en capitales, refonte de la page des trophées (5 spéciaux en pause).
 
 ---
 
