@@ -99,9 +99,9 @@ l'encombrement sur le disque, pas ce que GitHub Pages sert.
 
 **Depuis le 2026-10-05, les cartes sont celles de `ornitheque-data/cartes/`** (observations eBird
 via GBIF, 82,7 Mo, générées par `outils/build/cartes-gbif.mjs`, méthode dans
-`docs/sources-cartes.md`). `range/` et `range-weekly/` sont les anciennes cartes Cornell : à
-supprimer SEULEMENT une fois la nouvelle version du site en ligne, sinon le site encore en ligne
-perd ses cartes. **Ordre de mise en ligne : pousser `ornitheque-data` d'abord, puis ce dépôt.**
+`docs/sources-cartes.md`). Les anciennes cartes Cornell (`range/`, `range-weekly/`, 250 Mo) ont été
+retirées le même jour, une fois le nouveau site en ligne. **Ordre de mise en ligne quand on
+régénère les cartes : pousser `ornitheque-data` d'abord, puis ce dépôt.**
 
 ## Les pièges qui m'ont déjà fait perdre du temps
 
