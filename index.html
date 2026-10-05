@@ -49,7 +49,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=285">
+<link rel="modulepreload" href="app.js?v=286">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -320,88 +320,115 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
       </div>
     </div>
 
-    <!-- Guide d'import, version du 2026-10-05 voulue par Mathis : des blocs qui s'enchainent avec
-         des fleches, deux departs separes (liste simple / avec GPS) et un bloc de fin commun.
-         Grille : les deux rangees a gauche, une fleche, le bloc de fin sur les deux rangees.
-         Au telephone tout s'empile. Le bloc « Inviter des amis » qui etait au-dessus vit depuis le
-         meme jour dans le menu ☰ (#inviteDialog). -->
-    <h3 class="bloc-titre import-titre">Récupérer ta liste eBird</h3>
-    <div class="imp">
-      <div class="imp-rang">
-        <div class="imp-label">Liste simple</div>
-        <div class="imp-bloc"><span class="import-step-num">1</span><span>Ouvre <a href="https://ebird.org/lifelist?r=world&time=life" target="_blank" rel="noopener" class="import-step-link">ebird.org/lifelist ↗</a></span></div>
-        <div class="imp-fl" aria-hidden="true">→</div>
-        <div class="imp-bloc"><span class="import-step-num">2</span><span>Clique <b>Download (csv)</b></span></div>
-      </div>
-      <div class="imp-ou">ou</div>
-      <div class="imp-rang">
-        <div class="imp-label">Avec GPS, pour la carte</div>
-        <div class="imp-bloc"><span class="import-step-num">1</span><span>Ouvre <a href="https://ebird.org/downloadMyData" target="_blank" rel="noopener" class="import-step-link">ebird.org/downloadMyData ↗</a></span></div>
-        <div class="imp-fl" aria-hidden="true">→</div>
-        <div class="imp-bloc"><span class="import-step-num">2</span><span>Clique <b>Submit</b>, le fichier arrive par email</span></div>
-      </div>
-      <div class="imp-fl imp-fl-fin" aria-hidden="true">→</div>
-      <div class="imp-bloc imp-fin"><span class="import-step-num">3</span><span><b>Dépose le fichier ici en dessous ↓</b><br>Tu rejoins la ligue 🎉</span></div>
-    </div>
-
+    <!-- Refonte du 2026-10-05, decidee par Mathis : la page n'affiche plus que la liste, et
+         au-dessus quatre box qui ouvrent chacune une fenetre. Le guide en blocs fleches, la ligne
+         prenom + retirer et le bloc vert « N especes chargees » ont disparu de la page.
+         Les box « membre » ne paraissent qu'avec la classe .est-membre sur #leaguebar, posee
+         par applySnapshot() : qui arrive ne voit que l'accueil et « Charger ma liste ». -->
     <div class="onboarding" id="onboarding" style="display:none;">
-      <h3>👋 Bienvenue dans la Ligue</h3>
-      <p style="margin:4px 0 0; color:var(--ink-2);">Entrez votre prénom + suivez les étapes ci-dessus. Toutes les infos restent entre les membres de votre ligue.</p>
+      <h3>Bienvenue dans la Ligue</h3>
+      <p class="ml-accueil">Ajoute ta liste eBird et rejoins la ligue !</p>
+    </div>
+    <div class="ml-boxes">
+      <button type="button" class="ml-box ml-box-charger" id="mlBoxCharger">
+        <span class="ml-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 15V3M7 8l5-5 5 5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg></span>
+        <span>Charger ma liste</span>
+      </button>
+      <button type="button" class="ml-box ml-membre" id="mlBoxAjout">
+        <span class="ml-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>
+        <span>Ajouter une espèce</span>
+      </button>
+      <button type="button" class="ml-box ml-membre" id="mlBoxPrenom">
+        <span class="ml-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></span>
+        <span>Mon prénom</span>
+      </button>
+      <!-- La confirmation reste celle du navigateur (confirm), branchee sur #removeMineBtn -->
+      <button type="button" class="ml-box ml-membre ml-box-danger" id="removeMineBtn">
+        <span class="ml-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></span>
+        <span>Retirer ma liste</span>
+      </button>
     </div>
 
-    <!-- Panneau upload : etat vide vs rempli -->
-    <div class="me-panel">
-      <div class="me-ligne">
-      <div class="me-name">
-        <label for="myName">Ton prénom</label>
-        <input type="text" id="myName" placeholder="Ton prénom (visible dans la ligue)" maxlength="24">
-      </div>
-      <!-- Juste apres le prenom depuis le 2026-10-05 (demande de Mathis) : il etait seul sur sa
-           ligne sous le bloc de chargement. .me-ligne les met cote a cote, l'un sous l'autre au telephone. -->
-      <div class="me-secondary" style="display:none;" id="meSecondary">
-        <button class="btn-remove-list" id="removeMineBtn" title="Retire ta liste et quitte la ligue">
-          <span class="btn-remove-icon">🗑️</span>
-          <span>Retirer ma liste de la ligue</span>
-        </button>
-      </div>
-      </div>
-      <!-- Etiquette et non div, et champ masque visuellement et non "hidden" : c'est le seul montage
-           qui laisse le clavier atteindre le selecteur de fichier. Un element en display:none sort de
-           l'ordre de tabulation, donc l'action principale de l'appli etait inaccessible sans souris. -->
-      <input type="file" id="file" accept=".csv,text/csv" class="visually-hidden">
-      <label class="drop" id="drop" for="file">
-        <div class="drop-icon">📥</div>
-        <div class="big" id="dropBig">Déposez votre fichier eBird <code>.csv</code> ici</div>
-        <div class="small" id="dropSmall">ou cliquez pour parcourir votre ordinateur</div>
-      </label>
-      <div class="intake-actions" id="intakeActions">
-        <span class="mystatus" id="myStatus" role="status"></span>
-      </div>
-    </div>
-
-
-
-    <!-- Modal pour choisir un lieu sur la carte -->
-    <div id="pickMapModal" class="pick-map-modal" style="display:none;">
-      <div class="pick-map-inner">
-        <div class="pick-map-head">
-          <h3>Cliquez sur la carte pour choisir un lieu</h3>
-          <button type="button" class="pick-map-close" id="pickMapClose" aria-label="Fermer">✕</button>
+    <!-- Le tuto : une etape a la fois. Chaque .tuto-pas porte son nom dans data-pas, _tutoVa()
+         n'en montre qu'un. Les textes des etapes reprennent ceux de l'ancien guide. -->
+    <dialog class="ml-dialog" id="tutoDialog" aria-labelledby="tutoTitre">
+      <div class="ml-dialog-in">
+        <div class="ml-dialog-head">
+          <h3 class="bloc-titre" id="tutoTitre">Charger ma liste</h3>
+          <button type="button" class="ml-dialog-close" data-ferme aria-label="Fermer">✕</button>
         </div>
-        <div class="pick-map-search">
-          <input type="search" id="pickMapSearch" aria-label="Chercher un lieu" placeholder="🔎 Rechercher un lieu (ex. Camargue, Bois de Vincennes)" autocomplete="off">
-          <button type="button" class="btn tiny" id="pickMapSearchBtn">Rechercher</button>
+        <p class="ml-etape" id="tutoEtape">Quelle liste récupérer sur eBird ?</p>
+        <div class="tuto-pas" data-pas="choix">
+          <div class="tuto-choix">
+            <button type="button" class="tuto-ch" data-voie="simple"><b>Liste simple</b><span>Tes espèces, en deux clics</span></button>
+            <button type="button" class="tuto-ch" data-voie="gps"><b>Avec GPS, pour la carte</b><span>Chaque observation à sa place sur la carte. Le fichier arrive par email.</span></button>
+          </div>
         </div>
-        <div id="pickMapEl" class="pick-map-el"></div>
-        <div class="pick-map-actions">
-          <span id="pickMapCoords" class="pick-map-coords">Cliquez sur la carte pour placer un point.</span>
-          <button type="button" class="btn ghost" id="pickMapCancel">Annuler</button>
-          <button type="button" class="btn" id="pickMapConfirm" disabled>Valider</button>
+        <div class="tuto-pas" data-pas="simple-1" hidden>
+          <div class="tuto-step"><span class="tuto-num" aria-hidden="true">1</span><div>
+            <p>Ouvre ta liste sur eBird.</p>
+            <a class="btn ghost tuto-lien" href="https://ebird.org/lifelist?r=world&time=life" target="_blank" rel="noopener">ebird.org/lifelist ↗</a>
+          </div></div>
+        </div>
+        <div class="tuto-pas" data-pas="simple-2" hidden>
+          <div class="tuto-step"><span class="tuto-num" aria-hidden="true">2</span><div>
+            <p>Clique <b>Download (csv)</b>. Le fichier se télécharge.</p>
+          </div></div>
+        </div>
+        <div class="tuto-pas" data-pas="gps-1" hidden>
+          <div class="tuto-step"><span class="tuto-num" aria-hidden="true">1</span><div>
+            <p>Ouvre la page de téléchargement de tes données eBird.</p>
+            <a class="btn ghost tuto-lien" href="https://ebird.org/downloadMyData" target="_blank" rel="noopener">ebird.org/downloadMyData ↗</a>
+          </div></div>
+        </div>
+        <div class="tuto-pas" data-pas="gps-2" hidden>
+          <div class="tuto-step"><span class="tuto-num" aria-hidden="true">2</span><div>
+            <p>Clique <b>Submit</b>. eBird t'envoie le fichier <code>MyEBirdData.csv</code> par email, en quelques minutes.</p>
+          </div></div>
+        </div>
+        <div class="tuto-pas" data-pas="fin" hidden>
+          <!-- Le champ du prenom vient se poser ici pour qui n'est pas encore membre : il est exige
+               avant le depot (voir handleFiles). Il n'existe qu'UNE fois, deplace entre ce creux
+               et celui de la fenetre « Mon prenom » par _placePrenom(). -->
+          <div class="ml-prenom-slot" id="tutoPrenomSlot">
+            <div class="me-name" id="meName">
+              <label for="myName">Ton prénom</label>
+              <input type="text" id="myName" placeholder="Ton prénom (visible dans la ligue)" maxlength="24">
+            </div>
+          </div>
+          <!-- Etiquette et non div, et champ masque visuellement et non "hidden" : c'est le seul montage
+               qui laisse le clavier atteindre le selecteur de fichier. Un element en display:none sort de
+               l'ordre de tabulation, donc l'action principale de l'appli etait inaccessible sans souris. -->
+          <input type="file" id="file" accept=".csv,text/csv" class="visually-hidden">
+          <label class="drop" id="drop" for="file">
+            <div class="big" id="dropBig">Dépose ton fichier eBird <code>.csv</code> ici</div>
+            <div class="small" id="dropSmall">ou clique pour le choisir</div>
+          </label>
+          <div class="intake-actions" id="intakeActions">
+            <span class="mystatus" id="myStatus" role="status"></span>
+          </div>
+        </div>
+        <div class="tuto-nav" id="tutoNav" hidden>
+          <button type="button" class="btn ghost" id="tutoRetour">Retour</button>
+          <button type="button" class="btn" id="tutoSuivant">Suivant</button>
         </div>
       </div>
-    </div>
+    </dialog>
 
-    <!-- Ta liste, en entier, sous le bloc de chargement (demande de Mathis le 2026-10-05).
+    <dialog class="ml-dialog" id="prenomDialog" aria-labelledby="prenomTitre">
+      <div class="ml-dialog-in">
+        <div class="ml-dialog-head">
+          <h3 class="bloc-titre" id="prenomTitre">Mon prénom</h3>
+          <button type="button" class="ml-dialog-close" data-ferme aria-label="Fermer">✕</button>
+        </div>
+        <div class="ml-prenom-slot" id="prenomSlot"></div>
+        <!-- Le verrou des 24 h n'etait dit que dans un title, invisible au doigt : il s'ecrit ici -->
+        <p class="ml-note" id="prenomVerrou"></p>
+        <div class="tuto-nav"><span></span><button type="button" class="btn" id="prenomOk" data-ferme>Enregistrer</button></div>
+      </div>
+    </dialog>
+
+    <!-- Ta liste, en entier, sous les box (demande de Mathis le 2026-10-05).
          Le champ de recherche reste HORS de #myListBody : applySnapshot() redessine le tableau
          a chaque changement d'un membre de la ligue, et effacerait ce qu'on est en train de taper. -->
     <div class="mylist" id="myList" hidden>
@@ -411,11 +438,20 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
       </div>
       <p class="mylist-note">Date et lieu de la première observation. Les plus récentes en premier.</p>
       <div class="mylist-body" id="myListBody"></div>
-      <!-- Ajout manuel : sous le tableau de ses especes depuis le 2026-10-05 (demande de Mathis) -->
-      <details class="manual-add" id="manualAdd" style="display:none;">
-        <summary>➕ Ajouter une espèce manuellement</summary>
-        <div class="manual-body">
-          <p class="help" style="margin:6px 0 10px;">Pour une espèce vue mais pas encore dans votre export eBird. Tapez son nom (français ou scientifique) et choisissez dans la liste.</p>
+    </div>
+
+    <!-- Ajout manuel : dans sa fenetre depuis la refonte du 2026-10-05, ouverte par la box
+         « Ajouter une espece ». Le choix du lieu (#pickMapModal) vit DEDANS : la fenetre est
+         dans la couche du dessus (showModal), et une modale posee hors d'elle passerait
+         dessous, inerte, quel que soit son z-index. -->
+    <dialog class="ml-dialog ml-dialog-large" id="ajoutDialog" aria-labelledby="ajoutTitre">
+      <div class="ml-dialog-in">
+        <div class="ml-dialog-head">
+          <h3 class="bloc-titre" id="ajoutTitre">Ajouter une espèce</h3>
+          <button type="button" class="ml-dialog-close" data-ferme aria-label="Fermer">✕</button>
+        </div>
+        <div class="manual-body" id="manualAdd">
+          <p class="ml-note">Pour une espèce vue mais pas encore dans ton export eBird. Tape son nom (français ou scientifique) et choisis dans la liste.</p>
           <div class="manual-row">
             <div class="manual-search">
               <input type="text" id="manualSearch" aria-label="Chercher une espèce à ajouter" placeholder="Ex. « merle noir », « aegithalos »…" autocomplete="off">
@@ -423,7 +459,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
             </div>
             <select id="manualCountry" title="Pays d'observation">
               <option value="FR">France</option>
-              <option value="OTHER">🌍 À l'étranger</option>
+              <option value="OTHER">À l'étranger</option>
             </select>
             <input type="date" id="manualDate" title="Date (optionnelle)">
             <button class="btn" id="manualAddBtn" disabled>Ajouter</button>
@@ -435,13 +471,32 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
             </select>
           </div>
           <div class="manual-row" style="margin-top:8px;">
-            <button class="btn" id="manualPlaceBtn" type="button">🗺️ Choisir un lieu sur la carte</button>
+            <button class="btn ghost" id="manualPlaceBtn" type="button">Choisir un lieu sur la carte</button>
             <span id="manualPlaceStatus" class="manual-msg" role="status" style="min-height:0;"></span>
           </div>
           <div id="manualMsg" class="manual-msg" role="status"></div>
         </div>
-      </details>
-    </div>
+      </div>
+      <!-- Modal pour choisir un lieu sur la carte -->
+      <div id="pickMapModal" class="pick-map-modal" style="display:none;">
+        <div class="pick-map-inner">
+          <div class="pick-map-head">
+            <h3>Cliquez sur la carte pour choisir un lieu</h3>
+            <button type="button" class="pick-map-close" id="pickMapClose" aria-label="Fermer">✕</button>
+          </div>
+          <div class="pick-map-search">
+            <input type="search" id="pickMapSearch" aria-label="Chercher un lieu" placeholder="🔎 Rechercher un lieu (ex. Camargue, Bois de Vincennes)" autocomplete="off">
+            <button type="button" class="btn tiny" id="pickMapSearchBtn">Rechercher</button>
+          </div>
+          <div id="pickMapEl" class="pick-map-el"></div>
+          <div class="pick-map-actions">
+            <span id="pickMapCoords" class="pick-map-coords">Cliquez sur la carte pour placer un point.</span>
+            <button type="button" class="btn ghost" id="pickMapCancel">Annuler</button>
+            <button type="button" class="btn" id="pickMapConfirm" disabled>Valider</button>
+          </div>
+        </div>
+      </div>
+    </dialog>
 
     <!-- Liste des membres retiree de la page 'Ma liste' : redondant avec le Classement. -->
     <div class="people" id="people" hidden></div>
@@ -1248,4 +1303,4 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=285"></script>
+<script type="module" src="app.js?v=286"></script>

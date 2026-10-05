@@ -1,4 +1,13 @@
-# PROCHAIN TRAVAIL (décidé le 2026-10-05, pas commencé) : refonte de l'onglet Ma liste
+# FAIT le 2026-10-05 (commité, PAS poussé) : refonte de l'onglet Ma liste, v706, app.js?v=286
+
+Maquette : `notes-privees/maquettes/ma-liste/` -> direction C retenue (box à pictogramme au trait),
+**titres seuls**, sans petite ligne (« ça surcharge »). Accueil : « Ajoute ta liste eBird et rejoins
+la ligue ! ». Fin du tuto : aucune phrase. Vérifié dans la démo : membre (4 box, 3 fenêtres, carte du
+lieu au-dessus de la fenêtre d'ajout, Échap ferme la carte seule) ; nouveau venu simulé (seule
+« Charger ma liste », prénom exigé dans la dernière étape, dépôt -> fenêtre fermée, liste affichée) ;
+téléphone + sombre. Bancs CONFORME. Reste : qu'il regarde en local, puis pousser.
+Note : au dépôt d'un nouveau venu, le code d'invitation est encore demandé par une fenêtre du
+navigateur (`prompt()` dans saveMyList) - pas touché.
 
 Décisions de Mathis (questions à choix, réponses fermes) :
 - L'onglet n'affiche plus que **la liste** (le tableau « Mes espèces » actuel), et au-dessus **quatre

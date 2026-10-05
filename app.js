@@ -5849,20 +5849,15 @@ function applySnapshot(snap){
   if(me && _isBlocked(me.name)){ _showBlockedScreen(); return; }
   const nameInput=$('#myName');
   if(me && document.activeElement!==nameInput){ nameInput.value = me.name; }
-  // Le statut est deja visible dans le drop zone rempli - on ne repete pas ici.
   $('#myStatus').textContent = '';
-  const meSec = $('#meSecondary'); if(meSec) meSec.style.display = me ? '' : 'none';
-  $('#removeMineBtn').style.display = me ? 'inline' : 'none';
-  const ma=$('#manualAdd'); if(ma) ma.style.display = me ? '' : 'none';
+  // Une seule classe decide de ce que montre Ma liste (refonte du 2026-10-05) : les box
+  // « Ajouter », « Mon prenom » et « Retirer » ne paraissent qu'a un membre. Pas de
+  // style.display en ligne ici : il passerait devant la grille des box.
+  $('#leaguebar').classList.toggle('est-membre', !!me);
   const obd=$('#onboarding'); if(obd) obd.style.display = me ? 'none' : '';
-  // Etat drop zone : filled si liste chargee, vide sinon.
-  const dropEl = $('#drop');
-  if(dropEl){ if(me) dropEl.classList.add('filled'); else dropEl.classList.remove('filled'); }
-  $('#dropBig').innerHTML = me
-    ? `<span style="display:inline-flex;align-items:center;gap:8px;">✅ <span>${me.species.size} espèces chargées</span></span>`
-    : 'Déposez votre fichier eBird <code>.csv</code> ici';
+  // Le nombre d'especes vit dans le titre de la liste : plus de bloc vert dans la zone de depot.
   const dropSmall = $('#dropSmall');
-  if(dropSmall) dropSmall.textContent = me ? 'Cliquez pour remplacer votre liste' : 'ou cliquez pour parcourir votre ordinateur';
+  if(dropSmall) dropSmall.textContent = me ? 'ou clique pour le choisir - il remplace ta liste actuelle' : 'ou clique pour le choisir';
   fillProfile(me);
   renderMyList(me || null);
   if(typeof _lockMyNameIfSet==='function') _lockMyNameIfSet();
@@ -9998,12 +9993,10 @@ async function handleFiles(fileList){
     $('#myStatus').textContent = 'Encore ton prénom : écris-le juste au-dessus, puis appuie sur Entrée.';
     const inp = $('#myName');
     inp.classList.add('attend-saisie');
-    // Le champ vit dans « Ma liste ». Si on est ailleurs, l'onglet est en display:none : ni
-    // le message ni le champ ne se voient, et focus() ne prend pas sur un element non affiche.
-    // On y ramene avant de demander quoi que ce soit.
-    if(getComputedStyle($('#viewLoad')).display === 'none'){
-      document.querySelector('.tab[data-view="load"]')?.click();
-    }
+    // Depuis la refonte du 2026-10-05, le depot ne se fait que dans la derniere etape du tuto.
+    // On s'assure que le champ y est bien pose, juste au-dessus de la zone de depot.
+    _placePrenom($('#tutoPrenomSlot'));
+    _tutoVa('fin');
     inp.focus();
     inp.scrollIntoView({ block: 'center', behavior: 'smooth' });
     return;
@@ -10061,6 +10054,9 @@ async function _enregistreListe(parsed, name){
     // Le retour de Firestore vide #myStatus et repeint la page : la reussite ne laisse donc
     // aucune trace lisible. On l'annonce a part, avec le chiffre qui compte.
     annonce('Liste enregistrée : ' + parsed.species.size + ' espèces.');
+    // Le tuto a fini son travail : on le ferme pour montrer la liste. En cas d'erreur il reste
+    // ouvert, puisque #myStatus et le message vivent dedans.
+    $('#tutoDialog')?.close();
   }
   catch(e){ showError(e); $('#myStatus').textContent=''; }
 }
@@ -10124,7 +10120,101 @@ function _lockMyNameIfSet(){
     inp.readOnly = false; inp.classList.remove('locked');
     inp.title = hasName ? 'Modifiable pendant 24 h après inscription' : '';
   }
+  // Le title ne se voit pas au doigt : la fenetre « Mon prenom » le dit en toutes lettres.
+  const note = $('#prenomVerrou');
+  if(note) note.textContent = !hasName ? ''
+    : inp.readOnly ? 'Ton prénom est verrouillé 24 h après ton inscription. Pour le changer, demande à un admin.'
+    : 'Tu peux le changer pendant 24 h après ton inscription.';
+  // Verrouille, il n'y a rien a enregistrer : le bouton ferme, et le dit.
+  const ok = $('#prenomOk');
+  if(ok) ok.textContent = inp.readOnly ? 'Fermer' : 'Enregistrer';
 }
+
+/* ---------------- Ma liste : les box et leurs fenetres (refonte du 2026-10-05) ---------------- */
+// Un seul champ #myName pour toute l'appli : ses deux ecouteurs 'change' (reprise du depot en
+// attente, renommage) le suivent quand on le deplace. Pour qui arrive, il se pose dans la
+// derniere etape du tuto ; pour un membre, dans la fenetre « Mon prenom ».
+function _placePrenom(slot){
+  const bloc = $('#meName');
+  if(slot && bloc && bloc.parentNode !== slot) slot.appendChild(bloc);
+}
+// Le tuto : un choix (liste simple ou avec GPS), puis deux etapes, puis le depot.
+const TUTO_VOIES = {
+  simple: { titre: 'Liste simple', pas: ['simple-1', 'simple-2', 'fin'] },
+  gps:    { titre: 'Avec GPS, pour la carte', pas: ['gps-1', 'gps-2', 'fin'] },
+};
+let _tutoVoie = null;
+function _tutoVa(pas){
+  const d = $('#tutoDialog'); if(!d) return;
+  if(pas !== 'choix' && !_tutoVoie) _tutoVoie = 'simple';
+  if(pas === 'choix') _tutoVoie = null;
+  const voie = _tutoVoie ? TUTO_VOIES[_tutoVoie] : null;
+  const i = voie ? voie.pas.indexOf(pas) : -1;
+  d.querySelectorAll('.tuto-pas').forEach(el => { el.hidden = el.dataset.pas !== pas; });
+  $('#tutoTitre').textContent = voie ? voie.titre : 'Charger ma liste';
+  $('#tutoEtape').textContent = voie ? 'Étape ' + (i + 1) + ' sur ' + voie.pas.length : 'Quelle liste récupérer sur eBird ?';
+  $('#tutoNav').hidden = !voie;
+  $('#tutoSuivant').hidden = pas === 'fin';
+  d.dataset.pas = pas;
+  // Qui n'est pas encore membre donne son prenom ici ; un membre l'a deja, le champ est ailleurs.
+  if(pas === 'fin' && !iAmInLeague) _placePrenom($('#tutoPrenomSlot'));
+  $('#tutoPrenomSlot').hidden = iAmInLeague;
+  if(!d.open) d.showModal();
+  // Le focus suit l'etape : sans ca, le clavier et le lecteur d'ecran restent sur un bouton
+  // qui vient de disparaitre.
+  const cible = pas === 'choix' ? d.querySelector('.tuto-ch')
+    : d.querySelector('.tuto-pas[data-pas="' + pas + '"] a, #tutoSuivant:not([hidden])')
+      || (pas === 'fin' ? (iAmInLeague ? $('#file') : $('#myName')) : null);
+  cible?.focus();
+}
+function _tutoBouge(sens){
+  const voie = _tutoVoie && TUTO_VOIES[_tutoVoie]; if(!voie) return;
+  const i = voie.pas.indexOf($('#tutoDialog').dataset.pas) + sens;
+  _tutoVa(i < 0 ? 'choix' : voie.pas[Math.min(i, voie.pas.length - 1)]);
+}
+$('#mlBoxCharger')?.addEventListener('click', () => _tutoVa('choix'));
+$('#tutoDialog')?.querySelectorAll('.tuto-ch').forEach(b => b.addEventListener('click', () => {
+  _tutoVoie = b.dataset.voie; _tutoVa(TUTO_VOIES[_tutoVoie].pas[0]);
+}));
+$('#tutoRetour')?.addEventListener('click', () => _tutoBouge(-1));
+$('#tutoSuivant')?.addEventListener('click', () => _tutoBouge(1));
+// Fermer, c'est repartir du choix la prochaine fois. Un message reste de l'essai precedent
+// n'a plus de sens a la reouverture, sauf un prenom encore attendu.
+$('#tutoDialog')?.addEventListener('close', () => {
+  _tutoVoie = null;
+  if(!_depotEnAttente) $('#myStatus').textContent = '';
+});
+$('#mlBoxPrenom')?.addEventListener('click', () => {
+  _placePrenom($('#prenomSlot'));
+  _lockMyNameIfSet();
+  $('#prenomDialog').showModal();
+  $('#myName').focus();
+});
+// Le renommage part sur 'change', qui suit la sortie du champ. Echap ferme la fenetre sans
+// forcement la declencher : on fait sortir le champ AVANT la fermeture.
+$('#prenomDialog')?.addEventListener('cancel', () => $('#myName').blur());
+$('#prenomDialog')?.addEventListener('keydown', e => {
+  if(e.key === 'Enter' && e.target.id === 'myName'){ e.target.blur(); $('#prenomDialog').close(); }
+});
+$('#mlBoxAjout')?.addEventListener('click', () => {
+  $('#ajoutDialog').showModal();
+  $('#manualSearch').focus();
+});
+// Echap ou ✕ ferment la fenetre d'ajout : la carte du lieu ne doit pas rester ouverte dessous
+// pour la prochaine fois.
+$('#ajoutDialog')?.addEventListener('close', () => _closePickMap());
+// Echap dans la carte du lieu ferme la carte seule, pas toute la fenetre d'ajout.
+$('#ajoutDialog')?.addEventListener('cancel', e => {
+  if($('#pickMapModal')?.style.display === 'flex'){ e.preventDefault(); _closePickMap(); }
+});
+// Les trois fenetres : ✕ (et « Enregistrer ») portent data-ferme ; un clic sur le fond aussi.
+// La marge interieure est sur .ml-dialog-in et non sur la fenetre, sinon un clic dans la marge
+// viserait la fenetre elle-meme et la fermerait.
+document.querySelectorAll('#tutoDialog, #prenomDialog, #ajoutDialog').forEach(d => {
+  d.addEventListener('click', e => {
+    if(e.target === d || e.target.closest('[data-ferme]')) d.close();
+  });
+});
 // H : désactive visuellement écriture chat + upload photo pour les non-membres.
 function _refreshChatWriteAccess(){
   const canWrite = iAmInLeague;

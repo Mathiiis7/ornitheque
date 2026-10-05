@@ -289,23 +289,67 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .btn:has(input[type=file]:focus-visible),
   .chat-imgbtn:has(input[type=file]:focus-visible) { outline:3px solid var(--accent); outline-offset:2px; }
   .drop.drag { border-color:var(--accent); background:color-mix(in srgb, var(--accent) 12%, var(--surface-2)); transform:scale(1.01); }
-  .drop-icon { font-size:38px; margin-bottom:6px; opacity:.75; }
   .drop .big { font-size:16px; font-weight:700; color:var(--ink); }
-  .drop .small { color:var(--ink-2); font-size:13.5px; margin-top:6px; }
-  .drop code { font-family:var(--mono); background:var(--surface); padding:2px 7px; border-radius:6px; font-size:13px; }
-  /* Etat rempli : compact card avec statut */
-  .drop.filled { padding:16px 20px; border-style:solid; background:color-mix(in srgb, #2ecc71 8%, var(--surface-2)); border-color:color-mix(in srgb, #2ecc71 40%, var(--line-2)); }
-  .drop.filled .drop-icon { display:none; }
-  .drop.filled .big { color:var(--ink); }
-  .me-ligne { display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap; }
-  .me-secondary { display:flex; }
-  /* Bouton "retirer ma liste" : ghost destructif, discret mais elegant */
-  .btn-remove-list { display:inline-flex; align-items:center; gap:8px; padding:8px 14px;
-    background:transparent; color:var(--ink-3); border:1px solid var(--line-2); border-radius:10px;
-    font:inherit; font-size:12.5px; font-weight:600; cursor:pointer;
-    transition:color .12s, border-color .12s, background .12s; }
-  .btn-remove-list:hover { color:#c0392b; border-color:#c0392b; background:color-mix(in srgb, #c0392b 6%, transparent); }
-  .btn-remove-icon { font-size:14px; line-height:1; }
+  .drop .small { color:var(--ink-2); font-size:14px; margin-top:6px; }
+  .drop code { font-family:var(--mono); background:var(--surface); padding:2px 7px; border-radius:6px; font-size:14px; }
+  /* ---------- Ma liste : quatre box au-dessus de la liste (refonte du 2026-10-05) ----------
+     Direction C de la maquette (notes-privees/maquettes/ma-liste/), titres seuls : Mathis a refuse
+     les petites lignes sous les titres (« ca surcharge les box »). */
+  .ml-boxes { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:10px; margin-top:14px; }
+  .ml-box { display:flex; align-items:center; gap:12px; text-align:left; font:inherit; font-size:15px; font-weight:600;
+    cursor:pointer; padding:12px 14px; border-radius:12px; background:var(--surface); border:1px solid var(--line-2); color:var(--ink); }
+  .ml-box:hover { background:var(--surface-2); }
+  .ml-box:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
+  .ml-ic { flex:0 0 38px; height:38px; border-radius:10px; display:grid; place-items:center;
+    background:color-mix(in srgb, var(--accent) 12%, var(--surface)); color:var(--accent-ink); }
+  .ml-ic svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  .ml-box-danger .ml-ic { background:color-mix(in srgb, #c0392b 10%, var(--surface)); color:#c0392b; }
+  .ml-box-danger:hover { color:#c0392b; }
+  /* Qui arrive n'a que « Charger ma liste » : elle doit sauter aux yeux, en couleur pleine */
+  #leaguebar:not(.est-membre) .ml-membre { display:none; }
+  #leaguebar:not(.est-membre) .ml-boxes { grid-template-columns:minmax(0,320px); }
+  #leaguebar:not(.est-membre) .ml-box-charger { background:var(--accent); border-color:var(--accent); color:#fff; font-size:16px; padding:14px 16px; }
+  #leaguebar:not(.est-membre) .ml-box-charger .ml-ic { background:color-mix(in srgb, #fff 18%, transparent); color:#fff; }
+  #leaguebar:not(.est-membre) .ml-box-charger:hover { filter:brightness(1.06); }
+  .ml-accueil { margin:4px 0 0; color:var(--ink-2); font-size:15px; }
+  @media (max-width:700px){
+    .ml-boxes { grid-template-columns:repeat(2, minmax(0,1fr)); }
+  }
+
+  /* Les trois fenetres de Ma liste (tuto, prenom, ajout). La marge interieure est sur
+     .ml-dialog-in : un clic sur la fenetre elle-meme veut alors dire « sur le fond ». */
+  .ml-dialog { width:min(520px, calc(100vw - 32px)); padding:0; border:1px solid var(--line);
+    border-radius:16px; background:var(--surface); color:var(--ink); box-shadow:0 12px 40px rgba(0,0,0,.3); }
+  /* overflow visible : la liste des suggestions deborde sous la fenetre au lieu d'y etre coupee
+     (elle tenait dans 60 px, avec sa barre de defilement, au premier essai) */
+  .ml-dialog-large { width:min(680px, calc(100vw - 32px)); overflow:visible; }
+  .ml-dialog::backdrop { background:rgba(0,0,0,.35); }
+  .ml-dialog-in { padding:18px 22px 20px; }
+  .ml-dialog-head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .ml-dialog-head .bloc-titre { margin:0; }
+  .ml-dialog-close { border:none; background:transparent; color:var(--ink-3); font-size:16px; cursor:pointer;
+    width:36px; height:36px; border-radius:8px; flex:0 0 auto; }
+  .ml-dialog-close:hover { background:var(--surface-2); color:var(--ink); }
+  .ml-etape { margin:2px 0 14px; font-size:14px; color:var(--ink-3); }
+  .ml-note { margin:6px 0 12px; font-size:14px; color:var(--ink-3); line-height:1.5; }
+  .ml-note:empty { display:none; }
+  .ml-prenom-slot { margin-bottom:14px; }
+  .ml-prenom-slot:empty { display:none; }
+  .tuto-choix { display:grid; gap:10px; }
+  .tuto-ch { text-align:left; font:inherit; cursor:pointer; padding:14px 16px; border-radius:12px;
+    background:var(--surface-2); border:1px solid var(--line-2); color:var(--ink); }
+  .tuto-ch:hover { border-color:var(--accent); }
+  .tuto-ch b { display:block; font-size:15px; font-weight:600; }
+  .tuto-ch span { display:block; font-size:14px; color:var(--ink-3); margin-top:3px; line-height:1.4; }
+  .tuto-step { display:flex; gap:14px; align-items:flex-start; padding:2px 0 4px; }
+  .tuto-num { flex:0 0 32px; height:32px; border-radius:50%; background:var(--accent); color:#fff; font-weight:800;
+    display:grid; place-items:center; font-size:15px; }
+  .tuto-step p { margin:4px 0 0; font-size:15px; color:var(--ink); line-height:1.45; }
+  .tuto-step code { font-family:var(--mono); font-size:14px; }
+  .tuto-lien { margin-top:10px; text-decoration:none; }
+  .tuto-nav { display:flex; justify-content:space-between; gap:10px; margin-top:18px; }
+  .tuto-nav[hidden], .tuto-nav [hidden] { display:none; }
+  .manual-body > .ml-note { margin-top:2px; }
 
   /* ---------- Inviter des amis : fenetre ouverte depuis le menu ☰ ---------- */
   .invite-dialog { width:min(460px, calc(100vw - 32px)); padding:18px 20px; border:1px solid var(--line);
@@ -320,37 +364,6 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     border:1px solid var(--line); border-radius:8px; padding:8px 10px; overflow-wrap:anywhere; }
   .invite-actions { display:flex; gap:6px; justify-content:flex-end; margin-top:12px; flex-wrap:wrap; }
 
-  /* ---------- Import steps ----------
-     Tailles relevees le 2026-10-05 (« ecrit tres petit parfois », Mathis) : les sous-textes
-     a 11,5 px ecrits faisaient 9,8 px a l'ecran avec le zoom 0,85. Plancher : 13 px ecrits. */
-  .import-titre { margin-top:18px; }
-  /* Guide d'import : deux rangees de blocs (liste simple / avec GPS) qui menent, par une fleche,
-     au bloc de fin commun. Colonnes : les rangees | la fleche | le bloc de fin sur toute la hauteur. */
-  .imp { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(170px,.42fr); column-gap:10px;
-    align-items:center; margin-top:10px; }
-  .imp-rang { grid-column:1; display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); column-gap:10px; align-items:stretch; }
-  .imp-label { grid-column:1 / -1; font-size:15px; font-weight:600; color:var(--ink); margin:0 0 5px 2px; }
-  .imp-bloc { display:flex; align-items:center; gap:10px; padding:11px 14px; background:var(--surface-2);
-    border:1px solid var(--line-2); border-radius:12px; font-size:14.5px; color:var(--ink); line-height:1.35; min-width:0; }
-  .imp-bloc .import-step-link { margin-top:0; }
-  .imp-fl { align-self:center; font-size:18px; color:var(--ink-3); }
-  .imp-ou { grid-column:1; font-size:14.5px; font-weight:600; color:var(--ink-3); margin:6px 0 4px 2px; }
-  .imp-fl-fin { grid-column:2; grid-row:1 / 4; }
-  /* margin-top = hauteur de l'etiquette au-dessus des rangees (15 px x 1,5 + 5), mesure le 2026-10-05 */
-  .imp-fin { grid-column:3; grid-row:1 / 4; align-self:stretch; margin-top:27.5px;
-    background:color-mix(in srgb, var(--accent) 8%, var(--surface-2)); border-color:color-mix(in srgb, var(--accent) 30%, var(--line-2)); }
-  @media (max-width:600px){
-    /* Au telephone : tout s'empile, les fleches pointent vers le bas */
-    .imp { grid-template-columns:minmax(0,1fr); }
-    .imp-rang { grid-template-columns:minmax(0,1fr); row-gap:4px; }
-    .imp-fl { justify-self:center; transform:rotate(90deg); }
-    .imp-fl-fin, .imp-fin { grid-column:1; grid-row:auto; }
-    .imp-fin { margin-top:0; }
-  }
-  .import-step-num { flex:0 0 auto; width:28px; height:28px; border-radius:50%; background:var(--accent); color:#fff;
-    font-weight:800; font-size:14px; display:grid; place-items:center; margin-top:0; }
-  .import-step-link { display:inline-block; margin-top:4px; font-size:14px; color:var(--accent-ink); text-decoration:none; font-weight:600; }
-  .import-step-link:hover { text-decoration:underline; }
   .btn { display:inline-flex; align-items:center; gap:7px; background:var(--accent); color:#fff;
     border:none; border-radius:9px; padding:9px 15px; font:inherit; font-weight:600; font-size:14px;
     cursor:pointer; }
@@ -359,8 +372,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .btn.ghost:hover { border-color:var(--accent); }
   .btn.tiny { padding:5px 10px; font-size:12.5px; }
   .intake-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; align-items:center; }
-  /* Cache le container quand le status est vide (evite l'espace vertical inutile
-     entre la drop zone et le bouton "Retirer ma liste"). */
+  /* Cache le conteneur quand le statut est vide : pas d'espace vide sous la zone de depot */
   .intake-actions:has(#myStatus:empty) { display:none; }
   .help { font-size:12.5px; color:var(--ink-3); margin-top:14px; line-height:1.55; }
   .help b { color:var(--ink-2); font-weight:600; }
@@ -373,8 +385,6 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     border:1px solid var(--line-2); border-radius:9px; padding:8px 11px; max-width:100%; }
   .linkbox code { font-family:var(--mono); font-size:12.5px; color:var(--ink-2); overflow:hidden;
     text-overflow:ellipsis; white-space:nowrap; flex:1; min-width:0; }
-  .me-panel { margin-top:18px; padding-top:18px; border-top:1px solid var(--line); display:flex;
-    flex-direction:column; gap:12px; }
   .me-name label { font-size:14px; color:var(--ink-2); font-weight:600; }
   .me-name input { display:block; margin-top:5px; background:var(--surface-2); border:1px solid var(--line-2);
     border-radius:9px; padding:8px 11px; font:inherit; color:var(--ink); font-size:14px; width:240px; max-width:100%; }
@@ -390,17 +400,12 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .prof-grid input, .prof-grid select { background:var(--surface-2); border:1px solid var(--line-2);
     border-radius:9px; padding:8px 11px; font:inherit; color:var(--ink); font-size:14px; font-weight:400; }
   .prof-grid input:focus, .prof-grid select:focus { outline:3px solid var(--accent); }
-  .mystatus { font-size:13px; color:var(--accent-ink); font-weight:600; }
+  .mystatus { font-size:14px; color:var(--accent-ink); font-weight:600; }
   .join-row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:16px; }
   .join-row .search { max-width:280px; }
   .linkbtn { border:none; background:transparent; color:var(--accent-ink); cursor:pointer; font:inherit;
     font-size:12.5px; text-decoration:underline; padding:2px; }
   .linkbtn:hover { color:var(--t-rare); }
-  .manual-add { margin-top:14px; border:1px solid var(--line); border-radius:12px; background:var(--surface-2); overflow:visible; }
-  .manual-add > summary { cursor:pointer; list-style:none; padding:10px 14px; font-size:13px; font-weight:700; color:var(--ink-2); }
-  .manual-add > summary::-webkit-details-marker { display:none; }
-  .manual-add > summary:hover { color:var(--ink); }
-  .manual-body { padding:2px 14px 14px; border-top:1px solid var(--line); }
   .manual-row { display:flex; flex-wrap:wrap; gap:8px; align-items:stretch; }
   .manual-search { position:relative; flex:1 1 220px; min-width:180px; }
   .manual-search input { width:100%; box-sizing:border-box; padding:9px 12px; border:1px solid var(--line-2); border-radius:10px; font:inherit; background:var(--surface); color:var(--ink); }
@@ -2296,4 +2301,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
 
     /* Onglets de la fiche espece : 36 px d'ecran mesures, 52 ecrits les portent a 44. */
     .species-modal .sm-tab { min-height:52px; }
+
+    /* Ma liste : les box, les choix du tuto, ses boutons et les croix des fenetres. */
+    .ml-box, .tuto-ch, .tuto-nav .btn, .tuto-lien { min-height:52px; }
+    .ml-dialog-close { width:52px; height:52px; }
   }
