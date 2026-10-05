@@ -4,54 +4,42 @@ Arrow 2 : https://app.quiver.ai. Document de travail, à supprimer une fois le l
 
 ---
 
-## ▶ À ENVOYER MAINTENANT (2 envois)
+## ▶ À ENVOYER MAINTENANT (1 envoi)
 
-Réglages pour les deux : **Arrow 2, effort High, 4 propositions.** Prix attendu : 0,40 à 1,20 $ chacun.
+Réglages : **Arrow 2, effort High, 4 propositions.** Prix attendu : 0,40 à 1,20 $ l'envoi.
 
-### Envoi 1 sur 2 - les poses (retouche n° 4 : corrections ciblées)
+### Envoi 1 - la pose de base (le perché), à valider avant toute autre pose
 
-Dans la conversation d'Arrow 2 où est sortie la planche à 9 poses : sélectionner cette proposition-là,
-puis coller ce texte comme message suivant (rien à joindre). Hors de cette conversation, joindre
-`notes-privees/mascotte/retouche-3.svg`.
+Décidé le 2026-10-05 : on fixe d'abord UN oiseau, le perché, puis les autres poses partent de lui.
+Base choisie : le perché de la retouche n° 3 (« D »), avec les pattes du premier envoi (« A »).
+Comparaison : http://localhost:8765/notes-privees/mascotte/perches.html
+
+1. Nouvelle demande, effort High. Joindre `notes-privees/mascotte/perche-base.svg` (le perché D seul,
+   reflet de l'œil déjà retiré par `outils/build/perche-base.mjs`).
+2. Copier-coller ce texte :
 
 ```text
-Fix the 9-pose kingfisher sheet you just made (the proposal I selected).
-Change ONLY what is listed below.
-Everything else stays exactly as it is: the character, the colours, the
-3 x 3 layout, and these poses, untouched: top left (perched), centre (notebook),
-bottom right (headphones).
+Refine this single kingfisher. Keep it exactly as it is - same pose, same
+proportions, same head, same bill, same eye, same colours - and change only
+the legs and feet.
 
-FIXES, pose by pose (rows from top to bottom, columns from left to right):
-- top centre, binoculars: the binoculars stay on the eye, but they must be
-  HELD by the tip of the folded wing, the long flight feathers curling around
-  them. The bill points forward under the binoculars, closed, not hanging.
-- top right, diving: tuck both feet flat against the belly; nothing floating
-  beside the body.
-- middle left, flying: the bird has lost its face. Give it the same head as
-  the perched bird: the long black bill pointing forward, the eye, the orange
-  spot and ear patch. Keep the wings as they are.
-- middle right, fish: the fish is held CROSSWISE IN THE BILL, near the tip,
-  head on one side and tail on the other. The feet stand on the ground and
-  hold nothing. No eye on the fish, just a plain silver-grey fish shape.
-- bottom left, happy: remove the brown curved stick entirely. Both wings
-  raised high above the back, open, the bill pointing forward and slightly
-  open, like a cheer.
-- bottom centre, puzzled: the bird has ONE eye on the visible side of its head,
-  like every other pose. Head tilted to one side, bill closed and pointing
-  forward and slightly down, one wing tip raised to touch its cheek.
+THE LEGS: two short, THIN legs, set a little apart under the belly, the far
+leg slightly darker than the near one. Each foot is small and delicate, with
+thin toes spread flat on an invisible ground line: toes pointing forward and
+one short toe pointing back. Vermilion #C8452B for the near leg, #9E3A22 for
+the far leg. No chunky block feet.
 
-ON EVERY BIRD, THE EYE: one plain white circle with one solid black dot inside,
-nothing else. Remove the small white highlight inside the black dot.
-
-CLEAN-UP: no gaps between shapes; adjacent colour areas meet exactly or
-overlap.
+ALSO: no gaps between shapes; adjacent colour areas meet exactly or overlap.
+The eye stays a plain white circle with a solid black dot, no highlight.
 KEEP: flat vector, solid colours, no outlines, no gradients, no shading, no
-text, transparent background, the same palette.
-VARIATIONS: four proposals, each applying these fixes; the untouched poses
-must stay identical in all four.
+text, transparent background.
+VARIATIONS: four proposals; vary only the legs and feet.
 ```
 
-### Envoi 2 sur 2 - la tuile du logo
+Ensuite, une fois ce perché validé : chaque autre pose se demande seule, avec ce perché joint comme
+modèle (« the same bird as the attached one, now [pose] »).
+
+### Plus tard - la tuile du logo (après validation du perché)
 
 1. Joindre le fichier : `notes-privees/mascotte/mascotte-tuile.svg`
 2. Copier-coller ce texte :
