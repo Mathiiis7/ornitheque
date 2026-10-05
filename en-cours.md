@@ -25,8 +25,8 @@
   archives (`archives/status-trends/` : scripts R, injecteurs, guide, 233 `st_by_species.json`) et le
   dernier recours S&T est retiré d'`app.js` (~60 endroits, branches mortes). v697, app.js?v=281.
   Bancs CONFORME, fiche vérifiée en France et en Espagne, téléphone compris.
-- **À lancer par Mathis** (suppression refusée au mode automatique) :
-  `git branch -D sauvegarde/avant-rangement-2026-10-04` et `git rm outils/build/build-range-gbif.mjs`.
+- Branche `sauvegarde/avant-rangement-2026-10-04` et `outils/build/build-range-gbif.mjs` supprimés
+  par Mathis le même soir.
 - Habitats IUCN : clos (BIRDBASE en ligne depuis le 30/09). Espèces sans carte : on n'y touche pas.
 - Restent ouverts : petites étiquettes en capitales, refonte de la page des trophées (5 spéciaux en pause).
 
