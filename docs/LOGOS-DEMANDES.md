@@ -1,121 +1,17 @@
 # Le logo et la mascotte, avec Arrow 2
 
-Arrow 2 (QuiverAI) : https://app.quiver.ai. Document de travail, à supprimer une fois le logo
-arrêté. L'outil et ses prix : `~/Documents/0-Claude/0-QG/qg/savoir/quiver-ai.md`. Le nom : `NOMS.md`.
-
-Sommaire :
-1. Où on en est
-2. À envoyer maintenant : la mascotte
-3. Quand une image revient
-4. Le style retenu
-5. Ce qu'on a appris
-6. Archives : la session huppe du 28-29/09
+Arrow 2 : https://app.quiver.ai. Document de travail, à supprimer une fois le logo arrêté.
 
 ---
 
-## 1. Où on en est
+## ▶ À ENVOYER MAINTENANT (2 envois)
 
-| Quoi | État |
-|---|---|
-| Nom | **L'Ornithèque**, arrêté le 29/09 (`NOMS.md`) |
-| Style | trouvé : l'oiseau simple en formes primitives (section 4) |
-| Espèce | **le martin-pêcheur**, choisi le 2026-10-05 |
-| Logo en place | la huppe, tant que rien d'autre n'est arrêté |
-| Prochaine étape | Mathis envoie la demande de la section 2 dans Arrow 2 |
+Réglages pour les deux : **Arrow 2, effort High, 4 propositions.** Prix attendu : 0,40 à 1,20 $ chacun.
 
-Pourquoi le martin-pêcheur : il porte les couleurs de la charte (`docs/charte-graphique.md`), un
-dos bleu-vert comme l'accent `#0b7c77` et un ventre orange comme `--accent-2` `#c05e33`. Le vrai
-oiseau est un peu plus bleu : on le tire vers le vert de la charte, c'est l'intérêt du choix.
-L'espèce était libre, Ornithèque désignant une collection et pas un oiseau.
+### Envoi 1 sur 2 - les poses
 
-Candidats gardés de la session de septembre, pour comparer seulement :
-
-| Fichier | Réserve |
-|---|---|
-| `assets/logos/candidats/1-oiseau-plat.png` | vient de la planche Freepik : bon pour comparer, pas pour devenir le logo |
-| `assets/logos/candidats/3-tete-sarcelle-clair.png` | la moins contrastée des tuiles |
-
----
-
-## 2. À envoyer maintenant : la mascotte
-
-**Réglages** : Arrow 2, effort **Medium**, **4 propositions**. Ne changer qu'une chose à la fois.
-**Prix attendu** : entre 0,40 et 1 $ (une planche à cinq poses est plus chargée qu'une tête).
-
-Une seule planche : cinq poses du même personnage, et dans un coin la tête en tuile carrée pour le
-logo, coupée par le cadre (règle de cadrage, section 4).
-
-```text
-Character sheet for a mascot: a common kingfisher (Alcedo atthis), on ONE
-single sheet, the same character drawn several times.
-
-ON THE SHEET:
-- five full-body poses of the same bird, in a row or a loose grid: perched in
-  side profile facing right; looking through a small pair of binoculars;
-  diving head first; flying with wings spread; holding a tiny notebook in its
-  bill, as if ticking a species off a list;
-- in the bottom right corner, a separate square app tile: the head only, in
-  close-up, in profile facing right, CROPPED by the square frame - the tip of
-  the bill runs off the right edge, the chest and the nape run off the bottom
-  edge. No margin inside the tile.
-
-SUBJECT: a kingfisher - a short plump body, a large head, a very long straight
-dagger-shaped black bill, a short stubby tail, tiny orange legs. Teal-blue
-crown and wings, a bright paler teal stripe down the back, orange cheeks and
-belly, a white throat and a white patch on the side of the neck.
-
-STYLE: simple flat vector illustration, friendly, built from a few primitive
-rounded shapes: one rounded teardrop for the body and head, a leaf-shaped wing
-laid on top in a deeper tone, a short tail of two triangles, one long tapering
-triangle for the bill, the eye a small white circle with a dark dot. Flat areas
-of solid colour, hard clean edges, no outlines, no gradients, no shading, no
-texture.
-CONSISTENCY: it is the SAME character in every pose - same proportions, same
-colours, same eye, same bill length. Only the pose changes.
-ACCURACY: simple shapes, but the proportions follow the real species - the
-oversized bill, the big head, the short tail. A bird a birder would name at a
-glance, never a generic round bird.
-PALETTE: #0B7C77 teal for the crown and wings, #2BBCB0 light teal for the back
-stripe, #C05E33 orange for the cheeks, belly and legs, #15201E black for the
-bill and the eye dot, #F0EEE6 off-white for the throat and neck patch,
-#B98D22 gold only for the binoculars and the notebook. Sheet background
-#EEF2F1 pale sage; the app tile background #FFFFFF white.
-VARIATIONS: make the four proposals genuinely different from one another - vary
-the bulk of the body, the size of the head, and how playful the poses are. Do
-not return four versions of the same sheet.
-AVOID: outlines, contour lines, gradients, shading, drop shadows, texture, text,
-words, letters, numbers, labels, signatures, realistic feather detail, facets,
-a branch or scenery behind the poses, a different bird from one pose to the next.
-```
-
-**Si la planche sort brouillonne**, la couper en deux envois : d'abord la tuile seule (reprendre
-la demande « icône carrée » des archives en changeant l'oiseau et la palette), puis les poses.
-
-### 2 bis. La retouche en High (décidée le 2026-10-05)
-
-Envoi fait : Mathis a retenu les poses de la planche 4 et la tuile de la planche 3, assemblées et
-recalées sur la charte par `outils/build/mascotte.mjs` (section 3). Plutôt que de garder mes
-rustines, on redemande à Arrow 2, effort **High**, de redessiner proprement à partir de nos fichiers.
-**Deux envois séparés**, une seule mission par image. Prix attendu : 0,40 à 1,20 $ chacun.
-
-**Envoi A** - joindre `notes-privees/mascotte/mascotte-poses.svg` :
-
-Ce que les sources confirment sur le martin-pêcheur d'Europe, mâle adulte (vérifié le 2026-10-05 sur
-[oiseaux.net](https://www.oiseaux.net/oiseaux/martin-pecheur.d.europe.html) et
-[Wikipedia](https://en.wikipedia.org/wiki/Common_kingfisher)) :
-- dessus bleu nuancé de vert ; **dos et croupion d'un bleu plus vif et plus clair** (l'éclair bleu en vol) ;
-- calotte « nettement mouchetée », couvertures des ailes plus sombres « ponctuées de bleu clair » ;
-- devant l'œil, une zone noirâtre avec **une tache rousse** ; derrière l'œil, une **joue rousse bordée de
-  bleu dessous** (la moustache) ; **collier blanc** sur le côté du cou ; gorge blanche à crème ;
-- dessous roux vif ; **pattes rouge vermillon**, petites ;
-- **bec du mâle entièrement noir** (la femelle a la base du bas du bec orange) ;
-- silhouette trapue, grosse tête, queue courte, long bec en dague. Œil sombre.
-- **Dessous de l'aile** : absent des sources écrites lues, constaté sur une photo apportée par Mathis
-  (mâle, aile levée) : roux près du corps, grandes plumes gris-brun bordées de gris clair. La pose en
-  vol montre donc une aile par-dessous.
-
-Le grand œil blanc à point noir n'est pas fidèle (l'œil réel est sombre), mais c'est le style retenu
-pour la famille d'icônes : gardé.
+1. Joindre le fichier : `notes-privees/mascotte/mascotte-poses.svg`
+2. Copier-coller ce texte :
 
 ```text
 Redraw this kingfisher character sheet: keep the same character, the same
@@ -153,14 +49,17 @@ text. The eye stays a white circle with a black dot. Palette exactly: #0B7C77
 teal, #2BBCB0 light teal, #086660 dark teal, #C05E33 orange, #F0EEE6
 off-white, #15201E black, #33403D bill highlight, #C8452B vermilion for the
 legs only, #9E4523 rufous for the underwing coverts, #6B645C grey-brown and
-#B7B2AA pale grey for the underside of the flight feathers, #B98D22 gold for the binoculars and notebook. Transparent
-background.
+#B7B2AA pale grey for the underside of the flight feathers, #B98D22 gold for
+the binoculars and notebook. Transparent background.
 VARIATIONS: four proposals, each a faithful refinement; vary only how the
 shapes are joined and how the markings are drawn, never the poses or the
 character.
 ```
 
-**Envoi B** - joindre `notes-privees/mascotte/mascotte-tuile.svg` :
+### Envoi 2 sur 2 - la tuile du logo
+
+1. Joindre le fichier : `notes-privees/mascotte/mascotte-tuile.svg`
+2. Copier-coller ce texte :
 
 ```text
 Redraw this square app tile of a kingfisher head, keeping the same crop, the
@@ -181,12 +80,74 @@ corners drawn inside the canvas. Palette exactly: #0B7C77, #2BBCB0, #C05E33,
 VARIATIONS: four proposals, vary only the joins and the exact crop.
 ```
 
-**Pour retoucher** une proposition presque bonne, plutôt que relancer :
+### Ensuite
+
+Me rapporter les meilleures propositions (fichiers SVG dans Téléchargements). Pour retoucher une
+proposition presque bonne plutôt que relancer :
 « Change only [un élément] to [nouvelle consigne]. Keep the silhouette, the colours and the
 composition exactly as they are. »
 
 ---
 
+## Le reste du document (pour moi, pas besoin de le lire)
+
+1. Où on en est
+2. Le martin-pêcheur : ce que disent les sources
+3. Quand une image revient
+4. Le style retenu
+5. Ce qu'on a appris
+6. Archives : la première planche, et la session huppe du 28-29/09
+
+L'outil et ses prix : `~/Documents/0-Claude/0-QG/qg/savoir/quiver-ai.md`. Le nom : `NOMS.md`.
+
+---
+
+## 1. Où on en est
+
+| Quoi | État |
+|---|---|
+| Nom | **L'Ornithèque**, arrêté le 29/09 (`NOMS.md`) |
+| Style | trouvé : l'oiseau simple en formes primitives (section 4) |
+| Espèce | **le martin-pêcheur mâle**, choisi le 2026-10-05 |
+| Premier envoi | fait : poses de la planche 4 et tuile de la planche 3 retenues, assemblées et recalées sur la charte par `outils/build/mascotte.mjs` |
+| Logo en place | la huppe, tant que rien d'autre n'est arrêté |
+| Prochaine étape | les deux envois en High, en haut de ce document |
+
+Pourquoi le martin-pêcheur : il porte les couleurs de la charte (`docs/charte-graphique.md`), un
+dos bleu-vert comme l'accent `#0b7c77` et un ventre orange comme `--accent-2` `#c05e33`. Le vrai
+oiseau est un peu plus bleu : on le tire vers le vert de la charte, c'est l'intérêt du choix.
+
+Pourquoi deux envois : la tuile vient de la planche 3 (son bec se lit en petit), les poses de la
+planche 4. Une seule image jointe par demande, conseil du guide d'Arrow 2.
+
+Candidats gardés de la session de septembre, pour comparer seulement :
+
+| Fichier | Réserve |
+|---|---|
+| `assets/logos/candidats/1-oiseau-plat.png` | vient de la planche Freepik : bon pour comparer, pas pour devenir le logo |
+| `assets/logos/candidats/3-tete-sarcelle-clair.png` | la moins contrastée des tuiles |
+
+---
+
+## 2. Le martin-pêcheur : ce que disent les sources
+
+Mâle adulte, vérifié le 2026-10-05 sur
+[oiseaux.net](https://www.oiseaux.net/oiseaux/martin-pecheur.d.europe.html) et
+[Wikipedia](https://en.wikipedia.org/wiki/Common_kingfisher) :
+- dessus bleu nuancé de vert ; **dos et croupion d'un bleu plus vif et plus clair** (l'éclair bleu en vol) ;
+- calotte « nettement mouchetée », couvertures des ailes plus sombres « ponctuées de bleu clair » ;
+- devant l'œil, une zone noirâtre avec **une tache rousse** ; derrière l'œil, une **joue rousse bordée de
+  bleu dessous** (la moustache) ; **collier blanc** sur le côté du cou ; gorge blanche à crème ;
+- dessous roux vif ; **pattes rouge vermillon**, petites ;
+- **bec du mâle entièrement noir** (la femelle a la base du bas du bec orange) ;
+- silhouette trapue, grosse tête, queue courte, long bec en dague. Œil sombre.
+- **Dessous de l'aile** : absent des sources écrites lues, constaté sur une photo apportée par Mathis
+  (mâle, aile levée) : roux près du corps, grandes plumes gris-brun bordées de gris clair.
+
+Le grand œil blanc à point noir n'est pas fidèle (l'œil réel est sombre), mais c'est le style retenu
+pour la famille d'icônes : gardé.
+
+---
 ## 3. Quand une image revient
 
 Dans l'ordre :
@@ -252,9 +213,61 @@ en volume ou sportives sonnaient faux.
 
 ---
 
-## 6. Archives : la session huppe du 28-29/09
+## 6. Archives
 
-### Les styles écartés
+### La première planche (envoyée le 2026-10-05, effort Medium)
+
+Résultat : planches 3 et 4 retenues, copiées dans `notes-privees/mascotte/`.
+
+Une seule planche : cinq poses du même personnage, et dans un coin la tête en tuile carrée pour le
+logo, coupée par le cadre (règle de cadrage, section 4).
+
+```text
+Character sheet for a mascot: a common kingfisher (Alcedo atthis), on ONE
+single sheet, the same character drawn several times.
+
+ON THE SHEET:
+- five full-body poses of the same bird, in a row or a loose grid: perched in
+  side profile facing right; looking through a small pair of binoculars;
+  diving head first; flying with wings spread; holding a tiny notebook in its
+  bill, as if ticking a species off a list;
+- in the bottom right corner, a separate square app tile: the head only, in
+  close-up, in profile facing right, CROPPED by the square frame - the tip of
+  the bill runs off the right edge, the chest and the nape run off the bottom
+  edge. No margin inside the tile.
+
+SUBJECT: a kingfisher - a short plump body, a large head, a very long straight
+dagger-shaped black bill, a short stubby tail, tiny orange legs. Teal-blue
+crown and wings, a bright paler teal stripe down the back, orange cheeks and
+belly, a white throat and a white patch on the side of the neck.
+
+STYLE: simple flat vector illustration, friendly, built from a few primitive
+rounded shapes: one rounded teardrop for the body and head, a leaf-shaped wing
+laid on top in a deeper tone, a short tail of two triangles, one long tapering
+triangle for the bill, the eye a small white circle with a dark dot. Flat areas
+of solid colour, hard clean edges, no outlines, no gradients, no shading, no
+texture.
+CONSISTENCY: it is the SAME character in every pose - same proportions, same
+colours, same eye, same bill length. Only the pose changes.
+ACCURACY: simple shapes, but the proportions follow the real species - the
+oversized bill, the big head, the short tail. A bird a birder would name at a
+glance, never a generic round bird.
+PALETTE: #0B7C77 teal for the crown and wings, #2BBCB0 light teal for the back
+stripe, #C05E33 orange for the cheeks, belly and legs, #15201E black for the
+bill and the eye dot, #F0EEE6 off-white for the throat and neck patch,
+#B98D22 gold only for the binoculars and the notebook. Sheet background
+#EEF2F1 pale sage; the app tile background #FFFFFF white.
+VARIATIONS: make the four proposals genuinely different from one another - vary
+the bulk of the body, the size of the head, and how playful the poses are. Do
+not return four versions of the same sheet.
+AVOID: outlines, contour lines, gradients, shading, drop shadows, texture, text,
+words, letters, numbers, labels, signatures, realistic feather detail, facets,
+a branch or scenery behind the poses, a different bird from one pose to the next.
+```
+
+### La session huppe du 28-29/09
+
+#### Les styles écartés
 
 | Style | Verdict de Mathis |
 |---|---|
@@ -271,7 +284,7 @@ crête débordant en haut, bec sortant à droite, gorge crème pour le contraste
 identifiable, sans air de banque d'images. Le gabarit de la planche (envoi 10) marche aussi, mais
 fait illustration plus qu'identité.
 
-### Les prix mesurés (100 % = 5 $ par semaine)
+#### Les prix mesurés (100 % = 5 $ par semaine)
 
 | Envoi | Effort | Restant avant → après | Coût |
 |---|---|---|---|
@@ -286,7 +299,7 @@ fait illustration plus qu'identité.
 
 Total : **3,09 $ pour onze envois**, soit 44 propositions.
 
-### Demande de l'envoi 11 : l'icône carrée (le modèle à reprendre pour une tuile)
+#### Demande de l'envoi 11 : l'icône carrée (le modèle à reprendre pour une tuile)
 
 ```text
 Square app icon of a hoopoe bird, seen in close-up, head and upper chest only,
@@ -320,7 +333,7 @@ words, letters, numbers, signatures, a white margin around the bird, a rounded
 corner drawn inside the canvas, the whole bird seen at a distance.
 ```
 
-### Demande de l'envoi 10 : le gabarit de la planche, repris tel quel
+#### Demande de l'envoi 10 : le gabarit de la planche, repris tel quel
 
 Test demandé par Mathis : reprendre exactement le format de sa planche de référence, quitte à
 fausser les proportions de l'espèce. L'inverse exact de la règle de justesse, voulu pour trancher
