@@ -64,7 +64,8 @@ pour le logo, sur UNE planche). L'espèce n'est pas choisie (« on va y réfléc
 une charte propre à l'Ornithèque** : ÉCRITE et commitée (a56b34cf), `docs/charte-graphique.md` ; noté au QG
 (`decisions.md` et `charte-graphique.md`, commit db4028c du dépôt qg). Ticket #12 laissé ouvert
 (reste l'espèce de la mascotte et le logo). Titres : essai plus petit / police du texte refusé, on
-garde. Corrigé, NON commité : titres de page tous à la même hauteur (Ma liste avait 2 px de marge
+garde. **TOUT LE DESIGN EST POUSSÉ le 2026-10-05 (76349c82, v687, app.js?v=273), vérifié en
+ligne** (démo : bonne version, police servie, aucune erreur). Corrigé dans ce lot : titres de page tous à la même hauteur (Ma liste avait 2 px de marge
 en plus, le compteur du Birdydex poussait son titre de 4,8 px), titre « Quiz » ajouté (seule page
 sans titre), fondu glissé à l'ouverture du Classement retiré. Démo régénérée. Bancs CONFORME.
 
