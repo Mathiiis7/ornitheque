@@ -1,3 +1,17 @@
+# À FAIRE le 2026-10-07 : un guide des fonctionnalités pour les nouveaux arrivants
+Revue du site TERMINÉE : Mathis valide tout le reste du site (2026-10-06).
+
+Sa demande, telle quelle : un guide pour les nouveaux arrivants, intégré aussi au tuto, qui montre
+toutes les fonctionnalités de l'appli, et qu'on peut rouvrir à tout moment pour les recomprendre.
+À clarifier avec lui au démarrage (questions à choix) : forme (visite guidée qui pointe les écrans,
+ou pages d'explication), où le rouvrir (menu, bouton « ? »), et ce qu'est « le tuto » actuel
+(.tuto-ch / .tuto-nav dans styles.css, guide de Ma liste) - à lire avant de proposer.
+
+Dernier état en local, PAS en ligne : flèches ‹ › de la fiche espèce dessinées en SVG, centrées et
+plus grandes (v724, app.js?v=300). Le caractère « ‹ » en Segoe UI était minuscule et trop bas.
+À lui faire valider, puis pousser.
+
+---
 # EN LIGNE le 2026-10-06 : relecture « recruteur », schémas communs, noms latins en police du texte (v722, app.js?v=298)
 Suite de la revue : la prochaine page qu'il choisira. Il regarde en local, puis on pousse.
 - Noms latins : une seule règle en fin de styles.css, police du texte en italique (Palatino essayé puis refusé).
