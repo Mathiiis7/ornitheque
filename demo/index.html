@@ -99,7 +99,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=299">
+<link rel="modulepreload" href="app.js?v=300">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -1200,8 +1200,8 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
     <div class="sm-backdrop" data-sm-close></div>
     <div class="sm-box">
       <div class="sm-nav" style="position:absolute; top:14px; right:56px; display:flex; gap:6px; z-index:5;">
-        <button type="button" class="sm-nav-btn" id="smNavPrev" title="Espèce précédente (←)" style="background:rgba(255,255,255,.95); border:none; width:34px; height:34px; border-radius:50%; cursor:pointer; font-size:22px; line-height:1; color:var(--ink-sur-blanc); box-shadow:0 2px 8px rgba(0,0,0,.3); display:grid; place-items:center; padding:0;">‹</button>
-        <button type="button" class="sm-nav-btn" id="smNavNext" title="Espèce suivante (→)" style="background:rgba(255,255,255,.95); border:none; width:34px; height:34px; border-radius:50%; cursor:pointer; font-size:22px; line-height:1; color:var(--ink-sur-blanc); box-shadow:0 2px 8px rgba(0,0,0,.3); display:grid; place-items:center; padding:0;">›</button>
+        <button type="button" class="sm-nav-btn" id="smNavPrev" title="Espèce précédente (←)" aria-label="Espèce précédente" style="background:rgba(255,255,255,.95); border:none; width:34px; height:34px; border-radius:50%; cursor:pointer; color:var(--ink-sur-blanc); box-shadow:0 2px 8px rgba(0,0,0,.3); display:grid; place-items:center; padding:0;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.25 5.5 8.75 12l6.5 6.5"/></svg></button>
+        <button type="button" class="sm-nav-btn" id="smNavNext" title="Espèce suivante (→)" aria-label="Espèce suivante" style="background:rgba(255,255,255,.95); border:none; width:34px; height:34px; border-radius:50%; cursor:pointer; color:var(--ink-sur-blanc); box-shadow:0 2px 8px rgba(0,0,0,.3); display:grid; place-items:center; padding:0;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.75 5.5 15.25 12l-6.5 6.5"/></svg></button>
       </div>
       <button class="sm-close" data-sm-close aria-label="Fermer">✕</button>
       <div class="sm-header">
@@ -1342,5 +1342,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=299"></script>
+<script type="module" src="app.js?v=300"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>

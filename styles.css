@@ -1128,9 +1128,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   @media (max-width: 640px) {
     .species-modal .sm-close { width:44px; height:44px; font-size:22px; top:10px; right:10px; }
     .species-modal .sm-nav { top:16px !important; right:64px !important; }
-    /* ‹ › en Segoe UI : le chevron y est 30 % plus petit qu'en Arial (5 px de haut contre 7 à 16 px,
-       mesuré au canvas le 2026-10-06), d'où 22 px sur ordinateur et 27 px au doigt. */
-    .species-modal .sm-nav-btn { width:40px !important; height:40px !important; font-size:27px !important; }
+    /* Flèches dessinées en SVG, plus en caractère « ‹ » : en Segoe UI il était minuscule et posé trop
+       bas (refusé deux fois le 2026-10-06) ; un dessin se centre exactement, quelle que soit la police. */
+    .species-modal .sm-nav-btn { width:40px !important; height:40px !important; }
+    .species-modal .sm-nav-btn svg { width:22px; height:22px; }
   }
   /* Nav tabs : pills colorees arrondies */
   .species-modal .sm-tabs { display:flex; gap:6px; padding:12px 16px; background:var(--surface-2); flex:none; border-bottom:1px solid var(--line); overflow-x:auto; scrollbar-width:none; }
