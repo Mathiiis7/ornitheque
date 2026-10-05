@@ -1,5 +1,6 @@
-# FAIT le 2026-10-06 (commité, PAS poussé) : relecture « recruteur » et schémas communs, v720, app.js?v=297
+# EN LIGNE le 2026-10-06 : relecture « recruteur », schémas communs, noms latins en police du texte (v722, app.js?v=298)
 Suite de la revue : la prochaine page qu'il choisira. Il regarde en local, puis on pousse.
+- Noms latins : une seule règle en fin de styles.css, police du texte en italique (Palatino essayé puis refusé).
 
 - Infos privées retirées du public : trophées en pause (nom complet d'un ami) déplacés dans
   notes-privees/TROPHEES-EN-PAUSE.md, « Maël ne l'a pas » ôté du Pic noir, prénoms du banc de perf
