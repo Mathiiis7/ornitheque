@@ -2288,13 +2288,13 @@ function ingest(filename, text){
     if(existing){
       existing.obs++;
       if(inFR) existing.fr = true;                 // au moins une obs en France
-      // Regle de priorite pour l'obs "canonique" affichee (date/loc/country/coords) :
-      //   1. Si l'obs actuelle est FR et l'existing est etranger, on ecrase (FR prime).
-      //   2. Sinon, on garde l'obs la plus ancienne du meme "rang" (FR ou etranger).
-      const currIsFR = inFR;
-      const existingIsFR = existing.country === 'FR';
-      const shouldReplace = (currIsFR && !existingIsFR)
-        || (currIsFR === existingIsFR && date && (!existing.date || date < existing.date));
+      // L'obs "canonique" affichee (date/loc/country/coords) est la PREMIERE observation, quel
+      // que soit le pays. Jusqu'au 2026-10-05 une obs en France passait devant une obs plus
+      // ancienne a l'etranger ; Mathis l'a refuse : « la 1re observation reste la 1re ». Ce
+      // qui a besoin de savoir si l'espece a ete vue en France lit existing.fr, pose plus haut.
+      // Comparaison sur parseDate().ord et non sur le texte : « 22 Jul 2026 » ne se trie pas.
+      const ordCur = parseDate(date)?.ord || 0, ordOld = parseDate(existing.date)?.ord || 0;
+      const shouldReplace = !!date && (!ordOld || (ordCur && ordCur < ordOld));
       if(shouldReplace){
         if(date) existing.date = date;
         existing.loc = loc; existing.country = cc;
@@ -2508,7 +2508,9 @@ const countsFR = v => !foreignTick(v);
 // Compte pour les trophees rarete : exclut TOUS les exotiques (tous en tier 0 maintenant,
 // donc hors bareme rarete 1-9) et les especes hidden. Reste : les vraies especes sauvages.
 const _countsForRarity = v => countsFR(v) && !isExotic(v.sci);
-const seenFR = v => !v.country || v.country==='FR';  // observé EN France (ou pays inconnu) - pour Mike Horn
+// Observé EN France (ou pays inconnu) - pour Mike Horn. v.fr d'abord : depuis le 2026-10-05 le
+// pays retenu est celui de la 1re obs, qui peut etre etranger pour une espece vue aussi en France.
+const seenFR = v => v.fr === true || !v.country || v.country==='FR';
 const holdersFR = u => u.counts!=null ? u.counts : [...u.seenBy.values()].filter(countsFR).length;
 // Pays (code ISO 2 lettres)
 // Drapeau emoji : marche sur mobile mais s'affiche « US »/« FR » sur Windows desktop.
@@ -3129,6 +3131,8 @@ function renderMatrix({universe,N}){
         if(nCols && !displayPeople.some(p=>p.id===pid)) continue;
         const cc = v.country || 'FR';
         if(!state.countryExcl.has(cc)) return true;
+        // 1re obs a l'etranger mais vue aussi en France : la France compte si elle n'est pas masquee
+        if(v.fr === true && !state.countryExcl.has('FR')) return true;
       }
       return false;
     });
