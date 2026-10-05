@@ -124,8 +124,13 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      attend une saisie - et l'exclusion passe par :where(), qui ne compte pour rien dans la
      specificite : avec :not() la regle serait montee a 0-1-3 et aurait ecrase les
      cursor:pointer des composants, soit exactement l'inverse du but. */
+  :root { --curseur-aide: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Ctext x='7' y='10.5' text-anchor='middle' font-family='system-ui,sans-serif' font-size='11' font-weight='700' stroke='%23fff' stroke-width='2.6' stroke-linejoin='round' paint-order='stroke'%3E?%3C/text%3E%3Ctext x='7' y='10.5' text-anchor='middle' font-family='system-ui,sans-serif' font-size='11' font-weight='700' fill='%23000'%3E?%3C/text%3E%3C/svg%3E") 4 2, help; }
   :where(:not(select, input, textarea))[data-tip]:where(:not([data-tip=""])),
-  :where(:not(select, input, textarea))[title]:where(:not([title=""])) { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Ctext x='7' y='10.5' text-anchor='middle' font-family='system-ui,sans-serif' font-size='11' font-weight='700' stroke='%23fff' stroke-width='2.6' stroke-linejoin='round' paint-order='stroke'%3E?%3C/text%3E%3Ctext x='7' y='10.5' text-anchor='middle' font-family='system-ui,sans-serif' font-size='11' font-weight='700' fill='%23000'%3E?%3C/text%3E%3C/svg%3E") 4 2, help; }
+  :where(:not(select, input, textarea))[title]:where(:not([title=""])) { cursor: var(--curseur-aide); }
+  /* Les trois tris du Classement ouvrent une bulle d'explication au survol : ils prennent le
+     « ? » malgre leur clic, a la demande de Mathis (2026-10-05) - c'est la regle de tout ce
+     qui explique au survol. */
+  #boardModes button { cursor: var(--curseur-aide); }
   /* L'ascenseur est toujours la. Sans ca il apparait des que le contenu depasse la hauteur
      de l'ecran et disparait quand il rentre - et toute la page, centree, glisse
      lateralement a chaque fois. Ca sautait entre un birdydex filtre sur une seule espece et
@@ -545,7 +550,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .tbl-scroll table { width:100%; }
   .tbl-scroll thead th:first-child, .tbl-scroll tbody td.sp {
     width:260px; min-width:260px; max-width:260px; }
-  .tbl-scroll thead th:nth-child(2), .tbl-scroll tbody tr td:nth-child(2) {
+  #matrix:not(.sans-rarete) .tbl-scroll thead th:nth-child(2), #matrix:not(.sans-rarete) .tbl-scroll tbody tr td:nth-child(2) {
     width:140px; min-width:140px; max-width:140px; }
   .tbl-scroll thead th:last-child, .tbl-scroll tbody td.cnt {
     width:78px; min-width:78px; max-width:78px; }

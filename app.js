@@ -2988,6 +2988,11 @@ function renderMatrix({universe,N}){
     return u.tier;
   };
   const rarHead = rMode==='real' ? 'Rareté réelle' : 'Rareté';
+  // Classement au nombre d'especes : la rarete n'y compte pour rien, sa colonne et ses
+  // pastilles disparaissent (Mathis, 2026-10-05). La classe libere aussi la largeur fixe
+  // que styles.css donne a la 2e colonne, sinon elle tomberait sur le premier joueur.
+  const avecRar = state.boardMode !== 'count';
+  $('#matrix')?.classList.toggle('sans-rarete', !avecRar);
 
   // option : ajouter tous les oiseaux de France non encore observés par le groupe
   let uni = universe;
@@ -3031,7 +3036,7 @@ function renderMatrix({universe,N}){
 
   // Ré-écriture différée (après le calcul de displayPeople plus bas), stockée pour évaluation.
   const buildHead = (peopleForHead) => `<tr>
-    <th>Espèce</th><th>${rarHead}</th>
+    <th>Espèce</th>${avecRar ? `<th>${rarHead}</th>` : ''}
     ${peopleForHead.map(p=>`<th class="pcol${p.id===state.playerMain?' is-main':''}" style="--series:var(--s${p.si})"><span class="cap"><span class="dot"></span>${esc(p.name)}${p.id===state.playerMain?' <span class="youtag" title="Liste principale">★</span>':''}</span></th>`).join('')}
     <th class="pcol">Vues</th></tr>`;
 
@@ -3147,7 +3152,7 @@ function renderMatrix({universe,N}){
   $('#thead').innerHTML = buildHead(displayPeople);
   const tb=$('#tbody'), cards=$('#matrixCards');
   if(!list.length){
-    tb.innerHTML=`<tr><td colspan="${displayPeople.length+3}" style="text-align:center;color:var(--ink-3);padding:26px;">Aucune espèce ne correspond.</td></tr>`;
+    tb.innerHTML=`<tr><td colspan="${displayPeople.length+(avecRar?3:2)}" style="text-align:center;color:var(--ink-3);padding:26px;">Aucune espèce ne correspond.</td></tr>`;
     cards.innerHTML=`<div class="empty-note" style="margin-top:0;">Aucune espèce ne correspond.</div>`;
     return;
   }
@@ -3165,7 +3170,7 @@ function renderMatrix({universe,N}){
     }).join('');
     return `<tr class="${u.missing?'missing':''}">
       <td class="sp"><span class="sp-link" data-sci="${esc(u.sci||u.common)}">${esc(u.common)}</span>${state.showSci && u.sci?`<span class="sci">${esc(u.sci)}</span>`:''}</td>
-      <td><span class="chip" style="--tc:${t.color}">${t.label}</span></td>
+      ${avecRar ? `<td><span class="chip" style="--tc:${t.color}">${t.label}</span></td>` : ''}
       ${cells}
       <td class="cnt">${k}/${N}</td></tr>`;
   }).join('');
@@ -3177,13 +3182,13 @@ function renderMatrix({universe,N}){
       .map(p=>{ const v=u.seenBy.get(p.id); const foreign=foreignTick(v); const cc=v.country; const abroad=cc&&cc!=='FR';
         const ttl = abroad?`Vu en ${countryLabel(cc)}${foreign?' - hors compétition':''}`:'';
         return `<span class="mc-person${foreign?' is-foreign':''}" style="--series:var(--s${p.si})"${ttl?` title="${esc(ttl)}"`:''}><span class="dot"></span>${esc(p.name)}${abroad?'<span class="abroad-mark-inline">'+(flagImg(cc)||'🌍')+'</span>':''}</span>`; }).join('');
-    return `<div class="mcard ${u.missing?'missing':''}" style="border-left-color:${t.color}">
+    return `<div class="mcard ${u.missing?'missing':''}"${avecRar ? ` style="border-left-color:${t.color}"` : ''}>
       <div class="mc-head">
         <div class="mc-sp"><span class="sp-link" data-sci="${esc(u.sci||u.common)}">${esc(u.common)}</span>${state.showSci && u.sci?`<span class="mc-sci">${esc(u.sci)}</span>`:''}</div>
         <span class="mc-count">${k}/${N}</span>
       </div>
       <div class="mc-row">
-        <span class="chip" style="--tc:${t.color}">${t.label}</span>
+        ${avecRar ? `<span class="chip" style="--tc:${t.color}">${t.label}</span>` : ''}
         <div class="mc-people">${seers}</div>
       </div>
     </div>`;
@@ -3206,6 +3211,9 @@ function _bulleSiCoupe(el){
   if(t && el.scrollWidth > el.clientWidth + 1) el.setAttribute('data-tip', t);
   else el.removeAttribute('data-tip');
 }
+// Regle de toute explication au survol (Mathis, 2026-10-05) : curseur « ? » et un quart de
+// seconde d'attente avant d'afficher. Sert a l'infobulle generale et a la bulle des tris.
+const DELAI_SURVOL = 250;
 function _initInfobulle(){
   if(document.getElementById('tipbox')) return;
   const box = document.createElement('div');
@@ -3214,7 +3222,9 @@ function _initInfobulle(){
   let cible = null, minuteur = null, dernier = { clientX: 0, clientY: 0 };
   // Delai avant apparition, comme le fait le navigateur : sans lui, un simple passage de la
   // souris sur une rangee de boutons fait clignoter une infobulle par bouton.
-  const DELAI = 450;
+  // 450 -> 250 ms le 2026-10-05 : la regle de toute explication au survol, decidee par Mathis
+  // (curseur « ? » et un quart de seconde). DELAI_SURVOL la porte, la bulle des tris aussi.
+  const DELAI = DELAI_SURVOL;
   // La boite suit le curseur et se rabat quand elle toucherait un bord : sinon un survol
   // pres du bas de l'ecran l'affiche hors champ.
   // La boite suit le curseur, comme l'infobulle du navigateur. L'ancrage sur l'element a ete
@@ -10214,8 +10224,13 @@ document.querySelectorAll('#tutoDialog, #prenomDialog, #ajoutDialog').forEach(d 
 // Classement : la bulle de chaque tri, au survol ou au focus clavier de son bouton. Au doigt,
 // le toucher declenche aussi mouseenter : la bulle s'ouvre au choix du tri et part au toucher
 // suivant ailleurs.
+let _triBulleMinuteur = null;
 document.querySelectorAll('#boardModes button').forEach(b => {
   const montre = () => {
+    clearTimeout(_triBulleMinuteur);
+    _triBulleMinuteur = setTimeout(montreMaintenant, DELAI_SURVOL);
+  };
+  const montreMaintenant = () => {
     const bulle = $('#triBulle'); if(!bulle) return;
     bulle.innerHTML = _bulleTri(b.dataset.mode);
     bulle.hidden = false;
@@ -10223,7 +10238,7 @@ document.querySelectorAll('#boardModes button').forEach(b => {
     const rangee = bulle.parentElement;
     bulle.style.left = Math.max(0, Math.min(b.offsetLeft, rangee.clientWidth - bulle.offsetWidth)) + 'px';
   };
-  const cache = () => { const bulle = $('#triBulle'); if(bulle) bulle.hidden = true; };
+  const cache = () => { clearTimeout(_triBulleMinuteur); const bulle = $('#triBulle'); if(bulle) bulle.hidden = true; };
   b.addEventListener('mouseenter', montre); b.addEventListener('focus', montre);
   b.addEventListener('mouseleave', cache); b.addEventListener('blur', cache);
   b.addEventListener('keydown', e => { if(e.key === 'Escape') cache(); });
