@@ -1,3 +1,36 @@
+# Fait le 2026-10-05 soir : logo et mascotte EN LIGNE (poussé, vérifié sur la démo en ligne)
+
+- `1ab89c0c` : le martin-pêcheur entier (retouché par Mathis dans Figma, source
+  `assets/logos/sources/martin-figma.svg`) remplace la huppe : `martin.svg`, sur l'écran de
+  connexion et l'écran d'attente. `mix-blend-mode:multiply` retiré (noircissait le logo en sombre).
+- `5bcd682a` puis le commit suivant : le logo = la tête dans un cadre vert pâle #ddedec (essai n° 17), sur sapin #1d524e en thème sombre (`logo-sombre.svg`, bascule dans app.js après le bouton Thème) : `logo.svg`
+  (entête, favicon), `logo-192/512.png` pleins (manifeste, apple-touch). v691, app.js?v=277.
+- Tout se refait avec `node outils/build/icones-martin.mjs` ; les essais de cadrage et de fonds avec
+  `tete-martin.mjs` (sortie dans `assets/logos/candidats/`, non suivi).
+- Bancs CONFORME, vérifié en local ordinateur + téléphone, clair + sombre.
+
+Reste : les poses de la mascotte (demandes Arrow 2 à réécrire avec
+le martin Figma joint, voir plus bas) ; la vidéo attend ce logo ; les fichiers huppe
+(`assets/logos/huppe*`) ne servent plus au site, à retirer quand il le dira.
+
+---
+
+# Prochain sujet (décidé le 2026-10-05) : la mascotte
+
+Design et charte finis et en ligne (voir plus bas, section du 2026-10-02 complétée le 05/10).
+**Espèce choisie le 2026-10-05 : le martin-pêcheur** (il porte l'accent bleu-vert et l'orange de
+la charte). Demande Arrow 2 de la fiche personnage écrite : `docs/LOGOS-DEMANDES.md`, section
+« La mascotte ». Envoyée ; Mathis a retenu deux planches, copiées dans `notes-privees/mascotte/`
+(planche-3.svg, planche-4.svg). Choix : **poses de la 4, tuile de la 3** (meilleur bec en petit).
+`node outils/build/mascotte.mjs` en fait `mascotte-poses.svg` et `mascotte-tuile.svg` : couleurs
+recalées sur la charte, fentes bouchées (2 841 pixels de trou au rendu 2400 px -> 0 ; les 336
+restants sont l'espace normal entre les pattes). Comparaison avant/après :
+localhost:8765/notes-privees/mascotte/voir.html. Trois retouches High ont suivi (retouche-1 à 3.svg, bilan dans LOGOS-DEMANDES section 1). **Nouvelle méthode décidée : valider d'abord le perché seul**, base = perché de la retouche 3 avec les pattes du 1er envoi greffées par `node outils/build/perche-pattes.mjs` -> `perche-base-2.svg` (échelle des pattes 1,03 réglée avec Mathis, reflet de l'œil gardé). Comparaison A/D/E : localhost:8765/notes-privees/mascotte/perches.html. **E validé par Mathis ; il le retouche dans Canva et rapporte le fichier (SVG de préférence)**, puis la demande en tête de LOGOS-DEMANDES est périmée (Arrow 2 a fait des pattes minuscules) : écrire une demande par pose avec perche-base-2.svg joint. Puis chaque pose seule, ce perché joint. Arrow 2 a échoué deux fois en fin de journée (crédit épuisé ? non vérifié). Ensuite : tuile au banc des
+logos, puis manifeste, favicon, entête, démo ; décider où vont les poses. Charte à respecter : `docs/charte-graphique.md`. Logos candidats déjà essayés : mémoire
+« Logo : deux candidats retenus » et `assets/logos/candidats/` (hors git).
+
+---
+
 # Fait le 2026-10-05 : cartes GBIF en ligne (les deux dépôts poussés, démo en ligne vérifiée)
 
 Commits : `afd03b30` (ce dépôt : code, crédits, manifeste `data/cartes-index.json`, anciens
