@@ -1,6 +1,8 @@
 // Fabrique le logo martin-pêcheur et ses icônes à partir du dessin retouché par Mathis dans Figma.
 //
-// Source : assets/logos/sources/martin-figma.svg (fond gris de Figma déjà retiré).
+// Source : assets/logos/sources/martin-figma.svg (fond gris de Figma déjà retiré). Version
+// définitive du 2026-10-05 : les points de la calotte et de l'aile de la planche Arrow, reportés
+// par archives/logos-motifs/motifs-martin.mjs puis retouchés par Mathis dans Figma.
 // Sorties, dans assets/logos/ :
 //   martin.svg        le martin entier, recadré au carré avec 4 % de marge (une icône collée
 //                     aux bords paraît sale). Plus affiché depuis le 2026-10-05 (la tête
@@ -25,8 +27,16 @@ const browser = await chromium.launch();
 const page = await browser.newPage();
 await page.setContent(brut);
 const b = await page.evaluate(() => {
-  const r = document.querySelector('svg').getBBox();
-  return { x: r.x, y: r.y, w: r.width, h: r.height };
+  // Les groupes masqués (points de la calotte et de l'aile, version du 2026-10-05) débordent
+  // du dessin avant masquage - une bande de l'aile descend jusqu'à x = 0,08 - et getBBox
+  // ignore les masques : on les laisse hors du calcul, ils restent dans la tête et l'aile.
+  const els = [...document.querySelector('svg').children].filter((e) => e.tagName !== 'mask' && !e.hasAttribute('mask'));
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const e of els) {
+    const r = e.getBBox();
+    x0 = Math.min(x0, r.x); y0 = Math.min(y0, r.y); x1 = Math.max(x1, r.x + r.width); y1 = Math.max(y1, r.y + r.height);
+  }
+  return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
 });
 
 const cote = Math.max(b.w, b.h) * 1.08;

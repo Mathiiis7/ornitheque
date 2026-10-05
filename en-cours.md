@@ -10,7 +10,7 @@
 - Bancs CONFORME, vérifié en local ordinateur + téléphone, clair + sombre.
 - `09c858d1` puis le suivant (poussés) : la tête encadrée aussi sur les écrans de connexion et d'attente (suit clair/sombre), fond foncé à #d3e7e6 (accent à 18 %). Le choix d'un logo personnel en cliquant sur la pastille est retiré (v693, app.js?v=279).
 
-- Rangé le 2026-10-05 : essais dans `notes-privees/logos-candidats/`, huppe dans `archives/logos-huppe/`. **En attente : Mathis retouche `assets/logos/sources/martin-motifs.svg` dans Figma** (motifs Arrow reportés par `outils/build/motifs-martin.mjs`), puis le brancher dans icones-martin.mjs et pousser.
+- **Logo définitif (2026-10-05, poussé)** : la tête avec les points de la calotte et de l'aile (motifs Arrow reportés puis retouchés par Mathis dans Figma) ; source unique `assets/logos/sources/martin-figma.svg`, l'outil des motifs est dans `archives/logos-motifs/`. Essais rangés dans `notes-privees/logos-candidats/`, huppe dans `archives/logos-huppe/`. v695.
 
 Reste : les poses de la mascotte (demandes Arrow 2 à réécrire avec
 le martin Figma joint, voir plus bas) ; la vidéo attend ce logo ; les fichiers huppe
