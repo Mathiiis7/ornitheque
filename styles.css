@@ -375,7 +375,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .btn:hover { filter:brightness(1.06); }
   .btn.ghost { background:transparent; color:var(--accent-ink); border:1px solid var(--line-2); }
   .btn.ghost:hover { border-color:var(--accent); }
-  .btn.tiny { padding:5px 10px; font-size:12.5px; }
+  .btn.tiny { padding:5px 10px; font-size:14px; }
   .intake-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; align-items:center; }
   /* Cache le conteneur quand le statut est vide : pas d'espace vide sous la zone de depot */
   .intake-actions:has(#myStatus:empty) { display:none; }
@@ -644,7 +644,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .filt-sel:focus { outline:3px solid var(--accent); }
   /* Custom region picker (fiches especes) : dropdown riche avec bars d'abondance. */
   .reg-picker { position:relative; display:inline-block; }
-  .reg-picker-trigger { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line-2); background:var(--surface); color:var(--ink-2); font:inherit; font-size:11px; padding:4px 8px; border-radius:6px; cursor:pointer; font-weight:600; }
+  .reg-picker-trigger { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line-2); background:var(--surface); color:var(--ink-2); font:inherit; font-size:14px; padding:5px 10px; border-radius:9px; cursor:pointer; font-weight:600; min-height:34px; box-sizing:border-box; }
   .reg-picker-trigger:hover { border-color:var(--accent); }
   /* overscroll-behavior:contain : arrivé en butée de la liste, la molette ne doit pas
      enchaîner sur le défilement de la fiche derrière.

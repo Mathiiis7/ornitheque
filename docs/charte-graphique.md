@@ -128,9 +128,10 @@ règles communes dans le bloc « Schémas communs », juste avant celui du doigt
 | **Texte d'aide, état vide** (`.help`, « Aucune photo… ») | Trophées, Photos, Carte, Quiz, Tchat, À propos | 14 px, `--ink-3`. Plus aucune taille écrite à la main par-dessus. |
 | **Ligne de méta** (auteur, date, heure, compteur) | Fil, Tchat, Requêtes, Quiz, Carte | 14 px, `--ink-3` ; le nom de l'auteur en 600, `--ink-2`. |
 | **Petite étiquette en capitales** | en-têtes de tableaux, AVATAR, RARETÉ, NIVEAU, EN COURS, titres des cartes de la fiche | 13 px, 700, capitales, espacement 0,4 px, `--ink-3`. Le modèle est `.mylist-th`. |
-| **Contrôle de filtre** : liste déroulante (`.filt-sel`, `.cp-btn`), choix collés (`.seg`), jetons de personne (`.whochip`, `.person-chip`), modes du Quiz, bouton Filtres | Classement, Birdydex, Carte, Trophées, Quiz, Fil | **34 px de haut**, texte 14 px en 600. Coins de 9 px pour les rectangles, ronds pour les jetons. Avant : de 27 à 37 px, de 12 à 13 px. |
+| **Contrôle de filtre** : liste déroulante (`.filt-sel`, `.cp-btn`), choix collés (`.seg`), jetons de personne (`.whochip`, `.person-chip`), modes du Quiz, bouton Filtres | Classement, Birdydex, Carte, Trophées, Quiz, Fil, entête de la fiche espèce (pays, région) | **34 px de haut**, texte 14 px en 600. Coins de 9 px pour les rectangles, ronds pour les jetons. Avant : de 27 à 37 px, de 12 à 13 px. |
 | **Choisir une personne** | Trophées, Classement (jetons), Carte, Fil (liste) | premier choix « Tout le monde » partout (la Carte disait « Toutes les personnes ») ; soi-même suivi de « (toi) ». |
 | **Choisir une rareté** | Carte, Fil, Birdydex | toujours de 1 (le plus commun) à 10 (le plus rare) ; la Carte allait de 10 à 1. |
+| **Petit bouton** (`.btn.tiny` : Copier, Envoyer…) | fenêtres, Profil | 14 px (12,5 avant). |
 | **Petit titre de bloc** | Ma liste, Profil, À propos | `.bloc-titre` : Source Serif 4, 17 px, 600. Les titres de l'À propos étaient en Segoe UI 16 px. Les emojis devant les titres de blocs restent (décidé par Mathis le 2026-10-06). |
 
 ## Ton des textes

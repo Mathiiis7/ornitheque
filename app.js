@@ -123,7 +123,7 @@ function _top(etape){
       + '   (millisecondes depuis l\'ouverture de la page)'
       + (_chrono.poids ? '\n   reçu : ' + _chrono.poids.membres + ' membre(s), '
           + _chrono.poids.especes + ' espèces au total, ' + _chrono.poids.ko + ' Ko avant compression'
-          + ' — soit ' + Math.round(_chrono.poids.ko * 1024 / Math.max(1, _chrono.poids.especes))
+          + ' - soit ' + Math.round(_chrono.poids.ko * 1024 / Math.max(1, _chrono.poids.especes))
           + ' octets par espèce' : '')
       + _chronoReseau());
     // Le releve ci-dessus est incomplet par construction : une requete n'entre dans
@@ -1367,7 +1367,7 @@ function _openCountryPicker(currentCode, opts = {}){
             // plus souvent ce que le palier dit deja, et il empechait d'aligner les deux listes
             // du meme selecteur.
             const barW = _longueurBarre(vAn);
-            titreLigne = (reg.name || cc) + ' — ' + lbl
+            titreLigne = (reg.name || cc) + ' - ' + lbl
               + (vAn > 0 ? ' · ' + fmtPct(vAn) + ' des listes sur l\'année' : '');
             // La place du rond est reservee meme quand il n'y a pas de statut, sinon les
             // pourcentages ne s'alignaient plus d'une ligne a l'autre.
@@ -2328,7 +2328,7 @@ function ingest(filename, text){
 
 // Le nom de repli quand on n a VRAIMENT rien. Sorti en constante le 2026-09-28 pour que le
 // depot puisse le reconnaitre et demander le prenom, au lieu de l enregistrer tel quel.
-const NOM_ABSENT = '⚠️ Sans nom - modifiez « Ma liste » → nom';
+const NOM_ABSENT = '⚠️ Sans nom - modifie « Ma liste » → nom';
 function cleanName(base, n){
   let s = (base||'').replace(/[_\-]+/g,' ').replace(/\s+/g,' ').trim();
   // Fallback très visible pour repérer un compte sans nom (l'utilisateur oubliera moins de se renommer).
@@ -2637,7 +2637,7 @@ function build(){
 function renderMembers(){
   const el=$('#people'); if(!el) return;
   if(!state.people.length){
-    el.innerHTML = '<div class="pcards-empty">Personne n\'a encore chargé sa liste. Soyez le premier !</div>';
+    el.innerHTML = '<div class="pcards-empty">Personne n\'a encore chargé sa liste. Sois le premier !</div>';
     return;
   }
   const admin = isAdmin();
@@ -6121,7 +6121,7 @@ function renderChat(msgs){
   const avatarById = new Map(realPeople.map(p=>[p.id, p.avatar || '']));
   const msgById = new Map(msgs.map(m => [m.id, m]));
   const nearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
-  if(!msgs.length){ box.innerHTML='<div class="chat-empty">Aucun message. Lancez la conversation ! 🐦</div>'; return; }
+  if(!msgs.length){ box.innerHTML='<div class="chat-empty">Aucun message. Lance la conversation ! 🐦</div>'; return; }
   const now = Date.now();
   const EDIT_WINDOW_MS = 5 * 60 * 1000;   // 5 min pour editer son propre message
   // Load more en haut : visible si on a atteint la limite courante (potentiellement plus dispo)
@@ -6622,7 +6622,7 @@ const REQ_STATUS = { todo:{label:'À faire', cls:'todo'}, doing:{label:'En cours
 const REQ_STATUS_ORDER = ['todo','doing','done'];
 function renderRequests(){
   const box=$('#reqList'); if(!box) return;
-  if(!requests.length){ box.innerHTML='<p class="help" style="margin:0;">Aucune requête pour l\'instant. Soyez le premier à proposer une idée ! 💡</p>'; return; }
+  if(!requests.length){ box.innerHTML='<p class="help" style="margin:0;">Aucune requête pour l\'instant. Sois le premier à proposer une idée ! 💡</p>'; return; }
   // enrichir + trier : votes desc, puis date desc
   const enriched = requests.map(r=>({...r, votes:(reqVotesMap.get(r.id)?.size)||0, iVoted:!!(myUid && reqVotesMap.get(r.id)?.has(myUid))}));
   enriched.sort((a,b)=> (b.votes-a.votes) || ((b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0)));
@@ -7514,7 +7514,7 @@ function _renderModeMine(el){
     let c=0; for(const v of a.values()) if(typeof v.lat!=='number') c++;
     return n+c;
   },0);
-  if(withoutCoords>0){ note.style.display=''; note.innerHTML=`💡 ${withoutCoords} observation${withoutCoords>1?'s':''} sans coordonnées (import ancien ou life list simple). <b>Réimportez via <a href="https://ebird.org/downloadMyData" target="_blank" rel="noopener">Download My Data</a></b> pour les afficher.`; }
+  if(withoutCoords>0){ note.style.display=''; note.innerHTML=`💡 ${withoutCoords} observation${withoutCoords>1?'s':''} sans coordonnées (import ancien ou life list simple). <b>Réimporte via <a href="https://ebird.org/downloadMyData" target="_blank" rel="noopener">Download My Data</a></b> pour les afficher.`; }
   else note.style.display='none';
   // Timeline
   _tlDates = [...new Set(allPts.map(p=>p.dateOrd).filter(x=>x!=null))].sort((a,b)=>a-b);
@@ -9807,7 +9807,7 @@ async function saveMyList(name, speciesMap, regions){
         '« ' + jumelle.name + ' » est déjà dans la ligue, avec ' + jumelle.species.size + ' espèces.\n\n'
         + 'Si c\'est toi, tu es connecté avec un autre compte que la dernière fois. Continuer\n'
         + 'créera une SECONDE ligne à ton nom, et il faudra demander à un admin d\'en retirer\n'
-        + 'une. Mieux vaut annuler et te reconnecter avec ton compte habituel — au besoin via\n'
+        + 'une. Mieux vaut annuler et te reconnecter avec ton compte habituel - au besoin via\n'
         + '« Mot de passe oublié ».\n\nCharger quand même ma liste ?');
       if(!ok) return;
     }
@@ -12526,9 +12526,9 @@ async function _renderExoticMap(sci, cc){
     const isNative = !cat && nativeZones.has(code);
     const fill = cat ? CAT_COLOR[cat] : (isNative ? NATIVE_COLOR : '#d4d4d8');
     const nomR = nomZone(cc, code, r.name);
-    const title = cat ? `${nomR} — ${libelleExo(cat, true)}`
-                : isNative ? `${nomR} — pas de classement exotique (présente, eBird ne la tague pas ici)`
-                : `${nomR} — non listé (sauvage / absent)`;
+    const title = cat ? `${nomR} - ${libelleExo(cat, true)}`
+                : isNative ? `${nomR} - pas de classement exotique (présente, eBird ne la tague pas ici)`
+                : `${nomR} - non listé (sauvage / absent)`;
     return _pathZone(dRemplace || r.path, fill, title, selection.has(code), selection.size > 0,
       zonesSelectionnables.has(code) ? code : null, echelle);
   };
@@ -13381,16 +13381,16 @@ async function _renderRarityMap(sci, cc){
     }
     const nom = nomZone(cc, z, paths.zones[z].name);
     let fill = ABSENT;
-    let titre = surAnnee ? `${nom} — jamais observée` : `${nom} — absente en ${libellePeriode}`;
+    let titre = surAnnee ? `${nom} - jamais observée` : `${nom} - absente en ${libellePeriode}`;
     if(v > 0){
       const tier = annualFreqToTier(v);
       fill = realColor(tier);
       const lbl = (typeof REAL_LABELS === 'object' && REAL_LABELS[tier]) || ('tier ' + tier);
       titre = surAnnee
-        ? `${nom} — ${lbl} (${tier}) · ${fmtP(v)} sur l'année` +
+        ? `${nom} - ${lbl} (${tier}) · ${fmtP(v)} sur l'année` +
           (moisPic >= 0 ? ` · jusqu'à ${fmtP(pic)} en ${_MOIS_COURTS[moisPic]}` : '') +
           ` · présente ${nbMois} mois sur 12`
-        : `${nom} — ${lbl} (${tier}) · ${fmtP(v)} des listes`;
+        : `${nom} - ${lbl} (${tier}) · ${fmtP(v)} des listes`;
     }
     // Cliquable seulement si le selecteur connait la zone : sans cela on pourrait
     // selectionner un code que le libelle du declencheur ne sait pas nommer, et la
@@ -13421,7 +13421,7 @@ async function _renderRarityMap(sci, cc){
     const t = vu ? annualFreqToTier(valeur) : 0;
     const lbl = vu ? ((typeof REAL_LABELS === 'object' && REAL_LABELS[t]) || ('palier ' + t))
                    : (annuel ? 'jamais notée' : 'absente ce mois-ci');
-    const tip = label + ' · ' + nomPort + ' — ' + (vu ? fmtP(valeur) + ' des listes · ' + lbl + ' (' + t + ')' : lbl);
+    const tip = label + ' · ' + nomPort + ' - ' + (vu ? fmtP(valeur) + ' des listes · ' + lbl + ' (' + t + ')' : lbl);
     // L'etat courant ne peut pas se marquer par la couleur, elle porte deja le palier :
     // un anneau sombre autour de la pastille, detache du fond par un lisere clair.
     const anneau = actif ? ' box-shadow:0 0 0 1.5px var(--surface-2, #fafafa), 0 0 0 3px var(--ink-2);' : '';
@@ -13593,8 +13593,8 @@ function _renderSpeciesRarityCard(key){
       // nombre de mois de presence pour que la saisonnalite reste lisible.
       const fmt = fmtPct;
       const titre = absent
-        ? `${s.name} — jamais observée`
-        : `${s.name} — ${fmt(s.score)} sur l'année` +
+        ? `${s.name} - jamais observée`
+        : `${s.name} - ${fmt(s.score)} sur l'année` +
           (s.moisPic >= 0 ? ` · jusqu'à ${fmt(s.pic)} en ${_MOIS_COURTS[s.moisPic]}` : '') +
           ` · présente ${s.nbMois} mois sur 12`;
       const catZone = (statutsZone[s.code] || {})[k] || '';
@@ -13632,7 +13632,7 @@ function _renderSpeciesRarityCard(key){
   // reglage global de la fiche. Repli dans la carte si l'en-tete est absent.
   const geoHost = document.getElementById('smHeaderGeo');
   const geoHtml = `
-      <button type="button" id="smRarityCountrySel" class="cp-btn" data-cc="${esc(initCountry)}" style="font-size:12px; padding:3px 8px;">
+      <button type="button" id="smRarityCountrySel" class="cp-btn" data-cc="${esc(initCountry)}">
         <span class="cp-btn-flag">${flagImg(initCountry)}</span>
         <span class="cp-btn-label">${esc((COUNTRIES_REG[initCountry] && COUNTRIES_REG[initCountry].name) || initCountry)}</span>
         <span class="cp-btn-arrow">▾</span>
@@ -15725,7 +15725,7 @@ function _renderModalAccordion(items){
       : `<span class="acc-badge todo">${owned}/${it.length}</span>`;
     // Section vide (aucune espece FR pour cette categorie) : desactive le depliant.
     if(!it.length){
-      html += `<div class="tmodal-acc-item empty"><div class="acc-summary"><span class="acc-title">${esc(rawTitle||sec)}</span><span class="acc-badge todo">—</span></div></div>`;
+      html += `<div class="tmodal-acc-item empty"><div class="acc-summary"><span class="acc-title">${esc(rawTitle||sec)}</span><span class="acc-badge todo">-</span></div></div>`;
       continue;
     }
     html += `<details class="tmodal-acc-item ${validated?'is-valid':'is-todo'}"${validated?'':' open'}>
@@ -17012,7 +17012,7 @@ function _pkdxLignesZones(cc){
       + '" data-code="' + esc(r.code) + '">'
       + '<span>' + esc(r.name) + '</span>'
       + '<span class="reg-picker-exo"></span>'
-      + '<span class="reg-picker-val">' + (n ? n + ' esp.' : '—') + '</span>'
+      + '<span class="reg-picker-val">' + (n ? n + ' esp.' : '-') + '</span>'
       + '<div class="reg-picker-bar"><div style="width:' + Math.round(n / max * 100) + '%; color:var(--accent);"></div></div>'
       + '</div>';
   }).join('');
@@ -17342,7 +17342,7 @@ function _pkdxRender(){
     // on survole le N pour savoir ce qu'est un N, sans devoir demeler une bulle commune.
     const exoChips = cats.map(c => {
       const tip = `${EXOTIC_CATEGORY_LABEL[c] || 'Exotique ' + c} (${c})`
-        + (cats.length > 1 ? ' — un des statuts de l’espèce dans le pays, il change selon la région' : '');
+        + (cats.length > 1 ? ' - un des statuts de l’espèce dans le pays, il change selon la région' : '');
       return jetonExo(c, { tip });
     }).join('');
     // Pas d'infobulle pour dire « Palier 4 » sur une pastille qui affiche deja 4, et pas le

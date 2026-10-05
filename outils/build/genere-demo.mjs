@@ -402,7 +402,7 @@ const INJECTION = `
 </style>
 <!-- ================= FIN DU BLOC DEMO ================= -->`;
 
-const BANDEAU = `<div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans votre navigateur.</span></div>`;
+const BANDEAU = `<div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>`;
 
 function genereHtml(){
   let html = readFileSync(f('index.html'), 'utf8');

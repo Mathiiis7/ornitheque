@@ -1,7 +1,7 @@
 {
   "name": "L’Ornithèque",
   "short_name": "L’Ornithèque",
-  "description": "Comparez vos listes d'oiseaux eBird entre amis.",
+  "description": "Compare tes listes d'oiseaux eBird entre amis.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
