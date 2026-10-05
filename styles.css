@@ -500,7 +500,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      police, 14 px partout, tout centre en hauteur ; la flexbox vit dans .who-in. */
   .board-sheet td { font-size:14px; vertical-align:middle; }
   #viewRanking thead th { font-size:14px; vertical-align:middle; }
-  #viewRanking .seg button, #viewRanking .section-head p { font-size:14px; }
+  #viewRanking .seg button { font-size:14px; }
   .board-sheet .who-cell { font-weight:600; }
   .board-sheet .who-in { display:flex; align-items:center; gap:9px; }
   .board-sheet .who-cell .dot { width:11px; height:11px; border-radius:50%; background:var(--series); flex:none; }
@@ -2272,7 +2272,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .mylist-head { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
   .mylist-search { flex:0 1 300px; min-width:0; padding:8px 12px; font-size:14px; border:1px solid var(--line-2);
     border-radius:9px; background:var(--surface); color:var(--ink); }
-  .mylist-note { margin:6px 0 10px; font-size:14px; color:var(--ink-3); }
+  /* Texte d'introduction sous un titre de page : un seul style pour toutes les pages (modele :
+     « Date et lieu de la premiere observation » de Ma liste, demande de Mathis le 2026-10-05). */
+  .mylist-note, .section-head h2.page-title + p, #viewRanking .section-head p { margin:6px 0 10px; font-size:14px; line-height:normal; font-weight:400; color:var(--ink-3); }
+  .section-head h2.page-title + p b { font-weight:700; color:var(--ink-2); }
   /* Defilement interne : une liste de 1 000 especes ne doit pas repousser la page a l'infini */
   .mylist-body { max-height:560px; overflow-y:auto; border:1px solid var(--line); border-radius:12px; }
   .mylist-row { display:grid; grid-template-columns:minmax(0,1.4fr) 92px minmax(0,1.6fr); gap:12px; align-items:baseline;

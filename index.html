@@ -49,7 +49,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=288">
+<link rel="modulepreload" href="app.js?v=289">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -903,7 +903,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
     <section class="panel" style="padding:20px; margin-top:22px;">
       <div class="section-head">
         <div><h2 class="page-title">Le fil des observations</h2>
-          <p class="help" style="margin-top:2px;">Les dernières observations de la ligue. <b>Nouveautés</b> = par date d'ajout (idéal pour ne rien louper) · <b>Chronologique</b> = par date d'observation.</p></div>
+          <p class="help">Les dernières observations de la ligue. <b>Nouveautés</b> = par date d'ajout (idéal pour ne rien louper) · <b>Chronologique</b> = par date d'observation.</p></div>
       </div>
       <div class="seg" id="feedModeSeg" style="margin:6px 0 8px;">
         <button data-feed-mode="new" class="on">🆕 Nouveautés</button>
@@ -936,7 +936,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
     <section class="panel" style="padding:20px; margin-top:22px;">
       <div class="section-head">
         <div><h2 class="page-title">Requêtes & suggestions</h2>
-          <p class="help" style="margin-top:2px;">Proposez une amélioration, votez pour celles qui vous plaisent. Les plus populaires en haut.</p></div>
+          <p class="help">Proposez une amélioration, votez pour celles qui vous plaisent. Les plus populaires en haut.</p></div>
       </div>
       <form class="req-form" id="reqForm" autocomplete="off">
         <textarea id="reqText" aria-label="Votre idée d'amélioration" placeholder="Votre idée d'amélioration (ex. : ajouter un trophée pour X, améliorer Y…)" maxlength="500" rows="2"></textarea>
@@ -990,7 +990,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
     <section class="panel" style="padding:24px; margin-top:22px; max-width:900px;">
       <div class="section-head">
         <div><h2 class="page-title">À propos de L’Ornithèque</h2>
-          <p class="help" style="margin-top:2px;">Comment ça marche, d'où viennent les données, comment lire les indicateurs.</p></div>
+          <p class="help">Comment ça marche, d'où viennent les données, comment lire les indicateurs.</p></div>
       </div>
       <div class="about-body" style="font-size:14px; line-height:1.6; color:var(--ink); margin-top:16px;">
 
@@ -1317,4 +1317,4 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=288"></script>
+<script type="module" src="app.js?v=289"></script>
