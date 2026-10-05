@@ -99,7 +99,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=283">
+<link rel="modulepreload" href="app.js?v=284">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -366,50 +366,60 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
       </div>
     </div>
 
-    <!-- Guide d'import : 3 etapes horizontales visuelles. Le bloc « Inviter des amis » qui
-         etait au-dessus vit depuis le 2026-10-05 dans le menu ☰ (#inviteDialog) : il n'avait
-         rien a faire sur la page de sa propre liste (remarque de Mathis). -->
-    <h3 class="bloc-titre import-titre">Récupérer ta liste eBird</h3>
-    <div class="import-steps">
-      <div class="import-step">
-        <div class="import-step-num">1</div>
-        <div class="import-step-body">
-          <div class="import-step-title">Ouvre</div>
-          <a href="https://ebird.org/lifelist?r=world&time=life" target="_blank" rel="noopener" class="import-step-link">ebird.org/lifelist ↗</a>
+    <!-- Guide d'import : DEUX facons de recuperer sa liste, cote a cote (2026-10-05, demande de
+         Mathis : la variante avec GPS etait cachee dans un repli sous les etapes). La derniere
+         etape, deposer le fichier, est commune et sort des deux cartes.
+         Le bloc « Inviter des amis » qui etait au-dessus vit depuis le meme jour dans le menu ☰
+         (#inviteDialog) : il n'avait rien a faire sur la page de sa propre liste. -->
+    <h3 class="bloc-titre import-titre">Récupérer ta liste eBird <span class="bloc-titre-note">· deux façons</span></h3>
+    <div class="import-choix">
+      <div class="import-opt">
+        <div class="import-opt-head">
+          <span class="import-opt-titre">Liste simple</span>
+          <span class="import-opt-quand">tout de suite</span>
         </div>
+        <ol class="import-opt-steps">
+          <li><span class="import-step-num">1</span><span>Ouvre <a href="https://ebird.org/lifelist?r=world&time=life" target="_blank" rel="noopener" class="import-step-link">ebird.org/lifelist ↗</a></span></li>
+          <li><span class="import-step-num">2</span><span>Clique <b>Download (csv)</b> : le fichier se télécharge directement</span></li>
+        </ol>
+        <p class="import-opt-effet">Toutes tes espèces, mais pas de points sur la carte.</p>
       </div>
-      <div class="import-step-arrow">→</div>
-      <div class="import-step">
-        <div class="import-step-num">2</div>
-        <div class="import-step-body">
-          <div class="import-step-title">Clique <b>Download (csv)</b></div>
-          <div class="import-step-sub">Le fichier se télécharge sans email</div>
+      <div class="import-ou" aria-hidden="true">ou</div>
+      <div class="import-opt">
+        <div class="import-opt-head">
+          <span class="import-opt-titre">Liste complète, avec GPS</span>
+          <span class="import-opt-quand">par email</span>
         </div>
-      </div>
-      <div class="import-step-arrow">→</div>
-      <div class="import-step">
-        <div class="import-step-num">3</div>
-        <div class="import-step-body">
-          <div class="import-step-title">Dépose ici en dessous ↓</div>
-          <div class="import-step-sub">Tu rejoins la ligue automatiquement 🎉</div>
-        </div>
+        <ol class="import-opt-steps">
+          <li><span class="import-step-num">1</span><span>Ouvre <a href="https://ebird.org/downloadMyData" target="_blank" rel="noopener" class="import-step-link">ebird.org/downloadMyData ↗</a></span></li>
+          <li><span class="import-step-num">2</span><span>Clique <b>Submit</b>, puis attends l'email d'eBird</span></li>
+          <li><span class="import-step-num">3</span><span>Télécharge le fichier <code>MyEBirdData.csv</code> qu'il contient</span></li>
+        </ol>
+        <p class="import-opt-effet">Chaque observation avec sa position : tes oiseaux apparaissent sur la carte 📍</p>
       </div>
     </div>
-    <details class="import-guide-advanced">
-      <summary>💡 Variante avec GPS (nécessaire pour la carte 📍)</summary>
-      <p>Par email : <a href="https://ebird.org/downloadMyData" target="_blank" rel="noopener">ebird.org/downloadMyData</a> → <b>« Submit »</b> → attendez l'email → <code>MyEBirdData.csv</code>. Ce fichier contient les coordonnées GPS de chaque observation, ce qui permet d'afficher vos oiseaux sur la carte.</p>
-    </details>
+    <p class="import-fin">Dans les deux cas, <b>dépose le fichier ici en dessous ↓</b> : tu rejoins la ligue automatiquement 🎉</p>
 
     <div class="onboarding" id="onboarding" style="display:none;">
       <h3>👋 Bienvenue dans la Ligue</h3>
-      <p style="margin:4px 0 0; color:var(--ink-2);">Entrez votre prénom + suivez les 3 étapes ci-dessus. Toutes les infos restent entre les membres de votre ligue.</p>
+      <p style="margin:4px 0 0; color:var(--ink-2);">Entrez votre prénom + suivez l'une des deux façons ci-dessus. Toutes les infos restent entre les membres de votre ligue.</p>
     </div>
 
     <!-- Panneau upload : etat vide vs rempli -->
     <div class="me-panel">
+      <div class="me-ligne">
       <div class="me-name">
         <label for="myName">Ton prénom</label>
         <input type="text" id="myName" placeholder="Ton prénom (visible dans la ligue)" maxlength="24">
+      </div>
+      <!-- Juste apres le prenom depuis le 2026-10-05 (demande de Mathis) : il etait seul sur sa
+           ligne sous le bloc de chargement. .me-ligne les met cote a cote, l'un sous l'autre au telephone. -->
+      <div class="me-secondary" style="display:none;" id="meSecondary">
+        <button class="btn-remove-list" id="removeMineBtn" title="Retire ta liste et quitte la ligue">
+          <span class="btn-remove-icon">🗑️</span>
+          <span>Retirer ma liste de la ligue</span>
+        </button>
+      </div>
       </div>
       <!-- Etiquette et non div, et champ masque visuellement et non "hidden" : c'est le seul montage
            qui laisse le clavier atteindre le selecteur de fichier. Un element en display:none sort de
@@ -422,12 +432,6 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
       </label>
       <div class="intake-actions" id="intakeActions">
         <span class="mystatus" id="myStatus" role="status"></span>
-      </div>
-      <div class="me-secondary" style="display:none;" id="meSecondary">
-        <button class="btn-remove-list" id="removeMineBtn" title="Retire ta liste et quitte la ligue">
-          <span class="btn-remove-icon">🗑️</span>
-          <span>Retirer ma liste de la ligue</span>
-        </button>
       </div>
     </div>
 
@@ -1300,5 +1304,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=283"></script>
+<script type="module" src="app.js?v=284"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans votre navigateur.</span></div>

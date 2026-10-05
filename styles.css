@@ -297,7 +297,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .drop.filled { padding:16px 20px; border-style:solid; background:color-mix(in srgb, #2ecc71 8%, var(--surface-2)); border-color:color-mix(in srgb, #2ecc71 40%, var(--line-2)); }
   .drop.filled .drop-icon { display:none; }
   .drop.filled .big { color:var(--ink); }
-  .me-secondary { display:flex; justify-content:flex-end; margin-top:8px; }
+  .me-ligne { display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap; }
+  .me-secondary { display:flex; }
   /* Bouton "retirer ma liste" : ghost destructif, discret mais elegant */
   .btn-remove-list { display:inline-flex; align-items:center; gap:8px; padding:8px 14px;
     background:transparent; color:var(--ink-3); border:1px solid var(--line-2); border-radius:10px;
@@ -323,27 +324,30 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      Tailles relevees le 2026-10-05 (« ecrit tres petit parfois », Mathis) : les sous-textes
      a 11,5 px ecrits faisaient 9,8 px a l'ecran avec le zoom 0,85. Plancher : 13 px ecrits. */
   .import-titre { margin-top:18px; }
-  .import-steps { display:flex; align-items:stretch; gap:8px; margin-top:10px; flex-wrap:wrap; }
-  .import-step { flex:1 1 180px; display:flex; align-items:flex-start; gap:12px; padding:14px 16px;
-    background:var(--surface-2); border:1px solid var(--line-2); border-radius:12px; min-width:0; }
+  /* Deux facons de recuperer sa liste, cote a cote ; empilees au telephone */
+  .import-choix { display:flex; align-items:stretch; gap:10px; margin-top:10px; }
+  .import-opt { flex:1 1 0; min-width:0; display:flex; flex-direction:column; padding:14px 16px;
+    background:var(--surface-2); border:1px solid var(--line-2); border-radius:12px; }
+  .import-opt-head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+  .import-opt-titre { font-size:15.5px; font-weight:700; color:var(--ink); }
+  .import-opt-quand { font-size:13px; color:var(--ink-3); }
+  .import-opt-steps { list-style:none; margin:10px 0 0; padding:0; display:flex; flex-direction:column; gap:8px; }
+  .import-opt-steps li { display:flex; align-items:flex-start; gap:10px; font-size:14.5px; color:var(--ink); line-height:1.4; }
+  .import-opt-steps .import-step-num { width:24px; height:24px; font-size:12.5px; }
+  .import-opt-steps .import-step-link { margin-top:0; }
+  .import-opt-steps code { font-family:var(--mono); font-size:13px; background:var(--surface); padding:1px 6px; border-radius:5px; }
+  /* margin-top:auto : les deux phrases d'effet s'alignent en bas des cartes malgre 2 et 3 etapes */
+  .import-opt-effet { margin:12px 0 0; margin-top:auto; padding-top:12px; font-size:13.5px; color:var(--ink-2); line-height:1.45; }
+  .import-ou { align-self:center; font-size:14px; font-weight:600; color:var(--ink-3); flex:0 0 auto; }
+  .import-fin { margin:12px 0 0; font-size:14.5px; color:var(--ink-2); }
+  .import-fin b { color:var(--ink); }
+  @media (max-width:600px){
+    .import-choix { flex-direction:column; gap:6px; }
+  }
   .import-step-num { flex:0 0 auto; width:28px; height:28px; border-radius:50%; background:var(--accent); color:#fff;
     font-weight:800; font-size:14px; display:grid; place-items:center; margin-top:0; }
-  .import-step-body { flex:1; min-width:0; }
-  .import-step-title { font-size:15px; font-weight:600; color:var(--ink); line-height:1.35; }
-  .import-step-sub { font-size:13px; color:var(--ink-2); margin-top:4px; line-height:1.4; }
   .import-step-link { display:inline-block; margin-top:4px; font-size:14px; color:var(--accent-ink); text-decoration:none; font-weight:600; }
   .import-step-link:hover { text-decoration:underline; }
-  .import-step-arrow { display:grid; place-items:center; font-size:18px; color:var(--ink-3); flex:0 0 auto; padding:0 2px; }
-  @media (max-width:600px){ .import-step-arrow { display:none; } }
-  .import-guide-advanced { margin-top:12px; font-size:14px; }
-  .import-guide-advanced p { margin:8px 0 0; font-size:13.5px; color:var(--ink-2); line-height:1.5; }
-  /* list-style:none : Chrome dessine son triangle par ::marker, que ::-webkit-details-marker
-     ne masque plus - d'ou les deux triangles vus le 2026-10-05. */
-  .import-guide-advanced summary { cursor:pointer; color:var(--ink-2); font-weight:600; list-style:none; }
-  .import-guide-advanced summary:hover { color:var(--accent-ink); }
-  .import-guide-advanced summary::-webkit-details-marker { display:none; }
-  .import-guide-advanced summary::before { content:'▸ '; color:var(--ink-3); }
-  .import-guide-advanced[open] summary::before { content:'▾ '; }
   .btn { display:inline-flex; align-items:center; gap:7px; background:var(--accent); color:#fff;
     border:none; border-radius:9px; padding:9px 15px; font:inherit; font-weight:600; font-size:14px;
     cursor:pointer; }
