@@ -25,7 +25,8 @@ le produit, servi en ligne - ne jamais déplacer ni renommer (chaque fichier a u
   styles.css        toute la CSS
   service-worker.js le cache
   manifest.json     le manifeste de l'appli installable
-  assets/           images, logos, polices
+  assets/           images, logos, polices - logos/ ne garde que ce qui est affiché, plus
+                    sources/ ; les essais vivent dans notes-privees/logos-candidats/
   data/             les données générées, publiées telles quelles
   demo/             la démo du portfolio, générée - voir notes-privees/MODE-DEMO.md
 
@@ -46,7 +47,8 @@ la base commune
     verif/            les bancs de mesure - voir plus bas
     ebirdst/          les scripts R (chemins absolus en dur ; Projets/clc n'existe plus)
     onetake/          la vidéo de présentation
-  archives/         pas encore créé : à ouvrir le jour où un chantier fini doit y aller
+  archives/         ce qui a servi, exclu du site par _config.yml (logos-huppe/ : l'ancien logo
+                    et son générateur ; logos-martin-entier/ : rendus PNG plus affichés)
 
 propre au projet
   notes-privees/    notes gardées hors du dépôt public, exclues par .gitignore

@@ -6,9 +6,11 @@
 - `5bcd682a` puis le commit suivant : le logo = la tête dans un cadre vert pâle #ddedec (essai n° 17), sur sapin #1d524e en thème sombre (`logo-sombre.svg`, bascule dans app.js après le bouton Thème) : `logo.svg`
   (entête, favicon), `logo-192/512.png` pleins (manifeste, apple-touch). v691, app.js?v=277.
 - Tout se refait avec `node outils/build/icones-martin.mjs` ; les essais de cadrage et de fonds avec
-  `tete-martin.mjs` (sortie dans `assets/logos/candidats/`, non suivi).
+  `tete-martin.mjs` (sortie dans `notes-privees/logos-candidats/martin-2026-10-05/`, hors dépôt).
 - Bancs CONFORME, vérifié en local ordinateur + téléphone, clair + sombre.
 - `09c858d1` puis le suivant (poussés) : la tête encadrée aussi sur les écrans de connexion et d'attente (suit clair/sombre), fond foncé à #d3e7e6 (accent à 18 %). Le choix d'un logo personnel en cliquant sur la pastille est retiré (v693, app.js?v=279).
+
+- Rangé le 2026-10-05 : essais dans `notes-privees/logos-candidats/`, huppe dans `archives/logos-huppe/`. **En attente : Mathis retouche `assets/logos/sources/martin-motifs.svg` dans Figma** (motifs Arrow reportés par `outils/build/motifs-martin.mjs`), puis le brancher dans icones-martin.mjs et pousser.
 
 Reste : les poses de la mascotte (demandes Arrow 2 à réécrire avec
 le martin Figma joint, voir plus bas) ; la vidéo attend ce logo ; les fichiers huppe
@@ -28,7 +30,7 @@ recalées sur la charte, fentes bouchées (2 841 pixels de trou au rendu 2400 px
 restants sont l'espace normal entre les pattes). Comparaison avant/après :
 localhost:8765/notes-privees/mascotte/voir.html. Trois retouches High ont suivi (retouche-1 à 3.svg, bilan dans LOGOS-DEMANDES section 1). **Nouvelle méthode décidée : valider d'abord le perché seul**, base = perché de la retouche 3 avec les pattes du 1er envoi greffées par `node outils/build/perche-pattes.mjs` -> `perche-base-2.svg` (échelle des pattes 1,03 réglée avec Mathis, reflet de l'œil gardé). Comparaison A/D/E : localhost:8765/notes-privees/mascotte/perches.html. **E validé par Mathis ; il le retouche dans Canva et rapporte le fichier (SVG de préférence)**, puis la demande en tête de LOGOS-DEMANDES est périmée (Arrow 2 a fait des pattes minuscules) : écrire une demande par pose avec perche-base-2.svg joint. Puis chaque pose seule, ce perché joint. Arrow 2 a échoué deux fois en fin de journée (crédit épuisé ? non vérifié). Ensuite : tuile au banc des
 logos, puis manifeste, favicon, entête, démo ; décider où vont les poses. Charte à respecter : `docs/charte-graphique.md`. Logos candidats déjà essayés : mémoire
-« Logo : deux candidats retenus » et `assets/logos/candidats/` (hors git).
+« Logo : deux candidats retenus » et `notes-privees/logos-candidats/` (hors git).
 
 ---
 
@@ -113,7 +115,7 @@ sans titre), fondu glissé à l'ouverture du Classement retiré. Démo régéné
 **Retours de Mathis sur le brouillon v2 (moments 1 et 2), dans l'ordre où on les traite :**
 1. **Le logo d'abord, avant toute vidéo** : il n'aime pas vraiment la huppe actuelle. Reprendre le
    travail sur le logo (voir la mémoire « Logo : deux candidats retenus » : 1-oiseau-plat et
-   3-tete-sarcelle-clair, dans `assets/logos/candidats/`, non suivis par git).
+   3-tete-sarcelle-clair, dans `notes-privees/logos-candidats/`, non suivis par git).
 2. **FAIT le 02/10 : la démo étalée.** 337 points sur 84 départements au lieu de 10. Chaque membre
    a 8 coins dans son département (Indre, Bouches-du-Rhône, Jura, Gironde, Finistère) et 2 dans
    chaque département visité ; l'espèce va là où eBird la donne fréquente ce mois-là

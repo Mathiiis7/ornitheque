@@ -5,5 +5,6 @@
 exclude:
   - docs/
   - outils/
+  - archives/
   - CLAUDE.md
   - en-cours.md

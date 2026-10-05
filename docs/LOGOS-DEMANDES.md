@@ -111,8 +111,8 @@ Candidats gardés de la session de septembre, pour comparer seulement :
 
 | Fichier | Réserve |
 |---|---|
-| `assets/logos/candidats/1-oiseau-plat.png` | vient de la planche Freepik : bon pour comparer, pas pour devenir le logo |
-| `assets/logos/candidats/3-tete-sarcelle-clair.png` | la moins contrastée des tuiles |
+| `notes-privees/logos-candidats/1-oiseau-plat.png` | vient de la planche Freepik : bon pour comparer, pas pour devenir le logo |
+| `notes-privees/logos-candidats/3-tete-sarcelle-clair.png` | la moins contrastée des tuiles |
 
 ---
 

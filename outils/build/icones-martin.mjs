@@ -2,11 +2,10 @@
 //
 // Source : assets/logos/sources/martin-figma.svg (fond gris de Figma déjà retiré).
 // Sorties, dans assets/logos/ :
-//   martin.svg        recadré au carré sur l'oiseau, 4 % de marge comme la huppe
-//                     (une icône collée aux bords paraît sale) ; sert aux <img> et au favicon
-//   martin-512.png    manifeste
-//   martin-192.png    manifeste, apple-touch-icon et favicon de secours (Safari ne lit pas
-//                     un favicon SVG)
+//   martin.svg        le martin entier, recadré au carré avec 4 % de marge (une icône collée
+//                     aux bords paraît sale). Plus affiché depuis le 2026-10-05 (la tête
+//                     encadrée l'a remplacé partout), gardé pour la mascotte. Ses rendus PNG
+//                     sont partis dans archives/logos-martin-entier/ le même jour.
 // Le cadre se mesure au navigateur (getBBox), pas à la main : Figma laisse des marges
 // inégales autour du dessin dans son carré de 27.
 //
@@ -40,13 +39,6 @@ writeFileSync(join(DOSSIER, 'martin.svg'), svg);
 console.log(`dessin ${b.w.toFixed(2)} x ${b.h.toFixed(2)} -> carré ${cote.toFixed(2)}, viewBox ${vb}`);
 console.log(`ecrit  assets/logos/martin.svg  ${(svg.length / 1024).toFixed(1)} Ko`);
 
-for (const t of TAILLES) {
-  await page.setViewportSize({ width: t, height: t });
-  await page.setContent(`<style>html,body{margin:0;background:transparent}svg{display:block;width:${t}px;height:${t}px}</style>${svg}`);
-  const png = await page.screenshot({ omitBackground: true, clip: { x: 0, y: 0, width: t, height: t } });
-  writeFileSync(join(DOSSIER, `martin-${t}.png`), png);
-  console.log(`ecrit  assets/logos/martin-${t}.png  ${(png.length / 1024).toFixed(1)} Ko`);
-}
 
 // ---------- Le logo : la tête dans le cadre ----------
 // Choisi par Mathis le 2026-10-05 parmi les essais de tete-martin.mjs : le n° 17 (cadrage

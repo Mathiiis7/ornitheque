@@ -1,6 +1,6 @@
 // Essais de logo « tête du martin dans le cadre » : on recadre le dessin de la mascotte
 // sur la tête, dans un carré aux coins arrondis comme l'entête (11 px sur 54, soit 20 %).
-// Écrit des candidats dans assets/logos/candidats/ (non suivi), que le banc des logos
+// Écrit des candidats dans notes-privees/logos-candidats/martin-2026-10-05/ (hors dépôt), que le banc des logos
 // de localhost fait défiler.
 //
 // Usage : node outils/build/tete-martin.mjs
@@ -10,7 +10,7 @@ import { join } from 'node:path';
 
 const RACINE = process.cwd();
 const SOURCE = join(RACINE, 'assets', 'logos', 'sources', 'martin-figma.svg');
-const DOSSIER = join(RACINE, 'assets', 'logos', 'candidats');
+const DOSSIER = join(RACINE, 'notes-privees', 'logos-candidats', 'martin-2026-10-05');
 
 // Les formes seules, sans la balise <svg> ni le fond gris de Figma.
 const formes = readFileSync(SOURCE, 'utf8')
@@ -63,5 +63,5 @@ ${formes}
 </svg>
 `;
   writeFileSync(join(DOSSIER, nom), svg);
-  console.log(`ecrit  assets/logos/candidats/${nom}`);
+  console.log(`ecrit  notes-privees/logos-candidats/martin-2026-10-05/${nom}`);
 }
