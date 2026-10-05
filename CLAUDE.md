@@ -50,6 +50,9 @@ la base commune
 
 propre au projet
   notes-privees/    notes gardées hors du dépôt public, exclues par .gitignore
+  cartes-locales    jonction vers ../ornitheque-data/cartes, ignorée par git : en local
+                    (localhost), app.js lit les cartes là, pour les voir avant de pousser le
+                    dépôt de données. En ligne, il les lit sur mathiiis7.github.io/ornitheque-data
 
 hors du projet, mais qui en dépend - à corriger si un chemin bouge
   tâche Windows « Backup Firestore Ligue Plumes »   le 9 de chaque mois à 00:09,
@@ -93,6 +96,12 @@ plafond**. Les cartes de répartition vivent dans le dépôt séparé
 Ce dépôt-là pèse 250 Mo servis - 142 Mo de `range-weekly`, 108 Mo de `range` - mesuré le
 2026-09-28. Les 443 Mo que ce fichier annonçait avant comptaient le dossier `.git` : c'est
 l'encombrement sur le disque, pas ce que GitHub Pages sert.
+
+**Depuis le 2026-10-05, les cartes sont celles de `ornitheque-data/cartes/`** (observations eBird
+via GBIF, 82,7 Mo, générées par `outils/build/cartes-gbif.mjs`, méthode dans
+`docs/sources-cartes.md`). `range/` et `range-weekly/` sont les anciennes cartes Cornell : à
+supprimer SEULEMENT une fois la nouvelle version du site en ligne, sinon le site encore en ligne
+perd ses cartes. **Ordre de mise en ligne : pousser `ornitheque-data` d'abord, puis ce dépôt.**
 
 ## Les pièges qui m'ont déjà fait perdre du temps
 
