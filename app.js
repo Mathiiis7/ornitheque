@@ -7159,6 +7159,11 @@ function _mapCollectPoints(){
 // points ne se chevauchent plus visuellement, donc ils reviennent a leur position exacte.
 // Le cluster fibonacci (identique au fiche espece) n'est applique qu'aux points colles a
 // moins de OVERLAP_PX pixels a l'ecran.
+// Au-delà de SPREAD_MAX points collés, ce n'est plus une pile au même lieu mais une foule :
+// à l'échelle d'un pays, des milliers d'observations eBird ou GBIF s'enchaînaient en UN seul
+// groupe, et la spirale les redistribuait en un disque plein qui débordait sur toute l'Europe
+// (vu le 2026-10-07 sur le Canard colvert, 1 185 et 3 000 points). Une foule reste à sa place.
+const SPREAD_MAX = 12;
 function _mainMapSpreadGbifMarkers(){
   if(!_map || !_lyrMissing) return;
   // Ne fait rien si la couche n'est pas actuellement affichee (evite de perturber
@@ -7193,7 +7198,7 @@ function _mainMapSpreadGbifMarkers(){
   const GOLDEN = Math.PI * (3 - Math.sqrt(5));
   const R_PER = 7;
   for(const cluster of clusters){
-    if(cluster.length <= 1) continue;
+    if(cluster.length <= 1 || cluster.length > SPREAD_MAX) continue;
     let cx=0, cy=0; for(const p of cluster){ cx += p.x; cy += p.y; }
     cx /= cluster.length; cy /= cluster.length;
     const maxR = R_PER * Math.sqrt(cluster.length);
@@ -11988,7 +11993,7 @@ function _renderSpeciesAudioBlock(container, label, primaryId, list){
     </div>`).join('');
     container.insertAdjacentHTML('beforeend', `
       <details class="xa-more">
-        <summary>▼ ${others.length} autre${others.length>1?'s':''} enregistrement${others.length>1?'s':''}</summary>
+        <summary>${others.length} autre${others.length>1?'s':''} enregistrement${others.length>1?'s':''}</summary>
         <div class="xa-more-list">${items}</div>
       </details>`);
   }
@@ -15254,7 +15259,7 @@ function _smSpreadMarkers(){
   const GOLDEN = Math.PI * (3 - Math.sqrt(5));
   const R_PER = 7;
   for(const cluster of clusters){
-    if(cluster.length <= 1) continue;
+    if(cluster.length <= 1 || cluster.length > SPREAD_MAX) continue;
     let cx=0, cy=0; for(const p of cluster){ cx += p.x; cy += p.y; }
     cx /= cluster.length; cy /= cluster.length;
     const maxR = R_PER * Math.sqrt(cluster.length);
