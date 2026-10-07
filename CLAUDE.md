@@ -150,6 +150,10 @@ cherche l'un ou l'autre échoue - c'est déjà arrivé deux fois. L'ancre fiable
 l'intérieur. Les générateurs de `outils/verif/` en sont pleins : y écrire « la variable ok »
 et non « la variable \`ok\` ». Ça m'a coûté deux erreurs de syntaxe le même jour.
 
+**Le navigateur intégré masqué mesure un écran de 0 pixel** (`innerWidth` = 0) : toutes les
+positions sont fausses sans erreur. Fixer une taille avec `resize_window` avant de mesurer
+(2026-10-07, plusieurs essais perdus sur le guide).
+
 **`body { zoom: 0.85 }`.** `getBoundingClientRect` renvoie donc des pixels ÉCRAN, alors que
 les styles calculés et les métriques du canvas parlent en pixels CSS. Mélanger les deux m'a
 fait produire trois mesures fausses d'affilée. Mesurer tout dans un seul repère.
