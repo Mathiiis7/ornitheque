@@ -38,6 +38,27 @@
     }
   }catch(_){ }
 </script>
+<script>
+  // Le guide du site s ouvre a CHAQUE ouverture de la demo (demande de Mathis le 2026-10-08) :
+  // un recruteur qui arrive sur Ma liste ne sait pas ou regarder. Dans la vraie appli, il n est
+  // propose qu apres le premier depot ; le visiteur de la demo a deja sa liste, il ne le verrait
+  // donc jamais. On ne touche pas app.js : on clique sur « Guide du site » du menu, comme lui.
+  // On attend que la connexion soit faite ET que les boutons flottants se voient : lance trop
+  // tot, le guide saute en silence les etapes dont la cible est encore cachee (Fil, Photos, Tchat).
+  // ?sansguide le laisse ferme, pour les captures d ecran.
+  if(!/[?&]sansguide/.test(location.search)) addEventListener('DOMContentLoaded', () => {
+    const debut = Date.now();
+    const essai = setInterval(() => {
+      const pret = document.documentElement.getAttribute('data-auth') === 'signed-in'
+        && document.getElementById('fabFeed')?.getClientRects().length > 0;
+      if(pret){
+        clearInterval(essai);
+        if(document.getElementById('guide')?.hidden !== false) document.getElementById('hamGuide')?.click();
+      }
+      else if(Date.now() - debut > 10000) clearInterval(essai);
+    }, 100);
+  });
+</script>
 <style>
   /* Bandeau non negociable : personne ne doit croire qu il regarde la vraie ligue.
      Fixe en bas pour ne rien pousser - body porte un zoom 0.85, une bande en haut
