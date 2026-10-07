@@ -1,8 +1,8 @@
-# FAIT le 2026-10-07, commité, PAS poussé : le guide de l'appli (v727, app.js?v=303)
+# FAIT le 2026-10-07, commité, PAS poussé : le guide de l'appli (v729, app.js?v=305)
 Choix de Mathis (questions à choix) : **visite guidée** qui pointe chaque partie du vrai écran,
-**proposée juste après le premier dépôt** (« Plus tard » / « Découvrir l'appli », le tuto ne change
-pas), **rouvrable par « 🧭 Guide de l'appli » dans le menu ☰**.
-- 12 étapes + accueil : les six onglets, la fiche espèce (ouverte puis refermée par le guide), le pays du Birdydex, Fil, Photos, Tchat, le menu ☰.
+**proposée juste après le premier dépôt** (« Plus tard » / « Découvrir le site », le tuto ne change
+pas), **rouvrable par « 🧭 Guide du site » dans le menu ☰**.
+- 12 étapes + accueil : les six onglets, la fiche espèce (ouverte puis refermée par le guide), le pays du Birdydex, Fil, Photos, Tchat, le menu ☰ puis chacune de ses lignes (Profil, Requêtes, À propos, Inviter, Guide du site), menu ouvert par le guide.
   Tout est dans `GUIDE_ETAPES` (app.js, après les fenêtres de Ma liste) ; styles `.guide-*`.
 - Vérifié dans la démo : ordinateur 1280×800 et téléphone 375 (pointer coarse, boutons 44 px
   d'écran), clair et sombre ; bulle dans l'écran et hors de sa cible à chaque étape ; Échap,

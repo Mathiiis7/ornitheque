@@ -10227,14 +10227,14 @@ document.querySelectorAll('#tutoDialog, #prenomDialog, #ajoutDialog').forEach(d 
 // ---------------- Le guide de l'appli ----------------
 // Visite guidee voulue par Mathis le 2026-10-07 : une bulle pointe chaque partie de l'ecran, sur
 // le vrai ecran (l'onglet s'ouvre derriere). Proposee apres le premier depot (handleFiles),
-// rouvrable a tout moment par « Guide de l'appli » dans le menu ☰.
+// rouvrable a tout moment par « Guide du site » dans le menu ☰.
 // vue : l'onglet a ouvrir avant de pointer ; cible : ce que la bulle montre (sans cible, la bulle
 // est au centre) ; cote : 'gauche' pour les boutons flottants, colles au bord droit ;
-// fiche : ouvrir une fiche espece.
+// fiche : ouvrir une fiche espece ; menu : ouvrir le menu ☰.
 // On ne pointe jamais un onglet cache (Profil, Tchat...) : sa boite fait zero pixel.
 const GUIDE_ETAPES = [
   { titre:'Bienvenue dans L’Ornithèque',
-    texte:"Un tour de l'appli en une minute : chaque bulle montre une partie de l'écran. Tu peux le refaire quand tu veux depuis le menu ☰." },
+    texte:"Un tour du site en une minute : chaque bulle montre une partie de l'écran. Tu peux le refaire quand tu veux depuis le menu ☰." },
   { vue:'load', cible:'.tab[data-view="load"]', titre:'Ma liste',
     texte:"Ta life list eBird. Tu la charges ou la mets à jour ici, tu ajoutes une espèce à la main et tu indiques ton prénom. Un clic sur une espèce ouvre sa fiche." },
   { vue:'ranking', cible:'.tab[data-view="ranking"]', titre:'Classement',
@@ -10260,11 +10260,23 @@ const GUIDE_ETAPES = [
   { cible:'#fabChat', cote:'gauche', titre:'Tchat',
     texte:"Pour discuter avec toute la ligue." },
   { cible:'#hamburgerBtn', titre:'Le menu',
-    texte:"Ton profil, les idées d'amélioration, l'À propos et les invitations. Tu y retrouves aussi ce guide, à tout moment." },
+    texte:"Le reste du site est rangé ici. Voyons ce qu'il contient." },
+  // menu : le guide ouvre le menu ☰ (vrai clic sur le bouton) et pointe une de ses lignes.
+  // Une bulle chacune, voulu par Mathis le 2026-10-07.
+  { menu:true, cible:'.ham-item[data-view="profil"]', titre:'Profil',
+    texte:"Ta fiche, visible par toute la ligue : objectif, espèce préférée, espèce de rêve, avatar. Et tes statistiques : meilleur mois, année record, courbe de ta liste, familles préférées." },
+  { menu:true, cible:'.ham-item[data-view="requests"]', titre:'Requêtes',
+    texte:"Propose une amélioration du site et vote pour celles des autres. Les plus populaires passent en haut." },
+  { menu:true, cible:'.ham-item[data-view="about"]', titre:'À propos',
+    texte:"Les niveaux de rareté, d'où viennent les données et de quand elles datent. C'est aussi là que tu peux supprimer ton compte et toutes tes données." },
+  { menu:true, cible:'#hamInvite', titre:'Inviter des amis',
+    texte:"Le lien à envoyer à qui veut rejoindre la ligue. L'entrée se fait avec un code d'invitation." },
+  { menu:true, cible:'#hamGuide', titre:'Ce guide',
+    texte:"Tu le retrouves ici, à tout moment." },
 ];
 // Apres le premier depot, la premiere bulle propose le tour au lieu de l'imposer.
 const GUIDE_ACCUEIL_DEPOT = { titre:'Ta liste est enregistrée',
-  texte:"Envie de faire le tour de l'appli ? Une minute, une bulle par partie de l'écran. Tu le retrouves à tout moment dans le menu ☰." };
+  texte:"Envie de faire le tour du site ? Une minute, une bulle par partie de l'écran. Tu le retrouves à tout moment dans le menu ☰." };
 let _guide = null;   // { etapes, i, vueAvant, focusAvant, apresDepot } tant que le guide est ouvert
 function _guideVue(v){
   const b = document.querySelector('.tab[data-view="' + v + '"]');
@@ -10277,7 +10289,7 @@ function guideOuvre(apresDepot){
   // Une etape dont la cible n'existe pas pour ce visiteur saute. Les cibles d'une vue ne se
   // voient qu'une fois la vue ouverte : on les garde.
   const etapes = GUIDE_ETAPES.filter(e => {
-    if(!e.cible || e.vue) return true;
+    if(!e.cible || e.vue || e.menu) return true;
     const el = $(e.cible); return !!el && el.getClientRects().length > 0;
   });
   _guide = { etapes, i:0, apresDepot:!!apresDepot, focusAvant:document.activeElement,
@@ -10290,6 +10302,7 @@ function guideFerme(){
   const g = _guide; _guide = null;
   $('#guide').hidden = true;
   if(g.fiche) closeSpeciesModal();
+  const menu = $('#hamburgerMenu'); if(menu) menu.hidden = true;
   // Chaque etape a change d'onglet (et ecrit mb-last-tab) : on rend celui de depart.
   _guideVue(g.vueAvant);
   // Le focus revient d'ou il venait. Une ligne du menu ☰ ou un bouton de la fenetre du tuto,
@@ -10305,13 +10318,16 @@ function _guideMontre(){
     document.querySelector('#pkdxGrid .pkdx-card[data-sci]')?.click();
     g.fiche = true;
   } else if(!e.fiche && g.fiche){ closeSpeciesModal(); g.fiche = false; }
+  const menu = $('#hamburgerMenu');
+  if(e.menu && menu?.hidden) $('#hamburgerBtn').click();
+  else if(!e.menu && menu) menu.hidden = true;
   $('#guideTitre').textContent = (accueil || e).titre;
   $('#guideTexte').textContent = (accueil || e).texte;
   $('#guideEtape').textContent = g.i ? 'Étape ' + g.i + ' sur ' + (n - 1) : '';
   const retour = $('#guideRetour'), suivant = $('#guideSuivant');
   retour.hidden = g.i === 0 && !accueil;
   retour.textContent = accueil ? 'Plus tard' : 'Retour';
-  suivant.textContent = accueil ? 'Découvrir l’appli' : g.i === 0 ? 'Commencer'
+  suivant.textContent = accueil ? 'Découvrir le site' : g.i === 0 ? 'Commencer'
     : g.i === n - 1 ? 'Terminer' : 'Suivant';
   _guideCadre();
   // Une vue qui vient de s'ouvrir peut encore bouger (Birdydex, Carte se dessinent ensuite), et
@@ -10772,9 +10788,10 @@ document.addEventListener('click', e => {
   if(fabP){ _toggleFabPanel('photos', fabP); return; }
   const fabF = e.target.closest('#fabFeed');
   if(fabF){ _toggleFabPanel('feed', fabF); return; }
-  // Click outside : close hamburger.
+  // Click outside : close hamburger. Sauf un clic dans le guide, qui ouvre lui-meme le menu
+  // pour en montrer les lignes : sans ca, « Suivant » le refermait aussitot.
   const m = document.getElementById('hamburgerMenu');
-  if(m && !m.hidden && !e.target.closest('#hamburgerMenu')) m.hidden = true;
+  if(m && !m.hidden && !e.target.closest('#hamburgerMenu') && !e.target.closest('#guide')) m.hidden = true;
   // Click sur backdrop ou hors panneau : ferme le panneau flottant.
   // On NE ferme PAS si le click est dans les popups liees (emoji / gif / country pickers /
   // fiche espece) car ce sont des UI enfants qui s'ouvrent AU-DESSUS du panneau et leur

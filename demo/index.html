@@ -99,7 +99,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=303">
+<link rel="modulepreload" href="app.js?v=305">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -246,7 +246,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
     <!-- Sans data-view : ce n'est pas une page, il ouvre la fenetre #inviteDialog -->
     <button type="button" class="ham-item" id="hamInvite">📨 Inviter des amis</button>
     <!-- Sans data-view lui non plus : il lance la visite guidee (#guide) -->
-    <button type="button" class="ham-item" id="hamGuide">🧭 Guide de l'appli</button>
+    <button type="button" class="ham-item" id="hamGuide">🧭 Guide du site</button>
     <div class="ham-divider"></div>
     <div class="ham-account" id="hamAccount">
       <div class="ham-account-info" id="hamAccountInfo" hidden>
@@ -276,7 +276,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
     <p class="help" id="inviteCodeBox" hidden style="margin:10px 0 0;"></p>
   </dialog>
   <!-- Le guide de l'appli (2026-10-07) : une visite qui pointe chaque partie de l'ecran, une
-       bulle a la fois. Propose apres le premier depot, rouvert par « Guide de l'appli » du menu ☰.
+       bulle a la fois. Propose apres le premier depot, rouvert par « Guide du site » du menu ☰.
        Le voile avale les clics pour que rien ne bouge derriere ; le trou eclaire la cible.
        Etapes et placement : GUIDE_ETAPES et _guidePlace() dans app.js. -->
   <div class="guide" id="guide" hidden>
@@ -1364,5 +1364,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=303"></script>
+<script type="module" src="app.js?v=305"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>
