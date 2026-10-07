@@ -1,8 +1,8 @@
-# COMMITÉ le 2026-10-07, PAS POUSSÉ : « France entier » retiré (e714d7ff, v732, app.js?v=308)
+# EN LIGNE le 2026-10-07 : « France entier » retiré (e714d7ff, v732, app.js?v=308)
 Bouton pays du Birdydex : « France » ; première ligne des listes de zones (Birdydex et fiche) :
 « Tous les départements » en France, « Toutes les régions » ailleurs (`libelleToutesZones`) ; note du
 graphique des mois : « affichage pour tout le pays ». Vérifié dans la démo (ordi + téléphone, Espagne), bancs CONFORME.
-La capture du Birdydex du portfolio montre encore « France entier » : à refaire après la mise en ligne.
+Vérifié en ligne (v732, app.js?v=308). Capture du Birdydex du portfolio refaite sur la démo en ligne.
 
 ---
 # EN LIGNE le 2026-10-07 : le guide du site (v730, app.js?v=306), vérifié sur la démo en ligne
