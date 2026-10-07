@@ -10229,7 +10229,8 @@ document.querySelectorAll('#tutoDialog, #prenomDialog, #ajoutDialog').forEach(d 
 // le vrai ecran (l'onglet s'ouvre derriere). Proposee apres le premier depot (handleFiles),
 // rouvrable a tout moment par « Guide de l'appli » dans le menu ☰.
 // vue : l'onglet a ouvrir avant de pointer ; cible : ce que la bulle montre (sans cible, la bulle
-// est au centre) ; cote : 'gauche' pour les boutons flottants, colles au bord droit.
+// est au centre) ; cote : 'gauche' pour les boutons flottants, colles au bord droit ;
+// fiche : ouvrir une fiche espece.
 // On ne pointe jamais un onglet cache (Profil, Tchat...) : sa boite fait zero pixel.
 const GUIDE_ETAPES = [
   { titre:'Bienvenue dans L’Ornithèque',
@@ -10239,7 +10240,11 @@ const GUIDE_ETAPES = [
   { vue:'ranking', cible:'.tab[data-view="ranking"]', titre:'Classement',
     texte:"Qui mène la ligue : au nombre d'espèces, ou à la rareté de ce que chacun a vu. Dessous, « Qui a vu quoi » compare les listes espèce par espèce." },
   { vue:'pokedex', cible:'.tab[data-view="pokedex"]', titre:'Birdydex',
-    texte:"Toutes les espèces d'un pays, rangées par famille : celles que tu as vues et celles qui te manquent. Un clic sur un oiseau ouvre sa fiche : photo, chants et cris, carte, et mois où le voir." },
+    texte:"Toutes les espèces d'un pays, rangées par famille : celles que tu as vues et celles qui te manquent. Un clic sur un oiseau ouvre sa fiche." },
+  // fiche : le guide ouvre la fiche du premier oiseau du Birdydex, par un vrai clic sur sa
+  // vignette, et la referme a l'etape suivante (voulu par Mathis le 2026-10-07).
+  { vue:'pokedex', fiche:true, cible:'#speciesModal .sm-tabs', titre:'La fiche espèce',
+    texte:"Chaque oiseau a sa fiche, qui s'ouvre d'un clic sur lui. Info : photo, description, rareté, où et quand le trouver. Puis la carte des observations, et ses chants et cris. Les flèches en haut passent à l'espèce voisine." },
   { vue:'pokedex', cible:'#pkdxCountry', titre:'Le pays',
     texte:"Choisis ici le pays : le Birdydex et les autres onglets le suivent." },
   { vue:'map', cible:'.tab[data-view="map"]', titre:'Carte',
@@ -10284,6 +10289,7 @@ function guideFerme(){
   if(!_guide) return;
   const g = _guide; _guide = null;
   $('#guide').hidden = true;
+  if(g.fiche) closeSpeciesModal();
   // Chaque etape a change d'onglet (et ecrit mb-last-tab) : on rend celui de depart.
   _guideVue(g.vueAvant);
   // Le focus revient d'ou il venait. Une ligne du menu ☰ ou un bouton de la fenetre du tuto,
@@ -10295,6 +10301,10 @@ function _guideMontre(){
   const g = _guide, e = g.etapes[g.i], n = g.etapes.length;
   const accueil = g.i === 0 && g.apresDepot ? GUIDE_ACCUEIL_DEPOT : null;
   if(e.vue) _guideVue(e.vue);
+  if(e.fiche && $('#speciesModal').hidden){
+    document.querySelector('#pkdxGrid .pkdx-card[data-sci]')?.click();
+    g.fiche = true;
+  } else if(!e.fiche && g.fiche){ closeSpeciesModal(); g.fiche = false; }
   $('#guideTitre').textContent = (accueil || e).titre;
   $('#guideTexte').textContent = (accueil || e).texte;
   $('#guideEtape').textContent = g.i ? 'Étape ' + g.i + ' sur ' + (n - 1) : '';

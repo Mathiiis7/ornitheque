@@ -358,8 +358,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
 
   /* Le guide de l'appli : un voile qui avale les clics, un trou qui eclaire la cible (son ombre
      immense fait le fond sombre) et une bulle posee a cote. Au-dessus des boutons flottants
-     (1600) et du menu ☰ (1700). Positions ecrites par _guidePlace(), en pixels CSS. */
-  .guide { position:fixed; inset:0; z-index:2000; }
+     (1600), du menu ☰ (1700) et de la fiche espece. Positions ecrites par _guidePlace(), en pixels CSS. */
+  /* Au-dessus de la fiche espece aussi (2147483000), que l'etape « La fiche espece » ouvre. */
+  .guide { position:fixed; inset:0; z-index:2147483600; }
   .guide[hidden] { display:none; }
   .guide-voile { position:fixed; inset:0; }
   .guide.sans-cible .guide-voile { background:rgba(0,0,0,.45); }
