@@ -1,4 +1,4 @@
-# FAIT le 2026-10-07, commité, PAS poussé : le guide de l'appli (v725, app.js?v=301)
+# FAIT le 2026-10-07, commité, PAS poussé : le guide de l'appli (v726, app.js?v=302)
 Choix de Mathis (questions à choix) : **visite guidée** qui pointe chaque partie du vrai écran,
 **proposée juste après le premier dépôt** (« Plus tard » / « Découvrir l'appli », le tuto ne change
 pas), **rouvrable par « 🧭 Guide de l'appli » dans le menu ☰**.
