@@ -1,3 +1,10 @@
+# EN LIGNE le 2026-10-08 : le guide s ouvre a chaque ouverture de la demo (v733, app.js?v=309)
+Demande depuis la conversation portfolio. Script ajoute par outils/build/genere-demo.mjs (clic sur « Guide du site »
+une fois connecte et les boutons flottants visibles) : la vraie appli ne l ouvre toujours qu apres le premier depot.
+demo/?sansguide le laisse ferme, pour les captures. Ordre du guide (vraie appli aussi) : accueil, Carte, Birdydex,
+fiche, pays, Ma liste, Classement, puis la suite. Verifie ordi 1280 et telephone 375, 18 bulles, bancs CONFORME.
+
+---
 # EN LIGNE le 2026-10-07 : « France entier » retiré (e714d7ff, v732, app.js?v=308)
 Bouton pays du Birdydex : « France » ; première ligne des listes de zones (Birdydex et fiche) :
 « Tous les départements » en France, « Toutes les régions » ailleurs (`libelleToutesZones`) ; note du

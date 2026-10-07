@@ -10246,10 +10246,9 @@ document.querySelectorAll('#tutoDialog, #prenomDialog, #ajoutDialog').forEach(d 
 const GUIDE_ETAPES = [
   { titre:'Bienvenue dans L’Ornithèque',
     texte:"Un tour du site en une minute : chaque bulle montre une partie de l'écran. Tu peux le refaire quand tu veux depuis le menu ☰." },
-  { vue:'load', cible:'.tab[data-view="load"]', titre:'Ma liste',
-    texte:"Ta life list eBird. Tu la charges ou la mets à jour ici, tu ajoutes une espèce à la main et tu indiques ton prénom. Un clic sur une espèce ouvre sa fiche." },
-  { vue:'ranking', cible:'.tab[data-view="ranking"]', titre:'Classement',
-    texte:"Qui mène la ligue : au nombre d'espèces, ou à la rareté de ce que chacun a vu. Dessous, « Qui a vu quoi » compare les listes espèce par espèce." },
+  // Carte et Birdydex d'abord : ce que le portfolio met en avant (choix de Mathis le 2026-10-08).
+  { vue:'map', cible:'.tab[data-view="map"]', titre:'Carte',
+    texte:"Les observations de la ligue à leur place, pour les listes déposées avec le GPS. Deux autres modes : les espèces signalées récemment sur eBird qui manquent à ta liste, et les meilleurs sites." },
   { vue:'pokedex', cible:'.tab[data-view="pokedex"]', titre:'Birdydex',
     texte:"Toutes les espèces d'un pays, rangées par famille : celles que tu as vues et celles qui te manquent. Un clic sur un oiseau ouvre sa fiche." },
   // fiche : le guide ouvre la fiche du premier oiseau du Birdydex, par un vrai clic sur sa
@@ -10258,8 +10257,10 @@ const GUIDE_ETAPES = [
     texte:"Chaque oiseau a sa fiche, qui s'ouvre d'un clic sur lui. Info : photo, description, rareté, où et quand le trouver. Puis la carte des observations, et ses chants et cris. Les flèches en haut passent à l'espèce voisine." },
   { vue:'pokedex', cible:'#pkdxCountry', titre:'Le pays',
     texte:"Choisis ici le pays : le Birdydex et les autres onglets le suivent." },
-  { vue:'map', cible:'.tab[data-view="map"]', titre:'Carte',
-    texte:"Les observations de la ligue à leur place, pour les listes déposées avec le GPS. Deux autres modes : les espèces signalées récemment sur eBird qui manquent à ta liste, et les meilleurs sites." },
+  { vue:'load', cible:'.tab[data-view="load"]', titre:'Ma liste',
+    texte:"Ta life list eBird. Tu la charges ou la mets à jour ici, tu ajoutes une espèce à la main et tu indiques ton prénom. Un clic sur une espèce ouvre sa fiche." },
+  { vue:'ranking', cible:'.tab[data-view="ranking"]', titre:'Classement',
+    texte:"Qui mène la ligue : au nombre d'espèces, ou à la rareté de ce que chacun a vu. Dessous, « Qui a vu quoi » compare les listes espèce par espèce." },
   { vue:'trophies', cible:'.tab[data-view="trophies"]', titre:'Trophées',
     texte:"Des trophées à débloquer au fil de tes observations. Choisis une personne pour voir les siens." },
   { vue:'quiz', cible:'.tab[data-view="quiz"]', titre:'Quiz',
