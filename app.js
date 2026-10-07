@@ -4269,6 +4269,12 @@ function zonesFichePourPays(cc){
   if(cc === 'FR') return FR_DEPARTEMENTS;
   return (typeof REGIONS_BY_COUNTRY === 'object' && REGIONS_BY_COUNTRY[cc]) || [];
 }
+// Premiere ligne des listes de zones, celle qui revient au pays entier. « France entier »
+// sonnait faux (choix de Mathis, 2026-10-07) : on nomme ce qu'on choisit, toutes les zones.
+// Meme partage que les onglets des selecteurs : departements en France, regions ailleurs.
+function libelleToutesZones(cc){
+  return cc === 'FR' ? 'Tous les départements' : 'Toutes les régions';
+}
 // Nom francais d une zone. Les contours SVG portent leur propre nom, celui que Natural
 // Earth donne - en anglais pour la Russie et la Finlande, translittere du bielorusse, ou
 // a la forme adjectivale pour la Croatie. Les infobulles des cartes s en servaient, si
@@ -13594,7 +13600,7 @@ async function _renderRarityMap(sci, cc){
     }
     // Cliquable seulement si le selecteur connait la zone : sans cela on pourrait
     // selectionner un code que le libelle du declencheur ne sait pas nommer, et la
-    // fiche afficherait des donnees locales sous une etiquette "France entier".
+    // fiche afficherait des donnees locales sous une etiquette « Tous les départements ».
     return _pathZone(dRemplace || paths.zones[z].path, fill, titre, selection.has(z), selection.size > 0,
       zonesSelectionnables.has(z) ? z : null, echelle);
   };
@@ -13670,7 +13676,7 @@ async function _renderRarityMap(sci, cc){
   _majPanneauOuQuand();
   // Cliquer une zone la selectionne : c'est le geste naturel une fois qu'on l'a reperee
   // sur la carte. Recliquer la zone deja choisie revient au national, pour pouvoir
-  // ressortir sans aller chercher la ligne "France entier" dans la liste.
+  // ressortir sans aller chercher la ligne « Tous les départements » dans la liste.
   const svgCarte = document.querySelector('#smRarityMap svg');
   if(svgCarte && typeof _appliquerZoneFiche === 'function'){
     svgCarte.onclick = (e) => {
@@ -13771,10 +13777,9 @@ function _renderSpeciesRarityCard(key){
     const aDesValeurs = scored.some(s => s.score > 0);
     scored.sort(aDesValeurs ? (a, b) => b.score - a.score
                             : (a, b) => a.name.localeCompare(b.name, 'fr'));
-    const nationalLbl = (COUNTRIES_REG[cc] && COUNTRIES_REG[cc].name) || cc;
     // Sans drapeau : l'emoji tombe en lettres "FR" sur Windows, et le pays est deja nomme
     // juste a cote, dans l'onglet voisin et sur le bouton qui a ouvert le selecteur.
-    const nationalRow = `<div class="reg-picker-item national${_speciesRegion===''?' on':''}" data-code="">${esc(nationalLbl)} entier</div>`;
+    const nationalRow = `<div class="reg-picker-item national${_speciesRegion===''?' on':''}" data-code="">${esc(libelleToutesZones(cc))}</div>`;
     const items = scored.map(s => {
       // La valeur annuelle etant une moyenne ponderee, une zone ou l'espece a ete vue ne
       // serait-ce qu'un mois a un score non nul : le cas special qui les rattrapait n'a
@@ -14506,7 +14511,7 @@ function _renderSpeciesFreqChart(key, country){
   let fallbackNote = '';
   if(_speciesRegion && !regionScope){
     const regName = _regNameFor(_speciesRegion);
-    fallbackNote = ` <em style="color:var(--ink-3); font-weight:400; font-style:italic;">- pas de données pour ${esc(regName)}, affichage ${esc(countryName)} entier</em>`;
+    fallbackNote = ` <em style="color:var(--ink-3); font-weight:400; font-style:italic;">- pas de données pour ${esc(regName)}, affichage pour tout le pays</em>`;
   }
   // Texte d'entete : "France - pic mi-octobre (3.2 ind/h)" ou "France - pic en octobre (30 %)"
   let peakLbl, peakVal;
@@ -17205,7 +17210,6 @@ function _pkdxLignesZones(cc){
   const choisie = _pkdxFilters.zone || '';
   const nb = (z) => byZone[z] ? Object.keys(byZone[z]).length : 0;
   const max = Math.max(1, ...zones.map(r => nb(r.code)));
-  const pays = (COUNTRIES_REG[cc] && COUNTRIES_REG[cc].name) || cc;
   const lignes = zones.slice().sort((a, b) => a.name.localeCompare(b.name, 'fr')).map(r => {
     const n = nb(r.code);
     return '<div class="reg-picker-item sans-palier' + (n ? '' : ' absent') + (r.code === choisie ? ' on' : '')
@@ -17217,7 +17221,7 @@ function _pkdxLignesZones(cc){
       + '</div>';
   }).join('');
   return '<div class="reg-picker-item national' + (choisie ? '' : ' on') + '" data-code="">'
-    + esc(pays) + ' entier</div>' + lignes;
+    + esc(libelleToutesZones(cc)) + '</div>' + lignes;
 }
 // Le bouton pays affiche la zone quand il y en a une : sans ca, rien ne dirait a quelle
 // echelle les paliers de la grille sont lus.
@@ -17231,9 +17235,9 @@ function _majEtiquetteZone(){
   const nom = z
     ? ((zonesFichePourPays(cc).find(r => r.code === z) || {}).name || z)
     : ((COUNTRIES_REG[cc] && COUNTRIES_REG[cc].name) || cc);
-  // Sans zone, on ecrit « France entier » comme la ligne d'en-tete de la liste des zones :
-  // le bouton dit l'echelle de lecture, pas seulement le pays.
-  lbl.textContent = z ? '📍 ' + nom : nom + ' entier';
+  // Sans zone, le nom du pays seul (« France entier » retire le 2026-10-07) ; avec une zone,
+  // l'epingle dit que la grille est lue a cette echelle.
+  lbl.textContent = z ? '📍 ' + nom : nom;
 }
 function _pkdxVue(r, cc, zone){
   if(!zone) return { tier:r.tier, val:r.val, cat:r.cat, absente:false };
