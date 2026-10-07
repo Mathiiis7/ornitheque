@@ -1,15 +1,16 @@
-# À FAIRE le 2026-10-07 : un guide des fonctionnalités pour les nouveaux arrivants
-Revue du site TERMINÉE : Mathis valide tout le reste du site (2026-10-06).
-
-Sa demande, telle quelle : un guide pour les nouveaux arrivants, intégré aussi au tuto, qui montre
-toutes les fonctionnalités de l'appli, et qu'on peut rouvrir à tout moment pour les recomprendre.
-À clarifier avec lui au démarrage (questions à choix) : forme (visite guidée qui pointe les écrans,
-ou pages d'explication), où le rouvrir (menu, bouton « ? »), et ce qu'est « le tuto » actuel
-(.tuto-ch / .tuto-nav dans styles.css, guide de Ma liste) - à lire avant de proposer.
-
-Dernier état en local, PAS en ligne : flèches ‹ › de la fiche espèce dessinées en SVG, centrées et
-plus grandes (v724, app.js?v=300). Le caractère « ‹ » en Segoe UI était minuscule et trop bas.
-À lui faire valider, puis pousser.
+# FAIT le 2026-10-07, commité, PAS poussé : le guide de l'appli (v725, app.js?v=301)
+Choix de Mathis (questions à choix) : **visite guidée** qui pointe chaque partie du vrai écran,
+**proposée juste après le premier dépôt** (« Plus tard » / « Découvrir l'appli », le tuto ne change
+pas), **rouvrable par « 🧭 Guide de l'appli » dans le menu ☰**.
+- 11 étapes + accueil : les six onglets, le pays du Birdydex, Fil, Photos, Tchat, le menu ☰.
+  Tout est dans `GUIDE_ETAPES` (app.js, après les fenêtres de Ma liste) ; styles `.guide-*`.
+- Vérifié dans la démo : ordinateur 1280×800 et téléphone 375 (pointer coarse, boutons 44 px
+  d'écran), clair et sombre ; bulle dans l'écran et hors de sa cible à chaque étape ; Échap,
+  Retour, « Plus tard » ; l'onglet de départ revient à la fin ; nouveau venu simulé (fiche
+  retirée dans le bouchon + code `mb-invite`) -> la proposition s'ouvre après le dépôt. Bancs CONFORME.
+- Reste : qu'il relise les textes des bulles et choisisse les libellés, puis pousser (avec les
+  flèches SVG de la fiche espèce, v724, aussi en attente de sa validation).
+- Ticket qg#45 « Faire le guide » fermé.
 
 ---
 # EN LIGNE le 2026-10-06 : relecture « recruteur », schémas communs, noms latins en police du texte (v722, app.js?v=298)

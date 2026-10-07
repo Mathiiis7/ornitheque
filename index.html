@@ -49,7 +49,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=300">
+<link rel="modulepreload" href="app.js?v=301">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -199,6 +199,8 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
     <button type="button" class="ham-item" data-view="about">ℹ️ À propos</button>
     <!-- Sans data-view : ce n'est pas une page, il ouvre la fenetre #inviteDialog -->
     <button type="button" class="ham-item" id="hamInvite">📨 Inviter des amis</button>
+    <!-- Sans data-view lui non plus : il lance la visite guidee (#guide) -->
+    <button type="button" class="ham-item" id="hamGuide">🧭 Guide de l'appli</button>
     <div class="ham-divider"></div>
     <div class="ham-account" id="hamAccount">
       <div class="ham-account-info" id="hamAccountInfo" hidden>
@@ -227,6 +229,26 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
     </div>
     <p class="help" id="inviteCodeBox" hidden style="margin:10px 0 0;"></p>
   </dialog>
+  <!-- Le guide de l'appli (2026-10-07) : une visite qui pointe chaque partie de l'ecran, une
+       bulle a la fois. Propose apres le premier depot, rouvert par « Guide de l'appli » du menu ☰.
+       Le voile avale les clics pour que rien ne bouge derriere ; le trou eclaire la cible.
+       Etapes et placement : GUIDE_ETAPES et _guidePlace() dans app.js. -->
+  <div class="guide" id="guide" hidden>
+    <div class="guide-voile" id="guideVoile"></div>
+    <div class="guide-trou" id="guideTrou" aria-hidden="true"></div>
+    <div class="guide-bulle" id="guideBulle" role="dialog" aria-modal="true" aria-labelledby="guideTitre" aria-describedby="guideTexte">
+      <div class="guide-tete">
+        <span class="guide-etape" id="guideEtape"></span>
+        <button type="button" class="ml-dialog-close" id="guideFermer" aria-label="Fermer le guide">✕</button>
+      </div>
+      <h3 class="bloc-titre" id="guideTitre"></h3>
+      <p class="guide-texte" id="guideTexte" aria-live="polite"></p>
+      <div class="guide-nav">
+        <button type="button" class="btn ghost" id="guideRetour">Retour</button>
+        <button type="button" class="btn" id="guideSuivant">Suivant</button>
+      </div>
+    </div>
+  </div>
   <!-- Boutons flottants Fil + Photos + Tchat, positionnes en bas a droite -->
   <div id="fabStack" style="position:fixed; right:20px; bottom:20px; display:flex; flex-direction:column; gap:10px; z-index:1600;">
     <button type="button" id="fabFeed" title="Fil" style="position:relative; width:54px; height:54px; border-radius:50%; border:none; background:var(--warn, #d97a1c); color:#fff; font-size:22px; line-height:1; padding:0; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,.25); display:grid; place-items:center; transition:transform .15s;">📰</button>
@@ -1296,4 +1318,4 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=300"></script>
+<script type="module" src="app.js?v=301"></script>

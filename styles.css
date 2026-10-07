@@ -356,6 +356,27 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .tuto-nav[hidden], .tuto-nav [hidden] { display:none; }
   .manual-body > .ml-note { margin-top:2px; }
 
+  /* Le guide de l'appli : un voile qui avale les clics, un trou qui eclaire la cible (son ombre
+     immense fait le fond sombre) et une bulle posee a cote. Au-dessus des boutons flottants
+     (1600) et du menu ☰ (1700). Positions ecrites par _guidePlace(), en pixels CSS. */
+  .guide { position:fixed; inset:0; z-index:2000; }
+  .guide[hidden] { display:none; }
+  .guide-voile { position:fixed; inset:0; }
+  .guide.sans-cible .guide-voile { background:rgba(0,0,0,.45); }
+  .guide-trou { position:fixed; border-radius:12px; pointer-events:none;
+    box-shadow:0 0 0 3px var(--accent), 0 0 0 9999px rgba(0,0,0,.45); }
+  .guide.sans-cible .guide-trou { display:none; }
+  .guide-bulle { position:fixed; width:min(380px, calc(100vw - 32px)); box-sizing:border-box;
+    padding:14px 18px 16px; border:1px solid var(--line); border-radius:16px;
+    background:var(--surface); color:var(--ink); box-shadow:0 12px 40px rgba(0,0,0,.3); }
+  .guide-tete { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:2px; }
+  .guide-etape { font-size:14px; color:var(--ink-3); }
+  .guide-bulle .bloc-titre { margin:0 0 6px; }
+  .guide-texte { margin:0; font-size:15px; line-height:1.5; color:var(--ink-2); }
+  .guide-nav { display:flex; justify-content:space-between; gap:10px; margin-top:16px; }
+  .guide-nav [hidden] { display:none; }
+  .guide-nav .btn:only-child, .guide-nav [hidden] + .btn { margin-left:auto; }
+
   /* ---------- Inviter des amis : fenetre ouverte depuis le menu ☰ ---------- */
   .invite-dialog { width:min(460px, calc(100vw - 32px)); padding:18px 20px; border:1px solid var(--line);
     border-radius:16px; background:var(--surface); color:var(--ink); box-shadow:0 12px 40px rgba(0,0,0,.3); }
@@ -2381,6 +2402,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     /* Ma liste : les box, les choix du tuto, ses boutons et les croix des fenetres. */
     .ml-box, .tuto-ch, .tuto-nav .btn, .tuto-lien { min-height:52px; }
     .ml-dialog-close { width:52px; height:52px; }
+    /* Les boutons de la bulle du guide. */
+    .guide-nav .btn { min-height:52px; }
   }
 
   /* Une seule police pour TOUS les noms latins, partout : celle du texte, en italique (--sans).

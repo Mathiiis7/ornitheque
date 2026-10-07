@@ -10048,6 +10048,8 @@ async function _enregistreListe(parsed, name){
     for(const [k,v] of parsed.species) if(!v.addedAt) v.addedAt = importAt;
   }
   $('#myStatus').textContent = '… enregistrement';
+  // Lu avant le depot : apres, le nouveau venu devient membre.
+  const nouveauVenu = !iAmInLeague;
   try{
     await saveMyList(name, parsed.species, parsed.regions);
     // Premier depot : les abonnements ont ete refuses au demarrage faute d'etre membre, et
@@ -10061,6 +10063,8 @@ async function _enregistreListe(parsed, name){
     // Le tuto a fini son travail : on le ferme pour montrer la liste. En cas d'erreur il reste
     // ouvert, puisque #myStatus et le message vivent dedans.
     $('#tutoDialog')?.close();
+    // Premier depot : on lui propose le tour de l'appli. Un membre qui redepose ne le revoit pas.
+    if(nouveauVenu) guideOuvre(true);
   }
   catch(e){ showError(e); $('#myStatus').textContent=''; }
 }
@@ -10219,6 +10223,170 @@ document.querySelectorAll('#tutoDialog, #prenomDialog, #ajoutDialog').forEach(d 
     if(e.target === d || e.target.closest('[data-ferme]')) d.close();
   });
 });
+
+// ---------------- Le guide de l'appli ----------------
+// Visite guidee voulue par Mathis le 2026-10-07 : une bulle pointe chaque partie de l'ecran, sur
+// le vrai ecran (l'onglet s'ouvre derriere). Proposee apres le premier depot (handleFiles),
+// rouvrable a tout moment par « Guide de l'appli » dans le menu ☰.
+// vue : l'onglet a ouvrir avant de pointer ; cible : ce que la bulle montre (sans cible, la bulle
+// est au centre) ; cote : 'gauche' pour les boutons flottants, colles au bord droit.
+// On ne pointe jamais un onglet cache (Profil, Tchat...) : sa boite fait zero pixel.
+const GUIDE_ETAPES = [
+  { titre:'Bienvenue dans L’Ornithèque',
+    texte:"Un tour de l'appli en une minute : chaque bulle montre une partie de l'écran. Tu peux le refaire quand tu veux depuis le menu ☰." },
+  { vue:'load', cible:'.tab[data-view="load"]', titre:'Ma liste',
+    texte:"Ta life list eBird. Tu la charges ou la mets à jour ici, tu ajoutes une espèce à la main et tu choisis ton prénom. Un clic sur une espèce ouvre sa fiche." },
+  { vue:'ranking', cible:'.tab[data-view="ranking"]', titre:'Classement',
+    texte:"Qui mène la ligue : au nombre d'espèces, ou à la rareté de ce que chacun a vu. Dessous, « Qui a vu quoi » compare les listes espèce par espèce." },
+  { vue:'pokedex', cible:'.tab[data-view="pokedex"]', titre:'Birdydex',
+    texte:"Toutes les espèces d'un pays, rangées par famille : celles que tu as vues et celles qui te manquent. Un clic sur un oiseau ouvre sa fiche : photos, chants, carte et mois où le voir." },
+  { vue:'pokedex', cible:'#pkdxCountry', titre:'Le pays',
+    texte:"Choisis ici le pays : le Birdydex et les autres onglets le suivent." },
+  { vue:'map', cible:'.tab[data-view="map"]', titre:'Carte',
+    texte:"Les observations de la ligue à leur place, pour les listes déposées avec le GPS. Deux autres modes : les espèces signalées récemment sur eBird qui manquent à ta liste, et les meilleurs sites." },
+  { vue:'trophies', cible:'.tab[data-view="trophies"]', titre:'Trophées',
+    texte:"Des trophées à débloquer au fil de tes observations. Choisis une personne pour voir les siens." },
+  { vue:'quiz', cible:'.tab[data-view="quiz"]', titre:'Quiz',
+    texte:"Reconnais les oiseaux à leur chant ou à leur cri : un défi du jour, un défi de la semaine, des parties classées, ou un entraînement qui revient sur tes erreurs." },
+  { cible:'#fabFeed', cote:'gauche', titre:'Le fil',
+    texte:"Les dernières observations de la ligue, au fur et à mesure qu'elles arrivent." },
+  { cible:'#fabPhotos', cote:'gauche', titre:'Photos',
+    texte:"Les photos de la ligue. Tu peux y publier les tiennes." },
+  { cible:'#fabChat', cote:'gauche', titre:'Tchat',
+    texte:"Pour discuter avec toute la ligue." },
+  { cible:'#hamburgerBtn', titre:'Le menu',
+    texte:"Ton profil, les idées d'amélioration, l'À propos et les invitations. Tu y retrouves aussi ce guide, à tout moment." },
+];
+// Apres le premier depot, la premiere bulle propose le tour au lieu de l'imposer.
+const GUIDE_ACCUEIL_DEPOT = { titre:'Ta liste est enregistrée',
+  texte:"Envie de faire le tour de l'appli ? Une minute, une bulle par partie de l'écran. Tu le retrouves à tout moment dans le menu ☰." };
+let _guide = null;   // { etapes, i, vueAvant, focusAvant, apresDepot } tant que le guide est ouvert
+function _guideVue(v){
+  const b = document.querySelector('.tab[data-view="' + v + '"]');
+  if(b && !b.classList.contains('on')) b.click();
+}
+function guideOuvre(apresDepot){
+  if(_guide) return;
+  // Un panneau flottant ouvert (Fil, Photos, Tchat) se refermerait au premier clic dans la bulle.
+  _closeFabPanel();
+  // Une etape dont la cible n'existe pas pour ce visiteur saute. Les cibles d'une vue ne se
+  // voient qu'une fois la vue ouverte : on les garde.
+  const etapes = GUIDE_ETAPES.filter(e => {
+    if(!e.cible || e.vue) return true;
+    const el = $(e.cible); return !!el && el.getClientRects().length > 0;
+  });
+  _guide = { etapes, i:0, apresDepot:!!apresDepot, focusAvant:document.activeElement,
+    vueAvant:document.querySelector('.tab.on')?.dataset.view || 'load' };
+  $('#guide').hidden = false;
+  _guideMontre();
+}
+function guideFerme(){
+  if(!_guide) return;
+  const g = _guide; _guide = null;
+  $('#guide').hidden = true;
+  // Chaque etape a change d'onglet (et ecrit mb-last-tab) : on rend celui de depart.
+  _guideVue(g.vueAvant);
+  // Le focus revient d'ou il venait. Une ligne du menu ☰ ou un bouton de la fenetre du tuto,
+  // refermes, ne peuvent plus le recevoir : il va alors au ☰, la ou le guide se rouvre.
+  const f = g.focusAvant;
+  (f && f !== document.body && f.isConnected && f.getClientRects().length ? f : $('#hamburgerBtn'))?.focus();
+}
+function _guideMontre(){
+  const g = _guide, e = g.etapes[g.i], n = g.etapes.length;
+  const accueil = g.i === 0 && g.apresDepot ? GUIDE_ACCUEIL_DEPOT : null;
+  if(e.vue) _guideVue(e.vue);
+  $('#guideTitre').textContent = (accueil || e).titre;
+  $('#guideTexte').textContent = (accueil || e).texte;
+  $('#guideEtape').textContent = g.i ? 'Étape ' + g.i + ' sur ' + (n - 1) : '';
+  const retour = $('#guideRetour'), suivant = $('#guideSuivant');
+  retour.hidden = g.i === 0 && !accueil;
+  retour.textContent = accueil ? 'Plus tard' : 'Retour';
+  suivant.textContent = accueil ? 'Découvrir l’appli' : g.i === 0 ? 'Commencer'
+    : g.i === n - 1 ? 'Terminer' : 'Suivant';
+  _guideCadre();
+  // Une vue qui vient de s'ouvrir peut encore bouger (Birdydex, Carte se dessinent ensuite), et
+  // le navigateur rend parfois la position de defilement d'avant un rechargement apres coup :
+  // la page etait descendue de 304 px, l'onglet vise hors de l'ecran, au premier essai.
+  requestAnimationFrame(_guideCadre);
+  setTimeout(_guideCadre, 300);
+  suivant.focus();
+}
+// Ramene la cible dans l'ecran si besoin (rangee d'onglets qui defile au telephone, page
+// descendue), puis place la bulle.
+function _guideCadre(){
+  if(!_guide) return;
+  const e = _guide.etapes[_guide.i], cible = e.cible && $(e.cible);
+  if(cible && cible.getClientRects().length){
+    const r = cible.getBoundingClientRect();
+    if(r.top < 0 || r.bottom > innerHeight || r.left < 0 || r.right > innerWidth)
+      cible.scrollIntoView({ block:'nearest', inline:'center' });
+  }
+  _guidePlace();
+}
+// Tout se calcule en pixels CSS : getBoundingClientRect rend des pixels d'ecran, et body porte
+// zoom:0.85 (voir CLAUDE.md). Sans la division, la bulle et le trou tombent 15 % trop haut et
+// trop a gauche.
+function _guidePlace(){
+  if(!_guide) return;
+  const e = _guide.etapes[_guide.i];
+  const z = parseFloat(getComputedStyle(document.body).zoom) || 1;
+  const racine = $('#guide'), trou = $('#guideTrou'), bulle = $('#guideBulle');
+  const cible = e.cible && $(e.cible);
+  // Une cible sortie de l'ecran (page defilee a la main) : la bulle revient au centre.
+  const rc = cible && cible.getClientRects().length ? cible.getBoundingClientRect() : null;
+  const visible = !!rc && rc.bottom > 0 && rc.top < innerHeight && rc.right > 0 && rc.left < innerWidth;
+  racine.classList.toggle('sans-cible', !visible);
+  const vw = innerWidth / z, vh = innerHeight / z, bord = 16, ecart = 12;
+  const lb = bulle.getBoundingClientRect(), bw = lb.width / z, bh = lb.height / z;
+  const borne = (v, min, max) => Math.min(Math.max(v, min), Math.max(min, max));
+  let pos;
+  if(!visible){
+    pos = [borne((vw - bw) / 2, bord, vw - bw - bord), borne((vh - bh) / 2, bord, vh - bh - bord)];
+  } else {
+    const r = cible.getBoundingClientRect();
+    const c = { l:r.left / z - 6, t:r.top / z - 6, w:r.width / z + 12, h:r.height / z + 12 };
+    Object.assign(trou.style, { left:c.l + 'px', top:c.t + 'px', width:c.w + 'px', height:c.h + 'px' });
+    const centreX = borne(c.l + c.w / 2 - bw / 2, bord, vw - bw - bord);
+    const centreY = borne(c.t + c.h / 2 - bh / 2, bord, vh - bh - bord);
+    const essais = {
+      dessous: () => c.t + c.h + ecart + bh <= vh - bord && [centreX, c.t + c.h + ecart],
+      dessus:  () => c.t - ecart - bh >= bord && [centreX, c.t - ecart - bh],
+      gauche:  () => c.l - ecart - bw >= bord && [c.l - ecart - bw, centreY],
+    };
+    const ordre = e.cote === 'gauche' ? ['gauche', 'dessus', 'dessous'] : ['dessous', 'dessus', 'gauche'];
+    for(const k of ordre){ pos = essais[k](); if(pos) break; }
+    if(!pos) pos = [centreX, vh - bh - bord];
+  }
+  bulle.style.left = pos[0] + 'px';
+  bulle.style.top = pos[1] + 'px';
+}
+$('#hamGuide')?.addEventListener('click', () => {
+  const m = document.getElementById('hamburgerMenu'); if(m) m.hidden = true;
+  guideOuvre(false);
+});
+$('#guideSuivant')?.addEventListener('click', () => {
+  if(!_guide) return;
+  if(_guide.i >= _guide.etapes.length - 1) return guideFerme();
+  _guide.i++; _guideMontre();
+});
+$('#guideRetour')?.addEventListener('click', () => {
+  if(!_guide) return;
+  if(_guide.i === 0) return guideFerme();
+  _guide.i--; _guideMontre();
+});
+$('#guideFermer')?.addEventListener('click', guideFerme);
+// Echap ferme ; Tab tourne entre les boutons de la bulle, puisque rien derriere n'est cliquable.
+document.addEventListener('keydown', e => {
+  if(!_guide) return;
+  if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); guideFerme(); return; }
+  if(e.key !== 'Tab') return;
+  const bs = [...$('#guideBulle').querySelectorAll('button')].filter(b => !b.hidden);
+  const i = bs.indexOf(document.activeElement);
+  const j = i < 0 ? 0 : (i + (e.shiftKey ? -1 : 1) + bs.length) % bs.length;
+  e.preventDefault(); bs[j].focus();
+}, true);
+addEventListener('resize', _guidePlace);
+addEventListener('scroll', _guidePlace, true);
 // Classement : la bulle de chaque tri, au survol ou au focus clavier de son bouton. Au doigt,
 // le toucher declenche aussi mouseenter : la bulle s'ouvre au choix du tri et part au toucher
 // suivant ailleurs.
