@@ -108,7 +108,11 @@ if(orphelins.length) console.log('  ' + orphelins.slice(0, 10).join(' | '));
 
 // --- comparaison avec les tables en place ---
 const T0 = litObjet(src, 'REAL_RARITY_ME_EBIRD');
-const M0 = litObjet(src, 'REAL_FREQ_MONTHLY_ME');
+// Les series mensuelles ne vivent plus dans app.js depuis le 2026-09-27 : elles sont dans
+// data/freq_monthly_pays.json, sous la cle ME.
+const FREQ_JSON = 'data/freq_monthly_pays.json';
+const freqPays = JSON.parse(readFileSync(FREQ_JSON, 'utf8'));
+const M0 = { obj: freqPays.ME || {} };
 const perdus = Object.keys(T0.obj).filter(k => !(k in tiers));
 const ajouts = Object.keys(tiers).filter(k => !(k in T0.obj));
 console.log('');
@@ -131,7 +135,15 @@ const remplacerObjet = (nom, obj) => {
   s = s.slice(0, debut) + JSON.stringify(obj) + s.slice(fin);
 };
 remplacerObjet('REAL_RARITY_ME_EBIRD', tiers);
-remplacerObjet('REAL_FREQ_MONTHLY_ME', mois);
+// Series mensuelles : reecrites dans le fichier de donnees seulement si elles different, pour
+// ne pas faire retelecharger 1,9 Mo a tous les visiteurs pour rien.
+const ecartMois = Object.keys(mois).filter(k => JSON.stringify(mois[k]) !== JSON.stringify(M0.obj[k]));
+console.log('series mensuelles differentes du fichier de donnees : ' + ecartMois.length);
+if(ecartMois.length){
+  freqPays.ME = mois;
+  writeFileSync(FREQ_JSON, JSON.stringify(freqPays));
+  console.log(FREQ_JSON + ' ecrit - monter son ?v= dans app.js');
+}
 // profil d'effort : le Montenegro en etait absent, la moyenne y etait donc non ponderee
 const eff = litObjet(s, 'EFFORT_MENSUEL_PAR_PAYS');
 if(!eff.obj.ME){

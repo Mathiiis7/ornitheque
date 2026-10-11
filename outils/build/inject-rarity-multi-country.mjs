@@ -80,8 +80,14 @@ for (const cc of PAYS) {
     const src = extraire(readFileSync(fe, 'utf8'), 'EFFORT_MENSUEL_PAR_PAYS');
     const cible = extraire(app, 'const EFFORT_MENSUEL_PAR_PAYS');
     if (src && cible) {
-      app = app.slice(0, cible.debut) + src.litteral + app.slice(cible.fin);
-      console.log("  EFFORT_MENSUEL_PAR_PAYS      " + Object.keys(JSON.parse(src.litteral)).length + " pays");
+      // FUSION et non remplacement : le Montenegro n a pas sa place dans ce build (il a son
+      // propre script, build-rarity-me-quinzaines.mjs), et l ecraser lui a fait perdre son
+      // profil le 2026-09-26 sans que personne le voie - ses paliers sont restes faux jusqu
+      // au 2026-10-12.
+      const neuf = JSON.parse(src.litteral), ancien = JSON.parse(cible.litteral);
+      for (const k of Object.keys(ancien)) if (!(k in neuf)) neuf[k] = ancien[k];
+      app = app.slice(0, cible.debut) + JSON.stringify(neuf) + app.slice(cible.fin);
+      console.log("  EFFORT_MENSUEL_PAR_PAYS      " + Object.keys(neuf).length + " pays");
     } else if (src) {
       console.warn('  EFFORT_MENSUEL_PAR_PAYS : absent d app.js, injection ignoree.');
     }
