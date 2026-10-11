@@ -2895,10 +2895,16 @@ function _bulleTri(mode){
     + '<div class="tb-titre">Part des listes eBird qui mentionnent l\'espèce, 2019-2026</div>'
     + '<div class="tb-grille">' + lignes + '</div>';
 }
-function renderBoard(){
+// Joueurs dans l'ordre du classement affiché (selon le tri choisi) : sert au tableau des
+// joueurs et, sans filtre, à l'ordre des colonnes de « Qui a vu quoi » (le 1er à gauche).
+function _joueursClasses(){
   const mode=state.boardMode;
   const keyFn = mode==='count' ? (p=>p.total) : mode==='real' ? (p=>p.scoreReal||0) : (p=>p.score);
-  const ranked=[...state.people].sort((a,b)=>keyFn(b)-keyFn(a));
+  return [...state.people].sort((a,b)=>keyFn(b)-keyFn(a));
+}
+function renderBoard(){
+  const mode=state.boardMode;
+  const ranked=_joueursClasses();
   document.querySelectorAll('#boardModes button').forEach(b=>b.classList.toggle('on', b.dataset.mode===mode));
   const dash='<span class="muted">-</span>';
   const cell=v=>v?esc(v):dash;
@@ -3127,7 +3133,7 @@ function renderMatrix({universe,N}){
   const displayPeople = (state.playerMain || state.playerCompareSet.size)
     ? [ ...(state.playerMain ? [state.people.find(p=>p.id===state.playerMain)].filter(Boolean) : []),
         ...state.people.filter(p => p.id!==state.playerMain && state.playerCompareSet.has(p.id)) ]
-    : state.people.slice();
+    : _joueursClasses();
   const nCols = displayPeople.length;
   // Filtre pays (multi-exclusion) : garder une espèce s'il existe au moins une obs
   // (chez une personne affichée) dans un pays NON masqué.

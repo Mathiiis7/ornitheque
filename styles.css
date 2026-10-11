@@ -576,6 +576,14 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     width:140px; min-width:140px; max-width:140px; }
   .tbl-scroll thead th:last-child, .tbl-scroll tbody td.cnt {
     width:78px; min-width:78px; max-width:78px; }
+  /* La colonne Espèce reste collée à gauche quand on fait défiler les joueurs (Mathis,
+     2026-10-12). Fond opaque, sinon les cases qui passent dessous se lisent à travers ;
+     l'ombre de 1 px remplace la bordure, que border-collapse perd sur une cellule collante. */
+  .tbl-scroll thead th:first-child, .tbl-scroll tbody td.sp { position:sticky; left:0; box-shadow:1px 0 0 var(--line-2); }
+  .tbl-scroll thead th:first-child { z-index:3; }
+  .tbl-scroll tbody td.sp { z-index:1; background:var(--surface); }
+  .tbl-scroll tbody tr:nth-child(even) td.sp { background:color-mix(in srgb,var(--surface-2) 45%,var(--surface)); }
+  .tbl-scroll tbody tr:hover td.sp { background:color-mix(in srgb,var(--accent) 8%,var(--surface)); }
   /* Colonnes personnes : min 88 px, pas de max → elles absorbent l'espace excédentaire. */
   table th.pcol:not(:last-child), table td.pcol { min-width:88px; box-sizing:border-box; }
   /* Chips personne (filtre multi-sélection dans la matrice). */
@@ -802,7 +810,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .cp-item.disabled:hover { background:transparent; }
   .cp-item.absent { opacity:.55; }
   .cp-item-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
-  .tbl-scroll { overflow-x:auto; margin-top:10px; border:1px solid var(--line-2); border-radius:10px; }
+  /* Hauteur bornée (Mathis, 2026-10-12 : « quand on défile, on ne voit plus les noms ») :
+     un conteneur qui défile en largeur défile aussi en hauteur, donc l'en-tête collant
+     (top:0) restait collé à un conteneur aussi haut que le tableau, et sortait de l'écran
+     avec lui. Borné, c'est le tableau qui défile et les noms des joueurs restent visibles. */
+  .tbl-scroll { overflow:auto; max-height:75vh; margin-top:10px; border:1px solid var(--line-2); border-radius:10px; }
   table { border-collapse:collapse; width:100%; font-size:13.5px; }
   thead th { position:sticky; top:0; background:var(--surface-2); z-index:2; text-align:left;
     padding:9px 12px; border:1px solid var(--line-2); font-size:11.5px; text-transform:uppercase;
