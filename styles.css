@@ -550,9 +550,13 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      milieu : au milieu, la ligne de texte de la case l'entourait encore et ajoutait 1,2 px. */
   #viewRanking td .chip { line-height:17px; padding:1px 8px; vertical-align:top; }
   #viewRanking .youtag { font-size:12px; }
-  /* « TOI » a cote du prenom : a 12 px en capitales grasses, la pastille faisait 20 px de haut
-     pour un prenom de 21 et se lisait au meme niveau que lui (Mathis, 2026-10-12). */
-  #boardList .youtag { font-size:11px; line-height:15px; }
+  /* « TOI » a cote du prenom : la pastille garde sa taille (20 px de haut, 34 de large), seul le
+     texte descend de 12 a 10,5 px - variante B choisie par Mathis le 2026-10-12 sur
+     notes-privees/maquettes/toi/. Boite en flex pour centrer le texte quelle que soit sa taille. */
+  /* Marges 7 / 5 et non 6 / 6 : l'espacement des lettres s'ajoute aussi APRES le dernier « I »,
+     et l'encre mesuree tombait a 6,5 px du bord gauche contre 8,5 du droit. */
+  #boardList .youtag { font-size:10.5px; line-height:1; height:20px; min-width:34px; padding:0 5px 0 7px;
+    box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; }
   #viewRanking .fp-hint, #viewRanking .miss-toggle { font-size:14px; font-weight:400; text-transform:none; letter-spacing:0; color:var(--ink-3); }
   #viewRanking .miss-toggle { color:var(--ink-2); }
   #viewRanking .person-chip, #viewRanking .fp-reset, #viewRanking .filters-toggle, #viewRanking .rar-chip,
