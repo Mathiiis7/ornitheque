@@ -10,7 +10,7 @@ Nouveaux outils : crecelle.py, tics.py, duel.py, fenetres.py, syllabes.py (LISEZ
 3e passe, à sa demande : après un dépôt eBird, fenêtre « N nouvelles espèces ! » -> « Voir le Birdydex » ;
 les nouvelles y attendent sur fond teinté (.a-decouvrir, gardées en localStorage par compte), les toucher
 joue la scène. Scène ralentie (indices 1,3 s, carte à 4,7 s). Carte au style du site (grande case du
-Birdydex), plus de bronze/argent/or. Ajout manuel : scène tout de suite, comme avant. Vérifié dans la
+Birdydex), plus de bronze/argent/or. Ajout manuel : scène tout de suite (validé par lui). Vérifié dans la
 démo, ordi et téléphone sombre. Reste : son avis, puis pousser.
 
 # (2e passe) espèce débloquée façon walkout (commit f5d76aff, v734)
