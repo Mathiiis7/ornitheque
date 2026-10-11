@@ -1,3 +1,11 @@
+# FAIT le 2026-10-11 (nuit) : « Bruant lapon ? » bord de mer, 6:15-6:35 (son seul, hors appli)
+Rapport : notes-privees/analyse-sons/2026-10-11-bruant-lapon/RAPPORT.md. Merlin proposait lapon ET farlouse.
+Bruant lapon très probable : sa crécelle (3 traits qui descendent de 4,3 à 3,2 kHz) à 6:24,9, distincte
+de celle du Bruant des neiges (arceaux) et de la Linotte. Le gazouillis aigu seul ne sépare pas lapon et
+Pipit farlouse (12 mesures, penche un peu lapon pour une raison fragile) ; le farlouse peut être là aussi.
+Nouveaux outils : crecelle.py, tics.py, duel.py, fenetres.py, syllabes.py (LISEZMOI). Rien à pousser.
+
+---
 # À L'ESSAI le 2026-10-11 : espèce débloquée + « Je l'ai vu » (commit 9bdbc0d7, v733, app.js?v=309, PAS poussé)
 Demandé par Mathis : une animation quand on débloque un oiseau, et ajouter un oiseau depuis le Birdydex.
 Ses choix (questions à choix) : bouton DANS LA FICHE ; animations « révélation de la vignette » ET
