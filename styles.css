@@ -2494,10 +2494,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .decouvrir-actions { display:flex; justify-content:flex-end; flex-wrap:wrap; gap:8px; margin-top:16px; }
   /* Pas de photo tant qu'on ne l'a pas touchee : le fond de base de la vignette, un « ? » dore
      et une aura doree. Montree, la photo gachait la surprise ; l'aplat vert d'accent, l'aplat
-     noir puis l'aura du palier ne lui plaisaient pas : version 8 choisie sur une planche de
-     huit (Mathis, 2026-10-11, notes-privees/variantes-a-decouvrir/). */
-  .pkdx-card.a-decouvrir { box-shadow:0 0 18px 4px color-mix(in srgb, var(--gold) 60%, transparent); border-color:color-mix(in srgb, var(--gold) 60%, var(--line)); }
-  .pkdx-card.a-decouvrir .pkdx-img { font-size:0; position:relative; }
+     noir puis l'aura du palier ne lui plaisaient pas : version 8f (vignette legerement
+     doree) choisie sur deux planches, aura un peu reduite (Mathis, 2026-10-11,
+     notes-privees/variantes-a-decouvrir/). */
+  .pkdx-card.a-decouvrir { box-shadow:0 0 14px 3px color-mix(in srgb, var(--gold) 50%, transparent); border-color:color-mix(in srgb, var(--gold) 60%, var(--line)); }
+  .pkdx-card.a-decouvrir .pkdx-img { font-size:0; position:relative; background:color-mix(in srgb, var(--gold) 12%, var(--surface-2)); }
   .pkdx-card.a-decouvrir .pkdx-img img { visibility:hidden; }
   .pkdx-card.a-decouvrir .pkdx-img::after { content:'?'; position:absolute; inset:0; display:grid; place-items:center; color:var(--gold); font:700 40px var(--serif, Georgia, serif); }
 
