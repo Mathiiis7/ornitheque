@@ -1,3 +1,10 @@
+# EN LIGNE le 2026-10-11 (tard) : cases « à découvrir » dorées (v737, app.js?v=313)
+Plus de photo sur une espèce à découvrir : vignette légèrement dorée, « ? » doré, aura dorée (variante 8f,
+choisie sur deux planches : notes-privees/variantes-a-decouvrir/). Indices de la scène : plus de flou en sortie.
+Son « bug » venait de la démo : elle compare un dépôt à la fausse liste de 212 espèces, pas à la sienne.
+Sur le vrai site, son dépôt du soir a bien trouvé ses 10 nouvelles (vérifié dans Firestore).
+
+---
 # EN LIGNE le 2026-10-08 : le guide s ouvre a chaque ouverture de la demo (v733, app.js?v=309)
 Demande depuis la conversation portfolio. Script ajoute par outils/build/genere-demo.mjs (clic sur « Guide du site »
 une fois connecte et les boutons flottants visibles) : la vraie appli ne l ouvre toujours qu apres le premier depot.
