@@ -12799,6 +12799,23 @@ async function _renderExoticMap(sci, cc){
   // est un divagant asiatique - sauvage, mais pas natif.
   // Colorees distinctement pour montrer que le tag national ne vaut pas partout.
   const nativeZones = new Set(nativeRegionsDespiteNationalTag(key, cc));
+  // Le bleu valait seulement pour les especes classees au NATIONAL (liste precalculee, 4 pays
+  // concernes). Une espece classee dans quelques zones seulement laissait donc en gris, « sauvage
+  // ou absente », les zones ou elle est vue sans classement : le Capucin bec-de-plomb en Italie,
+  // X en Toscane, n'avait rien pour dire qu'il etait aussi note ailleurs (Mathis, 2026-10-12).
+  // Meme regle partout : vue dans la zone (une valeur mensuelle > 0) et pas classee = bleu, le
+  // gris ne veut plus dire que « pas vue ». Memes donnees que la carte de rarete, deja chargees
+  // par la fiche.
+  if(typeof _loadFreqDataForCountry === 'function'){
+    try { await _loadFreqDataForCountry(cc); } catch(_){}
+  }
+  const freqZones = (typeof REAL_FREQ_MONTHLY_BY_REGION_MULTI === 'object')
+    ? (REAL_FREQ_MONTHLY_BY_REGION_MULTI[cc] || {}) : {};
+  for(const code of Object.keys(paths.zones)){
+    if(perZone[code]) continue;
+    const arr = freqZones[code] && freqZones[code][key];
+    if(Array.isArray(arr) && arr.some(v => v > 0)) nativeZones.add(code);
+  }
   const CAT_COLOR = { N:'#22c55e', P:'#f59e0b', X:'#ef4444' };
   const NATIVE_COLOR = '#3b82f6';
   // Meme mise en evidence que la carte de rarete, pour que les deux se lisent pareil.
@@ -12815,7 +12832,7 @@ async function _renderExoticMap(sci, cc){
     const nomR = nomZone(cc, code, r.name);
     const title = cat ? `${nomR} - ${libelleExo(cat, true)}`
                 : isNative ? `${nomR} - pas de classement exotique (présente, eBird ne la tague pas ici)`
-                : `${nomR} - non listé (sauvage / absent)`;
+                : `${nomR} - non observée`;
     return _pathZone(dRemplace || r.path, fill, title, selection.has(code), selection.size > 0,
       zonesSelectionnables.has(code) ? code : null, echelle);
   };
@@ -13561,7 +13578,7 @@ function _legendeOuQuand(aCarte, aGraph, vueExo){
       + pastille('#f59e0b', 'P ' + libelleExo('P').toLowerCase())
       + pastille('#ef4444', 'X ' + libelleExo('X').toLowerCase())
       + (window._oqExoNatif ? pastille('#3b82f6', 'pas de classement') : '')
-      + pastille('#d4d4d8', 'sauvage ou absente');
+      + pastille('#d4d4d8', 'non observée');
     return `<div class="sm-oq-cles">${clesExo}</div>`
       + `<div class="sm-oq-note">ⓘ ${window._oqExoNational
           ? "D'où sort l'oiseau, " + (p.sansDecoupage ? 'dans le pays' : 'zone par zone') + " : eBird classe chaque population vue hors de son aire naturelle."
