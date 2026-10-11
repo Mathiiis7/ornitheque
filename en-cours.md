@@ -8,10 +8,14 @@
 - Exotiques (v745, app.js?v=321) : _exoticCategory lit eBird FR (Cygne noir, Faisan vénéré, Colin de
   Californie passent N, donc comptent dans le score de rareté réelle) ; plus de lettre sur une ligne
   de pays « absente » (Capucin bec-de-plomb en Suisse).
-Vérifié dans la démo, 11 bancs CONFORME. Reste : qu'il regarde en local, puis pousser.
-QUESTION OUVERTE : Capucin en Italie (pas de statut national, X en Toscane seule). Faire remonter la
-lettre d'une région au pays collerait des X sur des sauvages (149 cas : Oie cendrée, Aigle royal ES...).
-Options proposées : suivre eBird au pays (recommandé), liste à la main, ou appliquer quand même.
+- Carte des statuts exotiques : bleu partout où l'espèce est vue sans classement, gris = non observée.
+- Pays sans statut national : lettres des zones si au moins la moitié des zones où l'espèce est vue
+  la classent (EXOTIQUES_ZONES_MAJORITAIRES, outils/build/exotiques-majoritaires.mjs, 96 cas ; à
+  relancer après inject-exotic-by-region). Capucin en Italie : X. Seul cas douteux : Oie cendrée ME.
+- Étiquette TOI : variante B (pastille d'origine 20 px, texte 10,5 px centré à l'encre), choisie sur
+  notes-privees/maquettes/toi/.
+Dernière version : v751, app.js?v=326. Vérifié dans la démo, 11 bancs CONFORME. Reste : qu'il
+regarde en local, puis pousser.
 
 ---
 # FAIT le 2026-10-11 (pas poussé) : le dépôt eBird fait foi (v738, app.js?v=314, commit 307ca46a)
