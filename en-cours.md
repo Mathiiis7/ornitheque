@@ -1,3 +1,10 @@
+# FAIT le 2026-10-11 (pas poussé) : le dépôt eBird fait foi (v738, app.js?v=314, commit 307ca46a)
+Un ajout à la main absent du CSV disparaît désormais au dépôt suivant (avant : gardé pour toujours, et aucun bouton pour retirer).
+Vérifié dans la démo : dépôt 3 espèces + 1 à la main, redépôt de 2 -> il en reste 2. Bancs CONFORME.
+Quota Firestore dépassé le 11/10 (lecture admin refusée) : son redépôt doit se faire après la remise à zéro (~9 h).
+En suspens : texte du formulaire d'ajout (« pas encore dans ton export eBird ») à revoir avec lui.
+
+---
 # EN LIGNE le 2026-10-11 (tard) : cases « à découvrir » dorées (v737, app.js?v=313)
 Plus de photo sur une espèce à découvrir : vignette légèrement dorée, « ? » doré, aura dorée (variante 8f,
 choisie sur deux planches : notes-privees/variantes-a-decouvrir/). Indices de la scène : plus de flou en sortie.
