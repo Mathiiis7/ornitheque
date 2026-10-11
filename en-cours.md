@@ -6,7 +6,14 @@ Pipit farlouse (12 mesures, penche un peu lapon pour une raison fragile) ; le fa
 Nouveaux outils : crecelle.py, tics.py, duel.py, fenetres.py, syllabes.py (LISEZMOI). Rien à pousser.
 
 ---
-# À L'ESSAI le 2026-10-11 : espèce débloquée + « Je l'ai vu » (commit 9bdbc0d7, v733, app.js?v=309, PAS poussé)
+# À L'ESSAI le 2026-10-11 : espèce débloquée façon walkout (commit f5d76aff, v734, app.js?v=310, PAS poussé)
+2e passe, à sa demande : bouton renommé « Ajouter à ma liste » ; la carte sobre (« pas ouf ») remplacée par
+une scène plein écran façon FIFA (faisceaux, indices pays/famille/palier, carte bronze/argent/or/spéciale
+qui arrive en tournant, flash, étincelles). Vérifié dans la démo : ordi 1280, téléphone 375, dépôt de
+5 espèces (la plus rare en vedette), passer d'un clic. Reste : son avis sur la scène, puis pousser.
+Historique de la 1re passe ci-dessous (le bouton s'y appelait encore « Je l'ai vu »).
+
+# (1re passe) espèce débloquée + « Je l'ai vu » (commit 9bdbc0d7, v733)
 Demandé par Mathis : une animation quand on débloque un oiseau, et ajouter un oiseau depuis le Birdydex.
 Ses choix (questions à choix) : bouton DANS LA FICHE ; animations « révélation de la vignette » ET
 « carte plein écran », à tester toutes les deux.
