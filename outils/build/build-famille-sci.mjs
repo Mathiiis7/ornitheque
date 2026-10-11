@@ -2,10 +2,15 @@
 /*
   build-famille-sci.mjs
 
-  Genere FAMILLE_SCI dans app.js : intitule de famille du Birdydex -> nom scientifique de
-  la famille, mis en forme francaise (Calcariidae -> Calcariidés). Le Birdydex l'affiche a
-  droite du titre, pour qu'un intitule d'usage (« Plectrophanes et Bruants des neiges »)
-  garde son nom savant (demande de Mathis le 2026-10-12).
+  Genere FAMILLES_EBIRD dans app.js : pour chaque intitule de famille du Birdydex, son nom
+  scientifique mis en forme francaise (Calcariidae -> Calcariidés) et son ordre
+  (Passeriformes), le tout dans l'ordre taxonomique d'eBird. Le Birdydex en tire :
+  - le nom savant a droite du titre de famille (demande de Mathis le 2026-10-12) ;
+  - un grand titre par ordre, au-dessus de ses familles (Balbuzard et aigles sous
+    « Accipitriformes ») ;
+  - FAMILY_ORDER, l'ordre des familles. Il etait ecrit a la main et coupait des ordres en
+    deux (la Turnix loin des autres Charadriiformes) et oubliait 15 intitules, renvoyes
+    en fin de liste : mesure du 2026-10-12.
 
   On croise GENUS_FAMILY et FAMILY_EN_TO_FR, tels qu'ils sont dans app.js, avec le champ
   familySciName de la taxonomie eBird. Mesure du 2026-10-12 : 249 intitules sur 251 ne
@@ -47,11 +52,12 @@ const taxa = await r.json();
 
 // Intitule -> familles scientifiques, dans l'ordre ou eBird les rencontre
 const parIntitule = new Map();
+const ordreDe = new Map();
 for(const t of taxa){
   if(t.category !== 'species' || !t.familySciName) continue;
   const fr = familyOf(t.sciName);
   if(fr === 'Autres') continue;
-  if(!parIntitule.has(fr)) parIntitule.set(fr, []);
+  if(!parIntitule.has(fr)){ parIntitule.set(fr, []); ordreDe.set(fr, t.order); }
   const l = parIntitule.get(fr);
   if(!l.includes(t.familySciName)) l.push(t.familySciName);
 }
@@ -86,11 +92,22 @@ function franciser(lat){
   return out;
 }
 
-const table = {};
-for(const [fr, fams] of parIntitule) table[fr] = fams.map(franciser).join(', ');
+// [intitule, nom savant, ordre], dans l'ordre taxonomique d'eBird : la Map garde l'ordre
+// d'insertion et l'API rend les especes dans cet ordre-la.
+const familles = [...parIntitule].map(([fr, fams]) => [fr, fams.map(franciser).join(', '), ordreDe.get(fr)]);
 
-const ligne = 'const FAMILLE_SCI = ' + JSON.stringify(table) + ';';
-const rx = /^const FAMILLE_SCI = .*$/m;
+// Un meme ordre doit former un seul bloc, sinon le Birdydex afficherait deux fois son titre
+const vus = new Set();
+let prec = null;
+for(const [fr, , o] of familles){
+  if(o !== prec){
+    if(vus.has(o)){ console.error('Ordre coupe en deux : ' + o + ' reprend a ' + fr); process.exit(1); }
+    vus.add(o); prec = o;
+  }
+}
+
+const ligne = 'const FAMILLES_EBIRD = ' + JSON.stringify(familles) + ';';
+const rx = /^const FAMILLES_EBIRD = .*$/m;
 if(rx.test(app)) app = app.replace(rx, ligne);
 else {
   // Juste apres FAMILY_EN_TO_FR, qui sert a la meme chose
@@ -98,5 +115,5 @@ else {
   app = app.slice(0, fin) + NL + '// Genere par outils/build/build-famille-sci.mjs' + NL + ligne + app.slice(fin);
 }
 fs.writeFileSync(APP_JS, app);
-for(const [fr, sci] of Object.entries(table)) console.log(fr + '  ->  ' + sci);
-console.log(Object.keys(table).length + ' intitules');
+for(const [fr, sci, o] of familles) console.log(o + '  |  ' + fr + '  ->  ' + sci);
+console.log(familles.length + ' intitules, ' + vus.size + ' ordres');

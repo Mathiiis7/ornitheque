@@ -2249,6 +2249,12 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      couleur. Sur un ecran etroit, il passe a la ligne sous le titre. */
   .pkdx-groupe-fam { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:baseline; gap:0 12px; }
   .pkdx-groupe-sci { font-weight:400; color:var(--ink-3); }
+  /* Grand titre d'ordre (« Accipitriformes »), au-dessus de ses familles : la taille d'un
+     petit titre de bloc (17 px, 600, police des titres), selon la charte. */
+  .pkdx-ordre { grid-column:1/-1; margin:30px 0 0; padding:0 2px;
+    font:600 17px var(--titre); color:var(--ink); }
+  .pkdx-ordre:first-child { margin-top:0; }
+  .pkdx-ordre + .pkdx-groupe { margin-top:4px; }
   /* Compteur du Birdydex : le nombre d'especes vues en grand, dans la police des titres.
      Interligne serre : .section-head aligne ses deux cotes sur la ligne de base, et le 26 px en
      interligne normal montait plus haut que le titre, qu'il poussait de 4,8 px vers le bas ; le
