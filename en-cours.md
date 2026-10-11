@@ -6,7 +6,14 @@ Pipit farlouse (12 mesures, penche un peu lapon pour une raison fragile) ; le fa
 Nouveaux outils : crecelle.py, tics.py, duel.py, fenetres.py, syllabes.py (LISEZMOI). Rien à pousser.
 
 ---
-# À L'ESSAI le 2026-10-11 : espèce débloquée façon walkout (commit f5d76aff, v734, app.js?v=310, PAS poussé)
+# À L'ESSAI le 2026-10-11 : espèces à découvrir (commit 99a31388, v735, app.js?v=311, PAS poussé)
+3e passe, à sa demande : après un dépôt eBird, fenêtre « N nouvelles espèces ! » -> « Voir le Birdydex » ;
+les nouvelles y attendent sur fond teinté (.a-decouvrir, gardées en localStorage par compte), les toucher
+joue la scène. Scène ralentie (indices 1,3 s, carte à 4,7 s). Carte au style du site (grande case du
+Birdydex), plus de bronze/argent/or. Ajout manuel : scène tout de suite, comme avant. Vérifié dans la
+démo, ordi et téléphone sombre. Reste : son avis, puis pousser.
+
+# (2e passe) espèce débloquée façon walkout (commit f5d76aff, v734)
 2e passe, à sa demande : bouton renommé « Ajouter à ma liste » ; la carte sobre (« pas ouf ») remplacée par
 une scène plein écran façon FIFA (faisceaux, indices pays/famille/palier, carte bronze/argent/or/spéciale
 qui arrive en tournant, flash, étincelles). Vérifié dans la démo : ordi 1280, téléphone 375, dépôt de
