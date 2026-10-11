@@ -2493,6 +2493,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .decouvrir-texte { margin:12px 0 0; font-size:15px; line-height:1.45; color:var(--ink-2); }
   .decouvrir-actions { display:flex; justify-content:flex-end; flex-wrap:wrap; gap:8px; margin-top:16px; }
   .pkdx-card.a-decouvrir { background:color-mix(in srgb, var(--accent) 14%, var(--surface)); border-color:var(--accent); }
+  /* Pas de photo tant qu'on ne l'a pas touchee : un aplat de couleur, que rien ne confond
+     avec le gris des manquantes. Montree, la photo gachait la surprise et la case se perdait
+     parmi les autres (Mathis, 2026-10-11). */
+  .pkdx-card.a-decouvrir .pkdx-img { background:var(--accent); font-size:0; }
+  .pkdx-card.a-decouvrir .pkdx-img img { visibility:hidden; }
 
   /* La case du Birdydex qui se révèle : elle grossit, rebondit, s'entoure d'un halo
      d'accent, et sa photo passe de la silhouette à la couleur. */
