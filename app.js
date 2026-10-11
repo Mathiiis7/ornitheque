@@ -17648,9 +17648,7 @@ function _pkdxRender(){
     const photoConnue = r.owned ? _photoCarteConnue(r.sci) : '';
     // Absente de la zone choisie : la case reste, en retrait. La masquer ferait croire que
     // l'espece n'existe pas, alors qu'elle est seulement ailleurs.
-    // A decouvrir : la couleur du palier sert a la legere aura autour de la case.
-    const aDec = r.owned && dec.has(r.sci);
-    return `<div class="pkdx-card${r.owned?'':' missing'}${aDec ? ' a-decouvrir' : ''}"${aDec ? ` style="--rar:${tierBg}"` : ''} data-sci="${esc(r.sci)}">
+    return `<div class="pkdx-card${r.owned?'':' missing'}${r.owned && dec.has(r.sci) ? ' a-decouvrir' : ''}" data-sci="${esc(r.sci)}">
       <span class="pkdx-num">#${num}</span>
       ${r.saison ? `<span class="pkdx-saison" data-tip="Espèce nettement saisonnière : elle déserte une bonne partie de l'année. Viser le bon mois change tout.">◑</span>` : ''}
       ${cats.length ? `<span class="pkdx-exos">${exoChips}</span>` : ''}

@@ -2410,7 +2410,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     0%   { opacity:0; transform:scale(1.8); filter:blur(8px); }
     18%  { opacity:1; transform:scale(1); filter:none; }
     84%  { opacity:1; transform:scale(.97); }
-    100% { opacity:0; transform:scale(.85); filter:blur(4px); }
+    100% { opacity:0; transform:scale(.92); filter:none; }
   }
   .fut-indice-drapeau { width:170px; height:auto; border-radius:6px; box-shadow:0 0 30px var(--fut-couleur); }
   .fut-indice-grand { font:700 48px var(--titre); letter-spacing:.5px; text-transform:none; }
@@ -2492,13 +2492,14 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      d'être touchées, sur un fond teinté d'accent et un bord d'accent - légèrement à part. */
   .decouvrir-texte { margin:12px 0 0; font-size:15px; line-height:1.45; color:var(--ink-2); }
   .decouvrir-actions { display:flex; justify-content:flex-end; flex-wrap:wrap; gap:8px; margin-top:16px; }
-  /* Pas de photo tant qu'on ne l'a pas touchee : le fond de base de la vignette, un « ? », et
-     une aura tres legere a la couleur du palier. Montree, la photo gachait la surprise ;
-     l'aplat vert d'accent puis l'aplat noir « rendaient pas bien » (Mathis, 2026-10-11). */
-  .pkdx-card.a-decouvrir { box-shadow:0 0 12px 2px color-mix(in srgb, var(--rar, var(--accent)) 35%, transparent); }
+  /* Pas de photo tant qu'on ne l'a pas touchee : le fond de base de la vignette, un « ? » dore
+     et une aura doree. Montree, la photo gachait la surprise ; l'aplat vert d'accent, l'aplat
+     noir puis l'aura du palier ne lui plaisaient pas : version 8 choisie sur une planche de
+     huit (Mathis, 2026-10-11, notes-privees/variantes-a-decouvrir/). */
+  .pkdx-card.a-decouvrir { box-shadow:0 0 18px 4px color-mix(in srgb, var(--gold) 60%, transparent); border-color:color-mix(in srgb, var(--gold) 60%, var(--line)); }
   .pkdx-card.a-decouvrir .pkdx-img { font-size:0; position:relative; }
   .pkdx-card.a-decouvrir .pkdx-img img { visibility:hidden; }
-  .pkdx-card.a-decouvrir .pkdx-img::after { content:'?'; position:absolute; inset:0; display:grid; place-items:center; color:var(--ink-3); font:700 40px var(--serif, Georgia, serif); }
+  .pkdx-card.a-decouvrir .pkdx-img::after { content:'?'; position:absolute; inset:0; display:grid; place-items:center; color:var(--gold); font:700 40px var(--serif, Georgia, serif); }
 
   /* La case du Birdydex qui se révèle : elle grossit, rebondit, s'entoure d'un halo
      d'accent, et sa photo passe de la silhouette à la couleur. */
