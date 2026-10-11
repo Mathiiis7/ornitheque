@@ -5,7 +5,13 @@
   dans l'ordre du code à la première ouverture).
 - Monténégro : paliers recalculés (293/308 faux, remis à l'ancienne version le 27/09 ; profil
   d'effort effacé le 26/09 par inject-rarity-multi-country, qui fusionne désormais).
+- Exotiques (v745, app.js?v=321) : _exoticCategory lit eBird FR (Cygne noir, Faisan vénéré, Colin de
+  Californie passent N, donc comptent dans le score de rareté réelle) ; plus de lettre sur une ligne
+  de pays « absente » (Capucin bec-de-plomb en Suisse).
 Vérifié dans la démo, 11 bancs CONFORME. Reste : qu'il regarde en local, puis pousser.
+QUESTION OUVERTE : Capucin en Italie (pas de statut national, X en Toscane seule). Faire remonter la
+lettre d'une région au pays collerait des X sur des sauvages (149 cas : Oie cendrée, Aigle royal ES...).
+Options proposées : suivre eBird au pays (recommandé), liste à la main, ou appliquer quand même.
 
 ---
 # FAIT le 2026-10-11 (pas poussé) : le dépôt eBird fait foi (v738, app.js?v=314, commit 307ca46a)
