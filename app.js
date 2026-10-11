@@ -1167,7 +1167,12 @@ function _openCountryPicker(currentCode, opts = {}){
       if(p >= 10) return Math.round(p)+_PCT;
       if(p >= 0.1) return _fr(p.toFixed(1))+_PCT;
       return _fr(Number(p.toPrecision(1)))+_PCT; };
-    // Grouper par continent (avec optionnel score espece)
+    // Grouper par continent (avec optionnel score espece). Dans une fonction, rappelee quand
+    // les frequences des pays etrangers arrivent : triee une seule fois a l'ouverture, avant
+    // leur arrivee, la liste gardait l'ordre de declaration de COUNTRIES_REG (tous les pays
+    // a egalite, « absents »), et seul le premier affichage de la session le montrait
+    // (Mathis, 2026-10-12 : « parfois par ordre alphabetique »).
+    const grouper = () => {
     const grouped = {};
     for(const cc of allCodes){
       const cont = CONTINENT_BY_CC[cc] || 'Autres';
@@ -1212,6 +1217,9 @@ function _openCountryPicker(currentCode, opts = {}){
           || (COUNTRIES_REG[a.cc].name || a.cc).localeCompare(COUNTRIES_REG[b.cc].name || b.cc, 'fr'));
       }
     }
+    return grouped;
+    };
+    let grouped = grouper();
     const backdrop = document.createElement('div');
     backdrop.className = 'cp-modal-backdrop';
     backdrop.innerHTML = `
@@ -1411,7 +1419,7 @@ function _openCountryPicker(currentCode, opts = {}){
     // elles ne sont pas encore arrivees, chaque ligne afficherait « - » : on redessine des
     // qu'elles sont la, plutot que de retarder l'ouverture du selecteur.
     if(!_donneesPaysPretes()){
-      _chargerDonneesPays().then(() => { try{ render(); }catch(_){} });
+      _chargerDonneesPays().then(() => { try{ grouped = grouper(); render(searchEl.value); }catch(_){} });
     }
     // Events
     const cleanup = () => {
