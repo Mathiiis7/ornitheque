@@ -120,7 +120,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=314">
+<link rel="modulepreload" href="app.js?v=315">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -1338,7 +1338,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         <button type="button" class="ml-dialog-close" data-ferme aria-label="Fermer">✕</button>
       </div>
       <div class="manual-body" id="manualAdd">
-        <p class="ml-note">Pour une espèce vue mais pas encore dans ton export eBird. Tape son nom (français ou scientifique) et choisis dans la liste.</p>
+        <p class="ml-note">Pour une espèce vue mais pas encore dans ton export eBird. Tape son nom (français ou scientifique) et choisis dans la liste. Pense à l'ajouter aussi dans eBird : sinon il partira à ton prochain dépôt.</p>
         <div class="manual-row">
           <div class="manual-search">
             <input type="text" id="manualSearch" aria-label="Chercher une espèce à ajouter" placeholder="Ex. « merle noir », « aegithalos »…" autocomplete="off">
@@ -1415,5 +1415,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=314"></script>
+<script type="module" src="app.js?v=315"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>
