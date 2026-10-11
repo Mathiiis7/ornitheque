@@ -1,3 +1,21 @@
+# À L'ESSAI le 2026-10-11 : espèce débloquée + « Je l'ai vu » (commit 9bdbc0d7, v733, app.js?v=309, PAS poussé)
+Demandé par Mathis : une animation quand on débloque un oiseau, et ajouter un oiseau depuis le Birdydex.
+Ses choix (questions à choix) : bouton DANS LA FICHE ; animations « révélation de la vignette » ET
+« carte plein écran », à tester toutes les deux.
+- « ＋ Je l'ai vu » (en-tête de la fiche, seulement si l'espèce est grisée) -> fenêtre d'ajout pré-remplie
+  (espèce + pays de la fiche ; date et lieu à donner). Visible dans toutes les fiches, pas seulement
+  depuis le Birdydex : à lui de dire si ça lui va. La fenêtre d'ajout vit désormais au niveau de la page.
+- Ajout réussi (fiche ou Ma liste) ou re-dépôt eBird avec des nouveautés (pas au 1er dépôt, ni les « sp. »)
+  -> carte au centre (photo silhouette -> couleur) ; en la fermant depuis la fiche, la fiche se ferme
+  et la case du Birdydex se révèle (rebond, halo) + bandeau 3 s. Interrupteurs DEBLOQUE_CARTE /
+  DEBLOQUE_REVELATION dans app.js.
+- Vérifié dans la démo : ordi 1280 clair, téléphone 375 sombre (pointer coarse, 44 px), filtre
+  « Manquantes » (pas de révélation, pas d'erreur), Échap/flèches. Re-dépôt eBird SIMULÉ dans la démo
+  avec un export fabriqué (2 espèces + un « duck sp. » écarté). Bancs CONFORME.
+- Reste : ses retours sur les deux effets (garder les deux, ou un seul) et les textes (bouton, carte,
+  bandeau) ; puis pousser.
+
+---
 # FAIT le 2026-10-11 (soir) : vidéo 3, Les Moutiers-en-Retz (bruant.mp4, 25 s)
 Section « Vidéo 3 » du même RAPPORT.md. Bruant des roseaux sûr (cri net à 20,3 s), trois autres cris
 du même dessin non prouvés par la mesure ; le reste est surtout des voix humaines. Références ajoutées :
