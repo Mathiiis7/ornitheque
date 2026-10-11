@@ -228,7 +228,7 @@ const FAM_FR = {
   // Fringillidae
   'Finches, Euphonias, and Allies': 'Pinsons, chardonnerets…',
   // Calcariidae
-  'Longspurs and Snow Buntings': 'Bruants des neiges',
+  'Longspurs and Snow Buntings': 'Plectrophanes et Bruants des neiges',
   // Emberizidae
   'Old World Buntings': 'Bruants',
   // Passerellidae
