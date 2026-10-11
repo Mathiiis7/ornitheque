@@ -14,7 +14,7 @@
   relancer après inject-exotic-by-region). Capucin en Italie : X. Seul cas douteux : Oie cendrée ME.
 - Étiquette TOI : variante B (pastille d'origine 20 px, texte 10,5 px centré à l'encre), choisie sur
   notes-privees/maquettes/toi/.
-Dernière version : v751, app.js?v=326. Vérifié dans la démo, 11 bancs CONFORME. Reste : qu'il
+Dernière version : v750, app.js?v=326. Vérifié dans la démo, 11 bancs CONFORME. Reste : qu'il
 regarde en local, puis pousser.
 
 ---
