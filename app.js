@@ -5728,7 +5728,7 @@ function memberToPerson(id, data, si){
     locId: e.li||null,                         // LocID eBird pour lien hotspot
     // allObs (oa) = tableau de toutes les obs coord (import recent). Fallback : reconstruit depuis lat/lon si vieux format.
     allObs: Array.isArray(e.oa) ? e.oa : ((typeof e.la==='number' && typeof e.lo==='number') ? [{ lat:e.la, lon:e.lo, date:e.d||'', loc:e.l||'', cc:e.co||null, locId:e.li||null }] : []),
-    manual: e.m===1,                           // ajout manuel (préservé lors des ré-imports)
+    manual: e.m===1,                           // ajout manuel (perdu au prochain dépôt s il manque au CSV)
     addedAt: typeof e.a==='number' ? e.a : 0,  // ms unix : date à laquelle l'espèce est apparue chez ce joueur
     // recalculé à la lecture (pas figé au moment de l'upload) : ainsi toute
     // amélioration du filtre s'applique aux listes déjà enregistrées.
@@ -9791,7 +9791,7 @@ async function saveMyList(name, speciesMap, regions){
     // Toutes les coords (pour rendre 1 marker par obs sur la carte). Cap 20 obs
     // par espece pour eviter d'exploser Firestore doc size sur especes ultra communes.
     if(Array.isArray(v.allObs) && v.allObs.length > 1){ e.oa = v.allObs.slice(0, 20); }
-    if(v.manual) e.m = 1;                                           // ajout manuel -> à préserver au ré-import
+    if(v.manual) e.m = 1;                                           // ajout manuel -> marque l ajout manuel (le prochain dépôt le retire s il manque au CSV)
     if(v.addedAt) e.a = v.addedAt;                                  // horodatage d'apparition (pour tri "nouveautés" du fil)
     return e; });
   const ref=doc(db,'leagues',leagueId,'members',myUid);
@@ -10035,7 +10035,7 @@ async function _enregistreListe(parsed, name){
   const _avant = prev ? new Set(prev.keys()) : null;
   const debloquees = _avant ? [...parsed.species].filter(([k, v]) => !v.nonSpecies && !_mineHasStrict(_avant, k)).map(([k]) => k) : [];
   if(prev){
-    let kept=0, manualKept=0;
+    let kept=0;
     // Pour chaque espèce du CSV : si le CSV n'a pas de coords mais l'ancien oui, on garde.
     // (En revanche si le CSV apporte des coords, il gagne : c'est la meilleure source.)
     // On préserve aussi addedAt : si l'espèce est déjà connue chez ce joueur (manuel OU
@@ -10051,14 +10051,11 @@ async function _enregistreListe(parsed, name){
     for(const [k,v] of parsed.species){
       if(!prev.has(k) && !v.addedAt) v.addedAt = importAt;
     }
-    // Préserve les ajouts MANUELS qui ne sont PAS dans le nouveau CSV
-    // (l'utilisateur les a saisis à la main, ils ne doivent pas disparaître à chaque ré-import).
-    for(const [k,old] of prev){
-      if(parsed.species.has(k)) continue;   // le CSV a une version -> elle gagne
-      if(old.manual){ parsed.species.set(k, old); manualKept++; }
-    }
+    // Les ajouts MANUELS absents du CSV ne sont PAS repris : la liste deposee fait foi, entiere.
+    // Avant le 2026-10-11 ils etaient gardes a chaque re-depot, et comme l'appli n'a aucun bouton
+    // pour retirer une espece, un oiseau ajoute a la main par erreur ne partait plus jamais
+    // (signale par Mathis). Decision de Mathis : « c'est la liste qui compte ».
     if(kept) console.log('Ré-import : '+kept+' coords GPS préservées.');
-    if(manualKept) console.log('Ré-import : '+manualKept+' ajouts manuels préservés.');
   } else {
     // Tout premier import : toutes les espèces sont "nouvelles" à cet instant.
     for(const [k,v] of parsed.species) if(!v.addedAt) v.addedAt = importAt;
