@@ -9,7 +9,7 @@ fiche, pays, Ma liste, Classement, puis la suite. Verifie ordi 1280 et telephone
 Rapport : notes-privees/analyse-sons/2026-10-11-bruant-lapon/RAPPORT.md (3 passes). Merlin proposait lapon ET farlouse.
 Bruant lapon, bonne confiance sans certitude : DEUX crécelles jumelles (6:24,3 et 6:24,9), dessin que
 12 autres espèces côtières (222 enr., dont 54 Pipits farlouses) ne reproduisent pas. Le gazouillis
-aigu seul ne sépare pas lapon et farlouse. Sonagramme et extraits à écouter : dossier ecoute/.
+aigu seul ne sépare pas lapon et farlouse. Linotte écartée (50 enr.) : ses notes ont une trace grave vers 2-3 kHz, pas les tiennes. Sonagramme et extraits à écouter : dossier ecoute/.
 Outils : crecelle.py, qui_crecelle.py, deuxieme_crecelle.py, duel.py, fenetres.py (LISEZMOI). Rien à pousser.
 
 ---
