@@ -544,6 +544,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      au-dessus (Mathis, 2026-10-05 : « les couleurs ne correspondent pas »). Meme couleur de
      depart (t.color), seul le rendu differait - teinte a 16 % et mot colore. */
   #viewRanking .chip { font-size:13px; background:var(--tc); border-color:var(--tc); color:#fff; }
+  /* Dans le tableau, l'etiquette ne doit pas depasser la hauteur du nom de l'espece (21 px) :
+     a 25,4 px elle faisait passer chaque ligne de 37,9 a 42,3 px aux tris de rarete, et le
+     tableau changeait de hauteur selon le tri (Mathis, 2026-10-12). Alignee en haut et non au
+     milieu : au milieu, la ligne de texte de la case l'entourait encore et ajoutait 1,2 px. */
+  #viewRanking td .chip { line-height:17px; padding:1px 8px; vertical-align:top; }
   #viewRanking .youtag { font-size:12px; }
   #viewRanking .fp-hint, #viewRanking .miss-toggle { font-size:14px; font-weight:400; text-transform:none; letter-spacing:0; color:var(--ink-3); }
   #viewRanking .miss-toggle { color:var(--ink-2); }
