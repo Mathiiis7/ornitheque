@@ -10743,7 +10743,7 @@ function _ajoutRaz(){
 }
 // L'espece dont la fiche a ouvert la fenetre d'ajout, null quand elle vient de Ma liste.
 let _ajoutDepuisFiche = null;
-// « Je l'ai vu » dans la fiche : la fenetre d'ajout s'ouvre avec l'espece deja choisie et le
+// « Ajouter à ma liste » dans la fiche : la fenetre d'ajout s'ouvre avec l'espece deja choisie et le
 // pays de la fiche. La date et le lieu restent a donner : on ne les devine pas.
 function _ajoutOuvrePour(sci){
   if(!sci) return;
@@ -15138,7 +15138,7 @@ function _openSpeciesModalSuite(sci, key, modal, _wasOpen, _savedScroll){
   _majBoutonVu(key);
   _openSpeciesModalLiens(sci, key, modal, _wasOpen, _savedScroll);
 }
-// « Je l'ai vu » : seulement pour une espece que la grille du Birdydex montre grisee, avec
+// « Ajouter à ma liste » : seulement pour une espece que la grille du Birdydex montre grisee, avec
 // le meme test (_mineHasStrict, qui suit les changements de nom latin). L'ajout passe par
 // l'index de la recherche manuelle, qui ecarte les anciens noms : on s'y ramene par
 // SCI_ALIAS, et une espece qu'il ne connait pas ne montre pas de bouton qui ne ferait rien.
@@ -17794,57 +17794,130 @@ function _debloqueInfos(sci){
   const num = (_pkdxFilters && (_pkdxFilters.country || 'FR') === cc && _pkdxNumById) ? _pkdxNumById.get(sci) : null;
   return { cc, tier, num };
 }
-// Une photo qui arrive en silhouette puis prend ses couleurs. La classe .revele ne se pose
-// qu'une fois l'image decodee : posee avant, la transition se jouait sur un cadre vide.
-function _debloquePhoto(box, sci, credit){
+// La carte d'une espece debloquee, facon « walkout » de jeu de foot (demande de Mathis le
+// 2026-10-11, la premiere version - une simple carte qui s'ouvre - n'etait « pas ouf ») :
+// ecran noir, faisceaux a la couleur de la rarete, trois indices qui tombent l'un apres
+// l'autre (pays, famille, palier), puis la carte arrive en tournant, avec un flash et des
+// etincelles. Toute la chorégraphie est en CSS (delais), le code ne fait que poser la scene.
+// Un clic, Entree ou Echap pendant la scene la fait sauter a la carte posee (.fut-fini).
+//
+// Le metal de la carte suit le palier, comme bronze, argent et or dans le jeu : plus
+// l'oiseau est rare, plus la carte est precieuse.
+function _futType(tier){
+  if(tier >= 9) return 'special';
+  if(tier >= 7) return 'or';
+  if(tier >= 4) return 'argent';
+  return 'bronze';
+}
+function _futDrapeau(cc, cls){
+  cc = (cc || '').toLowerCase();
+  if(!/^[a-z]{2}$/.test(cc)) return '';
+  return '<img class="' + cls + '" src="https://flagcdn.com/w80/' + cc + '.png" srcset="https://flagcdn.com/w160/' + cc + '.png 2x" alt="">';
+}
+function _futCarteHtml(sci, mini){
+  const { cc, tier, num } = _debloqueInfos(sci);
+  const type = _futType(tier);
+  const nom = FR_NAMES[sci] || sci;
+  const note = tier ? String(tier) : '–';
+  if(mini){
+    return '<div class="fut-mini-bloc"><div class="fut-carte fut-mini fut-' + type + '"><div class="fut-int">'
+      + '<div class="fut-note">' + note + '</div><div class="fut-photo" data-sci="' + esc(sci) + '"></div>'
+      + '</div></div><span class="fut-mini-nom">' + esc(nom) + '</span></div>';
+  }
+  const latin = sci.charAt(0).toUpperCase() + sci.slice(1);
+  // Les chiffres du bas sont ceux que l'appli connait deja : le numero du Birdydex (seulement
+  // si la grille de ce pays a ete dessinee), le pays, la famille. Rien d'invente pour faire
+  // ressembler la carte a celle d'un joueur.
+  return '<div class="fut-carte fut-' + type + '"><div class="fut-int">'
+    + '<div class="fut-reflet" aria-hidden="true"></div>'
+    + '<div class="fut-haut"><div class="fut-cote">'
+    + '<div class="fut-note">' + note + '</div>'
+    + '<div class="fut-poste">' + esc(REAL_LABELS[tier] || '') + '</div>'
+    + _futDrapeau(cc, 'fut-drapeau')
+    + '</div><div class="fut-photo" data-sci="' + esc(sci) + '"></div></div>'
+    + '<h3 class="fut-nom" id="debloqueTitre">' + esc(nom) + '</h3>'
+    + '<div class="fut-sci">' + esc(latin) + '</div>'
+    + '<div class="fut-stats">'
+    + (num ? '<span><b>' + String(num).padStart(3, '0') + '</b>N°</span>' : '')
+    + '<span><b>' + esc((cc || '').toUpperCase()) + '</b>Pays</span>'
+    + '<span><b>' + note + '</b>Palier</span>'
+    + '</div>'
+    + '<div class="fut-famille">' + esc(familyOf(sci)) + '</div>'
+    + '</div></div>';
+}
+// La photo se pose des qu'elle arrive. La scene dure pres de trois secondes avant que la
+// carte se montre : c'est le temps qu'il faut, en general, pour aller la chercher.
+function _futPhoto(box){
+  const sci = box.dataset.sci;
   _fetchWikiPhoto(sci).then(p => {
     const src = p && (p.thumb || p.url);
-    if(!src){ box.textContent = '🐦'; box.classList.add('revele'); return; }
-    const img = new Image();
-    img.alt = FR_NAMES[sci] || sci;
-    img.src = src;
-    // La lecture de offsetWidth force le calcul du style de depart (la silhouette) : sans
-    // elle, image et classe arrivent dans le meme calcul et la transition ne se joue pas.
-    const pret = () => { if(!box.isConnected) return; box.replaceChildren(img);
-      void img.offsetWidth; box.classList.add('revele'); };
-    (img.decode ? img.decode() : Promise.resolve()).then(pret, pret);
-    if(credit && p.credit) credit.textContent = 'Photo : ' + p.credit;
-  }).catch(() => { box.textContent = '🐦'; box.classList.add('revele'); });
+    if(!src){ box.textContent = '🐦'; return; }
+    const img = new Image(); img.alt = ''; img.src = src;
+    const pose = () => { if(box.isConnected) box.replaceChildren(img); };
+    (img.decode ? img.decode() : Promise.resolve()).then(pose, pose);
+  }).catch(() => { box.textContent = '🐦'; });
 }
+const FUT_ETINCELLES = 28;
 function _debloqueOuvre(liste){
-  const dlg = $('#debloqueDialog'), corps = $('#debloqueCorps'); if(!dlg || !corps) return;
-  const nomDe = s => FR_NAMES[s] || s;
-  if(liste.length === 1){
-    const sci = liste[0];
-    const { cc, tier, num } = _debloqueInfos(sci);
-    const palier = tier ? tierChip(String(tier), realColor(tier), { cls:'tier-rond' })
-      // « · France » et non « en France » : « en Pays-Bas » serait faux, et rien dans l'appli
-      // ne choisit la preposition d'un pays.
-      + ' <span>' + esc(REAL_LABELS[tier] || '') + (COUNTRY_NAMES[cc] ? ' · ' + esc(COUNTRY_NAMES[cc]) : '') + '</span>' : '';
-    $('#debloqueSur').textContent = 'Nouvelle espèce';
-    corps.innerHTML = '<div class="debloque-photo"></div>'
-      + '<h3 class="debloque-nom" id="debloqueTitre">' + esc(nomDe(sci)) + '</h3>'
-      + '<div class="debloque-sci">' + esc(sci.charAt(0).toUpperCase() + sci.slice(1)) + '</div>'
-      + (palier || num ? '<div class="debloque-meta">' + palier
-        + (num ? '<span class="debloque-num">n° ' + num + ' du Birdydex</span>' : '') + '</div>' : '')
-      + '<p class="debloque-credit"></p>';
-    _debloquePhoto(corps.querySelector('.debloque-photo'), sci, corps.querySelector('.debloque-credit'));
-  } else {
-    const montrees = liste.slice(0, DEBLOQUE_MAX_VIGNETTES);
-    const reste = liste.length - montrees.length;
-    $('#debloqueSur').textContent = 'Nouvelles espèces';
-    corps.innerHTML = '<h3 class="debloque-nom" id="debloqueTitre">' + liste.length + ' nouvelles espèces</h3>'
-      + '<ul class="debloque-liste">' + montrees.map(s =>
-        '<li><div class="debloque-photo"></div><span>' + esc(nomDe(s)) + '</span></li>').join('') + '</ul>'
-      + (reste ? '<p class="debloque-reste">et ' + reste + ' autre' + (reste > 1 ? 's' : '') + ' dans ta liste</p>' : '');
-    // Les vignettes se revelent l'une apres l'autre, comme des cartes qu'on retourne.
-    corps.querySelectorAll('.debloque-photo').forEach((b, i) => {
-      b.style.setProperty('--decalage', (i * 140) + 'ms');
-      _debloquePhoto(b, montrees[i], null);
-    });
+  const dlg = $('#debloqueDialog'), scene = $('#debloqueScene'); if(!dlg || !scene) return;
+  const cc = _globalCountry || 'FR';
+  // Sur un depot qui en apporte plusieurs, la plus rare fait l'entree, les autres suivent.
+  const tri = liste.map(s => ({ s, t: rarityForCountry(s, cc) || 0 })).sort((a, b) => b.t - a.t);
+  const vedette = tri[0].s;
+  const autres = tri.slice(1).map(x => x.s);
+  const montrees = autres.slice(0, DEBLOQUE_MAX_VIGNETTES - 1);
+  const reste = autres.length - montrees.length;
+  const { tier } = _debloqueInfos(vedette);
+  scene.className = 'fut-scene fut-' + _futType(tier);
+  scene.style.setProperty('--fut-couleur', tier ? realColor(tier) : 'hsl(0 0% 55%)');
+  let etincelles = '';
+  for(let i = 0; i < FUT_ETINCELLES; i++){
+    const a = Math.round(i * 360 / FUT_ETINCELLES + (Math.random() * 10 - 5));
+    const d = Math.round(160 + Math.random() * 160);
+    etincelles += '<i style="--a:' + a + 'deg;--d:' + d + 'px;--t:' + (Math.random() * .25).toFixed(2) + 's"></i>';
   }
+  scene.innerHTML = '<div class="fut-rayons" aria-hidden="true"></div><div class="fut-halo" aria-hidden="true"></div>'
+    + '<p class="fut-titre">' + (liste.length > 1 ? liste.length + ' nouvelles espèces' : 'Nouvelle espèce') + '</p>'
+    + '<div class="fut-centre">'
+    +   '<div class="fut-indice" style="--i:0" aria-hidden="true">' + _futDrapeau(cc, 'fut-indice-drapeau')
+    +     '<span>' + esc(COUNTRY_NAMES[cc] || cc) + '</span></div>'
+    +   '<div class="fut-indice" style="--i:1" aria-hidden="true"><span class="fut-indice-grand">' + esc(familyOf(vedette)) + '</span></div>'
+    +   '<div class="fut-indice" style="--i:2" aria-hidden="true"><span class="fut-indice-note">' + (tier || '–') + '</span>'
+    +     '<span>' + esc(REAL_LABELS[tier] || '') + '</span></div>'
+    +   '<div class="fut-etincelles" aria-hidden="true">' + etincelles + '</div>'
+    +   '<div class="fut-pose">' + _futCarteHtml(vedette, false) + '</div>'
+    + '</div>'
+    + (montrees.length ? '<div class="fut-autres">' + montrees.map((s, i) =>
+        _futCarteHtml(s, true).replace('class="fut-mini-bloc"', 'class="fut-mini-bloc" style="--i:' + i + '"')).join('')
+      + (reste ? '<span class="fut-reste">+' + reste + '</span>' : '') + '</div>' : '')
+    + '<div class="fut-bas"><button type="button" class="btn debloque-ok" data-ferme>Continuer</button></div>'
+    + '<div class="fut-flash" aria-hidden="true"></div>';
+  scene.querySelectorAll('.fut-photo[data-sci]').forEach(_futPhoto);
   if(!dlg.open) dlg.showModal();
+  // Le focus va a la scene et non au bouton, encore invisible : Entree ne doit pas fermer
+  // avant que la carte soit la.
+  scene.focus();
 }
+// Passer la scene : premier clic, Entree ou Echap. Le suivant, sur « Continuer », ferme.
+function _futPasser(){
+  const scene = $('#debloqueScene');
+  if(!scene || scene.classList.contains('fut-fini')) return false;
+  scene.classList.add('fut-fini');
+  scene.querySelector('.debloque-ok')?.focus();
+  return true;
+}
+$('#debloqueScene')?.addEventListener('click', e => {
+  if(e.target.closest('[data-ferme]') && $('#debloqueScene').classList.contains('fut-fini')) return;
+  if(_futPasser()) e.stopPropagation();
+});
+$('#debloqueDialog')?.addEventListener('cancel', e => { if(_futPasser()) e.preventDefault(); });
+$('#debloqueScene')?.addEventListener('keydown', e => {
+  if((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget){ e.preventDefault(); _futPasser(); }
+});
+// La scene finit seule : une fois la carte posee, plus rien a passer.
+$('#debloqueScene')?.addEventListener('animationend', e => {
+  if(e.animationName === 'fut-bas-entre') e.currentTarget.classList.add('fut-fini');
+});
 $('#debloqueDialog')?.addEventListener('close', () => {
   if(_debloqueFermeFiche && _vueBirdydex() && !$('#speciesModal')?.hidden){
     _debloqueFermeFiche = false;

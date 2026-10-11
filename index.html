@@ -49,7 +49,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=309">
+<link rel="modulepreload" href="app.js?v=310">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -1132,7 +1132,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         <div class="sm-geo" id="smHeaderGeo"></div>
         <!-- Ajouter l'espece a sa liste sans quitter la fiche. Affiche seulement pour une
              espece que la grille du Birdydex montre grisee (meme test, _mineHasStrict). -->
-        <button type="button" class="sm-vu" id="smVuBtn" hidden>＋ Je l'ai vu</button>
+        <button type="button" class="sm-vu" id="smVuBtn" hidden>＋ Ajouter à ma liste</button>
       </div>
       <!-- Meme remarque qu'a l'ecran de connexion : role="tab" sur chaque bouton, sinon la
            rangee ne s'annonce pas. aria-selected suit la classe .on dans _smSetTab(). -->
@@ -1320,13 +1320,10 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
 
   <!-- Espece debloquee (2026-10-11) : la carte qui s'ouvre quand une espece entre dans la
        liste, par l'ajout manuel ou par un nouveau depot eBird. Fenetre de la couche du
-       dessus, sinon elle passerait sous la fenetre d'ajout. Remplie par _debloqueOuvre(). -->
+       dessus, sinon elle passerait sous la fenetre d'ajout. Plein ecran, facon « walkout » de
+       jeu de foot : toute la scene est posee par _debloqueOuvre(). -->
   <dialog class="debloque" id="debloqueDialog" aria-labelledby="debloqueTitre">
-    <div class="debloque-in">
-      <p class="debloque-sur" id="debloqueSur">Nouvelle espèce</p>
-      <div class="debloque-corps" id="debloqueCorps"></div>
-      <button type="button" class="btn debloque-ok" data-ferme>Continuer</button>
-    </div>
+    <div class="fut-scene" id="debloqueScene" tabindex="-1"></div>
   </dialog>
 
   <footer>
@@ -1335,4 +1332,4 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=309"></script>
+<script type="module" src="app.js?v=310"></script>
