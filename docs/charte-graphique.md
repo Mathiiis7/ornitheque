@@ -158,10 +158,13 @@ règles communes dans le bloc « Schémas communs », juste avant celui du doigt
   Quand une espèce entre dans la liste (ajout manuel, ou nouveau dépôt eBird qui en apporte), une
   scène plein écran façon « walkout » de jeu de foot (voulue par Mathis : la première carte sobre
   n'était « pas ouf ») : fond noir, faisceaux à la couleur du palier, trois indices (pays, famille,
-  palier), puis la carte arrive en tournant avec flash et étincelles. **C'est la seule exception au
-  style de l'appli** : sombre et métallique exprès, c'est un moment de jeu. Le métal suit le palier :
-  bronze 1-3, argent 4-6, or 7-8, spéciale (violet et or) 9-10. Sur un dépôt de plusieurs espèces,
-  la plus rare fait l'entrée, les autres suivent en petites cartes. Puis, dans le Birdydex, la case
+  palier), 1,3 s chacun (0,75 s était trop rapide), puis la carte arrive en tournant avec flash et
+  étincelles, vers 4,7 s. **Le fond sombre est la seule exception au style de l'appli** : c'est un
+  moment de jeu. La carte, elle, est dans le style du site, comme une grande case du Birdydex
+  (bord et halo à la couleur du palier) : la version bronze / argent / or façon FIFA a été refusée.
+  Après un **dépôt eBird**, pas de scène tout de suite : une fenêtre envoie au Birdydex, où les
+  nouvelles espèces attendent sur fond teinté d'accent (`.a-decouvrir`) ; les toucher joue la scène.
+  Puis, dans le Birdydex, la case
   grossit, rebondit avec un halo d'accent et un bandeau « Nouvelle espèce dans ton Birdydex »
   s'affiche 3 s. Les deux effets s'éteignent séparément (`DEBLOQUE_CARTE`, `DEBLOQUE_REVELATION`
   dans `app.js`). « Ajouter à ma liste », en blanc dans l'en-tête de la fiche, ouvre l'ajout déjà

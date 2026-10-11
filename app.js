@@ -10081,7 +10081,9 @@ async function _enregistreListe(parsed, name){
     $('#tutoDialog')?.close();
     // Premier depot : on lui propose le tour de l'appli. Un membre qui redepose ne le revoit pas.
     if(nouveauVenu) guideOuvre(true);
-    else _debloque(debloquees);
+    // Pas d'animation tout de suite : un message envoie au Birdydex, ou chaque nouvelle
+    // espece attend sur un fond a part qu'on la touche (voulu par Mathis le 2026-10-11).
+    else _annonceDecouvertes(debloquees);
   }
   catch(e){ showError(e); $('#myStatus').textContent=''; }
 }
@@ -10236,7 +10238,7 @@ $('#ajoutDialog')?.addEventListener('cancel', e => {
 // Les trois fenetres : ✕ (et « Enregistrer ») portent data-ferme ; un clic sur le fond aussi.
 // La marge interieure est sur .ml-dialog-in et non sur la fenetre, sinon un clic dans la marge
 // viserait la fenetre elle-meme et la fermerait.
-document.querySelectorAll('#tutoDialog, #prenomDialog, #ajoutDialog, #debloqueDialog').forEach(d => {
+document.querySelectorAll('#tutoDialog, #prenomDialog, #ajoutDialog, #debloqueDialog, #decouvrirDialog').forEach(d => {
   d.addEventListener('click', e => {
     if(e.target === d || e.target.closest('[data-ferme]')) d.close();
   });
@@ -17586,8 +17588,10 @@ function _pkdxRender(){
     rows = rows.slice().sort((a, b) =>
       (vues.get(b.sci).val - vues.get(a.sci).val) || a.nm.localeCompare(b.nm, 'fr'));
   }
+  // « 2 » : vue mais pas encore decouverte (case sur fond a part, cf. _aDecouvrir).
+  const dec = _decouvertes();
   const rowsHash = rows.length + '|' + country + '|' + zone + '|' + tri + '|'
-    + rows.map(r => r.sci + (r.owned ? '1' : '0')).join(',');
+    + rows.map(r => r.sci + (r.owned ? (dec.has(r.sci) ? '2' : '1') : '0')).join(',');
   // On compte les cartes et non les enfants : les titres de famille ou de milieu en sont
   // aussi, et comparer les enfants refaisait la grille entiere a chaque passage.
   if(rowsHash === _pkdxLastRowsHash && grid.querySelectorAll(':scope > .pkdx-card').length === rows.length){
@@ -17643,7 +17647,7 @@ function _pkdxRender(){
     const photoConnue = r.owned ? _photoCarteConnue(r.sci) : '';
     // Absente de la zone choisie : la case reste, en retrait. La masquer ferait croire que
     // l'espece n'existe pas, alors qu'elle est seulement ailleurs.
-    return `<div class="pkdx-card${r.owned?'':' missing'}" data-sci="${esc(r.sci)}">
+    return `<div class="pkdx-card${r.owned?'':' missing'}${r.owned && dec.has(r.sci) ? ' a-decouvrir' : ''}" data-sci="${esc(r.sci)}">
       <span class="pkdx-num">#${num}</span>
       ${r.saison ? `<span class="pkdx-saison" data-tip="Espèce nettement saisonnière : elle déserte une bonne partie de l'année. Viser le bon mois change tout.">◑</span>` : ''}
       ${cats.length ? `<span class="pkdx-exos">${exoChips}</span>` : ''}
@@ -17800,15 +17804,10 @@ function _debloqueInfos(sci){
 // l'autre (pays, famille, palier), puis la carte arrive en tournant, avec un flash et des
 // etincelles. Toute la chorégraphie est en CSS (delais), le code ne fait que poser la scene.
 // Un clic, Entree ou Echap pendant la scene la fait sauter a la carte posee (.fut-fini).
-//
-// Le metal de la carte suit le palier, comme bronze, argent et or dans le jeu : plus
-// l'oiseau est rare, plus la carte est precieuse.
-function _futType(tier){
-  if(tier >= 9) return 'special';
-  if(tier >= 7) return 'or';
-  if(tier >= 4) return 'argent';
-  return 'bronze';
-}
+// La carte elle-meme est dans le style du site, pas une carte de joueur : Mathis l'a voulu
+// ainsi le 2026-10-11, apres une version bronze / argent / or. C'est une grande case du
+// Birdydex : numero en haut a gauche, palier en rond en haut a droite, nom en Source Serif.
+// Seule la scene autour reste un moment de jeu.
 function _futDrapeau(cc, cls){
   cc = (cc || '').toLowerCase();
   if(!/^[a-z]{2}$/.test(cc)) return '';
@@ -17816,33 +17815,27 @@ function _futDrapeau(cc, cls){
 }
 function _futCarteHtml(sci, mini){
   const { cc, tier, num } = _debloqueInfos(sci);
-  const type = _futType(tier);
   const nom = FR_NAMES[sci] || sci;
   const note = tier ? String(tier) : '–';
+  const couleur = ' style="--fut-couleur:' + (tier ? realColor(tier) : 'hsl(0 0% 55%)') + '"';
   if(mini){
-    return '<div class="fut-mini-bloc"><div class="fut-carte fut-mini fut-' + type + '"><div class="fut-int">'
-      + '<div class="fut-note">' + note + '</div><div class="fut-photo" data-sci="' + esc(sci) + '"></div>'
-      + '</div></div><span class="fut-mini-nom">' + esc(nom) + '</span></div>';
+    return '<div class="fut-mini-bloc"><div class="fut-carte fut-mini"' + couleur + '>'
+      + '<div class="fut-photo" data-sci="' + esc(sci) + '"></div><div class="fut-note">' + note + '</div>'
+      + '</div><span class="fut-mini-nom">' + esc(nom) + '</span></div>';
   }
   const latin = sci.charAt(0).toUpperCase() + sci.slice(1);
-  // Les chiffres du bas sont ceux que l'appli connait deja : le numero du Birdydex (seulement
-  // si la grille de ce pays a ete dessinee), le pays, la famille. Rien d'invente pour faire
-  // ressembler la carte a celle d'un joueur.
-  return '<div class="fut-carte fut-' + type + '"><div class="fut-int">'
+  // Le numero n'apparait que si la grille de ce pays a ete dessinee (cf. _debloqueInfos).
+  return '<div class="fut-carte"' + couleur + '>'
     + '<div class="fut-reflet" aria-hidden="true"></div>'
-    + '<div class="fut-haut"><div class="fut-cote">'
+    + '<div class="fut-photo" data-sci="' + esc(sci) + '"></div>'
+    + (num ? '<span class="fut-num">#' + String(num).padStart(3, '0') + '</span>' : '')
     + '<div class="fut-note">' + note + '</div>'
-    + '<div class="fut-poste">' + esc(REAL_LABELS[tier] || '') + '</div>'
-    + _futDrapeau(cc, 'fut-drapeau')
-    + '</div><div class="fut-photo" data-sci="' + esc(sci) + '"></div></div>'
     + '<h3 class="fut-nom" id="debloqueTitre">' + esc(nom) + '</h3>'
     + '<div class="fut-sci">' + esc(latin) + '</div>'
-    + '<div class="fut-stats">'
-    + (num ? '<span><b>' + String(num).padStart(3, '0') + '</b>N°</span>' : '')
-    + '<span><b>' + esc((cc || '').toUpperCase()) + '</b>Pays</span>'
-    + '<span><b>' + note + '</b>Palier</span>'
-    + '</div>'
-    + '<div class="fut-famille">' + esc(familyOf(sci)) + '</div>'
+    + '<div class="fut-puces">'
+    + (tier ? '<span class="fut-puce fut-puce-palier">' + esc(REAL_LABELS[tier] || '') + '</span>' : '')
+    + '<span class="fut-puce">' + _futDrapeau(cc, '') + esc(COUNTRY_NAMES[cc] || cc) + '</span>'
+    + '<span class="fut-puce">' + esc(familyOf(sci)) + '</span>'
     + '</div></div>';
 }
 // La photo se pose des qu'elle arrive. La scene dure pres de trois secondes avant que la
@@ -17868,7 +17861,7 @@ function _debloqueOuvre(liste){
   const montrees = autres.slice(0, DEBLOQUE_MAX_VIGNETTES - 1);
   const reste = autres.length - montrees.length;
   const { tier } = _debloqueInfos(vedette);
-  scene.className = 'fut-scene fut-' + _futType(tier);
+  scene.className = 'fut-scene';
   scene.style.setProperty('--fut-couleur', tier ? realColor(tier) : 'hsl(0 0% 55%)');
   let etincelles = '';
   for(let i = 0; i < FUT_ETINCELLES; i++){
@@ -17942,6 +17935,15 @@ function _bandeauDebloque(html){
   clearTimeout(_bandeauTimer);
   _bandeauTimer = setTimeout(() => b.classList.remove('visible'), 3200);
 }
+// Amene une case au milieu de l'ecran. Un defilement doux seul ratait sa cible au telephone :
+// les cases hors de l'ecran ont une hauteur estimee (content-visibility), la vraie arrive en
+// chemin, et la case finissait 228 px au-dessus de l'ecran (mesure du 2026-10-11). On saute
+// donc d'abord, ce qui dessine les cases voisines, puis on corrige en douceur.
+function _centrerCase(el){
+  if(!el) return;
+  el.scrollIntoView({ block:'center' });
+  setTimeout(() => { if(el.isConnected) el.scrollIntoView({ block:'center', behavior:'smooth' }); }, 120);
+}
 // Joue les revelations en attente, si la grille est la et que rien ne la couvre. Appelee a
 // la fin de chaque rendu de la grille, a la fermeture de la fiche et de la carte.
 function _jouerRevelations(){
@@ -17961,7 +17963,7 @@ function _jouerRevelations(){
   }
   if(!cartes.length) return;
   const nb = new Set(cartes.map(c => c.dataset.sci)).size;
-  cartes[0].scrollIntoView({ block:'center', behavior:'smooth' });
+  _centrerCase(cartes[0]);
   cartes.forEach((c, i) => {
     const box = c.querySelector('.pkdx-img');
     // Une case qu'on n'avait pas encore eue n'a jamais charge sa photo (les grises n'en
@@ -17991,10 +17993,64 @@ function _jouerRevelations(){
     ? 'Nouvelle espèce dans ton Birdydex : <b>' + esc(nom) + '</b>'
     : '<b>' + nb + '</b> nouvelles espèces dans ton Birdydex');
 }
+// ---- Especes a decouvrir ----
+// Celles qu'un depot eBird vient d'apporter. Le depot ne les celebre pas tout de suite : un
+// message envoie au Birdydex, ou chacune attend sur un fond a part (.a-decouvrir) ; la toucher
+// joue son entree, et la case redevient normale. Garde dans le navigateur, par compte : c'est
+// un confort de lecture, rien que les autres doivent voir.
+var _aDecouvrir = null;   // var : lue par le rendu du Birdydex, qui peut tourner avant cette ligne au demarrage
+function _decouvertes(){
+  if(!myUid) return new Set();   // avant la connexion, la cle n'est pas encore connue
+  if(_aDecouvrir) return _aDecouvrir;
+  _aDecouvrir = new Set();
+  try{
+    const v = JSON.parse(localStorage.getItem('mb-a-decouvrir-' + myUid) || '[]');
+    if(Array.isArray(v)) v.forEach(s => _aDecouvrir.add(s));
+  }catch(_){}
+  return _aDecouvrir;
+}
+function _sauverDecouvertes(){
+  try{ localStorage.setItem('mb-a-decouvrir-' + myUid, JSON.stringify([..._decouvertes()])); }catch(_){}
+}
+function _annonceDecouvertes(scis){
+  const liste = [...new Set((scis || []).map(s => SCI_ALIAS[s] || s))];
+  if(!liste.length || !myUid) return;
+  const set = _decouvertes();
+  liste.forEach(s => set.add(s));
+  _sauverDecouvertes();
+  _pkdxLastRowsHash = null;
+  const n = liste.length;
+  const texte = n === 1
+    ? 'Ton dépôt a ajouté une nouvelle espèce à ta liste : ' + (FR_NAMES[liste[0]] || liste[0]) + '.'
+    : 'Ton dépôt a ajouté ' + n + ' nouvelles espèces à ta liste.';
+  $('#decouvrirTitre').textContent = n === 1 ? 'Une nouvelle espèce !' : n + ' nouvelles espèces !';
+  $('#decouvrirTexte').textContent = texte + (n === 1
+    ? ' Elle t’attend dans le Birdydex, sur un fond à part : touche-la pour la découvrir.'
+    : ' Elles t’attendent dans le Birdydex, sur un fond à part : touche-les pour les découvrir.');
+  $('#decouvrirDialog')?.showModal();
+}
+$('#decouvrirVoir')?.addEventListener('click', () => {
+  $('#decouvrirDialog').close();
+  document.querySelector('.tab[data-view="pokedex"]')?.click();
+  // La grille se dessine juste apres le changement d'onglet.
+  setTimeout(() => _centrerCase(document.querySelector('#pkdxGrid .pkdx-card.a-decouvrir')), 300);
+});
 // Delegation click : ouvre la fiche au clic sur une carte pokedex.
 document.addEventListener('click', e => {
   const card = e.target.closest('.pkdx-card[data-sci]');
   if(!card) return;
+  // Une espece a decouvrir joue son entree au lieu d'ouvrir sa fiche. Le clic suivant
+  // ouvrira la fiche comme pour toute autre case.
+  if(card.classList.contains('a-decouvrir')){
+    const sci = card.dataset.sci;
+    _decouvertes().delete(sci);
+    _sauverDecouvertes();
+    _pkdxLastRowsHash = null;
+    document.querySelectorAll('#pkdxGrid .pkdx-card.a-decouvrir[data-sci="' + CSS.escape(sci) + '"]')
+      .forEach(c => c.classList.remove('a-decouvrir'));
+    _debloque([sci]);
+    return;
+  }
   // Pool de navigation : toutes les cartes du Pokedex dans l'ordre affiche
   // (respecte les filtres actifs). Les fleches prev/next de la fiche circuleront
   // dans cet ordre.

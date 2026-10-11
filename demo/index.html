@@ -99,7 +99,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=310">
+<link rel="modulepreload" href="app.js?v=311">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -1368,6 +1368,22 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
        liste, par l'ajout manuel ou par un nouveau depot eBird. Fenetre de la couche du
        dessus, sinon elle passerait sous la fenetre d'ajout. Plein ecran, facon « walkout » de
        jeu de foot : toute la scene est posee par _debloqueOuvre(). -->
+  <!-- Apres un depot eBird qui apporte des especes : on envoie au Birdydex, ou elles attendent
+       d'etre decouvertes (_annonceDecouvertes). -->
+  <dialog class="ml-dialog" id="decouvrirDialog" aria-labelledby="decouvrirTitre">
+    <div class="ml-dialog-in">
+      <div class="ml-dialog-head">
+        <h3 class="bloc-titre" id="decouvrirTitre">Nouvelles espèces</h3>
+        <button type="button" class="ml-dialog-close" data-ferme aria-label="Fermer">✕</button>
+      </div>
+      <p class="decouvrir-texte" id="decouvrirTexte"></p>
+      <div class="decouvrir-actions">
+        <button type="button" class="btn ghost" data-ferme>Plus tard</button>
+        <button type="button" class="btn" id="decouvrirVoir">Voir le Birdydex</button>
+      </div>
+    </div>
+  </dialog>
+
   <dialog class="debloque" id="debloqueDialog" aria-labelledby="debloqueTitre">
     <div class="fut-scene" id="debloqueScene" tabindex="-1"></div>
   </dialog>
@@ -1378,5 +1394,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=310"></script>
+<script type="module" src="app.js?v=311"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>
