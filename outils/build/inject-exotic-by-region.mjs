@@ -207,3 +207,5 @@ writeFileSync(APP, app.replace(/\r?\n/g, finDeLigne));
 const totalEntries = Object.values(merged).reduce((a, byR) =>
   a + Object.values(byR).reduce((b, o) => b + Object.keys(o).length, 0), 0);
 console.log(`Ecrit app.js : ${Object.keys(merged).length} pays, ${totalEntries} entrees, ${(block.length/1024).toFixed(1)} KB.`);
+// Table derivee des statuts par zone : perimee des que ceux-ci changent
+console.log('A relancer ensuite : node outils/build/exotiques-majoritaires.mjs --ecrire');

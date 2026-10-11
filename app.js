@@ -1606,6 +1606,10 @@ const EXOTIC_STATUS_BY_REGION_MULTI = {"FR":{"FR-ARA":{"dendrocygna viduata":"X"
 // Bruant chanteur = P aux US alors qu'il niche dans 49 etats).
 // Format : { cc: { sciName: ["XX-YY", ...] } }. Precalcule par inject-exotic-by-region.mjs.
 const NATIVE_REGIONS_DESPITE_NATIONAL_TAG = {"GB":{"anser caerulescens":["GB-R06","GB-R08","GB-ZET"]},"NO":{"anser caerulescens":["SJ"],"tadorna ferruginea":["SJ"]},"AU":{"cacatua leadbeateri":["AU-NSW","AU-NT","AU-QLD","AU-SA","AU-VIC","AU-WA"],"trichoglossus rubritorquis":["AU-NT","AU-QLD","AU-WA"],"chloebia gouldiae":["AU-NT","AU-QLD","AU-WA"],"polytelis alexandrae":["AU-NT","AU-SA","AU-WA"],"eclectus polychloros":["AU-QLD"],"callocephalon fimbriatum":["AU-ACT","AU-NSW","AU-SA","AU-VIC"],"platycercus caledonicus":["AU-TAS"],"alisterus scapularis":["AU-ACT","AU-NSW","AU-QLD","AU-VIC"],"platycercus elegans":["AU-ACT","AU-NSW","AU-QLD","AU-SA","AU-VIC"],"melopsittacus undulatus":["AU-ACT","AU-NSW","AU-NT","AU-QLD","AU-SA","AU-VIC","AU-WA"],"aprosmictus erythropterus":["AU-NSW","AU-NT","AU-QLD","AU-WA"],"platycercus eximius":["AU-ACT","AU-NSW","AU-QLD","AU-SA","AU-TAS","AU-VIC"],"trichoglossus chlorolepidotus":["AU-ACT","AU-NSW","AU-QLD","AU-VIC"],"stagonopleura guttata":["AU-ACT","AU-NSW","AU-QLD","AU-SA","AU-VIC"]},"US":{"colinus virginianus":["US-AL","US-AR","US-CO","US-DE","US-FL","US-GA","US-IL","US-IN","US-IA","US-KS","US-KY","US-LA","US-MD","US-MA","US-MI","US-MN","US-MS","US-MO","US-NE","US-NJ","US-NM","US-NY","US-NC","US-OH","US-OK","US-RI","US-SC","US-SD","US-TN","US-TX","US-VA","US-WV","US-WI"],"anas bahamensis":["US-FL"],"callipepla squamata":["US-AZ","US-CO","US-KS","US-NM","US-OK","US-TX","US-UT"],"phoenicopterus ruber":["US-AL","US-DE","US-FL","US-GA","US-IN","US-KS","US-KY","US-LA","US-MD","US-MA","US-MI","US-MS","US-MO","US-NY","US-NC","US-OH","US-PA","US-RI","US-SC","US-TN","US-TX","US-VA","US-WI"],"daptrius chimachima":["US-FL","US-TX"],"cyanocorax yncas":["US-TX"],"cygnus buccinator":["US-AL","US-AK","US-AZ","US-AR","US-CA","US-CO","US-CT","US-DE","US-DC","US-GA","US-ID","US-IL","US-IN","US-IA","US-KS","US-KY","US-LA","US-ME","US-MD","US-MA","US-MI","US-MN","US-MO","US-MT","US-NE","US-NV","US-NH","US-NJ","US-NM","US-NY","US-NC","US-ND","US-OH","US-OK","US-OR","US-PA","US-SC","US-SD","US-TN","US-TX","US-UT","US-VT","US-VA","US-WA","US-WV","US-WI","US-WY"],"cygnus cygnus":["US-AK","US-WA"],"aythya ferina":["US-AK"],"parabuteo unicinctus":["US-AZ","US-CA","US-CO","US-KS","US-LA","US-NV","US-NM","US-OK","US-TX"],"volatinia jacarina":["US-AZ"],"melospiza melodia":["US-AL","US-AK","US-AZ","US-AR","US-CA","US-CO","US-CT","US-DE","US-DC","US-FL","US-GA","US-ID","US-IL","US-IN","US-IA","US-KS","US-KY","US-LA","US-ME","US-MD","US-MA","US-MI","US-MN","US-MS","US-MO","US-MT","US-NE","US-NV","US-NH","US-NJ","US-NM","US-NY","US-NC","US-ND","US-OH","US-OK","US-OR","US-PA","US-RI","US-SC","US-SD","US-TN","US-TX","US-UT","US-VT","US-VA","US-WA","US-WV","US-WI","US-WY"],"quiscalus mexicanus":["US-AZ","US-AR","US-CA","US-CO","US-FL","US-ID","US-IL","US-IA","US-KS","US-LA","US-MA","US-MI","US-MN","US-MO","US-MT","US-NE","US-NV","US-NM","US-ND","US-OK","US-OR","US-SD","US-TX","US-UT","US-WA","US-WI","US-WY"],"branta leucopsis":["US-CO","US-CT","US-DE","US-DC","US-IL","US-ME","US-MD","US-MA","US-NH","US-NJ","US-NY","US-PA","US-RI","US-VT","US-VA"],"mergellus albellus":["US-AK"],"melozone aberti":["US-AZ","US-CA","US-NV","US-NM","US-UT"],"anser canagicus":["US-AK","US-CA","US-OR","US-WA"],"anas zonorhyncha":["US-AK","US-HI"],"anser erythropus":["US-AK"],"spinus spinus":["US-AK"]}};
+// Statut exotique d un pays deduit de ses zones, quand eBird n en donne pas au national :
+// la lettre remonte si au moins la moitie des zones ou l espece est vue la classent.
+// Genere par outils/build/exotiques-majoritaires.mjs - ne pas editer a la main.
+const EXOTIQUES_ZONES_MAJORITAIRES = {"FR":{"columba livia":["N"],"anser erythropus":["X"]},"GB":{"ciconia ciconia":["P","X"],"anser erythropus":["X"],"falco rusticolus":["P","X"],"anser rossii":["P","X"],"branta ruficollis":["X"],"lophodytes cucullatus":["P","X"],"haliaeetus albicilla":["N","P"],"branta hutchinsii":["P","X"],"otis tarda":["P"],"gypaetus barbatus":["P"],"falco sparverius":["X"],"aythya valisineria":["X"],"mareca falcata":["X"]},"ES":{"bubo scandiacus":["P","X"],"corvus ruficollis":["X"],"passer luteus":["X"],"serinus canaria":["X"],"tadorna ferruginea":["N"],"grus virgo":["X"],"leptoptilos crumenifer":["X"],"mycteria ibis":["X"],"falco rusticolus":["X"]},"IT":{"anser cygnoides":["X"],"marmaronetta angustirostris":["P","X"],"columba livia":["N"],"alectoris rufa":["N","X"],"euodice malabarica":["X"],"pelecanus onocrotalus":["X"],"anser brachyrhynchus":["X"]},"PT":{"branta canadensis":["P"],"aix sponsa":["X"],"geronticus eremita":["P"],"serinus canaria":["X"],"grus virgo":["X"],"corvus frugilegus":["X"]},"CH":{"branta ruficollis":["X"],"branta hutchinsii":["X"],"falco cherrug":["X"],"sibirionetta formosa":["X"]},"NO":{"columba livia":["N"]},"GR":{"phasianus colchicus":["N","X"],"alectoris chukar":["N"]},"IS":{"branta canadensis":["N"]},"NA":{"columba livia":["N"]},"NZ":{"anser anser":["N","P"]},"CA":{"meleagris gallopavo":["N","X"],"anser anser":["X"],"colinus virginianus":["X"],"haemorhous mexicanus":["N"],"sibirionetta formosa":["P"],"anser canagicus":["X"]},"AT":{"columba livia":["N"],"geronticus eremita":["X"]},"BE":{"anser caerulescens":["X"],"branta ruficollis":["X"]},"CZ":{"anser caerulescens":["X"],"mareca americana":["X"]},"DE":{"falco rusticolus":["X"],"anser rossii":["P","X"],"pelecanus onocrotalus":["P","X"],"phoenicopterus roseus":["P"]},"DK":{"anser rossii":["X"],"falco cherrug":["X"]},"FI":{"anser rossii":["X"],"falco cherrug":["X"]},"HU":{"bucephala albeola":["X"]},"IE":{"aix sponsa":["X"],"perdix perdix":["X"],"branta ruficollis":["X"]},"LT":{"columba livia":["N"]},"NL":{"branta hutchinsii":["N"],"columba livia":["N"],"phoenicopterus roseus":["P"],"pelecanus onocrotalus":["X"],"anser rossii":["P","X"],"aegypius monachus":["X"],"histrionicus histrionicus":["X"],"pelecanus crispus":["X"]},"PL":{"tadorna ferruginea":["P"],"bubo scandiacus":["X"],"streptopelia orientalis":["X"]},"RS":{"columba livia":["N"]},"RU":{"phasianus colchicus":["N","X"],"columba livia":["N"],"aix galericulata":["P","X"],"branta canadensis":["N"]},"SE":{"tadorna ferruginea":["P"],"geronticus eremita":["P"]},"SI":{"columba livia":["N"]},"SK":{"columba livia":["N"]},"UA":{"columba livia":["N"]},"MD":{"columba livia":["N"]},"ME":{"anser anser":["X"]},"MK":{"columba livia":["N"]}};
 
 // Statut exotique par departement FR (96 dep metropole + 5 DOM) scrape par
 // outils/build/scrape-exotic-by-dep-fr.mjs. Meme structure que EXOTIC_STATUS_BY_REGION_FR
@@ -1803,8 +1807,16 @@ function exoticCategoryInCountry(sci, country){
 const _ORDRE_CAT_EXO = ['N', 'P', 'X', 'C'];
 function exoticCategoriesInCountry(sci, country){
   const principale = exoticCategoryInCountry(sci, country);
-  if(!principale) return [];
   const cc = country || 'FR';
+  // Pas de statut national : les lettres des zones, si au moins la moitie des zones ou
+  // l'espece est vue la classent (EXOTIQUES_ZONES_MAJORITAIRES, voir son generateur). Le
+  // Capucin bec-de-plomb en Italie, X en Toscane et nulle part ailleurs classe, n'avait
+  // aucune lettre (Mathis, 2026-10-12). Une espece classee au national puis annulee par
+  // l'override des zones natives n'y figure pas : son silence reste maitre.
+  if(!principale){
+    const t = (typeof EXOTIQUES_ZONES_MAJORITAIRES === 'object') && EXOTIQUES_ZONES_MAJORITAIRES[cc];
+    return (t && t[(sci || '').trim().toLowerCase()]) || [];
+  }
   const parZone = (typeof _exoticStatusByZone === 'function') ? _exoticStatusByZone(cc) : null;
   if(!parZone) return [principale];
   const k = (sci || '').trim().toLowerCase();
@@ -17467,8 +17479,10 @@ function _pkdxRender(){
       // montre en pastilles, et c'est donc lui - et non la seule categorie nationale - que
       // le filtre N/P/X doit interroger, sinon cliquer X n'affichait pas le Cygne noir
       // alors que sa case porte un X.
-      const catsPays = exo ? (exoticCategoriesInCountry(sci, country) || []) : [];
-      const cats = cat ? (catsPays.length ? catsPays : [cat]) : [];
+      // Calcule meme sans statut national : les lettres deduites des zones (voir
+      // exoticCategoriesInCountry) doivent aussi s'afficher sur la vignette et le filtre.
+      const catsPays = exoticCategoriesInCountry(sci, country) || [];
+      const cats = catsPays.length ? catsPays : (cat ? [cat] : []);
       all.push({ sci, nm, fam, tier, val, exo, cat, cats, accidentelle, saison });
     }
     // Tri : par ordre taxonomique IOC/eBird (FAMILY_ORDER), puis les exotiques rejetees en
@@ -17669,7 +17683,7 @@ function _pkdxRender(){
     // de la region - le Cygne noir est N dans 44 departements francais et X dans 18.
     // Avec une zone, le seul statut de cette zone : afficher les deux dans un departement
     // ou eBird n'en retient qu'un aurait contredit la grille, qui ne montre plus que lui.
-    const cats = zone ? (cat ? [cat] : []) : (cat ? (r.cats && r.cats.length ? r.cats : [cat]) : []);
+    const cats = zone ? (cat ? [cat] : []) : ((r.cats && r.cats.length) ? r.cats : (cat ? [cat] : []));
     // Une pastille RONDE PAR STATUT, pas un « N/X » soude. Soude, il se lisait comme un
     // seul jeton portant un nom bizarre, et sa forme de gelule le detachait du reste des
     // pastilles de l'app, toutes rondes. Separe, chaque rond porte sa propre infobulle :
