@@ -1,3 +1,10 @@
+# FAIT le 2026-10-11 : analyse des deux vidéos « Bruant roseaux » (son seul, hors appli)
+Rapport : notes-privees/analyse-sons/2026-10-11-bruant-roseaux/RAPPORT.md (193 références xeno-canto).
+Bruant des roseaux sûr (5 cris « tsiu »), Pouillot véloce probable (1 « huit »), 5 notes plates
+vers 4 kHz sans nom, babil de la vidéo 1 non attribué. Question ouverte : le milieu, pour relancer
+les notes plates avec d'autres candidats. Rien à pousser.
+
+---
 # EN LIGNE le 2026-10-07 : « France entier » retiré (e714d7ff, v732, app.js?v=308)
 Bouton pays du Birdydex : « France » ; première ligne des listes de zones (Birdydex et fiche) :
 « Tous les départements » en France, « Toutes les régions » ailleurs (`libelleToutesZones`) ; note du
