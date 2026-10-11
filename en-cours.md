@@ -1,3 +1,13 @@
+# FAIT le 2026-10-12 (pas poussé) : Classement et fiche espèce (v743, app.js?v=319)
+- Qui a vu quoi : en-tête et colonne Espèce collés (tableau borné à 75 vh), colonnes dans l'ordre du
+  classement sans filtre, lignes à 37,9 px aux trois tris (étiquette de rareté amincie).
+- Liste des pays de la fiche : se retrie quand les données des pays étrangers arrivent (elle restait
+  dans l'ordre du code à la première ouverture).
+- Monténégro : paliers recalculés (293/308 faux, remis à l'ancienne version le 27/09 ; profil
+  d'effort effacé le 26/09 par inject-rarity-multi-country, qui fusionne désormais).
+Vérifié dans la démo, 11 bancs CONFORME. Reste : qu'il regarde en local, puis pousser.
+
+---
 # FAIT le 2026-10-11 (pas poussé) : le dépôt eBird fait foi (v738, app.js?v=314, commit 307ca46a)
 Un ajout à la main absent du CSV disparaît désormais au dépôt suivant (avant : gardé pour toujours, et aucun bouton pour retirer).
 Vérifié dans la démo : dépôt 3 espèces + 1 à la main, redépôt de 2 -> il en reste 2. Bancs CONFORME.
