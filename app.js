@@ -445,9 +445,19 @@ const EXOTIQUES_CATEGORIES_FR = {
   // Tous les autres (perroquets, cygnes, oies exotiques, mandarin, paon, canards de
   // collection, becs de cires...) = X "Escapee" par defaut via _exoticCategory.
 };
+// Categorie exotique en France. La source est eBird (EXOTIQUES_EBIRD_PAR_PAYS.FR, 116 especes),
+// comme pour isExotic et le Birdydex. Elle lisait la table maison de 19 especes, avec X par
+// defaut : le Cygne noir, N chez eBird, s'affichait « Échappé isolé » dans Qui a vu quoi et
+// sortait du score de rarete, pendant que le Birdydex le donnait N avec son palier (Mathis,
+// 2026-10-12). Meme cas pour le Faisan venere et le Colin de Californie.
+// La table maison ne sert plus qu'au C : eBird ne publie jamais cette categorie dans ses bar
+// charts, et c'est elle qui sait que la Pintade ou le Coq bankiva sont d'origine domestique.
+// Un N ou un P d'eBird passe quand meme devant : une population etablie n'est plus domestique.
 function _exoticCategory(sci){
   const k = (sci||'').trim().toLowerCase();
-  return EXOTIQUES_CATEGORIES_FR[k] || (isExotic(k) ? 'X' : '');
+  const eb = (EXOTIQUES_EBIRD_PAR_PAYS.FR && EXOTIQUES_EBIRD_PAR_PAYS.FR[k]) || '';
+  if(eb === 'N' || eb === 'P') return eb;
+  return EXOTIQUES_CATEGORIES_FR[k] || eb;
 }
 // Une exotique est consideree "etablie" (elle merite un vrai tier de rarete et une
 // couleur, comme une sauvage) uniquement si eBird la classe N (Naturalized) : population
@@ -1380,8 +1390,12 @@ function _openCountryPicker(currentCode, opts = {}){
             // La place du rond est reservee meme quand il n'y a pas de statut, sinon les
             // pourcentages ne s'alignaient plus d'une ligne a l'autre.
             const caseExo = '<span class="cp-item-exo">' + exoChip + '</span>';
+            // Absente : pas de lettre. Un statut eBird sans aucune observation 2019-2026 ne dit
+            // rien d'utile, et « X » a cote d'« absente » se lisait comme une contradiction
+            // (Capucin bec-de-plomb en Suisse, Mathis, 2026-10-12). La case reste, vide, pour
+            // l'alignement.
             meta = absent
-              ? caseExo + '<span class="reg-picker-val">absente</span><div class="reg-picker-bar"></div>'
+              ? '<span class="cp-item-exo"></span><span class="reg-picker-val">absente</span><div class="reg-picker-bar"></div>'
                 + tierChip('–', 'var(--line-2)', { cls: 'tier-rond' })
               : caseExo + '<span class="reg-picker-val">' + esc(fmtPct(vAn)) + '</span>'
                 + '<div class="reg-picker-bar"><div style="width:' + barW + '%; color:' + col + ';"></div></div>'
