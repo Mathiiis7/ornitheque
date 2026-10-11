@@ -2244,6 +2244,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     border-bottom:1px solid var(--line); font:600 14px var(--sans); color:var(--ink-2); }
   .pkdx-groupe:first-child { margin-top:0; }
   .pkdx-groupe-n { font-weight:400; color:var(--ink-3); }
+  /* Le nom savant de la famille (« Calcariidés »), a droite du titre, ajoute le 2026-10-12 :
+     meme taille que le titre (14 px, rien de plus petit ne se lit), plus discret par la
+     couleur. Sur un ecran etroit, il passe a la ligne sous le titre. */
+  .pkdx-groupe-fam { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:baseline; gap:0 12px; }
+  .pkdx-groupe-sci { font-weight:400; color:var(--ink-3); }
   /* Compteur du Birdydex : le nombre d'especes vues en grand, dans la police des titres.
      Interligne serre : .section-head aligne ses deux cotes sur la ligne de base, et le 26 px en
      interligne normal montait plus haut que le titre, qu'il poussait de 4,8 px vers le bas ; le
