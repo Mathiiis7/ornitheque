@@ -2350,6 +2350,71 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .mylist-search { flex-basis:100%; }
   }
 
+  /* ===== Espèce débloquée (2026-10-11) =====
+     « Je l'ai vu » dans l'en-tête de la fiche. Fond blanc et encre fixe, comme les pastilles
+     de l'en-tête : le dégradé change de couleur selon le milieu, et --accent-ink, clair en
+     sombre, n'y tiendrait pas sur du blanc. #075a56 est l'--accent-ink du thème clair. */
+  .species-modal .sm-vu { display:inline-flex; align-items:center; gap:6px; margin-top:12px; height:34px; padding:0 14px;
+    border:none; border-radius:9px; background:#fff; color:#075a56; font:600 14px var(--sans); cursor:pointer;
+    box-shadow:0 1px 3px rgba(0,0,0,.18); }
+  .species-modal .sm-vu:hover { background:#eef7f6; }
+  .species-modal .sm-vu:focus-visible { outline:3px solid #fff; outline-offset:2px; }
+  .species-modal .sm-vu[hidden] { display:none; }
+
+  /* La carte « nouvelle espèce » : une fenêtre de la couche du dessus, qui entre avec un
+     léger rebond. La photo arrive en silhouette - celle des cases grises du Birdydex - et
+     prend ses couleurs une fois chargée (.revele), avec un reflet qui la traverse. */
+  .debloque { width:min(400px, calc(100vw - 32px)); padding:0; border:none; border-radius:18px;
+    background:var(--surface); color:var(--ink); box-shadow:0 24px 60px rgba(0,0,0,.35); overflow:hidden; }
+  .debloque::backdrop { background:rgba(0,0,0,.5); }
+  .debloque[open] { animation:debloque-entre .55s cubic-bezier(.2,.9,.3,1.25) both; }
+  @keyframes debloque-entre { from { opacity:0; transform:scale(.8) translateY(14px); } to { opacity:1; transform:none; } }
+  .debloque-in { padding:20px 22px 20px; text-align:center; }
+  .debloque-sur { margin:0 0 12px; font:700 13px var(--sans); text-transform:uppercase; letter-spacing:.4px; color:var(--accent-ink); }
+  .debloque-photo { position:relative; aspect-ratio:4/3; border-radius:12px; overflow:hidden; background:var(--line-2);
+    display:grid; place-items:center; font-size:40px; color:var(--ink-3); }
+  .debloque-photo img { width:100%; height:100%; object-fit:cover; display:block;
+    filter:brightness(0) contrast(2) opacity(.65); transition:filter 1.1s ease var(--decalage, .1s); }
+  .debloque-photo.revele img { filter:none; }
+  .debloque-photo::after { content:""; position:absolute; inset:0; pointer-events:none; opacity:0;
+    background:linear-gradient(105deg, transparent 35%, rgba(255,255,255,.55) 50%, transparent 65%); transform:translateX(-100%); }
+  .debloque-photo.revele::after { animation:debloque-reflet 1s ease-out calc(var(--decalage, 0s) + .35s) both; }
+  @keyframes debloque-reflet { 0% { opacity:1; transform:translateX(-100%); } 100% { opacity:1; transform:translateX(100%); } }
+  .debloque-nom { margin:14px 0 2px; font:700 24px var(--titre); color:var(--ink); }
+  .debloque-sci { font-size:14px; font-style:italic; color:var(--ink-3); }
+  .debloque-meta { display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:8px 12px; margin-top:12px;
+    font-size:14px; color:var(--ink-2); }
+  .debloque-num { font-weight:600; color:var(--accent-ink); }
+  .debloque-credit { margin:10px 0 0; font-size:14px; color:var(--ink-3); }
+  .debloque-credit:empty { display:none; }
+  /* Trois par rangée, centrées : avec deux espèces, une grille les calait à gauche. */
+  .debloque-liste { list-style:none; margin:12px 0 0; padding:0; display:flex; flex-wrap:wrap; justify-content:center; gap:10px; }
+  .debloque-liste li { flex:0 0 calc((100% - 20px) / 3); display:flex; flex-direction:column; gap:6px; font-size:14px; font-weight:600; line-height:1.25; }
+  .debloque-liste .debloque-photo { aspect-ratio:1/1; border-radius:10px; font-size:24px; }
+  .debloque-reste { margin:12px 0 0; font-size:14px; color:var(--ink-3); }
+  .debloque-ok { margin-top:16px; min-width:140px; }
+
+  /* La case du Birdydex qui se révèle : elle grossit, rebondit, s'entoure d'un halo
+     d'accent, et sa photo passe de la silhouette à la couleur. */
+  .pkdx-card.pkdx-revele { animation:pkdx-revele 1.2s cubic-bezier(.2,.8,.25,1) both; border-color:var(--accent); z-index:3; }
+  .pkdx-card.pkdx-revele .pkdx-img img { animation:pkdx-revele-img 1.2s ease-out both; }
+  @keyframes pkdx-revele {
+    0%   { transform:scale(.9); box-shadow:0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent); }
+    40%  { transform:scale(1.08); box-shadow:0 0 0 12px color-mix(in srgb, var(--accent) 0%, transparent); }
+    65%  { transform:scale(.98); }
+    100% { transform:scale(1); box-shadow:0 0 0 0 transparent; }
+  }
+  @keyframes pkdx-revele-img { 0%, 25% { filter:brightness(0) contrast(2) opacity(.65); } 100% { filter:none; } }
+  /* Centré par les marges et non par left:50% : avec left:50%, le texte n'avait que la
+     moitié de l'écran et passait sur deux lignes au téléphone (187 px de large mesurés).
+     60 px du bas : au-dessus de la barre de la démo, qui le couvrait à 24 px. */
+  .debloque-bandeau { position:fixed; left:0; right:0; bottom:60px; margin:0 auto; width:fit-content; z-index:3000;
+    max-width:calc(100vw - 32px); box-sizing:border-box; text-align:center;
+    padding:12px 18px; border-radius:12px; background:var(--ink); color:var(--surface); font-size:15px;
+    box-shadow:0 10px 30px rgba(0,0,0,.3); pointer-events:none;
+    opacity:0; transform:translateY(16px); transition:opacity .3s, transform .3s; }
+  .debloque-bandeau.visible { opacity:1; transform:none; }
+
   /* ===== Schémas communs (2026-10-06) - voir docs/charte-graphique.md, « Schémas récurrents » =====
      Une seule police : sans cette règle, les boutons et champs sans police écrite prenaient
      celle du navigateur (Arial), et la légende de la carte celle de Leaflet (Helvetica). */
@@ -2367,6 +2432,12 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .about-body h3:first-child { margin-top:0; }
 
   @media (pointer: coarse) {
+    /* Espèce débloquée : le bouton de la fiche et « Continuer » */
+    .species-modal .sm-vu, .debloque-ok { min-height:52px; }
+    .species-modal .sm-vu { height:auto; }
+    /* La pastille de la carte ne se touche pas : elle garde sa taille de souris, au lieu de
+       grossir comme les pastilles de filtre plus bas. */
+    .debloque-meta .tier-chip.tier-rond { width:40px; min-width:40px; height:40px; min-height:0; margin:-10px; font-size:20px; }
 
     /* Les pastilles de palier sont peintes dans une boite de taille double ramenee de
        moitie (voir le bloc .rar-chip plus haut). Pour 52 px rendus : boite 104, marge

@@ -10029,6 +10029,11 @@ async function _enregistreListe(parsed, name){
   // on garde les anciennes. La liste des espèces reste dictée par le CSV.
   const prev = realPeople.find(p=>p.id===myUid)?.species;
   const importAt = Date.now();   // horodatage de cet import (utilisé pour les NOUVELLES espèces)
+  // Les especes que ce depot debloque, pour la carte « nouvelle espece ». Seulement sur un
+  // re-depot : au tout premier, les 200 especes de la liste seraient toutes « nouvelles ».
+  // Ni les « Canard sp. » ni les hybrides, et pas une espece deja la sous son ancien nom latin.
+  const _avant = prev ? new Set(prev.keys()) : null;
+  const debloquees = _avant ? [...parsed.species].filter(([k, v]) => !v.nonSpecies && !_mineHasStrict(_avant, k)).map(([k]) => k) : [];
   if(prev){
     let kept=0, manualKept=0;
     // Pour chaque espèce du CSV : si le CSV n'a pas de coords mais l'ancien oui, on garde.
@@ -10076,6 +10081,7 @@ async function _enregistreListe(parsed, name){
     $('#tutoDialog')?.close();
     // Premier depot : on lui propose le tour de l'appli. Un membre qui redepose ne le revoit pas.
     if(nouveauVenu) guideOuvre(true);
+    else _debloque(debloquees);
   }
   catch(e){ showError(e); $('#myStatus').textContent=''; }
 }
@@ -10216,6 +10222,7 @@ $('#prenomDialog')?.addEventListener('keydown', e => {
   if(e.key === 'Enter' && e.target.id === 'myName'){ e.target.blur(); $('#prenomDialog').close(); }
 });
 $('#mlBoxAjout')?.addEventListener('click', () => {
+  _ajoutDepuisFiche = null;
   $('#ajoutDialog').showModal();
   $('#manualSearch').focus();
 });
@@ -10229,7 +10236,7 @@ $('#ajoutDialog')?.addEventListener('cancel', e => {
 // Les trois fenetres : ✕ (et « Enregistrer ») portent data-ferme ; un clic sur le fond aussi.
 // La marge interieure est sur .ml-dialog-in et non sur la fenetre, sinon un clic dans la marge
 // viserait la fenetre elle-meme et la fermerait.
-document.querySelectorAll('#tutoDialog, #prenomDialog, #ajoutDialog').forEach(d => {
+document.querySelectorAll('#tutoDialog, #prenomDialog, #ajoutDialog, #debloqueDialog').forEach(d => {
   d.addEventListener('click', e => {
     if(e.target === d || e.target.closest('[data-ferme]')) d.close();
   });
@@ -10724,6 +10731,40 @@ $('#manualCountry')?.addEventListener('change', e=>{
     wrap.style.display='';
   } else { wrap.style.display='none'; sel.value=''; }
 });
+// Remet le formulaire a vide : apres un ajout, et avant de le pre-remplir depuis une fiche,
+// pour qu'un lieu ou une date choisis la fois d'avant ne partent pas avec une autre espece.
+function _ajoutRaz(){
+  manualPickedSci=null; $('#manualSearch').value=''; $('#manualPicked').style.display='none';
+  $('#manualSuggest')?.classList.remove('open');
+  $('#manualAddBtn').disabled = true;
+  $('#manualDate').value=''; $('#manualCountry').value='FR'; $('#manualCountryPickWrap').style.display='none';
+  $('#manualCountryPick').value='';
+  $('#manualPlaceStatus').textContent=''; _manualPickedLat=_manualPickedLon=null; _manualPickedName='';
+}
+// L'espece dont la fiche a ouvert la fenetre d'ajout, null quand elle vient de Ma liste.
+let _ajoutDepuisFiche = null;
+// « Je l'ai vu » dans la fiche : la fenetre d'ajout s'ouvre avec l'espece deja choisie et le
+// pays de la fiche. La date et le lieu restent a donner : on ne les devine pas.
+function _ajoutOuvrePour(sci){
+  if(!sci) return;
+  _ajoutRaz();
+  $('#manualMsg').textContent = ''; $('#manualMsg').className = 'manual-msg';
+  manualPick(sci);
+  const cc = _speciesCountry || _globalCountry || 'FR';
+  const selPays = $('#manualCountry');
+  if(cc !== 'FR'){
+    selPays.value = 'OTHER';
+    selPays.dispatchEvent(new Event('change'));   // remplit la liste des pays
+    const pick = $('#manualCountryPick');
+    if([...pick.options].some(o => o.value === cc)) pick.value = cc;
+  }
+  _ajoutDepuisFiche = sci;
+  $('#ajoutDialog').showModal();
+  // Pas le champ de recherche : le focus y rouvrirait la liste de suggestions par-dessus
+  // l'espece deja choisie.
+  $('#manualAddBtn').focus();
+}
+$('#smVuBtn')?.addEventListener('click', e => _ajoutOuvrePour(e.currentTarget.dataset.sci));
 $('#manualAddBtn')?.addEventListener('click', async ()=>{
   const msg=$('#manualMsg'); msg.textContent=''; msg.className='manual-msg';
   if(!manualPickedSci){ msg.className='manual-msg err'; msg.textContent='Choisis une espèce dans la liste.'; return; }
@@ -10753,12 +10794,24 @@ $('#manualAddBtn')?.addEventListener('click', async ()=>{
     // (au lieu d'attendre le round-trip Firestore snapshot)
     renderResults();
     renderStats(me);
-    if(document.querySelector('.tab.on')?.dataset.view==='map') renderMap();
-    // reset formulaire
-    manualPickedSci=null; $('#manualSearch').value=''; $('#manualPicked').style.display='none';
-    $('#manualDate').value=''; $('#manualCountry').value='FR'; $('#manualCountryPickWrap').style.display='none';
-    $('#manualPlaceStatus').textContent=''; _manualPickedLat=_manualPickedLon=null; _manualPickedName='';
+    const vue = document.querySelector('.tab.on')?.dataset.view;
+    if(vue==='map') renderMap();
+    // La grille se redessine d'elle-meme au retour de Firestore ; on n'attend pas ce
+    // retour pour que la case soit deja en couleur quand la revelation la cherchera.
+    if(vue==='pokedex'){ _pkdxDerniereTaille = me.species.size; _pkdxRender(); }
+    _ajoutRaz();
     setTimeout(()=>{ if(msg.className.includes('ok')) msg.textContent=''; }, 3500);
+    // Depuis la fiche, l'ajout est le but : la fenetre se ferme et la fiche se met a jour.
+    // Depuis Ma liste, elle reste ouverte sous la carte, pour enchainer un autre ajout.
+    const depuisFiche = _ajoutDepuisFiche === key;
+    if(depuisFiche){
+      msg.textContent = '';
+      $('#ajoutDialog').close();
+      _renderSpeciesObs(key);
+      _renderSpeciesMap(key);
+      _majBoutonVu(key);
+    }
+    _debloque([key], { depuisFiche });
   }catch(err){
     // rollback local si l'écriture Firebase échoue
     me.species.delete(key);
@@ -15079,8 +15132,31 @@ function _openSpeciesModalSuite(sci, key, modal, _wasOpen, _savedScroll){
     else { hint.hidden = true; }
     // Mutex audio wrapper-level (voir IIFE en bas) : couvre auto les nouveaux <audio>.
   });
-  // Observations dans la ligue
-  const obsBox = $('#smObs');
+  _renderSpeciesObs(key);
+  // Mini carte des observations du groupe pour cette espece (marqueurs par membre avec coords).
+  _renderSpeciesMap(key);
+  _majBoutonVu(key);
+  _openSpeciesModalLiens(sci, key, modal, _wasOpen, _savedScroll);
+}
+// « Je l'ai vu » : seulement pour une espece que la grille du Birdydex montre grisee, avec
+// le meme test (_mineHasStrict, qui suit les changements de nom latin). L'ajout passe par
+// l'index de la recherche manuelle, qui ecarte les anciens noms : on s'y ramene par
+// SCI_ALIAS, et une espece qu'il ne connait pas ne montre pas de bouton qui ne ferait rien.
+function _cleAjoutable(key){
+  if(MANUAL_INDEX.some(x => x.sci === key)) return key;
+  const canon = SCI_ALIAS[key];
+  return (canon && MANUAL_INDEX.some(x => x.sci === canon)) ? canon : null;
+}
+function _majBoutonVu(key){
+  const b = $('#smVuBtn'); if(!b) return;
+  const me = realPeople.find(p => p.id === myUid);
+  const cle = _cleAjoutable(key);
+  b.hidden = !me || !cle || _mineHasStrict(new Set(me.species.keys()), key);
+  b.dataset.sci = cle || '';
+}
+// Observations dans la ligue. A part pour etre redessinee apres un ajout depuis la fiche.
+function _renderSpeciesObs(key){
+  const obsBox = $('#smObs'); if(!obsBox) return;
   const items = [];
   for(const p of realPeople){
     const v = p.species && p.species.get(key);
@@ -15101,8 +15177,8 @@ function _openSpeciesModalSuite(sci, key, modal, _wasOpen, _savedScroll){
       return `<li${clickHint}${dataUid}>${pin}<b>${esc(x.name)}${x.isMe?' (toi)':''}</b>${flag}${multi} · ${d}${loc}</li>`;
     }).join('') + '</ul>';
   }
-  // Mini carte des observations du groupe pour cette espece (marqueurs par membre avec coords).
-  _renderSpeciesMap(key);
+}
+function _openSpeciesModalLiens(sci, key, modal, _wasOpen, _savedScroll){
   // Liens externes
   const code = _sciToCode(sci);
   const ebirdUrl = code ? `https://ebird.org/species/${encodeURIComponent(code)}` : `https://ebird.org/search?q=${encodeURIComponent(sci)}`;
@@ -15774,6 +15850,8 @@ function closeSpeciesModal(){
   }
   // On garde _smMapInstance en memoire (recycle plus rapide), on vide juste la couche marqueurs.
   if(_smMapLayer) _smMapLayer.clearLayers();
+  // Une espece ajoutee depuis la fiche attendait que la grille redevienne visible.
+  _jouerRevelations();
 }
 // Mutex audio dans la fiche espece : lancer un lecteur (chant, cri, ou secondaire deplie)
 // pause tous les autres. Delegation au niveau du wrapper -> couvre les <audio> ajoutes
@@ -15821,6 +15899,10 @@ document.addEventListener('click', e=>{
   }
 });
 document.addEventListener('keydown', e=>{
+  // Une fenetre ouverte par-dessus la fiche (ajout d'une espece, espece debloquee) gere ses
+  // propres touches : sans ce garde, Echap la fermait ET fermait la fiche dessous, et les
+  // fleches tapees dans son champ de recherche faisaient defiler les especes derriere.
+  if(document.querySelector('dialog[open]')) return;
   if(e.key==='Escape'){ const m=$('#speciesModal'); if(m && !m.hidden) closeSpeciesModal(); return; }
   // Navigation clavier dans la fiche : ← / → passent a l'espece precedente / suivante
   const modal = $('#speciesModal');
@@ -17509,6 +17591,7 @@ function _pkdxRender(){
   // On compte les cartes et non les enfants : les titres de famille ou de milieu en sont
   // aussi, et comparer les enfants refaisait la grille entiere a chaque passage.
   if(rowsHash === _pkdxLastRowsHash && grid.querySelectorAll(':scope > .pkdx-card').length === rows.length){
+    _jouerRevelations();
     return;   // DOM deja a jour
   }
   _pkdxLastRowsHash = rowsHash;
@@ -17613,6 +17696,7 @@ function _pkdxRender(){
   }
   // Lazy loading photos via IntersectionObserver.
   _pkdxLazyPhotos();
+  _jouerRevelations();
 }
 // Photo deja connue, lue sans attendre : on la pose directement dans le HTML de la carte.
 // Sans ca, chaque re-rendu de la grille - cocher un filtre, changer de tri - repassait par
@@ -17668,6 +17752,171 @@ function _pkdxLazyPhotos(){
     }
   }, { rootMargin:'200px' });
   els.forEach(el => io.observe(el));
+}
+// ---------------- Espece debloquee (2026-10-11) ----------------
+// Quand une espece entre dans la liste - ajout manuel, ou nouveau depot eBird qui en apporte -
+// deux effets, que Mathis a voulu essayer ensemble : une carte au milieu de l'ecran (la photo
+// passe de la silhouette grise a la couleur), puis, dans le Birdydex, la case qui se revele
+// avec un bandeau. Chacun s'eteint par son interrupteur, sans toucher a l'autre.
+const DEBLOQUE_CARTE = true;
+const DEBLOQUE_REVELATION = true;
+// Au-dela, la carte d'un gros depot montre les premieres et compte le reste.
+const DEBLOQUE_MAX_VIGNETTES = 6;
+// Les cases a reveler la prochaine fois que la grille sera visible, fiche et carte fermees.
+const _revelationsEnAttente = new Set();
+// Fermer la carte ferme aussi la fiche d'ou l'ajout est parti, si le Birdydex est dessous :
+// sinon la case qui se revele resterait cachee derriere la fiche.
+let _debloqueFermeFiche = false;
+function _debloque(scis, opts){
+  const o = opts || {};
+  // La grille porte les noms latins actuels : un depot eBird peut encore donner l'ancien.
+  const liste = [...new Set((scis || []).map(s => SCI_ALIAS[s] || s))];
+  if(!liste.length) return;
+  if(DEBLOQUE_REVELATION) liste.forEach(s => _revelationsEnAttente.add(s));
+  annonce(liste.length === 1
+    ? 'Nouvelle espèce : ' + (FR_NAMES[liste[0]] || liste[0]) + '.'
+    : liste.length + ' nouvelles espèces dans ta liste.');
+  if(DEBLOQUE_CARTE){
+    _debloqueFermeFiche = !!o.depuisFiche;
+    _debloqueOuvre(liste);
+  } else {
+    if(o.depuisFiche && _vueBirdydex()) closeSpeciesModal();
+    _jouerRevelations();
+  }
+}
+function _vueBirdydex(){ return document.querySelector('.tab.on')?.dataset.view === 'pokedex'; }
+// Palier et numero de la case, lus la ou le Birdydex les lit. Le numero n'existe que pour
+// le pays dont la grille a ete dessinee : sans lui, on n'en affiche pas plutot que d'en
+// fabriquer un.
+function _debloqueInfos(sci){
+  const cc = _globalCountry || 'FR';
+  const tier = rarityForCountry(sci, cc);
+  const num = (_pkdxFilters && (_pkdxFilters.country || 'FR') === cc && _pkdxNumById) ? _pkdxNumById.get(sci) : null;
+  return { cc, tier, num };
+}
+// Une photo qui arrive en silhouette puis prend ses couleurs. La classe .revele ne se pose
+// qu'une fois l'image decodee : posee avant, la transition se jouait sur un cadre vide.
+function _debloquePhoto(box, sci, credit){
+  _fetchWikiPhoto(sci).then(p => {
+    const src = p && (p.thumb || p.url);
+    if(!src){ box.textContent = '🐦'; box.classList.add('revele'); return; }
+    const img = new Image();
+    img.alt = FR_NAMES[sci] || sci;
+    img.src = src;
+    // La lecture de offsetWidth force le calcul du style de depart (la silhouette) : sans
+    // elle, image et classe arrivent dans le meme calcul et la transition ne se joue pas.
+    const pret = () => { if(!box.isConnected) return; box.replaceChildren(img);
+      void img.offsetWidth; box.classList.add('revele'); };
+    (img.decode ? img.decode() : Promise.resolve()).then(pret, pret);
+    if(credit && p.credit) credit.textContent = 'Photo : ' + p.credit;
+  }).catch(() => { box.textContent = '🐦'; box.classList.add('revele'); });
+}
+function _debloqueOuvre(liste){
+  const dlg = $('#debloqueDialog'), corps = $('#debloqueCorps'); if(!dlg || !corps) return;
+  const nomDe = s => FR_NAMES[s] || s;
+  if(liste.length === 1){
+    const sci = liste[0];
+    const { cc, tier, num } = _debloqueInfos(sci);
+    const palier = tier ? tierChip(String(tier), realColor(tier), { cls:'tier-rond' })
+      // « · France » et non « en France » : « en Pays-Bas » serait faux, et rien dans l'appli
+      // ne choisit la preposition d'un pays.
+      + ' <span>' + esc(REAL_LABELS[tier] || '') + (COUNTRY_NAMES[cc] ? ' · ' + esc(COUNTRY_NAMES[cc]) : '') + '</span>' : '';
+    $('#debloqueSur').textContent = 'Nouvelle espèce';
+    corps.innerHTML = '<div class="debloque-photo"></div>'
+      + '<h3 class="debloque-nom" id="debloqueTitre">' + esc(nomDe(sci)) + '</h3>'
+      + '<div class="debloque-sci">' + esc(sci.charAt(0).toUpperCase() + sci.slice(1)) + '</div>'
+      + (palier || num ? '<div class="debloque-meta">' + palier
+        + (num ? '<span class="debloque-num">n° ' + num + ' du Birdydex</span>' : '') + '</div>' : '')
+      + '<p class="debloque-credit"></p>';
+    _debloquePhoto(corps.querySelector('.debloque-photo'), sci, corps.querySelector('.debloque-credit'));
+  } else {
+    const montrees = liste.slice(0, DEBLOQUE_MAX_VIGNETTES);
+    const reste = liste.length - montrees.length;
+    $('#debloqueSur').textContent = 'Nouvelles espèces';
+    corps.innerHTML = '<h3 class="debloque-nom" id="debloqueTitre">' + liste.length + ' nouvelles espèces</h3>'
+      + '<ul class="debloque-liste">' + montrees.map(s =>
+        '<li><div class="debloque-photo"></div><span>' + esc(nomDe(s)) + '</span></li>').join('') + '</ul>'
+      + (reste ? '<p class="debloque-reste">et ' + reste + ' autre' + (reste > 1 ? 's' : '') + ' dans ta liste</p>' : '');
+    // Les vignettes se revelent l'une apres l'autre, comme des cartes qu'on retourne.
+    corps.querySelectorAll('.debloque-photo').forEach((b, i) => {
+      b.style.setProperty('--decalage', (i * 140) + 'ms');
+      _debloquePhoto(b, montrees[i], null);
+    });
+  }
+  if(!dlg.open) dlg.showModal();
+}
+$('#debloqueDialog')?.addEventListener('close', () => {
+  if(_debloqueFermeFiche && _vueBirdydex() && !$('#speciesModal')?.hidden){
+    _debloqueFermeFiche = false;
+    closeSpeciesModal();   // joue la revelation
+    return;
+  }
+  _debloqueFermeFiche = false;
+  _jouerRevelations();
+});
+// Le bandeau sous la grille : « Nouvelle espèce dans ton Birdydex : … ». aria-hidden, parce
+// qu'annonce() l'a deja dit aux lecteurs d'ecran au moment de l'ajout.
+let _bandeauTimer = null;
+function _bandeauDebloque(html){
+  let b = document.getElementById('debloqueBandeau');
+  if(!b){
+    b = document.createElement('div');
+    b.id = 'debloqueBandeau'; b.className = 'debloque-bandeau'; b.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(b);
+  }
+  b.innerHTML = html;
+  b.classList.remove('visible'); void b.offsetWidth; b.classList.add('visible');
+  clearTimeout(_bandeauTimer);
+  _bandeauTimer = setTimeout(() => b.classList.remove('visible'), 3200);
+}
+// Joue les revelations en attente, si la grille est la et que rien ne la couvre. Appelee a
+// la fin de chaque rendu de la grille, a la fermeture de la fiche et de la carte.
+function _jouerRevelations(){
+  if(!_revelationsEnAttente.size || !_vueBirdydex()) return;
+  if(!$('#speciesModal')?.hidden || $('#debloqueDialog')?.open) return;
+  const grid = $('#pkdxGrid'); if(!grid) return;
+  const cartes = [];
+  for(const sci of [..._revelationsEnAttente]){
+    // Trie par milieu, une espece peut avoir deux cases : elles se revelent toutes.
+    const cs = [...grid.querySelectorAll('.pkdx-card[data-sci="' + CSS.escape(sci) + '"]')];
+    // Ecartee par un filtre (« Manquantes seulement », une famille, une zone) : rien a montrer.
+    if(!cs.length){ _revelationsEnAttente.delete(sci); continue; }
+    // Encore grisee : la grille n'a pas vu l'ajout, le prochain rendu nous rappellera.
+    if(cs[0].classList.contains('missing')) continue;
+    _revelationsEnAttente.delete(sci);
+    cartes.push(...cs);
+  }
+  if(!cartes.length) return;
+  const nb = new Set(cartes.map(c => c.dataset.sci)).size;
+  cartes[0].scrollIntoView({ block:'center', behavior:'smooth' });
+  cartes.forEach((c, i) => {
+    const box = c.querySelector('.pkdx-img');
+    // Une case qu'on n'avait pas encore eue n'a jamais charge sa photo (les grises n'en
+    // demandent pas) : on la demande ici, et la revelation l'attend.
+    const photo = new Promise(res => {
+      const img = box && box.querySelector('img');
+      if(img){ img.loading = 'eager'; (img.decode ? img.decode() : Promise.resolve()).then(res, res); return; }
+      if(!box){ res(); return; }
+      _fetchWikiPhoto(c.dataset.sci).then(p => {
+        const src = p && (p.thumb || p.url);
+        if(!src){ res(); return; }
+        box.removeAttribute('data-pkdx-lazy');
+        const im = new Image(); im.alt = FR_NAMES[c.dataset.sci] || c.dataset.sci; im.src = src;
+        (im.decode ? im.decode() : Promise.resolve()).then(() => { box.replaceChildren(im); res(); }, res);
+      }, res);
+    });
+    // Le defilement doux prend un peu moins d'une demi-seconde : la case se revele une fois
+    // arrivee sous les yeux, et pas avant 2,5 s d'attente de photo.
+    const attente = new Promise(r => setTimeout(r, 450 + i * 160));
+    Promise.all([attente, Promise.race([photo, new Promise(r => setTimeout(r, 2500))])]).then(() => {
+      c.classList.remove('pkdx-revele'); void c.offsetWidth; c.classList.add('pkdx-revele');
+      setTimeout(() => c.classList.remove('pkdx-revele'), 2600);
+    });
+  });
+  const nom = FR_NAMES[cartes[0].dataset.sci] || cartes[0].dataset.sci;
+  _bandeauDebloque(nb === 1
+    ? 'Nouvelle espèce dans ton Birdydex : <b>' + esc(nom) + '</b>'
+    : '<b>' + nb + '</b> nouvelles espèces dans ton Birdydex');
 }
 // Delegation click : ouvre la fiche au clic sur une carte pokedex.
 document.addEventListener('click', e => {

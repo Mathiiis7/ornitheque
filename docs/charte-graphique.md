@@ -154,7 +154,13 @@ règles communes dans le bloc « Schémas communs », juste avant celui du doigt
 - **Coins** : 8 à 14 px pour l'essentiel (cartes, champs, vignettes), 16 px pour les panneaux,
   ronds pour les jetons et les pastilles.
 - **Fiche espèce** : panneau qui glisse depuis la droite, en-tête en dégradé d'accent. C'est la seule
-  animation d'ouverture voulue.
+  animation d'ouverture voulue, avec une exception : **l'espèce débloquée** (2026-10-11, à l'essai).
+  Quand une espèce entre dans la liste (ajout manuel, ou nouveau dépôt eBird qui en apporte), une
+  carte s'ouvre au centre, sa photo passe de la silhouette grise à la couleur ; puis, dans le
+  Birdydex, la case grossit, rebondit avec un halo d'accent et un bandeau « Nouvelle espèce dans ton
+  Birdydex » s'affiche 3 s. Les deux effets s'éteignent séparément (`DEBLOQUE_CARTE`,
+  `DEBLOQUE_REVELATION` dans `app.js`). « Je l'ai vu », en blanc dans l'en-tête de la fiche, ouvre
+  l'ajout déjà rempli.
 
 ## Règles
 

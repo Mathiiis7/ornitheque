@@ -49,7 +49,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=308">
+<link rel="modulepreload" href="app.js?v=309">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -461,64 +461,6 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
       <p class="mylist-note">Date et lieu de la première observation. Les plus récentes en premier.</p>
       <div class="mylist-body" id="myListBody"></div>
     </div>
-
-    <!-- Ajout manuel : dans sa fenetre depuis la refonte du 2026-10-05, ouverte par la box
-         « Ajouter une espece ». Le choix du lieu (#pickMapModal) vit DEDANS : la fenetre est
-         dans la couche du dessus (showModal), et une modale posee hors d'elle passerait
-         dessous, inerte, quel que soit son z-index. -->
-    <dialog class="ml-dialog ml-dialog-large" id="ajoutDialog" aria-labelledby="ajoutTitre">
-      <div class="ml-dialog-in">
-        <div class="ml-dialog-head">
-          <h3 class="bloc-titre" id="ajoutTitre">Ajouter une espèce</h3>
-          <button type="button" class="ml-dialog-close" data-ferme aria-label="Fermer">✕</button>
-        </div>
-        <div class="manual-body" id="manualAdd">
-          <p class="ml-note">Pour une espèce vue mais pas encore dans ton export eBird. Tape son nom (français ou scientifique) et choisis dans la liste.</p>
-          <div class="manual-row">
-            <div class="manual-search">
-              <input type="text" id="manualSearch" aria-label="Chercher une espèce à ajouter" placeholder="Ex. « merle noir », « aegithalos »…" autocomplete="off">
-              <div class="manual-suggest" id="manualSuggest"></div>
-            </div>
-            <select id="manualCountry" title="Pays d'observation">
-              <option value="FR">France</option>
-              <option value="OTHER">À l'étranger</option>
-            </select>
-            <input type="date" id="manualDate" title="Date (optionnelle)">
-            <button class="btn" id="manualAddBtn" disabled>Ajouter</button>
-          </div>
-          <div id="manualPicked" class="manual-picked" style="display:none;"></div>
-          <div id="manualCountryPickWrap" style="display:none; margin-top:8px;">
-            <select id="manualCountryPick" title="Choisir le pays">
-              <option value="">- Choisir un pays -</option>
-            </select>
-          </div>
-          <div class="manual-row" style="margin-top:8px;">
-            <button class="btn ghost" id="manualPlaceBtn" type="button">Choisir un lieu sur la carte</button>
-            <span id="manualPlaceStatus" class="manual-msg" role="status" style="min-height:0;"></span>
-          </div>
-          <div id="manualMsg" class="manual-msg" role="status"></div>
-        </div>
-      </div>
-      <!-- Modal pour choisir un lieu sur la carte -->
-      <div id="pickMapModal" class="pick-map-modal" style="display:none;">
-        <div class="pick-map-inner">
-          <div class="pick-map-head">
-            <h3>Clique sur la carte pour choisir un lieu</h3>
-            <button type="button" class="pick-map-close" id="pickMapClose" aria-label="Fermer">✕</button>
-          </div>
-          <div class="pick-map-search">
-            <input type="search" id="pickMapSearch" aria-label="Chercher un lieu" placeholder="🔎 Rechercher un lieu (ex. Camargue, Bois de Vincennes)" autocomplete="off">
-            <button type="button" class="btn tiny" id="pickMapSearchBtn">Rechercher</button>
-          </div>
-          <div id="pickMapEl" class="pick-map-el"></div>
-          <div class="pick-map-actions">
-            <span id="pickMapCoords" class="pick-map-coords">Clique sur la carte pour placer un point.</span>
-            <button type="button" class="btn ghost" id="pickMapCancel">Annuler</button>
-            <button type="button" class="btn" id="pickMapConfirm" disabled>Valider</button>
-          </div>
-        </div>
-      </div>
-    </dialog>
 
     <!-- Liste des membres retiree de la page 'Ma liste' : redondant avec le Classement. -->
     <div class="people" id="people" hidden></div>
@@ -1188,6 +1130,9 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
              la ligne de rareté ET les deux mini-cartes, d'où leur place en en-tête
              plutôt que dans la seule carte Rareté. -->
         <div class="sm-geo" id="smHeaderGeo"></div>
+        <!-- Ajouter l'espece a sa liste sans quitter la fiche. Affiche seulement pour une
+             espece que la grille du Birdydex montre grisee (meme test, _mineHasStrict). -->
+        <button type="button" class="sm-vu" id="smVuBtn" hidden>＋ Je l'ai vu</button>
       </div>
       <!-- Meme remarque qu'a l'ecran de connexion : role="tab" sur chaque bouton, sinon la
            rangee ne s'annonce pas. aria-selected suit la classe .on dans _smSetTab(). -->
@@ -1312,10 +1257,82 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
     </div>
   </div>
 
+  <!-- Ajout manuel : dans sa fenetre depuis la refonte du 2026-10-05, ouverte par la box
+       « Ajouter une espece ». Le choix du lieu (#pickMapModal) vit DEDANS : la fenetre est
+       dans la couche du dessus (showModal), et une modale posee hors d'elle passerait
+       dessous, inerte, quel que soit son z-index.
+       Au niveau de la page, et non dans Ma liste, depuis le 2026-10-11 : la fiche espece
+       l'ouvre aussi (« Je l'ai vu »), et une fenetre posee dans une vue masquee (display:none)
+       s'ouvre invisible tout en rendant le reste de la page inerte. -->
+  <dialog class="ml-dialog ml-dialog-large" id="ajoutDialog" aria-labelledby="ajoutTitre">
+    <div class="ml-dialog-in">
+      <div class="ml-dialog-head">
+        <h3 class="bloc-titre" id="ajoutTitre">Ajouter une espèce</h3>
+        <button type="button" class="ml-dialog-close" data-ferme aria-label="Fermer">✕</button>
+      </div>
+      <div class="manual-body" id="manualAdd">
+        <p class="ml-note">Pour une espèce vue mais pas encore dans ton export eBird. Tape son nom (français ou scientifique) et choisis dans la liste.</p>
+        <div class="manual-row">
+          <div class="manual-search">
+            <input type="text" id="manualSearch" aria-label="Chercher une espèce à ajouter" placeholder="Ex. « merle noir », « aegithalos »…" autocomplete="off">
+            <div class="manual-suggest" id="manualSuggest"></div>
+          </div>
+          <select id="manualCountry" title="Pays d'observation">
+            <option value="FR">France</option>
+            <option value="OTHER">À l'étranger</option>
+          </select>
+          <input type="date" id="manualDate" title="Date (optionnelle)">
+          <button class="btn" id="manualAddBtn" disabled>Ajouter</button>
+        </div>
+        <div id="manualPicked" class="manual-picked" style="display:none;"></div>
+        <div id="manualCountryPickWrap" style="display:none; margin-top:8px;">
+          <select id="manualCountryPick" title="Choisir le pays">
+            <option value="">- Choisir un pays -</option>
+          </select>
+        </div>
+        <div class="manual-row" style="margin-top:8px;">
+          <button class="btn ghost" id="manualPlaceBtn" type="button">Choisir un lieu sur la carte</button>
+          <span id="manualPlaceStatus" class="manual-msg" role="status" style="min-height:0;"></span>
+        </div>
+        <div id="manualMsg" class="manual-msg" role="status"></div>
+      </div>
+    </div>
+    <!-- Modal pour choisir un lieu sur la carte -->
+    <div id="pickMapModal" class="pick-map-modal" style="display:none;">
+      <div class="pick-map-inner">
+        <div class="pick-map-head">
+          <h3>Clique sur la carte pour choisir un lieu</h3>
+          <button type="button" class="pick-map-close" id="pickMapClose" aria-label="Fermer">✕</button>
+        </div>
+        <div class="pick-map-search">
+          <input type="search" id="pickMapSearch" aria-label="Chercher un lieu" placeholder="🔎 Rechercher un lieu (ex. Camargue, Bois de Vincennes)" autocomplete="off">
+          <button type="button" class="btn tiny" id="pickMapSearchBtn">Rechercher</button>
+        </div>
+        <div id="pickMapEl" class="pick-map-el"></div>
+        <div class="pick-map-actions">
+          <span id="pickMapCoords" class="pick-map-coords">Clique sur la carte pour placer un point.</span>
+          <button type="button" class="btn ghost" id="pickMapCancel">Annuler</button>
+          <button type="button" class="btn" id="pickMapConfirm" disabled>Valider</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Espece debloquee (2026-10-11) : la carte qui s'ouvre quand une espece entre dans la
+       liste, par l'ajout manuel ou par un nouveau depot eBird. Fenetre de la couche du
+       dessus, sinon elle passerait sous la fenetre d'ajout. Remplie par _debloqueOuvre(). -->
+  <dialog class="debloque" id="debloqueDialog" aria-labelledby="debloqueTitre">
+    <div class="debloque-in">
+      <p class="debloque-sur" id="debloqueSur">Nouvelle espèce</p>
+      <div class="debloque-corps" id="debloqueCorps"></div>
+      <button type="button" class="btn debloque-ok" data-ferme>Continuer</button>
+    </div>
+  </dialog>
+
   <footer>
     L’Ornithèque · rareté mesurée sur les observations eBird 2019-2026 · données <b>Merlin / eBird</b>, propriété du Cornell Lab of Ornithology ; cartes tirées des observations eBird publiées sur GBIF (CC BY 4.0).<br>
     Compte réservé aux membres · tes listes ne sont partagées qu'au sein de la ligue.
   </footer>
 </div>
 
-<script type="module" src="app.js?v=308"></script>
+<script type="module" src="app.js?v=309"></script>
