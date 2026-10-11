@@ -1,3 +1,9 @@
+# FAIT le 2026-10-11 (soir) : vidéo 3, Les Moutiers-en-Retz (bruant.mp4, 25 s)
+Section « Vidéo 3 » du même RAPPORT.md. Bruant des roseaux sûr (cri net à 20,3 s), trois autres cris
+du même dessin non prouvés par la mesure ; le reste est surtout des voix humaines. Références ajoutées :
+Bergeronnette grise (14) et des ruisseaux (15). Rien à pousser.
+
+---
 # FAIT le 2026-10-11 : analyse des deux vidéos « Bruant roseaux » (son seul, hors appli)
 Rapport : notes-privees/analyse-sons/2026-10-11-bruant-roseaux/RAPPORT.md (257 références xeno-canto).
 Bruant des roseaux sûr (5 cris « tsiu »), Pouillot véloce probable (1 « huit »), 5 notes plates
