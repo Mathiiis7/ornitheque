@@ -550,6 +550,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      milieu : au milieu, la ligne de texte de la case l'entourait encore et ajoutait 1,2 px. */
   #viewRanking td .chip { line-height:17px; padding:1px 8px; vertical-align:top; }
   #viewRanking .youtag { font-size:12px; }
+  /* « TOI » a cote du prenom : a 12 px en capitales grasses, la pastille faisait 20 px de haut
+     pour un prenom de 21 et se lisait au meme niveau que lui (Mathis, 2026-10-12). */
+  #boardList .youtag { font-size:11px; line-height:15px; }
   #viewRanking .fp-hint, #viewRanking .miss-toggle { font-size:14px; font-weight:400; text-transform:none; letter-spacing:0; color:var(--ink-3); }
   #viewRanking .miss-toggle { color:var(--ink-2); }
   #viewRanking .person-chip, #viewRanking .fp-reset, #viewRanking .filters-toggle, #viewRanking .rar-chip,
