@@ -2492,14 +2492,13 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      d'être touchées, sur un fond teinté d'accent et un bord d'accent - légèrement à part. */
   .decouvrir-texte { margin:12px 0 0; font-size:15px; line-height:1.45; color:var(--ink-2); }
   .decouvrir-actions { display:flex; justify-content:flex-end; flex-wrap:wrap; gap:8px; margin-top:16px; }
-  /* Pas de photo tant qu'on ne l'a pas touchee : un aplat presque noir et un « ? », que rien
-     ne confond avec le gris des manquantes. Montree, la photo gachait la surprise et la case
-     se perdait parmi les autres ; l'aplat vert d'accent « rendait pas bien » (Mathis,
-     2026-10-11, choisi parmi palier / or / sombre). */
-  .pkdx-card.a-decouvrir { border-color:var(--ink); }
-  .pkdx-card.a-decouvrir .pkdx-img { background:#15181c; font-size:0; position:relative; }
+  /* Pas de photo tant qu'on ne l'a pas touchee : le fond de base de la vignette, un « ? », et
+     une aura tres legere a la couleur du palier. Montree, la photo gachait la surprise ;
+     l'aplat vert d'accent puis l'aplat noir « rendaient pas bien » (Mathis, 2026-10-11). */
+  .pkdx-card.a-decouvrir { box-shadow:0 0 12px 2px color-mix(in srgb, var(--rar, var(--accent)) 35%, transparent); }
+  .pkdx-card.a-decouvrir .pkdx-img { font-size:0; position:relative; }
   .pkdx-card.a-decouvrir .pkdx-img img { visibility:hidden; }
-  .pkdx-card.a-decouvrir .pkdx-img::after { content:'?'; position:absolute; inset:0; display:grid; place-items:center; color:#fff; font:700 40px var(--serif, Georgia, serif); }
+  .pkdx-card.a-decouvrir .pkdx-img::after { content:'?'; position:absolute; inset:0; display:grid; place-items:center; color:var(--ink-3); font:700 40px var(--serif, Georgia, serif); }
 
   /* La case du Birdydex qui se révèle : elle grossit, rebondit, s'entoure d'un halo
      d'accent, et sa photo passe de la silhouette à la couleur. */
