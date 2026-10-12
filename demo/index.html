@@ -120,7 +120,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=333">
+<link rel="modulepreload" href="app.js?v=334">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -1006,14 +1006,13 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         <h3>🎯 À quoi sert ce site</h3>
         <p style="margin:0 0 10px;">Comparer les life lists eBird d'un groupe d'amis birders. Charge ta liste sur « Ma liste », puis retrouve vos espèces dans le Birdydex, le Classement et la Carte, avec des trophées, un quiz de chants, des photos et un tchat.</p>
 
-        <h3>🌈 Les 11 niveaux de rareté</h3>
-        <p style="margin:0 0 10px;">Chaque espèce a un niveau de <b>0 à 10</b>, du vert (commun) au magenta (exceptionnel), selon la difficulté à l'observer <b>dans le pays choisi</b> :</p>
+        <h3>🌈 Les 10 niveaux de rareté</h3>
+        <p style="margin:0 0 10px;">Chaque espèce a un niveau de <b>1 à 10</b>, du vert (commun) au magenta (exceptionnel), selon la difficulté à l'observer <b>dans le pays choisi</b> :</p>
         <ul style="margin:0 0 10px 0; padding-left:22px;">
-          <li><b>0</b> Parc semi-libre ou échappé de captivité (Paon, Cygne noir…)</li>
           <li><b>1</b> Omniprésent · <b>2</b> Très commun · <b>3</b> Commun · <b>4</b> Assez commun · <b>5</b> Peu commun</li>
           <li><b>6</b> Assez rare · <b>7</b> Rare · <b>8</b> Très rare · <b>9</b> Ultra rare · <b>10</b> Exceptionnel</li>
         </ul>
-        <p style="margin:0 0 10px;">Le niveau vient du <b>bar chart eBird</b> du pays sur <b>2019-2026</b> : la part des listes d'observation qui citent l'espèce, en moyenne sur les 48 quinzaines de l'année. C'est la chance de la croiser lors d'une sortie au hasard : une espèce discrète mais répandue passe devant une espèce nombreuse sur trois sites.</p>
+        <p style="margin:0 0 10px;">Le niveau vient du <b>bar chart eBird</b> du pays sur <b>2019-2026</b> : la part des listes d'observation qui citent l'espèce, en moyenne sur les 48 quinzaines de l'année. C'est la chance de la croiser lors d'une sortie au hasard : une espèce discrète mais répandue passe devant une espèce nombreuse sur trois sites. Les oiseaux échappés de captivité ou domestiques n'ont pas de niveau.</p>
 
         <h3>📍 Choisir une zone (fiche espèce)</h3>
         <p style="margin:0 0 10px;">Sur la fiche d'une espèce, tu peux choisir une zone du pays : l'histogramme montre alors quand l'espèce y est présente. Si elle en est absente, la fiche le dit au lieu d'afficher les chiffres du pays entier.</p>
@@ -1431,5 +1430,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=333"></script>
+<script type="module" src="app.js?v=334"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>
