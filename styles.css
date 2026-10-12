@@ -2573,6 +2573,39 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* Titres de section de l'À propos : le petit titre de bloc de la charte. */
   .about-body h3 { font:600 17px var(--titre); color:var(--ink); margin:20px 0 8px; }
   .about-body h3:first-child { margin-top:0; }
+  /* Schéma « D'où viennent les cartes » : cinq cases en ligne, qui s'empilent sur téléphone.
+     L'accent ne marque que la dernière case, ce que voit le visiteur. */
+  .carto-chemin { list-style:none; margin:4px 0 0; padding:0; display:flex; align-items:stretch; }
+  .carto-case { flex:1 1 0; min-width:0; display:flex; flex-direction:column; gap:2px; padding:12px 8px;
+    background:var(--surface-2); border:1px solid var(--line-2); border-radius:12px;
+    font-size:14px; line-height:1.4; color:var(--ink-2); text-align:center; }
+  .carto-case code { font:14px var(--mono); color:var(--ink); }
+  .carto-nom { font:600 17px var(--titre); color:var(--ink); margin-bottom:4px; }
+  .carto-script { background:var(--surface); border-color:var(--ink-3); }
+  .carto-vue { background:color-mix(in srgb, var(--accent) 10%, var(--surface)); border:1.5px solid var(--accent); }
+  .carto-vue .carto-nom { color:var(--accent-ink); font-weight:700; }
+  .carto-fleche { flex:0 0 54px; position:relative; display:flex; flex-direction:column; align-items:center;
+    justify-content:center; gap:4px; font-size:14px; color:var(--ink-3); }
+  .carto-fleche::after { content:""; width:100%; height:14px; background:
+    linear-gradient(var(--ink-3), var(--ink-3)) left center / calc(100% - 9px) 1.5px no-repeat,
+    conic-gradient(from 225deg at 100% 50%, var(--ink-3) 0 90deg, transparent 0) right center / 9px 14px no-repeat; }
+  .carto-sous-titre { margin:16px 0 8px; font-size:13px; font-weight:700; text-transform:uppercase;
+    letter-spacing:0.4px; color:var(--ink-3); }
+  .carto-gestes { display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; }
+  .carto-geste { display:flex; flex-direction:column; gap:4px; padding:12px 14px; background:var(--surface);
+    border:1px solid var(--line-2); border-radius:12px; font-size:14px; line-height:1.5; color:var(--ink-2); }
+  .carto-geste b { font-size:15px; color:var(--ink); }
+  .carto-pourquoi { margin:12px 0 10px; color:var(--ink-2); }
+  @media (max-width:760px) {
+    .carto-chemin { flex-direction:column; }
+    .carto-case { flex:none; }
+    .carto-fleche { flex:0 0 auto; flex-direction:row; height:40px; gap:10px; }
+    .carto-fleche::after { width:14px; height:100%; order:-1; background:
+      linear-gradient(var(--ink-3), var(--ink-3)) center top / 1.5px calc(100% - 9px) no-repeat,
+      conic-gradient(from -45deg at 50% 100%, var(--ink-3) 0 90deg, transparent 0) center bottom / 14px 9px no-repeat; }
+    .carto-fleche span { position:absolute; left:calc(50% + 14px); }
+    .carto-gestes { grid-template-columns:1fr; }
+  }
 
   @media (pointer: coarse) {
     /* Espèce débloquée : le bouton de la fiche et « Continuer » */
