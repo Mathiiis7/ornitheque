@@ -1,3 +1,15 @@
+# EN LIGNE le 2026-10-12 : page À propos refaite (v758, app.js?v=334)
+Pleine largeur (bridée à 900 px avant), textes relus contre le code et allégés : rareté par pays, zones,
+sources à jour (iNaturalist, INPN), plus d'anglicismes, phrase « facteur 3 » et date du 23/09 retirées.
+Plus le schéma ci-dessous, allégé à sa demande.
+
+# schéma « D'où viennent les cartes » dans À propos (v754, app.js?v=330, commit 9f8c6498)
+Ticket qg#49, demandé par la session QG. Refait en HTML (classes .carto-*), cases empilées sous 760 px.
+Chiffres revérifiés : 10 896 cartes, 82,7 Mo de PNG, 1 775 781 186 observations (API GBIF).
+Vérifié dans la démo : ordi 1280 et téléphone 375, clair et sombre, 11 bancs CONFORME.
+Ticket qg#49 fermé une fois en ligne.
+
+---
 # FAIT le 2026-10-12 (pas poussé) : Classement et fiche espèce (v743, app.js?v=319)
 - Qui a vu quoi : en-tête et colonne Espèce collés (tableau borné à 75 vh), colonnes dans l'ordre du
   classement sans filtre, lignes à 37,9 px aux trois tris (étiquette de rareté amincie).
