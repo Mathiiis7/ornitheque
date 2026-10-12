@@ -49,7 +49,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=330">
+<link rel="modulepreload" href="app.js?v=331">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -975,23 +975,23 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
              dans ornitheque-data/cartes, 1 775 781 186 observations sur l'API GBIF. -->
         <h3>🗺️ D'où viennent les cartes</h3>
         <ol class="carto-chemin">
-          <li class="carto-case"><b class="carto-nom">eBird</b><span>les ornithologues du monde entier,</span><span>depuis 2015</span></li>
+          <li class="carto-case"><b class="carto-nom">eBird</b><span>les observations des ornithologues</span></li>
           <li class="carto-fleche" aria-hidden="true"><span>publie</span></li>
-          <li class="carto-case"><b class="carto-nom">GBIF</b><span>1,78 milliard d'observations,</span><span>libres (CC BY 4.0)</span></li>
+          <li class="carto-case"><b class="carto-nom">GBIF</b><span>1,78 milliard d'observations libres</span></li>
           <li class="carto-fleche" aria-hidden="true"><span>envoie</span></li>
-          <li class="carto-case carto-script"><b class="carto-nom">Le script</b><code>cartes-gbif.mjs</code><span>33 minutes,</span><span>lancé à la main</span></li>
+          <li class="carto-case carto-script"><b class="carto-nom">Un script</b><span>fabrique les cartes</span></li>
           <li class="carto-fleche" aria-hidden="true"><span>range</span></li>
-          <li class="carto-case"><b class="carto-nom">Les cartes</b><code>ornitheque-data</code><span>10 896 cartes,</span><span>82,7 Mo en niveaux de gris</span></li>
+          <li class="carto-case"><b class="carto-nom">Les cartes</b><span>10 896 cartes, 82,7 Mo</span></li>
           <li class="carto-fleche" aria-hidden="true"><span>lit</span></li>
-          <li class="carto-case carto-vue"><b class="carto-nom">L’Ornithèque</b><span>colore la carte</span><span>et l'anime sur 12 mois</span></li>
+          <li class="carto-case carto-vue"><b class="carto-nom">L’Ornithèque</b><span>les colore et les anime sur 12 mois</span></li>
         </ol>
         <p class="carto-sous-titre">Ce que fait le script</p>
         <div class="carto-gestes">
-          <div class="carto-geste"><b>Compter juste</b><span>Chaque case divise les observations de l'espèce par celles de tous les oiseaux : on suit les oiseaux, pas les observateurs.</span></div>
-          <div class="carto-geste"><b>Boucher les trous</b><span>Une case vide au milieu de l'aire est remplie quand au moins 5 de ses 8 voisines ont l'oiseau.</span></div>
-          <div class="carto-geste"><b>Alléger</b><span>Un pixel gris par case d'environ 28 km : en couleur, les cartes auraient pesé 2,7 Go, elles tiennent en 82,7 Mo.</span></div>
+          <div class="carto-geste"><b>Compter juste</b><span>On suit les oiseaux, pas les observateurs.</span></div>
+          <div class="carto-geste"><b>Boucher les trous</b><span>Une case vide entourée d'oiseaux est remplie.</span></div>
+          <div class="carto-geste"><b>Alléger</b><span>De 2,7 Go à 82,7 Mo.</span></div>
         </div>
-        <p class="carto-pourquoi"><b>Pourquoi ce chemin</b> : les cartes de Cornell ne peuvent pas être montrées sur un site sans son accord écrit ; les observations brutes, elles, sont libres à condition de citer leur source.</p>
+        <p class="carto-pourquoi"><b>Pourquoi ce chemin</b> : les cartes de Cornell ne peuvent pas être montrées sur un site sans son accord écrit ; les observations brutes sont libres si on cite la source.</p>
 
         <h3>📅 Versions des données</h3>
         <ul style="margin:0 0 10px 0; padding-left:22px;">
@@ -1372,4 +1372,4 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=330"></script>
+<script type="module" src="app.js?v=331"></script>
