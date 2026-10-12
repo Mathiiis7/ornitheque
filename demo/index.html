@@ -120,7 +120,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=332">
+<link rel="modulepreload" href="app.js?v=333">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -1003,37 +1003,31 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
           <p class="help">Comment ça marche, d'où viennent les données, comment lire les indicateurs.</p></div>
       </div>
       <div class="about-body" style="font-size:14px; line-height:1.6; color:var(--ink); margin-top:12px;">
-
         <h3>🎯 À quoi sert ce site</h3>
-        <p style="margin:0 0 10px;">Comparer les life lists eBird d'un groupe d'amis birders. Charge ta liste eBird sur "Ma liste", et retrouve toutes les espèces vues (partagées ou uniques), avec des filtres, un classement, un Birdydex par famille, et des suggestions personnalisées d'espèces à ajouter.</p>
+        <p style="margin:0 0 10px;">Comparer les life lists eBird d'un groupe d'amis birders. Charge ta liste sur « Ma liste », puis retrouve vos espèces dans le Birdydex, le Classement et la Carte, avec des trophées, un quiz de chants, des photos et un tchat.</p>
 
         <h3>🌈 Les 11 niveaux de rareté</h3>
-        <p style="margin:0 0 10px;">Chaque espèce a un niveau de <b>0 à 10</b> (couleur vert → magenta), qui reflète la difficulté à l'observer en France :</p>
+        <p style="margin:0 0 10px;">Chaque espèce a un niveau de <b>0 à 10</b>, du vert (commun) au magenta (exceptionnel), selon la difficulté à l'observer <b>dans le pays choisi</b> :</p>
         <ul style="margin:0 0 10px 0; padding-left:22px;">
-          <li><b>0</b> Parc semi-libre / échappé cage (Paon, Cygne noir…)</li>
-          <li><b>1</b> Omniprésent (Merle noir, Pigeon ramier)</li>
-          <li><b>2</b> Très commun · <b>3</b> Commun · <b>4</b> Assez commun · <b>5</b> Peu commun</li>
+          <li><b>0</b> Parc semi-libre ou échappé de captivité (Paon, Cygne noir…)</li>
+          <li><b>1</b> Omniprésent · <b>2</b> Très commun · <b>3</b> Commun · <b>4</b> Assez commun · <b>5</b> Peu commun</li>
           <li><b>6</b> Assez rare · <b>7</b> Rare · <b>8</b> Très rare · <b>9</b> Ultra rare · <b>10</b> Exceptionnel</li>
         </ul>
-        <p style="margin:0 0 10px;">Le niveau vient d'une seule source, le <b>bar chart eBird</b> du pays sur <b>2019-2026</b> : la part des listes d'observation qui mentionnent l'espèce.</p>
-        <p style="margin:0 0 10px;">La valeur retenue est la moyenne des <b>48 quinzaines</b> de l'année, <b>pondérée par le nombre de listes</b> de chacune : l'effort d'observation varie fortement selon la saison, jusqu'à un facteur 3 entre novembre et mai. Autrement dit : la chance de rencontrer l'espèce lors d'une sortie prise au hasard dans l'année.</p>
-        <p style="margin:0 0 10px;">C'est volontairement une mesure de <b>fréquence de rencontre</b>, pas d'effectif : une espèce discrète mais répandue sera mieux classée qu'une espèce nombreuse sur trois sites. Et un migrateur absent la moitié de l'année ne peut pas être « omniprésent », même s'il est partout en juin.</p>
+        <p style="margin:0 0 10px;">Le niveau vient du <b>bar chart eBird</b> du pays sur <b>2019-2026</b> : la part des listes d'observation qui citent l'espèce, en moyenne sur les 48 quinzaines de l'année. C'est la chance de la croiser lors d'une sortie au hasard : une espèce discrète mais répandue passe devant une espèce nombreuse sur trois sites.</p>
 
-        <h3>📍 Sélecteur région (fiche espèce)</h3>
-        <p style="margin:0 0 8px;">Sur chaque fiche espèce, tu peux choisir un département. L'histogramme de saisonnalité se met à jour pour montrer où et quand l'espèce est présente <b>dans cette zone</b>.</p>
-        <p style="margin:0 0 8px;">Si l'espèce est absente de la région choisie (ex : Macareux moine hors Bretagne), un message explicite le dit au lieu d'afficher un repli national trompeur.</p>
+        <h3>📍 Choisir une zone (fiche espèce)</h3>
+        <p style="margin:0 0 10px;">Sur la fiche d'une espèce, tu peux choisir une zone du pays : l'histogramme montre alors quand l'espèce y est présente. Si elle en est absente, la fiche le dit au lieu d'afficher les chiffres du pays entier.</p>
 
         <h3>📚 Sources des données</h3>
         <ul style="margin:0 0 10px 0; padding-left:22px;">
-          <li><b>eBird</b> (Cornell Lab of Ornithology) - la life list, le bar chart FR/région/département, la taxonomie</li>
-          <li><b>Observations eBird publiées sur GBIF</b> (<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>) - les cartes de répartition et de migration de la fiche espèce, en fréquence de signalement par case de 28 km. GBIF.org (1er octobre 2026), <a href="https://doi.org/10.15468/dl.c7y4kg" target="_blank" rel="noopener">doi:10.15468/dl.c7y4kg</a>. Pour les 236 espèces sans donnée eBird, carte de présence tirée des autres sources GBIF : <a href="https://doi.org/10.15468/dl.rb9sut" target="_blank" rel="noopener">doi:10.15468/dl.rb9sut</a>.</li>
-          <li><b>GBIF</b> - données d'occurrence, utilisées par la carte d'observations de la fiche espèce</li>
-          <li><b>xeno-canto</b> - chants et cris (onglet Quiz)</li>
-          <li><b>Wikipedia</b> - descriptions et photos</li>
-          <li><b>BIRDBASE</b> - les milieux de vie de chaque espèce, classés par ordre de préférence. Şekercioğlu et al. 2025, <i>Scientific Data</i> 12:1558, <a href="https://doi.org/10.6084/m9.figshare.27051040" target="_blank" rel="noopener">doi:10.6084/m9.figshare.27051040</a>, sous <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>.</li>
-          <li><b>AVONET</b> - les traits de la fiche espèce (morphologie, régime, déplacement). Tobias et al. 2022, <i>Ecology Letters</i>.</li>
-          <li><b>Natural Earth</b> (domaine public) - contours des régions sur les cartes par zone</li>
-          <li><b>geoBoundaries</b> - contours des communes danoises (domaine public), d'Åland et des six districts chypriotes. Ces deux derniers dérivent d'<b>OpenStreetMap</b> : © les contributeurs OpenStreetMap, sous <a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" rel="noopener">ODbL 1.0</a>, licence qui s'étend aux contours simplifiés publiés ici (<code>data/regions-cy-simplified.json</code> et <code>data/regions-fi-simplified.json</code>).</li>
+          <li><b>eBird</b> (Cornell Lab of Ornithology) - la life list, les bar charts par pays et par zone, la taxonomie</li>
+          <li><b>Observations eBird publiées sur GBIF</b> (<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>) - les cartes de répartition. GBIF.org (1er octobre 2026), <a href="https://doi.org/10.15468/dl.c7y4kg" target="_blank" rel="noopener">doi:10.15468/dl.c7y4kg</a> ; pour les 236 espèces sans donnée eBird, <a href="https://doi.org/10.15468/dl.rb9sut" target="_blank" rel="noopener">doi:10.15468/dl.rb9sut</a>.</li>
+          <li><b>GBIF</b> - la carte d'observations de la fiche espèce</li>
+          <li><b>xeno-canto</b>, et <b>iNaturalist</b> en secours - chants et cris (fiche espèce, Quiz)</li>
+          <li><b>Wikipedia</b>, <b>iNaturalist</b> et l'<b>INPN</b> - descriptions et photos</li>
+          <li><b>BIRDBASE</b> - les milieux de vie. Şekercioğlu et al. 2025, <i>Scientific Data</i> 12:1558, <a href="https://doi.org/10.6084/m9.figshare.27051040" target="_blank" rel="noopener">doi:10.6084/m9.figshare.27051040</a>, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>.</li>
+          <li><b>AVONET</b> - morphologie, régime, déplacement. Tobias et al. 2022, <i>Ecology Letters</i>.</li>
+          <li><b>Natural Earth</b> et <b>geoBoundaries</b> (domaine public) - contours des zones. Ceux d'Åland et de Chypre dérivent d'<b>OpenStreetMap</b> : © les contributeurs OpenStreetMap, <a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" rel="noopener">ODbL 1.0</a>, licence qui s'étend aux contours publiés ici (<code>data/regions-cy-simplified.json</code>, <code>data/regions-fi-simplified.json</code>).</li>
         </ul>
 
         <!-- Schema « D'ou viennent les cartes » (ticket qg#49, 2026-10-12), redessine en HTML a partir
@@ -1062,22 +1056,20 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
 
         <h3>📅 Versions des données</h3>
         <ul style="margin:0 0 10px 0; padding-left:22px;">
-          <li>Bar chart eBird : <b>2019-2026</b> (7 ans glissants)</li>
-          <li>Cartes de répartition : observations eBird <b>2015-2026</b> via GBIF, téléchargées le <b>1er octobre 2026</b></li>
-          <li>Génération data locale : <b>23 septembre 2026</b></li>
+          <li>Bar charts eBird : <b>2019-2026</b></li>
+          <li>Cartes de répartition : observations eBird <b>2015-2026</b>, téléchargées le <b>1er octobre 2026</b></li>
         </ul>
-        <p style="margin:0 0 10px; color:var(--ink-3);">Les cartes se refont à partir d'un nouveau téléchargement GBIF. Le bar chart peut être re-téléchargé annuellement.</p>
 
         <h3>🐛 Remarques et idées</h3>
-        <p style="margin:0;">Un niveau de rareté qui paraît faux, un graphique bizarre, une idée ? Utilise l'onglet <b>💡 Requêtes</b> (dans le menu ☰) pour signaler.</p>
+        <p style="margin:0 0 10px;">Un niveau de rareté qui paraît faux, un bug, une idée ? Dis-le dans l'onglet <b>💡 Requêtes</b> (menu ☰).</p>
 
         <h3>🔒 Confidentialité (RGPD)</h3>
-        <p style="margin:0 0 8px;"><b>Données collectées</b> : email (Firebase Auth), nom d'affichage, life list eBird (espèces + lieux d'observation + dates), messages du tchat, photos uploadées, commentaires, réactions emoji, statistiques quiz.</p>
-        <p style="margin:0 0 8px;"><b>Finalité</b> : partager sa liste d'oiseaux entre amis, comparer les cochages, tchatter, débloquer des trophées. Aucune revente, aucune publicité, aucun tracking commercial.</p>
-        <p style="margin:0 0 8px;"><b>Qui a accès</b> : les membres de la ligue (personnes ayant uploadé leur life list) uniquement. Les visiteurs anonymes ne voient rien. Google Firebase héberge les données (règles Firestore restrictives, transfert US encadré par les Standard Contractual Clauses de Google).</p>
-        <p style="margin:0 0 8px;"><b>Durée de conservation</b> : tant que tu es actif dans la ligue. Suppression manuelle possible à tout moment via le bouton <b>« Supprimer mon compte »</b> ci-dessous (efface définitivement ta fiche membre, tes messages, photos, commentaires, votes et stats quiz).</p>
-        <p style="margin:0 0 8px;"><b>Tes droits (RGPD)</b> : accès, rectification, effacement, portabilité. Contacte l'admin (Mathis) via l'onglet 💡 Requêtes pour toute demande.</p>
-        <p style="margin:0 0 8px;"><b>Sécurité</b> : HTTPS bout en bout, règles Firestore par membre, limite anti-spam, Content Security Policy, données EXIF retirées des photos.</p>
+        <p style="margin:0 0 8px;"><b>Données gardées</b> : ton email, ton nom d'affichage, ta life list eBird (espèces, lieux, dates), tes messages, photos, commentaires, réactions et résultats au quiz.</p>
+        <p style="margin:0 0 8px;"><b>Pourquoi</b> : comparer vos listes entre amis, tchatter, débloquer des trophées. Ni revente, ni publicité, ni pistage commercial.</p>
+        <p style="margin:0 0 8px;"><b>Qui les voit</b> : les membres de la ligue seulement. Elles sont hébergées par Google Firebase (transfert vers les États-Unis encadré par les clauses contractuelles types de Google).</p>
+        <p style="margin:0 0 8px;"><b>Combien de temps</b> : tant que tu es dans la ligue. Le bouton ci-dessous efface tout, définitivement.</p>
+        <p style="margin:0 0 8px;"><b>Tes droits</b> : accès, rectification, effacement, portabilité. Demande à l'admin (Mathis) dans l'onglet 💡 Requêtes.</p>
+        <p style="margin:0 0 8px;"><b>Sécurité</b> : connexion chiffrée, accès limité membre par membre, données de localisation retirées des photos.</p>
         <p style="margin:12px 0 0;"><button type="button" class="linkbtn" id="rgpdDeleteAll" style="color:#c00; font-weight:600;">🗑️ Supprimer définitivement mon compte et toutes mes données</button></p>
       </div>
     </section>
@@ -1439,5 +1431,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=332"></script>
+<script type="module" src="app.js?v=333"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>
