@@ -120,7 +120,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=334">
+<link rel="modulepreload" href="app.js?v=335">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -1067,9 +1067,12 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         <p style="margin:0 0 8px;"><b>Pourquoi</b> : comparer vos listes entre amis, tchatter, débloquer des trophées. Ni revente, ni publicité, ni pistage commercial.</p>
         <p style="margin:0 0 8px;"><b>Qui les voit</b> : les membres de la ligue seulement. Elles sont hébergées par Google Firebase (transfert vers les États-Unis encadré par les clauses contractuelles types de Google).</p>
         <p style="margin:0 0 8px;"><b>Combien de temps</b> : tant que tu es dans la ligue. Le bouton ci-dessous efface tout, définitivement.</p>
-        <p style="margin:0 0 8px;"><b>Tes droits</b> : accès, rectification, effacement, portabilité. Demande à l'admin (Mathis) dans l'onglet 💡 Requêtes.</p>
+        <p style="margin:0 0 8px;"><b>Tes droits</b> : accès, rectification, effacement, portabilité. Demande à l'admin (Mathis) dans l'onglet 💡 Requêtes. Tu peux aussi adresser une réclamation à la CNIL (cnil.fr).</p>
         <p style="margin:0 0 8px;"><b>Sécurité</b> : connexion chiffrée, accès limité membre par membre, données de localisation retirées des photos.</p>
         <p style="margin:12px 0 0;"><button type="button" class="linkbtn" id="rgpdDeleteAll" style="color:#c00; font-weight:600;">🗑️ Supprimer définitivement mon compte et toutes mes données</button></p>
+
+        <h3>Mentions légales</h3>
+        <p style="margin:0 0 8px;">Hébergeur : GitHub, Inc., 88 Colin P. Kelly Jr. St., San Francisco, CA 94107, États-Unis.</p>
       </div>
     </section>
   </div>
@@ -1430,5 +1433,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=334"></script>
+<script type="module" src="app.js?v=335"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>
