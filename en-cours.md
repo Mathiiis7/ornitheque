@@ -1,4 +1,4 @@
-# FAIT le 2026-10-14 (pas poussé) : Photos (maquette B), tchat resserré, fil retouché (v765, app.js?v=341)
+# FAIT le 2026-10-14 (pas poussé) : Photos (maquette B), tchat resserré, fil retouché (v766, app.js?v=342)
 - Photos : grille 2 colonnes (1 au téléphone) qui défile seule, cartes = moitié de sa hauteur (container-type,
   100cqh) : pas de photo coupée en haut, 10 px d'air. Fiche d'une photo (_ouvrirFichePhoto) pour réactions,
   commentaires, suppression. Zoom de l'image ouverte (_zoomImg : molette, pincement, double-clic, glisser).

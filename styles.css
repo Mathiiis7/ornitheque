@@ -1634,7 +1634,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* Un cran plus discret que --ink-3, demande par Mathis : 90 % garde 4,52:1 en clair et 5,05:1
      en sombre (85 % tombait a 4,04:1 en clair, sous le seuil de 4,5). */
   .feed-l1 .latin { font-size:14px; color:color-mix(in srgb, var(--ink-3) 90%, var(--surface)); }
-  .feed-l2 { margin-top:2px; font-size:14px; }
+  /* Prenom, drapeau, niveau, date : sans « · » entre eux mais plus espaces (Mathis, 2026-10-14). */
+  .feed-l2 { margin-top:2px; font-size:14px; display:flex; flex-wrap:wrap; align-items:center; column-gap:14px; row-gap:2px; }
   .feed-l2 b { color:var(--ink); font-weight:600; }
   /* Le niveau dans sa couleur, comme avant la refonte (Mathis, 2026-10-14). */
   .feed-rar { font-weight:600; }
