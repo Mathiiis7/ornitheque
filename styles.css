@@ -2606,6 +2606,40 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .carto-fleche span { position:absolute; left:calc(50% + 14px); }
     .carto-gestes { grid-template-columns:1fr; }
   }
+  /* Schéma « D'où vient la rareté » : trois temps numérotés, des barres eBird au niveau.
+     Barres et échelle en HTML, comme le schéma des cartes : le texte garde sa taille sur téléphone. */
+  .rar-titre { margin:14px 0 10px; font-size:13px; font-weight:700; text-transform:uppercase;
+    letter-spacing:0.4px; color:var(--ink-3); }
+  .rar-temps { display:grid; grid-template-columns:30px 1fr; column-gap:12px; margin-bottom:6px; }
+  .rar-n { width:28px; height:28px; border-radius:50%; background:var(--accent); color:#fff;
+    font:700 15px/28px var(--sans); text-align:center; }
+  .rar-corps { min-width:0; padding-bottom:16px; }
+  .rar-corps p { margin:2px 0 10px; color:var(--ink-2); }
+  .rar-corps p b { color:var(--ink); }
+  .rar-histo { position:relative; height:150px; border-bottom:1px solid var(--line-2); }
+  .rar-barres { display:flex; align-items:flex-end; gap:2px; height:100%; }
+  .rar-barres i { flex:1 1 0; min-width:0; border-radius:2px 2px 0 0; background:hsl(94 65% 45.22%); }
+  .rar-ligne { position:absolute; left:0; right:0; border-top:2px dashed var(--accent); }
+  .rar-ligne span { position:absolute; right:0; bottom:4px; padding:0 4px; background:var(--surface);
+    font-size:14px; font-weight:600; line-height:1.2; color:var(--accent-ink); }
+  .rar-mois { display:grid; grid-template-columns:repeat(12, 1fr); margin-top:4px; font-size:14px;
+    color:var(--ink-3); text-align:center; }
+  .rar-court { display:none; }
+  .rar-echelle { position:relative; padding:26px 0 28px; }
+  .rar-seg { display:grid; grid-template-columns:repeat(10, 1fr); gap:2px; }
+  .rar-seg div { height:32px; color:#fff; font-size:14px; font-weight:600; line-height:32px; text-align:center; }
+  .rar-seg div:first-child { border-radius:6px 0 0 6px; }
+  .rar-seg div:last-child { border-radius:0 6px 6px 0; }
+  .rar-seuil { position:absolute; transform:translateX(-50%); font-size:14px; color:var(--ink-3); white-space:nowrap; }
+  .rar-seuil.haut { top:0; }
+  .rar-seuil.bas { bottom:0; }
+  .rar-ici { position:absolute; top:21px; height:38px; margin-left:-4px; padding:0 1px; border:3px solid var(--ink);
+    border-radius:8px; box-sizing:content-box; }
+  @media (max-width:600px) {
+    .rar-barres { gap:1px; }
+    .rar-long { display:none; }
+    .rar-court { display:inline; }
+  }
 
   @media (pointer: coarse) {
     /* Espèce débloquée : le bouton de la fiche et « Continuer » */

@@ -49,7 +49,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=335">
+<link rel="modulepreload" href="app.js?v=336">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -946,6 +946,21 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
           <li><b>6</b> Assez rare · <b>7</b> Rare · <b>8</b> Très rare · <b>9</b> Ultra rare · <b>10</b> Exceptionnel</li>
         </ul>
         <p style="margin:0 0 10px;">Le niveau vient du <b>bar chart eBird</b> du pays sur <b>2019-2026</b> : la part des listes d'observation qui citent l'espèce, en moyenne sur les 48 quinzaines de l'année. C'est la chance de la croiser lors d'une sortie au hasard : une espèce discrète mais répandue passe devant une espèce nombreuse sur trois sites. Les oiseaux échappés de captivité ou domestiques n'ont pas de niveau.</p>
+        <!-- Schema « D'ou vient la rarete » (ticket qg#50, 2026-10-14), variante A de la maquette du QG,
+             en HTML comme celui des cartes. Barres : data/countries/fr/freq_48.json, martin-pecheur, echelle 0-20 %.
+             Moyenne 0,08089 : ponderee par le nombre de listes de chaque quinzaine (build-rarity-multi-country.mjs),
+             c'est la valeur de la fiche. Seuils : le tableau THRESHOLDS du meme script, pas son commentaire, perime. -->
+        <p class="rar-titre">Exemple : comment le martin-pêcheur devient « Commun » en France</p>
+        <div class="rar-temps">
+          <span class="rar-n">1</span><div class="rar-corps"><p><b>Sur eBird, chaque sortie donne une liste.</b> Pour chaque quinzaine de l'année, on compte la part des listes de France qui citent l'oiseau.</p>
+            <div class="rar-histo" role="img" aria-label="Part des listes eBird de France qui citent le martin-pêcheur, quinzaine par quinzaine : de 2,8 % au plus bas, au printemps, à 18,2 % au plus haut, en septembre"><div class="rar-barres" aria-hidden="true"><i style="height:49.2%"></i><i style="height:49.2%"></i><i style="height:39.8%"></i><i style="height:31.6%"></i><i style="height:33.0%"></i><i style="height:29.6%"></i><i style="height:27.7%"></i><i style="height:24.0%"></i><i style="height:24.0%"></i><i style="height:21.5%"></i><i style="height:23.9%"></i><i style="height:20.0%"></i><i style="height:17.0%"></i><i style="height:16.0%"></i><i style="height:14.7%"></i><i style="height:14.2%"></i><i style="height:16.8%"></i><i style="height:16.2%"></i><i style="height:16.3%"></i><i style="height:16.7%"></i><i style="height:18.6%"></i><i style="height:17.5%"></i><i style="height:16.9%"></i><i style="height:21.2%"></i><i style="height:27.1%"></i><i style="height:30.3%"></i><i style="height:34.3%"></i><i style="height:38.1%"></i><i style="height:47.7%"></i><i style="height:57.2%"></i><i style="height:60.5%"></i><i style="height:71.9%"></i><i style="height:77.4%"></i><i style="height:91.1%"></i><i style="height:87.1%"></i><i style="height:81.5%"></i><i style="height:83.5%"></i><i style="height:76.3%"></i><i style="height:69.9%"></i><i style="height:76.5%"></i><i style="height:70.5%"></i><i style="height:78.1%"></i><i style="height:76.2%"></i><i style="height:78.9%"></i><i style="height:72.4%"></i><i style="height:68.8%"></i><i style="height:60.7%"></i><i style="height:53.9%"></i></div><div class="rar-ligne" style="bottom:40.4%" aria-hidden="true"><span>moyenne : 8,1 %</span></div></div>
+            <div class="rar-mois" aria-hidden="true"><span><span class="rar-long">janv.</span><span class="rar-court">J</span></span><span><span class="rar-long">févr.</span><span class="rar-court">F</span></span><span><span class="rar-long">mars</span><span class="rar-court">M</span></span><span><span class="rar-long">avr.</span><span class="rar-court">A</span></span><span><span class="rar-long">mai</span><span class="rar-court">M</span></span><span><span class="rar-long">juin</span><span class="rar-court">J</span></span><span><span class="rar-long">juil.</span><span class="rar-court">J</span></span><span><span class="rar-long">août</span><span class="rar-court">A</span></span><span><span class="rar-long">sept.</span><span class="rar-court">S</span></span><span><span class="rar-long">oct.</span><span class="rar-court">O</span></span><span><span class="rar-long">nov.</span><span class="rar-court">N</span></span><span><span class="rar-long">déc.</span><span class="rar-court">D</span></span></div></div>
+          <span class="rar-n">2</span><div class="rar-corps"><p><b>On fait la moyenne de l'année : 8,1 %.</b> Une quinzaine compte d'autant plus qu'elle a de listes : il y a plus de sorties en mai qu'en novembre.</p></div>
+          <span class="rar-n">3</span><div class="rar-corps"><p><b>On lit le niveau sur l'échelle.</b> 8,1 % est entre 6 et 12 % : niveau 3, Commun.</p>
+            <div class="rar-echelle"><div class="rar-seg"><div style="background:hsl(130 65% 47%)">1</div><div style="background:hsl(112 65% 46.11%)">2</div><div style="background:hsl(94 65% 45.22%)">3</div><div style="background:hsl(77 65% 44.33%)">4</div><div style="background:hsl(59 65% 43.44%)">5</div><div style="background:hsl(41 65% 42.56%)">6</div><div style="background:hsl(23 65% 41.67%)">7</div><div style="background:hsl(6 65% 40.78%)">8</div><div style="background:hsl(348 65% 39.89%)">9</div><div style="background:hsl(330 65% 39%)">10</div></div>
+              <span class="rar-seuil haut" style="left:10%">24 %</span><span class="rar-seuil bas" style="left:20%">12 %</span><span class="rar-seuil haut" style="left:30%">6 %</span><span class="rar-seuil bas" style="left:40%">3 %</span><span class="rar-seuil haut" style="left:50%">1,5 %</span><span class="rar-seuil bas" style="left:60%">0,75 %</span><span class="rar-seuil haut" style="left:70%">0,2 %</span><span class="rar-seuil bas" style="left:80%">0,05 %</span><span class="rar-seuil haut" style="left:90%">0,01 %</span>
+              <span class="rar-ici" style="left:20%; width:10%" aria-hidden="true"></span></div></div>
+        </div>
 
         <h3>📍 Choisir une zone (fiche espèce)</h3>
         <p style="margin:0 0 10px;">Sur la fiche d'une espèce, tu peux choisir une zone du pays : l'histogramme montre alors quand l'espèce y est présente. Si elle en est absente, la fiche le dit au lieu d'afficher les chiffres du pays entier.</p>
@@ -1366,4 +1381,4 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=335"></script>
+<script type="module" src="app.js?v=336"></script>
