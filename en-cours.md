@@ -1,3 +1,8 @@
+# EN COURS le 2026-10-14 : refonte de la page Photos, maquette à choisir
+notes-privees/maquettes/photos/index.html : A une par écran (défilement aimanté), B deux colonnes, C à la une + vignettes.
+Demande de Mathis : photos plus grandes, et en haut du fil aucune photo coupée (la hauteur se cale sur le panneau, mesuré 10-11 px de marge).
+Code concerné : renderPhotos (app.js), .photo-* (styles.css), #viewPhotos (index.html). Fait avant : écrou régulier, panneaux à 640 px (v764, app.js?v=340).
+
 # FAIT le 2026-10-14 (pas poussé) : fil refait, écrou, tchat (v763, app.js?v=339)
 - Fil : maquette A choisie (notes-privees/maquettes/fil/), rangé par jour (jour d'ajout en Nouveautés, d'observation en
   Chronologique), pastille numérotée (chiffre blanc ou foncé selon le contraste, _texteSur), prénoms sans couleur,
