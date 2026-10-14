@@ -49,7 +49,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=336">
+<link rel="modulepreload" href="app.js?v=337">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -188,7 +188,15 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
     <button class="tab" data-view="feed" hidden>🆕 Fil</button>
     <button class="tab" data-view="requests" hidden>💡 Requêtes</button>
     <button class="tab" data-view="about" hidden>ℹ️ À propos</button>
-    <div style="margin-left:auto;">
+    <div class="nav-droite">
+      <!-- Fil, Photos, Tchat : dans la barre depuis le 2026-10-14. Ils flottaient en bas a
+           droite et couvraient la page selon la largeur (Mathis). Les identifiants n'ont pas
+           bouge : app.js, les pastilles et le guide s'y accrochent. -->
+      <div id="fabStack" class="nav-icos">
+        <button type="button" id="fabFeed" class="nav-ico" title="Fil" aria-label="Fil"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 10h16M4 15h10M4 20h7"/></svg></button>
+        <button type="button" id="fabPhotos" class="nav-ico" title="Photos" aria-label="Photos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8a2 2 0 0 1 2-2h2.5l1.5-2h6l1.5 2H19a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
+        <button type="button" id="fabChat" class="nav-ico" title="Tchat" aria-label="Tchat"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg></button>
+      </div>
       <button type="button" id="hamburgerBtn" class="tab" aria-label="Menu" style="min-width:auto; padding:9px 12px;" title="Plus">☰</button>
     </div>
   </nav>
@@ -249,12 +257,6 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
       </div>
     </div>
   </div>
-  <!-- Boutons flottants Fil + Photos + Tchat, positionnes en bas a droite -->
-  <div id="fabStack" style="position:fixed; right:20px; bottom:20px; display:flex; flex-direction:column; gap:10px; z-index:1600;">
-    <button type="button" id="fabFeed" title="Fil" style="position:relative; width:54px; height:54px; border-radius:50%; border:none; background:var(--warn, #d97a1c); color:#fff; font-size:22px; line-height:1; padding:0; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,.25); display:grid; place-items:center; transition:transform .15s;">📰</button>
-    <button type="button" id="fabPhotos" title="Photos" style="position:relative; width:54px; height:54px; border-radius:50%; border:none; background:var(--accent-2); color:#fff; font-size:22px; line-height:1; padding:0; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,.25); display:grid; place-items:center; transition:transform .15s;">📸</button>
-    <button type="button" id="fabChat" title="Tchat" style="position:relative; width:54px; height:54px; border-radius:50%; border:none; background:var(--accent); color:#fff; font-size:22px; line-height:1; padding:0; cursor:pointer; box-shadow:0 4px 14px rgba(0,0,0,.3); display:grid; place-items:center; transition:transform .15s;">💬</button>
-  </div>
   <!-- Backdrop pour fermer les panneaux flottants au clic exterieur -->
   <div id="fabBackdrop" hidden style="position:fixed; inset:0; background:rgba(0,0,0,.25); z-index:1400; animation:fab-fade-in .15s ease both;"></div>
   <style>
@@ -270,19 +272,29 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
     .ham-signout:hover { background:color-mix(in srgb, #c0392b 10%, transparent); color:#c0392b; }
     /* Pastille de notif : posee en top-right des FAB (position:absolute), en fin de ligne des items hamburger */
     .notif-badge { min-width:18px; height:18px; padding:0 5px; background:#d43a3a; color:#fff; font:700 11px/1 system-ui, -apple-system, sans-serif; border-radius:999px; display:grid; place-items:center; box-shadow:0 2px 4px rgba(0,0,0,.2); pointer-events:none; }
-    .fab-badge { position:absolute; top:-4px; right:-4px; border:2px solid var(--surface, #fff); z-index:5; }
+    /* Dans la barre, la pastille reste DANS le bouton : .tabs defile en largeur, donc coupe
+       tout ce qui depasse en haut. */
+    .fab-badge { position:absolute; top:1px; right:0; border:2px solid var(--surface, #fff); z-index:5; }
+    /* Colle au bord droit : au telephone la rangee d'onglets defile (747 px pour 375), et
+       les icones partaient hors de l'ecran avec elle. */
+    .nav-droite { margin-left:auto; display:flex; align-items:center; position:sticky; right:0; z-index:1;
+      background:var(--bg); padding-left:4px; }
+    .nav-icos { display:flex; align-items:center; gap:2px; }
+    .nav-ico { position:relative; width:42px; height:42px; padding:0; border:none; border-radius:10px; background:transparent;
+      color:var(--ink-2); cursor:pointer; display:grid; place-items:center; flex:0 0 auto; }
+    .nav-ico svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+    .nav-ico:hover { color:var(--accent-ink); background:var(--surface-2); }
+    .nav-ico.fab-active { color:var(--accent-ink); background:color-mix(in srgb, var(--accent) 14%, transparent); }
     .ham-badge { margin-left:auto; }
     /* Pulse subtle pour attirer l'oeil quand nouvelle notif apparait */
     @keyframes notif-pulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.12); } }
     .notif-badge { animation: notif-pulse 1.8s ease-in-out infinite; }
-    #fabChat:hover, #fabPhotos:hover { transform:scale(1.08); }
-    #fabChat:active, #fabPhotos:active { transform:scale(.96); }
-    .fab-active { box-shadow:0 0 0 4px color-mix(in srgb, currentColor 30%, transparent), 0 4px 14px rgba(0,0,0,.3) !important; }
-    /* View en mode panneau flottant : override display:none, position fixed, slide-up */
+    /* View en mode panneau flottant : override display:none, position fixed. Il s'ouvre sous
+       les icones de la barre : --fab-top et --fab-max sont poses par _toggleFabPanel(). */
     #viewChat.fab-open, #viewPhotos.fab-open, #viewFeed.fab-open {
       display:block !important; position:fixed;
-      right:20px; bottom:92px;
-      width:min(520px, calc(100vw - 40px)); max-height:min(820px, calc(100vh - 100px));
+      right:20px; top:var(--fab-top, 120px);
+      width:min(520px, calc(100vw - 40px)); max-height:min(820px, var(--fab-max, calc(100vh - 140px)));
       overflow-y:auto; overflow-x:hidden;
       background:var(--surface); border:1px solid var(--line); border-radius:16px;
       box-shadow:0 12px 40px rgba(0,0,0,.3);
@@ -297,12 +309,10 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
     #viewChat.fab-open .chat-box { flex:1; height:auto !important; min-height:150px; }
     /* Section interne du panneau : reduit la marge top+padding (adapte pour l'espace flottant) */
     #viewChat.fab-open > section, #viewPhotos.fab-open > section, #viewFeed.fab-open > section { margin-top:0 !important; }
-    @keyframes fab-slide-up { from { opacity:0; transform:translateY(20px) scale(.96); } to { opacity:1; transform:translateY(0) scale(1); } }
+    @keyframes fab-slide-up { from { opacity:0; transform:translateY(-12px) scale(.98); } to { opacity:1; transform:translateY(0) scale(1); } }
     @keyframes fab-fade-in { from { opacity:0; } to { opacity:1; } }
     @media (max-width:600px){
-      #fabStack { right:14px; bottom:14px; }
-      #fabChat, #fabPhotos, #fabFeed { width:50px; height:50px; font-size:20px; }
-      #viewChat.fab-open, #viewPhotos.fab-open, #viewFeed.fab-open { right:10px; left:10px; bottom:80px; width:auto; max-height:88vh; }
+      #viewChat.fab-open, #viewPhotos.fab-open, #viewFeed.fab-open { right:10px; left:10px; width:auto; }
     }
   </style>
 
@@ -1381,4 +1391,4 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=336"></script>
+<script type="module" src="app.js?v=337"></script>

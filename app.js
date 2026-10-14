@@ -10178,11 +10178,11 @@ const GUIDE_ETAPES = [
     texte:"Des trophées à débloquer au fil de tes observations. Choisis une personne pour voir les siens." },
   { vue:'quiz', cible:'.tab[data-view="quiz"]', titre:'Quiz',
     texte:"Reconnais les oiseaux à leur chant ou à leur cri : un défi du jour, un défi de la semaine, des parties classées, ou un entraînement qui revient sur tes erreurs." },
-  { cible:'#fabFeed', cote:'gauche', titre:'Le fil',
+  { cible:'#fabFeed', titre:'Le fil',
     texte:"Les dernières observations de la ligue, au fur et à mesure qu'elles arrivent." },
-  { cible:'#fabPhotos', cote:'gauche', titre:'Photos',
+  { cible:'#fabPhotos', titre:'Photos',
     texte:"Les photos de la ligue. Tu peux y publier les tiennes." },
-  { cible:'#fabChat', cote:'gauche', titre:'Tchat',
+  { cible:'#fabChat', titre:'Tchat',
     texte:"Pour discuter avec toute la ligue." },
   { cible:'#hamburgerBtn', titre:'Le menu',
     texte:"Le reste du site est rangé ici. Voyons ce qu'il contient." },
@@ -10784,6 +10784,12 @@ function _toggleFabPanel(view, fabBtn){
   // Ferme l'autre si ouvert.
   _closeFabPanel();
   // Marque le tab correspondant "on" pour synchro visuelle (au cas ou tab visible).
+  // Le panneau s'ouvre sous les icones de la barre. getBoundingClientRect parle en pixels
+  // d'ecran, la CSS du panneau en pixels CSS : on divise par le zoom de body (0,85).
+  const z = parseFloat(getComputedStyle(document.body).zoom) || 1;
+  const bas = Math.max(8, (fabBtn || document.getElementById('fabStack')).getBoundingClientRect().bottom + 6);
+  target.style.setProperty('--fab-top', (bas / z) + 'px');
+  target.style.setProperty('--fab-max', ((window.innerHeight - bas - 12) / z) + 'px');
   target.classList.add('fab-open');
   const bd = document.getElementById('fabBackdrop'); if(bd) bd.hidden = false;
   document.querySelectorAll('#fabStack button').forEach(b => b.classList.remove('fab-active'));

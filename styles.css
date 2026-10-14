@@ -2683,6 +2683,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .ml-dialog-close { width:52px; height:52px; }
     /* Les boutons de la bulle du guide. */
     .guide-nav .btn { min-height:52px; }
+    /* Fil, Photos, Tchat dans la barre d'onglets : 42 px ecrits a la souris. */
+    .nav-ico { width:52px; height:52px; }
   }
 
   /* Une seule police pour TOUS les noms latins, partout : celle du texte, en italique (--sans).
