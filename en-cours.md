@@ -1,3 +1,8 @@
+# FAIT le 2026-10-14 (pas poussé) : Fil, Photos, Tchat dans la barre d'onglets (v761, app.js?v=337, commit b559c9d7)
+Les trois ronds flottants couvraient la page. Devenus trois icônes (traits SVG) à gauche du ☰, collées au bord droit
+de la rangée (.nav-droite, sticky : au téléphone la rangée défile). Panneaux ouverts sous les icônes (--fab-top posé
+par _toggleFabPanel, corrigé du zoom 0,85). Vérifié 1000 px et 375 px, 11 bancs CONFORME. Reste : qu'il regarde en local, puis pousser.
+---
 # EN LIGNE le 2026-10-14 : schéma « D'où vient la rareté » dans À propos (v760, app.js?v=336, ticket qg#50 déjà fermé)
 Variante A de la maquette du QG, en HTML (classes `.rar-titre` à `.rar-ici` dans styles.css), sous le texte des 10 niveaux :
 barres du martin en France (freq_48.json), moyenne pondérée 8,1 %, échelle des 10 niveaux. Vérifié 1280 clair et 375 sombre,
