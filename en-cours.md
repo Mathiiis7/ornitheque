@@ -1,17 +1,10 @@
-# À FAIRE (choisi le 2026-10-14) : schéma « D'où vient la rareté » en trois temps, dans À propos (ticket qg#50)
-Maquette choisie : variante A de `0-QG/qg/savoir/essais/diagram-design/ornitheque-graphiques/4-rarete-expliquee.html`
-(générée par `fabriquer.mjs` à côté ; la voir : `python -m http.server 8790` depuis `Documents/0-Claude`).
-Place : rubrique « 🌈 Les 10 niveaux de rareté », sous le texte. En HTML (comme `.carto-*` du schéma des cartes), pas en SVG.
-1. 48 barres du martin-pêcheur en France, quinzaine par quinzaine (`data/countries/fr/freq_48.json`), ligne « moyenne : 8,1 % ».
-2. Moyenne de l'année pondérée par le nombre de listes par an (`valeurPonderee` + `poidsAnnuels`, build-rarity-multi-country.mjs) :
-   0,08089, soit 8,1 % - c'est bien ce que la fiche affiche. Mai a ~3 fois plus de listes que novembre (vérifié sur le bar chart brut).
-3. Échelle des 10 niveaux, couleurs `realColor()`, seuils du tableau THRESHOLDS (24 / 12 / 6 / 3 / 1,5 / 0,75 / 0,2 / 0,05 / 0,01 %),
-   PAS ceux du commentaire au-dessus, périmé. Le martin tombe au niveau 3 (entre 6 et 12 %).
-Fini quand : en ligne, vérifié ordi 1280 et téléphone 375, clair et sombre, bancs CONFORME ; puis fermer qg#50.
+# EN LIGNE le 2026-10-14 : schéma « D'où vient la rareté » dans À propos (v760, app.js?v=336, ticket qg#50 déjà fermé)
+Variante A de la maquette du QG, en HTML (classes `.rar-titre` à `.rar-ici` dans styles.css), sous le texte des 10 niveaux :
+barres du martin en France (freq_48.json), moyenne pondérée 8,1 %, échelle des 10 niveaux. Vérifié 1280 clair et 375 sombre,
+pas de défilement horizontal, étiquettes de seuils sans chevauchement, bancs CONFORME, démo régénérée.
 Écartés par Mathis : rareté pays par pays (aucune). Gardés en idées : taille comparée (qg#53), comparer aux espèces qui se ressemblent (qg#54).
 Vus en passant, pas touchés : Sri Lanka trié après les pays « absente » dans le sélecteur de pays ; `REAL_FREQ` est l'ancien pic
 (0,178 contre 0,081 pour le martin) et sert encore à départager deux espèces de même niveau ; chiffre blanc sur pastille jaune (niveau 5) à 2,2:1.
-
 ---
 # EN LIGNE le 2026-10-12 : page À propos refaite (v758, app.js?v=334)
 Pleine largeur (bridée à 900 px avant), textes relus contre le code et allégés : rareté par pays, zones,
