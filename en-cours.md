@@ -1,3 +1,7 @@
+# EN COURS le 2026-10-14 : refonte du fil (apparence + organisation), maquette à choisir
+Maquette : notes-privees/maquettes/fil/index.html (A par jour, B par sortie, C journal). Il choisit, puis on code renderFeed (app.js) et .feed-* (styles.css).
+Fait et commité, pas poussé : écrou à la place du ☰, panneaux jusqu'en bas, icônes au trait colorées dans le tchat, champ du nom masqué (v762, app.js?v=338, commit 1524e1cd).
+
 # FAIT le 2026-10-14 (pas poussé) : Fil, Photos, Tchat dans la barre d'onglets (v761, app.js?v=337, commit b559c9d7)
 Les trois ronds flottants couvraient la page. Devenus trois icônes (traits SVG) à gauche du ☰, collées au bord droit
 de la rangée (.nav-droite, sticky : au téléphone la rangée défile). Panneaux ouverts sous les icônes (--fab-top posé
