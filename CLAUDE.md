@@ -199,6 +199,12 @@ Conséquences pour qui touche à ce code :
 - un re-rendu ne doit JAMAIS faire repartir une photo de son aperçu flou : `thumbAttrs()`
   relit le cache mémoire avant d'écrire le HTML. Le banc `photos` vérifie ce point précis.
 
+**Un élément redessiné pendant son propre clic n'est plus dans la page.** Le cœur de la fiche
+d'une photo relance `renderPhotos`, qui réécrit la fiche avant que le clic ne remonte au document :
+`e.target.closest(...)` ne trouve plus rien, et le gestionnaire « clic à l'extérieur » refermait le
+panneau Photos. Tout gestionnaire qui juge « dedans ou dehors » commence par `if(!e.target.isConnected)`
+(2026-10-14, trouvé en testant avant de pousser).
+
 **Masquer l'interface n'est pas la vider.** Se déconnecter posait seulement une classe CSS
 sur `<html>` : `realPeople`, la liste chargée, le nom et le classement restaient en mémoire de
 l'onglet. Qui se reconnectait avec un AUTRE compte retrouvait l'écran du précédent, alors que

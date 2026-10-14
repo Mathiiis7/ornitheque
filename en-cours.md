@@ -1,4 +1,5 @@
-# FAIT le 2026-10-14 (pas poussé) : Photos (maquette B), tchat resserré, fil retouché (v767, app.js?v=343)
+# EN LIGNE le 2026-10-14 : fil, tchat et photos refaits (v768, app.js?v=344). Chantier clos.
+# (détail ci-dessous ; dernier correctif : un clic redessiné ne ferme plus le panneau)
 - Photos : grille 2 colonnes (1 au téléphone) qui défile seule, cartes = moitié de sa hauteur (container-type,
   100cqh) : pas de photo coupée en haut, 10 px d'air. Fiche d'une photo (_ouvrirFichePhoto) pour réactions,
   commentaires, suppression. Zoom de l'image ouverte (_zoomImg : molette, pincement, double-clic, glisser).

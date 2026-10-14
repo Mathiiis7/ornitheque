@@ -10885,6 +10885,10 @@ document.addEventListener('click', e => {
   // click ne doit pas etre interprete comme "hors panneau".
   const bd = document.getElementById('fabBackdrop');
   const inPopup = e.target.closest('#emojiPop') || e.target.closest('#gifPop') || e.target.closest('.cp-modal-backdrop') || e.target.closest('#imgModal') || e.target.closest('#speciesModal');
+  // Un element redessine pendant son propre clic (le coeur de la fiche d'une photo relance
+  // renderPhotos) n'est plus dans la page : closest() n'y trouve plus rien et le clic passait
+  // pour exterieur, ce qui fermait le panneau (2026-10-14). Il venait forcement de dedans.
+  if(!e.target.isConnected) return;
   if(bd && !bd.hidden && !inPopup && (e.target === bd || (!e.target.closest('#viewChat.fab-open') && !e.target.closest('#viewPhotos.fab-open') && !e.target.closest('#viewFeed.fab-open') && !e.target.closest('#fabStack')))){
     _closeFabPanel();
   }
