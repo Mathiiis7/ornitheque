@@ -49,7 +49,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=337">
+<link rel="modulepreload" href="app.js?v=338">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -197,7 +197,8 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         <button type="button" id="fabPhotos" class="nav-ico" title="Photos" aria-label="Photos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8a2 2 0 0 1 2-2h2.5l1.5-2h6l1.5 2H19a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
         <button type="button" id="fabChat" class="nav-ico" title="Tchat" aria-label="Tchat"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg></button>
       </div>
-      <button type="button" id="hamburgerBtn" class="tab" aria-label="Menu" style="min-width:auto; padding:9px 12px;" title="Plus">☰</button>
+      <!-- Un ecrou plutot que ☰ depuis le 2026-10-14 (Mathis) : l'identifiant reste hamburgerBtn. -->
+      <button type="button" id="hamburgerBtn" class="nav-ico" aria-label="Menu et réglages" title="Menu et réglages"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 3h3.4l.5 2.3 1.6.9 2.2-.8 1.7 2.9-1.8 1.6v1.9l1.8 1.6-1.7 2.9-2.2-.8-1.6.9-.5 2.3h-3.4l-.5-2.3-1.6-.9-2.2.8-1.7-2.9 1.8-1.6v-1.9L4.3 8.3 6 5.4l2.2.8 1.6-.9z"/><circle cx="12" cy="12" r="2.8"/></svg></button>
     </div>
   </nav>
   <!-- Menu hamburger : position:fixed (escape le overflow:auto de .tabs qui clippait le dropdown vertical). Position calculee au toggle. -->
@@ -294,7 +295,9 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
     #viewChat.fab-open, #viewPhotos.fab-open, #viewFeed.fab-open {
       display:block !important; position:fixed;
       right:20px; top:var(--fab-top, 120px);
-      width:min(520px, calc(100vw - 40px)); max-height:min(820px, var(--fab-max, calc(100vh - 140px)));
+      width:min(520px, calc(100vw - 40px));
+      /* Jusqu'en bas de l'ecran, meme presque vide (Mathis, 2026-10-14). */
+      height:var(--fab-max, calc(100vh - 140px)); box-sizing:border-box;
       overflow-y:auto; overflow-x:hidden;
       background:var(--surface); border:1px solid var(--line); border-radius:16px;
       box-shadow:0 12px 40px rgba(0,0,0,.3);
@@ -818,11 +821,14 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
       <div class="chat-reply-bar" id="chatReplyBar" hidden></div>
       <div class="chat-reply-bar" id="chatEditBar" hidden></div>
       <form class="chat-compose" id="chatForm" autocomplete="off">
+        <!-- Masque des que le nom de la ligue est connu (updateChatIdentity) : il repetait
+             juste son nom a cote des boutons. -->
         <input id="chatName" aria-label="Ton nom dans le tchat" class="chat-name" placeholder="Ton nom" maxlength="24">
-        <label class="chat-imgbtn" title="Ajouter une image">🖼️<input type="file" id="chatImgInput" accept="image/*" class="visually-hidden"></label>
-        <button type="button" class="chat-imgbtn" id="chatEmojiBtn" title="Emoji">😊</button>
-        <button type="button" class="chat-imgbtn" id="chatVoiceBtn" title="Note vocale (15s max)">🎤</button>
-        <button type="button" class="chat-imgbtn" id="chatGifBtn" title="GIF">🎬</button>
+        <!-- Icones au trait remplies d'une teinte, a la place des emojis (2026-10-14). -->
+        <label class="chat-imgbtn ci-img" title="Ajouter une image"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="2.5"/><path d="M3.5 17l5-5 4 4 3-3 5 5" fill="none"/><circle cx="16" cy="9" r="1.6"/></svg><input type="file" id="chatImgInput" accept="image/*" aria-label="Ajouter une image" class="visually-hidden"></label>
+        <button type="button" class="chat-imgbtn ci-emoji" id="chatEmojiBtn" title="Emoji" aria-label="Emoji"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 14.2c.9 1.3 2.1 1.9 3.5 1.9s2.6-.6 3.5-1.9" fill="none"/><path d="M9.2 9.6v.6M14.8 9.6v.6" fill="none"/></svg></button>
+        <button type="button" class="chat-imgbtn ci-micro" id="chatVoiceBtn" title="Note vocale (15s max)" aria-label="Note vocale"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M9 21h6" fill="none"/></svg></button>
+        <button type="button" class="chat-imgbtn ci-gif" id="chatGifBtn" title="GIF" aria-label="GIF"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><text x="12" y="15.2" text-anchor="middle" font-size="7.5" font-weight="700" font-family="system-ui, sans-serif" stroke="none" fill="currentColor">GIF</text></svg></button>
         <div class="chat-input-wrap">
           <input id="chatText" aria-label="Ton message" class="chat-input" placeholder="Ton message…" maxlength="500">
           <div id="chatMentionPop" class="mention-pop"></div>
@@ -1391,4 +1397,4 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=337"></script>
+<script type="module" src="app.js?v=338"></script>

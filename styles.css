@@ -1060,8 +1060,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .gif-remove:hover { background:#c0392b; }
   .mention { color:var(--accent-ink); font-weight:600; }
   .mention.self { background:color-mix(in srgb, #ffd54f 55%, transparent); padding:0 3px; border-radius:4px; }
-  .chat-input-wrap { position:relative; flex:1; display:flex; }
-  .chat-input-wrap .chat-input { flex:1; }
+  /* Sans le champ du nom (masque le 2026-10-14), boutons, message et « Envoyer » tiennent sur
+     une ligne a 520 px ; au telephone, le message passe dessous avec « Envoyer ». */
+  .chat-input-wrap { position:relative; flex:1; display:flex; min-width:140px; }
+  .chat-input-wrap .chat-input { flex:1; min-width:0; }
   .mention-pop { position:absolute; left:0; right:0; bottom:100%; margin-bottom:4px; background:var(--surface); border:1px solid var(--line); border-radius:10px; box-shadow:0 4px 14px rgba(0,0,0,.14); display:none; max-height:220px; overflow-y:auto; z-index:20; }
   .mention-pop.open { display:block; }
   .mention-pop-item { padding:8px 12px; cursor:pointer; font-size:13.5px; color:var(--ink); display:flex; align-items:center; gap:8px; }
@@ -1115,6 +1117,13 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .chat-imgbtn { display:inline-flex; align-items:center; justify-content:center; width:42px; height:42px; font-size:20px;
     border:1px solid var(--line-2); border-radius:10px; cursor:pointer; background:var(--surface); flex:0 0 auto; }
   .chat-imgbtn:hover { border-color:var(--accent); }
+  /* Icones au trait du formulaire du tchat, chacune remplie de sa teinte (Mathis, 2026-10-14). */
+  .chat-imgbtn svg { width:24px; height:24px; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round;
+    fill:color-mix(in srgb, currentColor 22%, transparent); }
+  .ci-img { color:var(--accent); }
+  .ci-emoji { color:#d9a21b; }
+  .ci-micro { color:#d0503f; }
+  .ci-gif { color:#8a63c9; }
   .chat-preview { position:relative; display:inline-block; margin:8px 0 0; }
   .chat-preview img { max-width:120px; max-height:120px; border-radius:10px; border:1px solid var(--line); display:block; }
   #chatPreviewRemove { position:absolute; top:-8px; right:-8px; width:22px; height:22px; border-radius:50%; border:none;

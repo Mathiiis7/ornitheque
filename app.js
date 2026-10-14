@@ -9666,6 +9666,8 @@ async function doInvite(){
 function updateChatIdentity(){
   const ni=$('#chatName'); if(!ni) return;
   const mn=myMemberName();
+  // Le nom de la ligue connu, le champ ne fait que le repeter : on le masque.
+  ni.hidden = !!mn;
   if(mn){ if(document.activeElement!==ni) ni.value=mn; ni.readOnly=true; ni.classList.add('locked'); ni.title='Ton nom de la ligue (non modifiable)'; }
   else { ni.readOnly=false; ni.classList.remove('locked'); ni.title=''; ni.placeholder='Ton nom (invité)'; if(!ni.value) ni.value=localStorage.getItem('mb-chatname')||''; }
 }
