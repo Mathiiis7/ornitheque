@@ -143,7 +143,9 @@ async function jouer(navigateur){
     const apresDemarrage = lourdes(await lectures());
 
     // Ouvrir la galerie. C est seulement la que les vignettes ont une raison d arriver.
-    await page.evaluate(() => document.querySelector('.tab[data-view="photos"]')?.click());
+    // Par son icone, comme a l ecran : depuis le 2026-10-14 la galerie vit dans le panneau, et
+    // c est la grille qui defile, plus la page.
+    await page.evaluate(() => document.getElementById('fabPhotos')?.click());
     await page.waitForTimeout(600);
     // Si la grille ne fait aucune hauteur, l observateur ne verra jamais rien et le banc
     // mesurerait du vide en croyant mesurer la galerie. On veut le savoir.
@@ -154,11 +156,18 @@ async function jouer(navigateur){
     const apresOuverture = lourdes(await lectures());
     const galerieOuverte = await page.evaluate(etatGalerie);
 
-    // Descendre jusqu au bout : toutes les vignettes doivent finir par arriver.
-    await page.evaluate(() => {
-      const cartes = document.querySelectorAll('#photoGrid .photo-card');
-      if(cartes.length) cartes[cartes.length - 1].scrollIntoView({ block: 'end' });
-    });
+    // Descendre jusqu au bout, par demi-hauteurs comme un doigt : toutes les vignettes doivent
+    // finir par arriver. Sauter d un coup en bas enjambait celles du milieu, qu aucune personne
+    // ne saute (les photos font la moitie du panneau depuis le 2026-10-14).
+    for(let i = 0; i < 40; i++){
+      const auBout = await page.evaluate(() => {
+        const g = document.getElementById('photoGrid');
+        g.scrollTop += g.clientHeight / 2;
+        return g.scrollTop + g.clientHeight >= g.scrollHeight - 2;
+      });
+      await page.waitForTimeout(120);
+      if(auBout) break;
+    }
     await page.waitForTimeout(800);
     const apresDefilement = lourdes(await lectures());
     const galerieDefilee = await page.evaluate(etatGalerie);

@@ -1,7 +1,14 @@
-# EN COURS le 2026-10-14 : refonte de la page Photos, maquette à choisir
-notes-privees/maquettes/photos/index.html : A une par écran (défilement aimanté), B deux colonnes, C à la une + vignettes.
-Demande de Mathis : photos plus grandes, et en haut du fil aucune photo coupée (la hauteur se cale sur le panneau, mesuré 10-11 px de marge).
-Code concerné : renderPhotos (app.js), .photo-* (styles.css), #viewPhotos (index.html). Fait avant : écrou régulier, panneaux à 640 px (v764, app.js?v=340).
+# FAIT le 2026-10-14 (pas poussé) : Photos (maquette B), tchat resserré, fil retouché (v765, app.js?v=341)
+- Photos : grille 2 colonnes (1 au téléphone) qui défile seule, cartes = moitié de sa hauteur (container-type,
+  100cqh) : pas de photo coupée en haut, 10 px d'air. Fiche d'une photo (_ouvrirFichePhoto) pour réactions,
+  commentaires, suppression. Zoom de l'image ouverte (_zoomImg : molette, pincement, double-clic, glisser).
+  Préchargement des vignettes rapporté à la grille (_thumbIOZones) ; banc photos ouvre le panneau et défile pas à pas.
+- Tchat : heure à côté du nom, actions au survol à côté de la bulle (dans le flux au doigt) : 7 px entre messages.
+- Palette d'emojis contre le bouton qui l'ouvre (_placeEmojiPop). Envoyer/supprimer en icônes au trait.
+- Fil : chiffre blanc partout, niveau en couleur, drapeau du pays, plus d'« ajout manuel », latin à 90 % d'--ink-3,
+  bulles d'aide sur Nouveautés/Chronologique, pastilles numérotées dans le choix de rareté.
+- Panneaux recalés au redimensionnement et arrêtés au-dessus du bandeau de la démo.
+Vérifié 780 px et 375 px, 11 bancs CONFORME. Reste : qu'il regarde en local, puis pousser.
 
 # FAIT le 2026-10-14 (pas poussé) : fil refait, écrou, tchat (v763, app.js?v=339)
 - Fil : maquette A choisie (notes-privees/maquettes/fil/), rangé par jour (jour d'ajout en Nouveautés, d'observation en

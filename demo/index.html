@@ -120,7 +120,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=340">
+<link rel="modulepreload" href="app.js?v=341">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -375,6 +375,8 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
        Le panneau devient flex-column full-height, la chat-box prend le flex:1 et
        gere son propre scroll. L'entete et le formulaire d'envoi restent visibles. */
     #viewChat.fab-open { display:flex !important; flex-direction:column; overflow:hidden; }
+    /* Photos aussi (2026-10-14) : la grille defile seule sous l'entete, voir .photo-grid dans styles.css. */
+    #viewPhotos.fab-open { display:flex !important; flex-direction:column; overflow:hidden; }
     #viewChat.fab-open > section { flex:1; overflow:hidden; display:flex; flex-direction:column; min-height:0; }
     #viewChat.fab-open .chat-box { flex:1; height:auto !important; min-height:150px; }
     /* Section interne du panneau : reduit la marge top+padding (adapte pour l'espace flottant) */
@@ -907,11 +909,13 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
 
   <div id="viewPhotos" style="display:none;">
     <section class="panel" style="padding:20px; margin-top:22px;">
-      <div class="section-head">
+      <!-- Refait le 2026-10-14 sur la maquette B (notes-privees/maquettes/photos/) : l'entete
+           reste en haut, la grille de deux colonnes defile seule et se cale sur sa hauteur. -->
+      <div class="section-head photo-tete">
         <div><h2 class="page-title">Photos</h2></div>
+        <label class="btn photo-ajout" id="photoAddLabel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Ajouter des photos<input type="file" id="photoInput" accept="image/*" multiple class="visually-hidden"></label>
       </div>
       <div class="photo-upload">
-        <label class="btn ghost" id="photoAddLabel">🖼️ Ajouter des photos<input type="file" id="photoInput" accept="image/*" multiple class="visually-hidden"></label>
         <div class="photo-draft" id="photoDraft" style="display:none;">
           <div class="photo-draft-thumbs" id="photoDraftThumbs"></div>
           <input id="photoCaption" aria-label="Légende des photos" placeholder="Une légende (commune à toutes)…" maxlength="200">
@@ -928,16 +932,15 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   <div id="viewFeed" style="display:none;">
     <section class="panel" style="padding:20px; margin-top:22px;">
       <div class="section-head">
-        <div><h2 class="page-title">Le fil des observations</h2>
-          <p class="help">Les dernières observations de la ligue. <b>Nouveautés</b> = par date d'ajout (idéal pour ne rien louper) · <b>Chronologique</b> = par date d'observation.</p></div>
+        <div><h2 class="page-title">Le fil des observations</h2></div>
       </div>
       <!-- Refait le 2026-10-14 sur la maquette A (notes-privees/maquettes/fil/) : sans emoji,
            et les deux filtres ouvrent la fenetre centree du Birdydex (_openFilterPicker), que
            Mathis prefere a une liste deroulante. -->
       <div class="feed-barre">
         <div class="seg" id="feedModeSeg">
-          <button data-feed-mode="new" class="on">Nouveautés</button>
-          <button data-feed-mode="chrono">Chronologique</button>
+          <button data-feed-mode="new" class="on" data-tip="Les dernières espèces ajoutées aux listes, pour ne rien manquer.">Nouveautés</button>
+          <button data-feed-mode="chrono" data-tip="Les observations rangées par date, de la plus récente à la plus ancienne.">Chronologique</button>
         </div>
         <button type="button" id="feedPersonBtn" class="cp-btn"><span class="cp-btn-label">Tout le monde</span><span class="cp-btn-arrow">▾</span></button>
         <button type="button" id="feedTierBtn" class="cp-btn"><span class="cp-btn-label">Toutes les raretés</span><span class="cp-btn-arrow">▾</span></button>
@@ -1452,5 +1455,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=340"></script>
+<script type="module" src="app.js?v=341"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>

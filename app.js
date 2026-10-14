@@ -1414,7 +1414,9 @@ function _openFilterPicker(currentValue, opts){
       }
       listEl.innerHTML = items.map(o => {
         const on = (o.value === currentValue) ? ' on' : '';
-        const dot = o.color ? `<span class="cp-item-dot" style="background:${o.color};"></span>` : '';
+        // chip : la pastille numerotee du niveau (fil), a la place du simple point de couleur.
+        const dot = o.chip != null ? `<span class="cp-item-chip" style="background:${o.color};">${esc(String(o.chip))}</span>`
+          : o.color ? `<span class="cp-item-dot" style="background:${o.color};"></span>` : '';
         const cnt = (o.count != null) ? `<span class="cp-item-meta">${o.count} esp.</span>` : '';
         // cp-item-simple : ce selecteur generique ne pose que deux ou trois elements, quand
         // .cp-item dessine depuis la grille a six colonnes du selecteur de pays. Sans lui, le
@@ -6107,11 +6109,10 @@ function renderChat(msgs){
     const editBtn = canEdit ? `<button class="msg-act msg-edit" data-id="${esc(m.id)}" title="Éditer" aria-label="Éditer mon message">✏️</button>` : '';
     const delBtn = canDelete ? `<button class="msg-act msg-del" data-id="${esc(m.id)}" title="Supprimer" aria-label="Supprimer ce message">🗑️</button>` : '';
     return `<div class="msg${mine?' mine':''}${mentionsMe?' mentions-me':''}${isDeleted?' msg-is-deleted':''}" data-msg-id="${esc(m.id)}">
-      <div class="msg-header">${avatarHtml}<div class="msg-name">${esc(nm)}${guestTag}${statusTag}</div></div>
+      <div class="msg-header">${avatarHtml}<div class="msg-name">${esc(nm)}${guestTag}${statusTag}</div><span class="msg-time">${esc(time)}${editedTag}</span></div>
       <div class="msg-bubble${emojiOnly?' emoji-only':''}">${deletedNote}${replyHtml}${imgHtml}${voiceHtml}${gifHtml}${txtHtml}</div>
-      ${reactionBar('chat:'+m.id)}
-      <div class="msg-actions">${replyBtn}${editBtn}${delBtn}</div>
-      <div class="msg-time">${esc(time)}${editedTag}</div>
+      ${_reactionsSeules('chat:'+m.id)}
+      <div class="msg-actions">${myUid?`<button class="react-add" data-target="${esc('chat:'+m.id)}" title="Réagir">＋</button>`:''}${replyBtn}${editBtn}${delBtn}</div>
     </div>`;
   }).join('');
   watchThumbs(box);
@@ -6171,9 +6172,10 @@ function heartButton(target){
     ? [...voters].map(uid=>uid===myUid?'toi':(byUid.get(uid)||'Invité')).sort((a,b)=>a==='toi'?-1:b==='toi'?1:a.localeCompare(b,'fr')).join(', ')
     : (myUid ? 'Aimer cette photo' : 'Connecte-toi pour aimer');
   const disabled = myUid ? '' : ' disabled';
-  return `<button class="heart-btn${mine?' liked':''}" data-heart-target="${esc(target)}" title="${esc(tip)}"${disabled}>`
-    + `<span class="heart-icon">${mine?'❤️':'🤍'}</span>`
-    + `<span class="heart-count">${count}</span></button>`;
+  // Coeur au trait, plein quand on a aime (2026-10-14, a la place des emojis ❤️ / 🤍).
+  return `<button class="heart-btn${mine?' liked':''}" data-heart-target="${esc(target)}" title="${esc(tip)}" aria-label="J'aime${count?' ('+count+')':''}"${disabled}>`
+    + `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>`
+    + (count ? `<span class="heart-count">${count}</span>` : '') + `</button>`;
 }
 // Barre commentaires : affiche la liste + un input pour poster. Cliquable/collapsible via
 // details/summary pour ne pas polluer visuellement quand vide.
@@ -6186,11 +6188,11 @@ function commentsBar(target){
     const t = c.createdAt?.toDate ? c.createdAt.toDate() : null;
     const time = t ? t.toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
     const canDelete = c.uid === myUid || isAdmin();
-    const del = canDelete ? `<button class="cmt-del" data-cmt-del="${esc(c.id)}" title="Supprimer">✕</button>` : '';
+    const del = canDelete ? `<button class="cmt-del" data-cmt-del="${esc(c.id)}" title="Supprimer" aria-label="Supprimer ce commentaire"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></button>` : '';
     return `<div class="cmt-item"><span class="cmt-who">${esc(nm)}</span> <span class="cmt-txt">${esc(c.text)}</span>${time?` <span class="cmt-time">${esc(time)}</span>`:''}${del}</div>`;
   }).join('');
   const form = myUid
-    ? `<form class="cmt-form" data-cmt-target="${esc(target)}"><input type="text" name="cmt-input" aria-label="Commenter" class="cmt-input" placeholder="Commenter…" maxlength="500" required><button type="submit" class="cmt-send" title="Envoyer">➤</button></form>`
+    ? `<form class="cmt-form" data-cmt-target="${esc(target)}"><input type="text" name="cmt-input" aria-label="Commenter" class="cmt-input" placeholder="Commenter…" maxlength="500" required><button type="submit" class="cmt-send" title="Envoyer" aria-label="Envoyer le commentaire"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l16-8-6 16-3-7z"/><path d="M11 13l9-9"/></svg></button></form>`
     : '';
   const label = n>0 ? `${n} commentaire${n>1?'s':''}` : 'Commenter';
   return `<details class="cmt-wrap"${n>0?' open':''}><summary class="cmt-summary">💬 ${label}</summary>
@@ -6218,6 +6220,26 @@ function openEmojiPop(ctx){
   const inner=$('#emojiPop .emoji-pop-inner'); if(!inner) return;
   inner.innerHTML=EMOJIS.map(e=>`<button type="button" class="emoji-opt" data-emoji="${e}">${e}</button>`).join('');
   $('#emojiPop').classList.add('open');
+  _placeEmojiPop(inner, ctx && ctx.ancre);
+}
+// La palette s'ouvre contre le bouton qui l'appelle : dessous s'il y a la place, sinon
+// dessus, sans deborder de l'ecran. Elle s'ouvrait en bas de l'ecran ou du panneau, loin du
+// bouton (signale par Mathis le 2026-10-14). Sans bouton (avatar), elle reste centree.
+// getBoundingClientRect parle en pixels d'ecran, la position en pixels CSS : on divise par
+// le zoom de body (0,85).
+function _placeEmojiPop(inner, ancre){
+  ['left','top','right','bottom','transform'].forEach(p => inner.style.removeProperty(p));
+  if(!ancre || !ancre.isConnected) return;
+  const z = parseFloat(getComputedStyle(document.body).zoom) || 1;
+  const r = ancre.getBoundingClientRect();
+  const larg = inner.offsetWidth, haut = inner.offsetHeight;   // pixels CSS
+  const vw = innerWidth / z, vh = innerHeight / z, marge = 8;
+  const bas = r.bottom / z, hautAncre = r.top / z;
+  let top = bas + 6;
+  if(top + haut > vh - marge && hautAncre - 6 - haut >= marge) top = hautAncre - 6 - haut;
+  top = Math.max(marge, Math.min(top, vh - haut - marge));
+  const left = Math.max(marge, Math.min(r.left / z, vw - larg - marge));
+  Object.assign(inner.style, { left: left + 'px', top: top + 'px', right: 'auto', bottom: 'auto', transform: 'none' });
 }
 function closeEmojiPop(){ $('#emojiPop')?.classList.remove('open'); emojiContext=null; }
 // ---- Images a la demande : apercu flou -> vignette nette -> image pleine ----
@@ -6254,6 +6276,7 @@ function thumbAttrs(coll, id){
   return known ? { src:known, attr:'' } : { src:'', attr:` data-thumb="${coll}:${id}"` };
 }
 let _thumbIO = null;
+const _thumbIOZones = new WeakMap();   // zone qui defile -> son observateur
 function _applyThumb(el){
   const spec = el.dataset.thumb; if(!spec) return;
   delete el.dataset.thumb;
@@ -6263,12 +6286,18 @@ function _applyThumb(el){
 function watchThumbs(root){
   const scope = root || document;
   if(!('IntersectionObserver' in window)){ scope.querySelectorAll('img[data-thumb]').forEach(_applyThumb); return; }
-  if(!_thumbIO){
-    _thumbIO = new IntersectionObserver(entries=>{
-      for(const e of entries){ if(!e.isIntersecting) continue; _thumbIO.unobserve(e.target); _applyThumb(e.target); }
-    }, { rootMargin:'300px' });
+  // Une zone qui defile elle-meme (la grille du panneau Photos depuis le 2026-10-14) coupe ce
+  // qui depasse : observee depuis l'ecran, la marge de 300 px ne prechargeait plus rien.
+  // Elle a donc son propre observateur, dont elle est la racine.
+  const defile = root && /(auto|scroll)/.test(getComputedStyle(root).overflowY);
+  let io = defile ? _thumbIOZones.get(root) : _thumbIO;
+  if(!io){
+    io = new IntersectionObserver(entries=>{
+      for(const e of entries){ if(!e.isIntersecting) continue; io.unobserve(e.target); _applyThumb(e.target); }
+    }, { root: defile ? root : null, rootMargin:'300px' });
+    if(defile) _thumbIOZones.set(root, io); else _thumbIO = io;
   }
-  scope.querySelectorAll('img[data-thumb]').forEach(el=>_thumbIO.observe(el));
+  scope.querySelectorAll('img[data-thumb]').forEach(el=>io.observe(el));
 }
 // Pose l'image de la modale : la vignette tout de suite, la pleine des qu'elle arrive.
 // dataset.spec garde ce qu'on attend : si on ferme ou si on ouvre une autre photo
@@ -6293,7 +6322,6 @@ function renderPhotos(){
     const nm=authoritative||ph.name||'Invité';
     const guest=authoritative?'':' <span class="msg-guest">invité</span>';
     const t=ph.createdAt&&ph.createdAt.toDate?ph.createdAt.toDate():null;
-    const time=t?t.toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'…';
     // Photo publiee avant la separation : l'image pleine est encore dans le document,
     // on l'affiche telle quelle. Sinon : apercu flou, puis vignette a l'approche de l'ecran.
     const legacy=(typeof ph.image==='string'&&/^data:image\//.test(ph.image))?ph.image:'';
@@ -6301,18 +6329,66 @@ function renderPhotos(){
     const th = legacy ? { src:legacy, attr:'' } : thumbAttrs('photoThumbs', ph.id);
     const safeImg=(th.src||blur).replace(/"/g,'%22');
     const fullAttr = legacy ? '' : ` data-full="photoFull:${esc(ph.id)}"`;
-    const del=ph.uid===myUid?`<button class="photo-del" data-id="${esc(ph.id)}">supprimer</button>`:'';
     const target = 'photo:'+ph.id;
+    // Maquette B : la photo, puis une ligne (qui, quand, coeur, commentaires) et la legende
+    // sur une ligne. Reactions, commentaires et suppression vivent dans la fiche de la photo
+    // (_ouvrirFichePhoto), ouverte par la bulle : dans une colonne de 290 px ils ecrasaient
+    // l'image.
+    const nbCom = (commentsMap.get(target) || []).length;
+    let nbReac = 0; for(const [em, v] of (reactionsMap.get(target) || new Map())) if(em !== HEART_EMOJI) nbReac += v.size;
+    const nbBulle = nbCom + nbReac;
     return `<div class="photo-card">
       <img class="photo-img" src="${safeImg}"${th.attr}${fullAttr} alt="photo d'observation">
-      ${ph.caption?`<div class="photo-cap">${esc(ph.caption)}</div>`:''}
-      <div class="photo-meta"><span>${esc(nm)}${guest} · ${esc(time)}</span>${del}</div>
-      <div class="photo-actions">${heartButton(target)}${reactionBar(target, {excludeEmojis:[HEART_EMOJI]})}</div>
-      ${commentsBar(target)}
+      <div class="photo-meta"><b>${esc(nm)}</b>${guest}<span class="photo-date">${esc(_datePhoto(t))}</span>
+        <span class="photo-acts">${heartButton(target)}<button type="button" class="photo-act" data-photo-fiche="${esc(ph.id)}" title="Réactions et commentaires" aria-label="Réactions et commentaires${nbBulle?' ('+nbBulle+')':''}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>${nbBulle?`<span>${nbBulle}</span>`:''}</button></span></div>
+      ${ph.caption?`<div class="photo-cap" title="${esc(ph.caption)}">${esc(ph.caption)}</div>`:''}
     </div>`;
   }).join('');
   watchThumbs(grid);
+  if(_fichePhotoId) _ouvrirFichePhoto(_fichePhotoId);   // redessine la fiche ouverte
 }
+// « 14 octobre », « aujourd'hui », « hier » : l'heure n'apportait rien sous une photo.
+function _datePhoto(t){
+  if(!t) return '…';
+  const j = d => d.toDateString();
+  if(j(t) === j(new Date())) return 'aujourd’hui';
+  if(j(t) === j(new Date(Date.now() - 864e5))) return 'hier';
+  return t.toLocaleDateString('fr-FR', t.getFullYear() === new Date().getFullYear() ? {day:'numeric', month:'long'} : {day:'numeric', month:'long', year:'numeric'});
+}
+// La fiche d'une photo : fenetre centree avec sa legende, ses reactions, ses commentaires et,
+// pour son auteur, la suppression. Redessinee a chaque renderPhotos tant qu'elle est ouverte.
+let _fichePhotoId = null;
+function _ouvrirFichePhoto(id){
+  const ph = photos.find(p => p.id === id);
+  let fond = document.getElementById('photoFiche');
+  if(!ph){ if(fond) fond.remove(); _fichePhotoId = null; return; }
+  const target = 'photo:'+id;
+  if(!fond){
+    fond = document.createElement('div');
+    fond.id = 'photoFiche'; fond.className = 'cp-modal-backdrop';
+    fond.addEventListener('click', e => {
+      if(e.target === fond || e.target.closest('.cp-modal-close')){ _fermerFichePhoto(); return; }
+      _clicPhoto(e);
+    });
+    document.body.appendChild(fond);
+  }
+  _fichePhotoId = id;
+  const nm = realPeople.find(p => p.id === ph.uid)?.name || ph.name || 'Invité';
+  const t = ph.createdAt && ph.createdAt.toDate ? ph.createdAt.toDate() : null;
+  // Le champ de commentaire garde sa saisie si la fiche se redessine pendant qu'on ecrit.
+  const saisie = fond.querySelector('.cmt-input'), texte = saisie ? saisie.value : '', focus = saisie && document.activeElement === saisie;
+  fond.innerHTML = `<div class="cp-modal-inner photo-fiche">
+    <div class="cp-modal-title"><span>${esc(nm)} · ${esc(_datePhoto(t))}</span><button type="button" class="cp-modal-close" aria-label="Fermer">×</button></div>
+    ${ph.caption?`<p class="photo-fiche-cap">${esc(ph.caption)}</p>`:''}
+    <div class="photo-fiche-reac">${heartButton(target)}${reactionBar(target, {excludeEmojis:[HEART_EMOJI]})}</div>
+    ${commentsBar(target).replace('<details class="cmt-wrap">', '<details class="cmt-wrap" open>')}
+    ${ph.uid === myUid ? `<button type="button" class="photo-del" data-id="${esc(ph.id)}" title="Supprimer la photo" aria-label="Supprimer la photo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></button>` : ''}
+  </div>`;
+  const n = fond.querySelector('.cmt-input');
+  if(n){ n.value = texte; if(focus) n.focus(); }
+}
+function _fermerFichePhoto(){ document.getElementById('photoFiche')?.remove(); _fichePhotoId = null; }
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && _fichePhotoId && !document.querySelector('.emoji-pop.open')) _fermerFichePhoto(); });
 // ---- Fil des observations ----
 let feedMode = 'new';       // 'new' = tri par addedAt (par défaut), 'chrono' = tri par date d'obs
 let feedPerson = 'any';     // uid ou 'any'
@@ -6495,7 +6571,7 @@ function renderFeed(){
         name:p.name, uid:p.id, bird:frName(v.sci,v.common), sci:(v.sci||''),
         abroad:foreignTick(v),
         ord: pd?pd.ord:0, disp: pd?pd.disp:'date inconnue',
-        addedAt, manual: !!v.manual
+        addedAt, manual: !!v.manual, pays: v.country || ''
       });
     }
   }
@@ -6541,40 +6617,24 @@ function renderFeed(){
     const target='obs:'+it.uid+':'+it.sci.toLowerCase();
     const nbCom = (commentsMap.get(target) || []).length;
     const niveau = tt.ord >= 1 && tt.ord <= 10 ? tt.ord : '';
-    const tag = it.manual ? ' · ajout manuel' : '';
     const dateObs = feedMode==='new' ? ' · vu le ' + esc(it.disp) : '';
     const reagir = myUid ? `<button type="button" class="feed-act react-add" data-target="${esc(target)}" title="Réagir" aria-label="Réagir">${IC_REAGIR}</button>` : '';
     html += `<div class="feed-item">
-      <span class="feed-pas" style="background:${tt.color}; color:${_texteSur(tt.color)}" title="${esc(tt.label)}">${niveau}</span>
+      <span class="feed-pas" style="background:${tt.color}" title="${esc(tt.label)}">${niveau}</span>
       <div class="feed-body">
         <div class="feed-l1"><span class="sp-link feed-sp" data-sci="${esc(it.sci)}">${esc(it.bird)}</span> <span class="latin">${esc(it.sci)}</span></div>
-        <div class="feed-l2"><b>${esc(it.name)}</b> · ${esc(tt.label)}${dateObs}${tag}</div>
+        <div class="feed-l2"><b>${esc(it.name)}</b>${it.pays && flagImg(it.pays) ? ` <span class="feed-pays" title="${esc(countryLabel(it.pays))}">${flagImg(it.pays)}</span>` : ''} · <span class="feed-rar" style="color:${tt.color}">${esc(tt.label)}</span>${dateObs}</div>
       </div>
       <span class="feed-acts">${reagir}<button type="button" class="feed-act" data-feed-cmt="${esc(target)}" title="Commentaires" aria-label="Commentaires${nbCom?' ('+nbCom+')':''}">${IC_COMM}${nbCom?`<span class="feed-n">${nbCom}</span>`:''}</button></span>
-      <div class="feed-suite">${_feedReactions(target)}${commentsBar(target).replace('<details class="cmt-wrap" open>', '<details class="cmt-wrap">').replace('<details class="cmt-wrap">', _feedCmtOuverts.has(target) ? '<details class="cmt-wrap" open>' : '<details class="cmt-wrap">')}</div>
+      <div class="feed-suite">${_reactionsSeules(target)}${commentsBar(target).replace('<details class="cmt-wrap" open>', '<details class="cmt-wrap">').replace('<details class="cmt-wrap">', _feedCmtOuverts.has(target) ? '<details class="cmt-wrap" open>' : '<details class="cmt-wrap">')}</div>
     </div>`;
   });
   el.innerHTML = html;
 }
-// Les reactions deja posees, sans le « + » : il est devenu l'icone au bout de la ligne.
-function _feedReactions(target){
+// Les reactions deja posees, sans le « + » : dans le fil il est l'icone au bout de la ligne,
+// dans le tchat il rejoint les boutons qui paraissent au survol (2026-10-14).
+function _reactionsSeules(target){
   return reactionBar(target).replace(/<button class="react-add"[^>]*>[^<]*<\/button>/, '');
-}
-// Couleur du chiffre sur une pastille de rarete : le blanc donnait 2,2:1 sur le jaune du
-// niveau 5. On prend, du blanc ou de l'encre foncee, celui qui contraste le plus.
-function _texteSur(couleur){
-  const m = /hsl\((\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\)/.exec(couleur || '');
-  let r, g, b;
-  if(m){
-    const h = +m[1], s = m[2]/100, l = m[3]/100, a = s*Math.min(l, 1-l);
-    const f = n => { const k = (n + h/30) % 12; return l - a*Math.max(-1, Math.min(k-3, 9-k, 1)); };
-    [r, g, b] = [f(0), f(8), f(4)];
-  } else if(/^#[0-9a-f]{6}$/i.test(couleur || '')){
-    [r, g, b] = [1, 3, 5].map(i => parseInt(couleur.slice(i, i+2), 16) / 255);
-  } else return '#fff';
-  const lin = c => c <= 0.04045 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4);
-  const L = 0.2126*lin(r) + 0.7152*lin(g) + 0.0722*lin(b);
-  return (1.05/(L+0.05)) >= ((L+0.05)/(0.0118+0.05)) ? '#fff' : '#15201e';
 }
 // Libelles des deux boutons de filtre du fil.
 function _feedMajBoutons(){
@@ -10842,10 +10902,7 @@ function _toggleFabPanel(view, fabBtn){
   // Marque le tab correspondant "on" pour synchro visuelle (au cas ou tab visible).
   // Le panneau s'ouvre sous les icones de la barre. getBoundingClientRect parle en pixels
   // d'ecran, la CSS du panneau en pixels CSS : on divise par le zoom de body (0,85).
-  const z = parseFloat(getComputedStyle(document.body).zoom) || 1;
-  const bas = Math.max(8, (fabBtn || document.getElementById('fabStack')).getBoundingClientRect().bottom + 6);
-  target.style.setProperty('--fab-top', (bas / z) + 'px');
-  target.style.setProperty('--fab-max', ((window.innerHeight - bas - 12) / z) + 'px');
+  _placeFabPanel(target, fabBtn);
   target.classList.add('fab-open');
   const bd = document.getElementById('fabBackdrop'); if(bd) bd.hidden = false;
   document.querySelectorAll('#fabStack button').forEach(b => b.classList.remove('fab-active'));
@@ -10865,6 +10922,20 @@ function _toggleFabPanel(view, fabBtn){
     if(typeof markSeen === 'function') markSeen('feed');
   }
 }
+function _placeFabPanel(target, fabBtn){
+  const z = parseFloat(getComputedStyle(document.body).zoom) || 1;
+  const bas = Math.max(8, (fabBtn || document.getElementById('fabStack')).getBoundingClientRect().bottom + 6);
+  target.style.setProperty('--fab-top', (bas / z) + 'px');
+  // La demo du portfolio pose un bandeau fixe en bas (#demoBandeau) : le panneau s'arrete dessus.
+  const bandeau = document.getElementById('demoBandeau');
+  const plancher = bandeau ? bandeau.getBoundingClientRect().top : window.innerHeight;
+  target.style.setProperty('--fab-max', ((plancher - bas - 12) / z) + 'px');
+}
+// Fenetre redimensionnee, telephone tourne : le panneau ouvert se recale sous son icone.
+addEventListener('resize', () => {
+  const ouvert = document.querySelector('#viewChat.fab-open, #viewPhotos.fab-open, #viewFeed.fab-open');
+  if(ouvert) _placeFabPanel(ouvert, document.querySelector('#fabStack .fab-active'));
+});
 function _closeFabPanel(){
   document.querySelectorAll('#viewChat, #viewPhotos, #viewFeed').forEach(el => el.classList.remove('fab-open'));
   document.querySelectorAll('#fabStack button').forEach(b => b.classList.remove('fab-active'));
@@ -11323,7 +11394,7 @@ $('#chatForm')?.addEventListener('submit',async e=>{
 $('#chatMessages')?.addEventListener('click', async e=>{
   const loadMore = e.target.closest('#chatLoadMore'); if(loadMore){ _loadMoreChat(); return; }
   const chip=e.target.closest('.react-chip'); if(chip){ toggleReaction(chip.dataset.target, chip.dataset.emoji); return; }
-  const addb=e.target.closest('.react-add'); if(addb){ openEmojiPop({type:'react', target:addb.dataset.target}); return; }
+  const addb=e.target.closest('.react-add'); if(addb){ openEmojiPop({type:'react', target:addb.dataset.target, ancre:addb}); return; }
   const repBtn=e.target.closest('.msg-reply');
   if(repBtn){
     const id = repBtn.dataset.id;
@@ -11417,7 +11488,7 @@ $('#reqList')?.addEventListener('click', async e=>{
   }
 });
 // bouton emoji du composeur + sélecteur
-$('#chatEmojiBtn')?.addEventListener('click', ()=>openEmojiPop({type:'text'}));
+$('#chatEmojiBtn')?.addEventListener('click', ()=>openEmojiPop({type:'text', ancre:$('#chatEmojiBtn')}));
 
 // ---- Autocomplétion @mention dans le chat ----
 let _mnOpen=false, _mnMatches=[], _mnActive=0;
@@ -11527,10 +11598,12 @@ $('#photoPublish')?.addEventListener('click', async ()=>{
   }catch(err){ showError(err); }
   btn.disabled=false;
 });
-$('#photoGrid')?.addEventListener('click', async e=>{
+// Clics des photos, dans la grille comme dans la fiche d'une photo (_ouvrirFichePhoto).
+async function _clicPhoto(e){
+  const fiche=e.target.closest('[data-photo-fiche]'); if(fiche){ _ouvrirFichePhoto(fiche.dataset.photoFiche); return; }
   const heart=e.target.closest('.heart-btn'); if(heart){ if(heart.disabled) return; toggleReaction(heart.dataset.heartTarget, HEART_EMOJI); return; }
   const chip=e.target.closest('.react-chip'); if(chip){ toggleReaction(chip.dataset.target, chip.dataset.emoji); return; }
-  const addb=e.target.closest('.react-add'); if(addb){ openEmojiPop({type:'react', target:addb.dataset.target}); return; }
+  const addb=e.target.closest('.react-add'); if(addb){ openEmojiPop({type:'react', target:addb.dataset.target, ancre:addb}); return; }
   const cdel=e.target.closest('.cmt-del'); if(cdel){ if(!confirm('Supprimer ce commentaire ?')) return;
     try{ await deleteDoc(doc(db,'leagues',leagueId,'comments',cdel.dataset.cmtDel)); }catch(err){ showError(err); } return; }
   const del=e.target.closest('.photo-del'); if(del){ if(!confirm('Supprimer cette photo ?')) return;
@@ -11542,12 +11615,14 @@ $('#photoGrid')?.addEventListener('click', async e=>{
     try{ await deleteDoc(doc(db,'leagues',leagueId,'photoFull',pid)); }catch(_){ }
     _imgDocReady.delete('photoThumbs/'+pid); _imgDocPending.delete('photoThumbs/'+pid);
     _imgDocReady.delete('photoFull/'+pid);   _imgDocPending.delete('photoFull/'+pid);
+    _fermerFichePhoto();
     return; }
   const img=e.target.closest('.photo-img'); if(img){ _setModalImage(img.src, img.dataset.full||''); $('#imgModal').classList.add('open'); document.body.classList.add('img-modal-open'); }
-});
+}
+$('#photoGrid')?.addEventListener('click', _clicPhoto);
 $('#feedList')?.addEventListener('click', async e=>{
   const chip=e.target.closest('.react-chip'); if(chip){ toggleReaction(chip.dataset.target, chip.dataset.emoji); return; }
-  const addb=e.target.closest('.react-add'); if(addb){ openEmojiPop({type:'react', target:addb.dataset.target}); return; }
+  const addb=e.target.closest('.react-add'); if(addb){ openEmojiPop({type:'react', target:addb.dataset.target, ancre:addb}); return; }
   const cdel=e.target.closest('.cmt-del'); if(cdel){ if(!confirm('Supprimer ce commentaire ?')) return;
     try{ await deleteDoc(doc(db,'leagues',leagueId,'comments',cdel.dataset.cmtDel)); }catch(err){ showError(err); } return; }
 });
@@ -11571,10 +11646,83 @@ function _closeImgModal(){
   const el=$('#imgModalImg'); if(el) el.dataset.spec='';
   $('#imgModalImg').src='';
   document.body.classList.remove('img-modal-open');
+  _zoomImg.reset();
 }
 $('#imgModal')?.addEventListener('click', e=>{
+  if(_zoomImg.aGlisse()) return;   // fin d'un deplacement de l'image, pas un clic
   if(e.target.closest('.img-modal-close') || e.target.id === 'imgModal') _closeImgModal();
 });
+// Zoom de l'image ouverte en grand (2026-10-14) : la molette et le pincement du pave tactile
+// zoomaient la PAGE derriere (signale par Mathis). Molette ou pincement : zoom autour du
+// pointeur ; double-clic : x2,5 ou retour ; glisser : deplacer l'image zoomee ; deux doigts :
+// pincement. Le calcul se fait en pixels CSS, d'ou la division par le zoom de body (0,85).
+const _zoomImg = (() => {
+  let s = 1, tx = 0, ty = 0, glisse = false, depart = null;
+  const doigts = new Map();
+  let pince = null;
+  const img = () => $('#imgModalImg');
+  const z = () => parseFloat(getComputedStyle(document.body).zoom) || 1;
+  const applique = () => {
+    const el = img(); if(!el) return;
+    if(s <= 1.001){ s = 1; tx = 0; ty = 0; }
+    el.style.transform = s === 1 ? '' : `translate(${tx}px, ${ty}px) scale(${s})`;
+    el.style.cursor = s > 1 ? 'grab' : '';
+  };
+  // Zoom vers s2 en gardant fixe le point de l'image sous (cx, cy), coordonnees ecran.
+  const zoomVers = (s2, cx, cy) => {
+    const el = img(); if(!el) return;
+    s2 = Math.min(6, Math.max(1, s2));
+    const r = el.getBoundingClientRect(), k = z();
+    const c0x = (r.left + r.right) / 2 / k - tx, c0y = (r.top + r.bottom) / 2 / k - ty;
+    const dx = cx / k - c0x, dy = cy / k - c0y;
+    tx = dx - (dx - tx) * s2 / s; ty = dy - (dy - ty) * s2 / s; s = s2;
+    applique();
+  };
+  const modale = $('#imgModal');
+  if(modale){
+    modale.addEventListener('wheel', e => {
+      if(!modale.classList.contains('open')) return;
+      e.preventDefault();
+      zoomVers(s * Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.002)), e.clientX, e.clientY);
+    }, { passive:false });
+    modale.addEventListener('dblclick', e => {
+      if(e.target !== img()) return;
+      if(s > 1){ s = 1; applique(); } else zoomVers(2.5, e.clientX, e.clientY);
+    });
+    modale.addEventListener('pointerdown', e => {
+      doigts.set(e.pointerId, { x:e.clientX, y:e.clientY });
+      glisse = false;
+      if(doigts.size === 2){
+        const [a, b] = [...doigts.values()];
+        pince = { d:Math.hypot(a.x - b.x, a.y - b.y), s };
+      } else if(e.target === img() && s > 1){
+        depart = { x:e.clientX, y:e.clientY, tx, ty };
+        img().setPointerCapture?.(e.pointerId);
+      }
+    });
+    modale.addEventListener('pointermove', e => {
+      if(!doigts.has(e.pointerId)) return;
+      doigts.set(e.pointerId, { x:e.clientX, y:e.clientY });
+      if(pince && doigts.size === 2){
+        const [a, b] = [...doigts.values()];
+        zoomVers(pince.s * Math.hypot(a.x - b.x, a.y - b.y) / pince.d, (a.x + b.x) / 2, (a.y + b.y) / 2);
+        glisse = true;
+      } else if(depart){
+        const k = z();
+        tx = depart.tx + (e.clientX - depart.x) / k; ty = depart.ty + (e.clientY - depart.y) / k;
+        if(Math.abs(e.clientX - depart.x) + Math.abs(e.clientY - depart.y) > 4) glisse = true;
+        applique();
+      }
+    });
+    const fin = e => { doigts.delete(e.pointerId); if(doigts.size < 2) pince = null; if(!doigts.size) depart = null; };
+    modale.addEventListener('pointerup', fin);
+    modale.addEventListener('pointercancel', fin);
+  }
+  return {
+    reset(){ s = 1; tx = 0; ty = 0; applique(); },
+    aGlisse(){ const g = glisse; glisse = false; return g; },
+  };
+})();
 document.addEventListener('keydown', e=>{ if(e.key === 'Escape' && $('#imgModal')?.classList.contains('open')) _closeImgModal(); });
 
 // ---- Fiche espèce (modal ouvert au clic sur un nom d'oiseau) ----
@@ -16196,7 +16344,7 @@ $('#feedPersonBtn')?.addEventListener('click', async ()=>{
 });
 $('#feedTierBtn')?.addEventListener('click', async ()=>{
   const opts = [{ value:'any', label:'Toutes les raretés' }]
-    .concat([1,2,3,4,5,6,7,8,9,10].map(t=>({ value:String(t), label:t+' · '+REAL_LABELS[t], color:realColor(t) })))
+    .concat([1,2,3,4,5,6,7,8,9,10].map(t=>({ value:String(t), label:REAL_LABELS[t], color:realColor(t), chip:t })))
     .concat([{ value:'exo', label:'Exotique ou échappé', color:'#7e8a99' }]);
   const v = await _openFilterPicker(String(feedTier), { title:'Quelle rareté ?', options:opts, searchable:false });
   if(v == null) return;

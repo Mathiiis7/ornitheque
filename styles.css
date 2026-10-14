@@ -131,6 +131,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      « ? » malgre leur clic, a la demande de Mathis (2026-10-05) - c'est la regle de tout ce
      qui explique au survol. */
   #boardModes button { cursor: var(--curseur-aide); }
+  /* Meme regle pour les deux tris du fil, dont l'explication est passee en bulle (2026-10-14). */
+  #feedModeSeg button { cursor: var(--curseur-aide); }
   /* L'ascenseur est toujours la. Sans ca il apparait des que le contenu depasse la hauteur
      de l'ecran et disparait quand il rentre - et toute la page, centree, glisse
      lateralement a chaque fois. Ca sautait entre un birdydex filtre sur une seule espece et
@@ -822,6 +824,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .cp-item.disabled:hover { background:transparent; }
   .cp-item.absent { opacity:.55; }
   .cp-item-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  /* Pastille de niveau dans le choix de rarete du fil : la meme que sur ses lignes. */
+  .cp-item-chip { width:26px; height:26px; border-radius:50%; flex-shrink:0; display:grid; place-items:center; color:#fff; font:700 13px/1 var(--sans); }
   /* Hauteur bornée (Mathis, 2026-10-12 : « quand on défile, on ne voit plus les noms ») :
      un conteneur qui défile en largeur défile aussi en hauteur, donc l'en-tête collant
      (top:0) restait collé à un conteneur aussi haut que le tableau, et sortait de l'écran
@@ -944,13 +948,15 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     border-radius:18px 18px 4px 18px; }
   .msg-bubble.emoji-only { background:transparent; border:none; padding:2px 10px; font-size:40px; line-height:1.1; box-shadow:none; }
   .msg.mine .msg-bubble.emoji-only { background:transparent; border:none; text-align:right; }
-  /* Timestamps + edited discretes : visibles seulement au hover */
-  .msg-time { font-size:14px; color:var(--ink-3); margin:2px 10px 0; opacity:0; transition:opacity .15s; }
-  .msg:hover .msg-time { opacity:1; }
+  /* L'heure loge a cote du nom depuis le 2026-10-14 : en ligne a part, invisible hors survol,
+     elle reservait quand meme sa hauteur sous chaque message, et le tchat paraissait troue. */
+  .msg-time { font-size:14px; color:var(--ink-3); white-space:nowrap; }
   .msg-edited { color:var(--ink-3); font-style:italic; }
-  /* Actions (repondre, editer, supprimer) : appraissent au hover */
-  .msg-actions { display:flex; gap:4px; margin:2px 10px 0; opacity:0; transition:opacity .15s; }
-  .msg.mine .msg-actions { justify-content:flex-end; }
+  /* Actions (reagir, repondre, editer, supprimer) : au survol, A COTE de la bulle et hors du
+     flux, pour la meme raison que l'heure. Au doigt elles reprennent leur ligne (fin du fichier). */
+  .msg-actions { display:flex; align-items:center; gap:4px; position:absolute; top:32px; left:calc(100% + 6px); opacity:0; transition:opacity .15s; }
+  .msg.mine .msg-actions { left:auto; right:calc(100% + 6px); flex-direction:row-reverse; }
+  .msg .react-bar:empty { display:none; }
   .msg:hover .msg-actions { opacity:1; }
   .msg-act { background:var(--surface-2); border:1px solid var(--line-2); border-radius:8px; padding:2px 7px; cursor:pointer; font-size:13px; line-height:1.2; }
   .msg-act:hover { background:var(--surface); border-color:var(--accent); }
@@ -1134,6 +1140,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .img-modal img { max-width:96vw; max-height:92vh; border-radius:10px; cursor:default; }
   .img-modal-close { position:fixed; top:16px; right:16px; z-index:2501; width:40px; height:40px; border-radius:50%; border:none; background:rgba(255,255,255,.15); color:#fff; font-size:26px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; transition:background .15s; }
   .img-modal-close:hover { background:rgba(255,255,255,.28); }
+  /* Zoom de l'image (_zoomImg dans app.js) : le navigateur ne doit ni zoomer la page ni
+     faire glisser l'image comme un fichier. */
+  .img-modal { touch-action:none; overscroll-behavior:contain; }
+  .img-modal img { transform-origin:center; user-select:none; -webkit-user-drag:none; will-change:transform; }
   body.img-modal-open { overflow:hidden; }
   /* Modal fiche espèce (ouvert au clic sur un nom d'oiseau) */
   /* ========== Drawer fiche espece : style "Cards colorees Merlin/eBird" ========== */
@@ -1616,13 +1626,20 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .feed-depuis-fin { color:var(--ink-3); margin-top:14px; }
   .feed-depuis-fin::before, .feed-depuis-fin::after { background:var(--line-2); opacity:1; }
   .feed-item { display:grid; grid-template-columns:auto 1fr auto; align-items:center; column-gap:12px; padding:9px 2px; border-bottom:1px solid var(--line); }
-  .feed-pas { width:26px; height:26px; border-radius:50%; display:grid; place-items:center; font:700 13px/1 var(--sans); }
+  /* Chiffre blanc sur toutes les pastilles, comme partout ailleurs (Mathis, 2026-10-14). */
+  .feed-pas { width:26px; height:26px; border-radius:50%; display:grid; place-items:center; font:700 13px/1 var(--sans); color:#fff; }
   .feed-body { min-width:0; font-size:15px; color:var(--ink-2); }
   .feed-l1 { color:var(--ink); }
   .feed-sp { font-weight:600; }
-  .feed-l1 .latin { font-size:14px; color:var(--ink-3); }
+  /* Un cran plus discret que --ink-3, demande par Mathis : 90 % garde 4,52:1 en clair et 5,05:1
+     en sombre (85 % tombait a 4,04:1 en clair, sous le seuil de 4,5). */
+  .feed-l1 .latin { font-size:14px; color:color-mix(in srgb, var(--ink-3) 90%, var(--surface)); }
   .feed-l2 { margin-top:2px; font-size:14px; }
   .feed-l2 b { color:var(--ink); font-weight:600; }
+  /* Le niveau dans sa couleur, comme avant la refonte (Mathis, 2026-10-14). */
+  .feed-rar { font-weight:600; }
+  /* Le pays de l'observation, en drapeau (Mathis, 2026-10-14). */
+  .feed-pays .flag { vertical-align:-2px; }
   .feed-acts { display:flex; gap:2px; }
   .feed-act { position:relative; width:34px; height:34px; padding:0; border:none; border-radius:8px; background:transparent; color:var(--ink-3); display:grid; place-items:center; cursor:pointer; font:inherit; }
   .feed-act:hover { background:var(--surface-2); color:var(--accent-ink); }
@@ -1880,6 +1897,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .cmt-send { font-size:13px; padding:5px 11px; border-radius:14px; border:1px solid var(--accent); background:var(--accent); color:#fff; cursor:pointer; }
   .cmt-send:hover { filter:brightness(.95); }
   .cmt-send:disabled { opacity:.6; cursor:not-allowed; }
+  /* Envoyer, supprimer : dessins au trait depuis le 2026-10-14 (Mathis), a la place de ➤ et ✕. */
+  .cmt-send { display:inline-grid; place-items:center; padding:5px 10px; }
+  .cmt-send svg, .cmt-del svg, .photo-del svg { width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; display:block; }
   /* z-index au-dessus des FAB panneaux (chat/photos/feed a 1500) pour que les emojis
      soient cliquables au lieu d'apparaitre en arriere-plan. */
   .emoji-pop { display:none; position:fixed; inset:0; z-index:2000; }
@@ -1902,7 +1922,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   }
   .emoji-opt { font-size:23px; background:none; border:none; cursor:pointer; padding:4px 5px; border-radius:9px; line-height:1; }
   .emoji-opt:hover { background:var(--surface-2); }
-  .photo-upload { margin:4px 0 16px; }
+  /* Vide tant qu'aucun depot n'est en cours : sans marge a lui, sinon un trou de 20 px sous l'entete. */
+  .photo-upload { margin:0; }
+  .photo-upload .photo-draft { margin:0 0 8px; }
   .photo-draft { margin-top:12px; display:flex; flex-direction:column; gap:8px; max-width:460px; }
   .photo-draft-thumbs { display:flex; flex-wrap:wrap; gap:8px; }
   .photo-draft-thumb { position:relative; width:88px; height:88px; border-radius:10px; overflow:hidden; border:1px solid var(--line); }
@@ -1912,24 +1934,46 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .photo-draft-thumb button:hover { background:rgba(200,0,0,.85); }
   .photo-draft input { padding:9px 12px; border:1px solid var(--line-2); border-radius:10px; font:inherit; background:var(--surface); color:var(--ink); }
   .photo-draft-actions { display:flex; gap:8px; }
-  .photo-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:14px; }
-  .photo-card { border:1px solid var(--line); border-radius:14px; overflow:hidden; background:var(--surface-2); display:flex; flex-direction:column; }
-  .photo-img { width:100%; aspect-ratio:1/1; object-fit:cover; cursor:pointer; display:block; }
-  .photo-cap { padding:9px 11px 4px; font-size:13.5px; color:var(--ink); line-height:1.4; }
-  .photo-meta { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:5px 11px; font-size:11px; color:var(--ink-3); }
-  .photo-del { font:inherit; font-size:11px; color:var(--ink-3); background:none; border:none; padding:0; cursor:pointer; text-decoration:underline; }
-  .photo-del:hover { color:#c0392b; }
-  .photo-card .react-bar { padding:0 11px 10px; margin:0; }
-  /* Bouton cœur type Instagram : à gauche des chips emoji, dans la même ligne .photo-actions. */
-  .photo-actions { display:flex; align-items:center; gap:8px; padding:2px 11px 8px; }
-  .photo-actions .react-bar { padding:0; margin:0; flex:1; }
-  .heart-btn { display:inline-flex; align-items:center; gap:5px; padding:4px 9px; background:var(--surface); border:1px solid var(--line-2); border-radius:14px; cursor:pointer; font:600 13px/1 var(--sans); color:var(--ink-2); transition:transform .1s; }
-  .heart-btn:hover:not(:disabled) { border-color:#e74a70; color:#e74a70; }
-  .heart-btn:active:not(:disabled) { transform:scale(.92); }
-  .heart-btn.liked { border-color:#e74a70; background:color-mix(in srgb,#e74a70 12%,var(--surface)); color:#c73058; }
+  /* Photos, refaites le 2026-10-14 sur la maquette B (notes-privees/maquettes/photos/) : deux
+     colonnes, photos presque deux fois plus grandes qu'avant (200 px), et pas de photo coupee
+     en haut du fil. Dans le panneau, la grille defile seule et sert de conteneur (container-type) :
+     chaque carte fait la moitie de sa hauteur visible, moins l'ecart. Deux rangees remplissent
+     donc pile la hauteur, 12 px d'air en bas, et la troisieme commence juste sous le bord. */
+  /* Le bouton sous le titre, voulu par Mathis (2026-10-14). */
+  .photo-tete { flex-direction:column; align-items:flex-start; gap:10px; }
+  .photo-ajout { display:inline-flex; align-items:center; gap:8px; flex:none; }
+  .photo-ajout svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; }
+  .photo-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; align-content:start; }
+  .photo-card { display:flex; flex-direction:column; gap:6px; min-width:0; }
+  .photo-img { width:100%; aspect-ratio:1/1; object-fit:cover; cursor:pointer; display:block; border-radius:12px; background:var(--surface-2); }
+  #viewPhotos.fab-open > section { flex:1; min-height:0; display:flex; flex-direction:column; overflow:hidden; padding-bottom:0 !important; }
+  #viewPhotos.fab-open .photo-grid { flex:1; min-height:0; overflow-y:auto; container-type:size; margin:0 -20px; padding:12px 20px; }
+  #viewPhotos.fab-open .photo-card { height:calc((100cqh - 12px) / 2); }
+  #viewPhotos.fab-open .photo-img { flex:1; min-height:0; aspect-ratio:auto; }
+  @media (max-width:600px){ .photo-grid { grid-template-columns:1fr; } }
+  .photo-meta { display:flex; align-items:center; gap:8px; min-width:0; font-size:14px; color:var(--ink-2); }
+  .photo-meta b { color:var(--ink); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .photo-date { color:var(--ink-3); white-space:nowrap; }
+  .photo-acts { display:flex; gap:2px; margin-left:auto; flex:none; }
+  .photo-cap { font-size:14px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .photo-act, .heart-btn { display:inline-flex; align-items:center; gap:4px; height:32px; min-width:32px; padding:0 6px; border:none; border-radius:8px;
+    background:transparent; color:var(--ink-3); font:600 14px var(--sans); cursor:pointer; }
+  .photo-act:hover, .heart-btn:hover:not(:disabled) { background:var(--surface-2); color:var(--accent-ink); }
+  .photo-act svg, .heart-btn svg { width:19px; height:19px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+  .heart-btn.liked, .heart-btn.liked:hover { color:#d1436b; }
+  .heart-btn.liked svg { fill:currentColor; }
   .heart-btn[disabled] { opacity:.6; cursor:not-allowed; }
-  .heart-btn .heart-icon { font-size:15px; line-height:1; }
-  .heart-btn .heart-count { min-width:12px; text-align:center; font-variant-numeric:tabular-nums; }
+  .heart-btn .heart-count { font-variant-numeric:tabular-nums; }
+  /* La fiche d'une photo (_ouvrirFichePhoto). Les emojis s'ouvrent par-dessus. */
+  .photo-fiche { max-width:480px; }
+  .photo-fiche-cap { margin:0 0 10px; font-size:15px; color:var(--ink); line-height:1.4; }
+  .photo-fiche-reac { display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
+  .photo-fiche-reac .react-bar { margin:0; }
+  .photo-fiche .cmt-summary { display:none; }
+  .photo-del { margin-top:12px; width:34px; height:34px; display:grid; place-items:center; color:var(--ink-3); background:none; border:1px solid var(--line-2); border-radius:8px; padding:0; cursor:pointer; }
+  .photo-del svg { width:19px; height:19px; }
+  .photo-del:hover { color:#c0392b; }
+  body:has(#photoFiche) .emoji-pop { z-index:2147483001; }
 
   /* trophées */
   .who-select { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
@@ -2698,7 +2742,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .msg-actions, .msg .msg-actions { opacity:1; }
     .msg-time, .msg .msg-time { opacity:1; }
     .msg-act { min-width:52px; min-height:52px; font-size:22px; border-radius:50%; }
-    .msg-actions { gap:8px; }
+    .msg-actions { gap:8px; position:static; margin:4px 10px 0; }
+    .msg.mine .msg-actions { justify-content:flex-start; }
     /* Le « + » des reactions et les pastilles deja posees vivent dans la meme rangee et
        avaient le meme defaut : 22 px ecrits, 18,7 a l'ecran. Les laisser a 22 a cote d'une
        action de 52 aurait donne une rangee bancale autant qu'inatteignable. */
