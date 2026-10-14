@@ -6318,6 +6318,7 @@ let feedMode = 'new';       // 'new' = tri par addedAt (par défaut), 'chrono' =
 let feedPerson = 'any';     // uid ou 'any'
 let feedTier = 'any';       // 1..9, 'exo', ou 'any'
 let _feedPeopleKey = '';
+const _feedCmtOuverts = new Set();   // cibles dont les commentaires sont ouverts dans le fil
 // Trophees "competitifs" : rangement classement (5 Ecologues) et prix unique (Mike Horn, Marco Polo).
 // Les 5 Ecologues sont ordonnes du meilleur au moins bon. Le TOP rang d'une personne = le
 // premier Ecologue qu'il detient dans cet ordre.
@@ -6458,16 +6459,13 @@ function _computeTrophyEvents(){
 }
 function renderFeed(){
   const el=$('#feedList'); if(!el) return;
-  // Rafraîchit le select personne quand la ligue change.
-  const psel = $('#feedPersonSel');
+  // La personne filtree a pu quitter la ligue : on revient a « Tout le monde ».
   const pKey = realPeople.map(p=>p.id+':'+p.name).join('|');
-  if(psel && pKey !== _feedPeopleKey){
+  if(pKey !== _feedPeopleKey){
     _feedPeopleKey = pKey;
-    psel.innerHTML = '<option value="any">Tout le monde</option>' +
-      realPeople.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}${p.isMe?' (toi)':''}</option>`).join('');
-    if(!realPeople.some(p=>p.id===feedPerson)) feedPerson = 'any';
-    psel.value = feedPerson;
+    if(feedPerson !== 'any' && !realPeople.some(p=>p.id===feedPerson)) feedPerson = 'any';
   }
+  _feedMajBoutons();
   const items=[];
   // Espèces observées
   for(const p of realPeople){
@@ -6515,19 +6513,75 @@ function renderFeed(){
     return;
   }
   let lastSeen=0; try{ lastSeen = +localStorage.getItem('mb-seen-feed')||0; }catch(_){ }
-  el.innerHTML=top.map(it=>{
-    const isNew = it.addedAt && it.addedAt > lastSeen;
-    const badge = isNew ? ' <span class="feed-new">🆕 nouveau</span>' : '';
-    // Observation classique
+  // Rangement par jour (maquette A, 2026-10-14). Le jour suit le tri : celui de l'ajout en
+  // « Nouveautes », celui de l'observation en « Chronologique ». La date de l'observation
+  // n'est redite sur la ligne qu'en « Nouveautes », ou l'en-tete parle d'autre chose.
+  const auj = new Date(), hier = new Date(Date.now() - 864e5);
+  const ordDe = d => d.getFullYear()*10000 + (d.getMonth()+1)*100 + d.getDate();
+  const ordAuj = ordDe(auj), ordHier = ordDe(hier);
+  const titreJour = ord => {
+    if(!ord) return feedMode==='new' ? 'Ajout non daté' : 'Date inconnue';
+    if(ord === ordAuj) return 'Aujourd’hui';
+    if(ord === ordHier) return 'Hier';
+    const d = new Date(Math.floor(ord/10000), Math.floor(ord/100)%100 - 1, ord%100);
+    return d.toLocaleDateString('fr-FR', d.getFullYear()===auj.getFullYear() ? {day:'numeric', month:'long'} : {day:'numeric', month:'long', year:'numeric'});
+  };
+  const IC_REAGIR = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 14.2c.9 1.3 2.1 1.9 3.5 1.9s2.6-.6 3.5-1.9M9.2 9.6v.6M14.8 9.6v.6"/></svg>';
+  const IC_COMM = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>';
+  // Une seule ligne « depuis ta derniere visite » au lieu d'une etiquette par oiseau. Elle
+  // n'a de sens qu'en « Nouveautes », seul tri ou les nouveaux sont tous en tete.
+  const nbNeufs = feedMode==='new' ? top.filter(it => it.addedAt && it.addedAt > lastSeen).length : 0;
+  let html = nbNeufs ? '<div class="feed-depuis">depuis ta dernière visite</div>' : '';
+  let jourPrec = null;
+  top.forEach((it, i) => {
+    if(nbNeufs && i === nbNeufs) { html += '<div class="feed-depuis feed-depuis-fin">déjà vu</div>'; jourPrec = null; }
+    const ordJour = feedMode==='new' ? (it.addedAt ? ordDe(new Date(it.addedAt)) : 0) : it.ord;
+    if(ordJour !== jourPrec){ html += `<div class="feed-jour">${esc(titreJour(ordJour))}</div>`; jourPrec = ordJour; }
     const tt=realTier(it.sci, it.abroad);
     const target='obs:'+it.uid+':'+it.sci.toLowerCase();
-    const tag = it.manual ? ' <span class="feed-tag">ajout manuel</span>' : '';
-    return `<div class="feed-item"><span class="feed-dot" style="background:${tt.color}"></span>
-      <div class="feed-body"><div><b>${esc(it.name)}</b> a observé <b class="sp-link" data-sci="${esc(it.sci)}">${esc(it.bird)}</b>${badge}${tag}</div>
-      <div class="feed-date">${esc(it.disp)} · <span class="feed-rar" style="color:${tt.color}">${esc(tt.label)}</span></div>
-      ${reactionBar(target)}
-      ${commentsBar(target)}</div></div>`;
-  }).join('');
+    const nbCom = (commentsMap.get(target) || []).length;
+    const niveau = tt.ord >= 1 && tt.ord <= 10 ? tt.ord : '';
+    const tag = it.manual ? ' · ajout manuel' : '';
+    const dateObs = feedMode==='new' ? ' · vu le ' + esc(it.disp) : '';
+    const reagir = myUid ? `<button type="button" class="feed-act react-add" data-target="${esc(target)}" title="Réagir" aria-label="Réagir">${IC_REAGIR}</button>` : '';
+    html += `<div class="feed-item">
+      <span class="feed-pas" style="background:${tt.color}; color:${_texteSur(tt.color)}" title="${esc(tt.label)}">${niveau}</span>
+      <div class="feed-body">
+        <div class="feed-l1"><span class="sp-link feed-sp" data-sci="${esc(it.sci)}">${esc(it.bird)}</span> <span class="latin">${esc(it.sci)}</span></div>
+        <div class="feed-l2"><b>${esc(it.name)}</b> · ${esc(tt.label)}${dateObs}${tag}</div>
+      </div>
+      <span class="feed-acts">${reagir}<button type="button" class="feed-act" data-feed-cmt="${esc(target)}" title="Commentaires" aria-label="Commentaires${nbCom?' ('+nbCom+')':''}">${IC_COMM}${nbCom?`<span class="feed-n">${nbCom}</span>`:''}</button></span>
+      <div class="feed-suite">${_feedReactions(target)}${commentsBar(target).replace('<details class="cmt-wrap" open>', '<details class="cmt-wrap">').replace('<details class="cmt-wrap">', _feedCmtOuverts.has(target) ? '<details class="cmt-wrap" open>' : '<details class="cmt-wrap">')}</div>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+// Les reactions deja posees, sans le « + » : il est devenu l'icone au bout de la ligne.
+function _feedReactions(target){
+  return reactionBar(target).replace(/<button class="react-add"[^>]*>[^<]*<\/button>/, '');
+}
+// Couleur du chiffre sur une pastille de rarete : le blanc donnait 2,2:1 sur le jaune du
+// niveau 5. On prend, du blanc ou de l'encre foncee, celui qui contraste le plus.
+function _texteSur(couleur){
+  const m = /hsl\((\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\)/.exec(couleur || '');
+  let r, g, b;
+  if(m){
+    const h = +m[1], s = m[2]/100, l = m[3]/100, a = s*Math.min(l, 1-l);
+    const f = n => { const k = (n + h/30) % 12; return l - a*Math.max(-1, Math.min(k-3, 9-k, 1)); };
+    [r, g, b] = [f(0), f(8), f(4)];
+  } else if(/^#[0-9a-f]{6}$/i.test(couleur || '')){
+    [r, g, b] = [1, 3, 5].map(i => parseInt(couleur.slice(i, i+2), 16) / 255);
+  } else return '#fff';
+  const lin = c => c <= 0.04045 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4);
+  const L = 0.2126*lin(r) + 0.7152*lin(g) + 0.0722*lin(b);
+  return (1.05/(L+0.05)) >= ((L+0.05)/(0.0118+0.05)) ? '#fff' : '#15201e';
+}
+// Libelles des deux boutons de filtre du fil.
+function _feedMajBoutons(){
+  const p = realPeople.find(x => x.id === feedPerson);
+  const lp = $('#feedPersonBtn .cp-btn-label'); if(lp) lp.textContent = p ? p.name : 'Tout le monde';
+  const lt = $('#feedTierBtn .cp-btn-label');
+  if(lt) lt.textContent = feedTier === 'any' ? 'Toutes les raretés' : feedTier === 'exo' ? 'Exotique ou échappé' : feedTier + ' · ' + REAL_LABELS[feedTier];
 }
 // ---- Fiche perso / stats ----
 // ---- Requêtes / suggestions ----
@@ -16133,8 +16187,32 @@ $('#feedModeSeg')?.addEventListener('click', e=>{
   b.classList.add('on');
   feedMode = b.dataset.feedMode; renderFeed();
 });
-$('#feedPersonSel')?.addEventListener('change', e=>{ feedPerson = e.target.value; renderFeed(); });
-$('#feedTierSel')?.addEventListener('change', e=>{ feedTier = e.target.value; renderFeed(); });
+$('#feedPersonBtn')?.addEventListener('click', async ()=>{
+  const opts = [{ value:'any', label:'Tout le monde' }].concat(
+    [...realPeople].sort((a,b)=>a.name.localeCompare(b.name,'fr')).map(p=>({ value:p.id, label:p.name + (p.isMe?' (toi)':'') })));
+  const v = await _openFilterPicker(feedPerson, { title:'Les observations de qui ?', options:opts, searchable: realPeople.length > 8 });
+  if(v == null) return;
+  feedPerson = v; renderFeed();
+});
+$('#feedTierBtn')?.addEventListener('click', async ()=>{
+  const opts = [{ value:'any', label:'Toutes les raretés' }]
+    .concat([1,2,3,4,5,6,7,8,9,10].map(t=>({ value:String(t), label:t+' · '+REAL_LABELS[t], color:realColor(t) })))
+    .concat([{ value:'exo', label:'Exotique ou échappé', color:'#7e8a99' }]);
+  const v = await _openFilterPicker(String(feedTier), { title:'Quelle rareté ?', options:opts, searchable:false });
+  if(v == null) return;
+  feedTier = v; renderFeed();
+});
+// L'icone de commentaire au bout d'une ligne du fil ouvre ou ferme ses commentaires. Les
+// commentaires restent fermes par defaut ; ceux qu'on a ouverts le restent quand le fil se
+// redessine (chaque reaction ou commentaire recu le redessine).
+document.addEventListener('click', e=>{
+  const b = e.target.closest('[data-feed-cmt]'); if(!b) return;
+  const d = b.closest('.feed-item')?.querySelector('.cmt-wrap'); if(!d) return;
+  d.open = !d.open;
+  const t = b.dataset.feedCmt;
+  if(t){ if(d.open) _feedCmtOuverts.add(t); else _feedCmtOuverts.delete(t); }
+  if(d.open) d.querySelector('.cmt-input')?.focus();
+});
 // Chips rareté (multi) : toggle du Set state.tierExcl (masquées), re-render.
 $('#tierChips')?.addEventListener('click', e=>{
   if(e.target.matches('[data-tier-all]')){

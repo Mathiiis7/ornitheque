@@ -120,7 +120,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=338">
+<link rel="modulepreload" href="app.js?v=339">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -931,28 +931,16 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         <div><h2 class="page-title">Le fil des observations</h2>
           <p class="help">Les dernières observations de la ligue. <b>Nouveautés</b> = par date d'ajout (idéal pour ne rien louper) · <b>Chronologique</b> = par date d'observation.</p></div>
       </div>
-      <div class="seg" id="feedModeSeg" style="margin:6px 0 8px;">
-        <button data-feed-mode="new" class="on">🆕 Nouveautés</button>
-        <button data-feed-mode="chrono">📅 Chronologique</button>
-      </div>
-      <div style="display:flex; gap:8px; flex-wrap:wrap; margin:0 0 14px;">
-        <select class="filt-sel" id="feedPersonSel" aria-label="Filtrer par personne">
-          <option value="any">Tout le monde</option>
-        </select>
-        <select class="filt-sel" id="feedTierSel" aria-label="Filtrer par rareté">
-          <option value="any">Toutes les raretés</option>
-          <option value="1">1 · Omniprésent</option>
-          <option value="2">2 · Très commun</option>
-          <option value="3">3 · Commun</option>
-          <option value="4">4 · Assez commun</option>
-          <option value="5">5 · Peu commun</option>
-          <option value="6">6 · Assez rare</option>
-          <option value="7">7 · Rare</option>
-          <option value="8">8 · Très rare</option>
-          <option value="9">9 · Ultra rare</option>
-          <option value="10">10 · Exceptionnel</option>
-          <option value="exo">🚨 Exotique / échappé</option>
-        </select>
+      <!-- Refait le 2026-10-14 sur la maquette A (notes-privees/maquettes/fil/) : sans emoji,
+           et les deux filtres ouvrent la fenetre centree du Birdydex (_openFilterPicker), que
+           Mathis prefere a une liste deroulante. -->
+      <div class="feed-barre">
+        <div class="seg" id="feedModeSeg">
+          <button data-feed-mode="new" class="on">Nouveautés</button>
+          <button data-feed-mode="chrono">Chronologique</button>
+        </div>
+        <button type="button" id="feedPersonBtn" class="cp-btn"><span class="cp-btn-label">Tout le monde</span><span class="cp-btn-arrow">▾</span></button>
+        <button type="button" id="feedTierBtn" class="cp-btn"><span class="cp-btn-label">Toutes les raretés</span><span class="cp-btn-arrow">▾</span></button>
       </div>
       <div class="feed-list" id="feedList"></div>
     </section>
@@ -1464,5 +1452,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=338"></script>
+<script type="module" src="app.js?v=339"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>
