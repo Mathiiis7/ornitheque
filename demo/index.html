@@ -120,7 +120,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=339">
+<link rel="modulepreload" href="app.js?v=340">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -265,7 +265,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         <button type="button" id="fabChat" class="nav-ico" title="Tchat" aria-label="Tchat"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg></button>
       </div>
       <!-- Un ecrou plutot que ☰ depuis le 2026-10-14 (Mathis) : l'identifiant reste hamburgerBtn. -->
-      <button type="button" id="hamburgerBtn" class="nav-ico" aria-label="Menu et réglages" title="Menu et réglages"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 3h3.4l.5 2.3 1.6.9 2.2-.8 1.7 2.9-1.8 1.6v1.9l1.8 1.6-1.7 2.9-2.2-.8-1.6.9-.5 2.3h-3.4l-.5-2.3-1.6-.9-2.2.8-1.7-2.9 1.8-1.6v-1.9L4.3 8.3 6 5.4l2.2.8 1.6-.9z"/><circle cx="12" cy="12" r="2.8"/></svg></button>
+      <button type="button" id="hamburgerBtn" class="nav-ico" aria-label="Menu et réglages" title="Menu et réglages"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.07 4.96L10.35 2.54L13.65 2.54L13.93 4.96L15.62 5.66L17.52 4.15L19.85 6.48L18.34 8.38L19.04 10.07L21.46 10.35L21.46 13.65L19.04 13.93L18.34 15.62L19.85 17.52L17.52 19.85L15.62 18.34L13.93 19.04L13.65 21.46L10.35 21.46L10.07 19.04L8.38 18.34L6.48 19.85L4.15 17.52L5.66 15.62L4.96 13.93L2.54 13.65L2.54 10.35L4.96 10.07L5.66 8.38L4.15 6.48L6.48 4.15L8.38 5.66Z"/><circle cx="12" cy="12" r="3.2"/></svg></button>
     </div>
   </nav>
   <!-- Menu hamburger : position:fixed (escape le overflow:auto de .tabs qui clippait le dropdown vertical). Position calculee au toggle. -->
@@ -362,7 +362,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
     #viewChat.fab-open, #viewPhotos.fab-open, #viewFeed.fab-open {
       display:block !important; position:fixed;
       right:20px; top:var(--fab-top, 120px);
-      width:min(520px, calc(100vw - 40px));
+      width:min(640px, calc(100vw - 40px));
       /* Jusqu'en bas de l'ecran, meme presque vide (Mathis, 2026-10-14). */
       height:var(--fab-max, calc(100vh - 140px)); box-sizing:border-box;
       overflow-y:auto; overflow-x:hidden;
@@ -1452,5 +1452,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=339"></script>
+<script type="module" src="app.js?v=340"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>
