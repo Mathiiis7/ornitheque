@@ -6341,7 +6341,7 @@ function renderPhotos(){
       <img class="photo-img" src="${safeImg}"${th.attr}${fullAttr} alt="photo d'observation">
       <div class="photo-meta"><b>${esc(nm)}</b>${guest}<span class="photo-date">${esc(_datePhoto(t))}</span>
         <span class="photo-acts">${heartButton(target)}<button type="button" class="photo-act" data-photo-fiche="${esc(ph.id)}" title="Réactions et commentaires" aria-label="Réactions et commentaires${nbBulle?' ('+nbBulle+')':''}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>${nbBulle?`<span>${nbBulle}</span>`:''}</button></span></div>
-      ${ph.caption?`<div class="photo-cap" title="${esc(ph.caption)}">${esc(ph.caption)}</div>`:''}
+      ${ph.caption?`<div class="photo-cap" data-tip-coupe="${esc(ph.caption)}">${esc(ph.caption)}</div>`:'<div class="photo-cap" aria-hidden="true"></div>'}
     </div>`;
   }).join('');
   watchThumbs(grid);

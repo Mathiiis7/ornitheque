@@ -1944,19 +1944,24 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .photo-tete { flex-direction:column; align-items:flex-start; gap:10px; }
   .photo-ajout { display:inline-flex; align-items:center; gap:8px; flex:none; }
   .photo-ajout svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; }
-  .photo-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; align-content:start; }
-  .photo-card { display:flex; flex-direction:column; gap:6px; min-width:0; }
+  /* Ecart vertical double de l'ecart interne : la legende appartient a la photo du dessus, elle
+     etait plus pres de celle du dessous (Mathis, 2026-10-14). */
+  .photo-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px 12px; align-content:start; }
+  .photo-card { display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .photo-card .photo-img { margin-bottom:4px; }
   .photo-img { width:100%; aspect-ratio:1/1; object-fit:cover; cursor:pointer; display:block; border-radius:12px; background:var(--surface-2); }
   #viewPhotos.fab-open > section { flex:1; min-height:0; display:flex; flex-direction:column; overflow:hidden; padding-bottom:0 !important; }
   #viewPhotos.fab-open .photo-grid { flex:1; min-height:0; overflow-y:auto; container-type:size; margin:0 -20px; padding:12px 20px; }
-  #viewPhotos.fab-open .photo-card { height:calc((100cqh - 12px) / 2); }
+  #viewPhotos.fab-open .photo-card { height:calc((100cqh - 24px) / 2); }
   #viewPhotos.fab-open .photo-img { flex:1; min-height:0; aspect-ratio:auto; }
   @media (max-width:600px){ .photo-grid { grid-template-columns:1fr; } }
   .photo-meta { display:flex; align-items:center; gap:8px; min-width:0; font-size:14px; color:var(--ink-2); }
   .photo-meta b { color:var(--ink); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .photo-date { color:var(--ink-3); white-space:nowrap; }
   .photo-acts { display:flex; gap:2px; margin-left:auto; flex:none; }
-  .photo-cap { font-size:14px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  /* La ligne existe meme vide : sans elle, une photo sans legende etait plus haute que sa voisine
+     et les rangees ne s'alignaient plus. */
+  .photo-cap { font-size:14px; line-height:1.4; min-height:1.4em; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .photo-act, .heart-btn { display:inline-flex; align-items:center; gap:4px; height:32px; min-width:32px; padding:0 6px; border:none; border-radius:8px;
     background:transparent; color:var(--ink-3); font:600 14px var(--sans); cursor:pointer; }
   .photo-act:hover, .heart-btn:hover:not(:disabled) { background:var(--surface-2); color:var(--accent-ink); }
