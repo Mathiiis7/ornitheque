@@ -1,3 +1,8 @@
+# FAIT le 2026-10-15 (pas poussé) : pastille TOI et palette d'emojis (v769, app.js?v=345, commit 81f1b911)
+- Choix « Les observations de qui ? » : pastille TOI du classement (option moi:true de _openFilterPicker). Classement : 8 px avant la pastille.
+- Emojis : EMOJI_GROUPES, 363 en 9 familles titrées, grille 8 colonnes. Emojis iPhone sur PC : non (dessins d'Apple non réutilisables), réponse donnée.
+Vérifié 1100 px et 375 px, 11 bancs CONFORME. Reste : qu'il regarde en local, puis pousser.
+---
 # EN LIGNE le 2026-10-14 : fil, tchat et photos refaits (v768, app.js?v=344). Chantier clos.
 # (détail ci-dessous ; dernier correctif : un clic redessiné ne ferme plus le panneau)
 - Photos : grille 2 colonnes (1 au téléphone) qui défile seule, cartes = moitié de sa hauteur (container-type,
