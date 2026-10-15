@@ -1,3 +1,9 @@
+# EN LIGNE le 2026-10-15 : entête fixe, plus de « ? » au Birdydex, moins de vide en bas (v779, app.js?v=353)
+- Birdydex : les espèces à découvrir gardent fond doré et aura, sans le « ? » (photo toujours cachée jusqu'au toucher).
+- Logo, thème et onglets dans .entete-fixe (sticky, top:-16px) : restent en haut en défilant, 10 px au-dessus du logo ; au repos rien ne bouge.
+- Pied de page : 28 px sous le texte (80 avant) ; la démo garde 80 px pour son bandeau (genere-demo.mjs, « html .wrap »).
+- Vérifié 1280 et 375 sur la démo, 11 bancs CONFORME. Rien en attente.
+---
 # EN LIGNE le 2026-10-15 : interrupteur de thème, entête à mi-chemin (26 et 16 px), carte « À ne pas confondre » retirée du code (v776, app.js?v=350)
 - Interrupteur soleil/lune (variante B de notes-privees/maquettes/theme/), bille placée par la CSS selon le thème réel.
 - Onglets à 10 px sous le logo (22 avant) ; haut de page 24 px (28 avant, 18 essayé et jugé trop haut).
