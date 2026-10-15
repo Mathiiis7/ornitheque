@@ -19597,7 +19597,6 @@ let _pcChants = null;   // data/parcours-mesanges.json, lu au premier lancement 
 
 const _pcSeuil = et => Math.ceil(et.q * 0.8);
 const _pcNomFr = sci => FR_NAMES[sci] || sci;
-const _pcLatin = sci => sci.charAt(0).toUpperCase() + sci.slice(1);
 const _pcMelanger = arr => arr.map(v => [Math.random(), v]).sort((a, b) => a[0] - b[0]).map(v => v[1]);
 function _pcScores(){
   try{ const s = JSON.parse(localStorage.getItem('mb-parcours-' + PARCOURS_MESANGES.cle) || '{}'); return Array.isArray(s.best) ? s.best : []; }
@@ -19764,7 +19763,7 @@ function _pcQuestion(){
       </div>
       <p class="qz-prompt">Quel oiseau chante ?</p>
       <div class="qz-choices" id="pcChoix">
-        ${q.choix.map((sci, k) => `<button type="button" class="qz-choice" data-pc-choix="${k}"><span class="qz-choice-fr">${esc(_pcNomFr(sci))}</span><span class="qz-choice-sci">${esc(_pcLatin(sci))}</span></button>`).join('')}
+        ${q.choix.map((sci, k) => `<button type="button" class="qz-choice" data-pc-choix="${k}"><span class="pc-vign" data-pc-vign="${esc(sci)}"></span><span class="qz-choice-fr">${esc(_pcNomFr(sci))}</span></button>`).join('')}
       </div>
       <audio id="pcAudio" preload="auto" src="${esc(rec?.file || '')}"></audio>`;
   } else {
@@ -19776,7 +19775,6 @@ function _pcQuestion(){
       <div class="pc-oiseau">
         <div class="pc-photo" id="pcPhoto"></div>
         <div class="pc-oiseau-nom">${esc(_pcNomFr(q.cible))}</div>
-        <div class="pc-meta"><i>${esc(_pcLatin(q.cible))}</i></div>
       </div>
       <p class="qz-prompt">Lequel de ces chants est le sien ?</p>
       <div class="pc-chants" id="pcChoix">
@@ -19807,6 +19805,13 @@ function _pcQuestion(){
     audio.addEventListener('pause', () => btn.classList.remove('playing'));
     audio.addEventListener('ended', () => { btn.classList.remove('playing'); fill.style.width = '0%'; });
     audio.play().catch(() => {});
+    // Petite photo a cote de chaque nom, comme sur Syrinx (demande de Mathis le 2026-10-16).
+    if(typeof _fetchWikiPhoto === 'function') box.querySelectorAll('[data-pc-vign]').forEach(el => {
+      _fetchWikiPhoto(el.dataset.pcVign).then(ph => {
+        const src = ph?.thumb || ph?.url;
+        if(src && el.isConnected) el.innerHTML = `<img src="${esc(src)}" alt="" loading="eager">`;
+      }).catch(() => {});
+    });
   } else {
     if(typeof _fetchWikiPhoto === 'function'){
       const cible = q.cible;
@@ -19861,7 +19866,6 @@ function _pcRepondre(k){
   if(v) v.innerHTML = `<div class="qz-verdict ${juste ? 'correct' : 'wrong'}">
       <div class="qz-verdict-badge">${juste ? '✓' : '✗'}</div>
       <div class="qz-verdict-species"><span class="sp-link" data-sci="${esc(q.cible)}">${esc(_pcNomFr(q.cible))}</span></div>
-      <div class="qz-verdict-sci">${esc(_pcLatin(q.cible))}</div>
       ${sono ? `<img class="qz-verdict-sono" src="${esc(sono)}" alt="Sonagramme du chant">` : ''}
     </div>`;
   const ent = box.querySelector('.pc-jeu-droite > span'); if(ent){ ent.textContent = '✓ ' + p.bonnes; ent.setAttribute('aria-label', p.bonnes + ' bonnes réponses'); }

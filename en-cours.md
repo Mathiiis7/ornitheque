@@ -1,6 +1,7 @@
-# EN LOCAL le 2026-10-16, PAS POUSSÉ : barre fluide, « nouvelle » retiré, question suivante automatique (v785, app.js?v=359)
+# EN LOCAL le 2026-10-16, PAS POUSSÉ : barre fluide, suite automatique, vignettes photo sans nom latin (v786, app.js?v=360)
 - Barre du chant suivie à chaque image (requestAnimationFrame) au lieu de timeupdate. « , nouvelle » reste pour les lecteurs d'écran.
 - Après une réponse : plus de boutons Suivante ni Réécouter, la suite arrive seule après 1 s (PC_PAUSE_SUITE_MS). Touche Entrée retirée.
+- Parcours : nom scientifique retiré partout (choix, photo, verdict) ; petite photo arrondie 48 px à gauche de chaque choix (.pc-vign, _fetchWikiPhoto). Prototype : même photo à côté du nom.
 - Prototype du tableau des critères : notes-privees/maquettes/criteres/ (familles en colonnes, oiseaux en lignes, coches et croix dessinées, 3 exemples à écouter par oiseau).
 - Critères des chants (qg#60) : premier jet dans docs/criteres-chants.md, 9 critères pour les 5 oiseaux, sourcés. Attend la validation à l'oreille de Mathis (cases « ? »).
 - Affichage voulu : dans chaque parcours pour ses espèces, plus un tableau d'ensemble depuis la page Quiz, là où seront regroupés tous les parcours. Maquette à faire après validation.
