@@ -19592,6 +19592,7 @@ const PARCOURS_MESANGES = {
 const PC_CHANTS_PROPOSES = 3;
 const PC_DUREE_MAX = 20;   // secondes lues par chant, comme l'ancien quiz
 const _pc = { selection: null, partie: null };
+let _pcChants = null;   // data/parcours-mesanges.json, lu au premier lancement d'une etape
 
 const _pcSeuil = et => Math.ceil(et.q * 0.8);
 const _pcNomFr = sci => FR_NAMES[sci] || sci;
@@ -19623,6 +19624,15 @@ function _pcDescription(et){
 }
 function _pcCouperSons(){
   document.querySelectorAll('#pcParcours audio').forEach(a => { try{ a.pause(); }catch(_){} });
+}
+// Avant de remplacer une question : annule aussi les telechargements en cours. Un <audio>
+// retire de la page continue de telecharger, et le navigateur n'ouvre que quelques
+// connexions a la fois vers xeno-canto. Le 2026-10-16, 25 questions passees en vitesse ont
+// ainsi bloque le chant suivant plus de 30 s (readyState 0), jusqu'au rechargement.
+function _pcLibererSons(){
+  document.querySelectorAll('#pcParcours audio').forEach(a => {
+    try{ a.pause(); a.removeAttribute('src'); a.load(); }catch(_){}
+  });
 }
 
 function _parcoursRender(){
@@ -19673,17 +19683,16 @@ function _parcoursRender(){
 
 // Choisit un enregistrement pour une espece en variant les enregistreurs : un meme micro au
 // meme endroit fait apprendre le micro, pas le chant (idee retenue le 2026-10-15).
-// Les listes de _fetchXenoSound sont deja triees par qualite : on pioche parmi les 3
-// premiers candidats encore jamais entendus dans la partie.
+// Tous les chants du fichier ont ete ecoutes et gardes par Mathis : on pioche au hasard
+// parmi ceux encore jamais entendus dans la partie.
 function _pcChoisirEnreg(sci, partie){
-  const sons = partie.sons[sci] || {};
-  const liste = ((sons.songList && sons.songList.length) ? sons.songList : (sons.callList || [])).filter(r => r.file);
+  const liste = (partie.sons[sci] || []).filter(r => r.file);
   const recs = partie.enregistreurs.get(sci) || new Set();
   let cand = liste.filter(r => !partie.utilises.has(r.id) && !recs.has(r.rec));
   if(!cand.length) cand = liste.filter(r => !partie.utilises.has(r.id));
   if(!cand.length) cand = liste;
   if(!cand.length) return null;
-  const r = cand[Math.floor(Math.random() * Math.min(3, cand.length))];
+  const r = cand[Math.floor(Math.random() * cand.length)];
   partie.utilises.add(r.id); recs.add(r.rec); partie.enregistreurs.set(sci, recs);
   return r;
 }
@@ -19702,9 +19711,17 @@ async function _pcLancer(i){
   const et = PARCOURS_MESANGES.etapes[i];
   const especes = PARCOURS_MESANGES.especes.slice(0, et.n);
   box.innerHTML = '<p class="help pc-attente">Chargement des chants…</p>';
+  // Les chants viennent de data/parcours-mesanges.json, ecoutes un par un par Mathis le
+  // 2026-10-16, et non plus des 8 chants les plus recents de xeno-canto : sur ces 40-la, des
+  // oiseaux du parcours chantaient en fond, et certains venaient de Coree ou du Maroc
+  // (docs/refonte-quiz.md). Le fichier se refait avec outils/build/chants-gardes.mjs.
+  if(!_pcChants){
+    try{ _pcChants = await (await fetch('data/parcours-mesanges.json?v=20261016')).json(); }
+    catch(_){ _pcChants = null; }
+  }
   const sons = {};
-  await Promise.all(especes.map(async sci => { sons[sci] = await _fetchXenoSound(sci).catch(() => null) || {}; }));
-  const sansSon = especes.filter(sci => !((sons[sci].songList || []).length || (sons[sci].callList || []).length));
+  for(const sci of especes) sons[sci] = (_pcChants && _pcChants[sci]) || [];
+  const sansSon = especes.filter(sci => !sons[sci].length);
   if(sansSon.length){
     box.innerHTML = `<p class="help pc-attente">Impossible de charger les chants (${esc(sansSon.map(_pcNomFr).join(', '))}). Vérifie ta connexion et réessaie.</p><div class="pc-fin-btns"><button type="button" class="btn ghost" data-pc-retour>Retour au parcours</button></div>`;
     return;
@@ -19722,7 +19739,7 @@ async function _pcLancer(i){
 function _pcQuestion(){
   const box = document.getElementById('pcParcours'); const p = _pc.partie;
   if(!box || !p) return;
-  _pcCouperSons();
+  _pcLibererSons();
   const et = PARCOURS_MESANGES.etapes[p.etape];
   const q = p.questions[p.cur];
   p.repondu = false;
@@ -19847,6 +19864,7 @@ function _pcRepondre(k){
 function _pcFin(){
   const box = document.getElementById('pcParcours'); const p = _pc.partie;
   if(!box || !p) return;
+  _pcLibererSons();
   const et = PARCOURS_MESANGES.etapes, e = et[p.etape];
   _pcEnregistrerScore(p.etape, p.bonnes);
   const ok = p.bonnes >= _pcSeuil(e);
@@ -19880,7 +19898,7 @@ document.addEventListener('click', e => {
   if(!e.target.closest('#pcParcours')) return;
   const etape = e.target.closest('[data-pc-etape]'); if(etape){ _pc.selection = +etape.dataset.pcEtape; _parcoursRender(); return; }
   const jouer = e.target.closest('[data-pc-jouer]'); if(jouer){ _pcLancer(+jouer.dataset.pcJouer); return; }
-  const retour = e.target.closest('[data-pc-retour]'); if(retour){ _pcCouperSons(); _pc.partie = null; _parcoursRender(); return; }
+  const retour = e.target.closest('[data-pc-retour]'); if(retour){ _pcLibererSons(); _pc.partie = null; _parcoursRender(); return; }
   const ecoute = e.target.closest('[data-pc-ecoute]'); if(ecoute){ _pcEcouter(+ecoute.dataset.pcEcoute); return; }
   const choix = e.target.closest('[data-pc-choix]'); if(choix){ _pcRepondre(+choix.dataset.pcChoix); return; }
   if(e.target.closest('[data-pc-reecouter]')){ const a = document.getElementById('pcAudio'); if(a){ try{ a.currentTime = 0; }catch(_){} a.play().catch(() => {}); } return; }

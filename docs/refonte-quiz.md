@@ -51,8 +51,12 @@ enregistreur. La note A juge le son, pas l'identification.
 Décision de Mathis : je présélectionne, il écoute. `node outils/build/chants-parcours.mjs`
 écrit 15 candidats par espèce dans `notes-privees/ecoute-chants/candidats.json` (filtres en
 tête du script) ; il les écoute sur `http://localhost:8765/notes-privees/ecoute-chants/` et
-colle sa sélection (au moins 8 par espèce). Reste à faire : mettre les chants gardés dans
-`data/` et faire jouer au parcours ceux-là seulement, au lieu de `_fetchXenoSound`.
+colle sa sélection (au moins 8 par espèce). Fait le 2026-10-16 : 66 chants gardés (13, 15, 15, 10,
+13), un enregistreur différent pour chacun, dans `data/parcours-mesanges.json`, fabriqué par
+`outils/build/chants-gardes.mjs` qui contient la liste. Le parcours ne joue plus que ceux-là.
+
+Ce que ça ne couvre pas : les cris (les mésanges crient toute l'année) et les enregistrements
+« comme dehors », avec du fond. Ticket qg#65.
 
 ## À garder en tête
 
