@@ -1,5 +1,7 @@
-# EN LOCAL le 2026-10-16, PAS POUSSÉ : barre de lecture fluide, « nouvelle » retiré de la pastille (v784, app.js?v=358)
+# EN LOCAL le 2026-10-16, PAS POUSSÉ : barre fluide, « nouvelle » retiré, question suivante automatique (v785, app.js?v=359)
 - Barre du chant suivie à chaque image (requestAnimationFrame) au lieu de timeupdate. « , nouvelle » reste pour les lecteurs d'écran.
+- Après une réponse : plus de boutons Suivante ni Réécouter, la suite arrive seule après 1 s (PC_PAUSE_SUITE_MS). Touche Entrée retirée.
+- Prototype du tableau des critères : notes-privees/maquettes/criteres/ (familles en colonnes, oiseaux en lignes, coches et croix dessinées, 3 exemples à écouter par oiseau).
 - Critères des chants (qg#60) : premier jet dans docs/criteres-chants.md, 9 critères pour les 5 oiseaux, sourcés. Attend la validation à l'oreille de Mathis (cases « ? »).
 - Affichage voulu : dans chaque parcours pour ses espèces, plus un tableau d'ensemble depuis la page Quiz, là où seront regroupés tous les parcours. Maquette à faire après validation.
 ---

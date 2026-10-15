@@ -19591,6 +19591,7 @@ const PARCOURS_MESANGES = {
 };
 const PC_CHANTS_PROPOSES = 3;
 const PC_DUREE_MAX = 20;   // secondes lues par chant, comme l'ancien quiz
+const PC_PAUSE_SUITE_MS = 1000;   // pause entre la reponse et la question suivante : « tres legere », dit Mathis
 const _pc = { selection: null, partie: null };
 let _pcChants = null;   // data/parcours-mesanges.json, lu au premier lancement d'une etape
 
@@ -19788,8 +19789,7 @@ function _pcQuestion(){
           </div>`).join('')}
       </div>`;
   }
-  box.innerHTML = `<div class="pc-jeu">${tete}<div class="pc-question">${corps}</div><div id="pcVerdict"></div>
-    <div class="pc-suite"><button type="button" class="btn" id="pcSuivante" hidden>${p.cur + 1 < et.q ? 'Suivante' : 'Voir le résultat'}</button></div></div>`;
+  box.innerHTML = `<div class="pc-jeu">${tete}<div class="pc-question">${corps}</div><div id="pcVerdict"></div></div>`;
   if(q.type === 'nom'){
     const audio = document.getElementById('pcAudio'), btn = document.getElementById('pcPlay'), fill = document.getElementById('pcProgression');
     btn.addEventListener('click', () => { if(audio.paused) audio.play().catch(() => {}); else audio.pause(); });
@@ -19863,10 +19863,17 @@ function _pcRepondre(k){
       <div class="qz-verdict-species"><span class="sp-link" data-sci="${esc(q.cible)}">${esc(_pcNomFr(q.cible))}</span></div>
       <div class="qz-verdict-sci">${esc(_pcLatin(q.cible))}</div>
       ${sono ? `<img class="qz-verdict-sono" src="${esc(sono)}" alt="Sonagramme du chant">` : ''}
-      ${q.type === 'nom' ? '<button type="button" class="qz-verdict-replay" data-pc-reecouter>Réécouter</button>' : ''}
     </div>`;
   const ent = box.querySelector('.pc-jeu-droite > span'); if(ent){ ent.textContent = '✓ ' + p.bonnes; ent.setAttribute('aria-label', p.bonnes + ' bonnes réponses'); }
-  const suiv = document.getElementById('pcSuivante'); if(suiv){ suiv.hidden = false; suiv.focus({ preventScroll: true }); }
+  // Plus de bouton « Suivante » ni « Réécouter » : la question suivante arrive seule apres une
+  // courte pause, le temps de voir le verdict (demande de Mathis le 2026-10-16). Si la partie a
+  // ete quittee entre-temps, on ne fait rien.
+  const cur = p.cur;
+  setTimeout(() => {
+    if(_pc.partie !== p || p.cur !== cur) return;
+    p.cur++;
+    if(p.cur >= p.questions.length) _pcFin(); else _pcQuestion();
+  }, PC_PAUSE_SUITE_MS);
 }
 function _pcFin(){
   const box = document.getElementById('pcParcours'); const p = _pc.partie;
@@ -19908,14 +19915,8 @@ document.addEventListener('click', e => {
   const retour = e.target.closest('[data-pc-retour]'); if(retour){ _pcLibererSons(); _pc.partie = null; _parcoursRender(); return; }
   const ecoute = e.target.closest('[data-pc-ecoute]'); if(ecoute){ _pcEcouter(+ecoute.dataset.pcEcoute); return; }
   const choix = e.target.closest('[data-pc-choix]'); if(choix){ _pcRepondre(+choix.dataset.pcChoix); return; }
-  if(e.target.closest('[data-pc-reecouter]')){ const a = document.getElementById('pcAudio'); if(a){ try{ a.currentTime = 0; }catch(_){} a.play().catch(() => {}); } return; }
-  if(e.target.closest('#pcSuivante')){
-    const p = _pc.partie; if(!p) return;
-    p.cur++;
-    if(p.cur >= p.questions.length) _pcFin(); else _pcQuestion();
-  }
 });
-// Raccourcis du parcours : 1 a 5 repondent, Espace reecoute, Entree passe a la suite.
+// Raccourcis du parcours : 1 a 5 repondent, Espace reecoute.
 document.addEventListener('keydown', e => {
   const view = document.getElementById('viewQuiz');
   if(!view || view.style.display === 'none' || !_pc.partie) return;
@@ -19931,10 +19932,6 @@ document.addEventListener('keydown', e => {
     const a = document.getElementById('pcAudio'); if(!a) return;
     e.preventDefault(); try{ a.currentTime = 0; }catch(_){} a.play().catch(() => {});
     return;
-  }
-  if(e.key === 'Enter'){
-    const s = document.getElementById('pcSuivante');
-    if(s && !s.hidden && document.activeElement !== s){ e.preventDefault(); s.click(); }
   }
 });
 // PWA : installation sur l'écran d'accueil

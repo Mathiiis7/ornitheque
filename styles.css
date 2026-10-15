@@ -1532,7 +1532,6 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .pc-ecoute::before { content:''; width:0; height:0; border-style:solid; border-width:8px 0 8px 13px; border-color:transparent transparent transparent #fff; margin-left:3px; }
   .pc-ecoute.playing::before { width:10px; height:14px; border:0; border-left:4px solid #fff; border-right:4px solid #fff; margin-left:0; }
   .pc-choisir { padding:7px 14px; }
-  .pc-suite { display:flex; justify-content:center; margin-top:16px; }
   .pc-fin { text-align:center; padding:12px 0; }
   .pc-fin-score { font:700 44px/1.1 var(--titre); margin:8px 0 4px; }
   .pc-confusions { list-style:none; padding:0; margin:6px 0 0; font-size:14px; color:var(--ink-2); }
@@ -2835,7 +2834,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
 
     /* Parcours du quiz. Les ronds de la frise restent petits : 7 ronds de 52 px ne tiennent
        pas sur un telephone, et chaque etape a aussi sa ligne dans la liste, a 52 px. */
-    .pc-ligne, .pc-choisir, .pc-quitter, .pc-btn-jouer, .pc-fin-btns .btn, .pc-suite .btn { min-height:52px; }
+    .pc-ligne, .pc-choisir, .pc-quitter, .pc-btn-jouer, .pc-fin-btns .btn { min-height:52px; }
     .pc-ecoute { width:52px; height:52px; }
 
     /* Les pastilles de palier sont peintes dans une boite de taille double ramenee de
