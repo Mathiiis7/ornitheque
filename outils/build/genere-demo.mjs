@@ -420,6 +420,10 @@ const INJECTION = `
   }
   #demoBandeau span{ font-weight:400; opacity:.85; }
   @media (max-width:640px){ #demoBandeau{ font-size:12px; padding:7px 10px; } }
+  /* Le site ne garde que 28 px sous le pied de page : la demo garde les 80 d avant, sinon
+     le bandeau fixe recouvre la derniere ligne. Ce bloc passe AVANT styles.css, d ou le
+     html devant, qui le fait gagner. */
+  html .wrap{ padding-bottom:80px; }
 </style>
 <!-- ================= FIN DU BLOC DEMO ================= -->`;
 
