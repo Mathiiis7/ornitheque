@@ -2,7 +2,7 @@
 - Interrupteur soleil/lune (variante B de notes-privees/maquettes/theme/), bille placée par la CSS selon le thème réel.
 - Onglets à 10 px sous le logo (22 avant) ; haut de page 24 px (28 avant, 18 essayé et jugé trop haut).
 - Vérifié 1280 et 375, clair et sombre, 11 bancs CONFORME. Vu en passant : le thème n'est pas retenu d'une visite à l'autre.
-- Syrinx : recherche dans docs/inspiration-syrinx.md. Attente de ce qu'il veut en reprendre.
+- Syrinx : idées notées en qg#55 à qg#63 (en réserve), détail dans docs/inspiration-syrinx.md.
 ---
 # FAIT le 2026-10-15 (pas poussé) : pastille TOI et palette d'emojis (v772, app.js?v=348)
 - « TOI » : variante C (11,5 px gras, maquette notes-privees/maquettes/toi/tailles-gras.html), centrée par flexbox à côté du prénom dans le classement et « Les observations de qui ? » ; 8 px avant.

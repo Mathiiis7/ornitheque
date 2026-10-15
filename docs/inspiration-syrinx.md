@@ -46,6 +46,35 @@ espèces ratées (Leitner), quiz du jour de 5 questions avec classement et séri
 | **Bibliothèque « oiseaux que je connais à l'oreille »** | Ce qu'on a appris, séparé de ce qu'on a vu. |
 | **Guides gratuits sur le site** | Lire un sonagramme, retenir un cri, une méthode sur sept jours. |
 
+## Ce que Mathis veut reprendre (2026-10-15)
+
+Tickets en réserve dans Mathiiis7/qg, titre seul ; le détail est ici.
+
+- **qg#55 - Apprendre pas à pas.** Groupes de 4 ou 5 oiseaux. Contrairement à Syrinx, dont les
+  groupes mélangent des chants très différents, un groupe réunit des oiseaux AU CHANT PROCHE, pour
+  apprendre à les distinguer. Point de départ : `CONFUSION_GROUPS` dans `app.js` (46 groupes,
+  servent déjà aux mauvaises réponses du quiz et à « À ne pas confondre »).
+- **qg#56 - Modes d'entraînement, 10 manches chacun.** (1) un chant, 5 noms proposés ; (2) un
+  oiseau, 3 chants proposés ; (3) écrire le nom, le niveau final ; (4) s'entraîner sur ses
+  lacunes : les plus ratés et les plus confondus. Existant : Classe (son vers nom, photo vers son),
+  Entraînement de Leitner, quiz du jour en 5 questions et de la semaine en 20.
+- **qg#57 - Quiz photo.** Même principe, mais on devine à l'apparence et non au chant.
+- **qg#58 - Paliers par oiseau.** Enchaîner les bonnes réponses sur un même oiseau fait monter
+  une chaîne, avec des paliers bronze, argent, or.
+- **qg#59 - Commencer par la France, et par les passereaux.** Le reste viendra après.
+- **qg#60 - Fiches d'écoute en tableau.** Une grille de critères communs (à définir), cochés ou
+  non pour chaque oiseau, chacun ayant une combinaison différente, plus une ligne sur ce qui lui
+  est propre. Même chose ensuite pour la vue. À faire groupe par groupe, pas tout d'un coup.
+- **qg#61 - Missions quotidiennes.** Elles débloquent des décorations de profil. PAS de mascotte :
+  le logo suffit, une mascotte ferait enfantin.
+- **qg#62 - Plusieurs oiseaux préférés au profil**, choisis parmi son Birdydex. Existant : une
+  seule « Espèce préférée » (`#profFav`), montrée dans le classement.
+- **qg#63 - Statistiques du quiz dans le profil.** On ne sait pas ce qu'en fait Syrinx (réservé à
+  la version payante) : à réfléchir.
+- **Classement entre joueurs** : déjà là pour le quiz (du jour, de la semaine). Pas de ticket ;
+  il faudra le prolonger aux nouveaux modes.
+- **Écartés** : duels en direct (trop compliqué), mascotte.
+
 ## Leur style
 
 Fond crème, titres ronds et gras, oiseaux détourés en collage, notes manuscrites (police Caveat)
