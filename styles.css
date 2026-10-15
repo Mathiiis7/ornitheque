@@ -160,7 +160,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
        navigateur. Reduit tout uniformement sans casser les proportions. */
     zoom:0.85; }
   /* 28 px sous le pied de page depuis le 2026-10-15 (80 avant, trop de vide : Mathis). */
-  .wrap { max-width:1560px; margin:0 auto; padding:20px 24px 28px; }
+  .wrap { max-width:1560px; margin:0 auto; padding:24px 24px 28px; }
   /* Bloque le scroll de la page quand la fiche espece est ouverte. La molette n'affecte
      que le contenu de la fiche, peu importe la position de la souris. */
   body.species-modal-open { overflow:hidden; }
@@ -247,11 +247,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* Logo, theme et onglets collent au haut de l'ecran quand on descend (Mathis, 2026-10-15).
      Les marges negatives etirent le fond sur les gouttieres de .wrap, pour que la page ne
      passe pas visible sur les cotes, et gardent la mise en page d'avant au repos.
-     top:0 et 20 px au-dessus du logo (26 avant) : l'entete ne bouge plus du tout en defilant.
+     top:0 et 24 px au-dessus du logo (26 avant, 20 essaye) : l'entete ne bouge plus du tout en defilant.
      Le top:-16px de la v779 la faisait remonter au debut du defilement, ce qui faisait bizarre
-     (Mathis, meme jour). 20 px : compromis, 18 avait ete juge trop haut. */
+     (Mathis, meme jour). */
   .entete-fixe { position:sticky; top:0; z-index:60; background:var(--bg);
-    margin:-20px -24px 0; padding:20px 24px 0; }
+    margin:-24px -24px 0; padding:24px 24px 0; }
   header.top { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; flex-wrap:wrap; }
   .brand { display:flex; gap:14px; align-items:center; }
   .mark { width:54px; height:54px; flex:none; display:grid; place-items:center;
@@ -949,9 +949,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   @media (prefers-reduced-motion: reduce){ *{animation:none!important; transition:none!important;} }
 
   /* onglets */
-  /* 16 px sous le logo depuis le 2026-10-15 (22 avant, 10 essaye et juge trop remonte) : Mathis.
+  /* 12 px sous le logo depuis le 2026-10-15 (22, puis 16 ; 10 juge trop remonte) : Mathis.
+     Logo 24 px + 12 = onglets a la meme hauteur qu'avec 20 + 16 : seul l'ecart a change.
      Le haut de .wrap : 28 px avant, 18 puis 24 juges trop hauts, 26 garde le meme jour. */
-  .tabs { display:flex; gap:4px; margin-top:16px; border-bottom:1px solid var(--line);
+  .tabs { display:flex; gap:4px; margin-top:12px; border-bottom:1px solid var(--line);
     overflow-x:auto; flex-wrap:nowrap; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
   .tabs::-webkit-scrollbar { display:none; }
   /* Onglets au repos en graisse normale, l'actif seul en gras : repris de la maquette
