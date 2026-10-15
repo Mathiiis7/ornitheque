@@ -159,7 +159,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     /* zoom global 0.85 : rendu par defaut plus dense, comme si le user etait a 85% de zoom
        navigateur. Reduit tout uniformement sans casser les proportions. */
     zoom:0.85; }
-  .wrap { max-width:1560px; margin:0 auto; padding:24px 24px 80px; }
+  .wrap { max-width:1560px; margin:0 auto; padding:26px 24px 80px; }
   /* Bloque le scroll de la page quand la fiche espece est ouverte. La molette n'affecte
      que le contenu de la fiche, peu importe la position de la souris. */
   body.species-modal-open { overflow:hidden; }
@@ -940,9 +940,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   @media (prefers-reduced-motion: reduce){ *{animation:none!important; transition:none!important;} }
 
   /* onglets */
-  /* 10 px sous le logo depuis le 2026-10-15 (22 avant) : « un peu bas sous le logo », Mathis.
-     Le haut de .wrap : 28 px avant, 18 essaye et juge trop haut, 24 garde le meme jour. */
-  .tabs { display:flex; gap:4px; margin-top:10px; border-bottom:1px solid var(--line);
+  /* 16 px sous le logo depuis le 2026-10-15 (22 avant, 10 essaye et juge trop remonte) : Mathis.
+     Le haut de .wrap : 28 px avant, 18 puis 24 juges trop hauts, 26 garde le meme jour. */
+  .tabs { display:flex; gap:4px; margin-top:16px; border-bottom:1px solid var(--line);
     overflow-x:auto; flex-wrap:nowrap; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
   .tabs::-webkit-scrollbar { display:none; }
   /* Onglets au repos en graisse normale, l'actif seul en gras : repris de la maquette
