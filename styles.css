@@ -552,16 +552,13 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      milieu : au milieu, la ligne de texte de la case l'entourait encore et ajoutait 1,2 px. */
   #viewRanking td .chip { line-height:17px; padding:1px 8px; vertical-align:top; }
   #viewRanking .youtag { font-size:12px; }
-  /* « TOI » a cote du prenom : la pastille garde sa taille (20 px de haut, 34 de large), seul le
-     texte descend de 12 a 10,5 px - variante B choisie par Mathis le 2026-10-12 sur
-     notes-privees/maquettes/toi/. Boite en flex pour centrer le texte quelle que soit sa taille. */
-  /* Marges 7 / 5 et non 6 / 6 : l'espacement des lettres s'ajoute aussi APRES le dernier « I »,
-     et l'encre mesuree tombait a 6,5 px du bord gauche contre 8,5 du droit. */
-  /* Meme pastille dans le choix « Les observations de qui ? » du fil, et 8 px d'air apres le
-     prenom au lieu de 4 : le classement met son gap a 0, la pastille collait au nom (Mathis,
-     2026-10-15). */
-  #boardList .youtag, .cp-item .youtag { font-size:10.5px; line-height:1; height:20px; min-width:34px; padding:0 5px 0 7px;
-    box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; margin-left:8px; vertical-align:middle; }
+  /* « toi » a cote du prenom, dans le classement et dans le choix « Les observations de qui ? »
+     du fil : la pastille verte garde ses 20 px de haut, mais le texte est celui du prenom
+     (meme taille, meme graisse, minuscules, lettres non ecartees) - les petites capitales
+     grasses espacees faisaient croire a une autre police (Mathis, 2026-10-15). 8 px d'air
+     apres le prenom : le classement met son gap a 0 et la pastille collait au nom. */
+  #boardList .youtag, .cp-item .youtag { font:inherit; text-transform:none; letter-spacing:0; line-height:20px; height:20px;
+    padding:0 8px; box-sizing:border-box; display:inline-block; margin-left:8px; vertical-align:baseline; }
   #viewRanking .fp-hint, #viewRanking .miss-toggle { font-size:14px; font-weight:400; text-transform:none; letter-spacing:0; color:var(--ink-3); }
   #viewRanking .miss-toggle { color:var(--ink-2); }
   #viewRanking .person-chip, #viewRanking .fp-reset, #viewRanking .filters-toggle, #viewRanking .rar-chip,

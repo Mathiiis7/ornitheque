@@ -1,5 +1,5 @@
-# FAIT le 2026-10-15 (pas poussé) : pastille TOI et palette d'emojis (v769, app.js?v=345, commit 81f1b911)
-- Choix « Les observations de qui ? » : pastille TOI du classement (option moi:true de _openFilterPicker). Classement : 8 px avant la pastille.
+# FAIT le 2026-10-15 (pas poussé) : pastille toi et palette d'emojis (v770, app.js?v=346)
+- « toi » : pastille verte, texte du prénom (minuscules, même taille et graisse), même ligne de base, dans le choix « Les observations de qui ? » et le classement ; 8 px avant.
 - Emojis : EMOJI_GROUPES, 363 en 9 familles titrées, grille 8 colonnes. Emojis iPhone sur PC : non (dessins d'Apple non réutilisables), réponse donnée.
 Vérifié 1100 px et 375 px, 11 bancs CONFORME. Reste : qu'il regarde en local, puis pousser.
 ---
