@@ -19650,10 +19650,12 @@ function _parcoursRender(){
     const rond = `<button type="button" class="pc-rond ${s}${i === sel ? ' sel' : ''}" data-pc-etape="${i}" ${s === 'ferme' ? 'disabled' : ''} aria-label="Étape ${i + 1} : ${esc(x.titre)}, ${etatTxt[s]}">${s === 'ok' ? '✓' : i + 1}</button>`;
     return (i ? `<span class="pc-trait${_pcReussie(i - 1, best) ? ' f' : ''}"></span>` : '') + rond;
   }).join('');
-  // Especes en jeu ; a une etape qui en ajoute une, la nouvelle est signalee.
+  // Especes en jeu ; a une etape qui en ajoute une, la nouvelle est signalee par sa couleur.
+  // Le mot « nouvelle » reste pour les lecteurs d'ecran seulement : a l'oeil, le bleu suffit
+  // (demande de Mathis le 2026-10-16).
   const nouvelle = (sel > 0 && e.n > et[sel - 1].n) ? e.n - 1 : -1;
   const puces = P.especes.slice(0, e.n).map((sci, j) =>
-    `<span class="pc-esp${j === nouvelle ? ' neuf' : ''}">${esc(_pcNomFr(sci))}${j === nouvelle ? ', nouvelle' : ''}</span>`).join('');
+    `<span class="pc-esp${j === nouvelle ? ' neuf' : ''}">${esc(_pcNomFr(sci))}${j === nouvelle ? '<span class="visually-hidden">, nouvelle</span>' : ''}</span>`).join('');
   const meilleur = best[sel] != null ? `meilleur score ${best[sel]}/${e.q}` : 'pas encore jouée';
   const autres = et.map((x, i) => {
     if(i === sel) return '';
@@ -19791,14 +19793,19 @@ function _pcQuestion(){
   if(q.type === 'nom'){
     const audio = document.getElementById('pcAudio'), btn = document.getElementById('pcPlay'), fill = document.getElementById('pcProgression');
     btn.addEventListener('click', () => { if(audio.paused) audio.play().catch(() => {}); else audio.pause(); });
-    audio.addEventListener('play', () => btn.classList.add('playing'));
-    audio.addEventListener('pause', () => btn.classList.remove('playing'));
-    audio.addEventListener('ended', () => { btn.classList.remove('playing'); fill.style.width = '0%'; });
-    audio.addEventListener('timeupdate', () => {
-      if(audio.currentTime >= PC_DUREE_MAX){ audio.pause(); audio.currentTime = 0; fill.style.width = '0%'; return; }
+    // La barre suit chaque image de l'ecran, et non timeupdate : celui-ci ne tombe que 4 fois
+    // par seconde environ, et la barre avancait par a-coups (vu par Mathis le 2026-10-16).
+    let anim = 0;
+    const suivre = () => {
+      if(!audio.isConnected || audio.paused){ anim = 0; return; }
+      if(audio.currentTime >= PC_DUREE_MAX){ audio.pause(); audio.currentTime = 0; fill.style.width = '0%'; anim = 0; return; }
       const d = Math.min(audio.duration || PC_DUREE_MAX, PC_DUREE_MAX);
       fill.style.width = (audio.currentTime / d * 100) + '%';
-    });
+      anim = requestAnimationFrame(suivre);
+    };
+    audio.addEventListener('play', () => { btn.classList.add('playing'); if(!anim) anim = requestAnimationFrame(suivre); });
+    audio.addEventListener('pause', () => btn.classList.remove('playing'));
+    audio.addEventListener('ended', () => { btn.classList.remove('playing'); fill.style.width = '0%'; });
     audio.play().catch(() => {});
   } else {
     if(typeof _fetchWikiPhoto === 'function'){
