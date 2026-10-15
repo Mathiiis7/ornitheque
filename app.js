@@ -17087,7 +17087,14 @@ function _quizSetMode(m){
   }
   _quizRefreshStatsUI();
 }
+// Depuis le 2026-10-15, la page Quiz n'affiche que le parcours. L'ancien quiz est masque
+// (#quizAncien) et n'est plus initialise : son abonnement au classement coutait des
+// lectures Firestore pour un ecran que personne ne voit. Pour le rallumer, rappeler
+// _quizAncienInit() et retirer hidden de #quizAncien.
 function renderQuizInit(){
+  _parcoursRender();
+}
+function _quizAncienInit(){
   _quizSetMode(_quizMode);
   // Restore le chip 'Sens' selon la valeur persistee (default classic)
   document.querySelectorAll('[data-quiz-sens]').forEach(b => b.classList.toggle('on', b.dataset.quizSens === _quizSens));
@@ -19524,6 +19531,9 @@ document.addEventListener('click', e => {
 document.addEventListener('keydown', e => {
   const view = document.getElementById('viewQuiz');
   if(!view || view.style.display === 'none' || view.offsetParent === null) return;
+  // Ancien quiz masque : sans ce garde, Entree cliquait son bouton « Lancer » cache et
+  // jouait un son sans rien afficher. Le parcours a ses propres raccourcis.
+  if(document.getElementById('quizAncien')?.hidden) return;
   const tag = (e.target?.tagName || '').toLowerCase();
   if(tag === 'input' || tag === 'textarea' || tag === 'select' || e.target?.isContentEditable) return;
   if(e.ctrlKey || e.metaKey || e.altKey) return;
@@ -19553,6 +19563,353 @@ document.addEventListener('keydown', e => {
     if(next && !next.hidden){ e.preventDefault(); next.click(); return; }
     const start = document.getElementById('quizStart');
     if(start){ e.preventDefault(); start.click(); return; }
+  }
+});
+/* ---------------- Parcours du quiz ----------------
+   Refonte du 2026-10-15, facon Syrinx : un petit groupe d'oiseaux au chant proche, appris
+   en 7 etapes. Decisions de Mathis (docs/refonte-quiz.md) : les especes arrivent du plus
+   facile au plus dur, la mesange noire en dernier parce que c'est le sosie de la
+   charbonniere ; 8 bonnes reponses sur 10 (12 sur 15 a la derniere) ouvrent l'etape
+   suivante ; une etape se rejoue a volonte.
+   La progression vit dans le navigateur (localStorage), pas encore dans Firestore.
+   ------------------------------------------------ */
+const PARCOURS_MESANGES = {
+  cle: 'mesanges',
+  titre: 'mésanges et pouillot véloce',
+  especes: ['parus major', 'phylloscopus collybita', 'cyanistes caeruleus', 'poecile palustris', 'periparus ater'],
+  // type : 'nom' = un chant, des noms proposes ; 'chant' = un oiseau, 3 chants proposes ;
+  // 'melange' = moitie de chaque. n = nombre d'especes en jeu (les n premieres).
+  etapes: [
+    { titre: 'Deux oiseaux', type: 'nom', n: 2, q: 10 },
+    { titre: 'Trois oiseaux', type: 'nom', n: 3, q: 10 },
+    { titre: 'Quatre oiseaux', type: 'nom', n: 4, q: 10 },
+    { titre: 'Cinq oiseaux', type: 'nom', n: 5, q: 10 },
+    { titre: 'Trouver le chant', type: 'chant', n: 5, q: 10 },
+    { titre: 'Le mélange', type: 'melange', n: 5, q: 10 },
+    { titre: 'L\'épreuve', type: 'nom', n: 5, q: 15 },
+  ],
+};
+const PC_CHANTS_PROPOSES = 3;
+const PC_DUREE_MAX = 20;   // secondes lues par chant, comme l'ancien quiz
+const _pc = { selection: null, partie: null };
+
+const _pcSeuil = et => Math.ceil(et.q * 0.8);
+const _pcNomFr = sci => FR_NAMES[sci] || sci;
+const _pcLatin = sci => sci.charAt(0).toUpperCase() + sci.slice(1);
+const _pcMelanger = arr => arr.map(v => [Math.random(), v]).sort((a, b) => a[0] - b[0]).map(v => v[1]);
+function _pcScores(){
+  try{ const s = JSON.parse(localStorage.getItem('mb-parcours-' + PARCOURS_MESANGES.cle) || '{}'); return Array.isArray(s.best) ? s.best : []; }
+  catch(_){ return []; }
+}
+function _pcEnregistrerScore(i, score){
+  const best = _pcScores();
+  if(best[i] != null && best[i] >= score) return;
+  best[i] = score;
+  try{ localStorage.setItem('mb-parcours-' + PARCOURS_MESANGES.cle, JSON.stringify({ best })); }catch(_){}
+}
+const _pcReussie = (i, best) => best[i] != null && best[i] >= _pcSeuil(PARCOURS_MESANGES.etapes[i]);
+const _pcOuverte = (i, best) => i === 0 || _pcReussie(i - 1, best);
+// L'etape a jouer : la premiere ouverte et pas encore reussie, sinon la derniere.
+function _pcEtapeDuMoment(best){
+  const et = PARCOURS_MESANGES.etapes;
+  for(let i = 0; i < et.length; i++) if(_pcOuverte(i, best) && !_pcReussie(i, best)) return i;
+  return et.length - 1;
+}
+function _pcDescription(et){
+  const quoi = et.type === 'nom' ? `Un chant, ${et.n} noms proposés`
+    : et.type === 'chant' ? `Un oiseau, ${PC_CHANTS_PROPOSES} chants proposés`
+    : 'Les deux sortes de questions';
+  return `${quoi} · ${et.q} questions · ${_pcSeuil(et)} bonnes réponses pour passer`;
+}
+function _pcCouperSons(){
+  document.querySelectorAll('#pcParcours audio').forEach(a => { try{ a.pause(); }catch(_){} });
+}
+
+function _parcoursRender(){
+  const box = document.getElementById('pcParcours'); if(!box) return;
+  if(_pc.partie) return;   // une partie en cours reste a l'ecran quand on revient sur l'onglet
+  const P = PARCOURS_MESANGES, et = P.etapes, best = _pcScores();
+  const reussies = et.filter((_, i) => _pcReussie(i, best)).length;
+  const moment = _pcEtapeDuMoment(best);
+  const sel = (_pc.selection != null && _pcOuverte(_pc.selection, best)) ? _pc.selection : moment;
+  const e = et[sel];
+  const etat = i => _pcReussie(i, best) ? 'ok' : (_pcOuverte(i, best) ? 'cours' : 'ferme');
+  const etatTxt = { ok: 'réussie', cours: 'à jouer', ferme: 'fermée' };
+  const frise = et.map((x, i) => {
+    const s = etat(i);
+    const rond = `<button type="button" class="pc-rond ${s}${i === sel ? ' sel' : ''}" data-pc-etape="${i}" ${s === 'ferme' ? 'disabled' : ''} aria-label="Étape ${i + 1} : ${esc(x.titre)}, ${etatTxt[s]}">${s === 'ok' ? '✓' : i + 1}</button>`;
+    return (i ? `<span class="pc-trait${_pcReussie(i - 1, best) ? ' f' : ''}"></span>` : '') + rond;
+  }).join('');
+  // Especes en jeu ; a une etape qui en ajoute une, la nouvelle est signalee.
+  const nouvelle = (sel > 0 && e.n > et[sel - 1].n) ? e.n - 1 : -1;
+  const puces = P.especes.slice(0, e.n).map((sci, j) =>
+    `<span class="pc-esp${j === nouvelle ? ' neuf' : ''}">${esc(_pcNomFr(sci))}${j === nouvelle ? ', nouvelle' : ''}</span>`).join('');
+  const meilleur = best[sel] != null ? `meilleur score ${best[sel]}/${e.q}` : 'pas encore jouée';
+  const autres = et.map((x, i) => {
+    if(i === sel) return '';
+    const s = etat(i);
+    const droite = s === 'ok' ? `${best[i]}/${x.q} · rejouer` : (s === 'cours' ? (best[i] != null ? `${best[i]}/${x.q} · à jouer` : 'à jouer') : '<span aria-label="fermée">🔒</span>');
+    return `<button type="button" class="pc-ligne" data-pc-etape="${i}" ${s === 'ferme' ? 'disabled' : ''}><b>${i + 1} · ${esc(x.titre)}</b><span>${droite}</span></button>`;
+  }).join('');
+  const fini = reussies === et.length;
+  box.innerHTML = `
+    <p class="pc-intro">Cinq oiseaux au chant proche, appris pas à pas. ${_pcSeuil(et[0])} bonnes réponses sur ${et[0].q} ouvrent l'étape suivante.</p>
+    <p class="pc-sous">Parcours 1 : ${esc(P.titre)} · ${fini ? 'parcours terminé' : `${reussies} ${reussies > 1 ? 'étapes réussies' : 'étape réussie'} sur ${et.length}`}</p>
+    <div class="pc-frise">${frise}</div>
+    <div class="pc-grande">
+      <div>
+        <div class="pc-etiq">Étape ${sel + 1} sur ${et.length}</div>
+        <h3 class="bloc-titre">${esc(e.titre)}</h3>
+        <p class="pc-meta">${esc(_pcDescription(e))}</p>
+        <div class="pc-especes">${puces}</div>
+      </div>
+      <div class="pc-jouer">
+        <button type="button" class="btn pc-btn-jouer" data-pc-jouer="${sel}">${best[sel] != null ? 'Rejouer' : 'Jouer'}</button>
+        <div class="pc-meta">${meilleur}</div>
+      </div>
+    </div>
+    <div class="pc-liste">${autres}</div>`;
+}
+
+// Choisit un enregistrement pour une espece en variant les enregistreurs : un meme micro au
+// meme endroit fait apprendre le micro, pas le chant (idee retenue le 2026-10-15).
+// Les listes de _fetchXenoSound sont deja triees par qualite : on pioche parmi les 3
+// premiers candidats encore jamais entendus dans la partie.
+function _pcChoisirEnreg(sci, partie){
+  const sons = partie.sons[sci] || {};
+  const liste = ((sons.songList && sons.songList.length) ? sons.songList : (sons.callList || [])).filter(r => r.file);
+  const recs = partie.enregistreurs.get(sci) || new Set();
+  let cand = liste.filter(r => !partie.utilises.has(r.id) && !recs.has(r.rec));
+  if(!cand.length) cand = liste.filter(r => !partie.utilises.has(r.id));
+  if(!cand.length) cand = liste;
+  if(!cand.length) return null;
+  const r = cand[Math.floor(Math.random() * Math.min(3, cand.length))];
+  partie.utilises.add(r.id); recs.add(r.rec); partie.enregistreurs.set(sci, recs);
+  return r;
+}
+// Cibles reparties egalement entre les especes, jamais deux fois la meme d'affilee.
+function _pcCibles(especes, q){
+  const out = [];
+  while(out.length < q){
+    let tour = _pcMelanger(especes);
+    if(out.length && tour[0] === out[out.length - 1] && tour.length > 1) tour = [...tour.slice(1), tour[0]];
+    out.push(...tour);
+  }
+  return out.slice(0, q);
+}
+async function _pcLancer(i){
+  const box = document.getElementById('pcParcours'); if(!box) return;
+  const et = PARCOURS_MESANGES.etapes[i];
+  const especes = PARCOURS_MESANGES.especes.slice(0, et.n);
+  box.innerHTML = '<p class="help pc-attente">Chargement des chants…</p>';
+  const sons = {};
+  await Promise.all(especes.map(async sci => { sons[sci] = await _fetchXenoSound(sci).catch(() => null) || {}; }));
+  const sansSon = especes.filter(sci => !((sons[sci].songList || []).length || (sons[sci].callList || []).length));
+  if(sansSon.length){
+    box.innerHTML = `<p class="help pc-attente">Impossible de charger les chants (${esc(sansSon.map(_pcNomFr).join(', '))}). Vérifie ta connexion et réessaie.</p><div class="pc-fin-btns"><button type="button" class="btn ghost" data-pc-retour>Retour au parcours</button></div>`;
+    return;
+  }
+  const cibles = _pcCibles(especes, et.q);
+  let types = cibles.map(() => et.type);
+  if(et.type === 'melange') types = _pcMelanger(cibles.map((_, k) => k < Math.ceil(et.q / 2) ? 'nom' : 'chant'));
+  _pc.partie = {
+    etape: i, especes, sons, cur: 0, bonnes: 0, repondu: false,
+    questions: cibles.map((cible, k) => ({ cible, type: types[k] })),
+    confusions: [], utilises: new Set(), enregistreurs: new Map(),
+  };
+  _pcQuestion();
+}
+function _pcQuestion(){
+  const box = document.getElementById('pcParcours'); const p = _pc.partie;
+  if(!box || !p) return;
+  _pcCouperSons();
+  const et = PARCOURS_MESANGES.etapes[p.etape];
+  const q = p.questions[p.cur];
+  p.repondu = false;
+  const tete = `
+    <div class="pc-jeu-tete">
+      <span>Étape ${p.etape + 1} · question <b>${p.cur + 1}</b> sur ${et.q}</span>
+      <span class="pc-jeu-droite"><span aria-label="${p.bonnes} bonnes réponses">✓ ${p.bonnes}</span><button type="button" class="btn ghost pc-quitter" data-pc-retour>Quitter</button></span>
+    </div>
+    <div class="pc-barre"><span style="width:${(p.cur / et.q) * 100}%"></span></div>`;
+  let corps;
+  if(q.type === 'nom'){
+    const rec = _pcChoisirEnreg(q.cible, p);
+    q.rec = rec;
+    q.choix = _pcMelanger(p.especes);
+    corps = `
+      <div class="qz-player">
+        <button type="button" class="qz-play-btn" id="pcPlay" aria-label="Écouter le chant"></button>
+        <div class="qz-progress"><div class="qz-progress-fill" id="pcProgression"></div></div>
+      </div>
+      <p class="qz-prompt">Quel oiseau chante ?</p>
+      <div class="qz-choices" id="pcChoix">
+        ${q.choix.map((sci, k) => `<button type="button" class="qz-choice" data-pc-choix="${k}"><span class="qz-choice-fr">${esc(_pcNomFr(sci))}</span><span class="qz-choice-sci">${esc(_pcLatin(sci))}</span></button>`).join('')}
+      </div>
+      <audio id="pcAudio" preload="auto" src="${esc(rec?.file || '')}"></audio>`;
+  } else {
+    const autres = _pcMelanger(p.especes.filter(s => s !== q.cible)).slice(0, PC_CHANTS_PROPOSES - 1);
+    q.choix = _pcMelanger([q.cible, ...autres]);
+    q.recs = q.choix.map(sci => _pcChoisirEnreg(sci, p));
+    const lettres = ['A', 'B', 'C'];
+    corps = `
+      <div class="pc-oiseau">
+        <div class="pc-photo" id="pcPhoto"></div>
+        <div class="pc-oiseau-nom">${esc(_pcNomFr(q.cible))}</div>
+        <div class="pc-meta"><i>${esc(_pcLatin(q.cible))}</i></div>
+      </div>
+      <p class="qz-prompt">Lequel de ces chants est le sien ?</p>
+      <div class="pc-chants" id="pcChoix">
+        ${q.choix.map((sci, k) => `
+          <div class="pc-chant" data-pc-carte="${k}">
+            <button type="button" class="pc-ecoute" data-pc-ecoute="${k}" aria-label="Écouter le chant ${lettres[k]}"></button>
+            <span class="pc-chant-nom">Chant ${lettres[k]}<span class="pc-chant-qui"></span></span>
+            <button type="button" class="btn ghost pc-choisir" data-pc-choix="${k}">Choisir</button>
+            <audio preload="auto" data-pc-audio="${k}" src="${esc(q.recs[k]?.file || '')}"></audio>
+          </div>`).join('')}
+      </div>`;
+  }
+  box.innerHTML = `<div class="pc-jeu">${tete}<div class="pc-question">${corps}</div><div id="pcVerdict"></div>
+    <div class="pc-suite"><button type="button" class="btn" id="pcSuivante" hidden>${p.cur + 1 < et.q ? 'Suivante' : 'Voir le résultat'}</button></div></div>`;
+  if(q.type === 'nom'){
+    const audio = document.getElementById('pcAudio'), btn = document.getElementById('pcPlay'), fill = document.getElementById('pcProgression');
+    btn.addEventListener('click', () => { if(audio.paused) audio.play().catch(() => {}); else audio.pause(); });
+    audio.addEventListener('play', () => btn.classList.add('playing'));
+    audio.addEventListener('pause', () => btn.classList.remove('playing'));
+    audio.addEventListener('ended', () => { btn.classList.remove('playing'); fill.style.width = '0%'; });
+    audio.addEventListener('timeupdate', () => {
+      if(audio.currentTime >= PC_DUREE_MAX){ audio.pause(); audio.currentTime = 0; fill.style.width = '0%'; return; }
+      const d = Math.min(audio.duration || PC_DUREE_MAX, PC_DUREE_MAX);
+      fill.style.width = (audio.currentTime / d * 100) + '%';
+    });
+    audio.play().catch(() => {});
+  } else {
+    if(typeof _fetchWikiPhoto === 'function'){
+      const cible = q.cible;
+      _fetchWikiPhoto(cible).then(ph => {
+        const src = ph?.thumb || ph?.url, el = document.getElementById('pcPhoto');
+        if(src && el && _pc.partie?.questions[_pc.partie.cur] === q) el.innerHTML = `<img src="${esc(src)}" alt="${esc(_pcNomFr(cible))}">`;
+      }).catch(() => {});
+    }
+    box.querySelectorAll('[data-pc-audio]').forEach(a => {
+      const b = box.querySelector(`[data-pc-ecoute="${a.dataset.pcAudio}"]`);
+      a.addEventListener('play', () => b.classList.add('playing'));
+      a.addEventListener('pause', () => b.classList.remove('playing'));
+      a.addEventListener('ended', () => b.classList.remove('playing'));
+      a.addEventListener('timeupdate', () => { if(a.currentTime >= PC_DUREE_MAX){ a.pause(); a.currentTime = 0; } });
+    });
+  }
+}
+function _pcEcouter(k){
+  const box = document.getElementById('pcParcours');
+  box.querySelectorAll('[data-pc-audio]').forEach(a => {
+    if(a.dataset.pcAudio === String(k)){ if(a.paused){ try{ a.currentTime = 0; }catch(_){} a.play().catch(() => {}); } else a.pause(); }
+    else { try{ a.pause(); a.currentTime = 0; }catch(_){} }
+  });
+}
+function _pcRepondre(k){
+  const p = _pc.partie; if(!p || p.repondu) return;
+  p.repondu = true;
+  const q = p.questions[p.cur];
+  const choisi = q.choix[k];
+  const juste = choisi === q.cible;
+  if(juste) p.bonnes++; else p.confusions.push([q.cible, choisi]);
+  _pcCouperSons();
+  const box = document.getElementById('pcParcours');
+  const bonIdx = q.choix.indexOf(q.cible);
+  let sono = '';
+  if(q.type === 'nom'){
+    box.querySelectorAll('[data-pc-choix]').forEach((b, i) => {
+      b.disabled = true;
+      if(i === bonIdx) b.classList.add('correct'); else if(i === k) b.classList.add('wrong');
+    });
+    sono = q.rec?.sono;
+  } else {
+    // On devoile a qui appartient chaque chant : c'est la que l'oreille apprend.
+    box.querySelectorAll('[data-pc-carte]').forEach((c, i) => {
+      c.querySelector('.pc-choisir').disabled = true;
+      c.querySelector('.pc-chant-qui').textContent = ' : ' + _pcNomFr(q.choix[i]);
+      if(i === bonIdx) c.classList.add('correct'); else if(i === k) c.classList.add('wrong');
+    });
+    sono = q.recs[bonIdx]?.sono;
+  }
+  const v = document.getElementById('pcVerdict');
+  if(v) v.innerHTML = `<div class="qz-verdict ${juste ? 'correct' : 'wrong'}">
+      <div class="qz-verdict-badge">${juste ? '✓' : '✗'}</div>
+      <div class="qz-verdict-species"><span class="sp-link" data-sci="${esc(q.cible)}">${esc(_pcNomFr(q.cible))}</span></div>
+      <div class="qz-verdict-sci">${esc(_pcLatin(q.cible))}</div>
+      ${sono ? `<img class="qz-verdict-sono" src="${esc(sono)}" alt="Sonagramme du chant">` : ''}
+      ${q.type === 'nom' ? '<button type="button" class="qz-verdict-replay" data-pc-reecouter>Réécouter</button>' : ''}
+    </div>`;
+  const ent = box.querySelector('.pc-jeu-droite > span'); if(ent){ ent.textContent = '✓ ' + p.bonnes; ent.setAttribute('aria-label', p.bonnes + ' bonnes réponses'); }
+  const suiv = document.getElementById('pcSuivante'); if(suiv){ suiv.hidden = false; suiv.focus({ preventScroll: true }); }
+}
+function _pcFin(){
+  const box = document.getElementById('pcParcours'); const p = _pc.partie;
+  if(!box || !p) return;
+  const et = PARCOURS_MESANGES.etapes, e = et[p.etape];
+  _pcEnregistrerScore(p.etape, p.bonnes);
+  const ok = p.bonnes >= _pcSeuil(e);
+  // Confusions regroupees : « Pouillot veloce : tu as repondu Mesange charbonniere (2 fois) ».
+  // Tournure sans accord : « prise pour » ne collait pas aux noms masculins.
+  const compte = new Map();
+  for(const [a, b] of p.confusions){ const c = a + '|' + b; compte.set(c, (compte.get(c) || 0) + 1); }
+  const lignes = [...compte.entries()].sort((x, y) => y[1] - x[1]).map(([c, n]) => {
+    const [a, b] = c.split('|');
+    return `<li><b>${esc(_pcNomFr(a))}</b> : tu as répondu ${esc(_pcNomFr(b))}${n > 1 ? ` (${n} fois)` : ''}</li>`;
+  }).join('');
+  const suivante = ok && p.etape + 1 < et.length;
+  _pc.partie = null;
+  _pc.selection = suivante ? p.etape + 1 : p.etape;
+  box.innerHTML = `<div class="pc-fin">
+    <div class="pc-etiq">${ok ? `Étape ${p.etape + 1} réussie` : `Étape ${p.etape + 1} : pas encore`}</div>
+    <div class="pc-fin-score">${p.bonnes}/${e.q}</div>
+    <p class="pc-meta">${ok ? (p.etape + 1 < et.length ? 'L\'étape suivante est ouverte.' : 'Tu as fini le parcours.') : `Il faut ${_pcSeuil(e)} bonnes réponses pour passer.`}</p>
+    ${lignes ? `<p class="pc-meta">Tes confusions :</p><ul class="pc-confusions">${lignes}</ul>` : ''}
+    <div class="pc-fin-btns">
+      <button type="button" class="btn ghost" data-pc-retour>Retour au parcours</button>
+      <button type="button" class="btn ${suivante ? 'ghost' : ''}" data-pc-jouer="${p.etape}">Rejouer</button>
+      ${suivante ? `<button type="button" class="btn" data-pc-jouer="${p.etape + 1}">Étape ${p.etape + 2}</button>` : ''}
+    </div>
+  </div>`;
+}
+document.addEventListener('click', e => {
+  // Changer d'onglet coupe un chant du parcours qui jouerait encore.
+  const onglet = e.target.closest('.tab[data-view]');
+  if(onglet && onglet.dataset.view !== 'quiz'){ _pcCouperSons(); return; }
+  if(!e.target.closest('#pcParcours')) return;
+  const etape = e.target.closest('[data-pc-etape]'); if(etape){ _pc.selection = +etape.dataset.pcEtape; _parcoursRender(); return; }
+  const jouer = e.target.closest('[data-pc-jouer]'); if(jouer){ _pcLancer(+jouer.dataset.pcJouer); return; }
+  const retour = e.target.closest('[data-pc-retour]'); if(retour){ _pcCouperSons(); _pc.partie = null; _parcoursRender(); return; }
+  const ecoute = e.target.closest('[data-pc-ecoute]'); if(ecoute){ _pcEcouter(+ecoute.dataset.pcEcoute); return; }
+  const choix = e.target.closest('[data-pc-choix]'); if(choix){ _pcRepondre(+choix.dataset.pcChoix); return; }
+  if(e.target.closest('[data-pc-reecouter]')){ const a = document.getElementById('pcAudio'); if(a){ try{ a.currentTime = 0; }catch(_){} a.play().catch(() => {}); } return; }
+  if(e.target.closest('#pcSuivante')){
+    const p = _pc.partie; if(!p) return;
+    p.cur++;
+    if(p.cur >= p.questions.length) _pcFin(); else _pcQuestion();
+  }
+});
+// Raccourcis du parcours : 1 a 5 repondent, Espace reecoute, Entree passe a la suite.
+document.addEventListener('keydown', e => {
+  const view = document.getElementById('viewQuiz');
+  if(!view || view.style.display === 'none' || !_pc.partie) return;
+  const tag = (e.target?.tagName || '').toLowerCase();
+  if(tag === 'input' || tag === 'textarea' || tag === 'select' || e.target?.isContentEditable) return;
+  if(e.ctrlKey || e.metaKey || e.altKey) return;
+  if(e.key >= '1' && e.key <= '5'){
+    const b = document.querySelector(`#pcParcours [data-pc-choix="${(+e.key) - 1}"]`);
+    if(b && !b.disabled){ e.preventDefault(); b.click(); }
+    return;
+  }
+  if(e.key === ' ' || e.code === 'Space'){
+    const a = document.getElementById('pcAudio'); if(!a) return;
+    e.preventDefault(); try{ a.currentTime = 0; }catch(_){} a.play().catch(() => {});
+    return;
+  }
+  if(e.key === 'Enter'){
+    const s = document.getElementById('pcSuivante');
+    if(s && !s.hidden && document.activeElement !== s){ e.preventDefault(); s.click(); }
   }
 });
 // PWA : installation sur l'écran d'accueil

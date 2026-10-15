@@ -49,7 +49,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=355">
+<link rel="modulepreload" href="app.js?v=356">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -1049,6 +1049,13 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
       <!-- Seule page sans titre jusqu'au 2026-10-05 : ajoute a la demande de Mathis, a la meme
            hauteur que les autres (meme section-head, meme padding haut de 20 px). -->
       <div class="section-head"><div><h2 class="page-title">Quiz</h2></div></div>
+      <!-- Parcours en 7 etapes, facon Syrinx (2026-10-15, maquette C de
+           notes-privees/maquettes/parcours-quiz/). Rempli par _parcoursRender() dans app.js. -->
+      <div id="pcParcours" class="pc"></div>
+      <!-- L'ancien quiz (defis, classe, entrainement, classement) est retire de la page pour
+           l'instant, a la demande de Mathis : son code est garde pour le remettre plus tard,
+           adapte au parcours. Rien ne le rallume tant que ce bloc reste masque. -->
+      <div id="quizAncien" hidden>
       <!-- Defis communs : quotidien (5Q) et hebdo (20Q). Meme graine partagee pour tous -->
       <div class="qz-challenges">
         <div class="qz-daily-card" id="quizDailyCard" hidden>
@@ -1145,6 +1152,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
       </div>
       <!-- Classement entre amis (Firestore) : liste triee par niveau% dans le bucket courant -->
       <div id="quizLeaderboard"><div class="qz-lb-empty">🐦 Chargement du classement de la ligue...</div></div>
+      </div>
     </section>
   </div>
 
@@ -1399,4 +1407,4 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=355"></script>
+<script type="module" src="app.js?v=356"></script>
