@@ -1,10 +1,10 @@
-# FAIT le 2026-10-15 (pas poussé) : interrupteur de thème et entête (v774, app.js?v=349, commit ad6514dc)
+# EN LIGNE le 2026-10-15 : interrupteur de thème, entête à mi-chemin (26 et 16 px), carte « À ne pas confondre » retirée du code (v776, app.js?v=350)
 - Interrupteur soleil/lune (variante B de notes-privees/maquettes/theme/), bille placée par la CSS selon le thème réel.
 - Onglets à 10 px sous le logo (22 avant) ; haut de page 24 px (28 avant, 18 essayé et jugé trop haut).
 - Vérifié 1280 et 375, clair et sombre, 11 bancs CONFORME. Vu en passant : le thème n'est pas retenu d'une visite à l'autre.
 - Syrinx : idées notées en qg#55 à qg#64 (en réserve), détail dans docs/inspiration-syrinx.md.
 ---
-# FAIT le 2026-10-15 (pas poussé) : pastille TOI et palette d'emojis (v772, app.js?v=348)
+# EN LIGNE le 2026-10-15 : pastille TOI et palette d'emojis (v772, app.js?v=348)
 - « TOI » : variante C (11,5 px gras, maquette notes-privees/maquettes/toi/tailles-gras.html), centrée par flexbox à côté du prénom dans le classement et « Les observations de qui ? » ; 8 px avant.
 - Emojis : EMOJI_GROUPES, 363 en 9 familles titrées, grille 8 colonnes. Emojis iPhone sur PC : non (dessins d'Apple non réutilisables), réponse donnée.
 Vérifié 1100 px et 375 px, 11 bancs CONFORME. Reste : qu'il regarde en local, puis pousser.
