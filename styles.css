@@ -554,11 +554,13 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   #viewRanking .youtag { font-size:12px; }
   /* « toi » a cote du prenom, dans le classement et dans le choix « Les observations de qui ? »
      du fil : la pastille verte garde ses 20 px de haut, mais le texte est celui du prenom
-     (meme taille, meme graisse, minuscules, lettres non ecartees) - les petites capitales
-     grasses espacees faisaient croire a une autre police (Mathis, 2026-10-15). 8 px d'air
-     apres le prenom : le classement met son gap a 0 et la pastille collait au nom. */
-  #boardList .youtag, .cp-item .youtag { font:inherit; text-transform:none; letter-spacing:0; line-height:20px; height:20px;
-    padding:0 8px; box-sizing:border-box; display:inline-block; margin-left:8px; vertical-align:baseline; }
+     (meme taille, meme graisse, lettres non ecartees) - les petites capitales grasses espacees
+     faisaient croire a une autre police. En majuscules : essaye en minuscules, Mathis preferait
+     les majuscules (2026-10-15). 8 px d'air apres le prenom : le classement met son gap a 0 et
+     la pastille collait au nom. Ligne de 18 px, 1,4 px dessus et 0,6 dessous : mesure, l'encre de
+     « TOI » tombe ainsi a 5 px du haut comme du bas (2 px dessous la mettait a 3,6 / 6,4). */
+  #boardList .youtag, .cp-item .youtag { font:inherit; text-transform:uppercase; letter-spacing:0; line-height:18px; height:20px;
+    padding:1.4px 8px 0.6px; box-sizing:border-box; display:inline-block; margin-left:8px; vertical-align:baseline; }
   #viewRanking .fp-hint, #viewRanking .miss-toggle { font-size:14px; font-weight:400; text-transform:none; letter-spacing:0; color:var(--ink-3); }
   #viewRanking .miss-toggle { color:var(--ink-2); }
   #viewRanking .person-chip, #viewRanking .fp-reset, #viewRanking .filters-toggle, #viewRanking .rar-chip,
