@@ -1,3 +1,9 @@
+# EN LOCAL le 2026-10-15, PAS POUSSÉ : parcours du quiz (v782, app.js?v=356)
+- Page Quiz = parcours en 7 étapes (maquette C, notes-privees/maquettes/parcours-quiz/), mésanges + pouillot véloce. Décisions dans docs/refonte-quiz.md.
+- Ancien quiz (défis, classé, classement) masqué dans #quizAncien, plus initialisé ; code gardé (_quizAncienInit).
+- Progression dans le navigateur seulement (mb-parcours-mesanges), pas dans Firestore. Enregistreurs variés dans une partie.
+- Vérifié 1280 et 375 sur la démo, étapes 1, 5, 6, 7 jouées, déblocage à 8/10, 11 bancs CONFORME. Visuel à retravailler plus tard (dit par Mathis).
+---
 # EN LIGNE le 2026-10-15 : entête immobile en défilant (v781, app.js?v=355)
 - .entete-fixe en top:0 (le top:-16px de la v779 la faisait remonter au début du défilement : bizarre pour Mathis).
 - 24 px au-dessus du logo (26 avant, 20 essayé), onglets à 12 px sous le logo (16 avant) : les onglets restent à la même hauteur.
