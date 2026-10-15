@@ -40,7 +40,7 @@ séparent.
 - **Mésange noire** : le motif de la charbonnière, en plus aigu, plus rapide, plus fluet
   (« pitsi pitsi pitsi »), souvent par séries de trois.
 - **Mésange nonnette** : la même note répétée vite, « tiu tiu tiu » ou « chip chip chip ».
-- **Pouillot véloce** : il dit son nom, « tchif tchaf », en notes lentes et appuyées qui
+- **Pouillot véloce** : « tchif tchaf » (d'où son nom anglais, chiffchaff), en notes lentes et appuyées qui
   s'enchaînent longtemps. Surnommé le « compteur d'écus ».
 
 ## Ce qu'il reste à trancher
