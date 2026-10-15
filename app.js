@@ -16491,6 +16491,8 @@ function _logoSelonTheme(){
   const sombre = t ? t==='dark' : _mqSombre.matches;
   const src = sombre ? 'assets/logos/logo-sombre.svg' : 'assets/logos/logo.svg';
   markEmoji.src = src;
+  // L'interrupteur annonce son etat aux lecteurs d'ecran ; la bille, elle, suit par la CSS.
+  $('#themeBtn').setAttribute('aria-checked', sombre ? 'true' : 'false');
   // L'écran de connexion porte le même logo depuis le 2026-10-05 (demande de Mathis).
   // L'ecran d'attente aussi, le meme jour.
   document.querySelectorAll('.auth-gate-logo, .auth-splash-logo').forEach(img=>{ img.src = src; });
