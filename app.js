@@ -12776,30 +12776,6 @@ document.addEventListener('click', e => {
   const btn = e.target.closest('.mig-fs-btn');
   if(btn){ e.preventDefault(); e.stopPropagation(); _openMigrationFullscreen(btn.dataset.sci); }
 });
-// Card 'A ne pas confondre avec' : liste les especes acoustiquement / visuellement
-// proches, dérivées de la table CONFUSION_GROUPS (deja utilisee pour les mauvaises
-// reponses du quiz). Chaque nom est cliquable pour ouvrir sa fiche.
-function _renderSpeciesConfuseCard(sci){
-  const box = $('#smConfuseCard'); if(!box) return;
-  box.hidden = true;
-  box.innerHTML = '';
-  const key = (sci || '').toLowerCase().trim();
-  if(typeof _confusionIndex !== 'object') return;
-  const groups = _confusionIndex[key] || [];
-  if(!groups.length) return;
-  // Union des especes confondables (pool restreint aux espece que l'app connait)
-  const confused = new Set();
-  for(const g of groups) for(const s of CONFUSION_GROUPS[g]) if(s !== key) confused.add(s);
-  const list = [...confused].filter(s => FR_NAMES[s]).slice(0, 8);
-  if(!list.length) return;
-  box.innerHTML = `
-    <div class="sm-card-title" style="display:flex; align-items:center; gap:8px;">🎵 À l'oreille <span style="font-size:10.5px; color:var(--ink-3); text-transform:none; font-weight:400; letter-spacing:0;">- chants et cris acoustiquement proches</span></div>
-    <div style="margin-top:6px; display:flex; flex-wrap:wrap; gap:6px;">
-      ${list.map(s => `<button type="button" class="sp-link" data-sci="${esc(s)}" style="background:var(--surface-2); border:1px solid var(--line-2); color:var(--ink); font:inherit; font-size:12.5px; padding:4px 10px; border-radius:16px; cursor:pointer;">${esc(FR_NAMES[s]||s)}</button>`).join('')}
-    </div>
-  `;
-  box.hidden = false;
-}
 function _renderSpeciesInfoChips(key){
   const box = $('#smInfoChips'); if(!box) return;
   const chips = [];
@@ -15223,10 +15199,6 @@ function _openSpeciesModalSuite(sci, key, modal, _wasOpen, _savedScroll){
   _renderSpeciesRarityCard(key);
   // Traits Avonet (ecologie + morphologie), lazy fetch au 1er open
   _renderSpeciesTraitsCard(key);
-  // Card 'A ne pas confondre' : legere, calcul local instantane depuis
-  // CONFUSION_GROUPS. Rendue direct.
-  // Card 'A l'oreille' retiree a la demande utilisateur
-  const smConf = $('#smConfuseCard'); if(smConf) smConf.innerHTML = '';
   // Carte de repartition eBird via GBIF (rendu direct, plus de lazy load
   // IntersectionObserver qui ne firait pas correctement selon le scroll container).
   _renderSpeciesRangeCard(sci);
