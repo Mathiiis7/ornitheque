@@ -1,3 +1,8 @@
+# EN LOCAL le 2026-10-16, PAS POUSSÉ : barre de lecture fluide, « nouvelle » retiré de la pastille (v784, app.js?v=358)
+- Barre du chant suivie à chaque image (requestAnimationFrame) au lieu de timeupdate. « , nouvelle » reste pour les lecteurs d'écran.
+- Critères des chants (qg#60) : premier jet dans docs/criteres-chants.md, 9 critères pour les 5 oiseaux, sourcés. Attend la validation à l'oreille de Mathis (cases « ? »).
+- Affichage voulu : dans chaque parcours pour ses espèces, plus un tableau d'ensemble depuis la page Quiz, là où seront regroupés tous les parcours. Maquette à faire après validation.
+---
 # EN LOCAL le 2026-10-16, PAS POUSSÉ : le parcours joue les chants choisis par Mathis (v783)
 - 66 chants écoutés et gardés, dans data/parcours-mesanges.json (outils/build/chants-gardes.mjs). Plus de _fetchXenoSound dans le parcours.
 - Corrigé en testant : un audio retiré de la page continuait de télécharger, 25 questions rapides bloquaient le chant suivant (_pcLibererSons).
