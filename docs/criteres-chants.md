@@ -30,7 +30,6 @@ complètent.
 | Forme | Strophes : un même air revient, coupé de silences | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Forme | Chant improvisé, qui change tout le temps | ✗ | ✗ | ✗ | ✗ | ✗ |
 | Forme | Imite d'autres oiseaux | ✗ | ✗ | ✗ | ✗ | ✗ |
-| Forme | Chante longtemps sans s'arrêter | ? | ? | ? | ? | ✓ |
 | Notes | Une seule note, répétée à l'identique | ✗ | ✗ | ✗ | ✓ | ✗ |
 | Notes | Un motif de 2 ou 3 notes, répété en boucle | ✓ | ✗ | ✓ | ✗ | ? |
 | Notes | Des notes différentes qui s'enchaînent | ✗ | ✓ | ✗ | ✗ | ✗ |
@@ -46,6 +45,13 @@ complètent.
 | Timbre | Sifflé, clair, comme une flûte | ? | ? | ? | ? | ? |
 | Timbre | Sonore, qui porte loin | ? | ? | ✓ | ? | ? |
 | Timbre | Grinçant, métallique ou grésillant | ? | ? | ? | ? | ? |
+| (aucune) | Chante longtemps sans s'arrêter | ? | ? | ? | ? | ✓ |
+
+**Revu par Mathis le 2026-10-16** :
+- la famille Forme est validée ; « Chante longtemps sans s'arrêter » est jugé flou : gardé de
+  côté, au bout de la grille, sans famille ;
+- les autres familles conviennent ;
+- à ajouter plus tard dans Rythme : **« Ralentit »**, pendant d'« Accélère ».
 
 Les croix de « Imite d'autres oiseaux » et « Finit par une fioriture » ne viennent d'aucune
 source qui les écarte : aucune ne les mentionne pour ces cinq oiseaux. Ces deux lignes sont là
@@ -70,7 +76,15 @@ noire est « beaucoup plus rapide et plus aiguë »), justement bannie. Pour tra
 
 ## Ce qu'il reste à trancher
 
+**Pour reprendre** (décidé par Mathis le 2026-10-16) : la suite commence par **moi qui écoute
+les chants**, c'est-à-dire qui analyse les 66 chants gardés (data/parcours-mesanges.json) pour
+mieux comprendre chaque oiseau, avant de remplir la grille. Méthode et pièges déjà connus :
+notes-privees/analyse-sons/ (lecture image par image du sonagramme, mesures sur xeno-canto).
+Prototype de l'écran : notes-privees/maquettes/criteres/.
+
 - Les « ? » de la grille, à l'écoute ou par la mesure.
+- Ajouter « Ralentit » dans Rythme.
+- « Chante longtemps sans s'arrêter » : le préciser ou le retirer.
 - Pouillot : ses deux notes alternent-elles comme un motif, ou sont-elles jetées dans le
   désordre ? Ses petites notes sèches « trrt » au début comptent-elles comme « notes isolées » ?
 - Faut-il parler des cris (qg#65) dans la même grille, ou une grille à part ?

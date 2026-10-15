@@ -3,8 +3,9 @@
 - Après une réponse : plus de boutons Suivante ni Réécouter, la suite arrive seule après 1 s (PC_PAUSE_SUITE_MS). Touche Entrée retirée.
 - Parcours : nom scientifique retiré partout (choix, photo, verdict) ; petite photo arrondie 48 px à gauche de chaque choix (.pc-vign, _fetchWikiPhoto). Prototype : même photo à côté du nom.
 - Prototype du tableau des critères : notes-privees/maquettes/criteres/ (familles en colonnes, oiseaux en lignes, coches et croix dessinées, 3 exemples à écouter par oiseau).
-- Critères des chants (qg#60) : premier jet dans docs/criteres-chants.md, 9 critères pour les 5 oiseaux, sourcés. Attend la validation à l'oreille de Mathis (cases « ? »).
-- Affichage voulu : dans chaque parcours pour ses espèces, plus un tableau d'ensemble depuis la page Quiz, là où seront regroupés tous les parcours. Maquette à faire après validation.
+- Critères des chants (qg#60) : grille universelle dans docs/criteres-chants.md, 18 critères en 6 familles + « Sans s'arrêter » mis de côté au bout. Familles validées par Mathis ; « Ralentit » à ajouter dans Rythme.
+- EN PAUSE. Pour reprendre : commencer par analyser moi-même les 66 chants gardés (voir « Pour reprendre » dans docs/criteres-chants.md), puis remplir les « ? ».
+- Affichage voulu : dans chaque parcours pour ses espèces, plus un tableau d'ensemble depuis la page Quiz, là où seront regroupés tous les parcours.
 ---
 # EN LOCAL le 2026-10-16, PAS POUSSÉ : le parcours joue les chants choisis par Mathis (v783)
 - 66 chants écoutés et gardés, dans data/parcours-mesanges.json (outils/build/chants-gardes.mjs). Plus de _fetchXenoSound dans le parcours.
