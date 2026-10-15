@@ -60,9 +60,14 @@ Tickets en réserve dans Mathiiis7/qg, titre seul ; le détail est ici.
   Entraînement de Leitner, quiz du jour en 5 questions et de la semaine en 20.
   Accepté le même jour : varier les enregistrements (pas 8 sons du même enregistreur) et finir
   une série sur un enregistrement jamais entendu, pour reconnaître l'oiseau et pas le fichier.
-- **qg#64 - Repartir de zéro sur le quiz de chants.** Dit par Mathis, ampleur pas encore
-  précisée : tout refaire en gardant les sons, sonagrammes et groupes de confusion, ou vraiment
-  tout ; et que deviennent les classements déjà enregistrés. À lui demander avant de commencer.
+- **qg#64 - Repartir de zéro sur le quiz de chants.** Tranché par Mathis le 2026-10-15 :
+  - scores et classements déjà enregistrés : **effacés** (Firestore compris, penser à la
+    suppression RGPD et aux règles) ;
+  - `CONFUSION_GROUPS` : **pas repris**, les groupes de chants proches se refont un par un avec
+    lui (rejoint qg#55). Attention : la table sert aussi à « À ne pas confondre » de la fiche
+    espèce, ne pas la supprimer sans lui demander ;
+  - sons et sonagrammes : **gardés**. Rien n'est stocké chez nous, ils sont lus en direct sur
+    xeno-canto par `_fetchXenoSound` ; ce qu'on garde, c'est ce code de récupération.
 - **qg#57 - Quiz photo.** Même principe, mais on devine à l'apparence et non au chant.
 - **qg#58 - Paliers par oiseau.** Enchaîner les bonnes réponses sur un même oiseau fait monter
   une chaîne, avec des paliers bronze, argent, or.
