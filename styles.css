@@ -243,6 +243,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   }
 
   /* ---------- header ---------- */
+  /* Logo, theme et onglets collent au haut de l'ecran quand on descend (Mathis, 2026-10-15).
+     Les marges negatives etirent le fond sur les gouttieres de .wrap, pour que la page ne
+     passe pas visible sur les cotes, et gardent la mise en page d'avant au repos. */
+  .entete-fixe { position:sticky; top:0; z-index:60; background:var(--bg);
+    margin:-26px -24px 0; padding:26px 24px 0; }
   header.top { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; flex-wrap:wrap; }
   .brand { display:flex; gap:14px; align-items:center; }
   .mark { width:54px; height:54px; flex:none; display:grid; place-items:center;
