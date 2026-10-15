@@ -557,8 +557,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      notes-privees/maquettes/toi/. Boite en flex pour centrer le texte quelle que soit sa taille. */
   /* Marges 7 / 5 et non 6 / 6 : l'espacement des lettres s'ajoute aussi APRES le dernier « I »,
      et l'encre mesuree tombait a 6,5 px du bord gauche contre 8,5 du droit. */
-  #boardList .youtag { font-size:10.5px; line-height:1; height:20px; min-width:34px; padding:0 5px 0 7px;
-    box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; }
+  /* Meme pastille dans le choix « Les observations de qui ? » du fil, et 8 px d'air apres le
+     prenom au lieu de 4 : le classement met son gap a 0, la pastille collait au nom (Mathis,
+     2026-10-15). */
+  #boardList .youtag, .cp-item .youtag { font-size:10.5px; line-height:1; height:20px; min-width:34px; padding:0 5px 0 7px;
+    box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; margin-left:8px; vertical-align:middle; }
   #viewRanking .fp-hint, #viewRanking .miss-toggle { font-size:14px; font-weight:400; text-transform:none; letter-spacing:0; color:var(--ink-3); }
   #viewRanking .miss-toggle { color:var(--ink-2); }
   #viewRanking .person-chip, #viewRanking .fp-reset, #viewRanking .filters-toggle, #viewRanking .rar-chip,
@@ -1905,8 +1908,15 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      soient cliquables au lieu d'apparaitre en arriere-plan. */
   .emoji-pop { display:none; position:fixed; inset:0; z-index:2000; }
   .emoji-pop.open { display:block; }
+  /* Grille de 8 colonnes qui se partagent toute la largeur : en flex-wrap, la derniere colonne
+     ne tenait pas et laissait un vide a droite (Mathis, 2026-10-15). Gouttiere de defilement
+     reservee pour que la largeur ne change pas selon qu'il y a une barre ou non. */
   .emoji-pop-inner { position:absolute; left:50%; bottom:18px; transform:translateX(-50%); background:var(--surface);
-    border:1px solid var(--line-2); border-radius:14px; padding:8px; display:flex; gap:4px; flex-wrap:wrap; width:min(340px,92vw); max-height:50vh; overflow-y:auto; box-shadow:var(--shadow); }
+    border:1px solid var(--line); border-radius:16px; padding:0 6px 10px 12px; display:grid; grid-template-columns:repeat(8, 1fr);
+    gap:2px; align-content:start; width:min(400px,92vw); max-height:min(400px,60vh); overflow-y:auto;
+    scrollbar-width:thin; scrollbar-gutter:stable; box-shadow:0 12px 40px rgba(0,0,0,.22); }
+  .emoji-groupe { grid-column:1 / -1; position:sticky; top:0; z-index:1; background:var(--surface);
+    font:600 14px var(--sans); color:var(--ink-3); padding:12px 2px 6px; }
   /* Quand le chat/photos/feed FAB est ouvert, positionner le picker emoji aligne avec
      le panneau flottant (au-dessus du compose form), pas centre au milieu de l'ecran. */
   body:has(#viewChat.fab-open) .emoji-pop .emoji-pop-inner,
@@ -1918,10 +1928,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     body:has(#viewChat.fab-open) .emoji-pop .emoji-pop-inner,
     body:has(#viewPhotos.fab-open) .emoji-pop .emoji-pop-inner,
     body:has(#viewFeed.fab-open) .emoji-pop .emoji-pop-inner {
-      right:10px; left:10px; bottom:150px; width:auto;
+      right:10px; left:10px; bottom:150px;
     }
   }
-  .emoji-opt { font-size:23px; background:none; border:none; cursor:pointer; padding:4px 5px; border-radius:9px; line-height:1; }
+  .emoji-opt { font-size:26px; background:none; border:none; cursor:pointer; padding:0; aspect-ratio:1; border-radius:10px; line-height:1;
+    display:grid; place-items:center; }
   .emoji-opt:hover { background:var(--surface-2); }
   /* Vide tant qu'aucun depot n'est en cours : sans marge a lui, sinon un trou de 20 px sous l'entete. */
   .photo-upload { margin:0; }

@@ -62,17 +62,20 @@ const isAdmin = () => myUid && ADMIN_UIDS.has(myUid);
 // n est affiche nulle part : la fiche joueur est ouvrable par tout le monde, et l UID y
 // suffit a distinguer deux lignes du meme nom. Il reste consultable en console quand l UID
 // seul ne tranche pas - d ou l ecriture, sans abonnement cote client.
-const EMOJIS = [
-  '👍','👎','❤️','🔥','💯','🎉','✨','⭐','🏆','🥇','🎁','✅','❌','⚠️','🚀','💡','👀','💤',
-  '😀','😄','😁','😊','🙂','😉','😍','🥰','😘','😎','🤩','🥳','😂','🤣','🥹','😋','😜','🤪','🤗','🤭','🤔','😴','🥱','😌','😔','😢','😭','😤','😠','😡','🥺','😱','😅','🙄','😏','😐','🤢','🤠','🥲','😈','👻','💀','🤡','👶',
-  '🙌','👏','🙏','💪','🤝','👊','✊','👌','✌️','🤞','🤟','🤙','👋','🫶',
-  '🧡','💛','💚','💙','💜','🖤','🤍','💔','💕','💖',
-  '🐦','🐦‍⬛','🕊️','🦅','🦉','🦆','🦢','🦩','🦜','🦚','🐧','🐔','🐓','🦃','🐣','🐤','🐥','🦤','🪶',
-  '🐶','🐱','🦊','🐻','🐼','🐨','🦁','🐸','🐵','🐰','🦌','🦋','🐝','🐞','🐢','🐙','🐬','🐳','🦈',
-  '🌸','🌻','🌷','🌿','🍀','🌲','🌳','🍃','🍂','🍁','🌊','🌈','☀️','🌙','❄️','⛰️','🏕️','⛺',
-  '🍎','🍓','🍉','🍕','🍔','🍟','🎂','🍪','🍺','☕',
-  '⚽','🏀','🎾','🎯','🎣','🎮','🔭','🔎','🗺️','🧭','📷','📸'
-];
+// Palette rangee par familles, titre au-dessus de chacune (2026-10-15 : 182 emojis en vrac
+// devenus pres de 400, Mathis en voulait plus). Rien au-dela d'Emoji 14 : Windows et les
+// telephones d'il y a deux ans afficheraient un carre vide.
+const EMOJI_GROUPES = [
+  { titre:'Réactions', liste:'👍 👎 ❤️ 🔥 💯 🎉 ✨ ⭐ 🌟 🏆 🥇 🥈 🥉 🎁 ✅ ❌ ⚠️ ❓ ❗ 🚀 💡 👀 💤 📌' },
+  { titre:'Visages', liste:'😀 😃 😄 😁 😆 😅 😂 🤣 🥲 🥹 😊 😇 🙂 🙃 😉 😌 😍 🥰 😘 😗 😙 😚 😋 😛 😜 🤪 😝 🤑 🤗 🤭 🤫 🤔 🤐 🤨 😐 😑 😶 😏 😒 🙄 😬 😮‍💨 😴 🥱 😪 🤤 😷 🤒 🤕 🤢 🤮 🤧 🥵 🥶 🥴 😵 🤯 🤠 🥳 😎 🤓 🧐 🤩 😕 😟 🙁 ☹️ 😮 😯 😲 😳 🥺 😦 😧 😨 😰 😥 😢 😭 😱 😖 😣 😞 😓 😩 😫 😤 😠 😡 🤬 😈 👿 💀 👻 👽 🤖 💩 🤡 👶 😺 😸 😹 😻 🙈 🙉 🙊' },
+  { titre:'Gestes', liste:'👋 🤚 🖐️ ✋ 🖖 👌 🤌 🤏 ✌️ 🤞 🤟 🤘 🤙 👈 👉 👆 👇 ☝️ 👍 👎 ✊ 👊 🤛 🤜 👏 🙌 🫶 👐 🤲 🤝 🙏 💪 🫡 🧠 👂 👃' },
+  { titre:'Cœurs', liste:'❤️ 🧡 💛 💚 💙 💜 🤎 🖤 🤍 ❤️‍🔥 💔 💕 💞 💓 💗 💖 💘 💝' },
+  { titre:'Oiseaux', liste:'🐦 🐦‍⬛ 🕊️ 🦅 🦉 🦆 🦢 🦩 🦜 🦚 🐧 🐔 🐓 🦃 🐣 🐤 🐥 🦤 🪶 🥚 🪺 🪹' },
+  { titre:'Animaux', liste:'🐶 🐱 🦊 🐺 🦝 🐻 🐼 🐨 🦁 🐯 🐮 🐷 🐗 🐴 🦄 🦌 🐰 🐭 🐹 🐿️ 🦔 🦇 🦦 🦡 🦫 🐸 🐵 🐘 🦒 🦓 🦏 🐪 🐊 🐢 🦎 🐍 🐙 🐬 🐳 🦭 🦈 🐟 🐠 🐡 🦀 🦞 🐌 🐛 🦋 🐝 🐞 🐜 🦗 🕷️' },
+  { titre:'Nature et météo', liste:'🌸 🌼 🌺 🌹 🌷 🌻 🌱 🌿 🍀 🌾 🌵 🌲 🌳 🍃 🍂 🍁 🍄 🪨 🌊 🌍 ⛰️ 🌋 🏝️ 🌅 🌄 🌈 ☀️ 🌞 ⛅ 🌧️ ⛈️ 🌨️ ❄️ 🌫️ 💨 ☔ ⚡ 🌙 🌛 ⭐' },
+  { titre:'À manger', liste:'🍎 🍌 🍒 🍇 🍓 🍉 🥐 🥖 🧀 🥪 🥗 🍕 🍔 🍟 🍝 🎂 🍪 🍫 🍦 ☕ 🍵 🧃 🍺 🍷 🥂 🍾' },
+  { titre:'Sorties et objets', liste:'🔭 🔎 📷 📸 🗺️ 🧭 📍 🥾 🎒 🧥 🧣 🧤 🏕️ ⛺ 🚲 🚗 🚆 ✈️ ⛵ 🏠 📅 ⏰ 🔔 📚 ✏️ 📝 🎵 🎧 🎤 🎬 🎈 ⚽ 🏀 🎾 🎯 🎣 🎮' }
+].map(g => ({ titre:g.titre, liste:g.liste.split(' ') }));
 let realPeople = [];
 let goalHeader = 'Objectif (fin de l\'été)';   // intitulé partagé de la colonne objectif
 
@@ -1424,7 +1427,7 @@ function _openFilterPicker(currentValue, opts){
         // lisait « P… ».
         return `<div class="cp-item cp-item-simple${on}" data-value="${esc(String(o.value))}">
           ${dot}
-          <span class="cp-item-name">${esc(o.label)}</span>
+          <span class="cp-item-name">${esc(o.label)}${o.moi ? '<span class="youtag">toi</span>' : ''}</span>
           ${cnt}
         </div>`;
       }).join('');
@@ -6218,7 +6221,8 @@ let emojiContext=null;
 function openEmojiPop(ctx){
   emojiContext=ctx;
   const inner=$('#emojiPop .emoji-pop-inner'); if(!inner) return;
-  inner.innerHTML=EMOJIS.map(e=>`<button type="button" class="emoji-opt" data-emoji="${e}">${e}</button>`).join('');
+  inner.innerHTML=EMOJI_GROUPES.map(g=>`<div class="emoji-groupe">${esc(g.titre)}</div>`
+    + g.liste.map(e=>`<button type="button" class="emoji-opt" data-emoji="${e}">${e}</button>`).join('')).join('');
   $('#emojiPop').classList.add('open');
   _placeEmojiPop(inner, ctx && ctx.ancre);
 }
@@ -16341,7 +16345,7 @@ $('#feedModeSeg')?.addEventListener('click', e=>{
 });
 $('#feedPersonBtn')?.addEventListener('click', async ()=>{
   const opts = [{ value:'any', label:'Tout le monde' }].concat(
-    [...realPeople].sort((a,b)=>a.name.localeCompare(b.name,'fr')).map(p=>({ value:p.id, label:p.name + (p.isMe?' (toi)':'') })));
+    [...realPeople].sort((a,b)=>a.name.localeCompare(b.name,'fr')).map(p=>({ value:p.id, label:p.name, moi:p.isMe })));
   const v = await _openFilterPicker(feedPerson, { title:'Les observations de qui ?', options:opts, searchable: realPeople.length > 8 });
   if(v == null) return;
   feedPerson = v; renderFeed();
