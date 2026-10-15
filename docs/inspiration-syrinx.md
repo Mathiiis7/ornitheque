@@ -58,6 +58,11 @@ Tickets en réserve dans Mathiiis7/qg, titre seul ; le détail est ici.
   oiseau, 3 chants proposés ; (3) écrire le nom, le niveau final ; (4) s'entraîner sur ses
   lacunes : les plus ratés et les plus confondus. Existant : Classe (son vers nom, photo vers son),
   Entraînement de Leitner, quiz du jour en 5 questions et de la semaine en 20.
+  Accepté le même jour : varier les enregistrements (pas 8 sons du même enregistreur) et finir
+  une série sur un enregistrement jamais entendu, pour reconnaître l'oiseau et pas le fichier.
+- **qg#64 - Repartir de zéro sur le quiz de chants.** Dit par Mathis, ampleur pas encore
+  précisée : tout refaire en gardant les sons, sonagrammes et groupes de confusion, ou vraiment
+  tout ; et que deviennent les classements déjà enregistrés. À lui demander avant de commencer.
 - **qg#57 - Quiz photo.** Même principe, mais on devine à l'apparence et non au chant.
 - **qg#58 - Paliers par oiseau.** Enchaîner les bonnes réponses sur un même oiseau fait monter
   une chaîne, avec des paliers bronze, argent, or.
