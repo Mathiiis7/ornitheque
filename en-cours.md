@@ -1,3 +1,8 @@
+# EN LIGNE le 2026-10-15 : entête immobile en défilant (v781, app.js?v=355)
+- .entete-fixe en top:0 (le top:-16px de la v779 la faisait remonter au début du défilement : bizarre pour Mathis).
+- 24 px au-dessus du logo (26 avant, 20 essayé), onglets à 12 px sous le logo (16 avant) : les onglets restent à la même hauteur.
+- Vérifié 1280 et 375 sur la démo, logo et onglets fixes de 0 à 3000 px défilés, 11 bancs CONFORME.
+---
 # EN LIGNE le 2026-10-15 : entête fixe, plus de « ? » au Birdydex, moins de vide en bas (v779, app.js?v=353)
 - Birdydex : les espèces à découvrir gardent fond doré et aura, sans le « ? » (photo toujours cachée jusqu'au toucher).
 - Logo, thème et onglets dans .entete-fixe (sticky, top:-16px) : restent en haut en défilant, 10 px au-dessus du logo ; au repos rien ne bouge.
