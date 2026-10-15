@@ -40,6 +40,20 @@ Il faut 8 sur 10 (12 sur 15 à la dernière) pour ouvrir l'étape suivante ; une
 à volonté. Maquettes : `notes-privees/maquettes/parcours-quiz/index.html` (A chemin, B cases,
 C étape en grand).
 
+## Les chants : choisis à l'oreille (en cours, 2026-10-15)
+
+Le quiz prenait les 8 chants notés A les plus récents de xeno-canto, sans rien écarter.
+Relevé sur les 40 des cinq espèces : oiseaux du parcours en fond (une noire avec bleue et
+pouillot, deux nonnettes avec bleue, pouillot ou charbonnière), une nonnette de Corée, deux
+noires du Maroc (sous-espèce atlas), des pistes « cri et chant », 7 bleues sur 8 du même
+enregistreur. La note A juge le son, pas l'identification.
+
+Décision de Mathis : je présélectionne, il écoute. `node outils/build/chants-parcours.mjs`
+écrit 15 candidats par espèce dans `notes-privees/ecoute-chants/candidats.json` (filtres en
+tête du script) ; il les écoute sur `http://localhost:8765/notes-privees/ecoute-chants/` et
+colle sa sélection (au moins 8 par espèce). Reste à faire : mettre les chants gardés dans
+`data/` et faire jouer au parcours ceux-là seulement, au lieu de `_fetchXenoSound`.
+
 ## À garder en tête
 
 - Varier les enregistreurs parmi les sons retenus pour une espèce : aujourd'hui `scoreRec`

@@ -1,3 +1,7 @@
+# EN COURS le 2026-10-15 : chants du parcours choisis à l oreille
+- Mathis écoute les 75 candidats sur http://localhost:8765/notes-privees/ecoute-chants/ et colle sa sélection (au moins 8 par espèce).
+- Ensuite : les chants gardés vont dans data/ (fichier à créer), le parcours ne joue qu eux. Détail et raisons : docs/refonte-quiz.md, section « Les chants ».
+---
 # EN LOCAL le 2026-10-15, PAS POUSSÉ : parcours du quiz (v782, app.js?v=356)
 - Page Quiz = parcours en 7 étapes (maquette C, notes-privees/maquettes/parcours-quiz/), mésanges + pouillot véloce. Décisions dans docs/refonte-quiz.md.
 - Ancien quiz (défis, classé, classement) masqué dans #quizAncien, plus initialisé ; code gardé (_quizAncienInit).
