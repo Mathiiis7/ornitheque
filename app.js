@@ -1427,7 +1427,7 @@ function _openFilterPicker(currentValue, opts){
         // lisait « P… ».
         return `<div class="cp-item cp-item-simple${on}" data-value="${esc(String(o.value))}">
           ${dot}
-          <span class="cp-item-name">${esc(o.label)}${o.moi ? '<span class="youtag">toi</span>' : ''}</span>
+          <span class="cp-item-name${o.moi ? ' cp-item-name-moi' : ''}">${esc(o.label)}</span>${o.moi ? '<span class="youtag">toi</span>' : ''}
           ${cnt}
         </div>`;
       }).join('');

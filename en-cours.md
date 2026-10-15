@@ -1,5 +1,5 @@
-# FAIT le 2026-10-15 (pas poussé) : pastille TOI et palette d'emojis (v771, app.js?v=347)
-- « TOI » : pastille verte, police et graisse du prénom, en MAJUSCULES (minuscules essayées, refusées), même ligne de base, encre centrée ; choix « Les observations de qui ? » et classement ; 8 px avant.
+# FAIT le 2026-10-15 (pas poussé) : pastille TOI et palette d'emojis (v772, app.js?v=348)
+- « TOI » : variante C (11,5 px gras, maquette notes-privees/maquettes/toi/tailles-gras.html), centrée par flexbox à côté du prénom dans le classement et « Les observations de qui ? » ; 8 px avant.
 - Emojis : EMOJI_GROUPES, 363 en 9 familles titrées, grille 8 colonnes. Emojis iPhone sur PC : non (dessins d'Apple non réutilisables), réponse donnée.
 Vérifié 1100 px et 375 px, 11 bancs CONFORME. Reste : qu'il regarde en local, puis pousser.
 ---

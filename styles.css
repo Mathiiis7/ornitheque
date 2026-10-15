@@ -552,15 +552,14 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      milieu : au milieu, la ligne de texte de la case l'entourait encore et ajoutait 1,2 px. */
   #viewRanking td .chip { line-height:17px; padding:1px 8px; vertical-align:top; }
   #viewRanking .youtag { font-size:12px; }
-  /* « toi » a cote du prenom, dans le classement et dans le choix « Les observations de qui ? »
-     du fil : la pastille verte garde ses 20 px de haut, mais le texte est celui du prenom
-     (meme taille, meme graisse, lettres non ecartees) - les petites capitales grasses espacees
-     faisaient croire a une autre police. En majuscules : essaye en minuscules, Mathis preferait
-     les majuscules (2026-10-15). 8 px d'air apres le prenom : le classement met son gap a 0 et
-     la pastille collait au nom. Ligne de 18 px, 1,4 px dessus et 0,6 dessous : mesure, l'encre de
-     « TOI » tombe ainsi a 5 px du haut comme du bas (2 px dessous la mettait a 3,6 / 6,4). */
-  #boardList .youtag, .cp-item .youtag { font:inherit; text-transform:uppercase; letter-spacing:0; line-height:18px; height:20px;
-    padding:1.4px 8px 0.6px; box-sizing:border-box; display:inline-block; margin-left:8px; vertical-align:baseline; }
+  /* « TOI » a cote du prenom, dans le classement et dans le choix « Les observations de qui ? »
+     du fil : 11,5 px gras, lettres a peine ecartees, pastille de 20 px - variante C choisie par
+     Mathis le 2026-10-15 sur notes-privees/maquettes/toi/tailles-gras.html, apres un essai a la
+     taille du prenom (trop gros) et en minuscules (refuse). 8 px d'air apres le prenom : le
+     classement met son gap a 0 et la pastille collait au nom. */
+  #boardList .youtag, .cp-item .youtag { font-family:inherit; font-size:11.5px; font-weight:700; text-transform:uppercase;
+    letter-spacing:.02em; line-height:1; height:20px; padding:0 7px 0 7.2px; box-sizing:border-box;
+    display:inline-flex; align-items:center; justify-content:center; margin-left:8px; vertical-align:middle; }
   #viewRanking .fp-hint, #viewRanking .miss-toggle { font-size:14px; font-weight:400; text-transform:none; letter-spacing:0; color:var(--ink-3); }
   #viewRanking .miss-toggle { color:var(--ink-2); }
   #viewRanking .person-chip, #viewRanking .fp-reset, #viewRanking .filters-toggle, #viewRanking .rar-chip,
@@ -805,6 +804,12 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      drapeau : il rendait « P… » pour « Par famille ». Ici, une simple rangee. */
   .cp-item.cp-item-simple { display:flex; align-items:center; gap:10px; }
   .cp-item.cp-item-simple .cp-item-name { flex:1 1 auto; }
+  /* La pastille TOI suit le prenom en voisine de rangee, centree par la flexbox comme dans le
+     classement : glissee dans le texte, elle tombait 1,7 px sous le milieu des majuscules
+     (mesure du 2026-10-15). Le prenom ne prend plus toute la place, et le gap de 10 px moins
+     2 redonne les 8 px d'air du classement. */
+  .cp-item.cp-item-simple .cp-item-name-moi { flex:0 1 auto; }
+  .cp-item.cp-item-simple .cp-item-name-moi + .youtag { margin-left:-2px; flex:none; }
   .cp-item.cp-item-simple .cp-item-meta { flex:none; }
   .cp-item:hover { background:var(--surface-2); }
   .cp-item.on { background:var(--surface-2); font-weight:700; }
