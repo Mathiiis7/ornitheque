@@ -35,12 +35,9 @@ complètent.
 | Forme | Strophes : un même air revient, coupé de silences | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Forme | Chant improvisé, qui change tout le temps | ✗ | ✗ | ✗ | ✗ | ✗ |
 | Forme | Imite d'autres oiseaux | ✗ | ✗ | ✗ | ✗ | ✗ |
-| Notes | Une seule note, répétée à l'identique | ✗ | ✗ | ✗ | ✓ (v 2/3) | ✗ ⚠ |
-| Notes | Un motif de 2 ou 3 notes, répété en boucle | ✓ (v 4/4) | ✗ | ✓ (v 2/3) | ✗ | ✗ (m hauteur, v forme) |
-| Notes | Des notes différentes qui s'enchaînent | ✗ | ✓ | ✗ | ✗ | ✗ |
-| Début et fin | Commence par quelques notes nettes, isolées | ✗ | ✓ (v 4/4) | ✗ | ✗ | ✗ (v) |
-| Début et fin | Finit par un trille (notes si rapides qu'elles roulent) | ✗ | ✓ (v 3/4) | ✗ | ✗ | ✗ |
-| Début et fin | Finit par une fioriture, une note accentuée | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Notes | Une seule note : la même revient au moins 3 fois de suite | ✗ (v 0/13) | ✓ (v 12/15) | parfois (v 6/13) | ✓ (v 9/10) | ✓ (v 14/15) |
+| Notes | Motif de 2-3 notes : un petit groupe revient au moins 2 fois | ✓ (v 10/13) | parfois (v 3/15) | parfois (v 7/13) | ✗ (v 1/10) | ✗ (v 0/15) |
+| Notes | Notes variées : au moins 5 de suite sans que rien ne revienne | parfois (v 3/13) | ✗ (v 0/15) | ✗ (v 0/13) | ✗ (v 1/10) | ✗ (v 1/15) |
 | Hauteur | Très aigu, fin, presque à la limite de l'audible | ✗ (m) | ✓ (m 14/15) | ✗ (m) | ✗ (m) | ✗ (m) |
 | Hauteur | Descend vers le grave au fil de la strophe | ✗ | ✓ (m 12/15) | ✗ | ✗ | ✗ |
 | Hauteur | Deux hauteurs qui alternent (haut-bas, haut-bas) | ✓ (v 3/4) | ✗ | ✗ (v) | ✗ | ✗ (m) |
@@ -97,6 +94,31 @@ donnent, à trancher par Mathis) :
     dans 10 enregistrements sur 13, des phrases courtes qui ne bouclent pas dans les 3 autres
     (702431, 804299, 862138) ;
 - les autres familles restent à revoir.
+
+**Famille Notes refaite (décidé avec Mathis le 2026-10-16)** :
+- **la famille « Début et fin » est retirée** (notes isolées au début, trille, fioriture), pour se
+  concentrer sur Notes ;
+- **chaque case est indépendante** : un oiseau peut en cocher plusieurs ;
+- **trois réponses** : ✓ son habitude (au moins 2 enregistrements sur 3), « parfois » (vu chez
+  au moins 2 oiseaux, mais moins de 2 sur 3), ✗ jamais vu ou une seule fois (un accident, ou un
+  autre oiseau) ;
+- **définitions**, sur le chant entier : une seule note = la même revient au moins 3 fois de
+  suite ; motif = un petit groupe de 2 ou 3 notes différentes revient au moins 2 fois ; notes
+  variées = au moins 5 de suite sans que rien ne revienne. Deux sons séparés par un silence font
+  deux notes ; deux sons collés font une seule note ;
+- jugé à l'œil sur 3 strophes par enregistrement (début, milieu, fin), les 66 enregistrements
+  (planches p3_*.png du dossier d'analyse). Ce qu'on y voit :
+  - **charbonnière** : un motif de 2 ou 3 notes ; 3 enregistrements font des phrases courtes
+    qui ne bouclent pas ;
+  - **bleue** : 2 ou 3 « tsi » puis une seule note répétée très vite ; 3 enregistrements font un
+    motif « une longue, deux courtes » en boucle ;
+  - **noire** : partagée. Les deux parties de son « pitsi » sont tantôt séparées par un silence
+    (motif, 7 sur 13), tantôt collées (une seule note, 6 sur 13). C'est la règle « collé ou
+    séparé » qui décide, pas l'oiseau : à écouter, pour dire si l'oreille entend la différence ;
+  - **nonnette** : une seule note ; un enregistrement fait un haut-bas (non_400300), un autre
+    gazouille (non_797517) ;
+  - **pouillot** : une seule note, qui varie un peu de hauteur sans ordre (le « tchif tchaf ») ;
+    un enregistrement étrange aux notes variées (pou_692351).
 
 Les croix de « Imite d'autres oiseaux » et « Finit par une fioriture » ne viennent d'aucune
 source qui les écarte : aucune ne les mentionne pour ces cinq oiseaux. Ces deux lignes sont là
