@@ -1301,7 +1301,15 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   #viewQuiz #pcParcours { flex:1; display:flex; flex-direction:column; justify-content:center; }
   /* Dans une colonne flexible, margin:auto empeche l'etirement : sans ceci, .pc-jeu se
      reduisait a la largeur de son contenu (238 px vus a 1680 px de large). */
-  #viewQuiz #pcParcours > * { width:100%; }
+  #viewQuiz #pcParcours > * { width:100%; zoom:var(--pc-k, 1); }
+  /* Page des etapes : une colonne centree, qui grandit avec --pc-k comme la partie. */
+  .pc-page { max-width:880px; margin:0 auto; }
+  @media (min-width:900px){
+    .pc-liste { display:grid; grid-template-columns:1fr 1fr; column-gap:28px; }
+  }
+  /* Place du verdict reservee : il apparait sous les reponses avec son sonagramme, et sans
+     cette reserve le bloc centre remontait d'un coup a chaque reponse. */
+  .pc-jeu #pcVerdict { min-height:140px; }
   .qz-head { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
   .qz-mode-switch { display:inline-flex; background:var(--surface-2); border-radius:22px; padding:3px; gap:2px; }
   .qz-mode { background:transparent; border:none; padding:7px 16px; font:600 14px/1 var(--sans); color:var(--ink-3); cursor:pointer; border-radius:20px; transition:all .18s; }

@@ -17100,12 +17100,21 @@ function renderQuizInit(){
 // Calcule en JS : le haut du panneau depend de l'entete (pas le meme au telephone), et
 // body porte zoom:0.85, donc la position mesuree (pixels d'ecran) se convertit en pixels CSS.
 const PC_MARGE_BAS = 28;   // = padding bas de .wrap, en pixels CSS
+// Sur grand ecran, le parcours grandit avec la place (« tout petit au milieu de l'ecran
+// blanc », Mathis le 2026-10-16) : un seul facteur --pc-k, applique par zoom dans styles.css,
+// pour que tout grandisse ensemble sans changer de place. Reference : la question la plus
+// haute (5 reponses et le verdict) mesure environ 720 px CSS pour 760 de large.
+const PC_REF_H = 720, PC_REF_W = 760, PC_K_MAX = 1.5;
 function _pcHauteur(){
   const panel = document.querySelector('#viewQuiz .qz-panel');
   if(!panel || !panel.offsetParent) return;   // onglet masque : rien a mesurer
   const zoom = parseFloat(getComputedStyle(document.body).zoom) || 1;
   const haut = panel.getBoundingClientRect().top + window.scrollY;
   panel.style.minHeight = Math.max(0, Math.floor((window.innerHeight - haut) / zoom - PC_MARGE_BAS)) + 'px';
+  const pc = document.getElementById('pcParcours'); if(!pc) return;
+  const dispoH = (window.innerHeight - (pc.getBoundingClientRect().top + window.scrollY)) / zoom - PC_MARGE_BAS - 22;   // 22 = padding bas du panneau
+  const k = Math.max(1, Math.min(dispoH / PC_REF_H, pc.clientWidth / PC_REF_W, PC_K_MAX));
+  pc.style.setProperty('--pc-k', k.toFixed(3));
 }
 window.addEventListener('resize', _pcHauteur);
 function _quizAncienInit(){
@@ -19697,7 +19706,7 @@ function _parcoursRender(){
     return `<button type="button" class="pc-ligne ${s}" data-pc-etape="${i}" ${s === 'ferme' ? 'disabled' : ''}><span class="pc-n">${i + 1}</span><b>${esc(x.titre)}</b><span class="pc-res">${droite}</span></button>`;
   }).join('');
   const fini = reussies === et.length;
-  box.innerHTML = `
+  box.innerHTML = `<div class="pc-page">
     <p class="pc-intro">Cinq oiseaux au chant proche, appris pas à pas. ${_pcSeuil(et[0])} bonnes réponses sur ${et[0].q} ouvrent l'étape suivante.</p>
     <p class="pc-sous">Parcours 1 : ${esc(P.titre)} · ${fini ? 'parcours terminé' : `${reussies} ${reussies > 1 ? 'étapes réussies' : 'étape réussie'} sur ${et.length}`}</p>
     <div class="pc-frise">${frise}</div>
@@ -19713,7 +19722,7 @@ function _parcoursRender(){
         <div class="pc-meta">${meilleur}</div>
       </div>
     </div>
-    <div class="pc-liste">${autres}</div>`;
+    <div class="pc-liste">${autres}</div></div>`;
   _pcPhotos(box);
 }
 // Remplit les photos [data-pc-vign] d'un bloc (memes photos que le reste de l'appli).

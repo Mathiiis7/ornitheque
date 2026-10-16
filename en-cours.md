@@ -4,6 +4,11 @@
 - Tranché par Mathis : « très aigu » = haut des notes ; ligne « Notes qui glissent d'un trait » ajoutée (sépare charbonnière et noire).
 - EN ATTENTE DE MATHIS : valider la grille à l'oreille ; note à crochet = une ou deux ; timbre ; « sans s'arrêter ». La maquette notes-privees/maquettes/criteres/ ne suit plus la grille.
 ---
+# EN LOCAL le 2026-10-16, PAS POUSSÉ : le parcours grandit avec l'écran (v792, app.js?v=366)
+- Facteur --pc-k (zoom CSS) calculé par _pcHauteur sur la place disponible : 1 jusqu'à ~1280x720, 1,33 à 1680x1050, 1,37 à 1920x1080, plafond 1,5. Référence : question à 5 réponses + verdict = 720 px CSS.
+- Page des étapes en colonne centrée (880 px avant zoom), étapes restantes sur deux colonnes au-dessus de 900 px.
+- Place du verdict réservée (140 px) : les réponses ne bougent plus quand il apparaît (mesuré).
+---
 # EN LOCAL le 2026-10-16, PAS POUSSÉ : panneau du Quiz plein écran (v791, app.js?v=365)
 - Tout l'onglet Quiz : le panneau descend jusqu'en bas de l'écran (_pcHauteur, recalculé au redimensionnement), le parcours se centre en hauteur dedans, le pied de page n'apparaît qu'en défilant. Mesuré à 1680x1050, 1280x720 et au téléphone.
 ---
