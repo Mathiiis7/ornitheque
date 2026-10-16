@@ -1302,11 +1302,6 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* Dans une colonne flexible, margin:auto empeche l'etirement : sans ceci, .pc-jeu se
      reduisait a la largeur de son contenu (238 px vus a 1680 px de large). */
   #viewQuiz #pcParcours > * { width:100%; zoom:var(--pc-k, 1); }
-  /* Page des etapes : une colonne centree, qui grandit avec --pc-k comme la partie. */
-  .pc-page { max-width:880px; margin:0 auto; }
-  @media (min-width:900px){
-    .pc-liste { display:grid; grid-template-columns:1fr 1fr; column-gap:28px; }
-  }
   /* Place du verdict reservee : il apparait sous les reponses avec son sonagramme, et sans
      cette reserve le bloc centre remontait d'un coup a chaque reponse. */
   .pc-jeu #pcVerdict { min-height:140px; }
@@ -1501,40 +1496,74 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      cartes photo viennent de la maquette B, a la demande de Mathis. */
   .pc { margin-top:12px; --pc-ok:#1f9a55; --pc-ko:#d04545; }
   .pc-ico { width:16px; height:16px; flex:none; display:block; }
-  .pc-intro { font-size:14px; color:var(--ink-3); margin:0; }
-  .pc-sous { font-size:14px; color:var(--ink-2); font-weight:600; margin:4px 0 0; }
   .pc-meta { font-size:14px; color:var(--ink-3); margin:4px 0 0; }
   .pc-etiq { font-size:13px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:var(--ink-3); }
-  .pc-frise { display:flex; align-items:center; margin:18px 0 20px; max-width:640px; }
-  .pc-trait { flex:1; height:2px; min-width:6px; background:var(--line-2); }
-  .pc-trait.f { background:var(--accent); }
-  .pc-rond { flex:none; width:38px; height:38px; border-radius:50%; display:grid; place-items:center; padding:0; font:800 15px/1 var(--sans); cursor:pointer; border:0; }
-  .pc-rond .pc-ico { width:17px; height:17px; }
-  .pc-rond.ok { background:var(--accent); color:#fff; }
-  .pc-rond.cours { background:var(--surface); color:var(--accent-ink); box-shadow:inset 0 0 0 2px var(--accent); }
-  .pc-rond.ferme { background:var(--surface-2); color:var(--ink-3); cursor:default; }
-  .pc-rond.sel { box-shadow:inset 0 0 0 2px var(--accent), 0 0 0 4px var(--surface), 0 0 0 6px color-mix(in srgb, var(--accent) 35%, transparent); }
-  .pc-rond.ok.sel { box-shadow:0 0 0 3px var(--surface), 0 0 0 5px color-mix(in srgb, var(--accent) 45%, transparent); }
-  .pc-grande { border:1px solid var(--line-2); border-radius:14px; padding:20px; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:16px; align-items:center; }
-  .pc-grande .bloc-titre { margin-top:4px; font-size:21px; }
-  .pc-especes { display:flex; flex-wrap:wrap; gap:14px; margin-top:16px; }
-  .pc-esp { width:84px; display:flex; flex-direction:column; align-items:center; gap:6px; text-align:center; font-size:14px; line-height:1.25; color:var(--ink-2); }
-  .pc-esp-photo { width:62px; height:62px; border-radius:50%; overflow:hidden; background:var(--surface-2); }
-  .pc-esp-photo img { width:100%; height:100%; object-fit:cover; display:block; }
-  .pc-esp.neuf { color:var(--accent-ink); font-weight:600; }
-  .pc-esp.neuf .pc-esp-photo { box-shadow:0 0 0 2px var(--surface), 0 0 0 4px var(--accent); }
-  .pc-jouer { text-align:center; }
-  .pc-btn-jouer { font-size:16px; padding:12px 30px; }
-  .pc-liste { margin-top:14px; }
-  .pc-ligne { display:flex; align-items:center; gap:12px; width:100%; padding:10px 4px; border:0; border-top:1px solid var(--line); background:none; font:inherit; font-size:14px; color:var(--ink-3); text-align:left; cursor:pointer; }
-  .pc-ligne b { flex:1; font-weight:600; color:var(--ink); }
-  .pc-ligne:hover:not(:disabled) b { color:var(--accent-ink); }
-  .pc-ligne:disabled { cursor:default; }
-  .pc-ligne:disabled b { font-weight:400; color:var(--ink-3); }
-  .pc-n { flex:none; width:28px; height:28px; border-radius:50%; display:grid; place-items:center; font-weight:800; font-size:13px; background:var(--surface-2); color:var(--ink-3); }
-  .pc-ligne.ok .pc-n { background:var(--accent); color:#fff; }
-  .pc-res { display:flex; align-items:center; gap:6px; }
-  .pc-ligne.ok .pc-res { color:var(--pc-ok); font-weight:600; }
+  /* Accueil du quiz (2026-10-16, maquettes L1 et C3 de notes-privees/maquettes/quiz-accueil/).
+     L'orange marque l'etape en cours et l'or les etoiles : exceptions a la charte voulues par
+     Mathis, notees dans docs/charte-graphique.md. */
+  .pc-etoiles { display:inline-flex; gap:2px; color:var(--gold); }
+  .pc-etoiles svg { width:16px; height:16px; display:block; }
+  /* Une etoile vide en --surface-3 disparaissait sur le fond sombre. */
+  .pc-etoiles .vide { color:color-mix(in srgb, var(--ink) 18%, transparent); }
+  .pc-compte { display:inline-flex; align-items:center; gap:6px; font-size:14px; color:var(--ink-2); }
+  .pc-compte b { font-size:16px; color:var(--ink); }
+  .pc-compte svg { width:18px; height:18px; color:var(--gold); }
+  /* La liste : une carte par parcours */
+  .pc-cartes { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:16px; max-width:900px; margin:0 auto; }
+  .pc-carte { display:flex; flex-direction:column; gap:12px; padding:18px; border:1px solid var(--line-2); border-radius:14px; background:var(--surface); font:inherit; color:var(--ink); text-align:left; }
+  button.pc-carte { cursor:pointer; border-color:var(--accent); box-shadow:0 0 0 1px var(--accent); transition:background .12s; }
+  button.pc-carte:hover { background:color-mix(in srgb, var(--accent) 6%, var(--surface)); }
+  .pc-ronds { display:flex; }
+  .pc-ronds > span { width:54px; height:54px; border-radius:50%; overflow:hidden; background:var(--surface-3); box-shadow:0 0 0 3px var(--surface); }
+  .pc-ronds > span + span { margin-left:-14px; }
+  .pc-ronds img, .pc-bulle-oiseau img { width:100%; height:100%; object-fit:cover; display:block; }
+  .pc-carte-titre { font:600 19px/1.25 var(--titre); }
+  .pc-carte.ferme .pc-ronds { filter:grayscale(1); opacity:.5; }
+  .pc-carte.ferme .pc-carte-titre { color:var(--ink-3); }
+  .pc-barre { display:block; height:6px; border-radius:3px; background:var(--surface-2); overflow:hidden; }
+  .pc-barre i { display:block; height:100%; background:var(--accent); }
+  .pc-carte-ligne { display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:14px; color:var(--ink-3); }
+  /* Un parcours ouvert : le chemin */
+  .pc-parcours { max-width:1200px; margin:0 auto; }
+  .pc-retour { display:inline-flex; align-items:center; gap:4px; padding:4px 0; border:0; background:none; font:600 14px var(--sans); color:var(--accent-ink); cursor:pointer; }
+  .pc-retour:hover { text-decoration:underline; }
+  .pc-tete { display:flex; align-items:center; justify-content:space-between; gap:8px 16px; flex-wrap:wrap; margin-top:8px; }
+  .pc-titre { font:600 21px/1.25 var(--titre); margin:0; }
+  .pc-tete .pc-compte { font-size:15px; }
+  .pc-tete .pc-compte b { font-size:20px; }
+  .pc-tete .pc-compte svg { width:22px; height:22px; }
+  .pc-chemin { position:relative; margin-top:18px; }
+  .pc-trace { position:absolute; left:0; top:0; overflow:visible; pointer-events:none; }
+  .pc-trace path { fill:none; stroke-width:6; stroke-linecap:round; }
+  .pc-trace .reste { stroke:var(--line-2); stroke-dasharray:2 12; }
+  .pc-trace .fait { stroke:var(--accent); }
+  .pc-noeud { position:absolute; transform:translate(-50%, -50%); padding:0; border:0; border-radius:50%; background:none; font:inherit; cursor:pointer; }
+  .pc-rond { position:relative; width:64px; height:64px; border-radius:50%; display:grid; place-items:center; background:var(--surface-2); color:var(--ink-3); transition:transform .12s; }
+  .pc-noeud:hover .pc-rond { transform:scale(1.06); }
+  .pc-rond > svg { width:28px; height:28px; }
+  .pc-n { position:absolute; right:-4px; top:-4px; min-width:24px; height:24px; padding:0 5px; box-sizing:border-box; border-radius:12px; display:grid; place-items:center; font:800 14px/1 var(--sans); background:var(--surface); color:var(--ink-2); box-shadow:0 0 0 2px var(--surface-2); }
+  /* Icone en --surface sur l'accent : blanc en clair, sapin en sombre. Le blanc sur l'accent
+     sombre #2bbcb0 ne faisait que 2,35:1, sous le seuil de 3:1 d'une icone. */
+  .pc-noeud.ok .pc-rond { background:var(--accent); color:var(--surface); box-shadow:0 4px 0 color-mix(in srgb, var(--accent) 55%, #000); }
+  .pc-noeud.ok .pc-n { box-shadow:0 0 0 2px var(--accent); color:var(--accent-ink); }
+  .pc-noeud.ici .pc-rond { width:82px; height:82px; background:var(--surface); color:var(--accent-2); box-shadow:inset 0 0 0 4px var(--accent-2), 0 0 0 8px color-mix(in srgb, var(--accent-2) 16%, transparent); }
+  .pc-noeud.ici .pc-rond > svg { width:34px; height:34px; }
+  .pc-noeud.ici .pc-n { box-shadow:0 0 0 2px var(--accent-2); color:var(--accent-2); }
+  .pc-noeud.ok.sel .pc-rond { box-shadow:0 4px 0 color-mix(in srgb, var(--accent) 55%, #000), 0 0 0 5px var(--surface), 0 0 0 8px color-mix(in srgb, var(--accent) 40%, transparent); }
+  .pc-noeud.ferme.sel .pc-rond { box-shadow:0 0 0 5px var(--surface), 0 0 0 8px color-mix(in srgb, var(--ink-3) 35%, transparent); }
+  .pc-cad { position:absolute; right:-3px; bottom:-3px; width:24px; height:24px; border-radius:50%; display:grid; place-items:center; background:var(--surface); color:var(--ink-3); box-shadow:0 0 0 1px var(--line-2); }
+  .pc-cad .pc-ico { width:13px; height:13px; }
+  .pc-noeud .pc-etoiles { position:absolute; left:50%; top:calc(100% + 10px); transform:translateX(-50%); }
+  .pc-bulle { position:absolute; z-index:2; width:260px; max-width:100%; box-sizing:border-box; display:flex; flex-direction:column; gap:10px; padding:14px 16px 16px; background:var(--surface); border:1px solid var(--line-2); border-radius:14px; box-shadow:0 10px 30px rgba(0,0,0,.16); }
+  .pc-bulle::before { content:''; position:absolute; top:-8px; left:var(--fx, 50%); width:14px; height:14px; background:var(--surface); border-left:1px solid var(--line-2); border-top:1px solid var(--line-2); transform:translateX(-50%) rotate(45deg); }
+  .pc-bulle-titre { font:600 19px/1.25 var(--titre); margin:0; }
+  .pc-bulle-meta { font-size:14px; color:var(--ink-3); }
+  .pc-bulle-oiseaux { display:flex; flex-wrap:wrap; gap:8px; }
+  .pc-bulle-oiseau { width:36px; height:36px; border-radius:50%; overflow:hidden; background:var(--surface-3); }
+  .pc-bulle-oiseau.neuf { box-shadow:0 0 0 2px var(--surface), 0 0 0 4px var(--accent); }
+  .pc-bulle-bas { display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:14px; color:var(--ink-3); }
+  .pc-bulle .btn { justify-content:center; width:100%; font-size:15px; padding:10px 15px; }
+  .pc-bulle-note { display:flex; align-items:center; gap:8px; margin:0; font-size:14px; color:var(--ink-3); }
   .pc-attente { margin:16px 0; }
   /* Une partie : la largeur suit le nombre de cartes, 5 cartes de 4/3 ne tenaient pas en 560 px. */
   .pc-jeu { max-width:680px; margin:0 auto; }
@@ -1607,11 +1636,6 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .pc-confusions li { margin:3px 0; }
   .pc-fin-btns { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:18px; }
   @media (max-width:560px){
-    .pc-grande { grid-template-columns:minmax(0,1fr); }
-    .pc-jouer { display:flex; align-items:center; justify-content:space-between; gap:12px; }
-    .pc-rond { width:34px; height:34px; font-size:14px; }
-    .pc-esp { width:70px; }
-    .pc-esp-photo { width:54px; height:54px; }
     .pc-son { padding:12px 14px; gap:12px; }
   }
   @media (max-width:640px) {
@@ -2905,9 +2929,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .species-modal .sm-vu, .debloque-ok { min-height:52px; }
     .species-modal .sm-vu { height:auto; }
 
-    /* Parcours du quiz. Les ronds de la frise restent petits : 7 ronds de 52 px ne tiennent
-       pas sur un telephone, et chaque etape a aussi sa ligne dans la liste, a 52 px. */
-    .pc-ligne, .pc-choisir, .pc-quitter, .pc-btn-jouer, .pc-fin-btns .btn { min-height:52px; }
+    /* Parcours du quiz. Les etapes du chemin font deja 64 px. */
+    .pc-retour, .pc-bulle .btn, .pc-choisir, .pc-quitter, .pc-fin-btns .btn { min-height:52px; }
     .pc-ecoute { width:52px; height:52px; }
 
     /* Les pastilles de palier sont peintes dans une boite de taille double ramenee de

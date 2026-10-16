@@ -17093,7 +17093,7 @@ function _quizSetMode(m){
 // _quizAncienInit() et retirer hidden de #quizAncien.
 function renderQuizInit(){
   _parcoursRender();
-  _pcHauteur();
+  _pcAjuster();   // aussi quand une partie en cours reste a l'ecran
 }
 // Le panneau du Quiz descend jusqu'en bas de l'ecran, et le parcours se centre dedans : le
 // pied de page n'apparait qu'en defilant (demande de Mathis le 2026-10-16, pour tout l'onglet).
@@ -17116,7 +17116,8 @@ function _pcHauteur(){
   const k = Math.max(1, Math.min(dispoH / PC_REF_H, pc.clientWidth / PC_REF_W, PC_K_MAX));
   pc.style.setProperty('--pc-k', k.toFixed(3));
 }
-window.addEventListener('resize', _pcHauteur);
+// Le chemin se redessine apres --pc-k : sa largeur, dans ses propres pixels, en depend.
+window.addEventListener('resize', () => _pcAjuster());
 function _quizAncienInit(){
   _quizSetMode(_quizMode);
   // Restore le chip 'Sens' selon la valeur persistee (default classic)
@@ -19598,7 +19599,7 @@ document.addEventListener('keydown', e => {
    ------------------------------------------------ */
 const PARCOURS_MESANGES = {
   cle: 'mesanges',
-  titre: 'mésanges et pouillot véloce',
+  titre: 'Mésanges et pouillot véloce',
   especes: ['parus major', 'phylloscopus collybita', 'cyanistes caeruleus', 'poecile palustris', 'periparus ater'],
   // type : 'nom' = un chant, des noms proposes ; 'chant' = un oiseau, 3 chants proposes ;
   // 'melange' = moitie de chaque. n = nombre d'especes en jeu (les n premieres).
@@ -19609,15 +19610,23 @@ const PARCOURS_MESANGES = {
     { titre: 'Cinq oiseaux', type: 'nom', n: 5, q: 10 },
     { titre: 'Trouver le chant', type: 'chant', n: 5, q: 10 },
     { titre: 'Le mélange', type: 'melange', n: 5, q: 10 },
-    { titre: 'L\'épreuve', type: 'nom', n: 5, q: 15 },
+    { titre: 'L\'épreuve', type: 'nom', n: 5, q: 15, epreuve: true },
   ],
 };
+// Parcours a venir, montres grises « Bientot » dans la liste : les deux groupes que
+// docs/refonte-quiz.md garde pour la suite.
+const PARCOURS_BIENTOT = [
+  { titre: 'Merle et grives', especes: ['turdus merula', 'turdus philomelos', 'turdus viscivorus', 'erithacus rubecula'] },
+  { titre: 'Fauvettes', especes: ['sylvia atricapilla', 'sylvia borin', 'curruca communis', 'hippolais polyglotta'] },
+];
 const PC_CHANTS_PROPOSES = 3;
 const PC_DUREE_MAX = 20;   // secondes lues par chant, comme l'ancien quiz
 // Pause entre la reponse et la question suivante. 1 s (« tres legere ») passait trop vite pour
 // voir la bonne carte, dit Mathis le 2026-10-16 : 2 s.
 const PC_PAUSE_SUITE_MS = 2000;
-const _pc = { selection: null, partie: null };
+// vue : 'liste' (les parcours en cartes) ou 'chemin' (un parcours ouvert). selection : l'etape
+// dont la bulle est ouverte sur le chemin (null = celle du moment).
+const _pc = { vue: 'liste', selection: null, partie: null };
 // Bouton de lecture : variante D « anneau qui avance », choisie par Mathis le 2026-10-16
 // (notes-privees/maquettes/quiz-visuel/pause.html). L'ancienne pause, deux bordures de 6 px
 // ecartees de 4 px, paraissait « bizarre ». Le triangle est place sur son centre de gravite :
@@ -19632,7 +19641,18 @@ const PC_ICO = {
   ok: '<svg class="pc-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5"/></svg>',
   ko: '<svg class="pc-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>',
   cadenas: '<svg class="pc-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 015 0v2"/></svg>',
+  retour: '<svg class="pc-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg>',
+  etoile: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4L2.8 9.5l6.4-.8z"/></svg>',
 };
+// Une icone par genre d'etape sur le chemin (maquette C3 choisie le 2026-10-16) : casque = un
+// chant, des noms ; ondes = trouver le chant ; fleches croisees = le melange ; drapeau = l'epreuve.
+const PC_GENRE_ICO = {
+  nom: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14v-2a8 8 0 0116 0v2"/><rect x="3" y="14" width="5" height="7" rx="2"/><rect x="16" y="14" width="5" height="7" rx="2"/></svg>',
+  chant: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2"/></svg>',
+  melange: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>',
+  epreuve: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>',
+};
+const _pcGenre = et => et.epreuve ? 'epreuve' : et.type;
 let _pcChants = null;   // data/parcours-mesanges.json, lu au premier lancement d'une etape
 
 const _pcSeuil = et => Math.ceil(et.q * 0.8);
@@ -19649,6 +19669,12 @@ function _pcEnregistrerScore(i, score){
   try{ localStorage.setItem('mb-parcours-' + PARCOURS_MESANGES.cle, JSON.stringify({ best })); }catch(_){}
 }
 const _pcReussie = (i, best) => best[i] != null && best[i] >= _pcSeuil(PARCOURS_MESANGES.etapes[i]);
+// Etoiles (Mathis le 2026-10-16) : 8, 9, 10 sur 10 donnent 1, 2, 3 ; a l'epreuve, 12, 14, 15
+// sur 15. Soit une etoile au seuil de passage, deux pour une seule erreur, trois sans faute.
+const PC_ETOILES_MAX = 3;
+const _pcEtoiles = (et, score) => score == null || score < _pcSeuil(et) ? 0 : score >= et.q ? 3 : score >= et.q - 1 ? 2 : 1;
+const _pcTotalEtoiles = best => PARCOURS_MESANGES.etapes.reduce((t, et, i) => t + _pcEtoiles(et, best[i]), 0);
+const _pcEtoilesHTML = n => `<span class="pc-etoiles">${Array.from({ length: PC_ETOILES_MAX }, (_, k) => `<span class="${k < n ? 'pleine' : 'vide'}">${PC_ICO.etoile}</span>`).join('')}</span>`;
 const _pcOuverte = (i, best) => i === 0 || _pcReussie(i - 1, best);
 // L'etape a jouer : la premiere ouverte et pas encore reussie, sinon la derniere.
 function _pcEtapeDuMoment(best){
@@ -19657,10 +19683,11 @@ function _pcEtapeDuMoment(best){
   return et.length - 1;
 }
 function _pcDescription(et){
-  const quoi = et.type === 'nom' ? `Un chant, ${et.n} noms proposés`
-    : et.type === 'chant' ? `Un oiseau, ${PC_CHANTS_PROPOSES} chants proposés`
-    : 'Les deux sortes de questions';
-  return `${quoi} · ${et.q} questions · ${_pcSeuil(et)} bonnes réponses pour passer`;
+  if(et.epreuve) return `${et.q} questions, les ${et.n} oiseaux`;
+  const quoi = et.type === 'nom' ? `Un chant, ${et.n} noms`
+    : et.type === 'chant' ? `Un oiseau, ${PC_CHANTS_PROPOSES} chants`
+    : 'Noms et chants mêlés';
+  return `${quoi} · ${et.q} questions`;
 }
 function _pcCouperSons(){
   document.querySelectorAll('#pcParcours audio').forEach(a => { try{ a.pause(); }catch(_){} });
@@ -19675,55 +19702,149 @@ function _pcLibererSons(){
   });
 }
 
+// Accueil du quiz refait le 2026-10-16 d'apres les maquettes choisies par Mathis
+// (notes-privees/maquettes/quiz-accueil/) : L1, les parcours en cartes, puis C3, un parcours
+// ouvert en chemin qui serpente. Ce qui genait avant : trop de texte, la frise de ronds et la
+// liste des etapes ; ce qui compte : voir d'un coup d'oeil ou on en est.
 function _parcoursRender(){
   const box = document.getElementById('pcParcours'); if(!box) return;
   if(_pc.partie) return;   // une partie en cours reste a l'ecran quand on revient sur l'onglet
-  const P = PARCOURS_MESANGES, et = P.etapes, best = _pcScores();
-  const reussies = et.filter((_, i) => _pcReussie(i, best)).length;
-  const moment = _pcEtapeDuMoment(best);
-  const sel = (_pc.selection != null && _pcOuverte(_pc.selection, best)) ? _pc.selection : moment;
-  const e = et[sel];
-  const etat = i => _pcReussie(i, best) ? 'ok' : (_pcOuverte(i, best) ? 'cours' : 'ferme');
-  const etatTxt = { ok: 'réussie', cours: 'à jouer', ferme: 'fermée' };
-  const frise = et.map((x, i) => {
-    const s = etat(i);
-    const rond = `<button type="button" class="pc-rond ${s}${i === sel ? ' sel' : ''}" data-pc-etape="${i}" ${s === 'ferme' ? 'disabled' : ''} aria-label="Étape ${i + 1} : ${esc(x.titre)}, ${etatTxt[s]}">${s === 'ok' ? PC_ICO.ok : i + 1}</button>`;
-    return (i ? `<span class="pc-trait${_pcReussie(i - 1, best) ? ' f' : ''}"></span>` : '') + rond;
-  }).join('');
-  // Especes en jeu ; a une etape qui en ajoute une, la nouvelle est signalee par sa couleur.
-  // Le mot « nouvelle » reste pour les lecteurs d'ecran seulement : a l'oeil, le bleu suffit
-  // (demande de Mathis le 2026-10-16).
-  const nouvelle = (sel > 0 && e.n > et[sel - 1].n) ? e.n - 1 : -1;
-  // Maquette A « Sentier » choisie le 2026-10-16 : les oiseaux de l'etape en photos rondes,
-  // la nouvelle entouree d'accent (notes-privees/maquettes/quiz-visuel/).
-  const puces = P.especes.slice(0, e.n).map((sci, j) =>
-    `<span class="pc-esp${j === nouvelle ? ' neuf' : ''}"><span class="pc-esp-photo" data-pc-vign="${esc(sci)}"></span><span>${esc(_pcNomFr(sci))}${j === nouvelle ? '<span class="visually-hidden">, nouvelle</span>' : ''}</span></span>`).join('');
-  const meilleur = best[sel] != null ? `meilleur score ${best[sel]}/${e.q}` : 'pas encore jouée';
-  const autres = et.map((x, i) => {
-    if(i === sel) return '';
-    const s = etat(i);
-    const droite = s === 'ok' ? `${PC_ICO.ok}${best[i]}/${x.q} · rejouer` : (s === 'cours' ? (best[i] != null ? `${best[i]}/${x.q} · à jouer` : 'à jouer') : `<span class="pc-cadenas" role="img" aria-label="fermée">${PC_ICO.cadenas}</span>`);
-    return `<button type="button" class="pc-ligne ${s}" data-pc-etape="${i}" ${s === 'ferme' ? 'disabled' : ''}><span class="pc-n">${i + 1}</span><b>${esc(x.titre)}</b><span class="pc-res">${droite}</span></button>`;
-  }).join('');
-  const fini = reussies === et.length;
-  box.innerHTML = `<div class="pc-page">
-    <p class="pc-intro">Cinq oiseaux au chant proche, appris pas à pas. ${_pcSeuil(et[0])} bonnes réponses sur ${et[0].q} ouvrent l'étape suivante.</p>
-    <p class="pc-sous">Parcours 1 : ${esc(P.titre)} · ${fini ? 'parcours terminé' : `${reussies} ${reussies > 1 ? 'étapes réussies' : 'étape réussie'} sur ${et.length}`}</p>
-    <div class="pc-frise">${frise}</div>
-    <div class="pc-grande">
-      <div>
-        <div class="pc-etiq">Étape ${sel + 1} sur ${et.length}</div>
-        <h3 class="bloc-titre">${esc(e.titre)}</h3>
-        <p class="pc-meta">${esc(_pcDescription(e))}</p>
-        <div class="pc-especes">${puces}</div>
-      </div>
-      <div class="pc-jouer">
-        <button type="button" class="btn pc-btn-jouer" data-pc-jouer="${sel}">${best[sel] != null ? 'Rejouer' : 'Jouer'}</button>
-        <div class="pc-meta">${meilleur}</div>
-      </div>
-    </div>
-    <div class="pc-liste">${autres}</div></div>`;
+  if(_pc.vue === 'chemin') _pcRenderChemin(box); else _pcRenderListe(box);
   _pcPhotos(box);
+  _pcAjuster();
+}
+function _pcAjuster(){ _pcHauteur(); _pcDessinerChemin(); }
+const _pcRonds = especes => `<span class="pc-ronds" aria-hidden="true">${especes.map(sci => `<span data-pc-vign="${esc(sci)}"></span>`).join('')}</span>`;
+function _pcRenderListe(box){
+  const P = PARCOURS_MESANGES, n = P.etapes.length, best = _pcScores();
+  const reussies = P.etapes.filter((_, i) => _pcReussie(i, best)).length;
+  const etoiles = _pcTotalEtoiles(best), max = n * PC_ETOILES_MAX;
+  const etapesTxt = `${reussies} ${reussies > 1 ? 'étapes' : 'étape'} sur ${n}`;
+  const carte = `<button type="button" class="pc-carte" data-pc-ouvrir aria-label="${esc(P.titre)} : ${etapesTxt}, ${etoiles} ${etoiles > 1 ? 'étoiles' : 'étoile'} sur ${max}">
+      ${_pcRonds(P.especes)}
+      <span class="pc-carte-titre">${esc(P.titre)}</span>
+      <span class="pc-barre"><i style="width:${(reussies / n * 100).toFixed(1)}%"></i></span>
+      <span class="pc-carte-ligne"><span>${etapesTxt}</span><span class="pc-compte">${PC_ICO.etoile}<b>${etoiles}</b>/${max}</span></span>
+    </button>`;
+  const bientot = PARCOURS_BIENTOT.map(b => `<div class="pc-carte ferme">
+      ${_pcRonds(b.especes)}
+      <span class="pc-carte-titre">${esc(b.titre)}</span>
+      <span class="pc-etiq">Bientôt</span>
+    </div>`).join('');
+  box.innerHTML = `<div class="pc-cartes">${carte}${bientot}</div>`;
+}
+function _pcRenderChemin(box){
+  const P = PARCOURS_MESANGES, best = _pcScores();
+  const etoiles = _pcTotalEtoiles(best), max = P.etapes.length * PC_ETOILES_MAX;
+  box.innerHTML = `<div class="pc-parcours">
+    <button type="button" class="pc-retour" data-pc-liste>${PC_ICO.retour}Tous les parcours</button>
+    <div class="pc-tete">
+      <h3 class="pc-titre">${esc(P.titre)}</h3>
+      <span class="pc-compte" aria-label="${etoiles} ${etoiles > 1 ? 'étoiles' : 'étoile'} sur ${max}">${PC_ICO.etoile}<b>${etoiles}</b> sur ${max}</span>
+    </div>
+    <div class="pc-chemin" id="pcChemin"></div>
+  </div>`;
+}
+// Le chemin se dessine dans les pixels CSS de sa propre boite (clientWidth), jamais en pixels
+// d'ecran : body porte zoom:0.85, et le parcours --pc-k par-dessus. D'ou un dessin APRES
+// _pcHauteur, qui fixe --pc-k, et un nouveau dessin a chaque changement de taille.
+const PC_CHEMIN_LARGE = 700;    // en dessous, le chemin descend au lieu d'onduler en largeur
+const PC_R = 32, PC_R_ICI = 41; // rayons des ronds : 64 px, 82 px pour l'etape en cours
+function _pcDessinerChemin(focus){
+  const box = document.getElementById('pcChemin'); if(!box) return;
+  const W = box.clientWidth; if(!W) return;   // onglet masque : renderQuizInit redessine a l'affichage
+  const et = PARCOURS_MESANGES.etapes, best = _pcScores(), dernier = et.length - 1;
+  const fini = et.every((_, i) => _pcReussie(i, best));
+  // Parcours fini : plus d'etape en cours, donc pas d'anneau orange, et tout le trait est plein.
+  const ici = fini ? -1 : _pcEtapeDuMoment(best);
+  const sel = _pc.selection != null ? _pc.selection : (fini ? dernier : ici);
+  const etat = i => _pcReussie(i, best) ? 'ok' : (i === ici ? 'ici' : 'ferme');
+  // Ce qui depasse sous le centre d'un rond : les etoiles d'une etape faite, le halo de l'etape
+  // en cours, le cadenas d'une etape fermee.
+  const bas = i => ({ ok: PC_R + 30, ici: PC_R_ICI + 8, ferme: PC_R + 3 })[etat(i)];
+  // La bulle d'abord, pour connaitre sa hauteur avant de placer les etapes. La place reservee
+  // est celle de la plus haute des sept : le parcours est centre en hauteur dans le panneau, et
+  // une boite qui changeait de hauteur a chaque etape touchee faisait sauter tout le chemin.
+  box.innerHTML = '<div class="pc-bulle"></div>';
+  const bulle = box.firstElementChild;
+  let bhMax = 0;
+  et.forEach((_, i) => { bulle.innerHTML = _pcBulleHTML(i, best, etat(i)); bhMax = Math.max(bhMax, bulle.offsetHeight); });
+  bulle.innerHTML = _pcBulleHTML(sel, best, etat(sel));
+  const bw = bulle.offsetWidth, bh = bulle.offsetHeight;
+  const large = W >= PC_CHEMIN_LARGE;
+  let pts, by;
+  if(large){
+    // En largeur, le chemin ondule entre deux rangees.
+    const marge = 60, pas = (W - 2 * marge) / dernier;
+    pts = et.map((_, i) => [Math.round(marge + i * pas), i % 2 ? 170 : 60]);
+    by = pts[sel][1] + bas(sel) + 14;
+    // Sous une etape de la rangee du haut, la bulle couvrirait ses voisines du bas quand le pas
+    // est court : elle descend alors sous les deux rangees, sa pointe toujours sous l'etape.
+    // Le test se fait sur la bulle deja ramenee dans la boite, pas sur la bulle centree : au
+    // bord, l'etape 1 debordait a gauche, et ramenee, elle couvrait l'etape 2.
+    const gauche = Math.min(W - bw, Math.max(0, pts[sel][0] - bw / 2)), droite = gauche + bw;
+    const couvre = [sel - 1, sel + 1].some(j => j >= 0 && j <= dernier && pts[j][1] > pts[sel][1]
+      && pts[j][0] + PC_R + 6 > gauche && pts[j][0] - PC_R - 6 < droite);
+    if(couvre) by = Math.max(...pts.map((p, i) => p[1] + bas(i))) + 14;
+  } else {
+    // Au telephone, il descend en zigzag, et les etapes qui suivent la bulle lui font la place.
+    const S = 118, amp = Math.min(W * 0.26, 150), f = [0, .7, 1, .7, 0, -.7, -1];
+    const ecart = bhMax + 28;
+    pts = et.map((_, i) => [Math.round(W / 2 + (f[i] || 0) * amp), 60 + i * S + (i > sel ? ecart : 0)]);
+    by = pts[sel][1] + bas(sel) + 14;
+  }
+  const bx = Math.min(W - bw, Math.max(0, pts[sel][0] - bw / 2));
+  bulle.style.left = bx + 'px'; bulle.style.top = by + 'px';
+  bulle.style.setProperty('--fx', Math.min(bw - 22, Math.max(22, pts[sel][0] - bx)) + 'px');
+  // Hauteur fixe quelle que soit l'etape touchee : en largeur, la bulle la plus haute posee sous
+  // les deux rangees ; au telephone, les etapes poussees lui ont deja fait sa place.
+  const fond = Math.max(...pts.map((p, i) => p[1] + bas(i)));
+  const H = (large ? fond + 14 + bhMax : Math.max(fond, by + bhMax)) + 12;
+  box.style.height = H + 'px';
+  // Le trait : plein jusqu'a l'etape du moment, en pointilles ensuite.
+  const seg = (a, p) => large
+    ? `C${(a[0] + p[0]) / 2},${a[1]} ${(a[0] + p[0]) / 2},${p[1]} ${p[0]},${p[1]}`
+    : `C${a[0]},${(a[1] + p[1]) / 2} ${p[0]},${(a[1] + p[1]) / 2} ${p[0]},${p[1]}`;
+  const trace = (de, a) => `M${pts[de][0]},${pts[de][1]}` + pts.slice(de + 1, a + 1).map((p, k) => ' ' + seg(pts[de + k], p)).join('');
+  const jusque = fini ? dernier : ici;
+  const svg = `<svg class="pc-trace" width="${W}" height="${H}" aria-hidden="true">`
+    + (jusque < dernier ? `<path class="reste" d="${trace(jusque, dernier)}"/>` : '')
+    + (jusque > 0 ? `<path class="fait" d="${trace(0, jusque)}"/>` : '') + '</svg>';
+  const etatTxt = { ok: 'réussie', ici: 'à jouer', ferme: 'fermée' };
+  const noeuds = et.map((x, i) => {
+    const s = etat(i), g = _pcGenre(x), nb = _pcEtoiles(x, best[i]);
+    const label = `Étape ${i + 1} : ${x.titre}, ${etatTxt[s]}${s === 'ok' ? `, ${nb} ${nb > 1 ? 'étoiles' : 'étoile'} sur ${PC_ETOILES_MAX}` : ''}`;
+    return `<button type="button" class="pc-noeud ${s}${i === sel ? ' sel' : ''}" style="left:${pts[i][0]}px;top:${pts[i][1]}px" data-pc-etape="${i}" aria-expanded="${i === sel}" aria-label="${esc(label)}">`
+      + `<span class="pc-rond">${PC_GENRE_ICO[g]}${g === 'nom' ? `<span class="pc-n">${x.n}</span>` : ''}${s === 'ferme' ? `<span class="pc-cad">${PC_ICO.cadenas}</span>` : ''}</span>`
+      + (s === 'ok' ? _pcEtoilesHTML(nb) : '') + '</button>';
+  }).join('');
+  bulle.insertAdjacentHTML('beforebegin', svg + noeuds);
+  _pcPhotos(box);
+  if(focus != null) box.querySelector(`[data-pc-etape="${focus}"]`)?.focus();
+}
+// Bulle d'une etape : titre, genre, oiseaux, etoiles et Jouer. Une etape fermee montre aussi sa
+// bulle, avec ce qui l'ouvrira a la place du bouton.
+function _pcBulleHTML(i, best, s){
+  const P = PARCOURS_MESANGES, et = P.etapes, e = et[i];
+  // A une etape qui ajoute un oiseau, le nouveau est entoure d'accent.
+  const nouvelle = (i > 0 && e.n > et[i - 1].n) ? e.n - 1 : -1;
+  const oiseaux = P.especes.slice(0, e.n).map((sci, j) => {
+    const nom = esc(_pcNomFr(sci));
+    return `<span class="pc-bulle-oiseau${j === nouvelle ? ' neuf' : ''}" data-pc-vign="${esc(sci)}" role="img" aria-label="${nom}${j === nouvelle ? ', nouvelle' : ''}" title="${nom}"></span>`;
+  }).join('');
+  let pied;
+  if(s === 'ferme') pied = `<p class="pc-bulle-note">${PC_ICO.cadenas}Réussis l'étape ${i} pour l'ouvrir.</p>`;
+  else {
+    const score = best[i] == null ? `${_pcSeuil(e)} sur ${e.q} pour passer`
+      : _pcReussie(i, best) ? `meilleur : ${best[i]}/${e.q}`
+      : `${best[i]}/${e.q}, il en faut ${_pcSeuil(e)}`;
+    pied = `<div class="pc-bulle-bas">${_pcEtoilesHTML(_pcEtoiles(e, best[i]))}<span>${score}</span></div>
+      <button type="button" class="btn" data-pc-jouer="${i}">${best[i] != null ? 'Rejouer' : 'Jouer'}</button>`;
+  }
+  return `<span class="pc-etiq">Étape ${i + 1}</span>
+    <h4 class="pc-bulle-titre">${esc(e.titre)}</h4>
+    <span class="pc-bulle-meta">${esc(_pcDescription(e))}</span>
+    <div class="pc-bulle-oiseaux">${oiseaux}</div>${pied}`;
 }
 // Remplit les photos [data-pc-vign] d'un bloc (memes photos que le reste de l'appli).
 function _pcPhotos(box){
@@ -19983,7 +20104,10 @@ document.addEventListener('click', e => {
   const onglet = e.target.closest('.tab[data-view]');
   if(onglet && onglet.dataset.view !== 'quiz'){ _pcCouperSons(); return; }
   if(!e.target.closest('#pcParcours')) return;
-  const etape = e.target.closest('[data-pc-etape]'); if(etape){ _pc.selection = +etape.dataset.pcEtape; _parcoursRender(); return; }
+  // Le focus suit l'element touche, que le nouveau dessin remplace.
+  const ouvrir = e.target.closest('[data-pc-ouvrir]'); if(ouvrir){ _pc.vue = 'chemin'; _pc.selection = null; _parcoursRender(); document.querySelector('#pcParcours .pc-retour')?.focus(); return; }
+  const liste = e.target.closest('[data-pc-liste]'); if(liste){ _pc.vue = 'liste'; _parcoursRender(); document.querySelector('#pcParcours [data-pc-ouvrir]')?.focus(); return; }
+  const etape = e.target.closest('[data-pc-etape]'); if(etape){ _pc.selection = +etape.dataset.pcEtape; _pcDessinerChemin(_pc.selection); return; }
   const jouer = e.target.closest('[data-pc-jouer]'); if(jouer){ _pcLancer(+jouer.dataset.pcJouer); return; }
   const retour = e.target.closest('[data-pc-retour]'); if(retour){ _pcLibererSons(); _pc.partie = null; _parcoursRender(); return; }
   const ecoute = e.target.closest('[data-pc-ecoute]'); if(ecoute){ _pcEcouter(+ecoute.dataset.pcEcoute); return; }

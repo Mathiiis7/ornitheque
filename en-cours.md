@@ -4,16 +4,12 @@
 - Tranché par Mathis : « très aigu » = haut des notes ; ligne « Notes qui glissent d'un trait » ajoutée (sépare charbonnière et noire).
 - EN ATTENTE DE MATHIS : valider la grille à l'oreille ; note à crochet = une ou deux ; timbre ; « sans s'arrêter ». La maquette notes-privees/maquettes/criteres/ ne suit plus la grille.
 ---
-# À FAIRE : nouvel accueil du quiz, maquette choisie le 2026-10-16 (rien de codé)
-Maquettes : notes-privees/maquettes/quiz-accueil/ (choix : L1 pour la liste, C3 pour le parcours).
-Réponses de Mathis aux questions (à respecter) :
-- Ce qui gênait : trop de texte, la frise de ronds, la liste des étapes. Priorité : voir « où j'en suis ». Ambiance : style de l'appli + touche de jeu.
-- Onglet Quiz = liste des parcours en cartes (L1) : oiseaux en ronds qui se chevauchent, barre + « 3 étapes sur 7 », étoiles gagnées /21. Parcours à venir grisés « Bientôt » : Merle et grives, Fauvettes (espèces de docs/refonte-quiz.md).
-- Un parcours ouvert = chemin qui serpente (C3) : en largeur sur grand écran (ondule gauche-droite), vertical au téléphone. « ‹ Tous les parcours », titre, compteur d'étoiles.
-- Chaque étape : icône du genre (casque = un chant/des noms avec pastille du nombre d'oiseaux, ondes = trouver le chant, flèches croisées = mélange, drapeau = épreuve). Faite = pleine accent + étoiles ; en cours = plus grande, cerclée d'orange ; fermée = grise + cadenas.
-- Toucher une étape = bulle de détail (titre, genre, oiseaux, étoiles, Jouer), sous l'étape en C3.
-- Étoiles : 8, 9, 10 sur 10 → 1, 2, 3 ; épreuve 12, 14, 15 sur 15. Badge de fin : ticket qg#69, plus tard.
-- À garder : agrandissement --pc-k, panneau pleine hauteur, mode sombre, cibles de 52 px au doigt.
+# EN LOCAL le 2026-10-16, PAS POUSSÉ : nouvel accueil du quiz, L1 + C3 (v793, app.js?v=367)
+- Onglet Quiz = les parcours en cartes (mésanges ouvert, « Merle et grives » et « Fauvettes » grisés « Bientôt ») ; toucher la carte ouvre le chemin.
+- Chemin : ondule en largeur à partir de 700 px de large (pixels du parcours), vertical en dessous. Icône par genre, étoiles sous les étapes faites, l'étape en cours cerclée d'orange, bulle sous l'étape touchée.
+- Tranché seul : une étape fermée montre aussi sa bulle (« Réussis l'étape N pour l'ouvrir », sans bouton) ; la hauteur du chemin est réservée pour la plus haute bulle, sinon tout le parcours sautait à chaque étape touchée (il est centré dans le panneau).
+- Étoiles : 1 au seuil, 2 à une erreur, 3 sans faute (_pcEtoiles) ; l'écran de fin d'étape ne les montre pas encore.
+- Vérifié sur la démo locale : 1200 px et 375 px, clair et sombre, partie jouée jusqu'au bout puis retour au chemin, cas rien joué / tout fini / épreuve 13 et 11 sur 15. Bancs : 11 conformes.
 ---
 # EN LOCAL le 2026-10-16, PAS POUSSÉ : le parcours grandit avec l'écran (v792, app.js?v=366)
 - Facteur --pc-k (zoom CSS) calculé par _pcHauteur sur la place disponible : 1 jusqu'à ~1280x720, 1,33 à 1680x1050, 1,37 à 1920x1080, plafond 1,5. Référence : question à 5 réponses + verdict = 720 px CSS.

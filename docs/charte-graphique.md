@@ -38,7 +38,8 @@ le bouton « Thème »).
 
 - **Un seul accent.** Il marque ce qui est actif, cliquable ou compté : onglet actif, bouton principal,
   compteur du Birdydex, lien. L'orange `--accent-2` ne sert qu'au bouton de lecture d'un chant, et
-  l'or `--gold` aux trophées.
+  l'or `--gold` aux trophées. Une exception chacun, voulue par Mathis le 2026-10-16 pour le parcours
+  du Quiz : l'orange entoure l'étape en cours, l'or colore les étoiles gagnées.
 - **`--ink-sur-blanc` et `--ink-3-sur-blanc` ne changent jamais avec le thème** : ils servent sur des
   fonds qui restent blancs en sombre (pastilles de la fiche espèce, numéros des vignettes du
   Birdydex). Mesuré le 2026-09-29 : 16,04:1 et 4,53:1, contre 1,10:1 et 2,94:1 avec les variables
