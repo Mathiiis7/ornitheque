@@ -20076,6 +20076,9 @@ function _pcFin(){
   const et = PARCOURS_MESANGES.etapes, e = et[p.etape];
   _pcEnregistrerScore(p.etape, p.bonnes);
   const ok = p.bonnes >= _pcSeuil(e);
+  // Les etoiles de CETTE partie, pas la meilleure : on voit ce qu'on vient de gagner. Le chemin,
+  // lui, garde la meilleure.
+  const nb = _pcEtoiles(e, p.bonnes);
   // Confusions regroupees : « Pouillot veloce : tu as repondu Mesange charbonniere (2 fois) ».
   // Tournure sans accord : « prise pour » ne collait pas aux noms masculins.
   const compte = new Map();
@@ -20089,6 +20092,7 @@ function _pcFin(){
   _pc.selection = suivante ? p.etape + 1 : p.etape;
   box.innerHTML = `<div class="pc-fin">
     <div class="pc-etiq">${ok ? `Étape ${p.etape + 1} réussie` : `Étape ${p.etape + 1} : pas encore`}</div>
+    <div class="pc-fin-etoiles" role="img" aria-label="${nb} étoile${nb > 1 ? 's' : ''} sur ${PC_ETOILES_MAX}">${_pcEtoilesHTML(nb)}</div>
     <div class="pc-fin-score">${p.bonnes}/${e.q}</div>
     <p class="pc-meta">${ok ? (p.etape + 1 < et.length ? 'L\'étape suivante est ouverte.' : 'Tu as fini le parcours.') : `Il faut ${_pcSeuil(e)} bonnes réponses pour passer.`}</p>
     ${lignes ? `<p class="pc-meta">Tes confusions :</p><ul class="pc-confusions">${lignes}</ul>` : ''}

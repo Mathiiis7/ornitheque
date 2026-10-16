@@ -1634,6 +1634,16 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .pc-choisir { padding:7px 14px; }
   .pc-fin { text-align:center; padding:12px 0; }
   .pc-fin-score { font:700 44px/1.1 var(--titre); margin:8px 0 4px; }
+  /* Etoiles de fin d'etape : les pleines arrivent l'une apres l'autre. Sans animation
+     (prefers-reduced-motion), elles s'affichent posees. */
+  .pc-fin-etoiles { margin:14px 0 0; }
+  .pc-fin-etoiles .pc-etoiles { gap:8px; }
+  .pc-fin-etoiles svg { width:44px; height:44px; }
+  .pc-fin-etoiles .pleine { animation:pc-etoile-pop .45s cubic-bezier(.3,1.6,.5,1) both; }
+  .pc-fin-etoiles .pleine:nth-child(1) { animation-delay:.15s; }
+  .pc-fin-etoiles .pleine:nth-child(2) { animation-delay:.4s; }
+  .pc-fin-etoiles .pleine:nth-child(3) { animation-delay:.65s; }
+  @keyframes pc-etoile-pop { from { transform:scale(0) rotate(-35deg); opacity:0; } to { transform:none; opacity:1; } }
   .pc-confusions { list-style:none; padding:0; margin:6px 0 0; font-size:14px; color:var(--ink-2); }
   .pc-confusions li { margin:3px 0; }
   .pc-fin-btns { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:18px; }
