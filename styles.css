@@ -1647,8 +1647,77 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .pc-confusions { list-style:none; padding:0; margin:6px 0 0; font-size:14px; color:var(--ink-2); }
   .pc-confusions li { margin:3px 0; }
   .pc-fin-btns { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:18px; }
+  /* Entrainement (qg#56, maquette E1 de notes-privees/maquettes/quiz-entrainement/) : une carte
+     par mode sous les parcours, puis une page pour cocher les oiseaux. */
+  .pc-accueil { max-width:900px; margin:0 auto; }
+  .pc-entr { margin-top:28px; padding-top:22px; border-top:1px solid var(--line); }
+  .pc-modes { display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:14px; margin-top:14px; }
+  .pc-mode { display:flex; flex-direction:column; align-items:flex-start; gap:10px; padding:16px; border:1px solid var(--line-2); border-radius:14px; background:var(--surface); font:inherit; color:var(--ink); text-align:left; }
+  button.pc-mode { cursor:pointer; transition:border-color .12s, background .12s; }
+  button.pc-mode:hover { border-color:var(--accent); background:color-mix(in srgb, var(--accent) 6%, var(--surface)); }
+  .pc-mode.ferme { color:var(--ink-3); }
+  .pc-mode.ferme .pc-mode-ico { filter:grayscale(1); opacity:.6; }
+  .pc-mode-ico { flex:none; width:46px; height:46px; border-radius:50%; display:grid; place-items:center; background:color-mix(in srgb, var(--accent) 12%, var(--surface)); color:var(--accent-ink); }
+  .pc-mode-ico svg { width:24px; height:24px; }
+  .pc-mode-titre { font:600 18px/1.25 var(--titre); }
+  .pc-mode-desc { font-size:14px; color:var(--ink-3); }
+  .pc-entr-page { max-width:760px; margin:0 auto; display:flex; flex-direction:column; align-items:stretch; gap:18px; }
+  .pc-entr-page > .pc-retour { align-self:flex-start; }
+  .pc-entr-tete { display:flex; align-items:center; gap:14px; }
+  .pc-entr-tete .pc-meta { display:block; margin:2px 0 0; }
+  .pc-entr-bas { display:flex; align-items:center; justify-content:space-between; gap:10px 16px; flex-wrap:wrap; }
+  .pc-entr-oiseaux { margin-bottom:10px; }
+  .pc-entr-bientot { margin:4px 0 10px; }
+  .pc-lien { border:0; background:none; padding:4px 0; font:600 14px var(--sans); color:var(--accent-ink); cursor:pointer; }
+  .pc-lien:hover { text-decoration:underline; }
+  .pc-jetons { display:flex; flex-wrap:wrap; gap:10px; }
+  .pc-jeton { display:flex; align-items:center; gap:10px; height:52px; padding:0 14px 0 6px; border:1px solid var(--line-2); border-radius:26px; background:var(--surface); font:600 15px var(--sans); color:var(--ink-2); }
+  button.pc-jeton { cursor:pointer; }
+  button.pc-jeton:hover { border-color:var(--accent); }
+  .pc-jeton.on { border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent); color:var(--ink); background:color-mix(in srgb, var(--accent) 7%, var(--surface)); }
+  .pc-jeton.ferme { opacity:.5; }
+  .pc-jeton.ferme .pc-jeton-ph { filter:grayscale(1); }
+  .pc-jeton-ph, .pc-lacune-ph, .pc-bilan-ph { flex:none; border-radius:50%; overflow:hidden; background:var(--surface-3); }
+  .pc-jeton-ph { width:40px; height:40px; }
+  .pc-jeton-ph img, .pc-lacune-ph img, .pc-bilan-ph img { width:100%; height:100%; object-fit:cover; display:block; }
+  .pc-jeton-coche { flex:none; width:20px; height:20px; border-radius:50%; display:grid; place-items:center; background:var(--surface-2); color:transparent; }
+  .pc-jeton-coche .pc-ico { width:12px; height:12px; }
+  /* Coche en --surface sur l'accent, comme les etapes faites du chemin (contraste en sombre). */
+  .pc-jeton.on .pc-jeton-coche { background:var(--accent); color:var(--surface); }
+  .pc-lacune { display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid var(--line); }
+  .pc-lacune-ph { width:40px; height:40px; }
+  .pc-lacune-txt { flex:1; min-width:0; display:flex; flex-direction:column; }
+  .pc-lacune-txt .pc-meta { margin:0; }
+  .pc-lacune-nom { font-size:15px; font-weight:600; }
+  .pc-lacune-taux { font-size:14px; font-weight:600; color:var(--pc-ko); white-space:nowrap; }
+  .pc-bilan { max-width:520px; margin:12px auto 4px; text-align:left; }
+  .pc-bilan-l { display:flex; align-items:center; gap:12px; padding:7px 0; border-bottom:1px solid var(--line); font-size:15px; }
+  .pc-bilan-ph { width:36px; height:36px; }
+  .pc-bilan-nom { flex:1; min-width:0; }
+  .pc-bilan-n { font-weight:600; font-variant-numeric:tabular-nums; }
+  .pc-bilan .pc-barre { flex:none; width:90px; }
+  /* Nom a ecrire (variante N2) : les noms proposes flottent sous le champ. */
+  .pc-ecrire { display:flex; gap:10px; }
+  .pc-ecrire-champ { position:relative; flex:1; min-width:0; }
+  .pc-ecrit { width:100%; box-sizing:border-box; height:52px; padding:0 16px; border:2px solid var(--line-2); border-radius:10px; background:var(--surface); color:var(--ink); font:17px var(--sans); }
+  .pc-ecrit:focus { outline:none; border-color:var(--accent); }
+  .pc-ecrit:disabled { opacity:.7; }
+  .pc-valider { height:52px; }
+  .pc-sugg { position:absolute; z-index:3; left:0; right:0; top:calc(100% + 4px); display:flex; flex-direction:column; border:1px solid var(--line-2); border-radius:10px; background:var(--surface); box-shadow:0 10px 30px rgba(0,0,0,.16); overflow:hidden; }
+  .pc-sugg[hidden] { display:none; }
+  .pc-sugg-l { padding:11px 16px; border:0; border-bottom:1px solid var(--line); background:none; font:16px var(--sans); color:var(--ink); text-align:left; cursor:pointer; }
+  .pc-sugg-l:last-child { border-bottom:0; }
+  .pc-sugg-l b { color:var(--accent-ink); }
+  .pc-sugg-l:hover, .pc-sugg-l[aria-selected="true"] { background:color-mix(in srgb, var(--accent) 9%, var(--surface)); }
+  .pc-aide { margin:8px 0 0; font-size:14px; color:var(--ink-3); text-align:center; }
+  .pc-ecrit-note { color:var(--ink-3); }
   @media (max-width:560px){
     .pc-son { padding:12px 14px; gap:12px; }
+    .pc-modes { grid-template-columns:1fr 1fr; gap:10px; }
+    .pc-mode { padding:12px; gap:8px; }
+    .pc-mode-titre { font-size:16px; }
+    .pc-jetons { flex-direction:column; align-items:stretch; gap:8px; }
+    .pc-entr-bas .btn { width:100%; justify-content:center; }
   }
   @media (max-width:640px) {
     .qz-head { flex-direction:column; align-items:flex-start; }
@@ -2943,6 +3012,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
 
     /* Parcours du quiz. Les etapes du chemin font deja 64 px. */
     .pc-retour, .pc-bulle .btn, .pc-choisir, .pc-quitter, .pc-fin-btns .btn { min-height:52px; }
+    .pc-lien, .pc-sugg-l, .pc-entr-bas .btn { min-height:52px; }
     .pc-ecoute { width:52px; height:52px; }
 
     /* Les pastilles de palier sont peintes dans une boite de taille double ramenee de

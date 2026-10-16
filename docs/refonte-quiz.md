@@ -60,6 +60,30 @@ colle sa sélection (au moins 8 par espèce). Fait le 2026-10-16 : 66 chants gar
 Ce que ça ne couvre pas : les cris. Idée retenue : une étape bonus à part sur chaque parcours,
 sur les cris des mêmes oiseaux. Ticket qg#65.
 
+## L'entraînement (qg#56, fait le 2026-10-17)
+
+Quatre modes de 10 manches sous les parcours, à part d'eux. Maquette :
+`notes-privees/maquettes/quiz-entrainement/`. Choix de Mathis : E1 (une carte par mode, puis une
+page pour cocher les oiseaux), N2 (nom à écrire avec suggestions), noms de la colonne C.
+
+| Mode | Question | Oiseaux |
+|---|---|---|
+| Chant vers nom | un chant, 5 noms au plus | ceux cochés, 2 au moins |
+| Nom vers chant | un oiseau, 3 chants | ceux cochés, 3 au moins |
+| Nom à écrire | un chant, le nom à écrire | ceux cochés, 2 au moins |
+| Points faibles | un chant, 5 noms | les 3 plus ratés (7 manches) et les autres (3) |
+
+Tranché par moi, validé par Mathis le 2026-10-16 :
+- on coche parmi les oiseaux des parcours dont les chants sont triés, débloqués ou non ; ceux
+  des parcours « Bientôt » sont grisés ;
+- pas d'étoiles, rien à débloquer : l'entraînement n'écrit jamais dans `mb-parcours-*` ;
+- nom à écrire : majuscules, accents, traits d'union ne comptent pas, une faute de frappe passe
+  (« Presque », compté juste) ; le nom exact d'un autre oiseau est faux. Les suggestions viennent
+  de tous les oiseaux de France du Birdydex ;
+- réponses gardées dans le navigateur (`mb-quiz-stats`), parcours compris : par espèce, par
+  confusion, et les enregistrements entendus. Points faibles fermés avant 20 réponses ;
+- la dernière manche prend un enregistrement jamais entendu quand il en reste.
+
 ## À garder en tête
 
 - Varier les enregistreurs parmi les sons retenus pour une espèce : aujourd'hui `scoreRec`

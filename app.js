@@ -19624,9 +19624,10 @@ const PC_DUREE_MAX = 20;   // secondes lues par chant, comme l'ancien quiz
 // Pause entre la reponse et la question suivante. 1 s (« tres legere ») passait trop vite pour
 // voir la bonne carte, dit Mathis le 2026-10-16 : 2 s.
 const PC_PAUSE_SUITE_MS = 2000;
-// vue : 'liste' (les parcours en cartes) ou 'chemin' (un parcours ouvert). selection : l'etape
-// dont la bulle est ouverte sur le chemin (null = celle du moment).
-const _pc = { vue: 'liste', selection: null, partie: null };
+// vue : 'liste' (les parcours en cartes), 'chemin' (un parcours ouvert) ou 'entr' (la page d'un
+// mode d'entrainement, mode dans _pc.mode). selection : l'etape dont la bulle est ouverte sur le
+// chemin (null = celle du moment).
+const _pc = { vue: 'liste', selection: null, partie: null, mode: null };
 // Bouton de lecture : variante D « anneau qui avance », choisie par Mathis le 2026-10-16
 // (notes-privees/maquettes/quiz-visuel/pause.html). L'ancienne pause, deux bordures de 6 px
 // ecartees de 4 px, paraissait « bizarre ». Le triangle est place sur son centre de gravite :
@@ -19654,6 +19655,308 @@ const PC_GENRE_ICO = {
 };
 const _pcGenre = et => et.epreuve ? 'epreuve' : et.type;
 let _pcChants = null;   // data/parcours-mesanges.json, lu au premier lancement d'une etape
+
+// ---------- Entrainement (qg#56) ----------
+// Quatre modes de 10 manches, a part des parcours, avec les oiseaux qu'on choisit, debloques ou
+// non dans le parcours (Mathis le 2026-10-16). Maquette notes-privees/maquettes/quiz-entrainement/ :
+// E1 (une carte par mode sous les parcours, puis une page pour cocher les oiseaux), N2 (nom a
+// ecrire avec suggestions), noms des modes de la colonne C. Decisions dans docs/refonte-quiz.md.
+const PC_ENTR_MANCHES = 10;
+const PC_NOMS_MAX = 5;   // noms proposes au plus, dont le bon
+// min : oiseaux a cocher au moins. « Nom vers chant » propose 3 chants de 3 oiseaux differents.
+const PC_ENTR_MODES = {
+  nom: { titre: 'Chant vers nom', desc: `Un chant, ${PC_NOMS_MAX} noms proposés`, min: 2 },
+  chant: { titre: 'Nom vers chant', desc: `Un oiseau, ${PC_CHANTS_PROPOSES} chants proposés`, min: PC_CHANTS_PROPOSES },
+  ecrire: { titre: 'Nom à écrire', desc: 'Un chant, à toi d\'écrire qui c\'est', min: 2 },
+  lacunes: { titre: 'Points faibles', desc: 'Les oiseaux que tu rates le plus' },
+};
+const PC_ENTR_ICO = {
+  nom: PC_GENRE_ICO.nom,
+  chant: PC_GENRE_ICO.chant,
+  ecrire: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>',
+  lacunes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>',
+};
+// Les oiseaux qu'on peut choisir : ceux des parcours dont Mathis a trie les chants a l'oreille.
+// Ceux des parcours « Bientot » s'affichent grises tant que leurs chants ne sont pas tries.
+const PC_ENTR_ESPECES = PARCOURS_MESANGES.especes;
+const PC_ENTR_BIENTOT = PARCOURS_BIENTOT.flatMap(b => b.especes);
+function _pcEntrChoix(){
+  try{
+    const s = JSON.parse(localStorage.getItem('mb-entr-oiseaux') || 'null');
+    if(Array.isArray(s)) return PC_ENTR_ESPECES.filter(sci => s.includes(sci));
+  }catch(_){}
+  return [...PC_ENTR_ESPECES];
+}
+function _pcEntrGarderChoix(liste){ try{ localStorage.setItem('mb-entr-oiseaux', JSON.stringify(liste)); }catch(_){} }
+// Au plus 5 noms proposes, dont le bon. Un parcours n'a jamais plus de 5 oiseaux : il les
+// propose tous, comme avant.
+const _pcChoixNoms = (especes, cible) => _pcMelanger([cible, ..._pcMelanger(especes.filter(s => s !== cible)).slice(0, PC_NOMS_MAX - 1)]);
+
+// Les reponses, parcours et entrainement compris, pour les points faibles : par espece
+// [entendue, ratee], par paire « a|b » le nombre de fois ou a a ete pris pour b, et les
+// enregistrements deja entendus. Gardees dans le navigateur, comme le parcours : dans Firestore,
+// chaque reponse couterait des ecritures et une ligne de plus a la suppression RGPD ; les
+// statistiques du profil sont un autre ticket (qg#63).
+const PC_STATS_CLE = 'mb-quiz-stats';
+const PC_LACUNES_MIN = 20;    // reponses avant d'ouvrir les points faibles
+const PC_LACUNES_NB = 3;      // oiseaux revus au plus
+const PC_LACUNES_PART = 7;    // manches sur ces oiseaux, les 3 autres sur le reste
+function _pcStats(){
+  try{
+    const s = JSON.parse(localStorage.getItem(PC_STATS_CLE) || '{}');
+    return { esp: s.esp || {}, conf: s.conf || {}, entendus: Array.isArray(s.entendus) ? s.entendus : [] };
+  }catch(_){ return { esp: {}, conf: {}, entendus: [] }; }
+}
+function _pcGarderStats(st){ try{ localStorage.setItem(PC_STATS_CLE, JSON.stringify(st)); }catch(_){} }
+function _pcNoterReponse(cible, juste, choisi){
+  const st = _pcStats(), e = st.esp[cible] || [0, 0];
+  e[0]++; if(!juste) e[1]++;
+  st.esp[cible] = e;
+  if(!juste && choisi){ const c = cible + '|' + choisi; st.conf[c] = (st.conf[c] || 0) + 1; }
+  _pcGarderStats(st);
+}
+function _pcNoterEntendus(ids){
+  const st = _pcStats(), vus = new Set(st.entendus);
+  for(const id of ids) if(id) vus.add(id);
+  st.entendus = [...vus];
+  _pcGarderStats(st);
+}
+// Les oiseaux les plus rates, avec celui qu'on leur donne le plus souvent a la place. Le taux est
+// lisse ((rates + 1) / (entendus + 2)) : un rate sur une seule ecoute ne passe pas devant 5 sur 12.
+function _pcLacunes(){
+  const st = _pcStats();
+  const total = PC_ENTR_ESPECES.reduce((t, sci) => t + ((st.esp[sci] || [])[0] || 0), 0);
+  const faibles = PC_ENTR_ESPECES.map(sci => {
+    const [vus = 0, rates = 0] = st.esp[sci] || [];
+    let pour = null, max = 0;
+    for(const [c, n] of Object.entries(st.conf)){
+      const [a, b] = c.split('|');
+      if(a === sci && n > max){ max = n; pour = b; }
+    }
+    return { sci, vus, rates, taux: (rates + 1) / (vus + 2), pour };
+  }).filter(x => x.rates > 0).sort((a, b) => b.taux - a.taux || b.rates - a.rates).slice(0, PC_LACUNES_NB);
+  return { total, faibles };
+}
+const _pcPluriel = (n, mot) => `${n} ${mot}${n > 1 ? 's' : ''}`;
+// Pourquoi les points faibles sont fermes, ou '' s'ils sont ouverts.
+function _pcLacunesFerme(l){
+  if(l.total < PC_LACUNES_MIN) return `Encore ${_pcPluriel(PC_LACUNES_MIN - l.total, 'réponse')} avant de l'ouvrir`;
+  if(!l.faibles.length) return 'Aucune erreur à revoir pour l\'instant';
+  return '';
+}
+// Les plus rates reviennent chacun au moins une fois, puis au prorata de leur taux ; les dernieres
+// manches vont aux autres oiseaux, pour que la reponse ne soit pas toujours parmi les memes.
+function _pcCiblesLacunes(faibles){
+  const sci = faibles.map(f => f.sci), autres = PC_ENTR_ESPECES.filter(s => !sci.includes(s));
+  const out = [...sci], somme = faibles.reduce((t, f) => t + f.taux, 0);
+  while(out.length < PC_LACUNES_PART){
+    let r = Math.random() * somme;
+    out.push((faibles.find(f => (r -= f.taux) < 0) || faibles[0]).sci);
+  }
+  const reste = autres.length ? autres : sci;
+  while(out.length < PC_ENTR_MANCHES) out.push(reste[Math.floor(Math.random() * reste.length)]);
+  return _pcMelanger(out);
+}
+
+// Nom a ecrire. Majuscules, accents, traits d'union et apostrophes ne comptent pas.
+const _pcNormaliser = s => (s || '').toLowerCase().replace(/œ/g, 'oe').replace(/æ/g, 'ae')
+  .normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[-'’]/g, ' ').replace(/\s+/g, ' ').trim();
+// Les noms proposes en ecrivant : tous les oiseaux de France (le catalogue du Birdydex), pas
+// seulement ceux de la serie. Il faut toujours savoir qui chante ; seule l'orthographe n'est
+// plus un piege (variante N2).
+let _pcNomsFrance = null;
+function _pcNoms(){
+  if(!_pcNomsFrance){
+    const scis = new Set(Object.keys(FR_NAMES).filter(sci => _countryHasSpecies('FR', sci)));
+    for(const sci of PC_ENTR_ESPECES) scis.add(sci);
+    _pcNomsFrance = [...scis].map(sci => ({ sci, nom: _pcNomFr(sci), cle: _pcNormaliser(_pcNomFr(sci)) }));
+  }
+  return _pcNomsFrance;
+}
+function _pcDistance(a, b){
+  let prec = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for(let i = 1; i <= a.length; i++){
+    const cur = [i];
+    for(let j = 1; j <= b.length; j++) cur[j] = Math.min(prec[j] + 1, cur[j - 1] + 1, prec[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    prec = cur;
+  }
+  return prec[b.length];
+}
+// null : rien d'ecrit. Sinon juste, presque (une faute de frappe, comptee juste) et choisi :
+// l'oiseau ecrit a la place du bon, s'il en existe un de ce nom.
+function _pcJugerEcrit(texte, cible){
+  const t = _pcNormaliser(texte); if(!t) return null;
+  const bon = _pcNormaliser(_pcNomFr(cible));
+  if(t === bon) return { juste: true, presque: false, choisi: null };
+  // Le nom exact d'un autre oiseau est faux, meme a une lettre du bon.
+  const autre = _pcNoms().find(x => x.cle === t && x.sci !== cible);
+  if(autre) return { juste: false, presque: false, choisi: autre.sci };
+  if(_pcDistance(t, bon) <= 1) return { juste: true, presque: true, choisi: null };
+  return { juste: false, presque: false, choisi: null };
+}
+const PC_SUGG_MAX = 6;
+// Des 2 lettres : les noms qui commencent ainsi, puis ceux dont un autre mot commence ainsi.
+function _pcSuggerer(champ){
+  const liste = document.getElementById('pcSugg'); if(!liste) return;
+  const t = _pcNormaliser(champ.value);
+  if(t.length < 2){ _pcFermerSugg(); return; }
+  const debut = [], mot = [];
+  for(const x of _pcNoms()){
+    if(x.cle.startsWith(t)) debut.push(x);
+    else if(x.cle.includes(' ' + t)) mot.push(x);
+  }
+  const tri = (a, b) => a.nom.localeCompare(b.nom, 'fr');
+  const res = [...debut.sort(tri), ...mot.sort(tri)].slice(0, PC_SUGG_MAX);
+  if(!res.length || (res.length === 1 && res[0].cle === t)){ _pcFermerSugg(); return; }
+  liste.innerHTML = res.map((x, i) => {
+    // Le debut tape en gras, quand le nom commence par lui (meme longueur une fois normalise).
+    const n = x.cle.startsWith(t) && x.nom.length === x.cle.length ? t.length : 0;
+    return `<button type="button" class="pc-sugg-l" role="option" id="pcSugg${i}" aria-selected="false" tabindex="-1" data-pc-sugg="${esc(x.nom)}">${n ? `<b>${esc(x.nom.slice(0, n))}</b>${esc(x.nom.slice(n))}` : esc(x.nom)}</button>`;
+  }).join('');
+  liste.hidden = false;
+  champ.setAttribute('aria-expanded', 'true');
+  champ.removeAttribute('aria-activedescendant');
+}
+function _pcFermerSugg(){
+  const liste = document.getElementById('pcSugg'), champ = document.getElementById('pcEcrit');
+  if(liste){ liste.hidden = true; liste.innerHTML = ''; }
+  if(champ){ champ.setAttribute('aria-expanded', 'false'); champ.removeAttribute('aria-activedescendant'); }
+}
+function _pcPrendreSugg(nom){
+  const champ = document.getElementById('pcEcrit'); if(!champ) return;
+  champ.value = nom;
+  _pcFermerSugg();
+  champ.focus({ preventScroll: true });
+}
+// Fleches pour parcourir les noms proposes, Entree pour en prendre un (ou valider s'il n'y en a
+// pas de surligne), Echap pour fermer la liste.
+document.addEventListener('input', e => { if(e.target.id === 'pcEcrit') _pcSuggerer(e.target); });
+document.addEventListener('keydown', e => {
+  const champ = e.target; if(champ.id !== 'pcEcrit') return;
+  const liste = document.getElementById('pcSugg');
+  const items = liste && !liste.hidden ? [...liste.querySelectorAll('.pc-sugg-l')] : [];
+  const actif = items.findIndex(b => b.getAttribute('aria-selected') === 'true');
+  const surligner = i => {
+    items.forEach((b, k) => b.setAttribute('aria-selected', String(k === i)));
+    if(items[i]) champ.setAttribute('aria-activedescendant', items[i].id); else champ.removeAttribute('aria-activedescendant');
+  };
+  if(e.key === 'ArrowDown' && items.length){ e.preventDefault(); surligner((actif + 1) % items.length); }
+  else if(e.key === 'ArrowUp' && items.length){ e.preventDefault(); surligner(actif <= 0 ? items.length - 1 : actif - 1); }
+  else if(e.key === 'Escape' && items.length){ e.preventDefault(); _pcFermerSugg(); }
+  else if(e.key === 'Enter'){
+    e.preventDefault();
+    if(actif >= 0) _pcPrendreSugg(items[actif].dataset.pcSugg); else _pcRepondreEcrit();
+  }
+});
+
+// Sous les parcours : une carte par mode (variante E1).
+function _pcEntrSectionHTML(){
+  const ferme = _pcLacunesFerme(_pcLacunes());
+  const modes = Object.entries(PC_ENTR_MODES).map(([cle, M]) => {
+    const raison = cle === 'lacunes' ? ferme : '';
+    const inner = `<span class="pc-mode-ico">${PC_ENTR_ICO[cle]}</span><span class="pc-mode-titre">${esc(M.titre)}</span><span class="pc-mode-desc">${esc(raison || M.desc)}</span>`;
+    return raison ? `<div class="pc-mode ferme">${inner}</div>` : `<button type="button" class="pc-mode" data-pc-entr="${cle}">${inner}</button>`;
+  }).join('');
+  return `<section class="pc-entr" aria-labelledby="pcEntrTitre">
+    <h3 class="pc-titre" id="pcEntrTitre">Entraînement</h3>
+    <p class="pc-meta">${PC_ENTR_MANCHES} manches, avec les oiseaux que tu veux. Ne change rien à tes parcours.</p>
+    <div class="pc-modes">${modes}</div>
+  </section>`;
+}
+// La page d'un mode : cocher les oiseaux, ou, pour les points faibles, voir ce qu'on va revoir.
+function _pcRenderEntr(box){
+  const mode = _pc.mode, M = PC_ENTR_MODES[mode];
+  if(!M){ _pc.vue = 'liste'; _pcRenderListe(box); return; }
+  let meta, corps;
+  if(mode === 'lacunes'){
+    const l = _pcLacunes(), ferme = _pcLacunesFerme(l);
+    meta = `D'après tes ${l.total} réponses · ${PC_ENTR_MANCHES} manches`;
+    corps = ferme ? `<p class="help">${esc(ferme)}.</p>` : `<div>
+        <p class="pc-etiq">Ce qu'on va revoir</p>
+        ${l.faibles.map(f => `<div class="pc-lacune">
+          <span class="pc-lacune-ph" data-pc-vign="${esc(f.sci)}"></span>
+          <span class="pc-lacune-txt"><span class="pc-lacune-nom">${esc(_pcNomFr(f.sci))}</span>${f.pour ? `<span class="pc-meta">tu réponds souvent ${esc(_pcNomFr(f.pour))}</span>` : ''}</span>
+          <span class="pc-lacune-taux">${_pcPluriel(f.rates, 'raté')} sur ${f.vus}</span>
+        </div>`).join('')}
+      </div>
+      <div class="pc-entr-bas"><span class="pc-meta">Les autres oiseaux reviennent de temps en temps.</span><button type="button" class="btn" data-pc-entr-jouer="lacunes">C'est parti</button></div>`;
+  } else {
+    const choix = _pcEntrChoix(), n = choix.length, ok = n >= M.min;
+    meta = `${M.desc} · ${PC_ENTR_MANCHES} manches`;
+    const jeton = (sci, on, bientot) => {
+      const nom = esc(_pcNomFr(sci));
+      const dedans = `<span class="pc-jeton-ph" data-pc-vign="${esc(sci)}"></span><span class="pc-jeton-nom">${nom}</span><span class="pc-jeton-coche">${PC_ICO.ok}</span>`;
+      return bientot ? `<span class="pc-jeton ferme" title="Bientôt">${dedans}</span>`
+        : `<button type="button" class="pc-jeton${on ? ' on' : ''}" data-pc-jeton="${esc(sci)}" aria-pressed="${on}">${dedans}</button>`;
+    };
+    // Avec moins de 5 oiseaux, « Chant vers nom » les propose tous : on dit combien.
+    const propose = mode === 'nom' && ok && n < PC_NOMS_MAX ? `Un chant, ${n} noms proposés` : '';
+    corps = `<div>
+        <div class="pc-entr-bas pc-entr-oiseaux"><span class="pc-etiq">Oiseaux · ${n} sur ${PC_ENTR_ESPECES.length}</span>
+          <button type="button" class="pc-lien" data-pc-tout>${n === PC_ENTR_ESPECES.length ? 'Tout décocher' : 'Tout cocher'}</button></div>
+        <div class="pc-jetons">${PC_ENTR_ESPECES.map(sci => jeton(sci, choix.includes(sci))).join('')}</div>
+      </div>
+      <div class="pc-entr-bas"><span class="pc-meta">${ok ? propose : `Coche au moins ${M.min} oiseaux.`}</span>
+        <button type="button" class="btn" data-pc-entr-jouer="${mode}"${ok ? '' : ' disabled'}>C'est parti</button></div>
+      ${PC_ENTR_BIENTOT.length ? `<div><p class="pc-etiq pc-entr-bientot">Bientôt</p><div class="pc-jetons">${PC_ENTR_BIENTOT.map(sci => jeton(sci, false, true)).join('')}</div></div>` : ''}`;
+  }
+  box.innerHTML = `<div class="pc-entr-page">
+    <button type="button" class="pc-retour" data-pc-liste>${PC_ICO.retour}Quiz</button>
+    <div class="pc-entr-tete"><span class="pc-mode-ico">${PC_ENTR_ICO[mode]}</span>
+      <div><h3 class="pc-titre">${esc(M.titre)}</h3><span class="pc-meta">${esc(meta)}</span></div></div>
+    ${corps}
+  </div>`;
+}
+async function _pcEntrLancer(mode){
+  const box = document.getElementById('pcParcours'); if(!box) return;
+  const M = PC_ENTR_MODES[mode]; if(!M) return;
+  let especes, cibles;
+  if(mode === 'lacunes'){
+    const l = _pcLacunes(); if(_pcLacunesFerme(l)) return;
+    especes = [...PC_ENTR_ESPECES];
+    cibles = _pcCiblesLacunes(l.faibles);
+  } else {
+    especes = _pcEntrChoix(); if(especes.length < M.min) return;
+    cibles = _pcCibles(especes, PC_ENTR_MANCHES);
+  }
+  _pc.vue = 'entr'; _pc.mode = mode;
+  const sons = await _pcSons(box, especes, 'Retour'); if(!sons) return;
+  // Les points faibles posent la question la plus simple a juger : un chant, des noms.
+  const type = mode === 'lacunes' ? 'nom' : mode;
+  _pc.partie = {
+    kind: 'entr', mode, especes, sons, cur: 0, bonnes: 0, repondu: false,
+    questions: cibles.map((cible, k) => ({ cible, type, neuf: k === cibles.length - 1 })),
+    confusions: [], utilises: new Set(), enregistreurs: new Map(), resultats: [],
+  };
+  _pcQuestion();
+}
+// Fin d'une serie : le score, oiseau par oiseau, les confusions. Pas d'etoiles.
+function _pcEntrFin(box, p){
+  const M = PC_ENTR_MODES[p.mode];
+  const par = new Map();
+  p.questions.forEach((q, k) => {
+    const x = par.get(q.cible) || [0, 0];
+    x[1]++; if(p.resultats[k] === 'ok') x[0]++;
+    par.set(q.cible, x);
+  });
+  const bilan = [...par.entries()].sort((a, b) => b[1][0] / b[1][1] - a[1][0] / a[1][1] || b[1][1] - a[1][1]).map(([sci, [bons, n]]) => `
+    <div class="pc-bilan-l"><span class="pc-bilan-ph" data-pc-vign="${esc(sci)}"></span><span class="pc-bilan-nom">${esc(_pcNomFr(sci))}</span>
+      <span class="pc-bilan-n">${bons}/${n}</span><span class="pc-barre" aria-hidden="true"><i style="width:${(bons / n * 100).toFixed(0)}%"></i></span></div>`).join('');
+  const lignes = _pcConfusionsLignes(p);
+  _pc.partie = null;
+  box.innerHTML = `<div class="pc-fin pc-entr-fin">
+    <div class="pc-etiq">${esc(M.titre)} · fini</div>
+    <div class="pc-fin-score">${p.bonnes}/${p.questions.length}</div>
+    <div class="pc-bilan">${bilan}</div>
+    ${lignes ? `<p class="pc-meta">Tes confusions :</p><ul class="pc-confusions">${lignes}</ul>` : ''}
+    <div class="pc-fin-btns">
+      <button type="button" class="btn ghost" data-pc-liste>Retour au quiz</button>
+      ${p.mode !== 'lacunes' ? `<button type="button" class="btn ghost" data-pc-entr="${p.mode}">Changer les oiseaux</button>` : ''}
+      <button type="button" class="btn" data-pc-entr-jouer="${p.mode}">Rejouer</button>
+    </div>
+  </div>`;
+  _pcPhotos(box);
+}
 
 const _pcSeuil = et => Math.ceil(et.q * 0.8);
 const _pcNomFr = sci => FR_NAMES[sci] || sci;
@@ -19709,7 +20012,9 @@ function _pcLibererSons(){
 function _parcoursRender(){
   const box = document.getElementById('pcParcours'); if(!box) return;
   if(_pc.partie) return;   // une partie en cours reste a l'ecran quand on revient sur l'onglet
-  if(_pc.vue === 'chemin') _pcRenderChemin(box); else _pcRenderListe(box);
+  if(_pc.vue === 'chemin') _pcRenderChemin(box);
+  else if(_pc.vue === 'entr') _pcRenderEntr(box);
+  else _pcRenderListe(box);
   _pcPhotos(box);
   _pcAjuster();
 }
@@ -19731,7 +20036,7 @@ function _pcRenderListe(box){
       <span class="pc-carte-titre">${esc(b.titre)}</span>
       <span class="pc-etiq">Bientôt</span>
     </div>`).join('');
-  box.innerHTML = `<div class="pc-cartes">${carte}${bientot}</div>`;
+  box.innerHTML = `<div class="pc-accueil"><div class="pc-cartes">${carte}${bientot}</div>${_pcEntrSectionHTML()}</div>`;
 }
 function _pcRenderChemin(box){
   const P = PARCOURS_MESANGES, best = _pcScores();
@@ -19861,8 +20166,15 @@ function _pcPhotos(box){
 // meme endroit fait apprendre le micro, pas le chant (idee retenue le 2026-10-15).
 // Tous les chants du fichier ont ete ecoutes et gardes par Mathis : on pioche au hasard
 // parmi ceux encore jamais entendus dans la partie.
-function _pcChoisirEnreg(sci, partie){
-  const liste = (partie.sons[sci] || []).filter(r => r.file);
+// neuf : derniere manche d'une serie d'entrainement, qui prend si possible un enregistrement
+// jamais entendu, pour reconnaitre l'oiseau et pas le fichier (accepte dans qg#56).
+function _pcChoisirEnreg(sci, partie, neuf){
+  let liste = (partie.sons[sci] || []).filter(r => r.file);
+  if(neuf){
+    const entendus = new Set(_pcStats().entendus);
+    const jamais = liste.filter(r => !entendus.has(r.id));
+    if(jamais.length) liste = jamais;
+  }
   const recs = partie.enregistreurs.get(sci) || new Set();
   let cand = liste.filter(r => !partie.utilises.has(r.id) && !recs.has(r.rec));
   if(!cand.length) cand = liste.filter(r => !partie.utilises.has(r.id));
@@ -19882,10 +20194,8 @@ function _pcCibles(especes, q){
   while(out.length < q) out.push(especes[Math.floor(Math.random() * especes.length)]);
   return _pcMelanger(out);
 }
-async function _pcLancer(i){
-  const box = document.getElementById('pcParcours'); if(!box) return;
-  const et = PARCOURS_MESANGES.etapes[i];
-  const especes = PARCOURS_MESANGES.especes.slice(0, et.n);
+// Les chants des especes en jeu, ou null (message d'erreur deja affiche dans box).
+async function _pcSons(box, especes, retour){
   box.innerHTML = '<p class="help pc-attente">Chargement des chants…</p>';
   // Les chants viennent de data/parcours-mesanges.json, ecoutes un par un par Mathis le
   // 2026-10-16, et non plus des 8 chants les plus recents de xeno-canto : sur ces 40-la, des
@@ -19899,9 +20209,16 @@ async function _pcLancer(i){
   for(const sci of especes) sons[sci] = (_pcChants && _pcChants[sci]) || [];
   const sansSon = especes.filter(sci => !sons[sci].length);
   if(sansSon.length){
-    box.innerHTML = `<p class="help pc-attente">Impossible de charger les chants (${esc(sansSon.map(_pcNomFr).join(', '))}). Vérifie ta connexion et réessaie.</p><div class="pc-fin-btns"><button type="button" class="btn ghost" data-pc-retour>Retour au parcours</button></div>`;
-    return;
+    box.innerHTML = `<p class="help pc-attente">Impossible de charger les chants (${esc(sansSon.map(_pcNomFr).join(', '))}). Vérifie ta connexion et réessaie.</p><div class="pc-fin-btns"><button type="button" class="btn ghost" data-pc-retour>${esc(retour)}</button></div>`;
+    return null;
   }
+  return sons;
+}
+async function _pcLancer(i){
+  const box = document.getElementById('pcParcours'); if(!box) return;
+  const et = PARCOURS_MESANGES.etapes[i];
+  const especes = PARCOURS_MESANGES.especes.slice(0, et.n);
+  const sons = await _pcSons(box, especes, 'Retour au parcours'); if(!sons) return;
   const cibles = _pcCibles(especes, et.q);
   let types = cibles.map(() => et.type);
   if(et.type === 'melange') types = _pcMelanger(cibles.map((_, k) => k < Math.ceil(et.q / 2) ? 'nom' : 'chant'));
@@ -19916,23 +20233,43 @@ function _pcQuestion(){
   const box = document.getElementById('pcParcours'); const p = _pc.partie;
   if(!box || !p) return;
   _pcLibererSons();
-  const et = PARCOURS_MESANGES.etapes[p.etape];
-  const q = p.questions[p.cur];
+  const q = p.questions[p.cur], total = p.questions.length;
   p.repondu = false;
+  const libelle = p.kind === 'entr' ? `${esc(PC_ENTR_MODES[p.mode].titre)} · manche` : `Étape ${p.etape + 1} · question`;
   const tete = `
     <div class="pc-jeu-tete">
-      <span>Étape ${p.etape + 1} · question <b>${p.cur + 1}</b> sur ${et.q}</span>
+      <span>${libelle} <b>${p.cur + 1}</b> sur ${total}</span>
       <span class="pc-jeu-droite"><span aria-label="${p.bonnes} bonnes réponses">✓ ${p.bonnes}</span><button type="button" class="btn ghost pc-quitter" data-pc-retour>Quitter</button></span>
     </div>
-    <div class="pc-segments" aria-hidden="true">${Array.from({ length: et.q }, (_, k) =>
+    <div class="pc-segments" aria-hidden="true">${Array.from({ length: total }, (_, k) =>
       `<i class="${p.resultats[k] || (k === p.cur ? 'ici' : '')}"></i>`).join('')}</div>`;
   let corps;
-  if(q.type === 'nom'){
-    const rec = _pcChoisirEnreg(q.cible, p);
+  const unSon = q.type === 'nom' || q.type === 'ecrire';
+  if(unSon){
+    const rec = _pcChoisirEnreg(q.cible, p, q.neuf);
     q.rec = rec;
-    q.choix = _pcMelanger(p.especes);
+    _pcNoterEntendus([rec?.id]);
     // Les reponses en barres, petite photo a gauche du nom. Les grandes cartes photo de la
     // maquette B, essayees le 2026-10-16, ont ete jugees « bof » par Mathis le jour meme.
+    let reponses;
+    if(q.type === 'nom'){
+      q.choix = _pcChoixNoms(p.especes, q.cible);
+      reponses = `<div class="pc-reponses" id="pcChoix">
+        ${q.choix.map((sci, k) => `<button type="button" class="pc-reponse" data-pc-choix="${k}"><span class="pc-vign" data-pc-vign="${esc(sci)}"></span><span class="pc-reponse-nom">${esc(_pcNomFr(sci))}</span></button>`).join('')}
+      </div>`;
+    } else {
+      // Nom a ecrire, avec suggestions (variante N2 choisie par Mathis le 2026-10-16). La liste
+      // flotte sous le champ : en place dans la page, elle faisait sauter le verdict.
+      reponses = `<div class="pc-ecrire">
+        <div class="pc-ecrire-champ">
+          <input type="text" id="pcEcrit" class="pc-ecrit" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done"
+            placeholder="Nom de l'oiseau" aria-label="Nom de l'oiseau" role="combobox" aria-autocomplete="list" aria-controls="pcSugg" aria-expanded="false">
+          <div class="pc-sugg" id="pcSugg" role="listbox" aria-label="Noms proposés" hidden></div>
+        </div>
+        <button type="button" class="btn pc-valider" data-pc-valider>Valider</button>
+      </div>
+      <p class="pc-aide">Majuscules, accents et traits d'union ne comptent pas.</p>`;
+    }
     corps = `
       <div class="pc-son">
         <button type="button" class="pc-lecture" id="pcPlay" aria-label="Écouter le chant">${PC_LECTURE_SVG}</button>
@@ -19940,14 +20277,13 @@ function _pcQuestion(){
         <span class="pc-son-t" id="pcTemps"></span>
       </div>
       <h3 class="bloc-titre pc-demande">Quel oiseau chante ?</h3>
-      <div class="pc-reponses" id="pcChoix">
-        ${q.choix.map((sci, k) => `<button type="button" class="pc-reponse" data-pc-choix="${k}"><span class="pc-vign" data-pc-vign="${esc(sci)}"></span><span class="pc-reponse-nom">${esc(_pcNomFr(sci))}</span></button>`).join('')}
-      </div>
+      ${reponses}
       <audio id="pcAudio" preload="auto" src="${esc(rec?.file || '')}"></audio>`;
   } else {
     const autres = _pcMelanger(p.especes.filter(s => s !== q.cible)).slice(0, PC_CHANTS_PROPOSES - 1);
     q.choix = _pcMelanger([q.cible, ...autres]);
     q.recs = q.choix.map(sci => _pcChoisirEnreg(sci, p));
+    _pcNoterEntendus(q.recs.map(r => r?.id));
     const lettres = ['A', 'B', 'C'];
     corps = `
       <div class="pc-oiseau">
@@ -19966,7 +20302,7 @@ function _pcQuestion(){
       </div>`;
   }
   box.innerHTML = `<div class="pc-jeu">${tete}<div class="pc-question">${corps}</div><div id="pcVerdict"></div></div>`;
-  if(q.type === 'nom'){
+  if(unSon){
     const audio = document.getElementById('pcAudio'), btn = document.getElementById('pcPlay'), fill = document.getElementById('pcProgression');
     const temps = document.getElementById('pcTemps');
     const mmss = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
@@ -19992,6 +20328,9 @@ function _pcQuestion(){
     audio.addEventListener('ended', () => { btn.classList.remove('playing'); avancer(0); });
     audio.play().catch(() => {});
     _pcPhotos(box);
+    // Au doigt, le champ attend qu'on le touche : ouvert d'office, le clavier couvrirait le
+    // bouton du chant avant qu'on l'ait entendu.
+    if(q.type === 'ecrire' && matchMedia('(pointer: fine)').matches) document.getElementById('pcEcrit')?.focus({ preventScroll: true });
   } else {
     if(typeof _fetchWikiPhoto === 'function'){
       const cible = q.cible;
@@ -20016,17 +20355,24 @@ function _pcEcouter(k){
     else { try{ a.pause(); a.currentTime = 0; }catch(_){} }
   });
 }
+// Ce que toute reponse change, quel que soit le genre de question. choisi : l'oiseau donne a
+// la place du bon, ou null (nom ecrit qui n'est celui d'aucun oiseau).
+function _pcCompter(p, q, juste, choisi){
+  p.repondu = true;
+  if(juste) p.bonnes++; else if(choisi) p.confusions.push([q.cible, choisi]);
+  p.resultats[p.cur] = juste ? 'ok' : 'ko';
+  _pcNoterReponse(q.cible, juste, choisi);
+  _pcCouperSons();
+  const seg = document.querySelectorAll('#pcParcours .pc-segments i')[p.cur]; if(seg) seg.className = p.resultats[p.cur];
+}
 function _pcRepondre(k){
   const p = _pc.partie; if(!p || p.repondu) return;
-  p.repondu = true;
   const q = p.questions[p.cur];
+  if(!q.choix) return;   // nom a ecrire : _pcRepondreEcrit
   const choisi = q.choix[k];
   const juste = choisi === q.cible;
-  if(juste) p.bonnes++; else p.confusions.push([q.cible, choisi]);
-  p.resultats[p.cur] = juste ? 'ok' : 'ko';
-  _pcCouperSons();
+  _pcCompter(p, q, juste, choisi);
   const box = document.getElementById('pcParcours');
-  const seg = box.querySelectorAll('.pc-segments i')[p.cur]; if(seg) seg.className = p.resultats[p.cur];
   const bonIdx = q.choix.indexOf(q.cible);
   let sono = '';
   if(q.type === 'nom'){
@@ -20048,13 +20394,35 @@ function _pcRepondre(k){
     });
     sono = q.recs[bonIdx]?.sono;
   }
+  _pcVerdict(p, q, juste, sono, juste ? 'Bien vu : ' : 'C\'était : ', '');
+}
+// Nom a ecrire : juste, presque (une faute de frappe, comptee juste) ou faux. Un champ vide ne
+// compte pas : on y renvoie le curseur.
+function _pcRepondreEcrit(){
+  const p = _pc.partie; if(!p || p.repondu) return;
+  const q = p.questions[p.cur]; if(q.type !== 'ecrire') return;
+  const champ = document.getElementById('pcEcrit'); if(!champ) return;
+  const texte = champ.value.trim();
+  const j = _pcJugerEcrit(texte, q.cible);
+  if(!j){ champ.focus(); return; }
+  _pcFermerSugg();
+  champ.disabled = true;
+  const valider = document.querySelector('#pcParcours [data-pc-valider]'); if(valider) valider.disabled = true;
+  _pcCompter(p, q, j.juste, j.choisi);
+  const ecrit = `<span class="pc-ecrit-note"> (tu as écrit « ${esc(texte)} »)</span>`;
+  _pcVerdict(p, q, j.juste, q.rec?.sono,
+    j.presque ? 'Presque, compté juste : ' : j.juste ? 'Bien vu : ' : 'C\'était : ',
+    j.juste && !j.presque ? '' : ecrit);
+}
+function _pcVerdict(p, q, juste, sono, debut, fin){
+  const box = document.getElementById('pcParcours');
   const v = document.getElementById('pcVerdict');
   // Ligne de verdict sobre. Le trait qui se vidait pendant la pause a ete retire a la demande
   // de Mathis (2026-10-16).
   if(v) v.innerHTML = `<div class="pc-verdict ${juste ? 'correct' : 'wrong'}">
       <div class="pc-verdict-ligne">
         <span class="pc-verdict-ico">${juste ? PC_ICO.ok : PC_ICO.ko}</span>
-        <span>${juste ? 'Bien vu : ' : 'C\'était : '}<span class="sp-link" data-sci="${esc(q.cible)}">${esc(_pcNomFr(q.cible))}</span></span>
+        <span>${debut}<span class="sp-link" data-sci="${esc(q.cible)}">${esc(_pcNomFr(q.cible))}</span>${fin}</span>
       </div>
       ${sono ? `<img class="pc-verdict-sono" src="${esc(sono)}" alt="Sonagramme du chant">` : ''}
     </div>`;
@@ -20069,24 +20437,29 @@ function _pcRepondre(k){
     if(p.cur >= p.questions.length) _pcFin(); else _pcQuestion();
   }, PC_PAUSE_SUITE_MS);
 }
+// Confusions regroupees : « Pouillot veloce : tu as repondu Mesange charbonniere (2 fois) ».
+// Tournure sans accord : « prise pour » ne collait pas aux noms masculins.
+function _pcConfusionsLignes(p){
+  const compte = new Map();
+  for(const [a, b] of p.confusions){ const c = a + '|' + b; compte.set(c, (compte.get(c) || 0) + 1); }
+  return [...compte.entries()].sort((x, y) => y[1] - x[1]).map(([c, n]) => {
+    const [a, b] = c.split('|');
+    return `<li><b>${esc(_pcNomFr(a))}</b> : tu as répondu ${esc(_pcNomFr(b))}${n > 1 ? ` (${n} fois)` : ''}</li>`;
+  }).join('');
+}
 function _pcFin(){
   const box = document.getElementById('pcParcours'); const p = _pc.partie;
   if(!box || !p) return;
   _pcLibererSons();
+  // L'entrainement n'ecrit jamais dans le parcours : ni score, ni etoiles, ni etape ouverte.
+  if(p.kind === 'entr'){ _pcEntrFin(box, p); return; }
   const et = PARCOURS_MESANGES.etapes, e = et[p.etape];
   _pcEnregistrerScore(p.etape, p.bonnes);
   const ok = p.bonnes >= _pcSeuil(e);
   // Les etoiles de CETTE partie, pas la meilleure : on voit ce qu'on vient de gagner. Le chemin,
   // lui, garde la meilleure.
   const nb = _pcEtoiles(e, p.bonnes);
-  // Confusions regroupees : « Pouillot veloce : tu as repondu Mesange charbonniere (2 fois) ».
-  // Tournure sans accord : « prise pour » ne collait pas aux noms masculins.
-  const compte = new Map();
-  for(const [a, b] of p.confusions){ const c = a + '|' + b; compte.set(c, (compte.get(c) || 0) + 1); }
-  const lignes = [...compte.entries()].sort((x, y) => y[1] - x[1]).map(([c, n]) => {
-    const [a, b] = c.split('|');
-    return `<li><b>${esc(_pcNomFr(a))}</b> : tu as répondu ${esc(_pcNomFr(b))}${n > 1 ? ` (${n} fois)` : ''}</li>`;
-  }).join('');
+  const lignes = _pcConfusionsLignes(p);
   const suivante = ok && p.etape + 1 < et.length;
   _pc.partie = null;
   _pc.selection = suivante ? p.etape + 1 : p.etape;
@@ -20115,6 +20488,20 @@ document.addEventListener('click', e => {
   const jouer = e.target.closest('[data-pc-jouer]'); if(jouer){ _pcLancer(+jouer.dataset.pcJouer); return; }
   const retour = e.target.closest('[data-pc-retour]'); if(retour){ _pcLibererSons(); _pc.partie = null; _parcoursRender(); return; }
   const ecoute = e.target.closest('[data-pc-ecoute]'); if(ecoute){ _pcEcouter(+ecoute.dataset.pcEcoute); return; }
+  // Entrainement
+  const entr = e.target.closest('[data-pc-entr]'); if(entr){ _pc.vue = 'entr'; _pc.mode = entr.dataset.pcEntr; _parcoursRender(); document.querySelector('#pcParcours .pc-retour')?.focus(); return; }
+  const jeton = e.target.closest('[data-pc-jeton]'); if(jeton){
+    const sci = jeton.dataset.pcJeton, choix = _pcEntrChoix();
+    _pcEntrGarderChoix(choix.includes(sci) ? choix.filter(s => s !== sci) : [...choix, sci]);
+    _parcoursRender(); document.querySelector(`#pcParcours [data-pc-jeton="${CSS.escape(sci)}"]`)?.focus(); return;
+  }
+  const tout = e.target.closest('[data-pc-tout]'); if(tout){
+    _pcEntrGarderChoix(_pcEntrChoix().length === PC_ENTR_ESPECES.length ? [] : [...PC_ENTR_ESPECES]);
+    _parcoursRender(); document.querySelector('#pcParcours [data-pc-tout]')?.focus(); return;
+  }
+  const entrJouer = e.target.closest('[data-pc-entr-jouer]'); if(entrJouer){ _pcEntrLancer(entrJouer.dataset.pcEntrJouer); return; }
+  const sugg = e.target.closest('[data-pc-sugg]'); if(sugg){ _pcPrendreSugg(sugg.dataset.pcSugg); return; }
+  if(e.target.closest('[data-pc-valider]')){ _pcRepondreEcrit(); return; }
   const choix = e.target.closest('[data-pc-choix]'); if(choix){ _pcRepondre(+choix.dataset.pcChoix); return; }
 });
 // Raccourcis du parcours : 1 a 5 repondent, Espace reecoute.
