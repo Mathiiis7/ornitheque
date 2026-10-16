@@ -19593,6 +19593,12 @@ const PC_CHANTS_PROPOSES = 3;
 const PC_DUREE_MAX = 20;   // secondes lues par chant, comme l'ancien quiz
 const PC_PAUSE_SUITE_MS = 1000;   // pause entre la reponse et la question suivante : « tres legere », dit Mathis
 const _pc = { selection: null, partie: null };
+// Icones au trait (le ✓ et le 🔒 en caracteres changeaient de dessin selon l'appareil).
+const PC_ICO = {
+  ok: '<svg class="pc-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5"/></svg>',
+  ko: '<svg class="pc-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>',
+  cadenas: '<svg class="pc-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 015 0v2"/></svg>',
+};
 let _pcChants = null;   // data/parcours-mesanges.json, lu au premier lancement d'une etape
 
 const _pcSeuil = et => Math.ceil(et.q * 0.8);
@@ -19647,21 +19653,23 @@ function _parcoursRender(){
   const etatTxt = { ok: 'réussie', cours: 'à jouer', ferme: 'fermée' };
   const frise = et.map((x, i) => {
     const s = etat(i);
-    const rond = `<button type="button" class="pc-rond ${s}${i === sel ? ' sel' : ''}" data-pc-etape="${i}" ${s === 'ferme' ? 'disabled' : ''} aria-label="Étape ${i + 1} : ${esc(x.titre)}, ${etatTxt[s]}">${s === 'ok' ? '✓' : i + 1}</button>`;
+    const rond = `<button type="button" class="pc-rond ${s}${i === sel ? ' sel' : ''}" data-pc-etape="${i}" ${s === 'ferme' ? 'disabled' : ''} aria-label="Étape ${i + 1} : ${esc(x.titre)}, ${etatTxt[s]}">${s === 'ok' ? PC_ICO.ok : i + 1}</button>`;
     return (i ? `<span class="pc-trait${_pcReussie(i - 1, best) ? ' f' : ''}"></span>` : '') + rond;
   }).join('');
   // Especes en jeu ; a une etape qui en ajoute une, la nouvelle est signalee par sa couleur.
   // Le mot « nouvelle » reste pour les lecteurs d'ecran seulement : a l'oeil, le bleu suffit
   // (demande de Mathis le 2026-10-16).
   const nouvelle = (sel > 0 && e.n > et[sel - 1].n) ? e.n - 1 : -1;
+  // Maquette A « Sentier » choisie le 2026-10-16 : les oiseaux de l'etape en photos rondes,
+  // la nouvelle entouree d'accent (notes-privees/maquettes/quiz-visuel/).
   const puces = P.especes.slice(0, e.n).map((sci, j) =>
-    `<span class="pc-esp${j === nouvelle ? ' neuf' : ''}">${esc(_pcNomFr(sci))}${j === nouvelle ? '<span class="visually-hidden">, nouvelle</span>' : ''}</span>`).join('');
+    `<span class="pc-esp${j === nouvelle ? ' neuf' : ''}"><span class="pc-esp-photo" data-pc-vign="${esc(sci)}"></span><span>${esc(_pcNomFr(sci))}${j === nouvelle ? '<span class="visually-hidden">, nouvelle</span>' : ''}</span></span>`).join('');
   const meilleur = best[sel] != null ? `meilleur score ${best[sel]}/${e.q}` : 'pas encore jouée';
   const autres = et.map((x, i) => {
     if(i === sel) return '';
     const s = etat(i);
-    const droite = s === 'ok' ? `${best[i]}/${x.q} · rejouer` : (s === 'cours' ? (best[i] != null ? `${best[i]}/${x.q} · à jouer` : 'à jouer') : '<span aria-label="fermée">🔒</span>');
-    return `<button type="button" class="pc-ligne" data-pc-etape="${i}" ${s === 'ferme' ? 'disabled' : ''}><b>${i + 1} · ${esc(x.titre)}</b><span>${droite}</span></button>`;
+    const droite = s === 'ok' ? `${PC_ICO.ok}${best[i]}/${x.q} · rejouer` : (s === 'cours' ? (best[i] != null ? `${best[i]}/${x.q} · à jouer` : 'à jouer') : `<span class="pc-cadenas" role="img" aria-label="fermée">${PC_ICO.cadenas}</span>`);
+    return `<button type="button" class="pc-ligne ${s}" data-pc-etape="${i}" ${s === 'ferme' ? 'disabled' : ''}><span class="pc-n">${i + 1}</span><b>${esc(x.titre)}</b><span class="pc-res">${droite}</span></button>`;
   }).join('');
   const fini = reussies === et.length;
   box.innerHTML = `
@@ -19681,6 +19689,17 @@ function _parcoursRender(){
       </div>
     </div>
     <div class="pc-liste">${autres}</div>`;
+  _pcPhotos(box);
+}
+// Remplit les photos [data-pc-vign] d'un bloc (memes photos que le reste de l'appli).
+function _pcPhotos(box){
+  if(typeof _fetchWikiPhoto !== 'function') return;
+  box.querySelectorAll('[data-pc-vign]').forEach(el => {
+    _fetchWikiPhoto(el.dataset.pcVign).then(ph => {
+      const src = ph?.thumb || ph?.url;
+      if(src && el.isConnected) el.innerHTML = `<img src="${esc(src)}" alt="" loading="eager">`;
+    }).catch(() => {});
+  });
 }
 
 // Choisit un enregistrement pour une espece en variant les enregistreurs : un meme micro au
@@ -19734,7 +19753,7 @@ async function _pcLancer(i){
   _pc.partie = {
     etape: i, especes, sons, cur: 0, bonnes: 0, repondu: false,
     questions: cibles.map((cible, k) => ({ cible, type: types[k] })),
-    confusions: [], utilises: new Set(), enregistreurs: new Map(),
+    confusions: [], utilises: new Set(), enregistreurs: new Map(), resultats: [],
   };
   _pcQuestion();
 }
@@ -19750,20 +19769,24 @@ function _pcQuestion(){
       <span>Étape ${p.etape + 1} · question <b>${p.cur + 1}</b> sur ${et.q}</span>
       <span class="pc-jeu-droite"><span aria-label="${p.bonnes} bonnes réponses">✓ ${p.bonnes}</span><button type="button" class="btn ghost pc-quitter" data-pc-retour>Quitter</button></span>
     </div>
-    <div class="pc-barre"><span style="width:${(p.cur / et.q) * 100}%"></span></div>`;
+    <div class="pc-segments" aria-hidden="true">${Array.from({ length: et.q }, (_, k) =>
+      `<i class="${p.resultats[k] || (k === p.cur ? 'ici' : '')}"></i>`).join('')}</div>`;
   let corps;
   if(q.type === 'nom'){
     const rec = _pcChoisirEnreg(q.cible, p);
     q.rec = rec;
     q.choix = _pcMelanger(p.especes);
+    // Les reponses en grandes cartes photo, idee reprise de la maquette B (choix de Mathis
+    // le 2026-10-16) : on reconnait l'oiseau avant de lire son nom.
     corps = `
-      <div class="qz-player">
-        <button type="button" class="qz-play-btn" id="pcPlay" aria-label="Écouter le chant"></button>
-        <div class="qz-progress"><div class="qz-progress-fill" id="pcProgression"></div></div>
+      <div class="pc-son">
+        <button type="button" class="pc-lecture" id="pcPlay" aria-label="Écouter le chant"></button>
+        <div class="pc-son-barre"><div class="pc-son-plein" id="pcProgression"></div></div>
+        <span class="pc-son-t" id="pcTemps"></span>
       </div>
-      <p class="qz-prompt">Quel oiseau chante ?</p>
-      <div class="qz-choices" id="pcChoix">
-        ${q.choix.map((sci, k) => `<button type="button" class="qz-choice" data-pc-choix="${k}"><span class="pc-vign" data-pc-vign="${esc(sci)}"></span><span class="qz-choice-fr">${esc(_pcNomFr(sci))}</span></button>`).join('')}
+      <h3 class="bloc-titre pc-demande">Quel oiseau chante ?</h3>
+      <div class="pc-cartes" id="pcChoix" style="--n:${q.choix.length}">
+        ${q.choix.map((sci, k) => `<button type="button" class="pc-carte" data-pc-choix="${k}"><span class="pc-carte-photo" data-pc-vign="${esc(sci)}"></span><span class="pc-carte-nom">${esc(_pcNomFr(sci))}</span></button>`).join('')}
       </div>
       <audio id="pcAudio" preload="auto" src="${esc(rec?.file || '')}"></audio>`;
   } else {
@@ -19790,28 +19813,27 @@ function _pcQuestion(){
   box.innerHTML = `<div class="pc-jeu">${tete}<div class="pc-question">${corps}</div><div id="pcVerdict"></div></div>`;
   if(q.type === 'nom'){
     const audio = document.getElementById('pcAudio'), btn = document.getElementById('pcPlay'), fill = document.getElementById('pcProgression');
+    const temps = document.getElementById('pcTemps');
+    const mmss = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+    const duree = () => Math.min(audio.duration || PC_DUREE_MAX, PC_DUREE_MAX);
+    const afficherTemps = () => { if(temps && audio.duration) temps.textContent = `${mmss(audio.currentTime)} / ${mmss(duree())}`; };
+    audio.addEventListener('loadedmetadata', afficherTemps);
     btn.addEventListener('click', () => { if(audio.paused) audio.play().catch(() => {}); else audio.pause(); });
     // La barre suit chaque image de l'ecran, et non timeupdate : celui-ci ne tombe que 4 fois
     // par seconde environ, et la barre avancait par a-coups (vu par Mathis le 2026-10-16).
     let anim = 0;
     const suivre = () => {
       if(!audio.isConnected || audio.paused){ anim = 0; return; }
-      if(audio.currentTime >= PC_DUREE_MAX){ audio.pause(); audio.currentTime = 0; fill.style.width = '0%'; anim = 0; return; }
-      const d = Math.min(audio.duration || PC_DUREE_MAX, PC_DUREE_MAX);
-      fill.style.width = (audio.currentTime / d * 100) + '%';
+      if(audio.currentTime >= PC_DUREE_MAX){ audio.pause(); audio.currentTime = 0; fill.style.width = '0%'; afficherTemps(); anim = 0; return; }
+      fill.style.width = (audio.currentTime / duree() * 100) + '%';
+      afficherTemps();
       anim = requestAnimationFrame(suivre);
     };
     audio.addEventListener('play', () => { btn.classList.add('playing'); if(!anim) anim = requestAnimationFrame(suivre); });
     audio.addEventListener('pause', () => btn.classList.remove('playing'));
     audio.addEventListener('ended', () => { btn.classList.remove('playing'); fill.style.width = '0%'; });
     audio.play().catch(() => {});
-    // Petite photo a cote de chaque nom, comme sur Syrinx (demande de Mathis le 2026-10-16).
-    if(typeof _fetchWikiPhoto === 'function') box.querySelectorAll('[data-pc-vign]').forEach(el => {
-      _fetchWikiPhoto(el.dataset.pcVign).then(ph => {
-        const src = ph?.thumb || ph?.url;
-        if(src && el.isConnected) el.innerHTML = `<img src="${esc(src)}" alt="" loading="eager">`;
-      }).catch(() => {});
-    });
+    _pcPhotos(box);
   } else {
     if(typeof _fetchWikiPhoto === 'function'){
       const cible = q.cible;
@@ -19843,14 +19865,20 @@ function _pcRepondre(k){
   const choisi = q.choix[k];
   const juste = choisi === q.cible;
   if(juste) p.bonnes++; else p.confusions.push([q.cible, choisi]);
+  p.resultats[p.cur] = juste ? 'ok' : 'ko';
   _pcCouperSons();
   const box = document.getElementById('pcParcours');
+  const seg = box.querySelectorAll('.pc-segments i')[p.cur]; if(seg) seg.className = p.resultats[p.cur];
   const bonIdx = q.choix.indexOf(q.cible);
   let sono = '';
   if(q.type === 'nom'){
+    // Le verdict se lit sur les cartes : coche sur la bonne, croix sur celle choisie, les
+    // autres s'effacent.
     box.querySelectorAll('[data-pc-choix]').forEach((b, i) => {
       b.disabled = true;
-      if(i === bonIdx) b.classList.add('correct'); else if(i === k) b.classList.add('wrong');
+      if(i === bonIdx){ b.classList.add('correct'); b.insertAdjacentHTML('beforeend', `<span class="pc-marque">${PC_ICO.ok}</span>`); }
+      else if(i === k){ b.classList.add('wrong'); b.insertAdjacentHTML('beforeend', `<span class="pc-marque">${PC_ICO.ko}</span>`); }
+      else b.classList.add('eteint');
     });
     sono = q.rec?.sono;
   } else {
@@ -19863,10 +19891,14 @@ function _pcRepondre(k){
     sono = q.recs[bonIdx]?.sono;
   }
   const v = document.getElementById('pcVerdict');
-  if(v) v.innerHTML = `<div class="qz-verdict ${juste ? 'correct' : 'wrong'}">
-      <div class="qz-verdict-badge">${juste ? '✓' : '✗'}</div>
-      <div class="qz-verdict-species"><span class="sp-link" data-sci="${esc(q.cible)}">${esc(_pcNomFr(q.cible))}</span></div>
-      ${sono ? `<img class="qz-verdict-sono" src="${esc(sono)}" alt="Sonagramme du chant">` : ''}
+  // Ligne de verdict sobre ; le trait qui se vide montre la pause avant la question suivante.
+  if(v) v.innerHTML = `<div class="pc-verdict ${juste ? 'correct' : 'wrong'}">
+      <div class="pc-verdict-ligne">
+        <span class="pc-verdict-ico">${juste ? PC_ICO.ok : PC_ICO.ko}</span>
+        <span>${juste ? 'Bien vu : ' : 'C\'était : '}<span class="sp-link" data-sci="${esc(q.cible)}">${esc(_pcNomFr(q.cible))}</span></span>
+        <span class="pc-suite" aria-hidden="true"><i style="animation-duration:${PC_PAUSE_SUITE_MS}ms"></i></span>
+      </div>
+      ${sono ? `<img class="pc-verdict-sono" src="${esc(sono)}" alt="Sonagramme du chant">` : ''}
     </div>`;
   const ent = box.querySelector('.pc-jeu-droite > span'); if(ent){ ent.textContent = '✓ ' + p.bonnes; ent.setAttribute('aria-label', p.bonnes + ' bonnes réponses'); }
   // Plus de bouton « Suivante » ni « Réécouter » : la question suivante arrive seule apres une

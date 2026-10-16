@@ -1,3 +1,10 @@
+# EN LOCAL le 2026-10-16, PAS POUSSÉ : visuel du quiz refait, « Sentier » + grandes cartes photo (v787, app.js?v=361)
+- 3 directions maquettées (notes-privees/maquettes/quiz-visuel/) ; Mathis a choisi A « Sentier », avec les réponses en grandes cartes photo de B.
+- Page des étapes : oiseaux de l'étape en photos rondes (la nouvelle entourée d'accent, mot « nouvelle » toujours caché), liste numérotée, icônes au trait au lieu de ✓ et 🔒.
+- Question : 10 segments verts/rouges, son dans un bandeau (bouton orange, temps écoulé), cartes photo 4/3 avec coche/croix, ligne « C'était : … » et trait qui se vide pendant la pause de 1 s. Sonagramme gardé sous le verdict.
+- Étape 5 (un oiseau, 3 chants) : mise en page inchangée, couleurs alignées.
+- Vérifié 1280, 375 et sombre sur la démo, aucune erreur, 11 bancs CONFORME. Au téléphone, les oiseaux de l'étape passent sur deux lignes (3 + 1).
+---
 # EN LOCAL le 2026-10-16, PAS POUSSÉ : barre fluide, suite automatique, vignettes photo sans nom latin (v786, app.js?v=360)
 - Barre du chant suivie à chaque image (requestAnimationFrame) au lieu de timeupdate. « , nouvelle » reste pour les lecteurs d'écran.
 - Après une réponse : plus de boutons Suivante ni Réécouter, la suite arrive seule après 1 s (PC_PAUSE_SUITE_MS). Touche Entrée retirée.
