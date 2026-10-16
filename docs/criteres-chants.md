@@ -18,9 +18,11 @@ tous les parcours (il y en aura plusieurs).
 
 **Statut** (2026-10-16, troisième jet) : cases remplies d'après les sources, puis complétées par
 l'analyse des 66 chants gardés (hauteur mesurée sur les 66, rythme et forme jugés à l'œil sur
-21 strophes). Une case suivie de « (m) » vient de la mesure, de « (v) » d'un jugement à l'œil.
+18 strophes, 3 ou 4 par oiseau). Une case suivie de « (m) » vient de la mesure, de « (v) » d'un jugement à l'œil.
 Méthode, chiffres et ratés : notes-privees/analyse-sons/2026-10-16-criteres-mesanges/RAPPORT.md.
 Seuils fixés avant de lire les chiffres : SEUILS.md dans le même dossier.
+**Reste à faire par Mathis : valider la grille à l'oreille** sur les chants gardés. Les cases
+jugées à l'œil reposent sur 3 ou 4 strophes par oiseau.
 
 ## Les critères universels
 
@@ -34,7 +36,7 @@ complètent.
 | Forme | Chant improvisé, qui change tout le temps | ✗ | ✗ | ✗ | ✗ | ✗ |
 | Forme | Imite d'autres oiseaux | ✗ | ✗ | ✗ | ✗ | ✗ |
 | Notes | Une seule note, répétée à l'identique | ✗ | ✗ | ✗ | ✓ (v 2/3) | ✗ ⚠ |
-| Notes | Un motif de 2 ou 3 notes, répété en boucle | ✓ (v 4/4) | ✗ | ✓ (v 2/3) | ✗ | ✗ (m) |
+| Notes | Un motif de 2 ou 3 notes, répété en boucle | ✓ (v 4/4) | ✗ | ✓ (v 2/3) | ✗ | ✗ (m hauteur, v forme) |
 | Notes | Des notes différentes qui s'enchaînent | ✗ | ✓ | ✗ | ✗ | ✗ |
 | Début et fin | Commence par quelques notes nettes, isolées | ✗ | ✓ (v 4/4) | ✗ | ✗ | ✗ (v) |
 | Début et fin | Finit par un trille (notes si rapides qu'elles roulent) | ✗ | ✓ (v 3/4) | ✗ | ✗ | ✗ |
@@ -59,7 +61,8 @@ hauteur médiane de la strophe atteint 6 kHz ; « descend » quand le dernier ti
 donnent, à trancher par Mathis) :
 - **Bleue, très aigu** : dépend de ce qu'on mesure. La hauteur médiane suit la partie grave du
   trille : 6,3 kHz, 9 enregistrements sur 15 au-dessus de 6 kHz, soit « parfois ». Le plafond
-  suit le haut des notes : 7,6 kHz, 14 sur 15 au-dessus de 7 kHz, soit ✓. Les quatre autres
+  suit le haut des notes : 7,6 kHz, 14 sur 15 au-dessus de 7 kHz, soit ✓ (ce seuil sur le plafond
+  n'avait pas été fixé d'avance). Les quatre autres
   oiseaux sont ✗ des deux façons.
 - **Nonnette, rapide** : 9 notes par seconde dans une strophe, 4,4 dans une autre, la 3e
   dépend de la façon de compter (ci-dessous). Plutôt « parfois ».
@@ -87,13 +90,14 @@ exactement les mêmes cases connues. Ce qui les sépare dans les sources est une
 noire est « beaucoup plus rapide et plus aiguë »), justement bannie. Pour trancher en absolu
 (« très aigu », « rapide »), il faut mesurer la hauteur et la vitesse sur les chants gardés.
 
-Mesuré le 2026-10-16 : en absolu, la noire n'est **ni très aiguë ni rapide** (4,7 kHz, 5 à
-7 notes par seconde le plus souvent, comme la charbonnière). Deux choses les séparent quand même :
+Vu le 2026-10-16 : en absolu, la noire n'est **pas très aiguë** (4,7 kHz, mesuré sur ses 13
+enregistrements) et **pas rapide** dans 2 strophes sur 3 regardées (4,8 et 7 notes par seconde ;
+la 3e à 12). C'est le contraire de ce que disent toutes les sources : à vérifier à l'oreille. Deux choses les séparent quand même :
 - **« Deux hauteurs qui alternent »** : ✓ pour la charbonnière (une note haute, une basse), ✗
   pour la noire, dont les deux notes ont la même hauteur et diffèrent par la forme ;
 - **la forme des notes**, qui n'a pas encore de ligne. Les notes de la charbonnière sont tenues,
   presque plates ; celles de la noire glissent d'un trait vers le haut ou vers le bas. Mesuré
-  sur les 66 : 79 Hz de glissade par 10 ms pour la charbonnière (32 à 183 selon
+  sur les 66 (chiffre propre à notre sonagramme : une note plate ne fait pas 0) : 79 Hz de glissade par 10 ms pour la charbonnière (32 à 183 selon
   l'enregistrement), 237 pour la noire (108 à 432). Proposition : une ligne « Notes qui glissent
   d'un trait » contre « Notes tenues, plates », dans Hauteur. Le seuil reste à fixer, sans le
   choisir pour séparer ces deux-là : la bleue fait 166, la nonnette 319, le pouillot 328.
@@ -117,7 +121,7 @@ remplis, « Ralentit » ajouté (personne ne ralentit). Prototype de l'écran :
 notes-privees/maquettes/criteres/.
 
 **Réponses pour le pouillot** :
-- ses notes **n'alternent pas** : mesuré sur 4 strophes et 48 notes, la hauteur reste la même
+- ses notes **n'alternent pas en hauteur** : mesuré sur 4 strophes et 48 notes, la hauteur reste la même
   presque partout, les écarts tombent au hasard (jamais plus d'alternance que des notes mélangées) ;
 - les « trrt » ne sont **pas des notes nettes isolées** : ce sont deux petites crécelles de clics
   serrés, vues dans une strophe sur quatre. Ils iraient plutôt avec les cris (qg#65).
