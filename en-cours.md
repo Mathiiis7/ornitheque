@@ -1,7 +1,8 @@
 # 2026-10-16 : critères des chants, les 66 chants analysés (qg#60, docs seulement)
 - Grille de docs/criteres-chants.md complétée : hauteur mesurée sur les 66, rythme et forme à l'œil sur 21 strophes, « Ralentit » ajouté. Rapport : notes-privees/analyse-sons/2026-10-16-criteres-mesanges/RAPPORT.md.
 - Le comptage automatique des notes a échoué (notes à crochet comptées double) : ne pas réutiliser strophes.py/juge.py pour le rythme.
-- EN ATTENTE DE MATHIS : « très aigu » = médiane ou plafond ; note à crochet = une ou deux ; ajouter « Notes qui glissent d'un trait » (sépare charbonnière et noire) ; timbre à l'oreille.
+- Tranché par Mathis : « très aigu » = haut des notes ; ligne « Notes qui glissent d'un trait » ajoutée (sépare charbonnière et noire).
+- EN ATTENTE DE MATHIS : valider la grille à l'oreille ; note à crochet = une ou deux ; timbre ; « sans s'arrêter ». La maquette notes-privees/maquettes/criteres/ ne suit plus la grille.
 ---
 # EN LOCAL le 2026-10-16, PAS POUSSÉ : cartes plus grandes, pause de 2 s, plus de trait (v788, app.js?v=362)
 - La partie prend la largeur des cartes (jusqu'à 290 px chacune), photos carrées : 5 cartes de 230 px d'écran à 1280 (141 avant). Téléphone : photos en 4/3, les 5 tiennent dans 812 px.
