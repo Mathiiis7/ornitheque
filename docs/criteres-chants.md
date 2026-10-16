@@ -81,7 +81,8 @@ donnent, à trancher par Mathis) :
 - à ajouter plus tard dans Rythme : **« Ralentit »**, pendant d'« Accélère ».
 
 **Revu par Mathis, deuxième passe (2026-10-16, après l'analyse des 66 chants)** :
-- **seule la famille Forme est validée**, cases comprises. Noms courts arrêtés : « Même air
+- **seule la famille Forme est validée**, cases comprises. **Validée pour de bon** sur ces 5 oiseaux
+  le 2026-10-16 (« garde-la validée ») : ses cases ne se rouvrent plus dans la maquette. Noms courts arrêtés : « Même air
   répété », « Change sans arrêt », « Imite » ;
 - **la famille Notes n'est pas jugée fiable pour l'instant**. Ce qui l'a montré, sur 3 strophes
   par enregistrement (39 de charbonnière, 43 de bleue, planches p3_*.png du dossier d'analyse) :
