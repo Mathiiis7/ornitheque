@@ -20232,10 +20232,21 @@ function _pcChoisirEnreg(sci, partie, neuf){
 // 2026-10-16). Avant, elles tournaient par tours complets sans repetition d'affilee : a deux
 // especes, cela donnait une alternance stricte, et l'on devinait sans ecouter.
 const PC_MIN_PAR_ESPECE = { 2: 3, 3: 2, 4: 1, 5: 1 };
+// Et un maximum (Mathis le 2026-10-17) : sans lui, un oiseau pouvait revenir 8 fois sur 10.
+// Au-dela de 5 especes (entrainement), une de plus que la part egale.
+const PC_MAX_PAR_ESPECE = { 2: 7, 3: 5, 4: 4, 5: 3 };
 function _pcCibles(especes, q){
-  const min = Math.min(PC_MIN_PAR_ESPECE[especes.length] ?? 1, Math.floor(q / especes.length));
+  const n = especes.length;
+  const min = Math.min(PC_MIN_PAR_ESPECE[n] ?? 1, Math.floor(q / n));
+  // le plafond ne doit jamais empecher de remplir les q questions
+  const max = Math.max(PC_MAX_PAR_ESPECE[n] ?? Math.ceil(q / n) + 1, Math.ceil(q / n));
   const out = especes.flatMap(sci => Array(min).fill(sci));
-  while(out.length < q) out.push(especes[Math.floor(Math.random() * especes.length)]);
+  const compte = new Map(especes.map(sci => [sci, min]));
+  while(out.length < q){
+    const libres = especes.filter(sci => compte.get(sci) < max);
+    const sci = libres[Math.floor(Math.random() * libres.length)];
+    out.push(sci); compte.set(sci, compte.get(sci) + 1);
+  }
   return _pcMelanger(out);
 }
 // Les chants des especes en jeu, ou null (message d'erreur deja affiche dans box).

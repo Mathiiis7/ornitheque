@@ -1595,7 +1595,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .pc-quitter { padding:6px 12px; }
   .pc-segments { display:flex; gap:4px; margin:12px 0 18px; }
   .pc-segments i { flex:1; height:6px; border-radius:3px; background:var(--surface-2); }
-  .pc-segments i.ici { background:var(--accent); }
+  /* Question en cours en gris, pas en accent : le bleu-vert se confondait avec le vert d'une
+     bonne réponse (Mathis le 2026-10-17). Plus foncé que les questions à venir pour s'en
+     distinguer, et toujours sans teinte. */
+  .pc-segments i.ici { background:color-mix(in srgb, var(--ink) 30%, var(--surface)); }
   .pc-segments i.ok { background:var(--pc-ok); }
   .pc-segments i.ko { background:var(--pc-ko); }
   .pc-son { display:flex; align-items:center; gap:16px; background:var(--surface-2); border-radius:14px; padding:14px 18px; }
