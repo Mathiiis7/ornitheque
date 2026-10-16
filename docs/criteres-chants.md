@@ -83,6 +83,21 @@ donnent, à trancher par Mathis) :
 - les autres familles conviennent ;
 - à ajouter plus tard dans Rythme : **« Ralentit »**, pendant d'« Accélère ».
 
+**Revu par Mathis, deuxième passe (2026-10-16, après l'analyse des 66 chants)** :
+- **seule la famille Forme est validée**, cases comprises. Noms courts arrêtés : « Même air
+  répété », « Change sans arrêt », « Imite » ;
+- **la famille Notes n'est pas jugée fiable pour l'instant**. Ce qui l'a montré, sur 3 strophes
+  par enregistrement (39 de charbonnière, 43 de bleue, planches p3_*.png du dossier d'analyse) :
+  - la bleue a deux morceaux : 2 ou 3 « tsi » détachés, puis UNE note répétée très vite (le
+    trille), dans 12 enregistrements sur 15 ; les 3 autres font un motif de 3 notes en boucle
+    (une longue, deux courtes). Sa case « Notes variées » vient du début, qui a déjà sa propre
+    case. Proposé : juger Notes sur la suite du chant, sans le début (bleue : une seule note ✓,
+    motif parfois, variées ✗). Compris par Mathis, pas adopté ;
+  - la charbonnière ne fait jamais une note seule répétée (0 sur 39) : un motif de 2 ou 3 notes
+    dans 10 enregistrements sur 13, des phrases courtes qui ne bouclent pas dans les 3 autres
+    (702431, 804299, 862138) ;
+- les autres familles restent à revoir.
+
 Les croix de « Imite d'autres oiseaux » et « Finit par une fioriture » ne viennent d'aucune
 source qui les écarte : aucune ne les mentionne pour ces cinq oiseaux. Ces deux lignes sont là
 pour les passereaux qui viendront (étourneau, rousserolle ; pinson).
