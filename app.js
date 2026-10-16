@@ -19611,10 +19611,52 @@ const PARCOURS_MESANGES = {
     { titre: 'Quatre oiseaux', type: 'nom', n: 4, q: 10 },
     { titre: 'Cinq oiseaux', type: 'nom', n: 5, q: 10 },
     { titre: 'Trouver le chant', type: 'chant', n: 5, q: 10 },
-    { titre: 'Le mélange', type: 'melange', n: 5, q: 10 },
-    { titre: 'L\'épreuve', type: 'nom', n: 5, q: 15, epreuve: true },
+    // sansCercles : plus d'indices dans les deux dernieres etapes (Mathis, 2026-10-17)
+    { titre: 'Le mélange', type: 'melange', n: 5, q: 10, sansCercles: true },
+    { titre: 'L\'épreuve', type: 'nom', n: 5, q: 15, epreuve: true, sansCercles: true },
   ],
 };
+// Cercles d'indices dans chaque reponse « Quel oiseau chante ? » : la strophe, le motif,
+// l'onomatopee, et au survol les mots de Mathis, repris de ses remarques et valides par lui le
+// 2026-10-17 (maquette notes-privees/maquettes/criteres/cercles.html : couleurs « sous-bois »,
+// oreille pour l'onomatopee). Vocabulaire : strophe > motif > note. La bleue n'a pas
+// d'onomatopee ; la nonnette, « courte a moyenne », est rangee en courte (son choix).
+const PC_CERCLES_DESSINS = {
+  strophe: {
+    courte:  ['Strophe courte',  '<path d="M8.5 12h7"/>'],
+    moyenne: ['Strophe moyenne', '<path d="M5.5 12h13"/>'],
+    longue:  ['Strophe longue',  '<path d="M2.5 12h19"/>'],
+  },
+  motif: {
+    une:     ['Une seule note répétée', '<circle class="p" cx="5" cy="12" r="2.3"/><circle class="p" cx="12" cy="12" r="2.3"/><circle class="p" cx="19" cy="12" r="2.3"/>'],
+    alterne: ['Deux hauteurs qui alternent', '<circle class="p" cx="4" cy="8" r="2.2"/><circle class="p" cx="9.3" cy="16" r="2.2"/><circle class="p" cx="14.7" cy="8" r="2.2"/><circle class="p" cx="20" cy="16" r="2.2"/>'],
+    pics:    ['Des petits pics', '<path d="M2.5 16l3.2-7 3.2 7 3.1-7 3.2 7 3.1-7 3.2 7"/>'],
+    trille:  ['Notes aiguës puis un trille', '<circle class="p" cx="4" cy="7.5" r="2.1"/><circle class="p" cx="9" cy="7.5" r="2.1"/><path d="M12.5 16q1.2-3 2.4 0t2.4 0t2.4 0t2.4 0" stroke-width="2.2"/>'],
+  },
+  ono: ['Onomatopée', '<path d="M7 10a5.5 5.5 0 0 1 11 0c0 3.2-3.2 4.3-3.2 7a2.8 2.8 0 0 1-5.4 1"/><path d="M10 10.2a2.5 2.5 0 0 1 5 0c0 1.5-1.6 2-1.6 3"/>'],
+};
+const PC_CERCLES = {
+  'parus major': { strophe: 'moyenne', strophe_txt: 'Moyenne, reprise à intervalles réguliers.',
+    motif: 'alterne', motif_txt: 'Des notes qui alternent haut-bas, avec un aigu bien marqué.', ono: '« ti-tu »' },
+  'cyanistes caeruleus': { strophe: 'courte', strophe_txt: 'Courte, reprise après une petite pause.',
+    motif: 'trille', motif_txt: 'Deux ou trois notes aiguës, puis un trille.', ono: null },
+  'periparus ater': { strophe: 'moyenne', strophe_txt: 'Moyenne, reprise à intervalles réguliers. Chante fort.',
+    motif: 'pics', motif_txt: 'Des notes rapides qui montent et redescendent en douceur, comme des petits pics.', ono: '« titjut-titjut-titjut »' },
+  'poecile palustris': { strophe: 'courte', strophe_txt: 'Courte à moyenne, reprise à intervalles réguliers.',
+    motif: 'une', motif_txt: 'La même note aiguë, qui descend, répétée vite.', ono: '« piu-piu-piu »' },
+  'phylloscopus collybita': { strophe: 'longue', strophe_txt: 'Longue.',
+    motif: 'alterne', motif_txt: 'Des notes sèches et nettes, qui alternent entre deux hauteurs.', ono: '« chiff-chaff »' },
+};
+// Masquer les cercles : un choix qui suit la personne d'une question et d'une etape a l'autre
+const PC_CLE_CERCLES = 'pc-cercles-masques';
+const _pcCerclesMasques = () => { try{ return localStorage.getItem(PC_CLE_CERCLES) === '1'; }catch(_){ return false; } };
+function _pcCerclesHtml(sci){
+  const c = PC_CERCLES[sci]; if(!c) return '';
+  // Le texte passe par data-tip, l'infobulle de toute l'appli (curseur « ? », un quart de seconde)
+  const un = (classe, [nom, dessin], texte) => `<span class="pc-cercle ${classe}" data-tip="${esc(nom + ' : ' + texte)}" aria-label="${esc(nom + ' : ' + texte)}" role="img"><svg viewBox="0 0 24 24" aria-hidden="true">${dessin}</svg></span>`;
+  return `<span class="pc-cercles">${un('pc-c-strophe', PC_CERCLES_DESSINS.strophe[c.strophe], c.strophe_txt)}${un('pc-c-motif', PC_CERCLES_DESSINS.motif[c.motif], c.motif_txt)}${
+    c.ono ? un('pc-c-ono', PC_CERCLES_DESSINS.ono, c.ono) : '<span class="pc-cercle vide" aria-hidden="true"></span>'}</span>`;
+}
 // Parcours a venir, montres grises « Bientot » dans la liste : les deux groupes que
 // docs/refonte-quiz.md garde pour la suite, puis dix familles posees pour voir la place que prend
 // la liste (Mathis le 2026-10-17 : « meme si elles sont fausses »). Ni leurs oiseaux ni leur ordre
@@ -20306,11 +20348,15 @@ function _pcQuestion(){
     _pcNoterEntendus([rec?.id]);
     // Les reponses en barres, petite photo a gauche du nom. Les grandes cartes photo de la
     // maquette B, essayees le 2026-10-16, ont ete jugees « bof » par Mathis le jour meme.
-    let reponses;
+    let reponses, cercles = false;
     if(q.type === 'nom'){
       q.choix = _pcChoixNoms(p.especes, q.cible);
-      reponses = `<div class="pc-reponses" id="pcChoix">
-        ${q.choix.map((sci, k) => `<button type="button" class="pc-reponse" data-pc-choix="${k}"><span class="pc-vign" data-pc-vign="${esc(sci)}"></span><span class="pc-reponse-nom">${esc(_pcNomFr(sci))}</span></button>`).join('')}
+      // Cercles d'indices : pas dans les etapes marquees sansCercles, ni pour des oiseaux qui
+      // n'en ont pas. Masques a la demande, par une simple classe : re-rendre couperait le chant.
+      const etape = p.kind === 'entr' ? null : PARCOURS_MESANGES.etapes[p.etape];
+      cercles = !etape?.sansCercles && q.choix.some(sci => PC_CERCLES[sci]);
+      reponses = `<div class="pc-reponses${cercles && _pcCerclesMasques() ? ' sans-cercles' : ''}" id="pcChoix">
+        ${q.choix.map((sci, k) => `<button type="button" class="pc-reponse" data-pc-choix="${k}"><span class="pc-vign" data-pc-vign="${esc(sci)}"></span><span class="pc-reponse-nom">${esc(_pcNomFr(sci))}</span>${cercles ? _pcCerclesHtml(sci) : ''}</button>`).join('')}
       </div>`;
     } else {
       // Nom a ecrire, avec suggestions (variante N2 choisie par Mathis le 2026-10-16). La liste
@@ -20331,7 +20377,8 @@ function _pcQuestion(){
         <div class="pc-son-barre"><div class="pc-son-plein" id="pcProgression"></div></div>
         <span class="pc-son-t" id="pcTemps"></span>
       </div>
-      <h3 class="bloc-titre pc-demande">Quel oiseau chante ?</h3>
+      <div class="pc-demande-ligne"><h3 class="bloc-titre pc-demande">Quel oiseau chante ?</h3>${cercles
+        ? `<button type="button" class="pc-cercles-bascule" data-pc-cercles aria-pressed="${!_pcCerclesMasques()}">${_pcCerclesMasques() ? 'Afficher les indices' : 'Masquer les indices'}</button>` : ''}</div>
       ${reponses}
       <audio id="pcAudio" preload="auto" src="${esc(rec?.file || '')}"></audio>`;
   } else {
@@ -20557,6 +20604,18 @@ document.addEventListener('click', e => {
   const entrJouer = e.target.closest('[data-pc-entr-jouer]'); if(entrJouer){ _pcEntrLancer(entrJouer.dataset.pcEntrJouer); return; }
   const sugg = e.target.closest('[data-pc-sugg]'); if(sugg){ _pcPrendreSugg(sugg.dataset.pcSugg); return; }
   if(e.target.closest('[data-pc-valider]')){ _pcRepondreEcrit(); return; }
+  const bascule = e.target.closest('[data-pc-cercles]');
+  if(bascule){
+    const masquer = !_pcCerclesMasques();
+    try{ localStorage.setItem(PC_CLE_CERCLES, masquer ? '1' : '0'); }catch(_){}
+    document.getElementById('pcChoix')?.classList.toggle('sans-cercles', masquer);
+    bascule.setAttribute('aria-pressed', String(!masquer));
+    bascule.textContent = masquer ? 'Afficher les indices' : 'Masquer les indices';
+    return;
+  }
+  // Toucher un cercle montre son texte (l'infobulle) sans repondre : au doigt, c'est le seul
+  // moyen de le lire, et repondre par megarde ferait perdre la question.
+  if(e.target.closest('.pc-cercle')) return;
   const choix = e.target.closest('[data-pc-choix]'); if(choix){ _pcRepondre(+choix.dataset.pcChoix); return; }
 });
 // Raccourcis du parcours : 1 a 5 repondent, Espace reecoute.
