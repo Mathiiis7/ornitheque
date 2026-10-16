@@ -6,7 +6,7 @@
 ---
 # EN LOCAL le 2026-10-16, PAS POUSSÉ : réponses revenues en barres (v789, app.js?v=363)
 - Grandes cartes photo jugées « bof » : barres pleine largeur (680 px max), photo 52 px à gauche du nom, coche/croix à droite.
-- EN ATTENTE : choix du bouton pause, planche notes-privees/maquettes/quiz-visuel/pause.html (actuel, A barres rapprochées, B épaisses, C carré d'arrêt, D anneau).
+- Bouton pause : variante D choisie (planche notes-privees/maquettes/quiz-visuel/pause.html), en place en v790 (app.js?v=364) : rond clair, anneau orange qui avance avec le chant, triangle centré sur son centre de gravité (écart mesuré 0,15 px). L'étape 5 garde ses petits boutons orange.
 ---
 # EN LOCAL le 2026-10-16, PAS POUSSÉ : cartes plus grandes, pause de 2 s, plus de trait (v788, app.js?v=362)
 - La partie prend la largeur des cartes (jusqu'à 290 px chacune), photos carrées : 5 cartes de 230 px d'écran à 1280 (141 avant). Téléphone : photos en 4/3, les 5 tiennent dans 812 px.

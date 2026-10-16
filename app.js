@@ -19595,6 +19595,15 @@ const PC_DUREE_MAX = 20;   // secondes lues par chant, comme l'ancien quiz
 // voir la bonne carte, dit Mathis le 2026-10-16 : 2 s.
 const PC_PAUSE_SUITE_MS = 2000;
 const _pc = { selection: null, partie: null };
+// Bouton de lecture : variante D « anneau qui avance », choisie par Mathis le 2026-10-16
+// (notes-privees/maquettes/quiz-visuel/pause.html). L'ancienne pause, deux bordures de 6 px
+// ecartees de 4 px, paraissait « bizarre ». Le triangle est place sur son centre de gravite :
+// sommets (8.5,5.5) (8.5,18.5) (19.5,12), soit x = 12,17 pour un centre a 12 ; centre sur sa
+// boite, il paraissait decale (remarque de Mathis le meme jour).
+const PC_ANNEAU = +(2 * Math.PI * 27).toFixed(2);   // circonference de l'anneau, rayon 27 sur 60
+const PC_LECTURE_SVG = `<svg class="pc-anneau" viewBox="0 0 60 60" aria-hidden="true"><circle class="pc-anneau-fond" cx="30" cy="30" r="27"/><circle class="pc-anneau-plein" cx="30" cy="30" r="27" stroke-dasharray="${PC_ANNEAU}" stroke-dashoffset="${PC_ANNEAU}" transform="rotate(-90 30 30)"/></svg>`
+  + '<svg class="pc-ico-lecture" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 5.5v13l11-6.5z" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>'
+  + '<svg class="pc-ico-pause" viewBox="0 0 22 22" aria-hidden="true" fill="currentColor"><rect x="5" y="3" width="4.5" height="16" rx="1.6"/><rect x="12.5" y="3" width="4.5" height="16" rx="1.6"/></svg>';
 // Icones au trait (le ✓ et le 🔒 en caracteres changeaient de dessin selon l'appareil).
 const PC_ICO = {
   ok: '<svg class="pc-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5"/></svg>',
@@ -19782,7 +19791,7 @@ function _pcQuestion(){
     // maquette B, essayees le 2026-10-16, ont ete jugees « bof » par Mathis le jour meme.
     corps = `
       <div class="pc-son">
-        <button type="button" class="pc-lecture" id="pcPlay" aria-label="Écouter le chant"></button>
+        <button type="button" class="pc-lecture" id="pcPlay" aria-label="Écouter le chant">${PC_LECTURE_SVG}</button>
         <div class="pc-son-barre"><div class="pc-son-plein" id="pcProgression"></div></div>
         <span class="pc-son-t" id="pcTemps"></span>
       </div>
@@ -19818,6 +19827,9 @@ function _pcQuestion(){
     const temps = document.getElementById('pcTemps');
     const mmss = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
     const duree = () => Math.min(audio.duration || PC_DUREE_MAX, PC_DUREE_MAX);
+    // La barre et l'anneau du bouton avancent ensemble.
+    const anneau = btn.querySelector('.pc-anneau-plein');
+    const avancer = f => { fill.style.width = (f * 100) + '%'; if(anneau) anneau.style.strokeDashoffset = PC_ANNEAU * (1 - f); };
     const afficherTemps = () => { if(temps && audio.duration) temps.textContent = `${mmss(audio.currentTime)} / ${mmss(duree())}`; };
     audio.addEventListener('loadedmetadata', afficherTemps);
     btn.addEventListener('click', () => { if(audio.paused) audio.play().catch(() => {}); else audio.pause(); });
@@ -19826,14 +19838,14 @@ function _pcQuestion(){
     let anim = 0;
     const suivre = () => {
       if(!audio.isConnected || audio.paused){ anim = 0; return; }
-      if(audio.currentTime >= PC_DUREE_MAX){ audio.pause(); audio.currentTime = 0; fill.style.width = '0%'; afficherTemps(); anim = 0; return; }
-      fill.style.width = (audio.currentTime / duree() * 100) + '%';
+      if(audio.currentTime >= PC_DUREE_MAX){ audio.pause(); audio.currentTime = 0; avancer(0); afficherTemps(); anim = 0; return; }
+      avancer(audio.currentTime / duree());
       afficherTemps();
       anim = requestAnimationFrame(suivre);
     };
     audio.addEventListener('play', () => { btn.classList.add('playing'); if(!anim) anim = requestAnimationFrame(suivre); });
     audio.addEventListener('pause', () => btn.classList.remove('playing'));
-    audio.addEventListener('ended', () => { btn.classList.remove('playing'); fill.style.width = '0%'; });
+    audio.addEventListener('ended', () => { btn.classList.remove('playing'); avancer(0); });
     audio.play().catch(() => {});
     _pcPhotos(box);
   } else {
