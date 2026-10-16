@@ -1522,11 +1522,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .pc-ligne.ok .pc-res { color:var(--pc-ok); font-weight:600; }
   .pc-attente { margin:16px 0; }
   /* Une partie : la largeur suit le nombre de cartes, 5 cartes de 4/3 ne tenaient pas en 560 px. */
-  .pc-jeu { max-width:880px; margin:0 auto; }
-  /* Avec des cartes photo, la partie prend la largeur des cartes, jusqu'a 290 px chacune : a
-     880 px, les 5 cartes de l'etape 4 tombaient a 166 px et laissaient la page vide autour
-     (remarque de Mathis le 2026-10-16). */
-  .pc-jeu.cartes { max-width:calc(var(--n) * 290px + (var(--n) - 1) * 14px); }
+  .pc-jeu { max-width:680px; margin:0 auto; }
   .pc-jeu-tete { display:flex; justify-content:space-between; align-items:center; gap:12px; font-size:14px; color:var(--ink-3); }
   .pc-jeu-tete b { color:var(--ink); }
   .pc-jeu-droite { display:flex; align-items:center; gap:12px; }
@@ -1545,19 +1541,21 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .pc-son-plein { height:100%; width:0; background:var(--accent-2); }
   .pc-son-t { min-width:72px; text-align:right; font-size:14px; color:var(--ink-3); font-variant-numeric:tabular-nums; }
   .pc-demande { margin:20px 0 12px; }
-  .pc-cartes { display:grid; grid-template-columns:repeat(var(--n), minmax(0, 1fr)); gap:14px; }
-  .pc-carte { position:relative; display:flex; flex-direction:column; padding:0; border:1px solid var(--line-2); border-radius:14px; overflow:hidden; background:var(--surface); cursor:pointer; font:inherit; color:var(--ink); text-align:center; transition:transform .12s, border-color .12s, opacity .15s; }
-  .pc-carte:hover:not(:disabled) { border-color:var(--accent); transform:translateY(-2px); }
-  .pc-carte:disabled { cursor:default; }
-  .pc-carte-photo { display:block; aspect-ratio:1; background:var(--surface-2); }
-  .pc-carte-photo img { width:100%; height:100%; object-fit:cover; display:block; }
-  .pc-carte-nom { padding:10px 8px; font-size:15px; font-weight:600; }
-  .pc-carte.correct { border-color:var(--pc-ok); box-shadow:0 0 0 2px var(--pc-ok); }
-  .pc-carte.wrong { border-color:var(--pc-ko); box-shadow:0 0 0 2px var(--pc-ko); }
-  .pc-carte.eteint { opacity:.4; }
-  .pc-marque { position:absolute; top:8px; right:8px; width:30px; height:30px; border-radius:50%; display:grid; place-items:center; color:#fff; }
-  .pc-carte.correct .pc-marque { background:var(--pc-ok); }
-  .pc-carte.wrong .pc-marque { background:var(--pc-ko); }
+  /* Reponses en barres, petite photo a gauche du nom (les grandes cartes photo, essayees le
+     2026-10-16, ont ete refusees le jour meme). */
+  .pc-reponses { display:flex; flex-direction:column; gap:8px; }
+  .pc-reponse { display:flex; align-items:center; gap:14px; width:100%; min-height:68px; padding:8px 16px 8px 8px; border:1px solid var(--line-2); border-radius:12px; background:var(--surface); cursor:pointer; font:inherit; color:var(--ink); text-align:left; transition:border-color .12s, background .12s, opacity .15s; }
+  .pc-reponse:hover:not(:disabled) { border-color:var(--accent); background:var(--surface-2); }
+  .pc-reponse:disabled { cursor:default; }
+  .pc-vign { flex:none; width:52px; height:52px; border-radius:10px; overflow:hidden; background:var(--surface-2); }
+  .pc-vign img { width:100%; height:100%; object-fit:cover; display:block; }
+  .pc-reponse-nom { flex:1; font-size:15px; font-weight:600; }
+  .pc-reponse.correct { border-color:var(--pc-ok); box-shadow:0 0 0 1px var(--pc-ok); background:color-mix(in srgb, var(--pc-ok) 10%, var(--surface)); }
+  .pc-reponse.wrong { border-color:var(--pc-ko); background:color-mix(in srgb, var(--pc-ko) 10%, var(--surface)); }
+  .pc-reponse.eteint { opacity:.5; }
+  .pc-marque { flex:none; display:grid; place-items:center; }
+  .pc-reponse.correct .pc-marque { color:var(--pc-ok); }
+  .pc-reponse.wrong .pc-marque { color:var(--pc-ko); }
   .pc-verdict { margin-top:14px; }
   .pc-verdict-ligne { display:flex; align-items:center; gap:10px; font-size:15px; color:var(--ink-2); }
   .pc-verdict-ligne .sp-link { font-weight:700; color:var(--ink); }
@@ -1591,10 +1589,6 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .pc-esp { width:70px; }
     .pc-esp-photo { width:54px; height:54px; }
     .pc-son { padding:12px 14px; gap:12px; }
-    .pc-cartes { grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px; }
-    .pc-carte-nom { font-size:14px; padding:8px 6px; }
-    /* Au telephone, 5 cartes carrees sur 3 rangees sortaient de l'ecran (bas a 918 px pour 812). */
-    .pc-carte-photo { aspect-ratio:4/3; }
   }
   @media (max-width:640px) {
     .qz-head { flex-direction:column; align-items:flex-start; }

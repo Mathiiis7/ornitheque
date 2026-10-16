@@ -19778,8 +19778,8 @@ function _pcQuestion(){
     const rec = _pcChoisirEnreg(q.cible, p);
     q.rec = rec;
     q.choix = _pcMelanger(p.especes);
-    // Les reponses en grandes cartes photo, idee reprise de la maquette B (choix de Mathis
-    // le 2026-10-16) : on reconnait l'oiseau avant de lire son nom.
+    // Les reponses en barres, petite photo a gauche du nom. Les grandes cartes photo de la
+    // maquette B, essayees le 2026-10-16, ont ete jugees « bof » par Mathis le jour meme.
     corps = `
       <div class="pc-son">
         <button type="button" class="pc-lecture" id="pcPlay" aria-label="Écouter le chant"></button>
@@ -19787,8 +19787,8 @@ function _pcQuestion(){
         <span class="pc-son-t" id="pcTemps"></span>
       </div>
       <h3 class="bloc-titre pc-demande">Quel oiseau chante ?</h3>
-      <div class="pc-cartes" id="pcChoix">
-        ${q.choix.map((sci, k) => `<button type="button" class="pc-carte" data-pc-choix="${k}"><span class="pc-carte-photo" data-pc-vign="${esc(sci)}"></span><span class="pc-carte-nom">${esc(_pcNomFr(sci))}</span></button>`).join('')}
+      <div class="pc-reponses" id="pcChoix">
+        ${q.choix.map((sci, k) => `<button type="button" class="pc-reponse" data-pc-choix="${k}"><span class="pc-vign" data-pc-vign="${esc(sci)}"></span><span class="pc-reponse-nom">${esc(_pcNomFr(sci))}</span></button>`).join('')}
       </div>
       <audio id="pcAudio" preload="auto" src="${esc(rec?.file || '')}"></audio>`;
   } else {
@@ -19812,8 +19812,7 @@ function _pcQuestion(){
           </div>`).join('')}
       </div>`;
   }
-  // --n : nombre de cartes ; toute la partie prend leur largeur (styles.css, .pc-jeu.cartes).
-  box.innerHTML = `<div class="pc-jeu${q.type === 'nom' ? ' cartes' : ''}" style="--n:${q.choix.length}">${tete}<div class="pc-question">${corps}</div><div id="pcVerdict"></div></div>`;
+  box.innerHTML = `<div class="pc-jeu">${tete}<div class="pc-question">${corps}</div><div id="pcVerdict"></div></div>`;
   if(q.type === 'nom'){
     const audio = document.getElementById('pcAudio'), btn = document.getElementById('pcPlay'), fill = document.getElementById('pcProgression');
     const temps = document.getElementById('pcTemps');
@@ -19875,7 +19874,7 @@ function _pcRepondre(k){
   const bonIdx = q.choix.indexOf(q.cible);
   let sono = '';
   if(q.type === 'nom'){
-    // Le verdict se lit sur les cartes : coche sur la bonne, croix sur celle choisie, les
+    // Le verdict se lit sur les reponses : coche sur la bonne, croix sur celle choisie, les
     // autres s'effacent.
     box.querySelectorAll('[data-pc-choix]').forEach((b, i) => {
       b.disabled = true;
