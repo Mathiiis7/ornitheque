@@ -80,9 +80,10 @@ Tranché par moi, validé par Mathis le 2026-10-16 :
 - nom à écrire : majuscules, accents, traits d'union ne comptent pas, une faute de frappe passe
   (« Presque », compté juste) ; le nom exact d'un autre oiseau est faux. Les suggestions viennent
   de tous les oiseaux de France du Birdydex ;
-- réponses gardées dans le navigateur (`mb-quiz-stats`), parcours compris : par espèce, par
+- réponses gardées dans le navigateur (`mb-quiz-reponses` ; `mb-quiz-stats` est celle de l'ancien quiz), parcours compris : par espèce, par
   confusion, et les enregistrements entendus. Points faibles fermés avant 20 réponses ;
-- la dernière manche prend un enregistrement jamais entendu quand il en reste.
+- la dernière manche prend un enregistrement jamais entendu quand il en reste (le chant du bon oiseau en « Nom vers chant ») ;
+- au doigt, les noms proposés s'ouvrent au-dessus du champ, 4 au plus : en dessous, le clavier les cacherait. Pas vérifiable sans vrai téléphone.
 
 ## À garder en tête
 

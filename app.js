@@ -19697,15 +19697,27 @@ const _pcChoixNoms = (especes, cible) => _pcMelanger([cible, ..._pcMelanger(espe
 // enregistrements deja entendus. Gardees dans le navigateur, comme le parcours : dans Firestore,
 // chaque reponse couterait des ecritures et une ligne de plus a la suppression RGPD ; les
 // statistiques du profil sont un autre ticket (qg#63).
-const PC_STATS_CLE = 'mb-quiz-stats';
+// Pas 'mb-quiz-stats' : l'ancien quiz y range deja ses scores, sous une autre forme.
+const PC_STATS_CLE = 'mb-quiz-reponses';
 const PC_LACUNES_MIN = 20;    // reponses avant d'ouvrir les points faibles
 const PC_LACUNES_NB = 3;      // oiseaux revus au plus
 const PC_LACUNES_PART = 7;    // manches sur ces oiseaux, les 3 autres sur le reste
+// Une valeur abimee est ecartee, pas lue : _pcLacunes tourne a chaque affichage de l'accueil du
+// Quiz, et une erreur la laisserait vide.
 function _pcStats(){
-  try{
-    const s = JSON.parse(localStorage.getItem(PC_STATS_CLE) || '{}');
-    return { esp: s.esp || {}, conf: s.conf || {}, entendus: Array.isArray(s.entendus) ? s.entendus : [] };
-  }catch(_){ return { esp: {}, conf: {}, entendus: [] }; }
+  const st = { esp: {}, conf: {}, entendus: [] };
+  let s;
+  try{ s = JSON.parse(localStorage.getItem(PC_STATS_CLE) || '{}'); }catch(_){ return st; }
+  if(!s || typeof s !== 'object') return st;
+  const nombre = n => Number.isFinite(n) && n >= 0;
+  if(s.esp && typeof s.esp === 'object') for(const [sci, e] of Object.entries(s.esp)){
+    if(Array.isArray(e) && e.length === 2 && nombre(e[0]) && nombre(e[1])) st.esp[sci] = e;
+  }
+  if(s.conf && typeof s.conf === 'object') for(const [c, n] of Object.entries(s.conf)){
+    if(c.includes('|') && nombre(n)) st.conf[c] = n;
+  }
+  if(Array.isArray(s.entendus)) st.entendus = s.entendus.filter(id => typeof id === 'string');
+  return st;
 }
 function _pcGarderStats(st){ try{ localStorage.setItem(PC_STATS_CLE, JSON.stringify(st)); }catch(_){} }
 function _pcNoterReponse(cible, juste, choisi){
@@ -19794,7 +19806,7 @@ function _pcJugerEcrit(texte, cible){
   if(_pcDistance(t, bon) <= 1) return { juste: true, presque: true, choisi: null };
   return { juste: false, presque: false, choisi: null };
 }
-const PC_SUGG_MAX = 6;
+const PC_SUGG_MAX = 6, PC_SUGG_MAX_DOIGT = 4;
 // Des 2 lettres : les noms qui commencent ainsi, puis ceux dont un autre mot commence ainsi.
 function _pcSuggerer(champ){
   const liste = document.getElementById('pcSugg'); if(!liste) return;
@@ -19806,7 +19818,10 @@ function _pcSuggerer(champ){
     else if(x.cle.includes(' ' + t)) mot.push(x);
   }
   const tri = (a, b) => a.nom.localeCompare(b.nom, 'fr');
-  const res = [...debut.sort(tri), ...mot.sort(tri)].slice(0, PC_SUGG_MAX);
+  // Au doigt, la liste s'ouvre au-dessus du champ (styles.css) : en dessous, le clavier du
+  // telephone la cacherait. 4 noms au plus, pour qu'elle tienne entre le haut et le champ.
+  const max = matchMedia('(pointer: coarse)').matches ? PC_SUGG_MAX_DOIGT : PC_SUGG_MAX;
+  const res = [...debut.sort(tri), ...mot.sort(tri)].slice(0, max);
   if(!res.length || (res.length === 1 && res[0].cle === t)){ _pcFermerSugg(); return; }
   liste.innerHTML = res.map((x, i) => {
     // Le debut tape en gras, quand le nom commence par lui (meme longueur une fois normalise).
@@ -20282,7 +20297,7 @@ function _pcQuestion(){
   } else {
     const autres = _pcMelanger(p.especes.filter(s => s !== q.cible)).slice(0, PC_CHANTS_PROPOSES - 1);
     q.choix = _pcMelanger([q.cible, ...autres]);
-    q.recs = q.choix.map(sci => _pcChoisirEnreg(sci, p));
+    q.recs = q.choix.map(sci => _pcChoisirEnreg(sci, p, q.neuf && sci === q.cible));
     _pcNoterEntendus(q.recs.map(r => r?.id));
     const lettres = ['A', 'B', 'C'];
     corps = `

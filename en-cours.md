@@ -1,4 +1,4 @@
-# EN LOCAL le 2026-10-17, PAS POUSSÉ : entraînement du quiz, qg#56 (v796, app.js?v=370)
+# EN LOCAL le 2026-10-17, PAS POUSSÉ : entraînement du quiz, qg#56 (v797, app.js?v=371)
 - Sous les parcours, 4 cartes : Chant vers nom, Nom vers chant, Nom à écrire, Points faibles. Choix de Mathis sur la maquette notes-privees/maquettes/quiz-entrainement/ : E1, N2, noms C. Décisions dans docs/refonte-quiz.md.
 - Vérifié sur la démo : les 4 modes joués jusqu'au bout à 1280 clair, page de choix et nom à écrire à 375 sombre (cibles 44 px), parcours inchangé, 11 bancs CONFORME.
 - Reste : qu'il essaie en local, puis pousser.

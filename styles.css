@@ -3013,6 +3013,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     /* Parcours du quiz. Les etapes du chemin font deja 64 px. */
     .pc-retour, .pc-bulle .btn, .pc-choisir, .pc-quitter, .pc-fin-btns .btn { min-height:52px; }
     .pc-lien, .pc-sugg-l, .pc-entr-bas .btn { min-height:52px; }
+    /* Noms proposes au-dessus du champ, le plus proche contre lui : en dessous, le clavier du
+       telephone les couvrirait. */
+    .pc-sugg { top:auto; bottom:calc(100% + 4px); flex-direction:column-reverse; }
+    .pc-sugg-l:last-child { border-bottom:1px solid var(--line); }
+    .pc-sugg-l:first-child { border-bottom:0; }
     .pc-ecoute { width:52px; height:52px; }
 
     /* Les pastilles de palier sont peintes dans une boite de taille double ramenee de
