@@ -19890,7 +19890,7 @@ function _pcRenderEntr(box){
         <p class="pc-etiq">Ce qu'on va revoir</p>
         ${l.faibles.map(f => `<div class="pc-lacune">
           <span class="pc-lacune-ph" data-pc-vign="${esc(f.sci)}"></span>
-          <span class="pc-lacune-txt"><span class="pc-lacune-nom">${esc(_pcNomFr(f.sci))}</span>${f.pour ? `<span class="pc-meta">tu réponds souvent ${esc(_pcNomFr(f.pour))}</span>` : ''}</span>
+          <span class="pc-lacune-txt"><span class="pc-lacune-nom">${esc(_pcNomFr(f.sci))}</span>${f.pour ? `<span class="pc-meta">confusion la plus fréquente : ${esc(_pcNomFr(f.pour))}</span>` : ''}</span>
           <span class="pc-lacune-taux">${_pcPluriel(f.rates, 'raté')} sur ${f.vus}</span>
         </div>`).join('')}
       </div>
