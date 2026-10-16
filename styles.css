@@ -1508,21 +1508,44 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .pc-compte { display:inline-flex; align-items:center; gap:6px; font-size:14px; color:var(--ink-2); }
   .pc-compte b { font-size:16px; color:var(--ink); }
   .pc-compte svg { width:18px; height:18px; color:var(--gold); }
-  /* La liste : une carte par parcours */
-  .pc-cartes { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:16px; max-width:900px; margin:0 auto; }
-  .pc-carte { display:flex; flex-direction:column; gap:12px; padding:18px; border:1px solid var(--line-2); border-radius:14px; background:var(--surface); font:inherit; color:var(--ink); text-align:left; }
-  button.pc-carte { cursor:pointer; border-color:var(--accent); box-shadow:0 0 0 1px var(--accent); transition:background .12s; }
-  button.pc-carte:hover { background:color-mix(in srgb, var(--accent) 6%, var(--surface)); }
+  /* Accueil (2026-10-17, maquette C de notes-privees/maquettes/quiz-accueil-2/) : comme les autres
+     pages, colle en haut, pleine largeur, sans l'agrandissement --pc-k du chemin et des parties. */
+  #viewQuiz #pcParcours.pc-haut { justify-content:flex-start; }
+  #viewQuiz #pcParcours.pc-haut > * { zoom:1; }
+  .pc-bloc + .pc-bloc { margin-top:22px; }
+  .pc-boites { margin-top:12px; }
+  .pc-boite-txt { display:flex; flex-direction:column; min-width:0; }
+  .pc-boite-desc { font-size:14px; font-weight:400; color:var(--ink-3); }
+  .pc-boite-ferme { cursor:default; color:var(--ink-3); }
+  .pc-boite-ferme:hover { background:var(--surface); }
+  .pc-boite-ferme .ml-ic { filter:grayscale(1); opacity:.6; }
+  /* Les parcours en lignes, comme le tableau des especes de Ma liste */
+  .pc-tableau { margin-top:12px; border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+  .pc-ligne { display:grid; grid-template-columns:150px minmax(0,1fr) 200px 80px; gap:12px; align-items:center; width:100%; box-sizing:border-box;
+    padding:8px 14px; border:0; border-top:1px solid var(--line); background:var(--surface); font:inherit; font-size:14px; color:var(--ink); text-align:left; }
+  .pc-ligne:first-child { border-top:0; }
+  .pc-tableau-th { background:var(--surface-2); font-size:13px; font-weight:700; color:var(--ink-3); text-transform:uppercase; letter-spacing:.4px; padding-top:7px; padding-bottom:7px; }
+  button.pc-ligne { cursor:pointer; background:color-mix(in srgb, var(--accent) 6%, var(--surface)); }
+  button.pc-ligne:hover { background:color-mix(in srgb, var(--accent) 11%, var(--surface)); }
+  .pc-ligne-nom { font-weight:600; }
+  .pc-ligne.ferme .pc-ligne-nom { font-weight:400; color:var(--ink-3); }
+  .pc-ligne .pc-ronds > span { width:30px; height:30px; box-shadow:0 0 0 2px var(--surface); }
+  .pc-ligne .pc-ronds > span + span { margin-left:-8px; }
+  .pc-ligne.ferme .pc-ronds { filter:grayscale(1); opacity:.5; }
+  .pc-ligne-avance { display:flex; align-items:center; gap:8px; color:var(--ink-3); }
+  .pc-ligne-avance .pc-barre { flex:1; }
+  .pc-ligne-vide { color:var(--ink-3); }
+  @media (max-width:560px){
+    .pc-ligne { grid-template-columns:auto minmax(0,1fr) auto; gap:10px; }
+    .pc-ligne-avance, .pc-tableau-th, .pc-boite-desc { display:none; }
+    .pc-tableau-th + .pc-ligne { border-top:0; }
+  }
   .pc-ronds { display:flex; }
   .pc-ronds > span { width:54px; height:54px; border-radius:50%; overflow:hidden; background:var(--surface-3); box-shadow:0 0 0 3px var(--surface); }
   .pc-ronds > span + span { margin-left:-14px; }
   .pc-ronds img, .pc-bulle-oiseau img { width:100%; height:100%; object-fit:cover; display:block; }
-  .pc-carte-titre { font:600 19px/1.25 var(--titre); }
-  .pc-carte.ferme .pc-ronds { filter:grayscale(1); opacity:.5; }
-  .pc-carte.ferme .pc-carte-titre { color:var(--ink-3); }
   .pc-barre { display:block; height:6px; border-radius:3px; background:var(--surface-2); overflow:hidden; }
   .pc-barre i { display:block; height:100%; background:var(--accent); }
-  .pc-carte-ligne { display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:14px; color:var(--ink-3); }
   /* Un parcours ouvert : le chemin */
   .pc-parcours { max-width:1200px; margin:0 auto; }
   .pc-retour { display:inline-flex; align-items:center; gap:4px; padding:4px 0; border:0; background:none; font:600 14px var(--sans); color:var(--accent-ink); cursor:pointer; }
@@ -1647,27 +1670,17 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .pc-confusions { list-style:none; padding:0; margin:6px 0 0; font-size:14px; color:var(--ink-2); }
   .pc-confusions li { margin:3px 0; }
   .pc-fin-btns { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:18px; }
-  /* Entrainement (qg#56, maquette E1 de notes-privees/maquettes/quiz-entrainement/) : une carte
-     par mode sous les parcours, puis une page pour cocher les oiseaux. */
-  .pc-accueil { max-width:900px; margin:0 auto; }
-  .pc-entr { margin-top:28px; padding-top:22px; border-top:1px solid var(--line); }
-  .pc-modes { display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:14px; margin-top:14px; }
-  .pc-mode { display:flex; flex-direction:column; align-items:flex-start; gap:10px; padding:16px; border:1px solid var(--line-2); border-radius:14px; background:var(--surface); font:inherit; color:var(--ink); text-align:left; }
-  button.pc-mode { cursor:pointer; transition:border-color .12s, background .12s; }
-  button.pc-mode:hover { border-color:var(--accent); background:color-mix(in srgb, var(--accent) 6%, var(--surface)); }
-  .pc-mode.ferme { color:var(--ink-3); }
-  .pc-mode.ferme .pc-mode-ico { filter:grayscale(1); opacity:.6; }
+  /* Entrainement (qg#56, maquette de notes-privees/maquettes/quiz-entrainement/) : les boites
+     de l'accueil ouvrent chacune une page pour cocher les oiseaux. */
   .pc-mode-ico { flex:none; width:46px; height:46px; border-radius:50%; display:grid; place-items:center; background:color-mix(in srgb, var(--accent) 12%, var(--surface)); color:var(--accent-ink); }
   .pc-mode-ico svg { width:24px; height:24px; }
-  .pc-mode-titre { font:600 18px/1.25 var(--titre); }
-  .pc-mode-desc { font-size:14px; color:var(--ink-3); }
   .pc-entr-page { max-width:760px; margin:0 auto; display:flex; flex-direction:column; align-items:stretch; gap:18px; }
   .pc-entr-page > .pc-retour { align-self:flex-start; }
   .pc-entr-tete { display:flex; align-items:center; gap:14px; }
   .pc-entr-tete .pc-meta { display:block; margin:2px 0 0; }
   .pc-entr-bas { display:flex; align-items:center; justify-content:space-between; gap:10px 16px; flex-wrap:wrap; }
   .pc-entr-oiseaux { margin-bottom:10px; }
-  .pc-entr-bientot { margin:4px 0 10px; }
+  .pc-entr-bientot { margin:10px 0 0; }
   .pc-lien { border:0; background:none; padding:4px 0; font:600 14px var(--sans); color:var(--accent-ink); cursor:pointer; }
   .pc-lien:hover { text-decoration:underline; }
   .pc-jetons { display:flex; flex-wrap:wrap; gap:10px; }
@@ -1675,8 +1688,6 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   button.pc-jeton { cursor:pointer; }
   button.pc-jeton:hover { border-color:var(--accent); }
   .pc-jeton.on { border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent); color:var(--ink); background:color-mix(in srgb, var(--accent) 7%, var(--surface)); }
-  .pc-jeton.ferme { opacity:.5; }
-  .pc-jeton.ferme .pc-jeton-ph { filter:grayscale(1); }
   .pc-jeton-ph, .pc-lacune-ph, .pc-bilan-ph { flex:none; border-radius:50%; overflow:hidden; background:var(--surface-3); }
   .pc-jeton-ph { width:40px; height:40px; }
   .pc-jeton-ph img, .pc-lacune-ph img, .pc-bilan-ph img { width:100%; height:100%; object-fit:cover; display:block; }
@@ -1713,9 +1724,6 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .pc-ecrit-note { color:var(--ink-3); }
   @media (max-width:560px){
     .pc-son { padding:12px 14px; gap:12px; }
-    .pc-modes { grid-template-columns:1fr 1fr; gap:10px; }
-    .pc-mode { padding:12px; gap:8px; }
-    .pc-mode-titre { font-size:16px; }
     .pc-jetons { flex-direction:column; align-items:stretch; gap:8px; }
     .pc-entr-bas .btn { width:100%; justify-content:center; }
   }
@@ -3012,7 +3020,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
 
     /* Parcours du quiz. Les etapes du chemin font deja 64 px. */
     .pc-retour, .pc-bulle .btn, .pc-choisir, .pc-quitter, .pc-fin-btns .btn { min-height:52px; }
-    .pc-lien, .pc-sugg-l, .pc-entr-bas .btn { min-height:52px; }
+    .pc-lien, .pc-sugg-l, .pc-entr-bas .btn, button.pc-ligne { min-height:52px; }
     /* Noms proposes au-dessus du champ, le plus proche contre lui : en dessous, le clavier du
        telephone les couvrirait. */
     .pc-sugg { top:auto; bottom:calc(100% + 4px); flex-direction:column-reverse; }

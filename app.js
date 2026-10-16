@@ -17108,10 +17108,12 @@ const PC_REF_H = 720, PC_REF_W = 760, PC_K_MAX = 1.5;
 function _pcHauteur(){
   const panel = document.querySelector('#viewQuiz .qz-panel');
   if(!panel || !panel.offsetParent) return;   // onglet masque : rien a mesurer
+  const pc = document.getElementById('pcParcours'); if(!pc) return;
+  // L'accueil n'occupe que sa place, comme les autres pages (2026-10-17).
+  if(pc.classList.contains('pc-haut')){ panel.style.minHeight = ''; pc.style.setProperty('--pc-k', '1'); return; }
   const zoom = parseFloat(getComputedStyle(document.body).zoom) || 1;
   const haut = panel.getBoundingClientRect().top + window.scrollY;
   panel.style.minHeight = Math.max(0, Math.floor((window.innerHeight - haut) / zoom - PC_MARGE_BAS)) + 'px';
-  const pc = document.getElementById('pcParcours'); if(!pc) return;
   const dispoH = (window.innerHeight - (pc.getBoundingClientRect().top + window.scrollY)) / zoom - PC_MARGE_BAS - 22;   // 22 = padding bas du panneau
   const k = Math.max(1, Math.min(dispoH / PC_REF_H, pc.clientWidth / PC_REF_W, PC_K_MAX));
   pc.style.setProperty('--pc-k', k.toFixed(3));
@@ -19614,10 +19616,22 @@ const PARCOURS_MESANGES = {
   ],
 };
 // Parcours a venir, montres grises « Bientot » dans la liste : les deux groupes que
-// docs/refonte-quiz.md garde pour la suite.
+// docs/refonte-quiz.md garde pour la suite, puis dix familles posees pour voir la place que prend
+// la liste (Mathis le 2026-10-17 : « meme si elles sont fausses »). Ni leurs oiseaux ni leur ordre
+// ne sont decides.
 const PARCOURS_BIENTOT = [
   { titre: 'Merle et grives', especes: ['turdus merula', 'turdus philomelos', 'turdus viscivorus', 'erithacus rubecula'] },
   { titre: 'Fauvettes', especes: ['sylvia atricapilla', 'sylvia borin', 'curruca communis', 'hippolais polyglotta'] },
+  { titre: 'Pinsons et chardonnerets', especes: ['fringilla coelebs', 'chloris chloris', 'carduelis carduelis', 'serinus serinus'] },
+  { titre: 'Pics', especes: ['dendrocopos major', 'picus viridis', 'dryocopus martius', 'dryobates minor'] },
+  { titre: 'Chouettes et hiboux', especes: ['strix aluco', 'asio otus', 'tyto alba', 'athene noctua'] },
+  { titre: 'Bruants', especes: ['emberiza citrinella', 'emberiza cirlus', 'emberiza schoeniclus', 'emberiza calandra'] },
+  { titre: 'Alouettes et pipits', especes: ['alauda arvensis', 'lullula arborea', 'anthus trivialis', 'anthus pratensis'] },
+  { titre: 'Roitelets et troglodyte', especes: ['troglodytes troglodytes', 'regulus regulus', 'regulus ignicapilla', 'certhia brachydactyla'] },
+  { titre: 'Corvidés', especes: ['corvus corone', 'garrulus glandarius', 'pica pica', 'coloeus monedula'] },
+  { titre: 'Hirondelles et martinets', especes: ['hirundo rustica', 'delichon urbicum', 'apus apus', 'riparia riparia'] },
+  { titre: 'Rousserolles', especes: ['acrocephalus scirpaceus', 'acrocephalus schoenobaenus', 'acrocephalus arundinaceus', 'locustella naevia'] },
+  { titre: 'Limicoles', especes: ['numenius arquata', 'tringa totanus', 'vanellus vanellus', 'haematopus ostralegus'] },
 ];
 const PC_CHANTS_PROPOSES = 3;
 const PC_DUREE_MAX = 20;   // secondes lues par chant, comme l'ancien quiz
@@ -19665,10 +19679,11 @@ const PC_ENTR_MANCHES = 10;
 const PC_NOMS_MAX = 5;   // noms proposes au plus, dont le bon
 // min : oiseaux a cocher au moins. « Nom vers chant » propose 3 chants de 3 oiseaux differents.
 const PC_ENTR_MODES = {
-  nom: { titre: 'Chant vers nom', desc: `Un chant, ${PC_NOMS_MAX} noms proposés`, min: 2 },
-  chant: { titre: 'Nom vers chant', desc: `Un oiseau, ${PC_CHANTS_PROPOSES} chants proposés`, min: PC_CHANTS_PROPOSES },
-  ecrire: { titre: 'Nom à écrire', desc: 'Un chant, à toi d\'écrire qui c\'est', min: 2 },
-  lacunes: { titre: 'Points faibles', desc: 'Les oiseaux que tu rates le plus' },
+// court : la ligne sous le titre, dans la boite de l'accueil.
+  nom: { titre: 'Chant vers nom', desc: `Un chant, ${PC_NOMS_MAX} noms proposés`, court: `Un chant, ${PC_NOMS_MAX} noms`, min: 2 },
+  chant: { titre: 'Nom vers chant', desc: `Un oiseau, ${PC_CHANTS_PROPOSES} chants proposés`, court: `Un oiseau, ${PC_CHANTS_PROPOSES} chants`, min: PC_CHANTS_PROPOSES },
+  ecrire: { titre: 'Nom à écrire', desc: 'Un chant, à toi d\'écrire qui c\'est', court: 'Un chant, écris le nom', min: 2 },
+  lacunes: { titre: 'Points faibles', desc: 'Les oiseaux que tu rates le plus', court: 'Les plus ratés' },
 };
 const PC_ENTR_ICO = {
   nom: PC_GENRE_ICO.nom,
@@ -19677,9 +19692,9 @@ const PC_ENTR_ICO = {
   lacunes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>',
 };
 // Les oiseaux qu'on peut choisir : ceux des parcours dont Mathis a trie les chants a l'oreille.
-// Ceux des parcours « Bientot » s'affichent grises tant que leurs chants ne sont pas tries.
+// Ceux des parcours « Bientot » etaient montres grises un par un ; a 48, une ligne les remplace
+// (Mathis le 2026-10-17).
 const PC_ENTR_ESPECES = PARCOURS_MESANGES.especes;
-const PC_ENTR_BIENTOT = PARCOURS_BIENTOT.flatMap(b => b.especes);
 function _pcEntrChoix(){
   try{
     const s = JSON.parse(localStorage.getItem('mb-entr-oiseaux') || 'null');
@@ -19864,18 +19879,17 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// Sous les parcours : une carte par mode (variante E1).
+// En haut de l'accueil : une boite par mode, celles de Ma liste (.ml-box), avec une ligne dessous.
 function _pcEntrSectionHTML(){
   const ferme = _pcLacunesFerme(_pcLacunes());
   const modes = Object.entries(PC_ENTR_MODES).map(([cle, M]) => {
     const raison = cle === 'lacunes' ? ferme : '';
-    const inner = `<span class="pc-mode-ico">${PC_ENTR_ICO[cle]}</span><span class="pc-mode-titre">${esc(M.titre)}</span><span class="pc-mode-desc">${esc(raison || M.desc)}</span>`;
-    return raison ? `<div class="pc-mode ferme">${inner}</div>` : `<button type="button" class="pc-mode" data-pc-entr="${cle}">${inner}</button>`;
+    const inner = `<span class="ml-ic" aria-hidden="true">${PC_ENTR_ICO[cle]}</span><span class="pc-boite-txt"><span>${esc(M.titre)}</span><span class="pc-boite-desc">${esc(raison || M.court)}</span></span>`;
+    return raison ? `<div class="ml-box pc-boite-ferme">${inner}</div>` : `<button type="button" class="ml-box" data-pc-entr="${cle}">${inner}</button>`;
   }).join('');
-  return `<section class="pc-entr" aria-labelledby="pcEntrTitre">
-    <h3 class="pc-titre" id="pcEntrTitre">Entraînement</h3>
-    <p class="pc-meta">${PC_ENTR_MANCHES} manches, avec les oiseaux que tu veux. Ne change rien à tes parcours.</p>
-    <div class="pc-modes">${modes}</div>
+  return `<section class="pc-bloc" aria-labelledby="pcEntrTitre">
+    <h3 class="bloc-titre" id="pcEntrTitre">Entraînement <span class="bloc-titre-note">· ${PC_ENTR_MANCHES} manches, les oiseaux que tu veux</span></h3>
+    <div class="ml-boxes pc-boites">${modes}</div>
   </section>`;
 }
 // La page d'un mode : cocher les oiseaux, ou, pour les points faibles, voir ce qu'on va revoir.
@@ -19898,22 +19912,18 @@ function _pcRenderEntr(box){
   } else {
     const choix = _pcEntrChoix(), n = choix.length, ok = n >= M.min;
     meta = `${M.desc} · ${PC_ENTR_MANCHES} manches`;
-    const jeton = (sci, on, bientot) => {
-      const nom = esc(_pcNomFr(sci));
-      const dedans = `<span class="pc-jeton-ph" data-pc-vign="${esc(sci)}"></span><span class="pc-jeton-nom">${nom}</span><span class="pc-jeton-coche">${PC_ICO.ok}</span>`;
-      return bientot ? `<span class="pc-jeton ferme" title="Bientôt">${dedans}</span>`
-        : `<button type="button" class="pc-jeton${on ? ' on' : ''}" data-pc-jeton="${esc(sci)}" aria-pressed="${on}">${dedans}</button>`;
-    };
+    const jeton = (sci, on) => `<button type="button" class="pc-jeton${on ? ' on' : ''}" data-pc-jeton="${esc(sci)}" aria-pressed="${on}">`
+      + `<span class="pc-jeton-ph" data-pc-vign="${esc(sci)}"></span><span class="pc-jeton-nom">${esc(_pcNomFr(sci))}</span><span class="pc-jeton-coche">${PC_ICO.ok}</span></button>`;
     // Avec moins de 5 oiseaux, « Chant vers nom » les propose tous : on dit combien.
     const propose = mode === 'nom' && ok && n < PC_NOMS_MAX ? `Un chant, ${n} noms proposés` : '';
     corps = `<div>
         <div class="pc-entr-bas pc-entr-oiseaux"><span class="pc-etiq">Oiseaux · ${n} sur ${PC_ENTR_ESPECES.length}</span>
           <button type="button" class="pc-lien" data-pc-tout>${n === PC_ENTR_ESPECES.length ? 'Tout décocher' : 'Tout cocher'}</button></div>
         <div class="pc-jetons">${PC_ENTR_ESPECES.map(sci => jeton(sci, choix.includes(sci))).join('')}</div>
+        ${PARCOURS_BIENTOT.length ? '<p class="pc-meta pc-entr-bientot">D\'autres oiseaux arriveront avec les prochains parcours.</p>' : ''}
       </div>
       <div class="pc-entr-bas"><span class="pc-meta">${ok ? propose : `Coche au moins ${M.min} oiseaux.`}</span>
-        <button type="button" class="btn" data-pc-entr-jouer="${mode}"${ok ? '' : ' disabled'}>C'est parti</button></div>
-      ${PC_ENTR_BIENTOT.length ? `<div><p class="pc-etiq pc-entr-bientot">Bientôt</p><div class="pc-jetons">${PC_ENTR_BIENTOT.map(sci => jeton(sci, false, true)).join('')}</div></div>` : ''}`;
+        <button type="button" class="btn" data-pc-entr-jouer="${mode}"${ok ? '' : ' disabled'}>C'est parti</button></div>`;
   }
   box.innerHTML = `<div class="pc-entr-page">
     <button type="button" class="pc-retour" data-pc-liste>${PC_ICO.retour}Quiz</button>
@@ -20027,6 +20037,11 @@ function _pcLibererSons(){
 function _parcoursRender(){
   const box = document.getElementById('pcParcours'); if(!box) return;
   if(_pc.partie) return;   // une partie en cours reste a l'ecran quand on revient sur l'onglet
+  // L'accueil se range comme les autres pages : colle en haut, sans agrandissement, avec sa
+  // phrase d'introduction. Le chemin et les parties restent centres dans l'ecran.
+  const accueil = _pc.vue !== 'chemin' && _pc.vue !== 'entr';
+  box.classList.toggle('pc-haut', accueil);
+  const intro = document.getElementById('pcIntro'); if(intro) intro.hidden = !accueil;
   if(_pc.vue === 'chemin') _pcRenderChemin(box);
   else if(_pc.vue === 'entr') _pcRenderEntr(box);
   else _pcRenderListe(box);
@@ -20035,23 +20050,37 @@ function _parcoursRender(){
 }
 function _pcAjuster(){ _pcHauteur(); _pcDessinerChemin(); }
 const _pcRonds = especes => `<span class="pc-ronds" aria-hidden="true">${especes.map(sci => `<span data-pc-vign="${esc(sci)}"></span>`).join('')}</span>`;
+// Accueil refait le 2026-10-17 (maquette C de notes-privees/maquettes/quiz-accueil-2/) : il
+// ressemble aux autres pages, colle en haut et pleine largeur, au lieu de cartes centrees au
+// milieu de l'ecran (« trop de blanc vide », Mathis). L'entrainement en boites comme celles de
+// Ma liste, les parcours en lignes comme son tableau des especes.
 function _pcRenderListe(box){
   const P = PARCOURS_MESANGES, n = P.etapes.length, best = _pcScores();
   const reussies = P.etapes.filter((_, i) => _pcReussie(i, best)).length;
   const etoiles = _pcTotalEtoiles(best), max = n * PC_ETOILES_MAX;
   const etapesTxt = `${reussies} ${reussies > 1 ? 'étapes' : 'étape'} sur ${n}`;
-  const carte = `<button type="button" class="pc-carte" data-pc-ouvrir aria-label="${esc(P.titre)} : ${etapesTxt}, ${etoiles} ${etoiles > 1 ? 'étoiles' : 'étoile'} sur ${max}">
+  const ouvert = `<button type="button" class="pc-ligne ouvert" data-pc-ouvrir aria-label="${esc(P.titre)} : ${etapesTxt}, ${etoiles} ${etoiles > 1 ? 'étoiles' : 'étoile'} sur ${max}">
       ${_pcRonds(P.especes)}
-      <span class="pc-carte-titre">${esc(P.titre)}</span>
-      <span class="pc-barre"><i style="width:${(reussies / n * 100).toFixed(1)}%"></i></span>
-      <span class="pc-carte-ligne"><span>${etapesTxt}</span><span class="pc-compte">${PC_ICO.etoile}<b>${etoiles}</b>/${max}</span></span>
+      <span class="pc-ligne-nom">${esc(P.titre)}</span>
+      <span class="pc-ligne-avance"><span class="pc-barre"><i style="width:${(reussies / n * 100).toFixed(1)}%"></i></span>${reussies} sur ${n}</span>
+      <span class="pc-compte">${PC_ICO.etoile}<b>${etoiles}</b>/${max}</span>
     </button>`;
-  const bientot = PARCOURS_BIENTOT.map(b => `<div class="pc-carte ferme">
+  const bientot = PARCOURS_BIENTOT.map(b => `<div class="pc-ligne ferme">
       ${_pcRonds(b.especes)}
-      <span class="pc-carte-titre">${esc(b.titre)}</span>
-      <span class="pc-etiq">Bientôt</span>
+      <span class="pc-ligne-nom">${esc(b.titre)}</span>
+      <span class="pc-ligne-avance">Bientôt</span>
+      <span class="pc-ligne-vide" aria-hidden="true">-</span>
     </div>`).join('');
-  box.innerHTML = `<div class="pc-accueil"><div class="pc-cartes">${carte}${bientot}</div>${_pcEntrSectionHTML()}</div>`;
+  box.innerHTML = `<div class="pc-accueil">
+    ${_pcEntrSectionHTML()}
+    <section class="pc-bloc" aria-labelledby="pcParcoursTitre">
+      <h3 class="bloc-titre" id="pcParcoursTitre">Parcours <span class="bloc-titre-note">· 1 ouvert, ${PARCOURS_BIENTOT.length} à venir</span></h3>
+      <div class="pc-tableau">
+        <div class="pc-ligne pc-tableau-th" aria-hidden="true"><span>Oiseaux</span><span>Parcours</span><span class="pc-ligne-avance">Avancée</span><span>Étoiles</span></div>
+        ${ouvert}${bientot}
+      </div>
+    </section>
+  </div>`;
 }
 function _pcRenderChemin(box){
   const P = PARCOURS_MESANGES, best = _pcScores();

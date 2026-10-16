@@ -1,3 +1,8 @@
+# EN LOCAL le 2026-10-17, PAS POUSSÉ : accueil du quiz refait en tableau (v799, app.js?v=373)
+- Maquette C choisie (notes-privees/maquettes/quiz-accueil-2/) : collé en haut et pleine largeur comme les autres pages, phrase d'intro, entraînement en boîtes de Ma liste, parcours en lignes comme son tableau. Le chemin et les parties restent centrés et agrandis.
+- 10 familles « Bientôt » ajoutées pour voir la place (fausses, assumé par Mathis). Dans l'entraînement, leurs oiseaux grisés sont remplacés par une ligne.
+- Vérifié sur la démo à 1280 clair et 375 sombre ; aller-retour accueil, chemin, page d'un mode.
+---
 # EN LOCAL le 2026-10-17, PAS POUSSÉ : entraînement du quiz, qg#56 (v798, app.js?v=372)
 - Sous les parcours, 4 cartes : Chant vers nom, Nom vers chant, Nom à écrire, Points faibles. Choix de Mathis sur la maquette notes-privees/maquettes/quiz-entrainement/ : E1, N2, noms C. Décisions dans docs/refonte-quiz.md.
 - Vérifié sur la démo : les 4 modes joués jusqu'au bout à 1280 clair, page de choix et nom à écrire à 375 sombre (cibles 44 px), parcours inchangé, 11 bancs CONFORME.
