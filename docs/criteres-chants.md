@@ -1,4 +1,4 @@
-# Critères pour reconnaître les chants - deuxième jet (2026-10-16)
+# Critères pour reconnaître les chants - troisième jet (2026-10-16)
 
 Idée qg#60 : une grille de critères communs, cochés ou non pour chaque oiseau, plus une ligne
 sur ce qui lui est propre. À faire groupe par groupe. Premier groupe : les 5 oiseaux du parcours
@@ -16,8 +16,11 @@ tous les parcours (il y en aura plusieurs).
   doit pouvoir accueillir demain le rouge-gorge, le pinson ou la fauvette sans changer de
   lignes.
 
-**Statut** : critères proposés, cases remplies d'après les sources ci-dessous. À valider à
-l'oreille par Mathis sur les 66 chants gardés.
+**Statut** (2026-10-16, troisième jet) : cases remplies d'après les sources, puis complétées par
+l'analyse des 66 chants gardés (hauteur mesurée sur les 66, rythme et forme jugés à l'œil sur
+21 strophes). Une case suivie de « (m) » vient de la mesure, de « (v) » d'un jugement à l'œil.
+Méthode, chiffres et ratés : notes-privees/analyse-sons/2026-10-16-criteres-mesanges/RAPPORT.md.
+Seuils fixés avant de lire les chiffres : SEUILS.md dans le même dossier.
 
 ## Les critères universels
 
@@ -30,22 +33,44 @@ complètent.
 | Forme | Strophes : un même air revient, coupé de silences | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Forme | Chant improvisé, qui change tout le temps | ✗ | ✗ | ✗ | ✗ | ✗ |
 | Forme | Imite d'autres oiseaux | ✗ | ✗ | ✗ | ✗ | ✗ |
-| Notes | Une seule note, répétée à l'identique | ✗ | ✗ | ✗ | ✓ | ✗ |
-| Notes | Un motif de 2 ou 3 notes, répété en boucle | ✓ | ✗ | ✓ | ✗ | ? |
+| Notes | Une seule note, répétée à l'identique | ✗ | ✗ | ✗ | ✓ (v 2/3) | ✗ ⚠ |
+| Notes | Un motif de 2 ou 3 notes, répété en boucle | ✓ (v 4/4) | ✗ | ✓ (v 2/3) | ✗ | ✗ (m) |
 | Notes | Des notes différentes qui s'enchaînent | ✗ | ✓ | ✗ | ✗ | ✗ |
-| Début et fin | Commence par quelques notes nettes, isolées | ✗ | ✓ | ✗ | ✗ | ? |
-| Début et fin | Finit par un trille (notes si rapides qu'elles roulent) | ✗ | ✓ | ✗ | ✗ | ✗ |
+| Début et fin | Commence par quelques notes nettes, isolées | ✗ | ✓ (v 4/4) | ✗ | ✗ | ✗ (v) |
+| Début et fin | Finit par un trille (notes si rapides qu'elles roulent) | ✗ | ✓ (v 3/4) | ✗ | ✗ | ✗ |
 | Début et fin | Finit par une fioriture, une note accentuée | ✗ | ✗ | ✗ | ✗ | ✗ |
-| Hauteur | Très aigu, fin, presque à la limite de l'audible | ? | ✓ | ? | ? | ? |
-| Hauteur | Descend vers le grave au fil de la strophe | ✗ | ✓ | ✗ | ✗ | ✗ |
-| Hauteur | Deux hauteurs qui alternent (haut-bas, haut-bas) | ✓ | ✗ | ? | ✗ | ? |
-| Rythme | Lent, notes bien séparées et appuyées | ✗ | ✗ | ✗ | ✗ | ✓ |
-| Rythme | Rapide, notes serrées | ? | ✓ | ? | ✓ | ✗ |
-| Rythme | Accélère au fil de la strophe | ✗ | ✓ | ✗ | ✗ | ✗ |
+| Hauteur | Très aigu, fin, presque à la limite de l'audible | ✗ (m) | ✓ ⚠ | ✗ (m) | ✗ (m) | ✗ (m) |
+| Hauteur | Descend vers le grave au fil de la strophe | ✗ | ✓ (m 12/15) | ✗ | ✗ | ✗ |
+| Hauteur | Deux hauteurs qui alternent (haut-bas, haut-bas) | ✓ (v 3/4) | ✗ | ✗ (v) | ✗ | ✗ (m) |
+| Rythme | Lent, notes bien séparées et appuyées | ✗ | ✗ | ✗ | ✗ | ✓ (v, 3 notes/s) |
+| Rythme | Rapide, notes serrées | ✗ (v, 5 notes/s) | ✓ (v 3/4) | ✗ (v 1/3) | ✓ ⚠ | ✗ |
+| Rythme | Accélère au fil de la strophe | ✗ | ✓ (v 4/4) | ✗ | ✗ | ✗ |
+| Rythme | Ralentit au fil de la strophe | ✗ (v) | ✗ (v) | ✗ (v) | ✗ (v) | ✗ (v) |
 | Timbre | Sifflé, clair, comme une flûte | ? | ? | ? | ? | ? |
 | Timbre | Sonore, qui porte loin | ? | ? | ✓ | ? | ? |
 | Timbre | Grinçant, métallique ou grésillant | ? | ? | ? | ? | ? |
 | (aucune) | Chante longtemps sans s'arrêter | ? | ? | ? | ? | ✓ |
+
+Seuils : « rapide » à partir de 8 notes par seconde, « lent » jusqu'à 4 ; « très aigu » quand la
+hauteur médiane de la strophe atteint 6 kHz ; « descend » quand le dernier tiers est au moins
+15 % plus grave que le premier.
+
+**⚠ Ce que la mesure contredit ou laisse ouvert** (cases laissées comme les sources les
+donnent, à trancher par Mathis) :
+- **Bleue, très aigu** : dépend de ce qu'on mesure. La hauteur médiane suit la partie grave du
+  trille : 6,3 kHz, 9 enregistrements sur 15 au-dessus de 6 kHz, soit « parfois ». Le plafond
+  suit le haut des notes : 7,6 kHz, 14 sur 15 au-dessus de 7 kHz, soit ✓. Les quatre autres
+  oiseaux sont ✗ des deux façons.
+- **Nonnette, rapide** : 9 notes par seconde dans une strophe, 4,4 dans une autre, la 3e
+  dépend de la façon de compter (ci-dessous). Plutôt « parfois ».
+- **Pouillot, une seule note** : ses notes gardent presque toutes la même hauteur (13 sur 14
+  dans une strophe), avec des écarts isolés et sans ordre. Plus proche d'« une seule note, avec
+  des variantes » que de deux notes « tchif tchaf » qui alternent. À l'oreille.
+- **Timbre** : la largeur de bande ne sépare aucun des cinq (258 à 344 Hz) : ces cases restent
+  à l'oreille. « Sonore, qui porte loin » ne se mesure pas sur un enregistrement (le volume
+  dépend de la distance au micro).
+- **« Sans s'arrêter »** : la strophe du pouillot dure 4,0 s en médiane, celles des mésanges
+  1,4 à 1,9 s. Le chiffre est là, le critère reste à définir.
 
 **Revu par Mathis le 2026-10-16** :
 - la famille Forme est validée ; « Chante longtemps sans s'arrêter » est jugé flou : gardé de
@@ -62,6 +87,17 @@ exactement les mêmes cases connues. Ce qui les sépare dans les sources est une
 noire est « beaucoup plus rapide et plus aiguë »), justement bannie. Pour trancher en absolu
 (« très aigu », « rapide »), il faut mesurer la hauteur et la vitesse sur les chants gardés.
 
+Mesuré le 2026-10-16 : en absolu, la noire n'est **ni très aiguë ni rapide** (4,7 kHz, 5 à
+7 notes par seconde le plus souvent, comme la charbonnière). Deux choses les séparent quand même :
+- **« Deux hauteurs qui alternent »** : ✓ pour la charbonnière (une note haute, une basse), ✗
+  pour la noire, dont les deux notes ont la même hauteur et diffèrent par la forme ;
+- **la forme des notes**, qui n'a pas encore de ligne. Les notes de la charbonnière sont tenues,
+  presque plates ; celles de la noire glissent d'un trait vers le haut ou vers le bas. Mesuré
+  sur les 66 : 79 Hz de glissade par 10 ms pour la charbonnière (32 à 183 selon
+  l'enregistrement), 237 pour la noire (108 à 432). Proposition : une ligne « Notes qui glissent
+  d'un trait » contre « Notes tenues, plates », dans Hauteur. Le seuil reste à fixer, sans le
+  choisir pour séparer ces deux-là : la bleue fait 166, la nonnette 319, le pouillot 328.
+
 ## Ce qui est propre à chacun
 
 - **Mésange charbonnière** : un « ti-tu » (ou « tsi-tsi-tu ») de 2 ou
@@ -76,17 +112,26 @@ noire est « beaucoup plus rapide et plus aiguë »), justement bannie. Pour tra
 
 ## Ce qu'il reste à trancher
 
-**Pour reprendre** (décidé par Mathis le 2026-10-16) : la suite commence par **moi qui écoute
-les chants**, c'est-à-dire qui analyse les 66 chants gardés (data/parcours-mesanges.json) pour
-mieux comprendre chaque oiseau, avant de remplir la grille. Méthode et pièges déjà connus :
-notes-privees/analyse-sons/ (lecture image par image du sonagramme, mesures sur xeno-canto).
-Prototype de l'écran : notes-privees/maquettes/criteres/.
+**Fait le 2026-10-16** : les 66 chants analysés, les « ? » de rythme, de forme et de hauteur
+remplis, « Ralentit » ajouté (personne ne ralentit). Prototype de l'écran :
+notes-privees/maquettes/criteres/.
 
-- Les « ? » de la grille, à l'écoute ou par la mesure.
-- Ajouter « Ralentit » dans Rythme.
-- « Chante longtemps sans s'arrêter » : le préciser ou le retirer.
-- Pouillot : ses deux notes alternent-elles comme un motif, ou sont-elles jetées dans le
-  désordre ? Ses petites notes sèches « trrt » au début comptent-elles comme « notes isolées » ?
+**Réponses pour le pouillot** :
+- ses notes **n'alternent pas** : mesuré sur 4 strophes et 48 notes, la hauteur reste la même
+  presque partout, les écarts tombent au hasard (jamais plus d'alternance que des notes mélangées) ;
+- les « trrt » ne sont **pas des notes nettes isolées** : ce sont deux petites crécelles de clics
+  serrés, vues dans une strophe sur quatre. Ils iraient plutôt avec les cris (qg#65).
+
+**Pour Mathis** :
+- **« Très aigu »** : hauteur médiane ou plafond ? Seule la bleue en dépend (« parfois » ou ✓).
+- **Une note à crochet** (nonnette, pouillot) : une note ou deux ? La machine en voit deux, l'œil
+  une ; c'est ce qui l'empêche de compter les notes seule, et ce qui laisse la nonnette entre
+  « rapide » et « parfois ».
+- **Ajouter « Notes qui glissent d'un trait »** ? C'est ce qui sépare le mieux la charbonnière
+  de la noire (voir plus haut).
+- **Le timbre** : sifflé, sonore, grinçant restent à l'oreille, aucune mesure ne les sépare.
+- « Chante longtemps sans s'arrêter » : le préciser ou le retirer (pouillot 4 s par strophe,
+  mésanges moins de 2 s).
 - Faut-il parler des cris (qg#65) dans la même grille, ou une grille à part ?
 - Les mots : « trille », « strophe » sont à expliquer à l'écran, ou à remplacer.
 
