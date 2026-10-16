@@ -37,7 +37,9 @@ défi hebdo et le classement sont retirés de la page pour l'instant ; leur code
 | 7 | un chant, 5 noms | les 5 | 15 |
 
 Il faut 8 sur 10 (12 sur 15 à la dernière) pour ouvrir l'étape suivante ; une étape se rejoue
-à volonté. Maquettes : `notes-privees/maquettes/parcours-quiz/index.html` (A chemin, B cases,
+à volonté. Les oiseaux tombent au hasard, avec un minimum de passages par espèce : 3 chacun à
+2 espèces, 2 à 3 espèces, 1 à 4 et 5 (Mathis le 2026-10-16 ; avant, à 2 espèces, ils alternaient
+un coup sur deux). Maquettes : `notes-privees/maquettes/parcours-quiz/index.html` (A chemin, B cases,
 C étape en grand).
 
 ## Les chants : choisis à l'oreille (en cours, 2026-10-15)

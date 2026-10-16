@@ -1549,7 +1549,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .pc-noeud.ici .pc-rond { width:82px; height:82px; background:var(--surface); color:var(--accent-2); box-shadow:inset 0 0 0 4px var(--accent-2), 0 0 0 8px color-mix(in srgb, var(--accent-2) 16%, transparent); }
   .pc-noeud.ici .pc-rond > svg { width:34px; height:34px; }
   .pc-noeud.ici .pc-n { box-shadow:0 0 0 2px var(--accent-2); color:var(--accent-2); }
-  .pc-noeud.ok.sel .pc-rond { box-shadow:0 4px 0 color-mix(in srgb, var(--accent) 55%, #000), 0 0 0 5px var(--surface), 0 0 0 8px color-mix(in srgb, var(--accent) 40%, transparent); }
+  /* L'anneau descend de 2 px : il se centre sur le rond ET son relief de 4 px. Centre sur le rond
+     seul, il paraissait remonte (remarque de Mathis le 2026-10-16). */
+  .pc-noeud.ok.sel .pc-rond { box-shadow:0 4px 0 color-mix(in srgb, var(--accent) 55%, #000), 0 2px 0 6px var(--surface), 0 2px 0 9px color-mix(in srgb, var(--accent) 40%, transparent); }
   .pc-noeud.ferme.sel .pc-rond { box-shadow:0 0 0 5px var(--surface), 0 0 0 8px color-mix(in srgb, var(--ink-3) 35%, transparent); }
   .pc-cad { position:absolute; right:-3px; bottom:-3px; width:24px; height:24px; border-radius:50%; display:grid; place-items:center; background:var(--surface); color:var(--ink-3); box-shadow:0 0 0 1px var(--line-2); }
   .pc-cad .pc-ico { width:13px; height:13px; }

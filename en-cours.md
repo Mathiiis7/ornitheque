@@ -4,7 +4,8 @@
 - Tranché par Mathis : « très aigu » = haut des notes ; ligne « Notes qui glissent d'un trait » ajoutée (sépare charbonnière et noire).
 - EN ATTENTE DE MATHIS : valider la grille à l'oreille ; note à crochet = une ou deux ; timbre ; « sans s'arrêter ». La maquette notes-privees/maquettes/criteres/ ne suit plus la grille.
 ---
-# EN LOCAL le 2026-10-16, PAS POUSSÉ : nouvel accueil du quiz, L1 + C3 (v793, app.js?v=367)
+# EN LOCAL le 2026-10-16, PAS POUSSÉ : nouvel accueil du quiz, L1 + C3 (v793, puis v794 / app.js?v=368)
+- v794 : anneau de l'étape choisie recentré sur le rond + son relief ; oiseaux tirés au hasard avec minimums (3/2/1/1, docs/refonte-quiz.md), vérifié sur 10 000 tirages.
 - Onglet Quiz = les parcours en cartes (mésanges ouvert, « Merle et grives » et « Fauvettes » grisés « Bientôt ») ; toucher la carte ouvre le chemin.
 - Chemin : ondule en largeur à partir de 700 px de large (pixels du parcours), vertical en dessous. Icône par genre, étoiles sous les étapes faites, l'étape en cours cerclée d'orange, bulle sous l'étape touchée.
 - Tranché seul : une étape fermée montre aussi sa bulle (« Réussis l'étape N pour l'ouvrir », sans bouton) ; la hauteur du chemin est réservée pour la plus haute bulle, sinon tout le parcours sautait à chaque étape touchée (il est centré dans le panneau).

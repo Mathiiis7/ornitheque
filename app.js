@@ -19872,15 +19872,15 @@ function _pcChoisirEnreg(sci, partie){
   partie.utilises.add(r.id); recs.add(r.rec); partie.enregistreurs.set(sci, recs);
   return r;
 }
-// Cibles reparties egalement entre les especes, jamais deux fois la meme d'affilee.
+// Cibles tirees au hasard, avec un minimum de passages par espece selon leur nombre (Mathis le
+// 2026-10-16). Avant, elles tournaient par tours complets sans repetition d'affilee : a deux
+// especes, cela donnait une alternance stricte, et l'on devinait sans ecouter.
+const PC_MIN_PAR_ESPECE = { 2: 3, 3: 2, 4: 1, 5: 1 };
 function _pcCibles(especes, q){
-  const out = [];
-  while(out.length < q){
-    let tour = _pcMelanger(especes);
-    if(out.length && tour[0] === out[out.length - 1] && tour.length > 1) tour = [...tour.slice(1), tour[0]];
-    out.push(...tour);
-  }
-  return out.slice(0, q);
+  const min = Math.min(PC_MIN_PAR_ESPECE[especes.length] ?? 1, Math.floor(q / especes.length));
+  const out = especes.flatMap(sci => Array(min).fill(sci));
+  while(out.length < q) out.push(especes[Math.floor(Math.random() * especes.length)]);
+  return _pcMelanger(out);
 }
 async function _pcLancer(i){
   const box = document.getElementById('pcParcours'); if(!box) return;
