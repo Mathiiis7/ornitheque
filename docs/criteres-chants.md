@@ -35,9 +35,9 @@ complètent.
 | Forme | Strophes : un même air revient, coupé de silences | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Forme | Chant improvisé, qui change tout le temps | ✗ | ✗ | ✗ | ✗ | ✗ |
 | Forme | Imite d'autres oiseaux | ✗ | ✗ | ✗ | ✗ | ✗ |
-| Notes | Une seule note : la même revient au moins 3 fois de suite | ✗ (v 0/13) | ✓ (v 12/15) | parfois (v 6/13) | ✓ (v 9/10) | ✓ (v 14/15) |
-| Notes | Motif de 2-3 notes : un petit groupe revient au moins 2 fois | ✓ (v 10/13) | parfois (v 3/15) | parfois (v 7/13) | ✗ (v 1/10) | ✗ (v 0/15) |
-| Notes | Notes variées : au moins 5 de suite sans que rien ne revienne | parfois (v 3/13) | ✗ (v 0/15) | ✗ (v 0/13) | ✗ (v 1/10) | ✗ (v 1/15) |
+| Notes | Une seule note : la même revient au moins 3 fois de suite | ✗ (v 0/13) | parfois (Mathis ; v 12/15) | parfois (v 6/13) | ✓ (v 9/10) | ✓ (v 14/15) |
+| Notes | Motif de 2-3 notes : un petit groupe revient au moins 2 fois | ✓ (v 10/13) | parfois (Mathis ; v 3/15) | parfois (v 7/13) | ✗ (v 1/10) | ✗ (v 0/15) |
+| Notes | Notes variées : au moins 5 de suite sans que rien ne revienne | parfois (Mathis, à l'oreille ; v 3/13) | parfois (Mathis ; v 0/15) | ✗ (v 0/13) | ✗ (v 1/10) | ✗ (v 1/15) |
 | Hauteur | Très aigu, fin, presque à la limite de l'audible | ✗ (m) | ✓ (m 14/15) | ✗ (m) | ✗ (m) | ✗ (m) |
 | Hauteur | Descend vers le grave au fil de la strophe | ✗ | ✓ (m 12/15) | ✗ | ✗ | ✗ |
 | Hauteur | Deux hauteurs qui alternent (haut-bas, haut-bas) | ✓ (v 3/4) | ✗ | ✗ (v) | ✗ | ✗ (m) |
