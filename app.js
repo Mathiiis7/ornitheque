@@ -20164,7 +20164,7 @@ function _pcDessinerChemin(focus){
     const s = etat(i), g = _pcGenre(x), nb = _pcEtoiles(x, best[i]);
     const label = `Étape ${i + 1} : ${x.titre}, ${etatTxt[s]}${s === 'ok' ? `, ${nb} ${nb > 1 ? 'étoiles' : 'étoile'} sur ${PC_ETOILES_MAX}` : ''}`;
     return `<button type="button" class="pc-noeud ${s}${i === sel ? ' sel' : ''}" style="left:${pts[i][0]}px;top:${pts[i][1]}px" data-pc-etape="${i}" aria-expanded="${i === sel}" aria-label="${esc(label)}">`
-      + `<span class="pc-rond">${PC_GENRE_ICO[g]}${g === 'nom' ? `<span class="pc-n">${x.n}</span>` : ''}${s === 'ferme' ? `<span class="pc-cad">${PC_ICO.cadenas}</span>` : ''}</span>`
+      + `<span class="pc-rond">${PC_GENRE_ICO[g]}${s === 'ferme' ? `<span class="pc-cad">${PC_ICO.cadenas}</span>` : ''}</span>`
       + (s === 'ok' ? _pcEtoilesHTML(nb) : '') + '</button>';
   }).join('');
   bulle.insertAdjacentHTML('beforebegin', svg + noeuds);
