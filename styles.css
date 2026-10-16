@@ -1295,6 +1295,13 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .xa-more .xa-block:last-child { border-bottom:none; padding-bottom:0; }
   /* ============ QUIZ (nouveau design) ============ */
   .qz-panel { padding:20px 22px 22px; margin-top:22px; }
+  /* Le panneau prend la hauteur de l'ecran (min-height pose par _pcHauteur dans app.js) et le
+     parcours se centre en hauteur dedans (2026-10-16). */
+  #viewQuiz .qz-panel { display:flex; flex-direction:column; box-sizing:border-box; }
+  #viewQuiz #pcParcours { flex:1; display:flex; flex-direction:column; justify-content:center; }
+  /* Dans une colonne flexible, margin:auto empeche l'etirement : sans ceci, .pc-jeu se
+     reduisait a la largeur de son contenu (238 px vus a 1680 px de large). */
+  #viewQuiz #pcParcours > * { width:100%; }
   .qz-head { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
   .qz-mode-switch { display:inline-flex; background:var(--surface-2); border-radius:22px; padding:3px; gap:2px; }
   .qz-mode { background:transparent; border:none; padding:7px 16px; font:600 14px/1 var(--sans); color:var(--ink-3); cursor:pointer; border-radius:20px; transition:all .18s; }

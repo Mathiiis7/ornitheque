@@ -4,6 +4,9 @@
 - Tranché par Mathis : « très aigu » = haut des notes ; ligne « Notes qui glissent d'un trait » ajoutée (sépare charbonnière et noire).
 - EN ATTENTE DE MATHIS : valider la grille à l'oreille ; note à crochet = une ou deux ; timbre ; « sans s'arrêter ». La maquette notes-privees/maquettes/criteres/ ne suit plus la grille.
 ---
+# EN LOCAL le 2026-10-16, PAS POUSSÉ : panneau du Quiz plein écran (v791, app.js?v=365)
+- Tout l'onglet Quiz : le panneau descend jusqu'en bas de l'écran (_pcHauteur, recalculé au redimensionnement), le parcours se centre en hauteur dedans, le pied de page n'apparaît qu'en défilant. Mesuré à 1680x1050, 1280x720 et au téléphone.
+---
 # EN LOCAL le 2026-10-16, PAS POUSSÉ : réponses revenues en barres (v789, app.js?v=363)
 - Grandes cartes photo jugées « bof » : barres pleine largeur (680 px max), photo 52 px à gauche du nom, coche/croix à droite.
 - Bouton pause : variante D choisie (planche notes-privees/maquettes/quiz-visuel/pause.html), en place en v790 (app.js?v=364) : rond clair, anneau orange qui avance avec le chant, triangle centré sur son centre de gravité (écart mesuré 0,15 px). L'étape 5 garde ses petits boutons orange.

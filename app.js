@@ -17093,7 +17093,21 @@ function _quizSetMode(m){
 // _quizAncienInit() et retirer hidden de #quizAncien.
 function renderQuizInit(){
   _parcoursRender();
+  _pcHauteur();
 }
+// Le panneau du Quiz descend jusqu'en bas de l'ecran, et le parcours se centre dedans : le
+// pied de page n'apparait qu'en defilant (demande de Mathis le 2026-10-16, pour tout l'onglet).
+// Calcule en JS : le haut du panneau depend de l'entete (pas le meme au telephone), et
+// body porte zoom:0.85, donc la position mesuree (pixels d'ecran) se convertit en pixels CSS.
+const PC_MARGE_BAS = 28;   // = padding bas de .wrap, en pixels CSS
+function _pcHauteur(){
+  const panel = document.querySelector('#viewQuiz .qz-panel');
+  if(!panel || !panel.offsetParent) return;   // onglet masque : rien a mesurer
+  const zoom = parseFloat(getComputedStyle(document.body).zoom) || 1;
+  const haut = panel.getBoundingClientRect().top + window.scrollY;
+  panel.style.minHeight = Math.max(0, Math.floor((window.innerHeight - haut) / zoom - PC_MARGE_BAS)) + 'px';
+}
+window.addEventListener('resize', _pcHauteur);
 function _quizAncienInit(){
   _quizSetMode(_quizMode);
   // Restore le chip 'Sens' selon la valeur persistee (default classic)
