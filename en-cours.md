@@ -2,6 +2,12 @@
 - Trois grandes étoiles (44 px) au-dessus du score : celles de CETTE partie, le chemin garde la meilleure. Les pleines arrivent l'une après l'autre.
 - Vérifié sur la démo : 10/10 (3) à 1280 clair, 9/10 (2) à 375 sombre, 5/10 (0, trois vides) ; 11 bancs CONFORME.
 ---
+# 2026-10-16, fin de journée : critères des chants, OÙ ON EN EST (qg#60)
+- Forme VALIDÉE pour de bon (cases figées dans la maquette notes-privees/maquettes/criteres/index.html, 5 chants par oiseau).
+- Notes refaite (cases indépendantes, ✓ / parfois / ✗, définitions dans docs/criteres-chants.md) ; bleue tout en « parfois », charbonnière « notes variées » parfois, nom « Notes variées » gardé. Famille « Début et fin » retirée.
+- Mathis a du mal à tout classer (« j'ai vraiment du mal ») : les oiseaux varient trop pour des cases nettes. Ne pas enchaîner les familles suivantes sans lui demander comment il veut avancer.
+- Page d'écoute : notes-privees/maquettes/criteres/ecoute-charbonniere.html (un cri possible dans 862138, pas vérifié).
+---
 # 2026-10-16 : critères des chants, les 66 chants analysés (qg#60, docs seulement)
 - Grille de docs/criteres-chants.md complétée : hauteur mesurée sur les 66, rythme et forme à l'œil sur 21 strophes, « Ralentit » ajouté. Rapport : notes-privees/analyse-sons/2026-10-16-criteres-mesanges/RAPPORT.md.
 - Le comptage automatique des notes a échoué (notes à crochet comptées double) : ne pas réutiliser strophes.py/juge.py pour le rythme.
