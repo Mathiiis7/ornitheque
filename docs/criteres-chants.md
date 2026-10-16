@@ -41,9 +41,10 @@ complètent.
 | Début et fin | Commence par quelques notes nettes, isolées | ✗ | ✓ (v 4/4) | ✗ | ✗ | ✗ (v) |
 | Début et fin | Finit par un trille (notes si rapides qu'elles roulent) | ✗ | ✓ (v 3/4) | ✗ | ✗ | ✗ |
 | Début et fin | Finit par une fioriture, une note accentuée | ✗ | ✗ | ✗ | ✗ | ✗ |
-| Hauteur | Très aigu, fin, presque à la limite de l'audible | ✗ (m) | ✓ ⚠ | ✗ (m) | ✗ (m) | ✗ (m) |
+| Hauteur | Très aigu, fin, presque à la limite de l'audible | ✗ (m) | ✓ (m 14/15) | ✗ (m) | ✗ (m) | ✗ (m) |
 | Hauteur | Descend vers le grave au fil de la strophe | ✗ | ✓ (m 12/15) | ✗ | ✗ | ✗ |
 | Hauteur | Deux hauteurs qui alternent (haut-bas, haut-bas) | ✓ (v 3/4) | ✗ | ✗ (v) | ✗ | ✗ (m) |
+| Hauteur | Notes qui glissent d'un trait, vers le haut ou le bas | ✗ (m 2/13) | parfois (m 8/15) | ✓ (m 11/13) | ✓ (m 10/10) | ✓ (m 15/15) |
 | Rythme | Lent, notes bien séparées et appuyées | ✗ | ✗ | ✗ | ✗ | ✓ (v, 3 notes/s) |
 | Rythme | Rapide, notes serrées | ✗ (v, 5 notes/s) | ✓ (v 3/4) | ✗ (v 1/3) | ✓ ⚠ | ✗ |
 | Rythme | Accélère au fil de la strophe | ✗ | ✓ (v 4/4) | ✗ | ✗ | ✗ |
@@ -54,12 +55,13 @@ complètent.
 | (aucune) | Chante longtemps sans s'arrêter | ? | ? | ? | ? | ✓ |
 
 Seuils : « rapide » à partir de 8 notes par seconde, « lent » jusqu'à 4 ; « très aigu » quand la
-hauteur médiane de la strophe atteint 6 kHz ; « descend » quand le dernier tiers est au moins
+haut des notes atteint 7 kHz (choix de Mathis le 2026-10-16 : le haut des notes, pas le milieu du chant) ;
+« glissent » quand les notes bougent de plus de 1,5 kHz en un dixième de seconde ; « descend » quand le dernier tiers est au moins
 15 % plus grave que le premier.
 
 **⚠ Ce que la mesure contredit ou laisse ouvert** (cases laissées comme les sources les
 donnent, à trancher par Mathis) :
-- **Bleue, très aigu** : dépend de ce qu'on mesure. La hauteur médiane suit la partie grave du
+- **Bleue, très aigu** (tranché par Mathis : le haut des notes, donc ✓) : dépendait de ce qu'on mesure. La hauteur médiane suit la partie grave du
   trille : 6,3 kHz, 9 enregistrements sur 15 au-dessus de 6 kHz, soit « parfois ». Le plafond
   suit le haut des notes : 7,6 kHz, 14 sur 15 au-dessus de 7 kHz, soit ✓ (ce seuil sur le plafond
   n'avait pas été fixé d'avance). Les quatre autres
@@ -98,9 +100,9 @@ la 3e à 12). C'est le contraire de ce que disent toutes les sources : à vérif
 - **la forme des notes**, qui n'a pas encore de ligne. Les notes de la charbonnière sont tenues,
   presque plates ; celles de la noire glissent d'un trait vers le haut ou vers le bas. Mesuré
   sur les 66 (chiffre propre à notre sonagramme : une note plate ne fait pas 0) : 79 Hz de glissade par 10 ms pour la charbonnière (32 à 183 selon
-  l'enregistrement), 237 pour la noire (108 à 432). Proposition : une ligne « Notes qui glissent
-  d'un trait » contre « Notes tenues, plates », dans Hauteur. Le seuil reste à fixer, sans le
-  choisir pour séparer ces deux-là : la bleue fait 166, la nonnette 319, le pouillot 328.
+  l'enregistrement), 237 pour la noire (108 à 432). Ligne « Notes qui glissent d'un trait » ajoutée dans Hauteur
+  (accord de Mathis le 2026-10-16), seuil rond fixé sur ce qu'on entend : 150 Hz par 10 ms,
+  soit 1,5 kHz en un dixième de seconde. La bleue fait 166, la nonnette 319, le pouillot 328.
 
 ## Ce qui est propre à chacun
 
@@ -127,12 +129,9 @@ notes-privees/maquettes/criteres/.
   serrés, vues dans une strophe sur quatre. Ils iraient plutôt avec les cris (qg#65).
 
 **Pour Mathis** :
-- **« Très aigu »** : hauteur médiane ou plafond ? Seule la bleue en dépend (« parfois » ou ✓).
 - **Une note à crochet** (nonnette, pouillot) : une note ou deux ? La machine en voit deux, l'œil
   une ; c'est ce qui l'empêche de compter les notes seule, et ce qui laisse la nonnette entre
   « rapide » et « parfois ».
-- **Ajouter « Notes qui glissent d'un trait »** ? C'est ce qui sépare le mieux la charbonnière
-  de la noire (voir plus haut).
 - **Le timbre** : sifflé, sonore, grinçant restent à l'oreille, aucune mesure ne les sépare.
 - « Chante longtemps sans s'arrêter » : le préciser ou le retirer (pouillot 4 s par strophe,
   mésanges moins de 2 s).
