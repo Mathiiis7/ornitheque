@@ -19591,7 +19591,9 @@ const PARCOURS_MESANGES = {
 };
 const PC_CHANTS_PROPOSES = 3;
 const PC_DUREE_MAX = 20;   // secondes lues par chant, comme l'ancien quiz
-const PC_PAUSE_SUITE_MS = 1000;   // pause entre la reponse et la question suivante : « tres legere », dit Mathis
+// Pause entre la reponse et la question suivante. 1 s (« tres legere ») passait trop vite pour
+// voir la bonne carte, dit Mathis le 2026-10-16 : 2 s.
+const PC_PAUSE_SUITE_MS = 2000;
 const _pc = { selection: null, partie: null };
 // Icones au trait (le ✓ et le 🔒 en caracteres changeaient de dessin selon l'appareil).
 const PC_ICO = {
@@ -19785,7 +19787,7 @@ function _pcQuestion(){
         <span class="pc-son-t" id="pcTemps"></span>
       </div>
       <h3 class="bloc-titre pc-demande">Quel oiseau chante ?</h3>
-      <div class="pc-cartes" id="pcChoix" style="--n:${q.choix.length}">
+      <div class="pc-cartes" id="pcChoix">
         ${q.choix.map((sci, k) => `<button type="button" class="pc-carte" data-pc-choix="${k}"><span class="pc-carte-photo" data-pc-vign="${esc(sci)}"></span><span class="pc-carte-nom">${esc(_pcNomFr(sci))}</span></button>`).join('')}
       </div>
       <audio id="pcAudio" preload="auto" src="${esc(rec?.file || '')}"></audio>`;
@@ -19810,7 +19812,8 @@ function _pcQuestion(){
           </div>`).join('')}
       </div>`;
   }
-  box.innerHTML = `<div class="pc-jeu">${tete}<div class="pc-question">${corps}</div><div id="pcVerdict"></div></div>`;
+  // --n : nombre de cartes ; toute la partie prend leur largeur (styles.css, .pc-jeu.cartes).
+  box.innerHTML = `<div class="pc-jeu${q.type === 'nom' ? ' cartes' : ''}" style="--n:${q.choix.length}">${tete}<div class="pc-question">${corps}</div><div id="pcVerdict"></div></div>`;
   if(q.type === 'nom'){
     const audio = document.getElementById('pcAudio'), btn = document.getElementById('pcPlay'), fill = document.getElementById('pcProgression');
     const temps = document.getElementById('pcTemps');
@@ -19891,12 +19894,12 @@ function _pcRepondre(k){
     sono = q.recs[bonIdx]?.sono;
   }
   const v = document.getElementById('pcVerdict');
-  // Ligne de verdict sobre ; le trait qui se vide montre la pause avant la question suivante.
+  // Ligne de verdict sobre. Le trait qui se vidait pendant la pause a ete retire a la demande
+  // de Mathis (2026-10-16).
   if(v) v.innerHTML = `<div class="pc-verdict ${juste ? 'correct' : 'wrong'}">
       <div class="pc-verdict-ligne">
         <span class="pc-verdict-ico">${juste ? PC_ICO.ok : PC_ICO.ko}</span>
         <span>${juste ? 'Bien vu : ' : 'C\'était : '}<span class="sp-link" data-sci="${esc(q.cible)}">${esc(_pcNomFr(q.cible))}</span></span>
-        <span class="pc-suite" aria-hidden="true"><i style="animation-duration:${PC_PAUSE_SUITE_MS}ms"></i></span>
       </div>
       ${sono ? `<img class="pc-verdict-sono" src="${esc(sono)}" alt="Sonagramme du chant">` : ''}
     </div>`;

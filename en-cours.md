@@ -1,3 +1,7 @@
+# EN LOCAL le 2026-10-16, PAS POUSSÉ : cartes plus grandes, pause de 2 s, plus de trait (v788, app.js?v=362)
+- La partie prend la largeur des cartes (jusqu'à 290 px chacune), photos carrées : 5 cartes de 230 px d'écran à 1280 (141 avant). Téléphone : photos en 4/3, les 5 tiennent dans 812 px.
+- Pause après la réponse : 2 s (1 s passait trop vite). Le trait qui se vidait pendant la pause est retiré.
+---
 # EN LOCAL le 2026-10-16, PAS POUSSÉ : visuel du quiz refait, « Sentier » + grandes cartes photo (v787, app.js?v=361)
 - 3 directions maquettées (notes-privees/maquettes/quiz-visuel/) ; Mathis a choisi A « Sentier », avec les réponses en grandes cartes photo de B.
 - Page des étapes : oiseaux de l'étape en photos rondes (la nouvelle entourée d'accent, mot « nouvelle » toujours caché), liste numérotée, icônes au trait au lieu de ✓ et 🔒.
