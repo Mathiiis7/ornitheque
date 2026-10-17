@@ -19704,23 +19704,18 @@ function _pcCerclesHtml(sci){
   return `<span class="pc-cercles">${un('pc-c-strophe', PC_CERCLES_DESSINS.strophe[c.strophe], c.strophe_txt)}${un('pc-c-motif', PC_CERCLES_DESSINS.motif[c.motif], c.motif_txt)}${
     c.ono ? un('pc-c-ono', PC_CERCLES_DESSINS.ono, c.ono) : '<span class="pc-cercle vide" aria-hidden="true"></span>'}</span>`;
 }
-// Parcours a venir, montres grises « Bientot » dans la liste : les deux groupes que
-// docs/refonte-quiz.md garde pour la suite, puis dix familles posees pour voir la place que prend
-// la liste (Mathis le 2026-10-17 : « meme si elles sont fausses »). Ni leurs oiseaux ni leur ordre
-// ne sont decides.
+// Parcours a venir, montres grises « Bientot » dans la liste, SANS NOM : les groupes 3 a 10 de
+// docs/groupes-chants.md, avec leurs oiseaux (Mathis le 2026-10-17). Ni leur nom ni leur ordre ne
+// sont decides ; les douze familles posees avant pour voir la place sont retirees.
 const PARCOURS_BIENTOT = [
-  { titre: 'Merle et grives', especes: ['turdus merula', 'turdus philomelos', 'turdus viscivorus', 'erithacus rubecula'] },
-  { titre: 'Fauvettes', especes: ['sylvia atricapilla', 'sylvia borin', 'curruca communis', 'hippolais polyglotta'] },
-  { titre: 'Pinsons et chardonnerets', especes: ['fringilla coelebs', 'chloris chloris', 'carduelis carduelis', 'serinus serinus'] },
-  { titre: 'Pics', especes: ['dendrocopos major', 'picus viridis', 'dryocopus martius', 'dryobates minor'] },
-  { titre: 'Chouettes et hiboux', especes: ['strix aluco', 'asio otus', 'tyto alba', 'athene noctua'] },
-  { titre: 'Bruants', especes: ['emberiza citrinella', 'emberiza cirlus', 'emberiza schoeniclus', 'emberiza calandra'] },
-  { titre: 'Alouettes et pipits', especes: ['alauda arvensis', 'lullula arborea', 'anthus trivialis', 'anthus pratensis'] },
-  { titre: 'Roitelets et troglodyte', especes: ['troglodytes troglodytes', 'regulus regulus', 'regulus ignicapilla', 'certhia brachydactyla'] },
-  { titre: 'Corvidés', especes: ['corvus corone', 'garrulus glandarius', 'pica pica', 'coloeus monedula'] },
-  { titre: 'Hirondelles et martinets', especes: ['hirundo rustica', 'delichon urbicum', 'apus apus', 'riparia riparia'] },
-  { titre: 'Rousserolles', especes: ['acrocephalus scirpaceus', 'acrocephalus schoenobaenus', 'acrocephalus arundinaceus', 'locustella naevia'] },
-  { titre: 'Limicoles', especes: ['numenius arquata', 'tringa totanus', 'vanellus vanellus', 'haematopus ostralegus'] },
+  { especes: ['erithacus rubecula', 'troglodytes troglodytes', 'prunella modularis', 'carduelis carduelis'] },
+  { especes: ['carduelis carduelis', 'chloris chloris', 'linaria cannabina', 'serinus serinus', 'spinus spinus'] },
+  { especes: ['sylvia atricapilla', 'curruca communis', 'curruca melanocephala', 'hippolais polyglotta', 'sylvia borin'] },
+  { especes: ['turdus merula', 'turdus philomelos', 'turdus viscivorus', 'luscinia megarhynchos', 'oriolus oriolus'] },
+  { especes: ['cettia cetti', 'cisticola juncidis', 'emberiza schoeniclus', 'acrocephalus scirpaceus', 'acrocephalus schoenobaenus', 'acrocephalus arundinaceus'] },
+  { especes: ['alauda arvensis', 'anthus pratensis', 'saxicola rubicola', 'lullula arborea', 'emberiza calandra', 'anthus trivialis'] },
+  { especes: ['emberiza cirlus', 'emberiza citrinella', 'phylloscopus bonelli', 'curruca curruca'] },
+  { especes: ['certhia brachydactyla', 'aegithalos caudatus', 'regulus ignicapilla', 'regulus regulus', 'lophophanes cristatus'] },
 ];
 const PC_CHANTS_PROPOSES = 3;
 const PC_DUREE_MAX = 20;   // secondes lues par chant, comme l'ancien quiz
@@ -20167,7 +20162,7 @@ function _pcRenderListe(box){
   }).join('');
   const bientot = PARCOURS_BIENTOT.map(b => `<div class="pc-ligne ferme">
       ${_pcRonds(b.especes)}
-      <span class="pc-ligne-nom">${esc(b.titre)}</span>
+      <span class="pc-ligne-nom"></span>
       <span class="pc-ligne-avance">Bientôt</span>
       <span class="pc-ligne-vide" aria-hidden="true">-</span>
     </div>`).join('');

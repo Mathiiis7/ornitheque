@@ -79,6 +79,11 @@ jouent leurs 15 candidats. Quand Mathis colle le reste : le recopier dans
 `PARCOURS_PHRASES` (le cache des données survit aux mises en ligne). Ces oiseaux n'entrent dans
 l'entraînement qu'une fois écoutés.
 
+Parcours à venir (Mathis, même jour) : seuls ces deux parcours sont ouverts. Les douze familles
+« Bientôt » inventées sont remplacées par les groupes 3 à 10 de `docs/groupes-chants.md` : huit
+lignes grisées, avec les photos de leurs oiseaux, sans nom tant que noms et ordre ne sont pas
+décidés (`PARCOURS_BIENTOT`).
+
 Indices : pinson et fitis seulement (variantes A, choisies le 2026-10-17), deux dessins de motif
 nouveaux, « Accélère puis fioriture » et « Sifflé qui descend », premiers jets. Les quatre autres
 gardent trois places vides.
