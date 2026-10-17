@@ -1614,6 +1614,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .pc-ico-pause { width:22px; height:22px; display:none; }
   .pc-lecture.playing .pc-ico-lecture { display:none; }
   .pc-lecture.playing .pc-ico-pause { display:block; }
+  /* Version des trois chants proposes (« Nom vers chant », etape 5), depuis le 2026-10-17 */
+  .pc-lecture-petit { width:48px; height:48px; }
+  .pc-lecture-petit .pc-ico-lecture { width:21px; height:21px; }
+  .pc-lecture-petit .pc-ico-pause { width:18px; height:18px; }
   .pc-son-barre { flex:1; height:6px; border-radius:3px; background:var(--surface-3); overflow:hidden; }
   /* La barre de lecture est mise a jour a chaque image : une transition la ferait trainer. */
   .pc-son-plein { height:100%; width:0; background:var(--accent-2); }
@@ -1650,22 +1654,33 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .pc-reponses.sans-cercles .pc-cercles { display:none; }
   .pc-demande-ligne { display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; }
   /* Identifiant du chant (numero xeno-canto et enregistreur), pour pouvoir signaler un son */
-  .pc-id { margin:6px 2px 0; font-size:14px; color:var(--ink-3); }
-  .pc-chant-id { display:block; font-size:14px; font-weight:400; color:var(--ink-3); }
+  /* Plus discret que le reste, mais lisible (Mathis le 2026-10-17) : --ink-3 mele a 65 % au fond */
+  .pc { --pc-discret:color-mix(in srgb, var(--ink-3) 65%, var(--surface)); }
+  .pc-id { margin:6px 2px 0; font-size:14px; color:var(--pc-discret); }
+  .pc-chant-id { display:block; font-size:14px; font-weight:400; color:var(--pc-discret); }
   /* Reecouter les questions precedentes : un repli sous la question */
   .pc-hist { margin-top:18px; border-top:1px solid var(--line); padding-top:10px; text-align:left; }
   .pc-hist summary { cursor:pointer; font-size:14px; font-weight:600; color:var(--accent-ink); padding:4px 0; }
   .pc-hist ul { list-style:none; margin:8px 0 0; padding:0; display:flex; flex-direction:column; gap:4px; }
   .pc-hist-l { display:flex; align-items:center; gap:10px; padding:4px 0; }
-  .pc-hist-jouer { flex:none; width:34px; height:34px; border-radius:50%; border:1.5px solid var(--line-2); background:var(--surface); color:var(--accent-2); display:grid; place-items:center; cursor:pointer; padding:0; }
-  .pc-hist-jouer.playing { background:var(--accent-2); border-color:var(--accent-2); color:#fff; }
+  .pc-lecture-mini { width:38px; height:38px; }
+  .pc-lecture-mini .pc-ico-lecture { width:17px; height:17px; }
+  .pc-lecture-mini .pc-ico-pause { width:15px; height:15px; }
   .pc-hist-q { flex:none; min-width:30px; font-size:14px; font-weight:600; color:var(--ink-3); }
   .pc-hist-res { flex:none; width:18px; display:grid; place-items:center; }
   .pc-hist-res svg { width:16px; height:16px; }
   .pc-hist-res.ok { color:var(--pc-ok); } .pc-hist-res.ko { color:var(--pc-ko); }
   .pc-hist-txt { min-width:0; display:flex; flex-direction:column; }
   .pc-hist-nom { font-size:14px; font-weight:600; color:var(--ink); }
-  .pc-hist-id { font-size:14px; color:var(--ink-3); }
+  .pc-hist-id { font-size:14px; color:var(--pc-discret); }
+  /* Version de l'entete : un petit lien a cote du score, la liste se deroule par-dessus la question
+     au lieu de la pousser vers le bas */
+  .pc-hist-menu { position:relative; margin:0; border:0; padding:0; }
+  .pc-hist-menu summary { list-style:none; display:inline-flex; align-items:center; gap:5px; padding:4px 2px; font-weight:600; color:var(--ink-3); }
+  .pc-hist-menu summary::-webkit-details-marker { display:none; }
+  .pc-hist-menu summary:hover, .pc-hist-menu[open] summary { color:var(--accent-ink); }
+  .pc-hist-menu ul { position:absolute; z-index:20; top:calc(100% + 6px); right:0; width:min(380px, 82vw); max-height:min(420px, 60vh); overflow-y:auto;
+    margin:0; padding:8px 12px; background:var(--surface); border:1px solid var(--line-2); border-radius:12px; box-shadow:var(--shadow); }
   .pc-cercles-bascule { border:0; background:none; padding:0; font:600 14px var(--sans); color:var(--accent-ink); cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
   .pc-verdict { margin-top:14px; }
   .pc-verdict-ligne { display:flex; align-items:center; gap:10px; font-size:15px; color:var(--ink-2); }
@@ -1684,9 +1699,6 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .pc-chant.wrong { border-color:var(--pc-ko); background:color-mix(in srgb, var(--pc-ko) 12%, var(--surface)); }
   .pc-chant-nom { flex:1; font-size:15px; font-weight:600; }
   .pc-chant-qui { font-weight:400; color:var(--ink-2); }
-  .pc-ecoute { flex:none; width:42px; height:42px; border-radius:50%; border:0; padding:0; background:var(--accent-2); cursor:pointer; display:grid; place-items:center; }
-  .pc-ecoute::before { content:''; width:0; height:0; border-style:solid; border-width:8px 0 8px 13px; border-color:transparent transparent transparent #fff; margin-left:3px; }
-  .pc-ecoute.playing::before { width:10px; height:14px; border:0; border-left:4px solid #fff; border-right:4px solid #fff; margin-left:0; }
   .pc-choisir { padding:7px 14px; }
   .pc-fin { text-align:center; padding:12px 0; }
   .pc-fin-score { font:700 44px/1.1 var(--titre); margin:8px 0 4px; }
@@ -3054,13 +3066,13 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     /* Parcours du quiz. Les etapes du chemin font deja 64 px. */
     .pc-retour, .pc-bulle .btn, .pc-choisir, .pc-quitter, .pc-fin-btns .btn { min-height:52px; }
     .pc-lien, .pc-sugg-l, .pc-entr-bas .btn, button.pc-ligne, .pc-cercles-bascule, .pc-hist summary { min-height:52px; }
-    .pc-hist-jouer { width:52px; height:52px; }
+    .pc-lecture-mini { width:52px; height:52px; }
     /* Noms proposes au-dessus du champ, le plus proche contre lui : en dessous, le clavier du
        telephone les couvrirait. */
     .pc-sugg { top:auto; bottom:calc(100% + 4px); flex-direction:column-reverse; }
     .pc-sugg-l:last-child { border-bottom:1px solid var(--line); }
     .pc-sugg-l:first-child { border-bottom:0; }
-    .pc-ecoute { width:52px; height:52px; }
+    .pc-lecture-petit { width:52px; height:52px; }
 
     /* Les pastilles de palier sont peintes dans une boite de taille double ramenee de
        moitie (voir le bloc .rar-chip plus haut). Pour 52 px rendus : boite 104, marge

@@ -19635,25 +19635,33 @@ const PC_CERCLES_DESSINS = {
   },
   ono: ['Onomatopée', '<path d="M7 10a5.5 5.5 0 0 1 11 0c0 3.2-3.2 4.3-3.2 7a2.8 2.8 0 0 1-5.4 1"/><path d="M10 10.2a2.5 2.5 0 0 1 5 0c0 1.5-1.6 2-1.6 3"/>'],
 };
+// Le titre du cercle dit deja la categorie (« Strophe moyenne », « Deux hauteurs qui
+// alternent ») : le texte n'ajoute que ce qu'il ne dit pas. Les premiers textes la repetaient
+// (« Strophe moyenne : Moyenne, ... »), remarque de Mathis le 2026-10-17. Texte vide = titre seul.
 const PC_CERCLES = {
-  'parus major': { strophe: 'moyenne', strophe_txt: 'Moyenne, reprise à intervalles réguliers.',
-    motif: 'alterne', motif_txt: 'Des notes qui alternent haut-bas, avec un aigu bien marqué.', ono: '« ti-tu »' },
-  'cyanistes caeruleus': { strophe: 'courte', strophe_txt: 'Courte, reprise après une petite pause.',
-    motif: 'trille', motif_txt: 'Deux ou trois notes aiguës, puis un trille.', ono: null },
-  'periparus ater': { strophe: 'moyenne', strophe_txt: 'Moyenne, reprise à intervalles réguliers. Chante fort.',
-    motif: 'pics', motif_txt: 'Des notes rapides qui montent et redescendent en douceur, comme des petits pics.', ono: '« titjut-titjut-titjut »' },
-  'poecile palustris': { strophe: 'courte', strophe_txt: 'Courte à moyenne, reprise à intervalles réguliers.',
-    motif: 'une', motif_txt: 'La même note aiguë, qui descend, répétée vite.', ono: '« piu-piu-piu »' },
-  'phylloscopus collybita': { strophe: 'longue', strophe_txt: 'Longue.',
-    motif: 'alterne', motif_txt: 'Des notes sèches et nettes, qui alternent entre deux hauteurs.', ono: '« chiff-chaff »' },
+  'parus major': { strophe: 'moyenne', strophe_txt: 'reprise à intervalles réguliers',
+    motif: 'alterne', motif_txt: 'avec un aigu bien marqué', ono: '« ti-tu »' },
+  'cyanistes caeruleus': { strophe: 'courte', strophe_txt: 'reprise après une petite pause',
+    motif: 'trille', motif_txt: 'deux ou trois au début', ono: null },
+  'periparus ater': { strophe: 'moyenne', strophe_txt: 'reprise à intervalles réguliers, chantée fort',
+    motif: 'pics', motif_txt: 'des notes rapides qui montent et redescendent en douceur', ono: '« titjut-titjut-titjut »' },
+  'poecile palustris': { strophe: 'courte', strophe_txt: 'parfois un peu plus, reprise à intervalles réguliers',
+    motif: 'une', motif_txt: 'aiguë et descendante, enchaînée vite', ono: '« piu-piu-piu »' },
+  'phylloscopus collybita': { strophe: 'longue', strophe_txt: '',
+    motif: 'alterne', motif_txt: 'des notes sèches et nettes', ono: '« chiff-chaff »' },
 };
 // Masquer les cercles : un choix qui suit la personne d'une question et d'une etape a l'autre
 const PC_CLE_CERCLES = 'pc-cercles-masques';
-const _pcCerclesMasques = () => { try{ return localStorage.getItem(PC_CLE_CERCLES) === '1'; }catch(_){ return false; } };
+// L'etat vit en memoire ; le navigateur ne sert qu'a le retrouver au prochain chargement. Le relire
+// a chaque fois dans localStorage cassait la bascule des qu'une ecriture y echouait (memoire du
+// site pleine, navigation privee) : « Masquer » marchait, « Afficher » remasquait, et rien ne
+// tenait d'une question a l'autre (signale par Mathis le 2026-10-17).
+let _pcCerclesCaches = (() => { try{ return localStorage.getItem(PC_CLE_CERCLES) === '1'; }catch(_){ return false; } })();
+const _pcCerclesMasques = () => _pcCerclesCaches;
 function _pcCerclesHtml(sci){
   const c = PC_CERCLES[sci]; if(!c) return '';
   // Le texte passe par data-tip, l'infobulle de toute l'appli (curseur « ? », un quart de seconde)
-  const un = (classe, [nom, dessin], texte) => `<span class="pc-cercle ${classe}" data-tip="${esc(nom + ' : ' + texte)}" aria-label="${esc(nom + ' : ' + texte)}" role="img"><svg viewBox="0 0 24 24" aria-hidden="true">${dessin}</svg></span>`;
+  const un = (classe, [nom, dessin], texte) => { const t = texte ? nom + ' : ' + texte : nom; return `<span class="pc-cercle ${classe}" data-tip="${esc(t)}" aria-label="${esc(t)}" role="img"><svg viewBox="0 0 24 24" aria-hidden="true">${dessin}</svg></span>`; };
   return `<span class="pc-cercles">${un('pc-c-strophe', PC_CERCLES_DESSINS.strophe[c.strophe], c.strophe_txt)}${un('pc-c-motif', PC_CERCLES_DESSINS.motif[c.motif], c.motif_txt)}${
     c.ono ? un('pc-c-ono', PC_CERCLES_DESSINS.ono, c.ono) : '<span class="pc-cercle vide" aria-hidden="true"></span>'}</span>`;
 }
@@ -20337,26 +20345,39 @@ const _pcIdChant = r => r ? `Chant n° XC ${esc(r.id)} · ${esc(r.rec)}` : '';
 // <audio> de la question en cours.
 const _pcHistAudio = new Audio();
 let _pcHistBouton = null, _pcHistOuvert = false;
-const PC_HIST_PLAY = '<svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true"><path d="M6.5 4.2v11.6L15.5 10z" fill="currentColor"/></svg>';
-const PC_HIST_PAUSE = '<svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true"><path d="M6 4.5h3v11H6zM11 4.5h3v11h-3z" fill="currentColor"/></svg>';
+// Le meme bouton a anneau que partout dans le quiz (Mathis le 2026-10-17 : « les memes partout »)
+let _pcHistAnim = 0;
+const _pcHistAnneau = f => { const c = _pcHistBouton && _pcHistBouton.querySelector('.pc-anneau-plein'); if(c) c.style.strokeDashoffset = PC_ANNEAU * (1 - f); };
+function _pcHistSuivre(){
+  if(!_pcHistBouton || _pcHistAudio.paused){ _pcHistAnim = 0; return; }
+  _pcHistAnneau(_pcHistAudio.currentTime / Math.min(_pcHistAudio.duration || PC_DUREE_MAX, PC_DUREE_MAX));
+  _pcHistAnim = requestAnimationFrame(_pcHistSuivre);
+}
 function _pcHistArreter(){
-  _pcHistAudio.pause();
-  if(_pcHistBouton){ _pcHistBouton.classList.remove('playing'); _pcHistBouton.innerHTML = PC_HIST_PLAY; _pcHistBouton = null; }
+  _pcHistAudio.pause(); cancelAnimationFrame(_pcHistAnim); _pcHistAnim = 0;
+  if(_pcHistBouton){ _pcHistAnneau(0); _pcHistBouton.classList.remove('playing'); _pcHistBouton = null; }
 }
 _pcHistAudio.addEventListener('ended', _pcHistArreter);
 // Le repli reste ouvert d'une question a l'autre si on l'a ouvert (toggle ne remonte pas : capture)
-document.addEventListener('toggle', e => { if(e.target.classList && e.target.classList.contains('pc-hist')) _pcHistOuvert = e.target.open; }, true);
+document.addEventListener('toggle', e => { const c = e.target.classList; if(c && c.contains('pc-hist') && !c.contains('pc-hist-menu')) _pcHistOuvert = e.target.open; }, true);
+// Le menu de l'entete se referme quand on clique ailleurs (pas sur ses propres boutons de lecture)
+document.addEventListener('click', e => {
+  if(!e.target.isConnected) return;
+  document.querySelectorAll('details.pc-hist-menu[open]').forEach(d => { if(!d.contains(e.target)) d.open = false; });
+});
 _pcHistAudio.addEventListener('timeupdate', () => { if(_pcHistAudio.currentTime >= PC_DUREE_MAX) _pcHistArreter(); });
 function _pcHistJouer(b){
   if(b === _pcHistBouton){ _pcHistArreter(); return; }
   _pcHistArreter();
   _pcCouperSons();   // le chant de la question en cours se tait
-  _pcHistBouton = b; b.classList.add('playing'); b.innerHTML = PC_HIST_PAUSE;
+  _pcHistBouton = b; b.classList.add('playing');
   _pcHistAudio.src = b.dataset.pcHist;
-  _pcHistAudio.play().catch(_pcHistArreter);
+  _pcHistAudio.play().then(() => { if(!_pcHistAnim) _pcHistAnim = requestAnimationFrame(_pcHistSuivre); }).catch(_pcHistArreter);
 }
-// n : nombre de questions deja jouees ; titre : le libelle du repli
-function _pcHistoriqueHtml(p, n, titre){
+// n : nombre de questions deja jouees ; titre : le libelle du repli ; menu : version compacte de
+// l'entete de la question. En bas de la question, le repli tombait sous l'ecran (place reservee au
+// verdict, agrandissement --pc-k) et Mathis ne le voyait pas (2026-10-17).
+function _pcHistoriqueHtml(p, n, titre, menu){
   if(!n) return '';
   const lignes = [];
   for(let k = n - 1; k >= 0; k--){
@@ -20365,11 +20386,12 @@ function _pcHistoriqueHtml(p, n, titre){
     recs.forEach(([sci, r], i) => {
       if(!r) return;
       const marque = i ? '' : `<span class="pc-hist-res ${res || ''}" aria-label="${res === 'ok' ? 'bonne réponse' : 'mauvaise réponse'}">${res === 'ok' ? PC_ICO.ok : PC_ICO.ko}</span>`;
-      lignes.push(`<li class="pc-hist-l"><button type="button" class="pc-hist-jouer" data-pc-hist="${esc(r.file)}" aria-label="Réécouter : question ${k + 1}, ${esc(_pcNomFr(sci))}">${PC_HIST_PLAY}</button>
+      lignes.push(`<li class="pc-hist-l"><button type="button" class="pc-lecture pc-lecture-mini" data-pc-hist="${esc(r.file)}" aria-label="Réécouter : question ${k + 1}, ${esc(_pcNomFr(sci))}">${PC_LECTURE_SVG}</button>
         <span class="pc-hist-q">${i ? '' : 'Q' + (k + 1)}</span>${marque || '<span class="pc-hist-res"></span>'}
         <span class="pc-hist-txt"><span class="pc-hist-nom">${esc(_pcNomFr(sci))}</span><span class="pc-hist-id">${_pcIdChant(r)}</span></span></li>`);
     });
   }
+  if(menu) return `<details class="pc-hist pc-hist-menu"><summary>${esc(titre)} (${n})</summary><ul>${lignes.join('')}</ul></details>`;
   return `<details class="pc-hist"${_pcHistOuvert ? ' open' : ''}><summary>${esc(titre)} (${n})</summary><ul>${lignes.join('')}</ul></details>`;
 }
 function _pcQuestion(){
@@ -20383,7 +20405,7 @@ function _pcQuestion(){
   const tete = `
     <div class="pc-jeu-tete">
       <span>${libelle} <b>${p.cur + 1}</b> sur ${total}</span>
-      <span class="pc-jeu-droite"><span aria-label="${p.bonnes} bonnes réponses">✓ ${p.bonnes}</span><button type="button" class="btn ghost pc-quitter" data-pc-retour>Quitter</button></span>
+      <span class="pc-jeu-droite"><span aria-label="${p.bonnes} bonnes réponses">✓ ${p.bonnes}</span>${_pcHistoriqueHtml(p, p.cur, 'Réécouter', true)}<button type="button" class="btn ghost pc-quitter" data-pc-retour>Quitter</button></span>
     </div>
     <div class="pc-segments" aria-hidden="true">${Array.from({ length: total }, (_, k) =>
       `<i class="${p.resultats[k] || (k === p.cur ? 'ici' : '')}"></i>`).join('')}</div>`;
@@ -20444,14 +20466,14 @@ function _pcQuestion(){
       <div class="pc-chants" id="pcChoix">
         ${q.choix.map((sci, k) => `
           <div class="pc-chant" data-pc-carte="${k}">
-            <button type="button" class="pc-ecoute" data-pc-ecoute="${k}" aria-label="Écouter le chant ${lettres[k]}"></button>
+            <button type="button" class="pc-lecture pc-lecture-petit" data-pc-ecoute="${k}" aria-label="Écouter le chant ${lettres[k]}">${PC_LECTURE_SVG}</button>
             <span class="pc-chant-nom">Chant ${lettres[k]}<span class="pc-chant-qui"></span><span class="pc-chant-id">${_pcIdChant(q.recs[k])}</span></span>
             <button type="button" class="btn ghost pc-choisir" data-pc-choix="${k}">Choisir</button>
             <audio preload="auto" data-pc-audio="${k}" src="${esc(q.recs[k]?.file || '')}"></audio>
           </div>`).join('')}
       </div>`;
   }
-  box.innerHTML = `<div class="pc-jeu">${tete}<div class="pc-question">${corps}</div><div id="pcVerdict"></div>${_pcHistoriqueHtml(p, p.cur, 'Réécouter les questions précédentes')}</div>`;
+  box.innerHTML = `<div class="pc-jeu">${tete}<div class="pc-question">${corps}</div><div id="pcVerdict"></div></div>`;
   if(unSon){
     const audio = document.getElementById('pcAudio'), btn = document.getElementById('pcPlay'), fill = document.getElementById('pcProgression');
     const temps = document.getElementById('pcTemps');
@@ -20489,20 +20511,33 @@ function _pcQuestion(){
         if(src && el && _pc.partie?.questions[_pc.partie.cur] === q) el.innerHTML = `<img src="${esc(src)}" alt="${esc(_pcNomFr(cible))}">`;
       }).catch(() => {});
     }
+    // Le meme bouton que la question « Quel oiseau chante ? » : anneau qui avance, lecture et
+    // pause (Mathis le 2026-10-17 : l'entrainement gardait les anciens ronds orange).
     box.querySelectorAll('[data-pc-audio]').forEach(a => {
       const b = box.querySelector(`[data-pc-ecoute="${a.dataset.pcAudio}"]`);
-      a.addEventListener('play', () => { _pcHistArreter(); b.classList.add('playing'); });
-      a.addEventListener('pause', () => b.classList.remove('playing'));
-      a.addEventListener('ended', () => b.classList.remove('playing'));
-      a.addEventListener('timeupdate', () => { if(a.currentTime >= PC_DUREE_MAX){ a.pause(); a.currentTime = 0; } });
+      const anneau = b.querySelector('.pc-anneau-plein');
+      const duree = () => Math.min(a.duration || PC_DUREE_MAX, PC_DUREE_MAX);
+      const avancer = f => { if(anneau) anneau.style.strokeDashoffset = PC_ANNEAU * (1 - f); };
+      let anim = 0;
+      const suivre = () => {
+        if(!a.isConnected || a.paused){ anim = 0; return; }
+        if(a.currentTime >= PC_DUREE_MAX){ a.pause(); a.currentTime = 0; avancer(0); anim = 0; return; }
+        avancer(a.currentTime / duree());
+        anim = requestAnimationFrame(suivre);
+      };
+      a.addEventListener('play', () => { _pcHistArreter(); b.classList.add('playing'); if(!anim) anim = requestAnimationFrame(suivre); });
+      a.addEventListener('pause', () => { b.classList.remove('playing'); if(a.currentTime === 0) avancer(0); });
+      a.addEventListener('ended', () => { b.classList.remove('playing'); avancer(0); });
     });
   }
 }
 function _pcEcouter(k){
   const box = document.getElementById('pcParcours');
   box.querySelectorAll('[data-pc-audio]').forEach(a => {
-    if(a.dataset.pcAudio === String(k)){ if(a.paused){ try{ a.currentTime = 0; }catch(_){} a.play().catch(() => {}); } else a.pause(); }
-    else { try{ a.pause(); a.currentTime = 0; }catch(_){} }
+    if(a.dataset.pcAudio === String(k)){ if(a.paused) a.play().catch(() => {}); else a.pause(); }
+    // Les autres chants reviennent au debut, anneau vide. Un chant deja en pause ne declenche
+    // plus d'evenement « pause » : on l'envoie a la main pour que son anneau se vide.
+    else if(!a.paused || a.currentTime){ try{ a.pause(); a.currentTime = 0; }catch(_){} a.dispatchEvent(new Event('pause')); }
   });
 }
 // Ce que toute reponse change, quel que soit le genre de question. choisi : l'oiseau donne a
@@ -20656,7 +20691,8 @@ document.addEventListener('click', e => {
   const hist = e.target.closest('[data-pc-hist]'); if(hist){ _pcHistJouer(hist); return; }
   const bascule = e.target.closest('[data-pc-cercles]');
   if(bascule){
-    const masquer = !_pcCerclesMasques();
+    const masquer = !_pcCerclesCaches;
+    _pcCerclesCaches = masquer;
     try{ localStorage.setItem(PC_CLE_CERCLES, masquer ? '1' : '0'); }catch(_){}
     document.getElementById('pcChoix')?.classList.toggle('sans-cercles', masquer);
     bascule.setAttribute('aria-pressed', String(!masquer));
