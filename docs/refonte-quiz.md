@@ -57,6 +57,10 @@ colle sa sélection (au moins 8 par espèce). Fait le 2026-10-16 : 66 chants gar
 13), un enregistreur différent pour chacun, dans `data/parcours-mesanges.json`, fabriqué par
 `outils/build/chants-gardes.mjs` qui contient la liste. Le parcours ne joue plus que ceux-là.
 
+Deuxième parcours, « Phrases qui dégringolent » (groupe 2 de `docs/groupes-chants.md`, les six
+oiseaux gardés, 2026-10-17) : `node outils/build/chants-parcours.mjs phrases` a écrit 15 candidats
+par espèce, à écouter sur `http://localhost:8765/notes-privees/ecoute-chants-phrases/`.
+
 Ce que ça ne couvre pas : les cris. Idée retenue : une étape bonus à part sur chaque parcours,
 sur les cris des mêmes oiseaux. Ticket qg#65.
 

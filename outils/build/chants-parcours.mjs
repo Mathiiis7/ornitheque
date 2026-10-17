@@ -1,9 +1,15 @@
 #!/usr/bin/env node
 /*
-  chants-parcours.mjs - preselectionne les chants candidats du parcours du quiz, pour que
-  Mathis les ecoute et garde les bons (notes-privees/ecoute-chants/index.html).
+  chants-parcours.mjs - preselectionne les chants candidats d'un parcours du quiz, pour que
+  Mathis les ecoute et garde les bons (une page d'ecoute par parcours, dans notes-privees/).
 
-      node outils/build/chants-parcours.mjs
+      node outils/build/chants-parcours.mjs            (mesanges : notes-privees/ecoute-chants/)
+      node outils/build/chants-parcours.mjs phrases    (« Phrases qui degringolent » :
+                                                        notes-privees/ecoute-chants-phrases/)
+
+  ATTENTION : relancer le parcours mesanges reecrit le candidats.json que relit
+  chants-gardes.mjs. xeno-canto ajoute des enregistrements, les 15 premiers changeraient et
+  certains des 66 chants gardes n'y seraient plus. Ne le relancer que pour refaire l'ecoute.
 
   Pourquoi (2026-10-15) : le quiz prenait les 8 chants notes A les plus recents de
   xeno-canto, sans rien ecarter. Sur les 40 des cinq especes : des oiseaux du parcours en
@@ -12,7 +18,7 @@
 
   Filtres : chant seul (type exactement « song »), qualite A puis B si besoin, Europe de
   l'Ouest hors peninsule iberique (le pouillot iberique y chante et s'y confond), aucune
-  des cinq especes du parcours en fond, 8 s a 3 min, un seul enregistrement par personne.
+  espece du MEME parcours en fond, 8 s a 3 min, un seul enregistrement par personne.
   Tri : France d'abord, puis sans aucun autre oiseau en fond, puis qualite, puis le plus
   recent. 15 candidats par espece.
 */
@@ -21,9 +27,21 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const RACINE = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const SORTIE = join(RACINE, 'notes-privees', 'ecoute-chants', 'candidats.json');
 const CLE = 'a082ff6c2adafb02ea6b275da67cd903988f82ea';   // la cle publique d'app.js (XC_API_KEY)
-const ESPECES = ['parus major', 'phylloscopus collybita', 'cyanistes caeruleus', 'poecile palustris', 'periparus ater'];
+// Noms scientifiques verifies dans FR_NAMES d'app.js.
+const PARCOURS = {
+  mesanges: { dossier: 'ecoute-chants',
+    especes: ['parus major', 'phylloscopus collybita', 'cyanistes caeruleus', 'poecile palustris', 'periparus ater'] },
+  // groupe 2 de docs/groupes-chants.md ; Mathis garde les six oiseaux (2026-10-17).
+  phrases: { dossier: 'ecoute-chants-phrases',
+    especes: ['fringilla coelebs', 'phylloscopus trochilus', 'certhia brachydactyla', 'certhia familiaris',
+      'phoenicurus ochruros', 'phoenicurus phoenicurus'] },
+};
+const nom = process.argv[2] || 'mesanges';
+// Un nom inconnu s'arrete : retomber sur mesanges ecraserait les candidats deja ecoutes.
+if (!PARCOURS[nom]) { console.error('parcours inconnu :', nom, '- connus :', Object.keys(PARCOURS).join(', ')); process.exit(1); }
+const ESPECES = PARCOURS[nom].especes;
+const SORTIE = join(RACINE, 'notes-privees', PARCOURS[nom].dossier, 'candidats.json');
 const PAYS = new Set(['France', 'Belgium', 'Switzerland', 'Luxembourg', 'Germany', 'Netherlands',
   'United Kingdom', 'Ireland', 'Italy', 'Austria', 'Denmark']);
 const PAR_ESPECE = 15;
