@@ -1649,6 +1649,23 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .pc-c-strophe { background:var(--pc-c-strophe); } .pc-c-motif { background:var(--pc-c-motif); } .pc-c-ono { background:var(--pc-c-ono); }
   .pc-reponses.sans-cercles .pc-cercles { display:none; }
   .pc-demande-ligne { display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  /* Identifiant du chant (numero xeno-canto et enregistreur), pour pouvoir signaler un son */
+  .pc-id { margin:6px 2px 0; font-size:14px; color:var(--ink-3); }
+  .pc-chant-id { display:block; font-size:14px; font-weight:400; color:var(--ink-3); }
+  /* Reecouter les questions precedentes : un repli sous la question */
+  .pc-hist { margin-top:18px; border-top:1px solid var(--line); padding-top:10px; text-align:left; }
+  .pc-hist summary { cursor:pointer; font-size:14px; font-weight:600; color:var(--accent-ink); padding:4px 0; }
+  .pc-hist ul { list-style:none; margin:8px 0 0; padding:0; display:flex; flex-direction:column; gap:4px; }
+  .pc-hist-l { display:flex; align-items:center; gap:10px; padding:4px 0; }
+  .pc-hist-jouer { flex:none; width:34px; height:34px; border-radius:50%; border:1.5px solid var(--line-2); background:var(--surface); color:var(--accent-2); display:grid; place-items:center; cursor:pointer; padding:0; }
+  .pc-hist-jouer.playing { background:var(--accent-2); border-color:var(--accent-2); color:#fff; }
+  .pc-hist-q { flex:none; min-width:30px; font-size:14px; font-weight:600; color:var(--ink-3); }
+  .pc-hist-res { flex:none; width:18px; display:grid; place-items:center; }
+  .pc-hist-res svg { width:16px; height:16px; }
+  .pc-hist-res.ok { color:var(--pc-ok); } .pc-hist-res.ko { color:var(--pc-ko); }
+  .pc-hist-txt { min-width:0; display:flex; flex-direction:column; }
+  .pc-hist-nom { font-size:14px; font-weight:600; color:var(--ink); }
+  .pc-hist-id { font-size:14px; color:var(--ink-3); }
   .pc-cercles-bascule { border:0; background:none; padding:0; font:600 14px var(--sans); color:var(--accent-ink); cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
   .pc-verdict { margin-top:14px; }
   .pc-verdict-ligne { display:flex; align-items:center; gap:10px; font-size:15px; color:var(--ink-2); }
@@ -3036,7 +3053,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
 
     /* Parcours du quiz. Les etapes du chemin font deja 64 px. */
     .pc-retour, .pc-bulle .btn, .pc-choisir, .pc-quitter, .pc-fin-btns .btn { min-height:52px; }
-    .pc-lien, .pc-sugg-l, .pc-entr-bas .btn, button.pc-ligne, .pc-cercles-bascule { min-height:52px; }
+    .pc-lien, .pc-sugg-l, .pc-entr-bas .btn, button.pc-ligne, .pc-cercles-bascule, .pc-hist summary { min-height:52px; }
+    .pc-hist-jouer { width:52px; height:52px; }
     /* Noms proposes au-dessus du champ, le plus proche contre lui : en dessous, le clavier du
        telephone les couvrirait. */
     .pc-sugg { top:auto; bottom:calc(100% + 4px); flex-direction:column-reverse; }

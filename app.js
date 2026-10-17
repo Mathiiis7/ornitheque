@@ -20016,6 +20016,7 @@ function _pcEntrFin(box, p){
     <div class="pc-fin-score">${p.bonnes}/${p.questions.length}</div>
     <div class="pc-bilan">${bilan}</div>
     ${lignes ? `<p class="pc-meta">Tes confusions :</p><ul class="pc-confusions">${lignes}</ul>` : ''}
+    ${_pcHistoriqueHtml(p, p.questions.length, 'Réécouter les chants de la partie')}
     <div class="pc-fin-btns">
       <button type="button" class="btn ghost" data-pc-liste>Retour au quiz</button>
       ${p.mode !== 'lacunes' ? `<button type="button" class="btn ghost" data-pc-entr="${p.mode}">Changer les oiseaux</button>` : ''}
@@ -20079,6 +20080,7 @@ function _pcLibererSons(){
 function _parcoursRender(){
   const box = document.getElementById('pcParcours'); if(!box) return;
   if(_pc.partie) return;   // une partie en cours reste a l'ecran quand on revient sur l'onglet
+  _pcHistArreter();
   // L'accueil se range comme les autres pages : colle en haut, sans agrandissement, avec sa
   // phrase d'introduction. Le chemin et les parties restent centres dans l'ecran.
   const accueil = _pc.vue !== 'chemin' && _pc.vue !== 'entr';
@@ -20326,10 +20328,55 @@ async function _pcLancer(i){
   };
   _pcQuestion();
 }
+// Identifiant d'un chant : son numero xeno-canto, que Mathis peut citer s'il trouve un son
+// bizarre (demande du 2026-10-17), et la personne qui l'a enregistre, que la licence de
+// xeno-canto demande de nommer. Ni l'un ni l'autre ne trahit l'oiseau.
+const _pcIdChant = r => r ? `Chant n° XC ${esc(r.id)} · ${esc(r.rec)}` : '';
+// Reecouter les questions deja jouees (demande de Mathis le 2026-10-17) : une liste repliable
+// sous la question, la plus recente en haut, avec un lecteur a part, pour ne pas toucher au
+// <audio> de la question en cours.
+const _pcHistAudio = new Audio();
+let _pcHistBouton = null, _pcHistOuvert = false;
+const PC_HIST_PLAY = '<svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true"><path d="M6.5 4.2v11.6L15.5 10z" fill="currentColor"/></svg>';
+const PC_HIST_PAUSE = '<svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true"><path d="M6 4.5h3v11H6zM11 4.5h3v11h-3z" fill="currentColor"/></svg>';
+function _pcHistArreter(){
+  _pcHistAudio.pause();
+  if(_pcHistBouton){ _pcHistBouton.classList.remove('playing'); _pcHistBouton.innerHTML = PC_HIST_PLAY; _pcHistBouton = null; }
+}
+_pcHistAudio.addEventListener('ended', _pcHistArreter);
+// Le repli reste ouvert d'une question a l'autre si on l'a ouvert (toggle ne remonte pas : capture)
+document.addEventListener('toggle', e => { if(e.target.classList && e.target.classList.contains('pc-hist')) _pcHistOuvert = e.target.open; }, true);
+_pcHistAudio.addEventListener('timeupdate', () => { if(_pcHistAudio.currentTime >= PC_DUREE_MAX) _pcHistArreter(); });
+function _pcHistJouer(b){
+  if(b === _pcHistBouton){ _pcHistArreter(); return; }
+  _pcHistArreter();
+  _pcCouperSons();   // le chant de la question en cours se tait
+  _pcHistBouton = b; b.classList.add('playing'); b.innerHTML = PC_HIST_PAUSE;
+  _pcHistAudio.src = b.dataset.pcHist;
+  _pcHistAudio.play().catch(_pcHistArreter);
+}
+// n : nombre de questions deja jouees ; titre : le libelle du repli
+function _pcHistoriqueHtml(p, n, titre){
+  if(!n) return '';
+  const lignes = [];
+  for(let k = n - 1; k >= 0; k--){
+    const q = p.questions[k], res = p.resultats[k];
+    const recs = q.type === 'chant' && q.recs ? q.choix.map((sci, i) => [sci, q.recs[i]]) : [[q.cible, q.rec]];
+    recs.forEach(([sci, r], i) => {
+      if(!r) return;
+      const marque = i ? '' : `<span class="pc-hist-res ${res || ''}" aria-label="${res === 'ok' ? 'bonne réponse' : 'mauvaise réponse'}">${res === 'ok' ? PC_ICO.ok : PC_ICO.ko}</span>`;
+      lignes.push(`<li class="pc-hist-l"><button type="button" class="pc-hist-jouer" data-pc-hist="${esc(r.file)}" aria-label="Réécouter : question ${k + 1}, ${esc(_pcNomFr(sci))}">${PC_HIST_PLAY}</button>
+        <span class="pc-hist-q">${i ? '' : 'Q' + (k + 1)}</span>${marque || '<span class="pc-hist-res"></span>'}
+        <span class="pc-hist-txt"><span class="pc-hist-nom">${esc(_pcNomFr(sci))}</span><span class="pc-hist-id">${_pcIdChant(r)}</span></span></li>`);
+    });
+  }
+  return `<details class="pc-hist"${_pcHistOuvert ? ' open' : ''}><summary>${esc(titre)} (${n})</summary><ul>${lignes.join('')}</ul></details>`;
+}
 function _pcQuestion(){
   const box = document.getElementById('pcParcours'); const p = _pc.partie;
   if(!box || !p) return;
   _pcLibererSons();
+  _pcHistArreter();
   const q = p.questions[p.cur], total = p.questions.length;
   p.repondu = false;
   const libelle = p.kind === 'entr' ? `${esc(PC_ENTR_MODES[p.mode].titre)} · manche` : `Étape ${p.etape + 1} · question`;
@@ -20377,6 +20424,7 @@ function _pcQuestion(){
         <div class="pc-son-barre"><div class="pc-son-plein" id="pcProgression"></div></div>
         <span class="pc-son-t" id="pcTemps"></span>
       </div>
+      <p class="pc-id">${_pcIdChant(rec)}</p>
       <div class="pc-demande-ligne"><h3 class="bloc-titre pc-demande">Quel oiseau chante ?</h3>${cercles
         ? `<button type="button" class="pc-cercles-bascule" data-pc-cercles aria-pressed="${!_pcCerclesMasques()}">${_pcCerclesMasques() ? 'Afficher les indices' : 'Masquer les indices'}</button>` : ''}</div>
       ${reponses}
@@ -20397,13 +20445,13 @@ function _pcQuestion(){
         ${q.choix.map((sci, k) => `
           <div class="pc-chant" data-pc-carte="${k}">
             <button type="button" class="pc-ecoute" data-pc-ecoute="${k}" aria-label="Écouter le chant ${lettres[k]}"></button>
-            <span class="pc-chant-nom">Chant ${lettres[k]}<span class="pc-chant-qui"></span></span>
+            <span class="pc-chant-nom">Chant ${lettres[k]}<span class="pc-chant-qui"></span><span class="pc-chant-id">${_pcIdChant(q.recs[k])}</span></span>
             <button type="button" class="btn ghost pc-choisir" data-pc-choix="${k}">Choisir</button>
             <audio preload="auto" data-pc-audio="${k}" src="${esc(q.recs[k]?.file || '')}"></audio>
           </div>`).join('')}
       </div>`;
   }
-  box.innerHTML = `<div class="pc-jeu">${tete}<div class="pc-question">${corps}</div><div id="pcVerdict"></div></div>`;
+  box.innerHTML = `<div class="pc-jeu">${tete}<div class="pc-question">${corps}</div><div id="pcVerdict"></div>${_pcHistoriqueHtml(p, p.cur, 'Réécouter les questions précédentes')}</div>`;
   if(unSon){
     const audio = document.getElementById('pcAudio'), btn = document.getElementById('pcPlay'), fill = document.getElementById('pcProgression');
     const temps = document.getElementById('pcTemps');
@@ -20425,7 +20473,7 @@ function _pcQuestion(){
       afficherTemps();
       anim = requestAnimationFrame(suivre);
     };
-    audio.addEventListener('play', () => { btn.classList.add('playing'); if(!anim) anim = requestAnimationFrame(suivre); });
+    audio.addEventListener('play', () => { _pcHistArreter(); btn.classList.add('playing'); if(!anim) anim = requestAnimationFrame(suivre); });
     audio.addEventListener('pause', () => btn.classList.remove('playing'));
     audio.addEventListener('ended', () => { btn.classList.remove('playing'); avancer(0); });
     audio.play().catch(() => {});
@@ -20443,7 +20491,7 @@ function _pcQuestion(){
     }
     box.querySelectorAll('[data-pc-audio]').forEach(a => {
       const b = box.querySelector(`[data-pc-ecoute="${a.dataset.pcAudio}"]`);
-      a.addEventListener('play', () => b.classList.add('playing'));
+      a.addEventListener('play', () => { _pcHistArreter(); b.classList.add('playing'); });
       a.addEventListener('pause', () => b.classList.remove('playing'));
       a.addEventListener('ended', () => b.classList.remove('playing'));
       a.addEventListener('timeupdate', () => { if(a.currentTime >= PC_DUREE_MAX){ a.pause(); a.currentTime = 0; } });
@@ -20571,6 +20619,7 @@ function _pcFin(){
     <div class="pc-fin-score">${p.bonnes}/${e.q}</div>
     <p class="pc-meta">${ok ? (p.etape + 1 < et.length ? 'L\'étape suivante est ouverte.' : 'Tu as fini le parcours.') : `Il faut ${_pcSeuil(e)} bonnes réponses pour passer.`}</p>
     ${lignes ? `<p class="pc-meta">Tes confusions :</p><ul class="pc-confusions">${lignes}</ul>` : ''}
+    ${_pcHistoriqueHtml(p, p.questions.length, 'Réécouter les chants de l\'étape')}
     <div class="pc-fin-btns">
       <button type="button" class="btn ghost" data-pc-retour>Retour au parcours</button>
       <button type="button" class="btn ${suivante ? 'ghost' : ''}" data-pc-jouer="${p.etape}">Rejouer</button>
@@ -20604,6 +20653,7 @@ document.addEventListener('click', e => {
   const entrJouer = e.target.closest('[data-pc-entr-jouer]'); if(entrJouer){ _pcEntrLancer(entrJouer.dataset.pcEntrJouer); return; }
   const sugg = e.target.closest('[data-pc-sugg]'); if(sugg){ _pcPrendreSugg(sugg.dataset.pcSugg); return; }
   if(e.target.closest('[data-pc-valider]')){ _pcRepondreEcrit(); return; }
+  const hist = e.target.closest('[data-pc-hist]'); if(hist){ _pcHistJouer(hist); return; }
   const bascule = e.target.closest('[data-pc-cercles]');
   if(bascule){
     const masquer = !_pcCerclesMasques();
