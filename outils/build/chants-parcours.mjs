@@ -33,7 +33,12 @@ const PARCOURS = {
   mesanges: { dossier: 'ecoute-chants',
     especes: ['parus major', 'phylloscopus collybita', 'cyanistes caeruleus', 'poecile palustris', 'periparus ater'] },
   // groupe 2 de docs/groupes-chants.md ; Mathis garde les six oiseaux (2026-10-17).
-  phrases: { dossier: 'ecoute-chants-phrases',
+  // Qualite A seulement, quitte a aller chercher hors de France (Mathis, meme jour) : le tri
+  // « France d'abord » donnait 13 grimpereaux des bois sur 15 en qualite B. L'Espagne revient
+  // ici, car le pouillot iberique ne se confond qu'avec le veloce, absent de ce parcours.
+  // Le Grimpereau des bois n'a que 14 enregistreurs en qualite A dans ces pays : Mathis a
+  // choisi d'admettre XC626692 (France, 3:31), ecarte par la seule limite de 3 min.
+  phrases: { dossier: 'ecoute-chants-phrases', qualiteA: true, paysEnPlus: ['Spain'], dureeAdmise: [626692],
     especes: ['fringilla coelebs', 'phylloscopus trochilus', 'certhia brachydactyla', 'certhia familiaris',
       'phoenicurus ochruros', 'phoenicurus phoenicurus'] },
 };
@@ -43,7 +48,7 @@ if (!PARCOURS[nom]) { console.error('parcours inconnu :', nom, '- connus :', Obj
 const ESPECES = PARCOURS[nom].especes;
 const SORTIE = join(RACINE, 'notes-privees', PARCOURS[nom].dossier, 'candidats.json');
 const PAYS = new Set(['France', 'Belgium', 'Switzerland', 'Luxembourg', 'Germany', 'Netherlands',
-  'United Kingdom', 'Ireland', 'Italy', 'Austria', 'Denmark']);
+  'United Kingdom', 'Ireland', 'Italy', 'Austria', 'Denmark', ...(PARCOURS[nom].paysEnPlus || [])]);
 const PAR_ESPECE = 15;
 
 const norm = u => !u ? null : u.startsWith('//') ? 'https:' + u : u.replace(/^http:\/\//, 'https://');
@@ -70,10 +75,10 @@ for(const sci of ESPECES){
     const autres = (r.also || []).filter(Boolean).map(s => s.toLowerCase());
     if(autres.some(a => ESPECES.includes(a))) return false;
     const d = secondes(r.length);
-    return d >= 8 && d <= 180;
+    return (d >= 8 && d <= 180) || (PARCOURS[nom].dureeAdmise || []).includes(+r.id);
   };
   let ok = brut.filter(garder);
-  if(new Set(ok.map(r => r.rec)).size < PAR_ESPECE) ok.push(...(await tout(gen, sp, 'B')).filter(garder));
+  if(!PARCOURS[nom].qualiteA && new Set(ok.map(r => r.rec)).size < PAR_ESPECE) ok.push(...(await tout(gen, sp, 'B')).filter(garder));
   const qOrdre = { A: 2, B: 1 };
   ok.sort((a, b) => (b.cnt === 'France') - (a.cnt === 'France')
     || ((a.also || []).filter(Boolean).length === 0 ? -1 : 0) - ((b.also || []).filter(Boolean).length === 0 ? -1 : 0)
