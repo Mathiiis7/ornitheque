@@ -19615,7 +19615,32 @@ const PARCOURS_MESANGES = {
     { titre: 'Le mélange', type: 'melange', n: 5, q: 10, sansCercles: true },
     { titre: 'L\'épreuve', type: 'nom', n: 5, q: 15, epreuve: true, sansCercles: true },
   ],
+  chants: 'data/parcours-mesanges.json?v=20261016',
 };
+// Groupe 2 de docs/groupes-chants.md, ouvert le 2026-10-17. Mathis garde les six oiseaux et
+// demande une etape de plus pour le sixieme. Ordre, meme regle que les mesanges : les courants
+// et faciles a distinguer d'abord, chaque sosie apres son modele, le plus rare en dernier.
+// Seuls le pinson et le fitis sont ecoutes ; les quatre autres jouent leurs 15 candidats en
+// attendant (outils/build/chants-gardes.mjs phrases).
+const PARCOURS_PHRASES = {
+  cle: 'phrases',
+  titre: 'Phrases qui dégringolent',
+  especes: ['fringilla coelebs', 'certhia brachydactyla', 'phoenicurus ochruros', 'phylloscopus trochilus',
+    'phoenicurus phoenicurus', 'certhia familiaris'],
+  etapes: [
+    { titre: 'Deux oiseaux', type: 'nom', n: 2, q: 10 },
+    { titre: 'Trois oiseaux', type: 'nom', n: 3, q: 10 },
+    { titre: 'Quatre oiseaux', type: 'nom', n: 4, q: 10 },
+    { titre: 'Cinq oiseaux', type: 'nom', n: 5, q: 10 },
+    { titre: 'Six oiseaux', type: 'nom', n: 6, q: 10 },
+    { titre: 'Trouver le chant', type: 'chant', n: 6, q: 10 },
+    { titre: 'Le mélange', type: 'melange', n: 6, q: 10, sansCercles: true },
+    { titre: 'L\'épreuve', type: 'nom', n: 6, q: 15, epreuve: true, sansCercles: true },
+  ],
+  chants: 'data/parcours-phrases.json?v=20261017',
+};
+const PARCOURS_OUVERTS = [PARCOURS_MESANGES, PARCOURS_PHRASES];
+const _pcParcoursDe = cle => PARCOURS_OUVERTS.find(P => P.cle === cle) || PARCOURS_MESANGES;
 // Cercles d'indices dans chaque reponse « Quel oiseau chante ? » : la strophe, le motif,
 // l'onomatopee, et au survol les mots de Mathis, repris de ses remarques et valides par lui le
 // 2026-10-17 (maquette notes-privees/maquettes/criteres/cercles.html : couleurs « sous-bois »,
@@ -19632,6 +19657,11 @@ const PC_CERCLES_DESSINS = {
     alterne: ['Deux hauteurs qui alternent', '<circle class="p" cx="4" cy="8" r="2.2"/><circle class="p" cx="9.3" cy="16" r="2.2"/><circle class="p" cx="14.7" cy="8" r="2.2"/><circle class="p" cx="20" cy="16" r="2.2"/>'],
     pics:    ['Des petits pics', '<path d="M2.5 16l3.2-7 3.2 7 3.1-7 3.2 7 3.1-7 3.2 7"/>'],
     trille:  ['Notes aiguës puis un trille', '<circle class="p" cx="4" cy="7.5" r="2.1"/><circle class="p" cx="9" cy="7.5" r="2.1"/><path d="M12.5 16q1.2-3 2.4 0t2.4 0t2.4 0t2.4 0" stroke-width="2.2"/>'],
+    // Parcours « Phrases qui degringolent » (2026-10-17), premiers dessins. Fioriture : des notes
+    // qui descendent en se serrant, puis un crochet qui remonte. Sifflé : des notes qui descendent
+    // a intervalles egaux en s'amenuisant, la fin qui s'eteint.
+    fioriture: ['Accélère puis fioriture', '<circle class="p" cx="3" cy="5.5" r="2.1"/><circle class="p" cx="8" cy="8.5" r="2"/><circle class="p" cx="12" cy="11" r="1.8"/><circle class="p" cx="15.6" cy="13.2" r="1.6"/><path d="M18 14.8l1.6 4 2.4-6"/>'],
+    siffle:  ['Sifflé qui descend', '<circle class="p" cx="4" cy="6" r="2.6"/><circle class="p" cx="9.5" cy="9.5" r="2.2"/><circle class="p" cx="15" cy="13" r="1.8"/><circle class="p" cx="20" cy="16.5" r="1.4"/>'],
   },
   ono: ['Onomatopée', '<path d="M7 10a5.5 5.5 0 0 1 11 0c0 3.2-3.2 4.3-3.2 7a2.8 2.8 0 0 1-5.4 1"/><path d="M10 10.2a2.5 2.5 0 0 1 5 0c0 1.5-1.6 2-1.6 3"/>'],
 };
@@ -19649,6 +19679,13 @@ const PC_CERCLES = {
     motif: 'une', motif_txt: 'aiguë et descendante, enchaînée vite', ono: '« piu-piu-piu »' },
   'phylloscopus collybita': { strophe: 'longue', strophe_txt: '',
     motif: 'alterne', motif_txt: 'des notes sèches et nettes', ono: '« chiff-chaff »' },
+  // Choisis par Mathis le 2026-10-17 a l'ecoute (variantes A). Le fitis n'a pas encore
+  // d'onomatopee, et sa « petite fioriture » est omise expres : c'est la fin qui s'eteint qui
+  // le separe du pinson.
+  'fringilla coelebs': { strophe: 'moyenne', strophe_txt: 'serrée, reprise après une longue pause',
+    motif: 'fioriture', motif_txt: 'des notes qui descendent de plus en plus vite', ono: '« ti-ti-ti-tiju »' },
+  'phylloscopus trochilus': { strophe: 'moyenne', strophe_txt: '',
+    motif: 'siffle', motif_txt: 'part de l\'aigu et s\'essouffle', ono: null },
 };
 // Masquer les cercles : un choix qui suit la personne d'une question et d'une etape a l'autre
 const PC_CLE_CERCLES = 'pc-cercles-masques';
@@ -19659,7 +19696,9 @@ const PC_CLE_CERCLES = 'pc-cercles-masques';
 let _pcCerclesCaches = (() => { try{ return localStorage.getItem(PC_CLE_CERCLES) === '1'; }catch(_){ return false; } })();
 const _pcCerclesMasques = () => _pcCerclesCaches;
 function _pcCerclesHtml(sci){
-  const c = PC_CERCLES[sci]; if(!c) return '';
+  // Un oiseau pas encore decrit garde trois places vides, comme l'onomatopee absente de la
+  // bleue : sans elles, sa barre n'aurait pas la meme forme que ses voisines.
+  const c = PC_CERCLES[sci]; if(!c) return '<span class="pc-cercles">' + '<span class="pc-cercle vide" aria-hidden="true"></span>'.repeat(3) + '</span>';
   // Le texte passe par data-tip, l'infobulle de toute l'appli (curseur « ? », un quart de seconde)
   const un = (classe, [nom, dessin], texte) => { const t = texte ? nom + ' : ' + texte : nom; return `<span class="pc-cercle ${classe}" data-tip="${esc(t)}" aria-label="${esc(t)}" role="img"><svg viewBox="0 0 24 24" aria-hidden="true">${dessin}</svg></span>`; };
   return `<span class="pc-cercles">${un('pc-c-strophe', PC_CERCLES_DESSINS.strophe[c.strophe], c.strophe_txt)}${un('pc-c-motif', PC_CERCLES_DESSINS.motif[c.motif], c.motif_txt)}${
@@ -19691,7 +19730,10 @@ const PC_PAUSE_SUITE_MS = 2000;
 // vue : 'liste' (les parcours en cartes), 'chemin' (un parcours ouvert) ou 'entr' (la page d'un
 // mode d'entrainement, mode dans _pc.mode). selection : l'etape dont la bulle est ouverte sur le
 // chemin (null = celle du moment).
-const _pc = { vue: 'liste', selection: null, partie: null, mode: null };
+// parcours : la cle du parcours ouvert sur le chemin. Une partie garde le sien (partie.P) : changer
+// de parcours pendant une partie ne doit pas ecrire ses etoiles ailleurs.
+const _pc = { vue: 'liste', selection: null, partie: null, mode: null, parcours: 'mesanges' };
+const _pcP = () => _pcParcoursDe(_pc.parcours);
 // Bouton de lecture : variante D « anneau qui avance », choisie par Mathis le 2026-10-16
 // (notes-privees/maquettes/quiz-visuel/pause.html). L'ancienne pause, deux bordures de 6 px
 // ecartees de 4 px, paraissait « bizarre ». Le triangle est place sur son centre de gravite :
@@ -19718,7 +19760,9 @@ const PC_GENRE_ICO = {
   epreuve: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>',
 };
 const _pcGenre = et => et.epreuve ? 'epreuve' : et.type;
-let _pcChants = null;   // data/parcours-mesanges.json, lu au premier lancement d'une etape
+// Un fichier de chants par parcours (champ chants), lu au premier lancement d'une etape. Un
+// cache par fichier : un echec sur l'un ne bloque pas les autres.
+const _pcChants = {};
 
 // ---------- Entrainement (qg#56) ----------
 // Quatre modes de 10 manches, a part des parcours, avec les oiseaux qu'on choisit, debloques ou
@@ -19742,6 +19786,7 @@ const PC_ENTR_ICO = {
   lacunes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>',
 };
 // Les oiseaux qu'on peut choisir : ceux des parcours dont Mathis a trie les chants a l'oreille.
+// Pas encore ceux de « Phrases qui degringolent », dont quatre oiseaux n'ont pas ete ecoutes.
 // Ceux des parcours « Bientot » etaient montres grises un par un ; a 48, une ligne les remplace
 // (Mathis le 2026-10-17).
 const PC_ENTR_ESPECES = PARCOURS_MESANGES.especes;
@@ -19753,9 +19798,9 @@ function _pcEntrChoix(){
   return [...PC_ENTR_ESPECES];
 }
 function _pcEntrGarderChoix(liste){ try{ localStorage.setItem('mb-entr-oiseaux', JSON.stringify(liste)); }catch(_){} }
-// Au plus 5 noms proposes, dont le bon. Un parcours n'a jamais plus de 5 oiseaux : il les
-// propose tous, comme avant.
-const _pcChoixNoms = (especes, cible) => _pcMelanger([cible, ..._pcMelanger(especes.filter(s => s !== cible)).slice(0, PC_NOMS_MAX - 1)]);
+// Au plus max noms proposes (5 par defaut), dont le bon. Un parcours passe le nombre de ses
+// oiseaux en jeu, six pour « Phrases qui degringolent » : il les propose tous.
+const _pcChoixNoms = (especes, cible, max = PC_NOMS_MAX) => _pcMelanger([cible, ..._pcMelanger(especes.filter(s => s !== cible)).slice(0, max - 1)]);
 
 // Les reponses, parcours et entrainement compris, pour les points faibles : par espece
 // [entendue, ratee], par paire « a|b » le nombre de fois ou a a ete pris pour b, et les
@@ -20037,27 +20082,28 @@ function _pcEntrFin(box, p){
 const _pcSeuil = et => Math.ceil(et.q * 0.8);
 const _pcNomFr = sci => FR_NAMES[sci] || sci;
 const _pcMelanger = arr => arr.map(v => [Math.random(), v]).sort((a, b) => a[0] - b[0]).map(v => v[1]);
-function _pcScores(){
-  try{ const s = JSON.parse(localStorage.getItem('mb-parcours-' + PARCOURS_MESANGES.cle) || '{}'); return Array.isArray(s.best) ? s.best : []; }
+// P : le parcours, par defaut celui ouvert sur le chemin.
+function _pcScores(P = _pcP()){
+  try{ const s = JSON.parse(localStorage.getItem('mb-parcours-' + P.cle) || '{}'); return Array.isArray(s.best) ? s.best : []; }
   catch(_){ return []; }
 }
-function _pcEnregistrerScore(i, score){
-  const best = _pcScores();
+function _pcEnregistrerScore(P, i, score){
+  const best = _pcScores(P);
   if(best[i] != null && best[i] >= score) return;
   best[i] = score;
-  try{ localStorage.setItem('mb-parcours-' + PARCOURS_MESANGES.cle, JSON.stringify({ best })); }catch(_){}
+  try{ localStorage.setItem('mb-parcours-' + P.cle, JSON.stringify({ best })); }catch(_){}
 }
-const _pcReussie = (i, best) => best[i] != null && best[i] >= _pcSeuil(PARCOURS_MESANGES.etapes[i]);
+const _pcReussie = (i, best, P = _pcP()) => best[i] != null && best[i] >= _pcSeuil(P.etapes[i]);
 // Etoiles (Mathis le 2026-10-16) : 8, 9, 10 sur 10 donnent 1, 2, 3 ; a l'epreuve, 12, 14, 15
 // sur 15. Soit une etoile au seuil de passage, deux pour une seule erreur, trois sans faute.
 const PC_ETOILES_MAX = 3;
 const _pcEtoiles = (et, score) => score == null || score < _pcSeuil(et) ? 0 : score >= et.q ? 3 : score >= et.q - 1 ? 2 : 1;
-const _pcTotalEtoiles = best => PARCOURS_MESANGES.etapes.reduce((t, et, i) => t + _pcEtoiles(et, best[i]), 0);
+const _pcTotalEtoiles = (best, P = _pcP()) => P.etapes.reduce((t, et, i) => t + _pcEtoiles(et, best[i]), 0);
 const _pcEtoilesHTML = n => `<span class="pc-etoiles">${Array.from({ length: PC_ETOILES_MAX }, (_, k) => `<span class="${k < n ? 'pleine' : 'vide'}">${PC_ICO.etoile}</span>`).join('')}</span>`;
 const _pcOuverte = (i, best) => i === 0 || _pcReussie(i - 1, best);
 // L'etape a jouer : la premiere ouverte et pas encore reussie, sinon la derniere.
 function _pcEtapeDuMoment(best){
-  const et = PARCOURS_MESANGES.etapes;
+  const et = _pcP().etapes;
   for(let i = 0; i < et.length; i++) if(_pcOuverte(i, best) && !_pcReussie(i, best)) return i;
   return et.length - 1;
 }
@@ -20107,16 +20153,18 @@ const _pcRonds = especes => `<span class="pc-ronds" aria-hidden="true">${especes
 // milieu de l'ecran (« trop de blanc vide », Mathis). L'entrainement en boites comme celles de
 // Ma liste, les parcours en lignes comme son tableau des especes.
 function _pcRenderListe(box){
-  const P = PARCOURS_MESANGES, n = P.etapes.length, best = _pcScores();
-  const reussies = P.etapes.filter((_, i) => _pcReussie(i, best)).length;
-  const etoiles = _pcTotalEtoiles(best), max = n * PC_ETOILES_MAX;
-  const etapesTxt = `${reussies} ${reussies > 1 ? 'étapes' : 'étape'} sur ${n}`;
-  const ouvert = `<button type="button" class="pc-ligne ouvert" data-pc-ouvrir aria-label="${esc(P.titre)} : ${etapesTxt}, ${etoiles} ${etoiles > 1 ? 'étoiles' : 'étoile'} sur ${max}">
+  const ouvert = PARCOURS_OUVERTS.map(P => {
+    const n = P.etapes.length, best = _pcScores(P);
+    const reussies = P.etapes.filter((_, i) => _pcReussie(i, best, P)).length;
+    const etoiles = _pcTotalEtoiles(best, P), max = n * PC_ETOILES_MAX;
+    const etapesTxt = `${reussies} ${reussies > 1 ? 'étapes' : 'étape'} sur ${n}`;
+    return `<button type="button" class="pc-ligne ouvert" data-pc-ouvrir="${P.cle}" aria-label="${esc(P.titre)} : ${etapesTxt}, ${etoiles} ${etoiles > 1 ? 'étoiles' : 'étoile'} sur ${max}">
       ${_pcRonds(P.especes)}
       <span class="pc-ligne-nom">${esc(P.titre)}</span>
       <span class="pc-ligne-avance"><span class="pc-barre"><i style="width:${(reussies / n * 100).toFixed(1)}%"></i></span>${reussies} sur ${n}</span>
       <span class="pc-compte">${PC_ICO.etoile}<b>${etoiles}</b>/${max}</span>
     </button>`;
+  }).join('');
   const bientot = PARCOURS_BIENTOT.map(b => `<div class="pc-ligne ferme">
       ${_pcRonds(b.especes)}
       <span class="pc-ligne-nom">${esc(b.titre)}</span>
@@ -20126,7 +20174,7 @@ function _pcRenderListe(box){
   box.innerHTML = `<div class="pc-accueil">
     ${_pcEntrSectionHTML()}
     <section class="pc-bloc" aria-labelledby="pcParcoursTitre">
-      <h3 class="bloc-titre" id="pcParcoursTitre">Parcours <span class="bloc-titre-note">· 1 ouvert, ${PARCOURS_BIENTOT.length} à venir</span></h3>
+      <h3 class="bloc-titre" id="pcParcoursTitre">Parcours <span class="bloc-titre-note">· ${PARCOURS_OUVERTS.length} ${PARCOURS_OUVERTS.length > 1 ? 'ouverts' : 'ouvert'}, ${PARCOURS_BIENTOT.length} à venir</span></h3>
       <div class="pc-tableau">
         <div class="pc-ligne pc-tableau-th" aria-hidden="true"><span>Oiseaux</span><span>Parcours</span><span class="pc-ligne-avance">Avancée</span><span>Étoiles</span></div>
         ${ouvert}${bientot}
@@ -20135,7 +20183,7 @@ function _pcRenderListe(box){
   </div>`;
 }
 function _pcRenderChemin(box){
-  const P = PARCOURS_MESANGES, best = _pcScores();
+  const P = _pcP(), best = _pcScores();
   const etoiles = _pcTotalEtoiles(best), max = P.etapes.length * PC_ETOILES_MAX;
   box.innerHTML = `<div class="pc-parcours">
     <button type="button" class="pc-retour" data-pc-liste>${PC_ICO.retour}Tous les parcours</button>
@@ -20154,7 +20202,7 @@ const PC_R = 32, PC_R_ICI = 41; // rayons des ronds : 64 px, 82 px pour l'etape 
 function _pcDessinerChemin(focus){
   const box = document.getElementById('pcChemin'); if(!box) return;
   const W = box.clientWidth; if(!W) return;   // onglet masque : renderQuizInit redessine a l'affichage
-  const et = PARCOURS_MESANGES.etapes, best = _pcScores(), dernier = et.length - 1;
+  const et = _pcP().etapes, best = _pcScores(), dernier = et.length - 1;
   const fini = et.every((_, i) => _pcReussie(i, best));
   // Parcours fini : plus d'etape en cours, donc pas d'anneau orange, et tout le trait est plein.
   const ici = fini ? -1 : _pcEtapeDuMoment(best);
@@ -20189,7 +20237,8 @@ function _pcDessinerChemin(focus){
     if(couvre) by = Math.max(...pts.map((p, i) => p[1] + bas(i))) + 14;
   } else {
     // Au telephone, il descend en zigzag, et les etapes qui suivent la bulle lui font la place.
-    const S = 118, amp = Math.min(W * 0.26, 150), f = [0, .7, 1, .7, 0, -.7, -1];
+    // f : l'ecart au centre de chaque etape ; la huitieme (parcours a six oiseaux) repart vers le centre.
+    const S = 118, amp = Math.min(W * 0.26, 150), f = [0, .7, 1, .7, 0, -.7, -1, -.7];
     const ecart = bhMax + 28;
     pts = et.map((_, i) => [Math.round(W / 2 + (f[i] || 0) * amp), 60 + i * S + (i > sel ? ecart : 0)]);
     by = pts[sel][1] + bas(sel) + 14;
@@ -20226,7 +20275,7 @@ function _pcDessinerChemin(focus){
 // Bulle d'une etape : titre, genre, oiseaux, etoiles et Jouer. Une etape fermee montre aussi sa
 // bulle, avec ce qui l'ouvrira a la place du bouton.
 function _pcBulleHTML(i, best, s){
-  const P = PARCOURS_MESANGES, et = P.etapes, e = et[i];
+  const P = _pcP(), et = P.etapes, e = et[i];
   // A une etape qui ajoute un oiseau, le nouveau est entoure d'accent.
   const nouvelle = (i > 0 && e.n > et[i - 1].n) ? e.n - 1 : -1;
   const oiseaux = P.especes.slice(0, e.n).map((sci, j) => {
@@ -20308,12 +20357,13 @@ async function _pcSons(box, especes, retour){
   // 2026-10-16, et non plus des 8 chants les plus recents de xeno-canto : sur ces 40-la, des
   // oiseaux du parcours chantaient en fond, et certains venaient de Coree ou du Maroc
   // (docs/refonte-quiz.md). Le fichier se refait avec outils/build/chants-gardes.mjs.
-  if(!_pcChants){
-    try{ _pcChants = await (await fetch('data/parcours-mesanges.json?v=20261016')).json(); }
-    catch(_){ _pcChants = null; }
+  const fichiers = PARCOURS_OUVERTS.filter(P => P.especes.some(sci => especes.includes(sci))).map(P => P.chants);
+  for(const f of fichiers){
+    if(_pcChants[f]) continue;
+    try{ _pcChants[f] = await (await fetch(f)).json(); }catch(_){}
   }
   const sons = {};
-  for(const sci of especes) sons[sci] = (_pcChants && _pcChants[sci]) || [];
+  for(const sci of especes) sons[sci] = fichiers.map(f => _pcChants[f]?.[sci]).find(l => l?.length) || [];
   const sansSon = especes.filter(sci => !sons[sci].length);
   if(sansSon.length){
     box.innerHTML = `<p class="help pc-attente">Impossible de charger les chants (${esc(sansSon.map(_pcNomFr).join(', '))}). Vérifie ta connexion et réessaie.</p><div class="pc-fin-btns"><button type="button" class="btn ghost" data-pc-retour>${esc(retour)}</button></div>`;
@@ -20323,14 +20373,14 @@ async function _pcSons(box, especes, retour){
 }
 async function _pcLancer(i){
   const box = document.getElementById('pcParcours'); if(!box) return;
-  const et = PARCOURS_MESANGES.etapes[i];
-  const especes = PARCOURS_MESANGES.especes.slice(0, et.n);
+  const P = _pcP(), et = P.etapes[i];
+  const especes = P.especes.slice(0, et.n);
   const sons = await _pcSons(box, especes, 'Retour au parcours'); if(!sons) return;
   const cibles = _pcCibles(especes, et.q);
   let types = cibles.map(() => et.type);
   if(et.type === 'melange') types = _pcMelanger(cibles.map((_, k) => k < Math.ceil(et.q / 2) ? 'nom' : 'chant'));
   _pc.partie = {
-    etape: i, especes, sons, cur: 0, bonnes: 0, repondu: false,
+    P, etape: i, especes, sons, cur: 0, bonnes: 0, repondu: false,
     questions: cibles.map((cible, k) => ({ cible, type: types[k] })),
     confusions: [], utilises: new Set(), enregistreurs: new Map(), resultats: [],
   };
@@ -20419,10 +20469,12 @@ function _pcQuestion(){
     // maquette B, essayees le 2026-10-16, ont ete jugees « bof » par Mathis le jour meme.
     let reponses, cercles = false;
     if(q.type === 'nom'){
-      q.choix = _pcChoixNoms(p.especes, q.cible);
+      // Dans un parcours, tous les oiseaux en jeu sont proposes, six compris : « Un chant, 6 noms »
+      // doit en montrer six. L'entrainement s'arrete a 5.
+      q.choix = _pcChoixNoms(p.especes, q.cible, p.kind === 'entr' ? PC_NOMS_MAX : p.especes.length);
       // Cercles d'indices : pas dans les etapes marquees sansCercles, ni pour des oiseaux qui
       // n'en ont pas. Masques a la demande, par une simple classe : re-rendre couperait le chant.
-      const etape = p.kind === 'entr' ? null : PARCOURS_MESANGES.etapes[p.etape];
+      const etape = p.kind === 'entr' ? null : p.P.etapes[p.etape];
       cercles = !etape?.sansCercles && q.choix.some(sci => PC_CERCLES[sci]);
       reponses = `<div class="pc-reponses${cercles && _pcCerclesMasques() ? ' sans-cercles' : ''}" id="pcChoix">
         ${q.choix.map((sci, k) => `<button type="button" class="pc-reponse" data-pc-choix="${k}"><span class="pc-vign" data-pc-vign="${esc(sci)}"></span><span class="pc-reponse-nom">${esc(_pcNomFr(sci))}</span>${cercles ? _pcCerclesHtml(sci) : ''}</button>`).join('')}
@@ -20638,8 +20690,8 @@ function _pcFin(){
   _pcLibererSons();
   // L'entrainement n'ecrit jamais dans le parcours : ni score, ni etoiles, ni etape ouverte.
   if(p.kind === 'entr'){ _pcEntrFin(box, p); return; }
-  const et = PARCOURS_MESANGES.etapes, e = et[p.etape];
-  _pcEnregistrerScore(p.etape, p.bonnes);
+  const et = p.P.etapes, e = et[p.etape];
+  _pcEnregistrerScore(p.P, p.etape, p.bonnes);
   const ok = p.bonnes >= _pcSeuil(e);
   // Les etoiles de CETTE partie, pas la meilleure : on voit ce qu'on vient de gagner. Le chemin,
   // lui, garde la meilleure.
@@ -20668,8 +20720,8 @@ document.addEventListener('click', e => {
   if(onglet && onglet.dataset.view !== 'quiz'){ _pcCouperSons(); return; }
   if(!e.target.closest('#pcParcours')) return;
   // Le focus suit l'element touche, que le nouveau dessin remplace.
-  const ouvrir = e.target.closest('[data-pc-ouvrir]'); if(ouvrir){ _pc.vue = 'chemin'; _pc.selection = null; _parcoursRender(); document.querySelector('#pcParcours .pc-retour')?.focus(); return; }
-  const liste = e.target.closest('[data-pc-liste]'); if(liste){ _pc.vue = 'liste'; _parcoursRender(); document.querySelector('#pcParcours [data-pc-ouvrir]')?.focus(); return; }
+  const ouvrir = e.target.closest('[data-pc-ouvrir]'); if(ouvrir){ _pc.parcours = _pcParcoursDe(ouvrir.dataset.pcOuvrir).cle; _pc.vue = 'chemin'; _pc.selection = null; _parcoursRender(); document.querySelector('#pcParcours .pc-retour')?.focus(); return; }
+  const liste = e.target.closest('[data-pc-liste]'); if(liste){ _pc.vue = 'liste'; _parcoursRender(); document.querySelector(`#pcParcours [data-pc-ouvrir="${_pc.parcours}"]`)?.focus(); return; }
   const etape = e.target.closest('[data-pc-etape]'); if(etape){ _pc.selection = +etape.dataset.pcEtape; _pcDessinerChemin(_pc.selection); return; }
   const jouer = e.target.closest('[data-pc-jouer]'); if(jouer){ _pcLancer(+jouer.dataset.pcJouer); return; }
   const retour = e.target.closest('[data-pc-retour]'); if(retour){ _pcLibererSons(); _pc.partie = null; _parcoursRender(); return; }

@@ -1576,7 +1576,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .pc-cad { position:absolute; right:-3px; bottom:-3px; width:24px; height:24px; border-radius:50%; display:grid; place-items:center; background:var(--surface); color:var(--ink-3); box-shadow:0 0 0 1px var(--line-2); }
   .pc-cad .pc-ico { width:13px; height:13px; }
   .pc-noeud .pc-etoiles { position:absolute; left:50%; top:calc(100% + 10px); transform:translateX(-50%); }
-  .pc-bulle { position:absolute; z-index:2; width:260px; max-width:100%; box-sizing:border-box; display:flex; flex-direction:column; gap:10px; padding:14px 16px 16px; background:var(--surface); border:1px solid var(--line-2); border-radius:14px; box-shadow:0 10px 30px rgba(0,0,0,.16); }
+  /* 292 px : six oiseaux de 36 px tiennent sur une ligne (parcours « Phrases qui degringolent ») */
+  .pc-bulle { position:absolute; z-index:2; width:292px; max-width:100%; box-sizing:border-box; display:flex; flex-direction:column; gap:10px; padding:14px 16px 16px; background:var(--surface); border:1px solid var(--line-2); border-radius:14px; box-shadow:0 10px 30px rgba(0,0,0,.16); }
   .pc-bulle::before { content:''; position:absolute; top:-8px; left:var(--fx, 50%); width:14px; height:14px; background:var(--surface); border-left:1px solid var(--line-2); border-top:1px solid var(--line-2); transform:translateX(-50%) rotate(45deg); }
   .pc-bulle-titre { font:600 19px/1.25 var(--titre); margin:0; }
   .pc-bulle-meta { font-size:14px; color:var(--ink-3); }

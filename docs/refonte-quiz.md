@@ -62,6 +62,27 @@ oiseaux gardés, 2026-10-17) : `node outils/build/chants-parcours.mjs phrases` a
 par espèce, tous en qualité A (choix de Mathis : pays voisins plutôt que qualité B, Espagne
 comprise), à écouter sur `http://localhost:8765/notes-privees/ecoute-chants-phrases/`.
 
+## Deuxième parcours : « Phrases qui dégringolent » (branché le 2026-10-17, v806)
+
+Mathis veut le voir avant d'avoir tout écouté, et une étape de plus pour le sixième oiseau.
+Ordre tranché par moi, même règle que les mésanges (courants et faciles à distinguer d'abord,
+chaque sosie après son modèle, le plus rare en dernier) : Pinson des arbres, Grimpereau des
+jardins, Rougequeue noir, Pouillot fitis, Rougequeue à front blanc, Grimpereau des bois.
+
+8 étapes : 2, 3, 4, 5 puis 6 noms, trouver le chant, le mélange, l'épreuve (15 questions). À six
+oiseaux, les six noms sont proposés (l'entraînement reste à 5 au plus).
+
+**Provisoire** : seuls le pinson (14 chants) et le fitis (15) sont écoutés ; les quatre autres
+jouent leurs 15 candidats. Quand Mathis colle le reste : le recopier dans
+`outils/build/chants-gardes.mjs` (parcours `phrases`), relancer
+`node outils/build/chants-gardes.mjs phrases`, et monter le `?v=` de `chants` dans
+`PARCOURS_PHRASES` (le cache des données survit aux mises en ligne). Ces oiseaux n'entrent dans
+l'entraînement qu'une fois écoutés.
+
+Indices : pinson et fitis seulement (variantes A, choisies le 2026-10-17), deux dessins de motif
+nouveaux, « Accélère puis fioriture » et « Sifflé qui descend », premiers jets. Les quatre autres
+gardent trois places vides.
+
 Ce que ça ne couvre pas : les cris. Idée retenue : une étape bonus à part sur chaque parcours,
 sur les cris des mêmes oiseaux. Ticket qg#65.
 
