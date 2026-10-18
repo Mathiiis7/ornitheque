@@ -463,6 +463,19 @@ service cloud.firestore {
         allow read: if isMember(leagueId) || isAdmin();
         allow write: if isSelf(uid) && isMember(leagueId);
       }
+
+      // La progression du nouveau quiz (parcours, reponses, paliers), pour qu elle suive le
+      // compte d un appareil a l autre (2026-10-18). Privee : seul son proprietaire la lit.
+      // Lecture sans condition de membre, expres : un ecouteur refuse ne se rejoue jamais, et
+      // celui-ci s ouvre au demarrage, avant le premier depot de liste. L ecriture, elle, attend
+      // d etre membre. Deux textes JSON bornes, et l heure de mise a jour.
+      match /quizProgress/{uid} {
+        allow read, delete: if isSelf(uid);
+        allow create, update: if isSelf(uid) && isMember(leagueId)
+          && hasOnlyKeys(['parcours', 'reponses', 'maj'])
+          && isBoundedString(request.resource.data.parcours, 0, 20000)
+          && isBoundedString(request.resource.data.reponses, 0, 200000);
+      }
     }
 
     // ============================================================

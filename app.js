@@ -9941,6 +9941,7 @@ function boot(){
   if(!myUid) return;              // s'abonne une fois la connexion prête
   if(unsub){ unsub(); unsub=null; }
   subscribe();
+  _pcSyncOuvrir();
 }
 
 /* ---------------- wire up ---------------- */
@@ -10099,6 +10100,8 @@ async function _enregistreListe(parsed, name){
     // « … enregistrement », la liste enregistree mais invisible (2026-09-28). Un membre qui
     // re-importe n'en a pas besoin : ses abonnements vivent deja.
     if(!iAmInLeague) subscribe();
+    // Meme raison pour la progression du quiz : son envoi etait refuse avant d'etre membre.
+    _pcSyncEnvoyer();
     // Le retour de Firestore vide #myStatus et repeint la page : la reussite ne laisse donc
     // aucune trace lisible. On l'annonce a part, avec le chiffre qui compte.
     annonce('Liste enregistrée : ' + parsed.species.size + ' espèces.');
@@ -10575,7 +10578,7 @@ $('#removeMineBtn').addEventListener('click',async()=>{
 // + commentaires + reactions + votes + requetes + quiz stats). Double confirmation.
 $('#rgpdDeleteAll')?.addEventListener('click', async ()=>{
   if(!myUid || !leagueId){ alert('Connexion requise.'); return; }
-  if(!confirm('⚠️ SUPPRESSION DÉFINITIVE\n\nCela va supprimer :\n• Ta fiche membre + life list\n• Tous tes messages tchat\n• Toutes tes photos\n• Tous tes commentaires\n• Toutes tes réactions emoji\n• Tous tes votes trophées\n• Toutes tes stats quiz\n\nAction IRRÉVERSIBLE. Continuer ?')) return;
+  if(!confirm('⚠️ SUPPRESSION DÉFINITIVE\n\nCela va supprimer :\n• Ta fiche membre + life list\n• Tous tes messages tchat\n• Toutes tes photos\n• Tous tes commentaires\n• Toutes tes réactions emoji\n• Tous tes votes trophées\n• Toutes tes stats quiz\n• Ta progression du quiz\n\nAction IRRÉVERSIBLE. Continuer ?')) return;
   if(!confirm('Vraiment sûr ? Dernière chance. Tape OK sur la prochaine boîte pour confirmer.')) return;
   const confirmTxt = prompt('Tape exactement "SUPPRIMER" pour confirmer la suppression définitive :');
   if(confirmTxt !== 'SUPPRIMER'){ alert('Suppression annulée (texte incorrect).'); return; }
@@ -10605,6 +10608,7 @@ $('#rgpdDeleteAll')?.addEventListener('click', async ()=>{
     }
     // Docs uniques : quizStats + member
     try{ await deleteDoc(doc(db,'leagues',leagueId,'quizStats',myUid)); totalDeleted++; }catch(_){}
+    try{ await deleteDoc(doc(db,'leagues',leagueId,'quizProgress',myUid)); totalDeleted++; }catch(_){}
     try{ await deleteDoc(doc(db,'leagues',leagueId,'members',myUid)); totalDeleted++; }catch(_){}
     // localStorage : wipe complet
     try{ Object.keys(localStorage).filter(k => k.startsWith('mb-')).forEach(k => localStorage.removeItem(k)); }catch(_){}
@@ -19906,9 +19910,8 @@ const _pcChoixNoms = (especes, cible, max = PC_NOMS_MAX) => _pcMelanger([cible, 
 
 // Les reponses, parcours et entrainement compris, pour les points faibles : par espece
 // [entendue, ratee], par paire « a|b » le nombre de fois ou a a ete pris pour b, et les
-// enregistrements deja entendus. Gardees dans le navigateur, comme le parcours : dans Firestore,
-// chaque reponse couterait des ecritures et une ligne de plus a la suppression RGPD ; les
-// statistiques du profil sont un autre ticket (qg#63).
+// enregistrements deja entendus. Gardees dans le navigateur, comme le parcours, et recopiees
+// dans une fiche privee du compte pour suivre d'un appareil a l'autre (voir _pcSyncOuvrir).
 // Pas 'mb-quiz-stats' : l'ancien quiz y range deja ses scores, sous une autre forme.
 const PC_STATS_CLE = 'mb-quiz-reponses';
 const PC_LACUNES_MIN = 20;    // reponses avant d'ouvrir les points faibles
@@ -19919,9 +19922,13 @@ const PC_LACUNES_PART = 7;    // manches sur ces oiseaux, les 3 autres sur le re
 // serie : par espece [serie en cours, record], pour les paliers (qg#58). Un champ a part : un
 // esp[sci] a quatre cases serait ecarte par le controle ci-dessous, et _pcLacunes le decoupe.
 function _pcStats(){
-  const st = { esp: {}, conf: {}, entendus: [], serie: {} };
   let s;
-  try{ s = JSON.parse(localStorage.getItem(PC_STATS_CLE) || '{}'); }catch(_){ return st; }
+  try{ s = JSON.parse(localStorage.getItem(PC_STATS_CLE) || '{}'); }catch(_){ s = null; }
+  return _pcStatsDe(s);
+}
+// Le meme controle sert a la copie du compte, qui arrive d'un autre appareil.
+function _pcStatsDe(s){
+  const st = { esp: {}, conf: {}, entendus: [], serie: {} };
   if(!s || typeof s !== 'object') return st;
   const nombre = n => Number.isFinite(n) && n >= 0;
   if(s.esp && typeof s.esp === 'object') for(const [sci, e] of Object.entries(s.esp)){
@@ -19939,7 +19946,137 @@ function _pcStats(){
   for(const [sci, [vus, rates]] of Object.entries(st.esp)) if(!st.serie[sci] && !rates) st.serie[sci] = [vus, vus];
   return st;
 }
-function _pcGarderStats(st){ _stockageEcrire(PC_STATS_CLE, JSON.stringify(st)); }
+function _pcGarderStats(st){ _stockageEcrire(PC_STATS_CLE, JSON.stringify(st)); _pcSyncMarquer(); }
+
+// ---- La progression suit le compte d'un appareil a l'autre (Mathis le 2026-10-18) ----
+// Avant, elle ne vivait que dans le navigateur : ce qui etait joue au telephone n'apparaissait
+// pas sur l'ordinateur. Elle est recopiee dans leagues/<ligue>/quizProgress/<uid>, une fiche que
+// seul son proprietaire lit (pas quizStats, que tous les membres lisent). Le navigateur reste la
+// reference : tant que les regles ne sont pas collees, ou hors connexion, rien ne change.
+//
+// Fusion : le meilleur des deux, case par case (meilleur score par etape, plus grand compte par
+// oiseau et par confusion, record de serie, enregistrements entendus des deux cotes). Jamais
+// une somme : refaire la meme fusion compterait deux fois les memes reponses. Le prix : quand
+// les deux appareils jouent le meme oiseau entre deux synchronisations, le plus petit des deux
+// comptes se perd. La serie en cours vient du cote qui a le plus entendu cet oiseau, donc en
+// pratique de celui qui l'a joue en dernier.
+//
+// Un ordinateur partage garde la progression du dernier compte : PC_SYNC_PROPRIO dit a qui elle
+// est. Pour un autre compte, elle est remplacee par la sienne, jamais fusionnee. Celle d'avant
+// ce changement, sans proprietaire, va au premier compte qui se synchronise.
+const PC_SYNC_PROPRIO = 'mb-quiz-proprio';
+// Envoi 15 s apres la derniere reponse : une partie de 10 manches part en une seule ecriture,
+// et tout de suite si l'on quitte la page.
+const PC_SYNC_ATTENTE_MS = 15000;
+const _pcSync = { pret: false, sale: false, minuteur: 0, distant: null, unsub: null };
+const _pcSyncDoc = () => doc(db, 'leagues', leagueId, 'quizProgress', myUid);
+function _pcSyncLocal(){
+  const parcours = {};
+  try{
+    for(const k of Object.keys(localStorage)) if(k.startsWith('mb-parcours-')){
+      try{ const s = JSON.parse(localStorage.getItem(k)); if(s && Array.isArray(s.best)) parcours[k.slice(12)] = s.best; }catch(_){}
+    }
+  }catch(_){}
+  return { parcours, reponses: _pcStats() };
+}
+function _pcSyncLire(d){
+  let parcours = {}, reponses = null;
+  try{ const p = JSON.parse(d.parcours || '{}'); if(p && typeof p === 'object') parcours = p; }catch(_){}
+  try{ reponses = JSON.parse(d.reponses || '{}'); }catch(_){}
+  for(const k of Object.keys(parcours)) if(!Array.isArray(parcours[k])) delete parcours[k];
+  return { parcours, reponses: _pcStatsDe(reponses) };
+}
+const _pcSyncVide = e => !Object.keys(e.parcours).length && !Object.keys(e.reponses.esp).length && !e.reponses.entendus.length;
+function _pcFusion(a, b){
+  const max = (x, y) => Math.max(Number.isFinite(x) ? x : 0, Number.isFinite(y) ? y : 0);
+  const parcours = {};
+  for(const cle of new Set([...Object.keys(a.parcours), ...Object.keys(b.parcours)])){
+    const pa = a.parcours[cle] || [], pb = b.parcours[cle] || [], best = [];
+    for(let i = 0; i < Math.max(pa.length, pb.length); i++){
+      const va = Number.isFinite(pa[i]) ? pa[i] : null, vb = Number.isFinite(pb[i]) ? pb[i] : null;
+      best[i] = va == null ? vb : vb == null ? va : Math.max(va, vb);
+    }
+    parcours[cle] = best;
+  }
+  const ra = a.reponses, rb = b.reponses, esp = {}, serie = {}, conf = {};
+  for(const sci of new Set([...Object.keys(ra.esp), ...Object.keys(rb.esp)])){
+    const ea = ra.esp[sci] || [0, 0], eb = rb.esp[sci] || [0, 0];
+    esp[sci] = [max(ea[0], eb[0]), max(ea[1], eb[1])];
+  }
+  for(const sci of new Set([...Object.keys(ra.serie), ...Object.keys(rb.serie)])){
+    const sa = ra.serie[sci], sb = rb.serie[sci];
+    const va = (ra.esp[sci] || [0])[0], vb = (rb.esp[sci] || [0])[0];
+    const cur = !sb ? sa[0] : !sa ? sb[0] : va > vb ? sa[0] : vb > va ? sb[0] : Math.max(sa[0], sb[0]);
+    serie[sci] = [cur, max(sa && sa[1], sb && sb[1])];
+  }
+  for(const c of new Set([...Object.keys(ra.conf), ...Object.keys(rb.conf)])) conf[c] = max(ra.conf[c], rb.conf[c]);
+  const entendus = [...new Set([...ra.entendus, ...rb.entendus])].sort();
+  return { parcours, reponses: { esp, conf, entendus, serie } };
+}
+// Pour comparer deux etats sans dependre de l'ordre des cles : sans cela, chaque demarrage
+// verrait une difference et reecrirait la fiche pour rien.
+function _pcSyncCanon(e){
+  if(!e) return '';
+  const trie = o => Object.fromEntries(Object.keys(o).sort().map(k => [k, o[k]]));
+  const r = e.reponses;
+  return JSON.stringify([trie(e.parcours), trie(r.esp), trie(r.conf), [...r.entendus].sort(), trie(r.serie)]);
+}
+function _pcSyncEcrireLocal(e){
+  try{
+    for(const k of Object.keys(localStorage)) if(k.startsWith('mb-parcours-') && !(k.slice(12) in e.parcours)) localStorage.removeItem(k);
+  }catch(_){}
+  for(const [cle, best] of Object.entries(e.parcours)) _stockageEcrire('mb-parcours-' + cle, JSON.stringify({ best }));
+  _stockageEcrire(PC_STATS_CLE, JSON.stringify(e.reponses));
+}
+function _pcSyncMarquer(){
+  if(!_pcSync.pret) return;
+  _pcSync.sale = true;
+  clearTimeout(_pcSync.minuteur);
+  _pcSync.minuteur = setTimeout(_pcSyncEnvoyer, PC_SYNC_ATTENTE_MS);
+}
+function _pcSyncEnvoyer(){
+  clearTimeout(_pcSync.minuteur);
+  if(!_pcSync.pret || !myUid || !leagueId) return;
+  // Fusionne avec la derniere copie recue : un autre appareil a pu jouer pendant que celui-ci
+  // restait ouvert, et ecrire l'etat local seul effacerait ce qu'il a fait.
+  const local = _pcSyncLocal(), e = _pcSync.distant ? _pcFusion(local, _pcSync.distant) : local;
+  _pcSync.sale = false;
+  if(_pcSyncVide(e) || _pcSyncCanon(e) === _pcSyncCanon(_pcSync.distant)) return;
+  const avant = _pcSync.distant;
+  _pcSync.distant = e;
+  // Refuse (pas encore membre de la ligue) : on reessaie a la prochaine reponse, ou juste apres
+  // le premier depot de liste.
+  setDoc(_pcSyncDoc(), { parcours: JSON.stringify(e.parcours), reponses: JSON.stringify(e.reponses), maj: serverTimestamp() })
+    .catch(() => { _pcSync.distant = avant; _pcSync.sale = true; });
+}
+function _pcSyncRecevoir(snap){
+  if(snap.metadata && snap.metadata.hasPendingWrites) return;   // l'echo de notre propre envoi
+  const distant = snap.exists() ? _pcSyncLire(snap.data()) : null;
+  let local;
+  if(!_pcSync.pret){
+    let proprio = null; try{ proprio = localStorage.getItem(PC_SYNC_PROPRIO); }catch(_){}
+    local = proprio && proprio !== myUid ? { parcours: {}, reponses: _pcStatsDe(null) } : _pcSyncLocal();
+    _stockageEcrire(PC_SYNC_PROPRIO, myUid);
+    _pcSync.pret = true;
+  } else local = _pcSyncLocal();
+  const e = distant ? _pcFusion(local, distant) : local;
+  _pcSync.distant = distant;
+  if(_pcSyncCanon(e) !== _pcSyncCanon(_pcSyncLocal())){
+    _pcSyncEcrireLocal(e);
+    // L'accueil du Quiz se redessine s'il est a l'ecran ; une partie en cours lit l'etat a
+    // chaque reponse et n'a pas besoin d'etre interrompue.
+    if(document.getElementById('viewQuiz')?.offsetParent && !_pc.partie) _parcoursRender();
+  }
+  if(!_pcSyncVide(e) && _pcSyncCanon(e) !== _pcSyncCanon(distant)) _pcSyncEnvoyer();
+}
+// Ouvert une fois par session, au demarrage : un seul document, le sien, donc une lecture a
+// l'ouverture et une par partie jouee sur un autre appareil. Refuse (regles pas encore collees),
+// il ne se rejoue pas : le navigateur reste la reference, comme avant.
+function _pcSyncOuvrir(){
+  if(_pcSync.unsub || !myUid || !leagueId) return;
+  try{ _pcSync.unsub = onSnapshot(_pcSyncDoc(), _pcSyncRecevoir, () => {}); }catch(_){}
+}
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden' && _pcSync.sale) _pcSyncEnvoyer(); });
 // Rend le palier gagne par cette reponse, ou 0. compte : la partie a assez d'oiseaux pour les
 // paliers (PC_PALIER_MIN_OISEAUX) ; sinon la reponse va dans la reussite et les confusions, mais
 // la serie ne bouge ni dans un sens ni dans l'autre.
@@ -20357,6 +20494,7 @@ function _pcEnregistrerScore(P, i, score){
   if(best[i] != null && best[i] >= score) return;
   best[i] = score;
   _stockageEcrire('mb-parcours-' + P.cle, JSON.stringify({ best }));
+  _pcSyncMarquer();
 }
 const _pcReussie = (i, best, P = _pcP()) => best[i] != null && best[i] >= _pcSeuil(P.etapes[i]);
 // Etoiles (Mathis le 2026-10-16) : 8, 9, 10 sur 10 donnent 1, 2, 3 ; a l'epreuve, 12, 14, 15
