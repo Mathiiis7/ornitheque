@@ -19620,8 +19620,8 @@ const PARCOURS_MESANGES = {
 // Groupe 2 de docs/groupes-chants.md, ouvert le 2026-10-17. Mathis garde les six oiseaux et
 // demande une etape de plus pour le sixieme. Ordre, meme regle que les mesanges : les courants
 // et faciles a distinguer d'abord, chaque sosie apres son modele, le plus rare en dernier.
-// Seuls le pinson et le fitis sont ecoutes ; les quatre autres jouent leurs 15 candidats en
-// attendant (outils/build/chants-gardes.mjs phrases).
+// Les six sont ecoutes : pinson et fitis le 2026-10-17, les quatre autres le 2026-10-18
+// (outils/build/chants-gardes.mjs phrases).
 const PARCOURS_PHRASES = {
   cle: 'phrases',
   titre: 'Phrases qui dégringolent',
@@ -19637,7 +19637,7 @@ const PARCOURS_PHRASES = {
     { titre: 'Le mélange', type: 'melange', n: 6, q: 10, sansCercles: true },
     { titre: 'L\'épreuve', type: 'nom', n: 6, q: 15, epreuve: true, sansCercles: true },
   ],
-  chants: 'data/parcours-phrases.json?v=20261017',
+  chants: 'data/parcours-phrases.json?v=20261018',
 };
 const PARCOURS_OUVERTS = [PARCOURS_MESANGES, PARCOURS_PHRASES];
 const _pcParcoursDe = cle => PARCOURS_OUVERTS.find(P => P.cle === cle) || PARCOURS_MESANGES;
@@ -19662,6 +19662,14 @@ const PC_CERCLES_DESSINS = {
     // a intervalles egaux en s'amenuisant, la fin qui s'eteint.
     fioriture: ['Accélère puis fioriture', '<circle class="p" cx="3" cy="5.5" r="2.1"/><circle class="p" cx="8" cy="8.5" r="2"/><circle class="p" cx="12" cy="11" r="1.8"/><circle class="p" cx="15.6" cy="13.2" r="1.6"/><path d="M18 14.8l1.6 4 2.4-6"/>'],
     siffle:  ['Sifflé qui descend', '<circle class="p" cx="4" cy="6" r="2.6"/><circle class="p" cx="9.5" cy="9.5" r="2.2"/><circle class="p" cx="15" cy="13" r="1.8"/><circle class="p" cx="20" cy="16.5" r="1.4"/>'],
+    // Les trois suivants, choisis par Mathis le 2026-10-18 (aucun des six ne convenait).
+    // Ritournelle : deux notes egales et appuyees, puis le petit tourbillon (grimpereau des jardins).
+    ritournelle: ['Une petite ritournelle', '<circle class="p" cx="3.5" cy="14.5" r="2.2"/><circle class="p" cx="8.7" cy="14.5" r="2.2"/><path d="M12 15.5C14.5 15.5 18.5 13 18.5 10 18.5 7.6 15 7.6 15 10.5 15 14 19 15.8 22 14.5"/>'],
+    // Question : des notes fines qui descendent en se serrant, puis une qui remonte (grimpereau
+    // des bois). Plus petites que celles du pinson : c'est le plus aigu du parcours.
+    question: ['Descend puis remonte', '<circle class="p" cx="3" cy="5.5" r="1.7"/><circle class="p" cx="7.4" cy="8.6" r="1.6"/><circle class="p" cx="11.2" cy="11.1" r="1.5"/><circle class="p" cx="14.4" cy="13" r="1.4"/><path d="M17.4 16.5q3.2.2 4.2-6"/>'],
+    // Hui : une note tenue qui monte, puis la meme note repetee plus bas (rougequeue a front blanc).
+    hui:     ['Une note tenue puis plus bas', '<path d="M2.5 11.5l5.5-4.5"/><circle class="p" cx="11.5" cy="15" r="2.2"/><circle class="p" cx="16" cy="15" r="2.2"/><circle class="p" cx="20.5" cy="15" r="2.2"/>'],
   },
   ono: ['Onomatopée', '<path d="M7 10a5.5 5.5 0 0 1 11 0c0 3.2-3.2 4.3-3.2 7a2.8 2.8 0 0 1-5.4 1"/><path d="M10 10.2a2.5 2.5 0 0 1 5 0c0 1.5-1.6 2-1.6 3"/>'],
 };
@@ -19679,13 +19687,22 @@ const PC_CERCLES = {
     motif: 'une', motif_txt: 'aiguë et descendante, enchaînée vite', ono: '« piu-piu-piu »' },
   'phylloscopus collybita': { strophe: 'longue', strophe_txt: '',
     motif: 'alterne', motif_txt: 'des notes sèches et nettes', ono: '« chiff-chaff »' },
-  // Choisis par Mathis le 2026-10-17 a l'ecoute (variantes A). Le fitis n'a pas encore
-  // d'onomatopee, et sa « petite fioriture » est omise expres : c'est la fin qui s'eteint qui
-  // le separe du pinson.
+  // Choisis par Mathis le 2026-10-17 a l'ecoute (variantes A). La « petite fioriture » du fitis
+  // est omise expres : c'est la fin qui s'eteint qui le separe du pinson.
   'fringilla coelebs': { strophe: 'moyenne', strophe_txt: 'serrée, reprise après une longue pause',
     motif: 'fioriture', motif_txt: 'des notes qui descendent de plus en plus vite', ono: '« ti-ti-ti-tiju »' },
   'phylloscopus trochilus': { strophe: 'moyenne', strophe_txt: '',
-    motif: 'siffle', motif_txt: 'part de l\'aigu et s\'essouffle', ono: null },
+    motif: 'siffle', motif_txt: 'part de l\'aigu et s\'essouffle', ono: '« si-si-si-sui-sui-suiu »' },
+  // Les quatre suivants et l'onomatopee du fitis : proposes d'apres oiseaux.net et les guides,
+  // verifies et retouches par Mathis a l'ecoute le 2026-10-18 ; les textes reprennent ses mots.
+  'certhia brachydactyla': { strophe: 'courte', strophe_txt: 'toujours la même, reprise souvent',
+    motif: 'ritournelle', motif_txt: 'quelques notes sèches sur un rythme sautillant, puis un petit tourbillon', ono: '« tit-tit-titeroi-tit »' },
+  'certhia familiaris': { strophe: 'moyenne', strophe_txt: 's\'estompe à la fin',
+    motif: 'question', motif_txt: 'très aiguës et fines, elles descendent en se serrant ; souvent une petite question à la fin', ono: '« sri-sri-sisisisi-tui »' },
+  'phoenicurus ochruros': { strophe: 'moyenne', strophe_txt: 'en deux temps, séparés par un petit blanc',
+    motif: 'une', motif_txt: 'sifflée très vite, avec un grésillement de papier froissé', ono: '« tu-tu-tu-tu… krrchh »' },
+  'phoenicurus phoenicurus': { strophe: 'moyenne', strophe_txt: 'la fin change d\'une strophe à l\'autre',
+    motif: 'hui', motif_txt: 'un « hui » qui monte, puis deux ou trois notes plus basses', ono: '« hui-tru-tru-tru »' },
 };
 // Masquer les cercles : un choix qui suit la personne d'une question et d'une etape a l'autre
 const PC_CLE_CERCLES = 'pc-cercles-masques';
@@ -19780,11 +19797,11 @@ const PC_ENTR_ICO = {
   ecrire: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>',
   lacunes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>',
 };
-// Les oiseaux qu'on peut choisir : ceux des parcours dont Mathis a trie les chants a l'oreille.
-// Pas encore ceux de « Phrases qui degringolent », dont quatre oiseaux n'ont pas ete ecoutes.
+// Les oiseaux qu'on peut choisir : ceux des parcours dont Mathis a trie les chants a l'oreille,
+// tous ouverts depuis que les six de « Phrases qui degringolent » sont ecoutes (2026-10-18).
 // Ceux des parcours « Bientot » etaient montres grises un par un ; a 48, une ligne les remplace
 // (Mathis le 2026-10-17).
-const PC_ENTR_ESPECES = PARCOURS_MESANGES.especes;
+const PC_ENTR_ESPECES = PARCOURS_OUVERTS.flatMap(P => P.especes);
 function _pcEntrChoix(){
   try{
     const s = JSON.parse(localStorage.getItem('mb-entr-oiseaux') || 'null');

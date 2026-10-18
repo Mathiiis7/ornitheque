@@ -1,3 +1,17 @@
+# EN LOCAL le 2026-10-18, PAS POUSSÉ : parcours 2 complet, ses six oiseaux écoutés (v808, app.js?v=382)
+- Sélection des 4 derniers (grimpereaux, rougequeues) collée le 18 et recopiée dans outils/build/chants-gardes.mjs ; data/parcours-phrases.json?v=20261018. Son texte collé ne gardait qu'un chant du pinson et aucun du fitis (autre navigateur) : leurs listes du 17 restent.
+- Indices (PC_CERCLES) des 4 + onomatopée du fitis, d'après les propositions préremplies (oiseaux.net) qu'il a vérifiées. Trois nouveaux dessins de motif choisis par lui : ritournelle (grimpereau des jardins), question (grimpereau des bois), hui (rougequeue à front blanc). Le rougequeue noir reprend « une seule note répétée ».
+- Entraînement : les 11 oiseaux des deux parcours (PC_ENTR_ESPECES = tous les parcours ouverts).
+- Vérifié sur la démo, ordinateur et téléphone. RESTE : son avis sur les 3 nouveaux dessins (+ les 2 du 17), puis pousser.
+- Ouvert : ordre et noms de tous les parcours (demande de Mathis, à réfléchir).
+---
+# EN LOCAL le 2026-10-17, PAS POUSSÉ : cercles d'indices, réécouter, numéros des chants (v805, app.js?v=379)
+- Commits 5c7426eb, 8bfc073e, 6dae1a20. Cercles DANS chaque réponse « Quel oiseau chante ? » : strophe (courte/moyenne/longue), motif (une note / deux hauteurs / petits pics / aigu puis trille), onomatopée (oreille, pas pour la bleue). Couleurs « sous-bois », textes de Mathis au survol (PC_CERCLES, sans répéter le titre). Absents des étapes 6 et 7 ; « Masquer / Afficher les indices », état gardé en mémoire de page.
+- « Réécouter (n) » : menu dans l'entête de la question, et liste sur les écrans de fin. Chaque chant affiche « Chant n° XC <id> · <enregistreur> » en gris clair : Mathis signalera un son bizarre par ce numéro.
+- Boutons à anneau partout (trois chants de « Nom vers chant » / étape 5, Réécouter) ; anciens ronds orange retirés.
+- Vérifié sur la démo (1300 clair, 375 sombre), 11 bancs CONFORME. Reste : qu'il revérifie « Afficher les indices » chez lui (cause probable non prouvée : écriture localStorage qui échouait), puis pousser.
+- Maquettes de cette conversation dans notes-privees/maquettes/criteres/ (remarques.html, cercles.html, sonos/). Vocabulaire fixé : strophe > motif > note. À reporter : « le pouillot alterne entre deux hauteurs » dans docs/criteres-chants.md (corrigé seulement dans criteres/index.html).
+---
 # EN LOCAL le 2026-10-17, PAS POUSSÉ : accueil du quiz refait en tableau (v799, app.js?v=373)
 - Maquette C choisie (notes-privees/maquettes/quiz-accueil-2/) : collé en haut et pleine largeur comme les autres pages, phrase d'intro, entraînement en boîtes de Ma liste, parcours en lignes comme son tableau. Le chemin et les parties restent centrés et agrandis.
 - 10 familles « Bientôt » ajoutées pour voir la place (fausses, assumé par Mathis). Dans l'entraînement, leurs oiseaux grisés sont remplacés par une ligne.

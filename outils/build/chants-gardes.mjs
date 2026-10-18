@@ -32,10 +32,12 @@ const PARCOURS = {
   phrases: { candidats: 'ecoute-chants-phrases', sortie: 'parcours-phrases.json', gardes: {
     'fringilla coelebs': [1152195, 1095018, 1088506, 919298, 906507, 896964, 855470, 817764, 792717, 708596, 541588, 528662, 483107, 479629],
     'phylloscopus trochilus': [989893, 908606, 870833, 699178, 647254, 635230, 464496, 367579, 365751, 298817, 161903, 79028, 468273, 1153230, 1140185],
-    'certhia brachydactyla': null,
-    'certhia familiaris': null,
-    'phoenicurus ochruros': null,
-    'phoenicurus phoenicurus': null,
+    // Les quatre suivants : selection du 2026-10-18. Son texte colle ce jour-la ne gardait qu'un
+    // chant du pinson et aucun du fitis (autre etat du navigateur) : leurs listes du 17 restent.
+    'certhia brachydactyla': [1152949, 1073542, 917422, 884077, 879424, 804603, 789334, 637242, 539347, 533321, 1148675],
+    'certhia familiaris': [627940, 626692, 543055, 140084, 893580, 807845, 636121, 591238, 570594, 320305, 307212, 64859, 1107503, 602930, 303238],
+    'phoenicurus ochruros': [895998, 696070, 688061, 503962, 335144, 237537, 143380, 141179, 844325, 815660, 718273, 374793, 55316],
+    'phoenicurus phoenicurus': [1048983, 937923, 900653, 809653, 560329, 551719, 549562, 244703, 800464, 1102129, 998031, 994185, 904746],
   } },
 };
 const nom = process.argv[2] || 'mesanges';
