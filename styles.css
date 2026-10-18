@@ -1258,12 +1258,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .xa-hdr-link:hover { text-decoration:underline; }
   /* Container principal : play + spectrogramme + temps */
   .xa-player { display:flex; align-items:center; gap:10px; padding:8px 10px; background:var(--surface-2); border:1px solid var(--line); border-radius:12px; }
-  .xa-play { flex:none; width:44px; height:44px; border-radius:50%; border:none; background:var(--accent); color:#fff; font-size:16px; cursor:pointer; display:grid; place-items:center; transition:transform .1s, background .1s; box-shadow:0 2px 6px color-mix(in srgb, var(--accent) 30%, transparent); }
-  .xa-play:hover { transform:scale(1.05); }
-  .xa-play:active { transform:scale(.96); }
-  .xa-play.on { background:var(--accent-2); box-shadow:0 2px 6px color-mix(in srgb, var(--accent-2) 30%, transparent); }
-  .xa-play.loading { animation:xa-spin 1.2s linear infinite; background:var(--ink-3); }
-  @keyframes xa-spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+  /* Le bouton est celui du quiz (.pc-lecture, anneau qui avance) depuis le 2026-10-18. Pendant
+     le chargement, l'anneau de fond respire : un clic annule. */
+  .xa-player .pc-lecture.loading .pc-anneau-fond { animation:xa-charge 1s ease-in-out infinite alternate; }
+  @keyframes xa-charge { from { opacity:1; } to { opacity:.35; } }
   .xa-body { flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
   .xa-bar { position:relative; height:114px; border-radius:6px; overflow:hidden; background:var(--surface-3); cursor:pointer; }
   /* Sono : image entiere de xeno-canto etiree pour remplir toute la bar (pleine hauteur
@@ -1286,7 +1284,6 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .xa-more[open] summary { color:var(--accent-ink); }
   .xa-more-list { margin-top:6px; display:flex; flex-direction:column; gap:8px; }
   .xa-more .xa-player { padding:6px 8px; }
-  .xa-more .xa-play { width:36px; height:36px; font-size:13px; }
   .xa-more .xa-bar { height:96px; }
   /* Espace visuel entre les blocs Chant et Cri (par-dessus la marge existante) */
   .xa-block { padding-bottom:14px; border-bottom:2px solid var(--line-2); }

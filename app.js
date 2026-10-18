@@ -12146,10 +12146,10 @@ function _renderSpeciesAudioBlock(container, label, primaryId, list, apresLabel 
     const total = (m||0)*60 + (ss||0);
     return total > 20 ? '0:20' : s;
   };
-  const playerHtml = (r, audioId) => {
+  const playerHtml = (r, audioId, taille = 'petit') => {
     const sono = r.sono ? `<img class="xa-bar-sono" src="${esc(r.sono)}" alt="Spectrogramme" onerror="this.remove()">` : `<div class="xa-bar-fallback">Pas de spectrogramme</div>`;
     return `<div class="xa-player" data-xa-src="${esc(r.file)}"${audioId?` data-xa-id="${esc(audioId)}"`:''}>
-      <button type="button" class="xa-play" data-xa-play aria-label="Lire / pause">▶</button>
+      <button type="button" class="pc-lecture pc-lecture-${taille}" data-xa-play aria-label="Lire / pause">${PC_LECTURE_SVG}</button>
       <div class="xa-body">
         <div class="xa-bar" data-xa-seek>
           ${sono}
@@ -12177,7 +12177,7 @@ function _renderSpeciesAudioBlock(container, label, primaryId, list, apresLabel 
         <span class="xa-hdr-meta">${shortMeta(r)}${r.rec?' · '+esc(r.rec):''}</span>
         ${r.url?`<a class="xa-hdr-link" href="${esc(r.url)}" target="_blank" rel="noopener">xeno-canto ↗</a>`:''}
       </div>
-      ${playerHtml(r, '')}
+      ${playerHtml(r, '', 'mini')}
     </div>`).join('');
     container.insertAdjacentHTML('beforeend', `
       <details class="xa-more">
@@ -12224,7 +12224,7 @@ function _wireCustomAudioPlayer(playerEl){
     try{ audio.pause(); }catch(_){}
     try{ audio.currentTime = 0; }catch(_){}
     const btn = playerEl.querySelector('[data-xa-play]');
-    if(btn){ btn.textContent = '▶'; btn.classList.remove('loading','on'); }
+    if(btn){ btn.classList.remove('loading','on','playing'); const a = btn.querySelector('.pc-anneau-plein'); if(a) a.style.strokeDashoffset = PC_ANNEAU; }
     playerEl.classList.remove('playing','has-progress');
   };
   // Mutex : au play, cancel tous les autres (playing ET loading).
@@ -12238,6 +12238,10 @@ function _wireCustomAudioPlayer(playerEl){
   const curEl = playerEl.querySelector('[data-xa-cur]');
   const durEl = playerEl.querySelector('[data-xa-dur]');
   if(!playBtn) return;
+  // Le bouton du quiz (Mathis le 2026-10-18) : « playing » montre la pause, « loading » garde la
+  // pause visible pendant le chargement (un clic l'annule), et l'anneau suit la lecture.
+  const anneau = playBtn.querySelector('.pc-anneau-plein');
+  const etat = m => { playBtn.classList.toggle('playing', m !== 'pause'); playBtn.classList.toggle('loading', m === 'charge'); };
   const fmt = s => { if(!isFinite(s) || s < 0) return '0:00'; const m = Math.floor(s/60), r = Math.floor(s%60); return m+':'+String(r).padStart(2,'0'); };
   const cursor = playerEl.querySelector('[data-xa-cursor]');
   // Cap dur : les enregistrements xeno-canto peuvent depasser plusieurs minutes.
@@ -12268,6 +12272,7 @@ function _wireCustomAudioPlayer(playerEl){
       audio.currentTime = 0;
       resyncClock();
       if(progress) progress.style.width = '0%';
+      if(anneau) anneau.style.strokeDashoffset = PC_ANNEAU;
       if(cursor){ cursor.style.transform = 'translateX(0px)'; cursor.style.left = '0'; }
       if(curEl) curEl.textContent = '0:00';
       return;
@@ -12276,6 +12281,7 @@ function _wireCustomAudioPlayer(playerEl){
     const pct = displayT / ed;
     const barW = seekEl ? seekEl.clientWidth : 0;
     if(progress) progress.style.width = (pct * 100) + '%';
+    if(anneau) anneau.style.strokeDashoffset = PC_ANNEAU * (1 - pct);
     if(cursor){
       // Transform GPU-accelere : evite le lag de left en % qui peut etre throttle
       // par le rendering pipeline. left:0 fixe pour que translateX parte de 0.
@@ -12295,14 +12301,14 @@ function _wireCustomAudioPlayer(playerEl){
     // qui chargent, pour eviter que 2 audios s'affichent en spinner en meme temps.
     for(const other of _xaAudios){ if(other !== audio && (other._xaLoadPending || !other.paused)){ try{ other._xaCancel && other._xaCancel(); }catch(_){} } }
     audio._xaLoadPending = true;
-    playBtn.textContent = '⏳'; playBtn.classList.add('loading');
+    etat('charge');
     if(audio.readyState === 0){ try{ audio.load(); }catch(_){} }
     const tryPlay = () => audio.play().then(() => {
       audio._xaLoadPending = false;
       playBtn.classList.remove('loading');
     }).catch(() => {
       // 2e tentative apres canplay
-      const once = () => { audio.removeEventListener('canplay', once); audio.play().then(() => { audio._xaLoadPending = false; }).catch(()=>{ audio._xaLoadPending = false; playBtn.textContent = '▶'; playBtn.classList.remove('loading'); }); };
+      const once = () => { audio.removeEventListener('canplay', once); audio.play().then(() => { audio._xaLoadPending = false; }).catch(()=>{ audio._xaLoadPending = false; etat('pause'); }); };
       audio.addEventListener('canplay', once, { once:true });
     });
     tryPlay();
@@ -12311,7 +12317,7 @@ function _wireCustomAudioPlayer(playerEl){
   audio.addEventListener('play', () => {
     // audio.play() vient de resoudre mais pas encore de son produit. Garde spinner
     // jusqu'a 'playing' (frames reellement decodees/jouees). Timeout 6s de safety.
-    playBtn.textContent = '⏳'; playBtn.classList.add('on','loading');
+    etat('charge'); playBtn.classList.add('on');
     playerEl.classList.add('playing','has-progress');
     resyncClock();
     if(rafId) cancelAnimationFrame(rafId);
@@ -12322,14 +12328,14 @@ function _wireCustomAudioPlayer(playerEl){
       if(playBtn.classList.contains('loading')) audio._xaCancel();
     }, 6000);
   });
-  audio.addEventListener('waiting', () => { playBtn.textContent = '⏳'; playBtn.classList.add('loading'); });
+  audio.addEventListener('waiting', () => { etat('charge'); });
   audio.addEventListener('playing', () => {
     // Playback reel demarre : bascule enfin sur ⏸.
-    playBtn.textContent = '⏸'; playBtn.classList.remove('loading');
+    etat('lecture');
     if(audio._xaPlayTimeout){ clearTimeout(audio._xaPlayTimeout); audio._xaPlayTimeout = null; }
     resyncClock();   // resync apres le buffer initial
   });
-  audio.addEventListener('canplay', () => { if(audio.paused){ playBtn.textContent = '▶'; playBtn.classList.remove('loading'); } });
+  audio.addEventListener('canplay', () => { if(audio.paused){ etat('pause'); } });
   // Duree parfois connue seulement apres 'durationchange' (post playing sur MP3 sans header).
   // Des qu'on l'a, on retire le spinner et updatePos commencera a bouger le curseur.
   // Handler duree connue : mise a jour affichage duree + resize sono aligne sur cap 20s.
@@ -12338,7 +12344,7 @@ function _wireCustomAudioPlayer(playerEl){
   const onDurationReady = () => {
     if(!hasDur()) return;
     if(durEl) durEl.textContent = fmt(effDur());
-    if(!audio.paused){ playBtn.textContent = '⏸'; playBtn.classList.remove('loading'); }
+    if(!audio.paused){ etat('lecture'); }
     updatePos();
     // Aligne le sono avec la fenetre de lecture 0-20s
     if(audio.duration > MAX_PLAYBACK_SEC){
@@ -12360,8 +12366,8 @@ function _wireCustomAudioPlayer(playerEl){
     }
   };
   audio.addEventListener('durationchange', onDurationReady);
-  audio.addEventListener('pause', () => { if(!playBtn.classList.contains('loading')) playBtn.textContent = '▶'; playBtn.classList.remove('on'); if(rafId){ cancelAnimationFrame(rafId); rafId = null; } });
-  audio.addEventListener('ended', () => { playBtn.textContent = '▶'; playBtn.classList.remove('on','loading'); playerEl.classList.remove('playing','has-progress'); if(progress) progress.style.width = '0%'; if(playhead) playhead.style.left = '0%'; if(rafId){ cancelAnimationFrame(rafId); rafId = null; } });
+  audio.addEventListener('pause', () => { if(!playBtn.classList.contains('loading')) etat('pause'); playBtn.classList.remove('on'); if(rafId){ cancelAnimationFrame(rafId); rafId = null; } });
+  audio.addEventListener('ended', () => { etat('pause'); playBtn.classList.remove('on'); if(anneau) anneau.style.strokeDashoffset = PC_ANNEAU; playerEl.classList.remove('playing','has-progress'); if(progress) progress.style.width = '0%'; if(playhead) playhead.style.left = '0%'; if(rafId){ cancelAnimationFrame(rafId); rafId = null; } });
   audio.addEventListener('timeupdate', () => { resyncClock(); updatePos(); });
   audio.addEventListener('loadedmetadata', onDurationReady);
   // Si l'audio est deja loade au moment du wire (cache browser, details ouvert avant wire...),

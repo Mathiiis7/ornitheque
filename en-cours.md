@@ -1,8 +1,8 @@
-# EN LOCAL le 2026-10-18 : indices sur les fiches et chants choisis (v810, app.js?v=384), POUSSÉ le 2026-10-18
-- Poussé avant ça : parcours 2 complet + photos pinson / grimpereau des bois (v809, commit 59840c87).
-- Indices : plus dans les 3 dernières étapes des parcours (« Trouver le chant » ajouté à sansCercles) ; toujours dans l'entraînement. Futur mode classé : sans indices (commentaire dans _pcQuestion).
-- Fiche espèce, onglet Sons, pour les 11 oiseaux de parcours : les 3 cercles à côté de « Chant » (.sm-indices), et les chants sélectionnés par Mathis à la place de la recherche xeno-canto (_pcChantsFiche). Le cri ne change pas.
-- Vérifié sur la démo (pinson, grimpereau des bois), ordinateur et téléphone ; 11 bancs CONFORME. Validé par Mathis et poussé.
+# POUSSÉ le 2026-10-18 : bouton lecture du quiz sur les fiches espèces (v811, app.js?v=385)
+- Fiche espèce, chant et cri : le bouton « anneau qui avance » du quiz (.pc-lecture petit, mini dans « autres enregistrements »), anneau qui suit la lecture, anneau de fond qui respire au chargement. Ancien .xa-play et xa-spin retirés de styles.css.
+- Centrage mesuré : pause centrée à 0 px ; le triangle est centré sur son centre de gravité (choix du 2026-10-16), sa boîte est donc décalée de 1,5 px à droite, voulu.
+- Autres boutons lecture NON touchés, à proposer : messages vocaux du tchat (lecteur natif du navigateur, <audio controls>), aperçu d'un vocal avant envoi (app.js ~11213), animations de la carte (#mapTlPlay) et de la migration (« ▶ Lire »). L'ancien quiz (qz-play-btn) n'est plus affiché.
+- Avant : indices sur les fiches et chants choisis (v810), parcours 2 complet et photos (v809), tout en ligne.
 - Ouvert : ordre et noms de tous les parcours (demande de Mathis, à réfléchir).
 ---
 # EN LOCAL le 2026-10-17, PAS POUSSÉ : cercles d'indices, réécouter, numéros des chants (v805, app.js?v=379)
