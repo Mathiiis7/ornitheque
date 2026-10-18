@@ -1,4 +1,5 @@
-# EN LOCAL le 2026-10-18, PAS POUSSÉ : progression du quiz sur tous les appareils (v822, app.js?v=396)
+# POUSSÉ le 2026-10-18 : progression du quiz sur tous les appareils (v822, app.js?v=396, commit 9a5852e0)
+- En ligne vérifié : app.js?v=396 servi, démo en ligne abonnée à sa fiche, aucune erreur. Reste : Mathis colle les règles, puis teste sur son téléphone. Réglages : il ne veut pas les synchroniser (« pas important »).
 - Choix de Mathis parmi « les trucs annexes du quiz ». Progression (étapes de parcours, réponses, séries et paliers) recopiée dans leagues/<ligue>/quizProgress/<uid>, privée (seul le propriétaire lit). Le navigateur reste la référence.
 - Tranché par moi : fusion « le meilleur des deux » case par case, jamais une somme (sinon double compte) ; série en cours prise du côté qui a le plus entendu l'oiseau ; envoi 15 s après la dernière réponse ou en quittant la page ; un écouteur ouvert au démarrage (15 abonnements au lieu de 14) ; ordinateur partagé : mb-quiz-proprio, la progression d'un autre compte est remplacée, jamais fusionnée. Réglages (oiseaux cochés de l'entraînement, indices masqués) NON synchronisés.
 - Règles : nouveau bloc quizProgress dans outils/config/firestore.rules, à COLLER dans la console Firebase après avoir poussé. Avant, rien ne casse : tout reste local. Suppression RGPD : la fiche est ajoutée.
