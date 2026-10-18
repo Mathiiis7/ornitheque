@@ -1,8 +1,7 @@
-# POUSSÉ le 2026-10-18 : le bouton lecture du quiz partout (v812, app.js?v=386)
-- Fiches espèces (chant, cri), vocaux du tchat, aperçu d'un vocal avant envoi, animation dans le temps de la Carte (#mapTlPlay), animation de migration (#migFsPlayBtn) : tous le bouton « anneau qui avance » (.pc-lecture). Outils communs _anneauLecture() et _boutonLecture() à côté de PC_LECTURE_SVG.
-- Vocaux : _voixHtml / _voixMaj / _voixDuree près de pendingVoiceB64 ; durée affichée à côté ; un webm qui annonce une durée infinie est sondé une fois (saut au bout puis retour à 0). Testé dans la démo avec un vocal webm fabriqué sans micro.
-- Centrage mesuré : pause à 0 px ; triangle centré sur son centre de gravité (choix du 2026-10-16), boîte décalée de 1,5 px, voulu.
-- L'ancien quiz (qz-play-btn) n'est plus affiché : pas touché.
+# EN LOCAL le 2026-10-18, PAS POUSSÉ : sonagrammes du verdict (v813, app.js?v=387)
+- Images xeno-canto « colour.png » = tout l'enregistrement, 1,9 à 5,7 Mo, 15 000 à 30 000 px de large, 475 px de haut. Choix de Mathis : couleur, téléchargée dès l'affichage de la question (_pcPrechargerSono), rien au téléphone (_pcAvecSono = pas de pointer: coarse). Hauteur fixe 90 px au lieu de max-height (tailles différentes avant).
+- Vérifié sur la démo : image prête au moment de répondre (complete au verdict), 90 px ; en téléphone, aucune requête de sonagramme. RESTE : qu'il regarde, puis pousser.
+- Avant, tout en ligne : bouton lecture partout (v812).
 - Ouvert : ordre et noms de tous les parcours (demande de Mathis, à réfléchir).
 ---
 # EN LOCAL le 2026-10-17, PAS POUSSÉ : cercles d'indices, réécouter, numéros des chants (v805, app.js?v=379)

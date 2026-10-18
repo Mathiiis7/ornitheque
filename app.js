@@ -20548,6 +20548,7 @@ function _pcQuestion(){
   if(unSon){
     const rec = _pcChoisirEnreg(q.cible, p, q.neuf);
     q.rec = rec;
+    _pcPrechargerSono(rec?.sono);
     _pcNoterEntendus([rec?.id]);
     // Les reponses en barres, petite photo a gauche du nom. Les grandes cartes photo de la
     // maquette B, essayees le 2026-10-16, ont ete jugees « bof » par Mathis le jour meme.
@@ -20594,6 +20595,7 @@ function _pcQuestion(){
     const autres = _pcMelanger(p.especes.filter(s => s !== q.cible)).slice(0, PC_CHANTS_PROPOSES - 1);
     q.choix = _pcMelanger([q.cible, ...autres]);
     q.recs = q.choix.map(sci => _pcChoisirEnreg(sci, p, q.neuf && sci === q.cible));
+    _pcPrechargerSono(q.recs[q.choix.indexOf(q.cible)]?.sono);
     _pcNoterEntendus(q.recs.map(r => r?.id));
     const lettres = ['A', 'B', 'C'];
     corps = `
@@ -20738,7 +20740,20 @@ function _pcRepondreEcrit(){
     j.presque ? 'Presque, compté juste : ' : j.juste ? 'Bien vu : ' : 'C\'était : ',
     j.juste && !j.presque ? '' : ecrit);
 }
+// Sonagramme du verdict : l'image de xeno-canto couvre tout l'enregistrement, 1,9 a 5,7 Mo
+// (mesure le 2026-10-18, 15 000 a 30 000 px de large). Mathis le veut en couleur sur ordinateur,
+// telecharge des l'affichage de la question pour etre pret a la reponse, et pas du tout au
+// telephone, pour ne pas lui couter ces megaoctets a chaque question.
+const _pcAvecSono = () => !matchMedia('(pointer: coarse)').matches;
+// Seulement pour ne pas lancer deux fois le meme : l'entree s'efface au verdict, l'image decodee
+// pesant des dizaines de Mo en memoire ; le fichier, lui, reste dans le cache du navigateur.
+const _pcSonosEnCours = new Map();
+function _pcPrechargerSono(url){
+  if(!url || !_pcAvecSono() || _pcSonosEnCours.has(url)) return;
+  const im = new Image(); im.src = url; _pcSonosEnCours.set(url, im);
+}
 function _pcVerdict(p, q, juste, sono, debut, fin){
+  if(sono) _pcSonosEnCours.delete(sono);
   const box = document.getElementById('pcParcours');
   const v = document.getElementById('pcVerdict');
   // Ligne de verdict sobre. Le trait qui se vidait pendant la pause a ete retire a la demande
@@ -20748,7 +20763,7 @@ function _pcVerdict(p, q, juste, sono, debut, fin){
         <span class="pc-verdict-ico">${juste ? PC_ICO.ok : PC_ICO.ko}</span>
         <span>${debut}<span class="sp-link" data-sci="${esc(q.cible)}">${esc(_pcNomFr(q.cible))}</span>${fin}</span>
       </div>
-      ${sono ? `<img class="pc-verdict-sono" src="${esc(sono)}" alt="Sonagramme du chant">` : ''}
+      ${sono && _pcAvecSono() ? `<img class="pc-verdict-sono" src="${esc(sono)}" alt="Sonagramme du chant">` : ''}
     </div>`;
   const ent = box.querySelector('.pc-jeu-droite > span'); if(ent){ ent.textContent = '✓ ' + p.bonnes; ent.setAttribute('aria-label', p.bonnes + ' bonnes réponses'); }
   // Plus de bouton « Suivante » ni « Réécouter » : la question suivante arrive seule apres une

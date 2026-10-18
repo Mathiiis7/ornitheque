@@ -1691,7 +1691,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .pc-verdict-ligne .sp-link { font-weight:700; color:var(--ink); }
   .pc-verdict.correct .pc-verdict-ico { color:var(--pc-ok); }
   .pc-verdict.wrong .pc-verdict-ico { color:var(--pc-ko); }
-  .pc-verdict-sono { display:block; width:100%; max-height:90px; object-fit:cover; object-position:left center; margin-top:10px; border-radius:8px; opacity:.85; }
+  /* Hauteur fixe (2026-10-18) : avec max-height, elle suivait la longueur de l'enregistrement,
+     l'image de xeno-canto faisant 475 px de haut quelle que soit sa largeur. */
+  .pc-verdict-sono { display:block; width:100%; height:90px; object-fit:cover; object-position:left center; margin-top:10px; border-radius:8px; opacity:.85; }
   .pc-oiseau { text-align:center; margin-bottom:14px; }
   .pc-photo { width:100%; max-width:320px; height:200px; margin:0 auto 10px; border-radius:12px; background:var(--surface-2); overflow:hidden; }
   .pc-photo img { width:100%; height:100%; object-fit:cover; display:block; }
