@@ -12124,7 +12124,8 @@ async function _fetchXenoSound(sci){
 //  - Header : pill colore (vert=chant, orange=cri) + short meta (qualite, lieu, date, duree)
 //  - Player : bouton play rond + spectrogramme comme progress bar + time counter
 //  - <details> pour les autres enregistrements avec le meme player compact
-function _renderSpeciesAudioBlock(container, label, primaryId, list){
+// apresLabel : HTML pose juste apres l'etiquette du premier enregistrement (les indices du chant).
+function _renderSpeciesAudioBlock(container, label, primaryId, list, apresLabel = ''){
   container.innerHTML = '';
   if(!list || !list.length) return;
   const primary = list[0];
@@ -12163,7 +12164,7 @@ function _renderSpeciesAudioBlock(container, label, primaryId, list){
   const blockHtml = (r, audioId) => `
     <div class="xa-block">
       <div class="xa-hdr">
-        <span class="xa-hdr-lbl">${esc(label)}</span>
+        <span class="xa-hdr-lbl">${esc(label)}</span>${apresLabel}
         <span class="xa-hdr-meta">${shortMeta(r)}${r.rec?' · par '+esc(r.rec):''}</span>
         ${r.url?`<a class="xa-hdr-link" href="${esc(r.url)}" target="_blank" rel="noopener">xeno-canto ↗</a>`:''}
       </div>
@@ -15239,9 +15240,13 @@ function _openSpeciesModalSuite(sci, key, modal, _wasOpen, _savedScroll){
   songRow.hidden = true; callRow.hidden = true;
   songRow.innerHTML = ''; callRow.innerHTML = '';
   hint.textContent = '🎧 Recherche du chant et du cri…'; hint.hidden = false;
-  _fetchXenoSound(sci).then(r => {
-    const { songList = [], callList = [] } = r || {};
-    _renderSpeciesAudioBlock(songRow, 'Chant', 'smSong', songList);
+  const sciMin = sci.toLowerCase();
+  Promise.all([_fetchXenoSound(sci), _pcChantsFiche(sciMin).catch(() => null)]).then(([r, choisis]) => {
+    let { songList = [], callList = [] } = r || {};
+    if(choisis) songList = choisis;
+    // Les cercles d'indices du quiz, a cote du chant (Mathis le 2026-10-18)
+    const indices = PC_CERCLES[sciMin] ? `<span class="sm-indices pc-indices">${_pcCerclesHtml(sciMin)}</span>` : '';
+    _renderSpeciesAudioBlock(songRow, 'Chant', 'smSong', songList, indices);
     _renderSpeciesAudioBlock(callRow, 'Cri', 'smCall', callList);
     if(songList.length) songRow.hidden = false;
     if(callList.length) callRow.hidden = false;
@@ -19613,8 +19618,9 @@ const PARCOURS_MESANGES = {
     { titre: 'Trois oiseaux', type: 'nom', n: 3, q: 10 },
     { titre: 'Quatre oiseaux', type: 'nom', n: 4, q: 10 },
     { titre: 'Cinq oiseaux', type: 'nom', n: 5, q: 10 },
-    { titre: 'Trouver le chant', type: 'chant', n: 5, q: 10 },
-    // sansCercles : plus d'indices dans les deux dernieres etapes (Mathis, 2026-10-17)
+    { titre: 'Trouver le chant', type: 'chant', n: 5, q: 10, sansCercles: true },
+    // sansCercles : plus d'indices dans les trois dernieres etapes (Mathis, 2026-10-17, puis la
+    // troisieme le 2026-10-18). Les indices servent a apprendre : chaque etape qui ajoute un oiseau.
     { titre: 'Le mélange', type: 'melange', n: 5, q: 10, sansCercles: true },
     { titre: 'L\'épreuve', type: 'nom', n: 5, q: 15, epreuve: true, sansCercles: true },
   ],
@@ -19636,7 +19642,7 @@ const PARCOURS_PHRASES = {
     { titre: 'Quatre oiseaux', type: 'nom', n: 4, q: 10 },
     { titre: 'Cinq oiseaux', type: 'nom', n: 5, q: 10 },
     { titre: 'Six oiseaux', type: 'nom', n: 6, q: 10 },
-    { titre: 'Trouver le chant', type: 'chant', n: 6, q: 10 },
+    { titre: 'Trouver le chant', type: 'chant', n: 6, q: 10, sansCercles: true },
     { titre: 'Le mélange', type: 'melange', n: 6, q: 10, sansCercles: true },
     { titre: 'L\'épreuve', type: 'nom', n: 6, q: 15, epreuve: true, sansCercles: true },
   ],
@@ -19805,6 +19811,16 @@ const PC_ENTR_ICO = {
 // Ceux des parcours « Bientot » etaient montres grises un par un ; a 48, une ligne les remplace
 // (Mathis le 2026-10-17).
 const PC_ENTR_ESPECES = PARCOURS_OUVERTS.flatMap(P => P.especes);
+// Fiche espece : pour un oiseau de parcours, les chants tries a l'oreille par Mathis remplacent
+// ceux que xeno-canto propose (Mathis le 2026-10-18), dans l'ordre de sa selection. null pour
+// un oiseau hors parcours : la fiche garde alors sa recherche xeno-canto.
+async function _pcChantsFiche(sci){
+  const P = PARCOURS_OUVERTS.find(P => P.especes.includes(sci)); if(!P) return null;
+  if(!_pcChants[P.chants]){ try{ _pcChants[P.chants] = await (await fetch(P.chants)).json(); }catch(_){ return null; } }
+  const l = _pcChants[P.chants]?.[sci]; if(!l?.length) return null;
+  // Le fichier du parcours ne garde que ce que le quiz lit : le lien se refait depuis le numero.
+  return l.map(r => ({ ...r, url: 'https://xeno-canto.org/' + r.id }));
+}
 function _pcEntrChoix(){
   try{
     const s = JSON.parse(localStorage.getItem('mb-entr-oiseaux') || 'null');
@@ -20487,8 +20503,11 @@ function _pcQuestion(){
       // Dans un parcours, tous les oiseaux en jeu sont proposes, six compris : « Un chant, 6 noms »
       // doit en montrer six. L'entrainement s'arrete a 5.
       q.choix = _pcChoixNoms(p.especes, q.cible, p.kind === 'entr' ? PC_NOMS_MAX : p.especes.length);
-      // Cercles d'indices : pas dans les etapes marquees sansCercles, ni pour des oiseaux qui
-      // n'en ont pas. Masques a la demande, par une simple classe : re-rendre couperait le chant.
+      // Cercles d'indices : seulement pour apprendre, soit l'entrainement et les etapes d'un
+      // parcours qui ajoutent un oiseau (pas celles marquees sansCercles), et jamais pour des
+      // oiseaux qui n'en ont pas. Un futur mode classe n'en aura pas non plus (Mathis le
+      // 2026-10-18) : il devra les couper ici. Masques a la demande, par une simple classe :
+      // re-rendre couperait le chant.
       const etape = p.kind === 'entr' ? null : p.P.etapes[p.etape];
       cercles = !etape?.sansCercles && q.choix.some(sci => PC_CERCLES[sci]);
       reponses = `<div class="pc-reponses${cercles && _pcCerclesMasques() ? ' sans-cercles' : ''}" id="pcChoix">

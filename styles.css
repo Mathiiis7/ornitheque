@@ -1643,9 +1643,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      couleurs « sous-bois » choisies par Mathis, sans rouge ni vert vif pour ne pas se confondre
      avec --pc-ok et --pc-ko. Dessin blanc sur le cercle : 5,8 a 7,5:1 en clair, 4,0 a 5,3:1 en
      sombre. Le texte vient de data-tip, l'infobulle commune. */
-  .pc { --pc-c-strophe:#2f5d50; --pc-c-motif:#5e6b2f; --pc-c-ono:#6e4e37; }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .pc { --pc-c-strophe:#3f7868; --pc-c-motif:#76863d; --pc-c-ono:#8a6447; } }
-  :root[data-theme="dark"] .pc { --pc-c-strophe:#3f7868; --pc-c-motif:#76863d; --pc-c-ono:#8a6447; }
+  .pc, .pc-indices { --pc-c-strophe:#2f5d50; --pc-c-motif:#5e6b2f; --pc-c-ono:#6e4e37; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) :is(.pc, .pc-indices) { --pc-c-strophe:#3f7868; --pc-c-motif:#76863d; --pc-c-ono:#8a6447; } }
+  :root[data-theme="dark"] :is(.pc, .pc-indices) { --pc-c-strophe:#3f7868; --pc-c-motif:#76863d; --pc-c-ono:#8a6447; }
   .pc-cercles { flex:none; display:flex; gap:6px; }
   .pc-cercle { width:36px; height:36px; border-radius:50%; display:grid; place-items:center; color:#fff; cursor:help; }
   .pc-cercle svg { width:22px; height:22px; display:block; overflow:visible; fill:none; stroke:currentColor; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round; }
@@ -1653,6 +1653,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .pc-cercle.vide { visibility:hidden; }
   .pc-c-strophe { background:var(--pc-c-strophe); } .pc-c-motif { background:var(--pc-c-motif); } .pc-c-ono { background:var(--pc-c-ono); }
   .pc-reponses.sans-cercles .pc-cercles { display:none; }
+  /* Fiche espece : les memes cercles, a cote de l'etiquette « Chant » (2026-10-18), un peu plus
+     petits pour tenir dans la ligne d'en-tete du lecteur. */
+  .sm-indices .pc-cercles { gap:5px; }
+  .sm-indices .pc-cercle { width:30px; height:30px; }
+  .sm-indices .pc-cercle svg { width:18px; height:18px; }
   .pc-demande-ligne { display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; }
   /* Identifiant du chant (numero xeno-canto et enregistreur), pour pouvoir signaler un son */
   /* Plus discret que le reste, mais lisible (Mathis le 2026-10-17) : --ink-3 mele a 65 % au fond */

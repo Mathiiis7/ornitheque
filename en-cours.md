@@ -1,9 +1,8 @@
-# EN LOCAL le 2026-10-18, PAS POUSSÉ : parcours 2 complet, ses six oiseaux écoutés (v809, app.js?v=383)
-- Sélection des 4 derniers (grimpereaux, rougequeues) collée le 18 et recopiée dans outils/build/chants-gardes.mjs ; data/parcours-phrases.json?v=20261018. Son texte collé ne gardait qu'un chant du pinson et aucun du fitis (autre navigateur) : leurs listes du 17 restent.
-- Indices (PC_CERCLES) des 4 + onomatopée du fitis, d'après les propositions préremplies (oiseaux.net) qu'il a vérifiées. Trois nouveaux dessins de motif choisis par lui : ritournelle (grimpereau des jardins), question (grimpereau des bois), hui (rougequeue à front blanc). Le rougequeue noir reprend « une seule note répétée ».
-- Entraînement : les 11 oiseaux des deux parcours (PC_ENTR_ESPECES = tous les parcours ouverts).
-- Photos du pinson et du grimpereau des bois changées partout (PHOTO_OVERRIDE_WIKI, iNaturalist P1 et G1 de notes-privees/choix-photos/), v809, app.js?v=383.
-- Vérifié sur la démo, ordinateur et téléphone. RESTE : son avis sur les 3 nouveaux dessins (+ les 2 du 17), puis pousser.
+# EN LOCAL le 2026-10-18 : indices sur les fiches et chants choisis (v810, app.js?v=384), PAS POUSSÉ
+- Poussé avant ça : parcours 2 complet + photos pinson / grimpereau des bois (v809, commit 59840c87).
+- Indices : plus dans les 3 dernières étapes des parcours (« Trouver le chant » ajouté à sansCercles) ; toujours dans l'entraînement. Futur mode classé : sans indices (commentaire dans _pcQuestion).
+- Fiche espèce, onglet Sons, pour les 11 oiseaux de parcours : les 3 cercles à côté de « Chant » (.sm-indices), et les chants sélectionnés par Mathis à la place de la recherche xeno-canto (_pcChantsFiche). Le cri ne change pas.
+- Vérifié sur la démo (pinson, grimpereau des bois), ordinateur et téléphone ; 11 bancs CONFORME. RESTE : qu'il regarde en local, puis pousser.
 - Ouvert : ordre et noms de tous les parcours (demande de Mathis, à réfléchir).
 ---
 # EN LOCAL le 2026-10-17, PAS POUSSÉ : cercles d'indices, réécouter, numéros des chants (v805, app.js?v=379)
