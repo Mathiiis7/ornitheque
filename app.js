@@ -19688,7 +19688,7 @@ const PARCOURS_MESANGES = {
     { titre: 'Le mélange', type: 'melange', n: 5, q: 10, sansCercles: true },
     { titre: 'L\'épreuve', type: 'nom', n: 5, q: 15, epreuve: true, sansCercles: true },
   ],
-  chants: 'data/parcours-mesanges.json?v=20261018',
+  chants: 'data/parcours-mesanges.json?v=20261018b',
 };
 // Groupe 2 de docs/groupes-chants.md, ouvert le 2026-10-17. Mathis garde les six oiseaux et
 // demande une etape de plus pour le sixieme. Ordre, meme regle que les mesanges : les courants
@@ -19710,7 +19710,7 @@ const PARCOURS_PHRASES = {
     { titre: 'Le mélange', type: 'melange', n: 6, q: 10, sansCercles: true },
     { titre: 'L\'épreuve', type: 'nom', n: 6, q: 15, epreuve: true, sansCercles: true },
   ],
-  chants: 'data/parcours-phrases.json?v=20261018',
+  chants: 'data/parcours-phrases.json?v=20261018b',
 };
 const PARCOURS_OUVERTS = [PARCOURS_MESANGES, PARCOURS_PHRASES];
 const _pcParcoursDe = cle => PARCOURS_OUVERTS.find(P => P.cle === cle) || PARCOURS_MESANGES;

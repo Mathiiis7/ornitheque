@@ -27,8 +27,10 @@ const PARCOURS = {
     // Siberie, Herblay en decembre), dont le chant varie et n'est pas le « tchif tchaf » a apprendre.
     'phylloscopus collybita': [985275, 978524, 904320, 830601, 807054, 664445, 643725, 374746, 298834, 240896, 161937, 138845, 1091827, 992402],
     'cyanistes caeruleus': [880622, 802235, 722939, 623137, 536056, 533328, 311018, 298118, 240794, 134949, 384605, 1185195, 1070960, 985196, 972604],
-    'poecile palustris': [618397, 584044, 400300, 161554, 872533, 864567, 855712, 797517, 780633, 720007],
-    'periparus ater': [1105320, 537840, 533713, 270438, 177719, 138844, 1011037, 384581, 240923, 1092922, 1001379, 985198, 879546],
+    // Retires le 2026-10-18 sur la remarque de leur auteur : 400300 « Marsh/Willow Tit » (nonnette
+    // ou boreale, l'espece meme est douteuse), 879546 enregistre pres d'une boreale qui chantait.
+    'poecile palustris': [618397, 584044, 161554, 872533, 864567, 855712, 797517, 780633, 720007],
+    'periparus ater': [1105320, 537840, 533713, 270438, 177719, 138844, 1011037, 384581, 240923, 1092922, 1001379, 985198],
   } },
   // Selection du 2026-10-17 (notes-privees/ecoute-chants-phrases/selection-2026-10-17.txt).
   phrases: { candidats: 'ecoute-chants-phrases', sortie: 'parcours-phrases.json', gardes: {
@@ -36,7 +38,9 @@ const PARCOURS = {
     'phylloscopus trochilus': [989893, 908606, 870833, 699178, 647254, 635230, 464496, 367579, 365751, 298817, 161903, 79028, 468273, 1153230, 1140185],
     // Les quatre suivants : selection du 2026-10-18. Son texte colle ce jour-la ne gardait qu'un
     // chant du pinson et aucun du fitis (autre etat du navigateur) : leurs listes du 17 restent.
-    'certhia brachydactyla': [1152949, 1073542, 917422, 884077, 879424, 804603, 789334, 637242, 539347, 533321, 1148675],
+    // Retires le 2026-10-18 sur la remarque de leur auteur : 884077 (un passage imite le Pouillot
+    // siffleur), 804603 (« chant assez atypique par sa lenteur »).
+    'certhia brachydactyla': [1152949, 1073542, 917422, 879424, 789334, 637242, 539347, 533321, 1148675],
     'certhia familiaris': [627940, 626692, 543055, 140084, 893580, 807845, 636121, 591238, 570594, 320305, 307212, 64859, 1107503, 602930, 303238],
     'phoenicurus ochruros': [895998, 696070, 688061, 503962, 335144, 237537, 143380, 141179, 844325, 815660, 718273, 374793, 55316],
     'phoenicurus phoenicurus': [1048983, 937923, 900653, 809653, 560329, 551719, 549562, 244703, 800464, 1102129, 998031, 994185, 904746],

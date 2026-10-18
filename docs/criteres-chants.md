@@ -116,7 +116,8 @@ donnent, à trancher par Mathis) :
   - **noire** : partagée. Les deux parties de son « pitsi » sont tantôt séparées par un silence
     (motif, 7 sur 13), tantôt collées (une seule note, 6 sur 13). C'est la règle « collé ou
     séparé » qui décide, pas l'oiseau : à écouter, pour dire si l'oreille entend la différence ;
-  - **nonnette** : une seule note ; un enregistrement fait un haut-bas (non_400300), un autre
+  - **nonnette** : une seule note ; un enregistrement fait un haut-bas (non_400300, « nonnette ou
+    boréale » selon son auteur, retiré du parcours le 2026-10-18), un autre
     gazouille (non_797517) ;
   - **pouillot** : une seule note, qui varie un peu de hauteur sans ordre (le « tchif tchaf ») ;
     un enregistrement étrange aux notes variées (pou_692351) : un Pouillot de Sibérie
