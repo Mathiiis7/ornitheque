@@ -19959,7 +19959,8 @@ function _pcGarderStats(st){ _stockageEcrire(PC_STATS_CLE, JSON.stringify(st)); 
 // une somme : refaire la meme fusion compterait deux fois les memes reponses. Le prix : quand
 // les deux appareils jouent le meme oiseau entre deux synchronisations, le plus petit des deux
 // comptes se perd. La serie en cours vient du cote qui a le plus entendu cet oiseau, donc en
-// pratique de celui qui l'a joue en dernier.
+// pratique de celui qui l'a joue en dernier. Corollaire : une remise a zero faite dans le seul
+// navigateur serait defaite a la synchronisation suivante ; il faudrait l'ecrire dans la fiche.
 //
 // Un ordinateur partage garde la progression du dernier compte : PC_SYNC_PROPRIO dit a qui elle
 // est. Pour un autre compte, elle est remplacee par la sienne, jamais fusionnee. Celle d'avant
@@ -20051,6 +20052,9 @@ function _pcSyncEnvoyer(){
 }
 function _pcSyncRecevoir(snap){
   if(snap.metadata && snap.metadata.hasPendingWrites) return;   // l'echo de notre propre envoi
+  // Hors ligne (dans le terrain), le SDK peut annoncer la fiche absente faute d'avoir demande au
+  // serveur : la croire vide ferait ecrire l'etat local seul, par-dessus l'autre appareil.
+  if(snap.metadata && snap.metadata.fromCache) return;
   const distant = snap.exists() ? _pcSyncLire(snap.data()) : null;
   let local;
   if(!_pcSync.pret){

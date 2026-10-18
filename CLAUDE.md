@@ -302,7 +302,8 @@ erreur. Corrigé le 2026-09-29 dans les deux, attrapé par le banc `photos`.
 **Le plafond qui cédera le premier est Firestore, pas GitHub Pages.** Chaque document modifié
 coûte **une lecture par client abonné** : à 50 connectés, une frappe dans le chat coûte 50
 lectures, soit 1 000 frappes par jour avant le plafond gratuit de 50 000. Mesuré par le banc
-`firestore`, qui compte aussi les 14 abonnements ouverts à la connexion.
+`firestore`, qui compte aussi les 15 abonnements ouverts à la connexion (le 15e, depuis le 2026-10-18 :
+la progression du quiz, `quizProgress/<uid>`, une fiche privée lue par son seul propriétaire).
 
 ## Données eBird
 
