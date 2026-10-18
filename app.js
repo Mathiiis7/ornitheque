@@ -19940,12 +19940,17 @@ function _pcStats(){
   return st;
 }
 function _pcGarderStats(st){ _stockageEcrire(PC_STATS_CLE, JSON.stringify(st)); }
-// Rend le palier gagne par cette reponse, ou 0.
-function _pcNoterReponse(cible, juste, choisi){
+// Rend le palier gagne par cette reponse, ou 0. compte : la partie a assez d'oiseaux pour les
+// paliers (PC_PALIER_MIN_OISEAUX) ; sinon la reponse va dans la reussite et les confusions, mais
+// la serie ne bouge ni dans un sens ni dans l'autre.
+function _pcNoterReponse(cible, juste, choisi, compte){
   const st = _pcStats(), e = st.esp[cible] || [0, 0];
   e[0]++; if(!juste) e[1]++;
   st.esp[cible] = e;
   if(!juste && choisi){ const c = cible + '|' + choisi; st.conf[c] = (st.conf[c] || 0) + 1; }
+  // La serie est ecrite telle quelle : sans elle, _pcStats prendrait cet oiseau jamais rate pour
+  // une donnee d'avant les paliers et lui donnerait toutes ses reponses comme serie.
+  if(!compte){ st.serie[cible] = _pcSerie(cible, st); _pcGarderStats(st); return 0; }
   // Une erreur ne remet a zero que la serie de l'oiseau a trouver, pas celle de l'oiseau donne
   // a sa place. « Presque » (nom a ecrire) compte juste, comme partout ailleurs.
   const [cur, rec] = _pcSerie(cible, st), avant = _pcPalier(rec);
@@ -19972,6 +19977,10 @@ const PC_PALIERS = [
   { seuil: 100, nom: 'Infaillible', teinte: '#a06cff', anneau: 'conic-gradient(#ff5cdc, #a06cff, #7fb5ff, #5cd3ff, #ff5cdc)' },
 ].map(P => ({ ...P, anneau: P.anneau || `linear-gradient(${P.teinte}, ${P.teinte})` }));
 const _pcPalier = record => PC_PALIERS.filter(P => record >= P.seuil).length;   // 0 a 5
+// Entre 2 ou 3 oiseaux, on devine trop facilement : 5 d'affilee s'enchainaient en une partie
+// (Mathis le 2026-10-18). Ces parties ne comptent pas pour les paliers, et la bulle des etapes
+// concernees le dit.
+const PC_PALIER_MIN_OISEAUX = 4;
 const _pcSerie = (sci, st = _pcStats()) => st.serie[sci] || [0, 0];
 // A poser sur un rond [data-pc-vign] : son anneau (styles.css, [data-palier]), rien sans palier.
 // n force un palier (l'echelle de la fiche montre les cinq).
@@ -20554,7 +20563,8 @@ function _pcBulleHTML(i, best, s){
   return `<span class="pc-etiq">Étape ${i + 1}</span>
     <h4 class="pc-bulle-titre">${esc(e.titre)}</h4>
     <span class="pc-bulle-meta">${esc(_pcDescription(e))}</span>
-    <div class="pc-bulle-oiseaux">${oiseaux}</div>${pied}`;
+    <div class="pc-bulle-oiseaux">${oiseaux}</div>
+    ${e.n < PC_PALIER_MIN_OISEAUX ? `<p class="pc-bulle-note">Les paliers comptent à partir de ${PC_PALIER_MIN_OISEAUX}&nbsp;oiseaux.</p>` : ''}${pied}`;
 }
 // Remplit les photos [data-pc-vign] d'un bloc (memes photos que le reste de l'appli).
 function _pcPhotos(box){
@@ -20863,7 +20873,7 @@ function _pcCompter(p, q, juste, choisi){
   p.repondu = true;
   if(juste) p.bonnes++; else if(choisi) p.confusions.push([q.cible, choisi]);
   p.resultats[p.cur] = juste ? 'ok' : 'ko';
-  const gagne = _pcNoterReponse(q.cible, juste, choisi);
+  const gagne = _pcNoterReponse(q.cible, juste, choisi, p.especes.length >= PC_PALIER_MIN_OISEAUX);
   if(gagne) (p.paliers ||= new Map()).set(q.cible, gagne);   // le plus haut l'emporte : ils ne font que monter
   _pcCouperSons();
   const seg = document.querySelectorAll('#pcParcours .pc-segments i')[p.cur]; if(seg) seg.className = p.resultats[p.cur];
