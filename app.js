@@ -11869,7 +11869,10 @@ const PHOTO_OVERRIDE_WIKI = {
   'remiz pendulinus': { url:'https://upload.wikimedia.org/wikipedia/commons/6/66/Chapim-de-faces-pretas_%28Remiz_pendulinus%29_%2852712339112%29.jpg' },
   'acrocephalus palustris': { url:'https://upload.wikimedia.org/wikipedia/commons/a/af/Acrocephalus_palustris._Lazaritskaya_Luka.jpg' },
   'acrocephalus arundinaceus': { url:'https://upload.wikimedia.org/wikipedia/commons/4/47/Carricero_tordal_Acrocephalus_arundinaceus.jpg' },
-  'certhia familiaris': { url:'https://upload.wikimedia.org/wikipedia/commons/d/d7/Eurasian_treecreeper%2C_Certhia_familiaris%2C_tr%C3%A4dkrypare.jpg' },
+  // Choisie par Mathis le 2026-10-18 (notes-privees/choix-photos/, G1) : Leonid, CC BY-NC.
+  'certhia familiaris': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/353776251/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/353776251/medium.jpg', credit:'iNaturalist' },
+  // Choisie par Mathis le 2026-10-18 (P1) : Jonny Andrews, CC BY-NC.
+  'fringilla coelebs': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/151143058/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/151143058/medium.jpg', credit:'iNaturalist' },
   'loxia curvirostra': { url:'https://upload.wikimedia.org/wikipedia/commons/e/e6/Cruza-bico_comum%2C_f%C3%AAmea%2C_Red_Crossbill%2C_female_%2851692602998%29.jpg' },
   'tetrao urogallus': { url:'https://upload.wikimedia.org/wikipedia/commons/b/ba/David_Palmer_Capercaillie.jpg' },
   'streptopelia orientalis': { url:'https://upload.wikimedia.org/wikipedia/commons/4/44/2026-08-27_Streptopelia_orientalis_in_Chitose.jpg' },

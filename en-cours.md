@@ -1,7 +1,8 @@
-# EN LOCAL le 2026-10-18, PAS POUSSÉ : parcours 2 complet, ses six oiseaux écoutés (v808, app.js?v=382)
+# EN LOCAL le 2026-10-18, PAS POUSSÉ : parcours 2 complet, ses six oiseaux écoutés (v809, app.js?v=383)
 - Sélection des 4 derniers (grimpereaux, rougequeues) collée le 18 et recopiée dans outils/build/chants-gardes.mjs ; data/parcours-phrases.json?v=20261018. Son texte collé ne gardait qu'un chant du pinson et aucun du fitis (autre navigateur) : leurs listes du 17 restent.
 - Indices (PC_CERCLES) des 4 + onomatopée du fitis, d'après les propositions préremplies (oiseaux.net) qu'il a vérifiées. Trois nouveaux dessins de motif choisis par lui : ritournelle (grimpereau des jardins), question (grimpereau des bois), hui (rougequeue à front blanc). Le rougequeue noir reprend « une seule note répétée ».
 - Entraînement : les 11 oiseaux des deux parcours (PC_ENTR_ESPECES = tous les parcours ouverts).
+- Photos du pinson et du grimpereau des bois changées partout (PHOTO_OVERRIDE_WIKI, iNaturalist P1 et G1 de notes-privees/choix-photos/), v809, app.js?v=383.
 - Vérifié sur la démo, ordinateur et téléphone. RESTE : son avis sur les 3 nouveaux dessins (+ les 2 du 17), puis pousser.
 - Ouvert : ordre et noms de tous les parcours (demande de Mathis, à réfléchir).
 ---
