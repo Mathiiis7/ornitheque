@@ -23,7 +23,9 @@ const RACINE = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const PARCOURS = {
   mesanges: { candidats: 'ecoute-chants', sortie: 'parcours-mesanges.json', gardes: {
     'parus major': [1100272, 1092231, 1084417, 1046158, 994505, 862138, 804299, 801249, 711263, 702431, 626693, 550313, 161542],
-    'phylloscopus collybita': [985275, 978524, 904320, 830601, 807054, 692351, 664445, 643725, 374746, 298834, 240896, 161937, 138845, 1091827, 992402],
+    // 692351 retire le 2026-10-18 : xeno-canto le classe en collybita tristis (Pouillot de
+    // Siberie, Herblay en decembre), dont le chant varie et n'est pas le « tchif tchaf » a apprendre.
+    'phylloscopus collybita': [985275, 978524, 904320, 830601, 807054, 664445, 643725, 374746, 298834, 240896, 161937, 138845, 1091827, 992402],
     'cyanistes caeruleus': [880622, 802235, 722939, 623137, 536056, 533328, 311018, 298118, 240794, 134949, 384605, 1185195, 1070960, 985196, 972604],
     'poecile palustris': [618397, 584044, 400300, 161554, 872533, 864567, 855712, 797517, 780633, 720007],
     'periparus ater': [1105320, 537840, 533713, 270438, 177719, 138844, 1011037, 384581, 240923, 1092922, 1001379, 985198, 879546],

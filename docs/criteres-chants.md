@@ -119,7 +119,8 @@ donnent, à trancher par Mathis) :
   - **nonnette** : une seule note ; un enregistrement fait un haut-bas (non_400300), un autre
     gazouille (non_797517) ;
   - **pouillot** : une seule note, qui varie un peu de hauteur sans ordre (le « tchif tchaf ») ;
-    un enregistrement étrange aux notes variées (pou_692351).
+    un enregistrement étrange aux notes variées (pou_692351) : un Pouillot de Sibérie
+    (*collybita tristis* sur xeno-canto), retiré du parcours le 2026-10-18.
 
 Les croix de « Imite d'autres oiseaux » et « Finit par une fioriture » ne viennent d'aucune
 source qui les écarte : aucune ne les mentionne pour ces cinq oiseaux. Ces deux lignes sont là
