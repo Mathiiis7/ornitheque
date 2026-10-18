@@ -1,3 +1,8 @@
+# POUSSÉ le 2026-10-18 : chants douteux retirés des deux parcours (v817, app.js?v=391)
+- XC 692351 était un Pouillot de Sibérie (collybita tristis, Herblay en décembre) : retiré. Puis les 146 fiches xeno-canto relues : espèce, « song », mois, sons et sonagrammes tous bons ; retirés aussi 400300 (nonnette ou boréale), 879546 (noire près d'une boréale), 884077 et 804603 (grimpereau des jardins atypique). Raisons notées dans outils/build/chants-gardes.mjs.
+- Restent 63 chants (mésanges) et 79 (phrases). Vérifié en ligne. Les deux parcours sont ARRÊTÉS là pour le moment (Mathis).
+- Suite décidée par Mathis : « les trucs annexes du quiz » (à préciser avec lui). Toujours ouvert : ordre et noms de tous les parcours.
+---
 # POUSSÉ le 2026-10-18 : progression du quiz protégée + sonagramme après le chant (v815, app.js?v=389)
 - Progression « réinitialisée à chaque mise à jour », toujours sur le site en ligne : aucun code ne l'efface. Cause probable (non prouvée chez lui) : mémoire du site pleine, les 40 anciennes versions du cache de photos (mb-sp-photo-cache-v1 à v40) n'étant jamais effacées ; l'écriture de mb-parcours-* échouait en silence. Corrigé : purge des anciennes versions au démarrage, _stockageEcrire() (libère les caches et réessaie) pour progression, stats, oiseaux de l'entraînement, indices ; cache de photos plafonné à 2 500 espèces.
 - Testé en remplissant la mémoire du navigateur intégré : anciennes versions purgées, progression gardée, réglage enregistré malgré la mémoire pleine.
