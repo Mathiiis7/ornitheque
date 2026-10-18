@@ -1,4 +1,4 @@
-# EN LOCAL le 2026-10-18, PAS POUSSÉ : paliers à partir de 4 oiseaux (v821, app.js?v=395, commit e9b01eb5)
+# POUSSÉ et vérifié en ligne le 2026-10-18 : paliers à partir de 4 oiseaux (v821, app.js?v=395, commit e9b01eb5)
 - Choix de Mathis : une partie à 2 ou 3 oiseaux (étapes 1-2, entraînement avec 2-3 cochés) ne fait ni monter ni tomber la série ; réussite et confusions comptent toujours. Seuils et paliers déjà gagnés : inchangés. Dit seulement dans la bulle des étapes 1 et 2 : « Les paliers comptent à partir de 4 oiseaux. »
 - Vérifié dans la démo : partie à 2 oiseaux (séries à 0), à 4 (record monte), bulles à 1280 et 375 sombre. 11 bancs CONFORME.
 ---
