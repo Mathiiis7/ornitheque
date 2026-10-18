@@ -38,6 +38,7 @@ exigé à la racine par un outil
   firebase.json, .firebaserc  Firebase ; firebase.json pointe vers outils/config/firestore.rules
   package.json, package-lock.json, node_modules/   Node, pour les scripts d'outils/
   .impeccable/, .onetake/     ateliers locaux de deux extensions, ignorés par git
+  .diagram-design             marqueur du skill diagram-design : choisit le profil « ornitheque »
 
 la base commune
   CLAUDE.md, en-cours.md
@@ -249,6 +250,11 @@ existant qui n'a pas été mentionné.
 **Le style a sa propre charte : `docs/charte-graphique.md`**, à lire avant de toucher à l'apparence.
 L'Ornithèque n'entre PAS dans la charte commune des projets perso (vert forêt, Figtree) : essayée
 sur la démo et refusée par Mathis le 2026-10-05.
+
+**Les schémas d'explication de l'appli se font avec le skill `diagram-design`**, installé dans ce
+projet seulement (2026-10-18). Il lit la charte dans le profil `~/.diagram-design/profiles/ornitheque.md`
+(hors dépôt), choisi par le marqueur `.diagram-design`. Un schéma qui entre dans l'appli se réécrit en
+HTML avec les variables de `styles.css`, comme « D'où viennent les cartes » (en SVG, le texte rétrécit sur téléphone).
 
 **Une classe partagée se touche avec précaution.** Réparer un composant en modifiant une
 classe que d'autres utilisent casse les autres en silence. `.cp-item` sert au sélecteur de

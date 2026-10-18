@@ -1,7 +1,4 @@
 {
-  "enabledPlugins": {
-    "impeccable@impeccable": true
-  },
   "hooks": {
     "Stop": [
       {
@@ -15,5 +12,17 @@
         ]
       }
     ]
+  },
+  "enabledPlugins": {
+    "impeccable@impeccable": true,
+    "diagram-design@diagram-design": true
+  },
+  "extraKnownMarketplaces": {
+    "diagram-design": {
+      "source": {
+        "source": "github",
+        "repo": "cathrynlavery/diagram-design"
+      }
+    }
   }
 }
