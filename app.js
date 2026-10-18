@@ -11783,6 +11783,20 @@ document.addEventListener('keydown', e=>{ if(e.key === 'Escape' && $('#imgModal'
 const _SP_PHOTO_CACHE_KEY = 'mb-sp-photo-cache-v41';
 const _SP_PHOTO_CACHE_TTL_MS = 30 * 24 * 3600 * 1000;
 const _spPhotoCache = new Map();      // sci → {url, thumb, credit} | null (échec)
+// Les 40 versions precedentes du cache (v1 a v40, changees jusqu'au 2026-09-03) n'etaient jamais
+// effacees : chacune gardait sa place dans la memoire du site, environ 5 Mo pour tout. Pleine,
+// elle refusait en silence d'enregistrer la progression du quiz, perdue au rechargement suivant
+// (signale par Mathis le 2026-10-18). On les retire au demarrage.
+try{ Object.keys(localStorage).filter(k => k.startsWith('mb-sp-photo-cache') && k !== _SP_PHOTO_CACHE_KEY).forEach(k => localStorage.removeItem(k)); }catch(_){}
+// Ecrire ce qui compte (progression, statistiques, reglages) meme si la memoire du site est
+// pleine : on libere alors les caches, qui se refont seuls, et on reessaie une fois.
+function _stockageEcrire(cle, valeur){
+  try{ localStorage.setItem(cle, valeur); return true; }catch(_){}
+  try{
+    Object.keys(localStorage).filter(k => k.startsWith('mb-sp-photo-cache') || k.startsWith('gbifMissing-')).forEach(k => localStorage.removeItem(k));
+    localStorage.setItem(cle, valeur); return true;
+  }catch(_){ return false; }
+}
 try{
   const raw = localStorage.getItem(_SP_PHOTO_CACHE_KEY);
   if(raw){
@@ -11796,10 +11810,12 @@ let _spPhotoCacheSaveTimer = 0;
 function _spPhotoCachePersist(){
   clearTimeout(_spPhotoCacheSaveTimer);
   _spPhotoCacheSaveTimer = setTimeout(() => {
+    // Plafonne aux 2 500 dernieres especes (environ 0,5 Mo) : un cache qui grossit sans fin
+    // finirait par prendre la place de la progression. S'il ne passe pas, il cede sa place.
     try{
-      const entries = Object.fromEntries(_spPhotoCache);
+      const entries = Object.fromEntries([..._spPhotoCache].slice(-2500));
       localStorage.setItem(_SP_PHOTO_CACHE_KEY, JSON.stringify({ ts: Date.now(), entries }));
-    }catch(_){}
+    }catch(_){ try{ localStorage.removeItem(_SP_PHOTO_CACHE_KEY); }catch(_){} }
   }, 2000);
 }
 const _spSoundCache = new Map();      // sci → url mp3 | null
@@ -19881,7 +19897,7 @@ function _pcEntrChoix(){
   }catch(_){}
   return [...PC_ENTR_ESPECES];
 }
-function _pcEntrGarderChoix(liste){ try{ localStorage.setItem('mb-entr-oiseaux', JSON.stringify(liste)); }catch(_){} }
+function _pcEntrGarderChoix(liste){ _stockageEcrire('mb-entr-oiseaux', JSON.stringify(liste)); }
 // Au plus max noms proposes (5 par defaut), dont le bon. Un parcours passe le nombre de ses
 // oiseaux en jeu, six pour « Phrases qui degringolent » : il les propose tous.
 const _pcChoixNoms = (especes, cible, max = PC_NOMS_MAX) => _pcMelanger([cible, ..._pcMelanger(especes.filter(s => s !== cible)).slice(0, max - 1)]);
@@ -19913,7 +19929,7 @@ function _pcStats(){
   if(Array.isArray(s.entendus)) st.entendus = s.entendus.filter(id => typeof id === 'string');
   return st;
 }
-function _pcGarderStats(st){ try{ localStorage.setItem(PC_STATS_CLE, JSON.stringify(st)); }catch(_){} }
+function _pcGarderStats(st){ _stockageEcrire(PC_STATS_CLE, JSON.stringify(st)); }
 function _pcNoterReponse(cible, juste, choisi){
   const st = _pcStats(), e = st.esp[cible] || [0, 0];
   e[0]++; if(!juste) e[1]++;
@@ -20175,7 +20191,7 @@ function _pcEnregistrerScore(P, i, score){
   const best = _pcScores(P);
   if(best[i] != null && best[i] >= score) return;
   best[i] = score;
-  try{ localStorage.setItem('mb-parcours-' + P.cle, JSON.stringify({ best })); }catch(_){}
+  _stockageEcrire('mb-parcours-' + P.cle, JSON.stringify({ best }));
 }
 const _pcReussie = (i, best, P = _pcP()) => best[i] != null && best[i] >= _pcSeuil(P.etapes[i]);
 // Etoiles (Mathis le 2026-10-16) : 8, 9, 10 sur 10 donnent 1, 2, 3 ; a l'epreuve, 12, 14, 15
@@ -20848,7 +20864,7 @@ document.addEventListener('click', e => {
   if(bascule){
     const masquer = !_pcCerclesCaches;
     _pcCerclesCaches = masquer;
-    try{ localStorage.setItem(PC_CLE_CERCLES, masquer ? '1' : '0'); }catch(_){}
+    _stockageEcrire(PC_CLE_CERCLES, masquer ? '1' : '0');
     document.getElementById('pcChoix')?.classList.toggle('sans-cercles', masquer);
     bascule.setAttribute('aria-pressed', String(!masquer));
     bascule.textContent = masquer ? 'Afficher les indices' : 'Masquer les indices';
