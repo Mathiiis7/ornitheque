@@ -1,3 +1,7 @@
+# EN LOCAL le 2026-10-18, PAS POUSSÉ : paliers à partir de 4 oiseaux (v821, app.js?v=395, commit e9b01eb5)
+- Choix de Mathis : une partie à 2 ou 3 oiseaux (étapes 1-2, entraînement avec 2-3 cochés) ne fait ni monter ni tomber la série ; réussite et confusions comptent toujours. Seuils et paliers déjà gagnés : inchangés. Dit seulement dans la bulle des étapes 1 et 2 : « Les paliers comptent à partir de 4 oiseaux. »
+- Vérifié dans la démo : partie à 2 oiseaux (séries à 0), à 4 (record monte), bulles à 1280 et 375 sombre. 11 bancs CONFORME.
+---
 # POUSSÉ le 2026-10-18 : paliers par oiseau, qg#58 (v818, app.js?v=392)
 - Maquette notes-privees/maquettes/quiz-paliers/. Choix de Mathis : palier sur la meilleure série d'affilée (5, 10, 25, 50, 100), gardé ; anneau autour du rond (bronze, argent, or, diamant, prismatique) ; noms Repéré, Reconnu, Familier, Sûr, Infaillible ; « Mes oiseaux » en cartes sur l'accueil, fiche de l'oiseau (paliers, série, réussite, enregistrements entendus, confusions, « S'entraîner sur cet oiseau »). qg#63 fermé (remplacé).
 - Tranché par moi : tous les modes comptent ; « Presque » compte juste ; une erreur ne remet à zéro que l'oiseau à trouver ; séries dans mb-quiz-reponses (champ serie) ; anciennes réponses sans ordre, donc séries à zéro sauf oiseau jamais raté (série = toutes ses réponses). Bilan oiseau par oiseau ajouté aussi à la fin des étapes de parcours, comme sur la maquette.
