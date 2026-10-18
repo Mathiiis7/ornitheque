@@ -1,6 +1,6 @@
-# EN LOCAL le 2026-10-18, PAS POUSSÉ : sonagrammes du verdict (v813, app.js?v=387)
+# POUSSÉ le 2026-10-18 : sonagrammes du verdict (v813, app.js?v=387)
 - Images xeno-canto « colour.png » = tout l'enregistrement, 1,9 à 5,7 Mo, 15 000 à 30 000 px de large, 475 px de haut. Choix de Mathis : couleur, téléchargée dès l'affichage de la question (_pcPrechargerSono), rien au téléphone (_pcAvecSono = pas de pointer: coarse). Hauteur fixe 90 px au lieu de max-height (tailles différentes avant).
-- Vérifié sur la démo : image prête au moment de répondre (complete au verdict), 90 px ; en téléphone, aucune requête de sonagramme. RESTE : qu'il regarde, puis pousser.
+- Vérifié sur la démo : image prête au moment de répondre (complete au verdict), 90 px ; en téléphone, aucune requête de sonagramme. Validé et poussé.
 - Avant, tout en ligne : bouton lecture partout (v812).
 - Ouvert : ordre et noms de tous les parcours (demande de Mathis, à réfléchir).
 ---
