@@ -1,8 +1,8 @@
-# EN LOCAL le 2026-10-18 : indices sur les fiches et chants choisis (v810, app.js?v=384), PAS POUSSÉ
+# EN LOCAL le 2026-10-18 : indices sur les fiches et chants choisis (v810, app.js?v=384), POUSSÉ le 2026-10-18
 - Poussé avant ça : parcours 2 complet + photos pinson / grimpereau des bois (v809, commit 59840c87).
 - Indices : plus dans les 3 dernières étapes des parcours (« Trouver le chant » ajouté à sansCercles) ; toujours dans l'entraînement. Futur mode classé : sans indices (commentaire dans _pcQuestion).
 - Fiche espèce, onglet Sons, pour les 11 oiseaux de parcours : les 3 cercles à côté de « Chant » (.sm-indices), et les chants sélectionnés par Mathis à la place de la recherche xeno-canto (_pcChantsFiche). Le cri ne change pas.
-- Vérifié sur la démo (pinson, grimpereau des bois), ordinateur et téléphone ; 11 bancs CONFORME. RESTE : qu'il regarde en local, puis pousser.
+- Vérifié sur la démo (pinson, grimpereau des bois), ordinateur et téléphone ; 11 bancs CONFORME. Validé par Mathis et poussé.
 - Ouvert : ordre et noms de tous les parcours (demande de Mathis, à réfléchir).
 ---
 # EN LOCAL le 2026-10-17, PAS POUSSÉ : cercles d'indices, réécouter, numéros des chants (v805, app.js?v=379)
