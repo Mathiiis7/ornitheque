@@ -20548,7 +20548,6 @@ function _pcQuestion(){
   if(unSon){
     const rec = _pcChoisirEnreg(q.cible, p, q.neuf);
     q.rec = rec;
-    _pcPrechargerSono(rec?.sono);
     _pcNoterEntendus([rec?.id]);
     // Les reponses en barres, petite photo a gauche du nom. Les grandes cartes photo de la
     // maquette B, essayees le 2026-10-16, ont ete jugees « bof » par Mathis le jour meme.
@@ -20595,7 +20594,6 @@ function _pcQuestion(){
     const autres = _pcMelanger(p.especes.filter(s => s !== q.cible)).slice(0, PC_CHANTS_PROPOSES - 1);
     q.choix = _pcMelanger([q.cible, ...autres]);
     q.recs = q.choix.map(sci => _pcChoisirEnreg(sci, p, q.neuf && sci === q.cible));
-    _pcPrechargerSono(q.recs[q.choix.indexOf(q.cible)]?.sono);
     _pcNoterEntendus(q.recs.map(r => r?.id));
     const lettres = ['A', 'B', 'C'];
     corps = `
@@ -20637,6 +20635,7 @@ function _pcQuestion(){
       anim = requestAnimationFrame(suivre);
     };
     audio.addEventListener('play', () => { _pcHistArreter(); btn.classList.add('playing'); if(!anim) anim = requestAnimationFrame(suivre); });
+    audio.addEventListener('playing', () => _pcPrechargerSono(q.rec?.sono), { once: true });
     audio.addEventListener('pause', () => btn.classList.remove('playing'));
     audio.addEventListener('ended', () => { btn.classList.remove('playing'); avancer(0); });
     audio.play().catch(() => {});
@@ -20667,6 +20666,7 @@ function _pcQuestion(){
         anim = requestAnimationFrame(suivre);
       };
       a.addEventListener('play', () => { _pcHistArreter(); b.classList.add('playing'); if(!anim) anim = requestAnimationFrame(suivre); });
+      a.addEventListener('playing', () => _pcPrechargerSono(q.recs[q.choix.indexOf(q.cible)]?.sono), { once: true });
       a.addEventListener('pause', () => { b.classList.remove('playing'); if(a.currentTime === 0) avancer(0); });
       a.addEventListener('ended', () => { b.classList.remove('playing'); avancer(0); });
     });
@@ -20742,15 +20742,16 @@ function _pcRepondreEcrit(){
 }
 // Sonagramme du verdict : l'image de xeno-canto couvre tout l'enregistrement, 1,9 a 5,7 Mo
 // (mesure le 2026-10-18, 15 000 a 30 000 px de large). Mathis le veut en couleur sur ordinateur,
-// telecharge des l'affichage de la question pour etre pret a la reponse, et pas du tout au
-// telephone, pour ne pas lui couter ces megaoctets a chaque question.
+// pret a la reponse, et pas du tout au telephone, pour ne pas lui couter ces megaoctets a chaque
+// question. Telecharge seulement une fois le chant parti, en priorite basse : lance des
+// l'affichage de la question, il passait devant le chant, qui tardait a demarrer.
 const _pcAvecSono = () => !matchMedia('(pointer: coarse)').matches;
 // Seulement pour ne pas lancer deux fois le meme : l'entree s'efface au verdict, l'image decodee
 // pesant des dizaines de Mo en memoire ; le fichier, lui, reste dans le cache du navigateur.
 const _pcSonosEnCours = new Map();
 function _pcPrechargerSono(url){
   if(!url || !_pcAvecSono() || _pcSonosEnCours.has(url)) return;
-  const im = new Image(); im.src = url; _pcSonosEnCours.set(url, im);
+  const im = new Image(); im.fetchPriority = 'low'; im.src = url; _pcSonosEnCours.set(url, im);
 }
 function _pcVerdict(p, q, juste, sono, debut, fin){
   if(sono) _pcSonosEnCours.delete(sono);
