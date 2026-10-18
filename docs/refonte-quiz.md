@@ -116,6 +116,24 @@ Tranché par moi, validé par Mathis le 2026-10-16 :
 - la dernière manche prend un enregistrement jamais entendu quand il en reste (le chant du bon oiseau en « Nom vers chant ») ;
 - au doigt, les noms proposés s'ouvrent au-dessus du champ, 4 au plus : en dessous, le clavier les cacherait. Pas vérifiable sans vrai téléphone.
 
+## Paliers par oiseau (qg#58, fait le 2026-10-18)
+
+Maquette : `notes-privees/maquettes/quiz-paliers/`. Choix de Mathis, d'après Syrinx :
+- un palier par oiseau sur sa **meilleure série** de bonnes réponses d'affilée : 5, 10, 25, 50, 100,
+  gardé une fois gagné. Noms N2 : Repéré, Reconnu, Familier, Sûr, Infaillible ;
+- pas de médaille : un anneau autour du rond de l'oiseau, couleurs des trophées (bronze, argent,
+  or, diamant), le prismatique à la place de l'émeraude ;
+- « Mes oiseaux » en cartes sur l'accueil (D1), qui ouvrent la fiche de l'oiseau : les cinq
+  paliers, la série en cours, la réussite, les enregistrements entendus, les confusions, et
+  « S'entraîner sur cet oiseau » (10 manches, la moitié sur lui, le reste sur son parcours).
+  Remplace qg#63 (statistiques au profil), fermé.
+
+Tranché par moi : tous les modes comptent, parcours compris ; « Presque » compte juste ; une
+erreur ne remet à zéro que l'oiseau à trouver. Séries rangées dans `mb-quiz-reponses` (champ
+`serie`). Les réponses d'avant n'ont pas d'ordre : les séries partent de zéro, sauf pour un oiseau
+jamais raté. Pas d'anneau sur les réponses pendant une question. La fin d'une étape de parcours
+a reçu le même bilan oiseau par oiseau que l'entraînement.
+
 ## À garder en tête
 
 - Varier les enregistreurs parmi les sons retenus pour une espèce : aujourd'hui `scoreRec`

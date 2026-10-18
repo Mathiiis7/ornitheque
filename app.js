@@ -19817,7 +19817,8 @@ const PC_PAUSE_SUITE_MS = 2000;
 // chemin (null = celle du moment).
 // parcours : la cle du parcours ouvert sur le chemin. Une partie garde le sien (partie.P) : changer
 // de parcours pendant une partie ne doit pas ecrire ses etoiles ailleurs.
-const _pc = { vue: 'liste', selection: null, partie: null, mode: null, parcours: 'mesanges' };
+// oiseau : celui dont la fiche est ouverte (vue 'oiseau').
+const _pc = { vue: 'liste', selection: null, partie: null, mode: null, parcours: 'mesanges', oiseau: null };
 const _pcP = () => _pcParcoursDe(_pc.parcours);
 // Bouton de lecture : variante D « anneau qui avance », choisie par Mathis le 2026-10-16
 // (notes-privees/maquettes/quiz-visuel/pause.html). L'ancienne pause, deux bordures de 6 px
@@ -19840,6 +19841,7 @@ const PC_ICO = {
   cadenas: '<svg class="pc-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 015 0v2"/></svg>',
   retour: '<svg class="pc-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg>',
   etoile: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4L2.8 9.5l6.4-.8z"/></svg>',
+  serie: '<svg class="pc-ico pc-ico-serie" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 1c.5 2.4 3.8 3.9 3.8 7.6A3.8 3.8 0 014.2 9c0-1.3.6-2.3 1.4-3 .1 1.2.7 2 1.5 2.2C7 6.3 7.2 3.6 8 1z"/></svg>',
 };
 // Une icone par genre d'etape sur le chemin (maquette C3 choisie le 2026-10-16) : casque = un
 // chant, des noms ; ondes = trouver le chant ; fleches croisees = le melange ; drapeau = l'epreuve.
@@ -19914,8 +19916,10 @@ const PC_LACUNES_NB = 3;      // oiseaux revus au plus
 const PC_LACUNES_PART = 7;    // manches sur ces oiseaux, les 3 autres sur le reste
 // Une valeur abimee est ecartee, pas lue : _pcLacunes tourne a chaque affichage de l'accueil du
 // Quiz, et une erreur la laisserait vide.
+// serie : par espece [serie en cours, record], pour les paliers (qg#58). Un champ a part : un
+// esp[sci] a quatre cases serait ecarte par le controle ci-dessous, et _pcLacunes le decoupe.
 function _pcStats(){
-  const st = { esp: {}, conf: {}, entendus: [] };
+  const st = { esp: {}, conf: {}, entendus: [], serie: {} };
   let s;
   try{ s = JSON.parse(localStorage.getItem(PC_STATS_CLE) || '{}'); }catch(_){ return st; }
   if(!s || typeof s !== 'object') return st;
@@ -19927,15 +19931,153 @@ function _pcStats(){
     if(c.includes('|') && nombre(n)) st.conf[c] = n;
   }
   if(Array.isArray(s.entendus)) st.entendus = s.entendus.filter(id => typeof id === 'string');
+  if(s.serie && typeof s.serie === 'object') for(const [sci, e] of Object.entries(s.serie)){
+    if(Array.isArray(e) && e.length === 2 && nombre(e[0]) && nombre(e[1])) st.serie[sci] = e;
+  }
+  // Les reponses d'avant les paliers n'ont pas garde leur ordre : on ne connait la serie que d'un
+  // oiseau jamais rate, ou elle vaut toutes ses reponses. Les autres partent de zero.
+  for(const [sci, [vus, rates]] of Object.entries(st.esp)) if(!st.serie[sci] && !rates) st.serie[sci] = [vus, vus];
   return st;
 }
 function _pcGarderStats(st){ _stockageEcrire(PC_STATS_CLE, JSON.stringify(st)); }
+// Rend le palier gagne par cette reponse, ou 0.
 function _pcNoterReponse(cible, juste, choisi){
   const st = _pcStats(), e = st.esp[cible] || [0, 0];
   e[0]++; if(!juste) e[1]++;
   st.esp[cible] = e;
   if(!juste && choisi){ const c = cible + '|' + choisi; st.conf[c] = (st.conf[c] || 0) + 1; }
+  // Une erreur ne remet a zero que la serie de l'oiseau a trouver, pas celle de l'oiseau donne
+  // a sa place. « Presque » (nom a ecrire) compte juste, comme partout ailleurs.
+  const [cur, rec] = _pcSerie(cible, st), avant = _pcPalier(rec);
+  const serie = juste ? cur + 1 : 0;
+  st.serie[cible] = [serie, Math.max(rec, serie)];
   _pcGarderStats(st);
+  const apres = _pcPalier(st.serie[cible][1]);
+  return apres > avant ? apres : 0;
+}
+// ---------- Paliers par oiseau (qg#58) ----------
+// Un palier par oiseau, gagne sur la meilleure serie de bonnes reponses d'affilee et garde
+// ensuite, comme dans Syrinx (Mathis le 2026-10-18). Pas une medaille : un anneau de la couleur
+// du palier autour du rond de l'oiseau. Maquette notes-privees/maquettes/quiz-paliers/ : couleurs
+// des trophees avec le prismatique a la place de l'emeraude, noms de la variante N2, section
+// « Mes oiseaux » en cartes (D1) et fiche de l'oiseau.
+const _pcCouleurTrophee = cle => TROPHY_TIERS.find(t => t.key === cle).color;
+// anneau : ce qui peint l'anneau ; teinte : le fond de l'encadre « Nouveau palier ».
+const PC_PALIERS = [
+  { seuil: 5, nom: 'Repéré', teinte: _pcCouleurTrophee('bronze') },
+  { seuil: 10, nom: 'Reconnu', teinte: _pcCouleurTrophee('argent') },
+  { seuil: 25, nom: 'Familier', teinte: _pcCouleurTrophee('or') },
+  { seuil: 50, nom: 'Sûr', teinte: _pcCouleurTrophee('diamant') },
+  // Le prismatique des trophees est un degrade (leur barre de progression) : memes teintes.
+  { seuil: 100, nom: 'Infaillible', teinte: '#a06cff', anneau: 'conic-gradient(#ff5cdc, #a06cff, #7fb5ff, #5cd3ff, #ff5cdc)' },
+].map(P => ({ ...P, anneau: P.anneau || `linear-gradient(${P.teinte}, ${P.teinte})` }));
+const _pcPalier = record => PC_PALIERS.filter(P => record >= P.seuil).length;   // 0 a 5
+const _pcSerie = (sci, st = _pcStats()) => st.serie[sci] || [0, 0];
+// A poser sur un rond [data-pc-vign] : son anneau (styles.css, [data-palier]), rien sans palier.
+// n force un palier (l'echelle de la fiche montre les cinq).
+function _pcAnneauAttrs(sci, st, n = _pcPalier(_pcSerie(sci, st)[1])){
+  return n ? ` data-palier="${n}" style="--pc-palier:${PC_PALIERS[n - 1].anneau}"` : '';
+}
+// La couleur ne s'entend pas : le nom du palier, pour les lecteurs d'ecran.
+function _pcPalierLu(sci, st){
+  const n = _pcPalier(_pcSerie(sci, st)[1]);
+  return n ? `<span class="visually-hidden">, palier ${esc(PC_PALIERS[n - 1].nom)}</span>` : '';
+}
+// La serie en cours et le record, sous le nom d'un oiseau.
+function _pcSerieTxt(sci, st){
+  const [cur, rec] = _pcSerie(sci, st);
+  return ((st.esp[sci] || [])[0] || 0) ? `${PC_ICO.serie}${cur} · record ${rec}` : 'Pas encore entendu';
+}
+// Sur l'accueil, entre l'entrainement et les parcours : un oiseau par carte, qui ouvre sa fiche.
+function _pcOiseauxSectionHTML(){
+  const st = _pcStats();
+  const avec = PC_ENTR_ESPECES.filter(sci => _pcPalier(_pcSerie(sci, st)[1])).length;
+  const cartes = PC_ENTR_ESPECES.map(sci => {
+    const vus = (st.esp[sci] || [])[0] || 0;
+    return `<button type="button" class="pc-oiseau${vus ? '' : ' jamais'}" data-pc-oiseau="${esc(sci)}">
+      <span class="pc-oiseau-ph" data-pc-vign="${esc(sci)}"${_pcAnneauAttrs(sci, st)}></span>
+      <span class="pc-oiseau-txt"><span class="pc-oiseau-nom">${esc(_pcNomFr(sci))}${_pcPalierLu(sci, st)}</span><span class="pc-oiseau-serie">${_pcSerieTxt(sci, st)}</span></span>
+    </button>`;
+  }).join('');
+  return `<section class="pc-bloc" aria-labelledby="pcOiseauxTitre">
+    <h3 class="bloc-titre" id="pcOiseauxTitre">Mes oiseaux <span class="bloc-titre-note">· ${avec} sur ${PC_ENTR_ESPECES.length} ${avec > 1 ? 'ont' : 'a'} un palier</span></h3>
+    <div class="pc-oiseaux">${cartes}</div>
+  </section>`;
+}
+// La fiche d'un oiseau : ses cinq paliers, ce qu'il manque pour le suivant, et ses chiffres.
+function _pcRenderOiseau(box){
+  const sci = _pc.oiseau;
+  if(!PC_ENTR_ESPECES.includes(sci)){ _pc.vue = 'liste'; _pcRenderListe(box); return; }
+  const st = _pcStats(), [cur, rec] = _pcSerie(sci, st), n = _pcPalier(rec);
+  const [vus = 0, rates = 0] = st.esp[sci] || [];
+  const suiv = PC_PALIERS[n];
+  const echelle = PC_PALIERS.map((P, k) => `<div class="pc-echelon${rec >= P.seuil ? '' : ' non'}">
+      <span class="pc-echelon-ph" data-pc-vign="${esc(sci)}"${_pcAnneauAttrs(sci, st, k + 1)}></span>
+      <b>${esc(P.nom)}</b><span>${P.seuil}</span>
+    </div>`).join('');
+  const prog = suiv
+    ? `<span>Série en cours : <b>${cur}</b> d'affilée. Encore <b>${suiv.seuil - cur}</b> pour ${esc(suiv.nom)}.</span>
+       <span class="pc-barre" aria-hidden="true"><i style="width:${(cur / suiv.seuil * 100).toFixed(1)}%"></i></span>`
+    : `<span>Série en cours : <b>${cur}</b> d'affilée. Tous les paliers sont gagnés.</span>`;
+  // conf « a|b » : a pris pour b. Ici, les oiseaux qu'on donne a la place de celui-ci.
+  const confs = Object.entries(st.conf).filter(([c]) => c.startsWith(sci + '|'))
+    .map(([c, k]) => [c.slice(sci.length + 1), k]).sort((a, b) => b[1] - a[1]).slice(0, 3);
+  box.innerHTML = `<div class="pc-entr-page pc-fiche">
+    <button type="button" class="pc-retour" data-pc-liste>${PC_ICO.retour}Quiz</button>
+    <div class="pc-fiche-tete">
+      <span class="pc-fiche-ph" data-pc-vign="${esc(sci)}"${_pcAnneauAttrs(sci, st)}></span>
+      <div><h3 class="pc-titre">${esc(_pcNomFr(sci))}</h3>
+        <p class="pc-fiche-palier">${n ? `<span class="pc-pastille" style="--pc-palier:${PC_PALIERS[n - 1].anneau}"></span>${esc(PC_PALIERS[n - 1].nom)}` : 'Pas encore de palier'}<span class="pc-meta"> · record ${rec} d'affilée</span></p></div>
+    </div>
+    <div class="pc-echelle">${echelle}</div>
+    <div class="pc-fiche-prog">${prog}</div>
+    <div class="pc-chiffres">
+      <div class="pc-chiffre"><b>${vus ? Math.round((vus - rates) / vus * 100) + ' %' : '-'}</b><span>de bonnes réponses</span></div>
+      <div class="pc-chiffre"><b>${vus}</b><span>fois au quiz</span></div>
+      <div class="pc-chiffre"><b id="pcFicheEnreg">-</b><span>enregistrements différents entendus</span></div>
+    </div>
+    ${confs.length ? `<div><p class="pc-etiq">Tu le confonds avec</p>${confs.map(([b, k]) => `<div class="pc-lacune">
+        <span class="pc-lacune-ph" data-pc-vign="${esc(b)}"${_pcAnneauAttrs(b, st)}></span>
+        <span class="pc-lacune-txt"><span class="pc-lacune-nom">${esc(_pcNomFr(b))}</span></span>
+        <span class="pc-lacune-taux">${k} fois</span>
+      </div>`).join('')}</div>` : ''}
+    <div class="pc-entr-bas"><span class="pc-meta">${PC_ENTR_MANCHES} manches, la moitié sur lui, les autres sur les oiseaux de son parcours.</span>
+      <button type="button" class="btn" data-pc-oiseau-jouer="${esc(sci)}">S'entraîner sur cet oiseau</button></div>
+  </div>`;
+  // Les enregistrements viennent du fichier de chants de son parcours, lu au besoin.
+  _pcChantsFiche(sci).then(l => {
+    const el = document.getElementById('pcFicheEnreg');
+    if(!el || !l || _pc.oiseau !== sci) return;
+    const ent = new Set(st.entendus);
+    el.textContent = `${l.filter(r => ent.has(r.id)).length} sur ${l.length}`;
+  });
+}
+// S'entrainer sur un oiseau : la moitie des manches sur lui, le reste sur les autres oiseaux de
+// son parcours, ses sosies. Comme l'entrainement, rien n'est ecrit dans le parcours.
+async function _pcOiseauLancer(sci){
+  const box = document.getElementById('pcParcours'); if(!box) return;
+  const P = PARCOURS_OUVERTS.find(P => P.especes.includes(sci)); if(!P) return;
+  const especes = [...P.especes], autres = especes.filter(s => s !== sci), moitie = Math.ceil(PC_ENTR_MANCHES / 2);
+  const cibles = _pcMelanger(Array.from({ length: PC_ENTR_MANCHES }, (_, k) => k < moitie ? sci : autres[Math.floor(Math.random() * autres.length)]));
+  _pc.vue = 'oiseau'; _pc.oiseau = sci; _pc.mode = 'nom';
+  const sons = await _pcSons(box, especes, 'Retour'); if(!sons) return;
+  _pc.partie = {
+    kind: 'entr', mode: 'nom', oiseau: sci, especes, sons, cur: 0, bonnes: 0, repondu: false,
+    questions: cibles.map((cible, k) => ({ cible, type: 'nom', neuf: k === cibles.length - 1 })),
+    confusions: [], utilises: new Set(), enregistreurs: new Map(), resultats: [],
+  };
+  _pcQuestion();
+}
+// Fin de partie : un encadre par palier gagne pendant la partie.
+function _pcGainsHtml(p){
+  if(!p.paliers?.size) return '';
+  return `<div class="pc-gains">${[...p.paliers].map(([sci, n]) => {
+    const P = PC_PALIERS[n - 1];
+    return `<div class="pc-gain" style="--pc-teinte:${P.teinte}">
+      <span class="pc-gain-ph" data-pc-vign="${esc(sci)}"${_pcAnneauAttrs(sci, null, n)}></span>
+      <span class="pc-gain-txt"><b>Nouveau palier : ${esc(P.nom)}</b><span>${esc(_pcNomFr(sci))}, ${P.seuil} bonnes réponses d'affilée.</span></span>
+    </div>`;
+  }).join('')}</div>`;
 }
 function _pcNoterEntendus(ids){
   const st = _pcStats(), vus = new Set(st.entendus);
@@ -20093,22 +20235,22 @@ function _pcRenderEntr(box){
   if(!M){ _pc.vue = 'liste'; _pcRenderListe(box); return; }
   let meta, corps;
   if(mode === 'lacunes'){
-    const l = _pcLacunes(), ferme = _pcLacunesFerme(l);
+    const l = _pcLacunes(), ferme = _pcLacunesFerme(l), st = _pcStats();
     meta = `D'après tes ${l.total} réponses · ${PC_ENTR_MANCHES} manches`;
     corps = ferme ? `<p class="help">${esc(ferme)}.</p>` : `<div>
         <p class="pc-etiq">Ce qu'on va revoir</p>
         ${l.faibles.map(f => `<div class="pc-lacune">
-          <span class="pc-lacune-ph" data-pc-vign="${esc(f.sci)}"></span>
+          <span class="pc-lacune-ph" data-pc-vign="${esc(f.sci)}"${_pcAnneauAttrs(f.sci, st)}></span>
           <span class="pc-lacune-txt"><span class="pc-lacune-nom">${esc(_pcNomFr(f.sci))}</span>${f.pour ? `<span class="pc-meta">confusion la plus fréquente : ${esc(_pcNomFr(f.pour))}</span>` : ''}</span>
           <span class="pc-lacune-taux">${_pcPluriel(f.rates, 'raté')} sur ${f.vus}</span>
         </div>`).join('')}
       </div>
       <div class="pc-entr-bas"><span class="pc-meta">Les autres oiseaux reviennent de temps en temps.</span><button type="button" class="btn" data-pc-entr-jouer="lacunes">C'est parti</button></div>`;
   } else {
-    const choix = _pcEntrChoix(), n = choix.length, ok = n >= M.min;
+    const choix = _pcEntrChoix(), n = choix.length, ok = n >= M.min, st = _pcStats();
     meta = `${M.desc} · ${PC_ENTR_MANCHES} manches`;
     const jeton = (sci, on) => `<button type="button" class="pc-jeton${on ? ' on' : ''}" data-pc-jeton="${esc(sci)}" aria-pressed="${on}">`
-      + `<span class="pc-jeton-ph" data-pc-vign="${esc(sci)}"></span><span class="pc-jeton-nom">${esc(_pcNomFr(sci))}</span><span class="pc-jeton-coche">${PC_ICO.ok}</span></button>`;
+      + `<span class="pc-jeton-ph" data-pc-vign="${esc(sci)}"${_pcAnneauAttrs(sci, st)}></span><span class="pc-jeton-nom">${esc(_pcNomFr(sci))}${_pcPalierLu(sci, st)}</span><span class="pc-jeton-coche">${PC_ICO.ok}</span></button>`;
     // Avec moins de 5 oiseaux, « Chant vers nom » les propose tous : on dit combien.
     const propose = mode === 'nom' && ok && n < PC_NOMS_MAX ? `Un chant, ${n} noms proposés` : '';
     corps = `<div>
@@ -20150,30 +20292,44 @@ async function _pcEntrLancer(mode){
   };
   _pcQuestion();
 }
-// Fin d'une serie : le score, oiseau par oiseau, les confusions. Pas d'etoiles.
-function _pcEntrFin(box, p){
-  const M = PC_ENTR_MODES[p.mode];
+// Le score oiseau par oiseau, a la fin d'une serie comme d'une etape de parcours. Chaque ligne
+// ouvre la fiche de l'oiseau, avec sa serie apres la partie (paliers, qg#58).
+function _pcBilanHtml(p){
   const par = new Map();
   p.questions.forEach((q, k) => {
     const x = par.get(q.cible) || [0, 0];
     x[1]++; if(p.resultats[k] === 'ok') x[0]++;
     par.set(q.cible, x);
   });
-  const bilan = [...par.entries()].sort((a, b) => b[1][0] / b[1][1] - a[1][0] / a[1][1] || b[1][1] - a[1][1]).map(([sci, [bons, n]]) => `
-    <div class="pc-bilan-l"><span class="pc-bilan-ph" data-pc-vign="${esc(sci)}"></span><span class="pc-bilan-nom">${esc(_pcNomFr(sci))}</span>
-      <span class="pc-bilan-n">${bons}/${n}</span><span class="pc-barre" aria-hidden="true"><i style="width:${(bons / n * 100).toFixed(0)}%"></i></span></div>`).join('');
+  const st = _pcStats();
+  return `<div class="pc-bilan">${[...par.entries()].sort((a, b) => b[1][0] / b[1][1] - a[1][0] / a[1][1] || b[1][1] - a[1][1]).map(([sci, [bons, n]]) => {
+    const cur = _pcSerie(sci, st)[0];
+    return `
+    <button type="button" class="pc-bilan-l" data-pc-oiseau="${esc(sci)}"><span class="pc-bilan-ph" data-pc-vign="${esc(sci)}"${_pcAnneauAttrs(sci, st)}></span>
+      <span class="pc-bilan-nom">${esc(_pcNomFr(sci))}${_pcPalierLu(sci, st)}<span class="pc-bilan-serie">${cur ? `${PC_ICO.serie}série ${cur}` : 'série à zéro'}</span></span>
+      <span class="pc-bilan-n">${bons}/${n}</span><span class="pc-barre" aria-hidden="true"><i style="width:${(bons / n * 100).toFixed(0)}%"></i></span></button>`;
+  }).join('')}</div>`;
+}
+// Fin d'une serie : le score, oiseau par oiseau, les confusions. Pas d'etoiles.
+function _pcEntrFin(box, p){
+  const M = PC_ENTR_MODES[p.mode];
+  const bilan = _pcBilanHtml(p);
   const lignes = _pcConfusionsLignes(p);
   _pc.partie = null;
+  // Sur un seul oiseau (depuis sa fiche) : on revient a la fiche, on rejoue le meme oiseau.
+  const retour = p.oiseau ? '<button type="button" class="btn ghost" data-pc-retour>Retour à sa fiche</button>' : '<button type="button" class="btn ghost" data-pc-liste>Retour au quiz</button>';
+  const rejouer = p.oiseau ? `data-pc-oiseau-jouer="${esc(p.oiseau)}"` : `data-pc-entr-jouer="${p.mode}"`;
   box.innerHTML = `<div class="pc-fin pc-entr-fin">
-    <div class="pc-etiq">${esc(M.titre)} · fini</div>
+    <div class="pc-etiq">${esc(p.oiseau ? _pcNomFr(p.oiseau) : M.titre)} · fini</div>
     <div class="pc-fin-score">${p.bonnes}/${p.questions.length}</div>
-    <div class="pc-bilan">${bilan}</div>
+    ${_pcGainsHtml(p)}
+    ${bilan}
     ${lignes ? `<p class="pc-meta">Tes confusions :</p><ul class="pc-confusions">${lignes}</ul>` : ''}
     ${_pcHistoriqueHtml(p, p.questions.length, 'Réécouter les chants de la partie')}
     <div class="pc-fin-btns">
-      <button type="button" class="btn ghost" data-pc-liste>Retour au quiz</button>
-      ${p.mode !== 'lacunes' ? `<button type="button" class="btn ghost" data-pc-entr="${p.mode}">Changer les oiseaux</button>` : ''}
-      <button type="button" class="btn" data-pc-entr-jouer="${p.mode}">Rejouer</button>
+      ${retour}
+      ${p.mode !== 'lacunes' && !p.oiseau ? `<button type="button" class="btn ghost" data-pc-entr="${p.mode}">Changer les oiseaux</button>` : ''}
+      <button type="button" class="btn" ${rejouer}>Rejouer</button>
     </div>
   </div>`;
   _pcPhotos(box);
@@ -20237,17 +20393,18 @@ function _parcoursRender(){
   _pcHistArreter();
   // L'accueil se range comme les autres pages : colle en haut, sans agrandissement, avec sa
   // phrase d'introduction. Le chemin et les parties restent centres dans l'ecran.
-  const accueil = _pc.vue !== 'chemin' && _pc.vue !== 'entr';
+  const accueil = _pc.vue !== 'chemin' && _pc.vue !== 'entr' && _pc.vue !== 'oiseau';
   box.classList.toggle('pc-haut', accueil);
   const intro = document.getElementById('pcIntro'); if(intro) intro.hidden = !accueil;
   if(_pc.vue === 'chemin') _pcRenderChemin(box);
   else if(_pc.vue === 'entr') _pcRenderEntr(box);
+  else if(_pc.vue === 'oiseau') _pcRenderOiseau(box);
   else _pcRenderListe(box);
   _pcPhotos(box);
   _pcAjuster();
 }
 function _pcAjuster(){ _pcHauteur(); _pcDessinerChemin(); }
-const _pcRonds = especes => `<span class="pc-ronds" aria-hidden="true">${especes.map(sci => `<span data-pc-vign="${esc(sci)}"></span>`).join('')}</span>`;
+const _pcRonds = (especes, st = _pcStats()) => `<span class="pc-ronds" aria-hidden="true">${especes.map(sci => `<span data-pc-vign="${esc(sci)}"${_pcAnneauAttrs(sci, st)}></span>`).join('')}</span>`;
 // Accueil refait le 2026-10-17 (maquette C de notes-privees/maquettes/quiz-accueil-2/) : il
 // ressemble aux autres pages, colle en haut et pleine largeur, au lieu de cartes centrees au
 // milieu de l'ecran (« trop de blanc vide », Mathis). L'entrainement en boites comme celles de
@@ -20273,6 +20430,7 @@ function _pcRenderListe(box){
     </div>`).join('');
   box.innerHTML = `<div class="pc-accueil">
     ${_pcEntrSectionHTML()}
+    ${_pcOiseauxSectionHTML()}
     <section class="pc-bloc" aria-labelledby="pcParcoursTitre">
       <h3 class="bloc-titre" id="pcParcoursTitre">Parcours <span class="bloc-titre-note">· ${PARCOURS_OUVERTS.length} ${PARCOURS_OUVERTS.length > 1 ? 'ouverts' : 'ouvert'}, ${PARCOURS_BIENTOT.length} à venir</span></h3>
       <div class="pc-tableau">
@@ -20378,9 +20536,11 @@ function _pcBulleHTML(i, best, s){
   const P = _pcP(), et = P.etapes, e = et[i];
   // A une etape qui ajoute un oiseau, le nouveau est entoure d'accent.
   const nouvelle = (i > 0 && e.n > et[i - 1].n) ? e.n - 1 : -1;
+  const st = _pcStats();
   const oiseaux = P.especes.slice(0, e.n).map((sci, j) => {
-    const nom = esc(_pcNomFr(sci));
-    return `<span class="pc-bulle-oiseau${j === nouvelle ? ' neuf' : ''}" data-pc-vign="${esc(sci)}" role="img" aria-label="${nom}${j === nouvelle ? ', nouvelle' : ''}" title="${nom}"></span>`;
+    const nom = esc(_pcNomFr(sci)), n = _pcPalier(_pcSerie(sci, st)[1]);
+    const palier = n ? `, palier ${esc(PC_PALIERS[n - 1].nom)}` : '';
+    return `<span class="pc-bulle-oiseau${j === nouvelle ? ' neuf' : ''}" data-pc-vign="${esc(sci)}"${_pcAnneauAttrs(sci, st)} role="img" aria-label="${nom}${palier}${j === nouvelle ? ', nouvelle' : ''}" title="${nom}"></span>`;
   }).join('');
   let pied;
   if(s === 'ferme') pied = `<p class="pc-bulle-note">${PC_ICO.cadenas}Réussis l'étape ${i} pour l'ouvrir.</p>`;
@@ -20703,7 +20863,8 @@ function _pcCompter(p, q, juste, choisi){
   p.repondu = true;
   if(juste) p.bonnes++; else if(choisi) p.confusions.push([q.cible, choisi]);
   p.resultats[p.cur] = juste ? 'ok' : 'ko';
-  _pcNoterReponse(q.cible, juste, choisi);
+  const gagne = _pcNoterReponse(q.cible, juste, choisi);
+  if(gagne) (p.paliers ||= new Map()).set(q.cible, gagne);   // le plus haut l'emporte : ils ne font que monter
   _pcCouperSons();
   const seg = document.querySelectorAll('#pcParcours .pc-segments i')[p.cur]; if(seg) seg.className = p.resultats[p.cur];
 }
@@ -20824,6 +20985,8 @@ function _pcFin(){
     <div class="pc-fin-etoiles" role="img" aria-label="${nb} étoile${nb > 1 ? 's' : ''} sur ${PC_ETOILES_MAX}">${_pcEtoilesHTML(nb)}</div>
     <div class="pc-fin-score">${p.bonnes}/${e.q}</div>
     <p class="pc-meta">${ok ? (p.etape + 1 < et.length ? 'L\'étape suivante est ouverte.' : 'Tu as fini le parcours.') : `Il faut ${_pcSeuil(e)} bonnes réponses pour passer.`}</p>
+    ${_pcGainsHtml(p)}
+    ${_pcBilanHtml(p)}
     ${lignes ? `<p class="pc-meta">Tes confusions :</p><ul class="pc-confusions">${lignes}</ul>` : ''}
     ${_pcHistoriqueHtml(p, p.questions.length, 'Réécouter les chants de l\'étape')}
     <div class="pc-fin-btns">
@@ -20832,6 +20995,7 @@ function _pcFin(){
       ${suivante ? `<button type="button" class="btn" data-pc-jouer="${p.etape + 1}">Étape ${p.etape + 2}</button>` : ''}
     </div>
   </div>`;
+  _pcPhotos(box);
 }
 document.addEventListener('click', e => {
   // Changer d'onglet coupe un chant du parcours qui jouerait encore.
@@ -20857,6 +21021,9 @@ document.addEventListener('click', e => {
     _parcoursRender(); document.querySelector('#pcParcours [data-pc-tout]')?.focus(); return;
   }
   const entrJouer = e.target.closest('[data-pc-entr-jouer]'); if(entrJouer){ _pcEntrLancer(entrJouer.dataset.pcEntrJouer); return; }
+  // Paliers : la fiche d'un oiseau, et l'entrainement sur lui
+  const oiseau = e.target.closest('[data-pc-oiseau]'); if(oiseau){ _pc.vue = 'oiseau'; _pc.oiseau = oiseau.dataset.pcOiseau; _parcoursRender(); document.querySelector('#pcParcours .pc-retour')?.focus(); return; }
+  const oiseauJouer = e.target.closest('[data-pc-oiseau-jouer]'); if(oiseauJouer){ _pcOiseauLancer(oiseauJouer.dataset.pcOiseauJouer); return; }
   const sugg = e.target.closest('[data-pc-sugg]'); if(sugg){ _pcPrendreSugg(sugg.dataset.pcSugg); return; }
   if(e.target.closest('[data-pc-valider]')){ _pcRepondreEcrit(); return; }
   const hist = e.target.closest('[data-pc-hist]'); if(hist){ _pcHistJouer(hist); return; }

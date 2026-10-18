@@ -1758,6 +1758,63 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .pc-bilan-nom { flex:1; min-width:0; }
   .pc-bilan-n { font-weight:600; font-variant-numeric:tabular-nums; }
   .pc-bilan .pc-barre { flex:none; width:90px; }
+  /* Paliers par oiseau (qg#58, maquette notes-privees/maquettes/quiz-paliers/) : un anneau de la
+     couleur du palier autour du rond, separe de la photo par un filet du fond. L'anneau est pris
+     dans la taille du rond : rien ne bouge autour quand un palier tombe. */
+  #pcParcours [data-palier] { box-sizing:border-box; border:3px solid transparent; padding:2px;
+    background:linear-gradient(var(--surface), var(--surface)) padding-box, var(--pc-palier) border-box; }
+  #pcParcours [data-palier] img { border-radius:50%; }
+  #pcParcours .pc-ligne .pc-ronds > [data-palier], #pcParcours .pc-bulle-oiseau[data-palier],
+  #pcParcours .pc-bilan-ph[data-palier], #pcParcours .pc-echelon-ph[data-palier] { border-width:2px; padding:1.5px; }
+  #pcParcours .pc-fiche-ph[data-palier] { border-width:5px; padding:3px; }
+  .pc-ico.pc-ico-serie { display:inline-block; width:14px; height:14px; color:var(--accent-2); vertical-align:-2px; margin-right:3px; }
+  .pc-oiseaux { display:grid; grid-template-columns:repeat(auto-fill, minmax(210px, 1fr)); gap:10px; margin-top:12px; }
+  .pc-oiseau { display:flex; align-items:center; gap:12px; padding:10px 12px; border:1px solid var(--line-2); border-radius:14px;
+    background:var(--surface); font:inherit; color:var(--ink); text-align:left; cursor:pointer; }
+  .pc-oiseau:hover { border-color:var(--accent); }
+  .pc-oiseau-ph, .pc-fiche-ph, .pc-echelon-ph, .pc-gain-ph { flex:none; border-radius:50%; overflow:hidden; background:var(--surface-3); }
+  .pc-oiseau-ph img, .pc-fiche-ph img, .pc-echelon-ph img, .pc-gain-ph img { width:100%; height:100%; object-fit:cover; display:block; }
+  .pc-oiseau-ph { width:52px; height:52px; }
+  .pc-oiseau.jamais .pc-oiseau-ph { filter:grayscale(1); opacity:.6; }
+  .pc-oiseau-txt { min-width:0; display:flex; flex-direction:column; gap:2px; }
+  .pc-oiseau-nom { font-size:15px; font-weight:600; line-height:1.25; }
+  .pc-oiseau-serie, .pc-bilan-serie { font-size:14px; color:var(--ink-3); font-variant-numeric:tabular-nums; }
+  .pc-bilan-serie { display:block; margin-top:1px; }
+  button.pc-bilan-l { width:100%; border:0; border-bottom:1px solid var(--line); background:none; font:inherit; font-size:15px; color:var(--ink); text-align:left; cursor:pointer; }
+  button.pc-bilan-l:hover .pc-bilan-nom { color:var(--accent-ink); }
+  /* La fiche d'un oiseau */
+  .pc-fiche-tete { display:flex; align-items:center; gap:16px; }
+  .pc-fiche-ph { width:96px; height:96px; }
+  .pc-fiche-palier { display:flex; align-items:center; flex-wrap:wrap; gap:0 7px; margin:4px 0 0; font-size:15px; font-weight:600; }
+  .pc-fiche-palier .pc-meta { margin:0; font-weight:400; }
+  .pc-pastille { width:14px; height:14px; border-radius:50%; background:var(--pc-palier); flex:none; }
+  .pc-echelle { display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); gap:6px; }
+  .pc-echelon { display:flex; flex-direction:column; align-items:center; gap:4px; font-size:14px; color:var(--ink-3); text-align:center; }
+  .pc-echelon b { color:var(--ink); font-weight:600; }
+  .pc-echelon-ph { width:36px; height:36px; margin-bottom:2px; }
+  .pc-echelon.non .pc-echelon-ph { opacity:.35; filter:grayscale(.7); }
+  .pc-echelon.non b { color:var(--ink-3); font-weight:400; }
+  .pc-fiche-prog { display:flex; flex-direction:column; gap:8px; font-size:15px; }
+  .pc-fiche-prog .pc-barre { height:8px; border-radius:4px; }
+  .pc-chiffres { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:10px; }
+  .pc-chiffre { display:flex; flex-direction:column; gap:2px; padding:10px 12px; border-radius:12px; background:var(--surface-2); }
+  .pc-chiffre b { font-size:22px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .pc-chiffre span { font-size:14px; color:var(--ink-2); }
+  /* Fin de partie : un encadre par palier gagne */
+  .pc-gains { display:flex; flex-direction:column; gap:8px; max-width:520px; margin:14px auto 0; text-align:left; }
+  .pc-gain { display:flex; align-items:center; gap:14px; padding:10px 14px; border-radius:14px;
+    background:color-mix(in srgb, var(--pc-teinte) 16%, var(--surface)); border:1px solid color-mix(in srgb, var(--pc-teinte) 45%, transparent); }
+  .pc-gain-ph { width:52px; height:52px; }
+  .pc-gain-txt { display:flex; flex-direction:column; gap:2px; font-size:14px; color:var(--ink-2); }
+  .pc-gain-txt b { font-size:16px; color:var(--ink); }
+  @media (max-width:560px){
+    .pc-oiseaux { grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px; }
+    .pc-oiseau { gap:10px; padding:8px 10px; }
+    .pc-oiseau-ph { width:44px; height:44px; }
+    .pc-oiseau-nom { font-size:14px; }
+    .pc-fiche-ph { width:76px; height:76px; }
+    .pc-chiffres { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+  }
   /* Nom a ecrire (variante N2) : les noms proposes flottent sous le champ. */
   .pc-ecrire { display:flex; gap:10px; }
   .pc-ecrire-champ { position:relative; flex:1; min-width:0; }
