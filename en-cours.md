@@ -1,8 +1,8 @@
-# EN LOCAL le 2026-10-18, PAS POUSSÉ : progression du quiz protégée + sonagramme après le chant (v815, app.js?v=389)
+# POUSSÉ le 2026-10-18 : progression du quiz protégée + sonagramme après le chant (v815, app.js?v=389)
 - Progression « réinitialisée à chaque mise à jour », toujours sur le site en ligne : aucun code ne l'efface. Cause probable (non prouvée chez lui) : mémoire du site pleine, les 40 anciennes versions du cache de photos (mb-sp-photo-cache-v1 à v40) n'étant jamais effacées ; l'écriture de mb-parcours-* échouait en silence. Corrigé : purge des anciennes versions au démarrage, _stockageEcrire() (libère les caches et réessaie) pour progression, stats, oiseaux de l'entraînement, indices ; cache de photos plafonné à 2 500 espèces.
 - Testé en remplissant la mémoire du navigateur intégré : anciennes versions purgées, progression gardée, réglage enregistré malgré la mémoire pleine.
 - Sonagramme : téléchargé seulement au premier « playing » du chant, fetchPriority low (il retardait le chant). Vérifié : démarre après le chant, prêt au verdict.
-- RESTE : pousser (avec son accord), puis vérifier sur le site en ligne qu'une progression survit à une mise à jour.
+- Poussé. Vérifié en ligne (navigateur intégré) : une progression écrite en v387 est toujours là après le passage à v389. Reste à voir si elle tient chez lui.
 - Ouvert : ordre et noms de tous les parcours (demande de Mathis, à réfléchir).
 ---
 # EN LOCAL le 2026-10-17, PAS POUSSÉ : cercles d'indices, réécouter, numéros des chants (v805, app.js?v=379)
