@@ -1,8 +1,8 @@
-# FAIT, NON POUSSÉ le 2026-10-18 : paliers par oiseau, qg#58 (v818, app.js?v=392)
+# POUSSÉ le 2026-10-18 : paliers par oiseau, qg#58 (v818, app.js?v=392)
 - Maquette notes-privees/maquettes/quiz-paliers/. Choix de Mathis : palier sur la meilleure série d'affilée (5, 10, 25, 50, 100), gardé ; anneau autour du rond (bronze, argent, or, diamant, prismatique) ; noms Repéré, Reconnu, Familier, Sûr, Infaillible ; « Mes oiseaux » en cartes sur l'accueil, fiche de l'oiseau (paliers, série, réussite, enregistrements entendus, confusions, « S'entraîner sur cet oiseau »). qg#63 fermé (remplacé).
 - Tranché par moi : tous les modes comptent ; « Presque » compte juste ; une erreur ne remet à zéro que l'oiseau à trouver ; séries dans mb-quiz-reponses (champ serie) ; anciennes réponses sans ordre, donc séries à zéro sauf oiseau jamais raté (série = toutes ses réponses). Bilan oiseau par oiseau ajouté aussi à la fin des étapes de parcours, comme sur la maquette.
 - Vérifié dans la démo (1280 clair, 375 sombre) : gain de palier, série remise à zéro, fiche, retour, entraînement sur un oiseau, fin d'étape. 11 bancs CONFORME.
-- Reste : qu'il regarde en local, puis pousser. Toujours ouvert : ordre et noms de tous les parcours.
+- Poussé et vérifié en ligne (démo : app.js?v=392, section Mes oiseaux affichée). Toujours ouvert : ordre et noms de tous les parcours.
 ---
 # POUSSÉ le 2026-10-18 : chants douteux retirés des deux parcours (v817, app.js?v=391)
 - XC 692351 était un Pouillot de Sibérie (collybita tristis, Herblay en décembre) : retiré. Puis les 146 fiches xeno-canto relues : espèce, « song », mois, sons et sonagrammes tous bons ; retirés aussi 400300 (nonnette ou boréale), 879546 (noire près d'une boréale), 884077 et 804603 (grimpereau des jardins atypique). Raisons notées dans outils/build/chants-gardes.mjs.
