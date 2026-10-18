@@ -6084,7 +6084,7 @@ function renderChat(msgs){
       }
     }
     const safeVoice = (showOriginal && typeof fieldVoice==='string' && /^data:audio\//.test(fieldVoice)) ? fieldVoice.replace(/"/g,'%22') : '';
-    const voiceHtml = safeVoice ? `<audio class="msg-voice${isDeleted?' msg-deleted-content':''}" src="${safeVoice}" controls preload="metadata"></audio>` : '';
+    const voiceHtml = safeVoice ? _voixHtml(safeVoice, isDeleted ? 'msg-deleted-content' : '') : '';
     const safeGif = (showOriginal && typeof fieldGif==='string' && /^https:\/\/[a-z0-9-]+\.giphy\.com\//.test(fieldGif)) ? fieldGif.replace(/"/g,'%22') : '';
     const gifHtml = safeGif ? `<img class="msg-gif${isDeleted?' msg-deleted-content':''}" src="${safeGif}" alt="GIF" loading="lazy">` : '';
     const emojiOnly = !hasImg && !safeVoice && !safeGif && !isDeleted && _isEmojiOnly(fieldText);
@@ -7556,6 +7556,7 @@ function _renderModeMine(el){
   _tlDates = [...new Set(allPts.map(p=>p.dateOrd).filter(x=>x!=null))].sort((a,b)=>a-b);
   const tlEl=$('#mapTimeline'), tlStart=$('#mapTlStart'), tlEnd=$('#mapTlEnd'), tlLabel=$('#mapTlLabel');
   if(tlEl && _tlDates.length>1){
+    _boutonLecture($('#mapTlPlay'));
     const max=_tlDates.length-1;
     tlStart.max=max; tlEnd.max=max;
     if(_tlEndIdx<0||_tlEndIdx>max) _tlEndIdx=max;
@@ -8480,30 +8481,31 @@ document.addEventListener('change', e=>{
 });
 // Timeline : sliders (Du/Au), vitesse, play/pause, reset
 document.addEventListener('input', e=>{
-  if(e.target.id==='mapTlStart'){ const v=+e.target.value; if(_tlPlayId){ clearInterval(_tlPlayId); _tlPlayId=null; const b=$('#mapTlPlay'); if(b){ b.textContent='▶'; b.classList.remove('playing'); } } _tlStartIdx=v; if(_tlStartIdx>_tlEndIdx){ _tlEndIdx=_tlStartIdx; } _tlSkipFit=true; renderMap(); }
-  else if(e.target.id==='mapTlEnd'){ const v=+e.target.value; if(_tlPlayId){ clearInterval(_tlPlayId); _tlPlayId=null; const b=$('#mapTlPlay'); if(b){ b.textContent='▶'; b.classList.remove('playing'); } } _tlEndIdx=v; if(_tlEndIdx<_tlStartIdx){ _tlStartIdx=_tlEndIdx; } _tlSkipFit=true; renderMap(); }
+  if(e.target.id==='mapTlStart'){ const v=+e.target.value; if(_tlPlayId){ clearInterval(_tlPlayId); _tlPlayId=null; const b=$('#mapTlPlay'); if(b){ b.classList.remove('playing'); _anneauLecture(b, 0); } } _tlStartIdx=v; if(_tlStartIdx>_tlEndIdx){ _tlEndIdx=_tlStartIdx; } _tlSkipFit=true; renderMap(); }
+  else if(e.target.id==='mapTlEnd'){ const v=+e.target.value; if(_tlPlayId){ clearInterval(_tlPlayId); _tlPlayId=null; const b=$('#mapTlPlay'); if(b){ b.classList.remove('playing'); _anneauLecture(b, 0); } } _tlEndIdx=v; if(_tlEndIdx<_tlStartIdx){ _tlStartIdx=_tlEndIdx; } _tlSkipFit=true; renderMap(); }
 });
 document.addEventListener('change', e=>{
   if(e.target.id==='mapTlSpeed'){ _tlSpeed=+e.target.value; if(_tlPlayId){ const wasPlaying=true; _tlStop(); if(wasPlaying) _tlPlay(); } }
 });
-function _tlStop(){ if(_tlPlayId){ clearInterval(_tlPlayId); _tlPlayId=null; } const b=$('#mapTlPlay'); if(b){ b.textContent='▶'; b.classList.remove('playing'); b.title='Lancer l\'animation'; } }
+function _tlStop(){ if(_tlPlayId){ clearInterval(_tlPlayId); _tlPlayId=null; } const b=$('#mapTlPlay'); if(b){ b.classList.remove('playing'); _anneauLecture(b, 0); b.title='Lancer l\'animation'; } }
 function _tlPlay(){
   if(!_tlDates.length || _tlStartIdx>=_tlEndIdx) return;
   if(_tlPlayId){ clearInterval(_tlPlayId); _tlPlayId=null; }
   _tlPlayPos = _tlStartIdx;   // repart toujours du début de la fenêtre
-  const b=$('#mapTlPlay'); if(b){ b.textContent='⏸'; b.classList.add('playing'); b.title='Pause'; }
+  const b=$('#mapTlPlay'); if(b){ b.classList.add('playing'); _anneauLecture(b, 0); b.title='Pause'; }
   const span = _tlEndIdx - _tlStartIdx + 1;
   const stepMs = Math.max(40, Math.min(400, (8000/_tlSpeed)/span));   // ~8 s à vitesse normale
   _tlPlayId = 1;   // marqueur "en train de jouer" (le setInterval remplace ensuite)
   _tlSkipFit=true; renderMap();
   _tlPlayId = setInterval(()=>{
     _tlPlayPos++;
+    _anneauLecture($('#mapTlPlay'), (_tlPlayPos - _tlStartIdx) / Math.max(1, _tlEndIdx - _tlStartIdx));
     if(_tlPlayPos>=_tlEndIdx){ _tlPlayPos=_tlEndIdx; _tlSkipFit=true; renderMap(); _tlStop(); return; }
     _tlSkipFit=true; renderMap();
   }, stepMs);
 }
 document.addEventListener('click', e=>{
-  if(e.target.id==='mapTlPlay'){ if(_tlPlayId) _tlStop(); else _tlPlay(); }
+  if(e.target.closest('#mapTlPlay')){ if(_tlPlayId) _tlStop(); else _tlPlay(); }
   else if(e.target.id==='mapTlReset'){ _tlStop(); _tlStartIdx=0; _tlEndIdx=_tlDates.length-1; _tlPlayPos=_tlEndIdx; renderMap(); }
 });
 
@@ -11179,6 +11181,45 @@ $('#gifSearch')?.addEventListener('input', e => {
 // A 32 kbps webm : 15s = ~60 KB base64. Rentre largement.
 let _mediaRecorder = null, _voiceChunks = [], _voiceTimer = null, _voiceStartT = 0;
 let pendingVoiceB64 = null;
+// Vocaux du tchat : le bouton du quiz au lieu du lecteur du navigateur, qui changeait d'allure
+// d'un navigateur a l'autre (Mathis le 2026-10-18). L'anneau suit la lecture, la duree s'affiche
+// a cote. avecTemps = false pour l'apercu avant envoi, qui a deja sa duree.
+function _voixHtml(src, cls = '', avecTemps = true){
+  return `<span class="msg-voice${cls ? ' ' + cls : ''}"><button type="button" class="pc-lecture pc-lecture-mini" data-voix aria-label="Écouter le message vocal">${PC_LECTURE_SVG}</button>`
+    + (avecTemps ? '<span class="msg-voix-t"></span>' : '') + `<audio src="${src}" preload="metadata"></audio></span>`;
+}
+const _voixFmt = s => isFinite(s) && s >= 0 ? Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0') : '';
+function _voixMaj(a){
+  const box = a.closest('.msg-voice'); if(!box) return;
+  const btn = box.querySelector('[data-voix]'), t = box.querySelector('.msg-voix-t');
+  const joue = !a.paused && !a.ended;
+  btn?.classList.toggle('playing', joue);
+  const d = a.duration;
+  if(t) t.textContent = joue || a.currentTime > 0 ? _voixFmt(a.currentTime) : _voixFmt(d);
+  _anneauLecture(btn, isFinite(d) && d > 0 && !a.ended ? a.currentTime / d : 0);
+}
+// Un enregistrement du navigateur (webm) annonce souvent une duree infinie tant qu'on ne l'a pas
+// lu jusqu'au bout : on saute tout au bout une fois pour qu'il la calcule, puis on revient a 0.
+function _voixDuree(a){
+  if(a.duration !== Infinity || a._voixFix) return;
+  a._voixFix = true;
+  const fin = () => { if(!isFinite(a.duration)) return; a.removeEventListener('durationchange', fin); a.currentTime = 0; a._voixFix = false; _voixMaj(a); };
+  a.addEventListener('durationchange', fin);
+  try{ a.currentTime = 1e7; }catch(_){ a._voixFix = false; }
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-voix]'); if(!b) return;
+  const a = b.closest('.msg-voice')?.querySelector('audio'); if(!a) return;
+  if(a.paused){ document.querySelectorAll('.msg-voice audio').forEach(x => { if(x !== a && !x.paused) x.pause(); }); a.play().catch(() => {}); }
+  else a.pause();
+});
+// Les evenements d'un <audio> ne remontent pas : on les attrape a la descente.
+['play', 'pause', 'ended', 'loadedmetadata', 'durationchange'].forEach(type => document.addEventListener(type, e => {
+  const a = e.target; if(!(a instanceof HTMLAudioElement) || !a.closest('.msg-voice') || a._voixFix) return;
+  if(type === 'loadedmetadata') _voixDuree(a);
+  if(type === 'play') (function suivre(){ _voixMaj(a); if(!a.paused && !a.ended && a.isConnected) requestAnimationFrame(suivre); })();
+  else _voixMaj(a);
+}, true));
 const VOICE_MAX_SEC = 15;
 function _voiceMimeType(){
   // Preferer opus (webm). Fallback mp4 pour Safari iOS.
@@ -11210,7 +11251,7 @@ async function _startVoiceRecording(){
       if(prev){
         prev.hidden = false;
         prev.innerHTML = `<div class="voice-preview">
-          <audio src="${b64}" controls preload="metadata"></audio>
+          ${_voixHtml(b64.replace(/"/g, '%22'), '', false)}
           <span class="voice-duration">${dur}s</span>
           <button type="button" class="voice-remove" title="Retirer">✕</button>
         </div>`;
@@ -12694,7 +12735,7 @@ async function _openMigrationFullscreen(sci){
       </div>
       <div id="migFsMapEl" style="flex:1; background:var(--surface-3);"></div>
       <div style="padding:12px 20px; display:flex; align-items:center; gap:12px; border-top:1px solid var(--line);">
-        <button type="button" id="migFsPlayBtn" class="btn tiny" style="min-width:80px;">▶ Lire</button>
+        <button type="button" id="migFsPlayBtn" class="pc-lecture pc-lecture-mini" aria-label="Lire l'animation" title="Lire l'animation">${PC_LECTURE_SVG}</button>
         <input type="range" id="migFsSlider" min="0" max="11" value="0" step="1" style="flex:1; cursor:pointer;">
         <span id="migFsLabel" style="font-size:13px; color:var(--ink); min-width:60px; text-align:right;">${CARTES_MOIS[0]}</span>
       </div>
@@ -12769,13 +12810,14 @@ async function _openMigrationFullscreen(sci){
     setFrame(0).then(() => { for(let m = 2; m <= 12; m++) _carteImage(entry, m).catch(() => {}); });
     slider.addEventListener('input', () => setFrame(+slider.value));
     playBtn.addEventListener('click', () => {
-      if(_migFsPlay){ clearInterval(_migFsPlay); _migFsPlay = null; playBtn.textContent = '▶ Lire'; }
+      if(_migFsPlay){ clearInterval(_migFsPlay); _migFsPlay = null; playBtn.classList.remove('playing'); }
       else {
-        playBtn.textContent = '⏸ Pause';
+        playBtn.classList.add('playing');
         _migFsPlay = setInterval(() => {
           let v = (+slider.value + 1) % 12;
           slider.value = String(v);
           setFrame(v);
+          _anneauLecture(playBtn, (v + 1) / 12);   // l'anneau fait le tour de l'annee
         }, 900);   // 12 images x 900 ms = ~11 s par cycle
       }
     });
@@ -19770,6 +19812,11 @@ const PC_ANNEAU = +(2 * Math.PI * 27).toFixed(2);   // circonference de l'anneau
 const PC_LECTURE_SVG = `<svg class="pc-anneau" viewBox="0 0 60 60" aria-hidden="true"><circle class="pc-anneau-fond" cx="30" cy="30" r="27"/><circle class="pc-anneau-plein" cx="30" cy="30" r="27" stroke-dasharray="${PC_ANNEAU}" stroke-dashoffset="${PC_ANNEAU}" transform="rotate(-90 30 30)"/></svg>`
   + '<svg class="pc-ico-lecture" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 5.5v13l11-6.5z" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>'
   + '<svg class="pc-ico-pause" viewBox="0 0 22 22" aria-hidden="true" fill="currentColor"><rect x="5" y="3" width="4.5" height="16" rx="1.6"/><rect x="12.5" y="3" width="4.5" height="16" rx="1.6"/></svg>';
+// Le meme bouton partout ou l'on lit quelque chose (Mathis le 2026-10-18) : sons du quiz et des
+// fiches, vocaux du tchat, animations des cartes. f : avancement de 0 a 1, que suit l'anneau.
+function _anneauLecture(btn, f){ const c = btn && btn.querySelector('.pc-anneau-plein'); if(c) c.style.strokeDashoffset = PC_ANNEAU * (1 - Math.max(0, Math.min(1, f || 0))); }
+// Pour un bouton ecrit dans index.html, qui ne peut pas lire PC_LECTURE_SVG : rempli a l'usage.
+function _boutonLecture(btn){ if(btn && !btn.querySelector('.pc-anneau')) btn.innerHTML = PC_LECTURE_SVG; return btn; }
 // Icones au trait (le ✓ et le 🔒 en caracteres changeaient de dessin selon l'appareil).
 const PC_ICO = {
   ok: '<svg class="pc-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5"/></svg>',

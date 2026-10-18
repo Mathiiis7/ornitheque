@@ -1,8 +1,8 @@
-# POUSSÉ le 2026-10-18 : bouton lecture du quiz sur les fiches espèces (v811, app.js?v=385)
-- Fiche espèce, chant et cri : le bouton « anneau qui avance » du quiz (.pc-lecture petit, mini dans « autres enregistrements »), anneau qui suit la lecture, anneau de fond qui respire au chargement. Ancien .xa-play et xa-spin retirés de styles.css.
-- Centrage mesuré : pause centrée à 0 px ; le triangle est centré sur son centre de gravité (choix du 2026-10-16), sa boîte est donc décalée de 1,5 px à droite, voulu.
-- Autres boutons lecture NON touchés, à proposer : messages vocaux du tchat (lecteur natif du navigateur, <audio controls>), aperçu d'un vocal avant envoi (app.js ~11213), animations de la carte (#mapTlPlay) et de la migration (« ▶ Lire »). L'ancien quiz (qz-play-btn) n'est plus affiché.
-- Avant : indices sur les fiches et chants choisis (v810), parcours 2 complet et photos (v809), tout en ligne.
+# POUSSÉ le 2026-10-18 : le bouton lecture du quiz partout (v812, app.js?v=386)
+- Fiches espèces (chant, cri), vocaux du tchat, aperçu d'un vocal avant envoi, animation dans le temps de la Carte (#mapTlPlay), animation de migration (#migFsPlayBtn) : tous le bouton « anneau qui avance » (.pc-lecture). Outils communs _anneauLecture() et _boutonLecture() à côté de PC_LECTURE_SVG.
+- Vocaux : _voixHtml / _voixMaj / _voixDuree près de pendingVoiceB64 ; durée affichée à côté ; un webm qui annonce une durée infinie est sondé une fois (saut au bout puis retour à 0). Testé dans la démo avec un vocal webm fabriqué sans micro.
+- Centrage mesuré : pause à 0 px ; triangle centré sur son centre de gravité (choix du 2026-10-16), boîte décalée de 1,5 px, voulu.
+- L'ancien quiz (qz-play-btn) n'est plus affiché : pas touché.
 - Ouvert : ordre et noms de tous les parcours (demande de Mathis, à réfléchir).
 ---
 # EN LOCAL le 2026-10-17, PAS POUSSÉ : cercles d'indices, réécouter, numéros des chants (v805, app.js?v=379)
