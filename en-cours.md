@@ -1,7 +1,6 @@
-# PAS POUSSÉ (2026-10-19) : en-tête du profil sans les 4 chiffres ni l'UID (v828, app.js?v=402)
+# POUSSÉ et en ligne le 2026-10-19 : en-tête du profil sans les 4 chiffres ni l'UID (v828, app.js?v=402)
 - Demande de Mathis : retirer « 143 espèces / 4e sur 11 / 2 pays / 23 photos » et l'UID affiché. L'UID reste au survol de l'avatar, pour l'admin seulement. Le bouton n'occupe plus de colonne quand il n'y en a pas (profil d'un autre membre).
 - Vérifié dans la démo : ordinateur et téléphone, rien ne déborde. 11 bancs CONFORME.
-- Reste : Mathis regarde en local, puis pousse s'il valide.
 - Date d'arrivée de Mathis RÉTABLIE le 2026-10-19 avec son accord : joinedAt 2026-09-29 → 2026-07-27T23:54:04.855Z (sauvegarde du 28/09), par outils/build/retablir-arrivee.mjs (Admin SDK, ce seul champ). Écrit directement dans la vraie ligue, rien à pousser pour ça.
 ---
 # POUSSÉ et vérifié en ligne le 2026-10-19 : en-tête du profil refait une 3e fois, en carte compacte (v827, app.js?v=401)
