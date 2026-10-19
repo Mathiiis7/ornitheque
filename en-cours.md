@@ -1,3 +1,9 @@
+# POUSSÉ (2026-10-19) : onglet Statistiques du profil en tableau de bord (v825, app.js?v=399)
+- Mathis : « pas dingue ». Ses choix sur maquette : disposition B (frise des jalons en haut, courbe à gauche, années et mois à droite) ; autres membres en gris, nom au survol ; objectif et records fondus dans les graphiques.
+- Fait : courbe en vrai temps (l'ancienne plaçait les dates sur AAAAMMJJ, d'où de fausses marches au changement d'année), escalier par espèce, objectif en pointillé s'il est un nombre et pas plus du double du maximum ; barres par année (années vides comprises) et par mois, record en accent avec chiffre et rang dans la ligue ; frise sur 4 rangées d'étiquettes sans chevauchement, remplacée par une liste sous 760 px. Les « 1re espèce de l'année » ne sont plus des jalons (les années sont sur la frise). Texte des graphiques en HTML (le SVG ne trace que les lignes). Anciens styles stat-*/goal-* et la courbe SVG retirés.
+- Vérifié dans la démo : ordinateur, sombre, téléphone ; survol de la courbe (date + nombre), des lignes grises (nom de chaque membre, ligne allumée), des barres ; profil d'un autre membre ; 0 chevauchement sur la frise ; aucune erreur ; 11 bancs CONFORME.
+- Dans la démo, les objectifs sont du texte libre : la ligne d'objectif n'y paraît pas. À regarder sur la vraie ligue.
+---
 # POUSSÉ et vérifié en ligne le 2026-10-19 : profil refait une 2e fois, en onglets (v824, app.js?v=398, commit 935e250e)
 - Retour de Mathis sur la v823 en ligne : « trop le bordel », emojis partout, ne ressemble pas au reste du site ; préférées voulues en photos comme le Birdydex.
 - Ses choix (maquette en deux directions) : onglets Aperçu / Espèces / Photos / Statistiques ; PAS de jetons de personne en haut ; préférées en grandes cartes photo sur toute la largeur.

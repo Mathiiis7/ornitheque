@@ -9403,97 +9403,6 @@ function _timeStatsFor(active){
   const bestYear = yearsEntries[0] || null;
   return { timeline, perMonth, perYear, bestMonthIdx, bestMonthCount:perMonth[bestMonthIdx]||0, bestYear, totalDated:sorted.length };
 }
-// Ord "virtuel" pour un 1er janvier : YYYY0101. Utile pour placer les gridlines annuelles.
-function _yearOrd(y){ return y*10000 + 101; }
-function _monthOrd(y, m){ return y*10000 + (m*100) + 1; }   // m = 1..12
-const _MONTH_ABBR = ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
-function _renderCumulativeSVG(timeline){
-  if(!timeline.length) return '';
-  const minOrd = timeline[0].ord, maxOrd = timeline[timeline.length-1].ord;
-  const maxCount = timeline[timeline.length-1].count;
-  // Padding + zone dessin. On elargit PB pour laisser de la place aux labels annees.
-  const W = 400, H = 160, PL = 36, PR = 12, PT = 14, PB = 30;
-  const iw = W - PL - PR, ih = H - PT - PB;
-  const span = Math.max(1, maxOrd - minOrd);
-  const x = ord => PL + iw * (ord - minOrd) / span;
-  const y = cnt => PT + ih - ih * cnt / Math.max(1, maxCount);
-
-  // Ligne + aire
-  let line = `M ${x(minOrd).toFixed(1)} ${y(0).toFixed(1)}`;
-  for(const pt of timeline) line += ` L ${x(pt.ord).toFixed(1)} ${y(pt.count).toFixed(1)}`;
-  const area = line + ` L ${x(maxOrd).toFixed(1)} ${y(0).toFixed(1)} Z`;
-
-  // Grille temporelle adaptative :
-  //  - periode <= 24 mois : ticks mensuels (label = "janv.", "févr.", ...), annee affichee au 1er mois
-  //  - periode > 24 mois : ticks annuels (comme avant)
-  const firstYear = Math.floor(minOrd/10000);
-  const firstMonth = Math.floor((minOrd%10000)/100);
-  const lastYear = Math.floor(maxOrd/10000);
-  const lastMonth = Math.floor((maxOrd%10000)/100);
-  const totalMonths = (lastYear-firstYear)*12 + (lastMonth-firstMonth) + 1;
-  const gridLines = []; const labels = [];
-  if(totalMonths <= 24){
-    // Boucle mois par mois : commence au 1er du mois de la 1re obs.
-    let y0 = firstYear, m0 = firstMonth;
-    // Un label sur N mois selon la densite (evite surcharge). 1 si <=8 mois, 2 si <=16, sinon 3.
-    const stepM = totalMonths <= 8 ? 1 : (totalMonths <= 16 ? 2 : 3);
-    let i = 0;
-    while(y0 < lastYear || (y0 === lastYear && m0 <= lastMonth)){
-      const ord = _monthOrd(y0, m0);
-      if(ord >= minOrd && ord <= maxOrd){
-        const xp = x(ord);
-        gridLines.push(`<line x1="${xp.toFixed(1)}" y1="${PT}" x2="${xp.toFixed(1)}" y2="${(PT+ih).toFixed(1)}" stroke="var(--line)" stroke-width="1" stroke-dasharray="2 3"/>`);
-        if(i % stepM === 0){
-          // Ajoute l'annee dans le label du 1er mois affiche OU du 1er janvier rencontre.
-          const showYear = i === 0 || m0 === 1;
-          const txt = showYear ? `${_MONTH_ABBR[m0-1]} ${y0}` : _MONTH_ABBR[m0-1];
-          labels.push(`<text x="${xp.toFixed(1)}" y="${(H-8).toFixed(1)}" font-size="10" fill="var(--ink-3)" text-anchor="middle">${txt}</text>`);
-        }
-      }
-      i++;
-      m0++; if(m0 > 12){ m0 = 1; y0++; }
-    }
-  } else {
-    // Vue annuelle : ticks pour chaque 1er janvier. Pas de label si trop d'annees.
-    const totalYears = lastYear - firstYear + 1;
-    const stepYear = totalYears <= 6 ? 1 : (totalYears <= 12 ? 2 : (totalYears <= 25 ? 5 : 10));
-    for(let y0 = firstYear; y0 <= lastYear + 1; y0++){
-      const ord = _yearOrd(y0);
-      if(ord < minOrd || ord > maxOrd) continue;
-      const xp = x(ord);
-      gridLines.push(`<line x1="${xp.toFixed(1)}" y1="${PT}" x2="${xp.toFixed(1)}" y2="${(PT+ih).toFixed(1)}" stroke="var(--line)" stroke-width="1" stroke-dasharray="2 3"/>`);
-      if((y0 - firstYear) % stepYear === 0){
-        labels.push(`<text x="${xp.toFixed(1)}" y="${(H-8).toFixed(1)}" font-size="10" fill="var(--ink-3)" text-anchor="middle">${y0}</text>`);
-      }
-    }
-  }
-  // Filet de secours : au moins la 1re et derniere date en label.
-  if(!labels.length){
-    labels.push(`<text x="${PL}" y="${(H-8)}" font-size="10" fill="var(--ink-3)" text-anchor="start">${_MONTH_ABBR[firstMonth-1]} ${firstYear}</text>`);
-    if(minOrd !== maxOrd) labels.push(`<text x="${W-PR}" y="${(H-8)}" font-size="10" fill="var(--ink-3)" text-anchor="end">${_MONTH_ABBR[lastMonth-1]} ${lastYear}</text>`);
-  }
-  const yearLabels = labels;
-
-  // Grille horizontale : quelques niveaux (0, mid, max) avec labels a gauche.
-  const yTicks = [0, Math.round(maxCount/2), maxCount].filter((v,i,a)=>a.indexOf(v)===i);
-  const yLines = yTicks.map(t => `<line x1="${PL}" y1="${y(t).toFixed(1)}" x2="${W-PR}" y2="${y(t).toFixed(1)}" stroke="var(--line)" stroke-width="1" stroke-dasharray="2 3"/>`).join('');
-  const yLabels = yTicks.map(t => `<text x="${PL-6}" y="${(y(t)+3).toFixed(1)}" font-size="10" fill="var(--ink-3)" text-anchor="end">${t}</text>`).join('');
-
-  // Axe Y et X (traits pleins)
-  const axes = `<line x1="${PL}" y1="${PT}" x2="${PL}" y2="${PT+ih}" stroke="var(--line-2)" stroke-width="1"/>
-                <line x1="${PL}" y1="${(PT+ih).toFixed(1)}" x2="${W-PR}" y2="${(PT+ih).toFixed(1)}" stroke="var(--line-2)" stroke-width="1"/>`;
-
-  return `<svg class="stat-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
-    <defs><linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--accent)" stop-opacity=".35"/><stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>
-    ${yLines}
-    ${gridLines.join('')}
-    ${axes}
-    <path d="${area}" fill="url(#chartGrad)"/>
-    <path d="${line}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
-    ${yLabels}
-    ${yearLabels.join('')}
-  </svg>`;
-}
 // Rank d'une valeur numerique dans la ligue (1 = meilleur). Retourne {rank, n} ou null.
 function _rankInLeague(me, valueFn){
   const list = state.people.map(p => ({ id:p.id, val: valueFn(p) })).filter(x => x.val > 0);
@@ -9523,130 +9432,247 @@ function _profilChiffres(me){
   const rank=ranked.findIndex(p=>p.id===me.id)+1;
   return { total, rareName, rareTier, fams, rank, n:state.people.length };
 }
-function renderStats(me){
-  const box=$('#statsBox'); if(!box) return;
-  if(!me || !me._active){ box.style.display='none'; box.innerHTML=''; return; }
-  box.style.display='';
-  const active=me._active;
-  // L'onglet Statistiques du profil, en parties comme les autres onglets (2026-10-19). Les
-  // familles sont passees dans l'onglet Especes, les emojis des titres sont retires.
-  const moi = me.id===myUid, ton = moi ? 'ta' : 'sa';
-  const { total } = _profilChiffres(me);
-  const goal=parseInt(me.goal,10);
-  const goalHtml = (goal>0) ? (()=>{ const pct=Math.min(100,Math.round(total/goal*100)); const done=total>=goal;
-    return _profilPartie('Objectif', done ? 'Objectif atteint.' : `Encore ${goal-total} espèce${goal-total>1?'s':''} pour l'atteindre.`,
-      `<div class="goal-prog"><div class="goal-row"><span>Espèces</span><span><b>${total}</b> / ${goal}</span></div>
-      <div class="goal-bar"><div style="width:${pct}%"></div></div></div>`); })() : '';
-
-  // Statistiques temporelles + comparaison avec les amis
-  const ts = _timeStatsFor(active);
-  const bestMonthLabel = ts.bestMonthCount>0 ? _MONTH_FR[ts.bestMonthIdx] : '-';
-  const bestYearLabel = ts.bestYear ? String(ts.bestYear[0]) : '-';
-  const bestYearCount = ts.bestYear ? ts.bestYear[1] : 0;
-  // Rangs vs la ligue
-  const rankBestMonth = state.people.length>1 ? _rankInLeague(me, p => { const s=p._active?_timeStatsFor(p._active):null; return s?s.bestMonthCount:0; }) : null;
-  const rankBestYear  = state.people.length>1 ? _rankInLeague(me, p => { const s=p._active?_timeStatsFor(p._active):null; return s?(s.bestYear?s.bestYear[1]:0):0; }) : null;
-  const rankTxt = r => r ? ` <span class="stat-rank">${r.rank}${r.rank===1?'ᵉʳ':'ᵉ'}/${r.n}</span>` : '';
-
-  const progression = ts.timeline.length>=2
-    ? _profilPartie('Progression', `Le nombre d'espèces de ${ton} liste au fil du temps (${ts.totalDated} espèces datées).`, _renderCumulativeSVG(ts.timeline)
-      + (ts.bestMonthCount>0 || ts.bestYear
-        ? `<div class="stat-time-grid">
-             <div class="stat-time-cell"><div class="stat-time-lbl">Meilleur mois</div><div class="stat-time-val">${esc(bestMonthLabel)}${rankTxt(rankBestMonth)}</div><div class="stat-time-sub">${ts.bestMonthCount} espèce${ts.bestMonthCount>1?'s':''} cochée${ts.bestMonthCount>1?'s':''} sur toutes les années confondues</div></div>
-             <div class="stat-time-cell"><div class="stat-time-lbl">Année record</div><div class="stat-time-val">${esc(bestYearLabel)}${rankTxt(rankBestYear)}</div><div class="stat-time-sub">${bestYearCount} nouvelle${bestYearCount>1?'s':''} espèce${bestYearCount>1?'s':''} cette année-là</div></div>
-           </div>`
-        : ''))
-    : (ts.totalDated>0 ? _profilPartie('Progression', '', `<p class="help" style="margin:0;">Pas assez de dates pour tracer une courbe (${ts.totalDated} espèce datée).</p>`) : '');
-
-  box.innerHTML = goalHtml + progression + _renderPersonalTimeline(active, moi);
+const _JOUR_MS = 864e5;
+// ---- Onglet Statistiques du profil : un tableau de bord (2026-10-19) ----
+// Mathis le trouvait « pas dingue ». Choix sur maquette : disposition B (frise des jalons en
+// haut, la courbe a gauche, annees et mois a droite) ; les autres membres en gris pale, leur
+// nom au survol ; l'objectif et les records fondus dans les graphiques au lieu de cases a part.
+//
+// L'ancienne courbe placait les dates sur leur nombre AAAAMMJJ : du 31 decembre au 1er janvier
+// il y a 8 870 « unites » contre 1 d'un jour a l'autre, d'ou des marches qui n'existaient pas.
+// Tout passe ici en vrai temps (millisecondes).
+//
+// Le texte des graphiques est en HTML, pas dans le SVG : un SVG qui s'etire fait retrecir son
+// texte sur telephone (deja vu sur « D'ou viennent les cartes »). Le SVG ne trace que les
+// lignes, etire a la taille de sa boite (preserveAspectRatio none, traits non deformes).
+function _ordVersMs(ord){ return Date.UTC(Math.floor(ord / 10000), Math.floor(ord / 100) % 100 - 1, ord % 100); }
+function _jourFr(ms){ return new Date(ms).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric', timeZone:'UTC' }); }
+// Points cumules d'une liste : [ms, nombre d'especes a cette date], une entree par espece datee.
+function _cumulDe(active){ return _timeStatsFor(active).timeline.map(pt => [_ordVersMs(pt.ord), pt.count]); }
+// Nombre d'especes a la date t dans une suite cumulee (dernier point avant ou a t).
+function _cumulA(pts, t){
+  let lo = 0, hi = pts.length - 1, r = 0;
+  while(lo <= hi){ const m = (lo + hi) >> 1; if(pts[m][0] <= t){ r = pts[m][1]; lo = m + 1; } else hi = m - 1; }
+  return r;
 }
-// Timeline personnelle : liste chronologique des jalons majeurs (1ere espece, 100e/500e/1000e,
-// 1er tier 8/9/10, 1ere espece de chaque annee). Affichee en bas du profil.
-function _renderPersonalTimeline(active, moi){
-  // Extrait toutes les especes avec date valide, trie chronologiquement
+// Graduation lisible : 0, puis un pas rond (1, 2, 5 x 10^n) qui donne 4 ou 5 lignes.
+function _pasRond(max){
+  const brut = max / 4, p = Math.pow(10, Math.floor(Math.log10(brut || 1)));
+  return [1, 2, 5, 10].map(k => k * p).find(s => s >= brut) || p * 10;
+}
+
+// La courbe : la personne du profil en accent, les autres membres en gris. Les donnees vivent
+// dans _stCourbe pour le survol (renderStats est rappele a chaque instantane Firestore).
+let _stCourbe = null;
+function _stCourbeHtml(p, moi){
+  const lui = _cumulDe(p._active);
+  if(lui.length < 2) return '';
+  const autres = state.people.filter(x => x.id !== p.id && x._active)
+    .map(x => ({ id:x.id, nom:x.id === myUid ? 'Toi' : x.name, pts:_cumulDe(x._active) })).filter(x => x.pts.length);
+  // Domaine : de la premiere espece de la personne a la derniere date connue dans la ligue.
+  // Partir du debut de la ligue tasserait sa courbe si un membre a commence bien avant.
+  const x0 = lui[0][0];
+  const x1 = Math.max(lui[lui.length - 1][0], ...autres.map(a => a.pts[a.pts.length - 1][0]), x0 + _JOUR_MS * 30);
+  const total = lui[lui.length - 1][1];
+  let yMax = Math.max(total, ...autres.map(a => a.pts[a.pts.length - 1][1]));
+  // L'objectif entre dans le cadre s'il reste raisonnable ; trop loin, il ecraserait tout.
+  const goal = parseInt(p.goal, 10);
+  const goalDedans = goal > 0 && goal <= yMax * 2;
+  if(goalDedans) yMax = Math.max(yMax, goal);
+  const pas = _pasRond(yMax);
+  yMax = yMax * 1.06;   // un peu d'air au-dessus, sans monter a la graduation suivante (600 pour 389)
+  const X = t => ((t - x0) / (x1 - x0) * 1000).toFixed(1);
+  const Y = c => (1000 - c / yMax * 1000).toFixed(1);
+  // Une liste cumulee est un escalier : chaque nouvelle espece fait monter d'une marche.
+  const trace = (pts, c0) => {
+    let d = `M0 ${Y(c0)}`;
+    for(const [t, c] of pts){ if(t < x0) continue; d += ` H${X(t)} V${Y(c)}`; }
+    return d + ' H1000';
+  };
+  const lignesAutres = autres.map(a => `<path class="st-autre" data-uid="${esc(a.id)}" d="${trace(a.pts, _cumulA(a.pts, x0))}"/>`).join('');
+  const dLui = trace(lui, 0);
+  const grilles = [], etiqY = [];
+  for(let v = 0; v <= yMax; v += pas){
+    grilles.push(`<line x1="0" x2="1000" y1="${Y(v)}" y2="${Y(v)}"/>`);
+    etiqY.push(`<span class="st-y" style="bottom:${(v / yMax * 100).toFixed(2)}%">${v}</span>`);
+  }
+  const an0 = new Date(x0).getUTCFullYear(), an1 = new Date(x1).getUTCFullYear();
+  const pasAn = an1 - an0 > 12 ? 5 : (an1 - an0 > 6 ? 2 : 1);
+  const etiqX = [];
+  for(let a = an0 + 1; a <= an1; a++){
+    if((a - an0) % pasAn) continue;
+    const t = Date.UTC(a, 0, 1);
+    etiqX.push(`<span class="st-x" style="left:${(X(t) / 10).toFixed(2)}%">${a}</span>`);
+    grilles.push(`<line class="st-grille-an" x1="${X(t)}" x2="${X(t)}" y1="0" y2="1000"/>`);
+  }
+  _stCourbe = { x0, x1, yMax, lui, nomLui: moi ? 'Toi' : p.name, autres };
+  const atteint = goal > 0 && total >= goal;
+  return `<div class="st-courbe">
+      <div class="st-plot" role="img" aria-label="${esc((moi ? 'Ta' : 'Sa') + ' liste est passée de 1 à ' + total + ' espèces entre ' + _jourFr(x0) + ' et ' + _jourFr(lui[lui.length - 1][0]) + '.')}">
+        <svg viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true">
+          <g class="st-grille">${grilles.join('')}</g>
+          ${lignesAutres}
+          ${goalDedans ? `<line class="st-objectif" x1="0" x2="1000" y1="${Y(goal)}" y2="${Y(goal)}"/>` : ''}
+          <path class="st-aire" d="${dLui} V1000 H0 Z"/>
+          <path class="st-lui" d="${dLui}"/>
+          <line class="st-curseur" x1="0" x2="0" y1="0" y2="1000" visibility="hidden"/>
+        </svg>
+        ${etiqY.join('')}
+        ${goalDedans ? `<span class="st-objectif-lbl" style="bottom:${(goal / yMax * 100).toFixed(2)}%">objectif ${goal}${atteint ? ' atteint' : ''}</span>` : ''}
+        <div class="st-bulle" hidden></div>
+      </div>
+      <div class="st-xaxe">${etiqX.join('')}</div>
+    </div>`
+    + (goal > 0 && !goalDedans ? `<p class="prof-partie-note">Objectif : ${goal} espèces, hors du cadre.</p>` : '');
+}
+
+// Barres verticales (annees ou mois). La plus haute est en accent plein et porte son chiffre ;
+// les autres en accent pale. Chaque barre dit sa valeur au survol (bulle commune).
+function _stBarresHtml(items, idxRecord){
+  const max = Math.max(1, ...items.map(it => it.n));
+  return `<div class="st-barres" style="--nb:${items.length}">` + items.map((it, i) => `
+      <div class="st-barre-col">
+        <span class="st-barre-val">${i === idxRecord ? it.n : ''}</span>
+        <span class="st-barre${i === idxRecord ? ' record' : ''}" style="height:${Math.max(it.n ? 3 : 0, it.n / max * 100).toFixed(1)}%"
+          role="img" aria-label="${esc(it.long)} : ${it.n} espèce${it.n > 1 ? 's' : ''}" data-bulle="${esc(it.long)} : ${it.n} espèce${it.n > 1 ? 's' : ''}"></span>
+        <span class="st-barre-lbl">${esc(it.court)}</span>
+      </div>`).join('') + '</div>';
+}
+
+// Jalons : la 1re espece, chaque centaine, la 1re rarete 8, 9 et 10. Les « 1re espece de
+// l'annee » de l'ancienne liste n'y sont plus : la frise porte deja les annees.
+function _jalonsDe(active){
   const dated = [];
   for(const v of active.values()){
     if(!countsFR(v)) continue;
-    const pd = parseDate(v.date);
-    if(!pd) continue;
-    dated.push({ sci: v.sci, common: v.common, ord: pd.ord, disp: pd.disp, loc: v.loc||'' });
+    const pd = parseDate(v.date); if(!pd) continue;
+    dated.push({ sci:v.sci, common:v.common, ord:pd.ord });
   }
-  if(dated.length < 5) return '';   // pas assez de data pour une timeline interessante
   dated.sort((a, b) => a.ord - b.ord);
-
-  // Detecte les jalons
-  const milestones = [];
-  const yearsSeen = new Set();
-  let firstTier8 = null, firstTier9 = null, firstTier10 = null;
+  const out = []; let t8 = 0, t9 = 0, t10 = 0;
   dated.forEach((v, i) => {
-    const nth = i + 1;
-    const year = String(v.ord).slice(0, 4);
-    const nm = frName(v.sci, v.common);
-    const tier = rarityForFilter(v.sci);
-    // Premiere espece ever
-    if(nth === 1){
-      milestones.push({ ord: v.ord, disp: v.disp, year, icon: '⭐', label: '1<sup>ère</sup> espèce cochée', sp: nm, sci: v.sci });
-    }
-    // Multiples de 100 (100, 200, 300, 500, 1000)
-    if([100, 200, 300, 500, 750, 1000, 1500, 2000].includes(nth)){
-      const icon = nth >= 1000 ? '💎' : nth >= 500 ? '🥇' : nth >= 200 ? '🥈' : '🥉';
-      milestones.push({ ord: v.ord, disp: v.disp, year, icon, label: `<b>${nth}<sup>e</sup></b> espèce`, sp: nm, sci: v.sci });
-    }
-    // 1er tier 8 / 9 / 10 (les gros trophées de rareté)
-    if(tier >= 8 && !firstTier8){ firstTier8 = 1;
-      milestones.push({ ord: v.ord, disp: v.disp, year, icon: '🔥', label: '1<sup>ère</sup> rareté (tier 8+)', sp: nm, sci: v.sci }); }
-    if(tier >= 9 && !firstTier9){ firstTier9 = 1;
-      milestones.push({ ord: v.ord, disp: v.disp, year, icon: '💥', label: '1<sup>ère</sup> ultra-rare (tier 9)', sp: nm, sci: v.sci }); }
-    if(tier >= 10 && !firstTier10){ firstTier10 = 1;
-      milestones.push({ ord: v.ord, disp: v.disp, year, icon: '👑', label: '1<sup>ère</sup> exceptionnelle (tier 10)', sp: nm, sci: v.sci }); }
-    // 1ere espece de chaque annee
-    if(!yearsSeen.has(year)){
-      yearsSeen.add(year);
-      if(nth > 1){   // skip la 1ere annee (deja capturee par "1ere espece ever")
-        milestones.push({ ord: v.ord, disp: v.disp, year, icon: '📅', label: `1<sup>ère</sup> espèce de ${year}`, sp: nm, sci: v.sci });
-      }
-    }
+    const n = i + 1, tier = rarityForFilter(v.sci), labels = [];
+    if(n === 1) labels.push('1re espèce');
+    if([100, 200, 300, 400, 500, 750, 1000, 1500, 2000].includes(n)) labels.push(n + 'e espèce');
+    if(tier >= 8 && !t8){ t8 = 1; labels.push('1re rareté 8'); }
+    if(tier >= 9 && !t9){ t9 = 1; labels.push('1re rareté 9'); }
+    if(tier >= 10 && !t10){ t10 = 1; labels.push('1re rareté 10'); }
+    if(labels.length) out.push({ ms:_ordVersMs(v.ord), labels, sci:v.sci, nom:frName(v.sci, v.common) });
   });
-
-  // Sort by ord et dedupe si 2 milestones tombent sur la meme espece (ex: 500e + 1ere de l'annee)
-  milestones.sort((a, b) => a.ord - b.ord);
-  // Groupe par ord+sci pour merger les jalons simultanes
-  const grouped = new Map();
-  for(const m of milestones){
-    const k = m.ord + '__' + m.sci;
-    if(!grouped.has(k)) grouped.set(k, { ...m, labels: [m.label], icons: [m.icon] });
-    else { const g = grouped.get(k); g.labels.push(m.label); g.icons.push(m.icon); }
-  }
-  const merged = [...grouped.values()];
-
-  if(merged.length === 0) return '';
-
-  // Render : timeline verticale compacte
-  const rows = merged.map(m => `
-    <div class="tl-row" data-sci="${esc(m.sci)}">
-      <div class="tl-date">${esc(m.disp)}</div>
-      <div class="tl-dot" aria-hidden="true"></div>
-      <div class="tl-body">
-        <div class="tl-labels">${m.labels.join(' · ')}</div>
-        <div class="tl-species"><span class="sp-link" data-sci="${esc(m.sci)}">${esc(m.sp)}</span></div>
-      </div>
-    </div>`).join('');
-
-  // Plus d'emoji dans les points (2026-10-19) : le libelle dit deja de quel jalon il s'agit.
-  return _profilPartie('Jalons', `${merged.length} étape${merged.length>1?'s':''} de ${moi ? 'ta' : 'sa'} liste, sur ${dated.length} espèces datées.`, `<div class="tl-wrap">${rows}</div>`)
-    + `
-    <style>
-      .tl-wrap { border-left: 2px solid var(--line); margin: 10px 0 0 8px; padding-left: 0; }
-      .tl-row { display: grid; grid-template-columns: 86px 28px 1fr; gap: 8px; align-items: start; padding: 8px 0; position: relative; cursor: pointer; transition: background .15s; border-radius: 6px; padding-right: 6px; }
-      .tl-row:hover { background: var(--surface-2); }
-      .tl-date { font-size: 13px; font-variant-numeric: tabular-nums; color: var(--ink-3); padding-top: 4px; padding-left: 8px; }
-      .tl-dot { margin: 5px 0 0 6px; background: var(--surface); border: 3px solid var(--accent); border-radius: 50%; width: 14px; height: 14px; box-sizing: border-box; z-index: 1; }
-      .tl-body { padding-top: 2px; }
-      .tl-labels { font-size: 13px; color: var(--ink); font-weight: 500; }
-      .tl-species { font-size: 12px; color: var(--ink-2); margin-top: 2px; }
-      .tl-species .sp-link { color: var(--ink-2); text-decoration: underline dotted; }
-    </style>`;
+  return out;
 }
+// La frise sur ordinateur, une liste sur telephone (la frise y serait illisible). Sur la frise,
+// chaque etiquette prend la premiere rangee libre, au-dessus puis au-dessous de la ligne :
+// la largeur d'une etiquette est estimee (7,5 px par caractere sur ~1 100 px de frise).
+function _stFriseHtml(jalons){
+  if(!jalons.length) return '';
+  const t0 = jalons[0].ms, t1 = Math.max(jalons[jalons.length - 1].ms, t0 + _JOUR_MS);
+  const pos = t => 3 + (t - t0) / (t1 - t0) * 94;   // 3 % de marge de chaque cote
+  const rangees = [-1, -1, -1, -1];                    // fin occupee (en %) : haut 1, bas 1, haut 2, bas 2
+  const points = jalons.map(j => {
+    const x = pos(j.ms), titre = j.labels.join(' · ');
+    const larg = (Math.max(titre.length, j.nom.length) * 7.5 + 16) / 1100 * 100;
+    let r = rangees.findIndex(fin => fin < x - larg / 2);
+    if(r < 0) r = rangees.indexOf(Math.min(...rangees));
+    rangees[r] = x + larg / 2;
+    return `<a href="#" class="st-jalon sp-link r${r}" data-sci="${esc(j.sci)}" style="left:${x.toFixed(2)}%" title="${esc(titre + ' : ' + j.nom + ', ' + _jourFr(j.ms))}">
+        <span class="st-jalon-pt"></span><span class="st-jalon-txt"><b>${esc(titre)}</b>${esc(j.nom)}</span></a>`;
+  }).join('');
+  const ans = [];
+  for(let a = new Date(t0).getUTCFullYear() + 1; a <= new Date(t1).getUTCFullYear(); a++)
+    ans.push(`<span class="st-frise-an" style="left:${pos(Date.UTC(a, 0, 1)).toFixed(2)}%">${a}</span>`);
+  const liste = jalons.map(j => `<li><span class="st-jl-date">${esc(_jourFr(j.ms))}</span><span><b>${esc(j.labels.join(' · '))}</b> <a href="#" class="sp-link" data-sci="${esc(j.sci)}">${esc(j.nom)}</a></span></li>`).join('');
+  return `<div class="st-frise"><div class="st-frise-ligne"></div>${ans.join('')}${points}</div><ol class="st-jalons-liste">${liste}</ol>`;
+}
+
+function renderStats(me){
+  const box = $('#statsBox'); if(!box) return;
+  if(!me || !me._active){ box.style.display = 'none'; box.innerHTML = ''; _stCourbe = null; return; }
+  box.style.display = '';
+  const active = me._active;
+  const moi = me.id === myUid, ton = moi ? 'ta' : 'sa', Ta = moi ? 'Ta' : 'Sa';
+  const ts = _timeStatsFor(active);
+  if(ts.totalDated < 2){
+    box.innerHTML = _profilPartie('Statistiques', '', `<p class="help" style="margin:0;">Pas assez d'espèces datées pour des graphiques (${ts.totalDated}).</p>`);
+    return;
+  }
+  const n = state.people.length;
+  const rang = r => r ? `, ${r.rank}${r.rank === 1 ? 'er' : 'e'} de la ligue sur ${r.n}` : '';
+  const rangMois = n > 1 ? _rankInLeague(me, x => { const s = x._active ? _timeStatsFor(x._active) : null; return s ? s.bestMonthCount : 0; }) : null;
+  const rangAn = n > 1 ? _rankInLeague(me, x => { const s = x._active ? _timeStatsFor(x._active) : null; return s && s.bestYear ? s.bestYear[1] : 0; }) : null;
+
+  // Annees : de la premiere a la derniere, les annees vides comprises (sinon on ne les voit pas).
+  const ansConnus = Object.keys(ts.perYear).map(Number);
+  const an0 = Math.min(...ansConnus), an1 = Math.max(...ansConnus);
+  const annees = [];
+  for(let a = an0; a <= an1; a++) annees.push({ n:ts.perYear[a] || 0, court:(an1 - an0 > 7 ? "'" + String(a).slice(2) : String(a)), long:String(a) });
+  const idxAn = annees.reduce((b, it, i, arr) => it.n > arr[b].n ? i : b, 0);
+  const mois = ts.perMonth.map((v, i) => ({ n:v, court:_MONTH_FR[i][0].toUpperCase(), long:_MONTH_FR[i] }));
+
+  const frise = _stFriseHtml(_jalonsDe(active));
+  const autresN = state.people.filter(x => x.id !== me.id && x._active).length;
+  box.innerHTML =
+    (frise ? _profilPartie('Jalons', 'Les étapes de ' + ton + ' liste. Un clic ouvre la fiche de l\'espèce.', frise) : '')
+    + `<div class="st-grille">
+        ${_profilPartie('Progression', Ta + ' liste au fil du temps' + (autresN ? `, face aux ${autresN} autre${autresN > 1 ? 's' : ''} membre${autresN > 1 ? 's' : ''} en gris. Survole une ligne pour voir à qui elle est.` : '.'), _stCourbeHtml(me, moi))}
+        <div>
+          ${_profilPartie('Par année', `Nouvelles espèces chaque année. Record : ${annees[idxAn].long}, ${annees[idxAn].n} espèces${rang(rangAn)}.`, _stBarresHtml(annees, idxAn))}
+          ${ts.bestMonthCount > 0 ? _profilPartie('Par mois', `Mois de la première observation, toutes années confondues. Le plus fort : ${_MONTH_FR[ts.bestMonthIdx]}, ${ts.bestMonthCount} espèces${rang(rangMois)}.`, _stBarresHtml(mois, ts.bestMonthIdx)) : ''}
+        </div>
+      </div>`;
+}
+
+// Survol de la courbe : un trait vertical, et une bulle avec le nombre d'especes a cette date ;
+// si une ligne grise passe pres du pointeur, elle s'allume et son membre s'ajoute a la bulle.
+// Les positions se calculent en FRACTIONS de la boite : getBoundingClientRect et clientX
+// parlent tous deux en pixels d'ecran, la fraction ne depend donc pas du zoom de 0,85.
+function _stSurvol(e){
+  const plot = e.target.closest?.('.st-plot');
+  if(!plot || !_stCourbe) return;
+  const r = plot.getBoundingClientRect();
+  const fx = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+  const fy = Math.min(1, Math.max(0, (e.clientY - r.top) / r.height));
+  const c = _stCourbe, t = c.x0 + fx * (c.x1 - c.x0);
+  const n = _cumulA(c.lui, t);
+  let proche = null, ecart = 0.06;
+  for(const a of c.autres){
+    const d = Math.abs((1 - _cumulA(a.pts, t) / c.yMax) - fy);
+    if(d < ecart){ ecart = d; proche = a; }
+  }
+  const cur = plot.querySelector('.st-curseur');
+  cur.setAttribute('x1', fx * 1000); cur.setAttribute('x2', fx * 1000); cur.setAttribute('visibility', 'visible');
+  plot.querySelectorAll('.st-autre.on').forEach(l => l.classList.remove('on'));
+  if(proche) plot.querySelector(`.st-autre[data-uid="${CSS.escape(proche.id)}"]`)?.classList.add('on');
+  const b = plot.querySelector('.st-bulle');
+  b.innerHTML = `<span class="st-bulle-date">${esc(_jourFr(t))}</span>`
+    + `<span><i class="st-pastille lui"></i>${esc(c.nomLui)} : <b>${n}</b></span>`
+    + (proche ? `<span><i class="st-pastille"></i>${esc(proche.nom)} : <b>${_cumulA(proche.pts, t)}</b></span>` : '');
+  b.hidden = false;
+  b.style.left = (fx * 100) + '%';
+  b.classList.toggle('a-gauche', fx > 0.6);
+}
+function _stSortie(e){
+  const plot = e.target.closest?.('.st-plot'); if(!plot) return;
+  plot.querySelector('.st-bulle').hidden = true;
+  plot.querySelector('.st-curseur')?.setAttribute('visibility', 'hidden');
+  plot.querySelectorAll('.st-autre.on').forEach(l => l.classList.remove('on'));
+}
+document.addEventListener('pointermove', _stSurvol);
+document.addEventListener('pointerdown', _stSurvol);
+document.addEventListener('pointerout', e => { if(e.target.closest?.('.st-plot') && !e.relatedTarget?.closest?.('.st-plot')) _stSortie(e); });
+// Bulle des barres : la valeur exacte, au survol ou au doigt.
+document.addEventListener('pointerover', e => {
+  const barre = e.target.closest?.('#statsBox [data-bulle]');
+  const vieille = document.getElementById('stBulleBarre');
+  if(!barre){ if(vieille && !e.target.closest?.('#stBulleBarre')) vieille.remove(); return; }
+  const col = barre.closest('.st-barres');
+  let b = vieille;
+  if(!b || b.parentElement !== col){ b?.remove(); b = document.createElement('div'); b.id = 'stBulleBarre'; b.className = 'st-bulle st-bulle-barre'; col.appendChild(b); }
+  b.textContent = barre.dataset.bulle;
+  const rc = col.getBoundingClientRect(), rb = barre.getBoundingClientRect();
+  b.style.left = ((rb.left + rb.width / 2 - rc.left) / rc.width * 100) + '%';
+  b.classList.toggle('a-gauche', (rb.left - rc.left) / rc.width > 0.6);
+});
 // ---- Pastilles "non lu" (Tchat / Photos / Fil / Requêtes) ----
 let chatLatest=0, photosLatest=0, feedLatest=0, requestsLatest=0;
 // Compte les elements NON LUS (posterieurs a `seen`, hors ceux de l'utilisateur courant).

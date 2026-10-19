@@ -1972,32 +1972,6 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .import-guide summary { cursor:pointer; font-weight:600; color:var(--accent-ink); }
   .import-guide ol { margin:9px 0 0; padding-left:20px; color:var(--ink-2); line-height:1.65; }
   .import-guide li { margin:3px 0; }
-  .statsbox { margin:16px 0 4px; padding:15px 16px; background:var(--surface-2); border:1px solid var(--line); border-radius:14px; }
-  .stat-tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:10px; }
-  .stat-tile { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:12px 10px; text-align:center; }
-  .stat-num { font-family:var(--serif); font-size:26px; font-weight:600; color:var(--ink); line-height:1.1; }
-  .stat-num.small { font-size:15px; line-height:1.25; }
-  .stat-lbl { font-size:11px; color:var(--ink-3); margin-top:4px; }
-  .stat-fam-title { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-2); margin:16px 0 8px; }
-  .stat-fams { display:flex; flex-direction:column; gap:8px; }
-  .stat-fam-row { display:flex; justify-content:space-between; font-size:12.5px; color:var(--ink-2); margin-bottom:3px; }
-  .stat-fam-bar { height:7px; border-radius:4px; background:var(--line); overflow:hidden; }
-  .stat-fam-bar div { height:100%; background:var(--accent); border-radius:4px; }
-  .goal-prog { margin:16px 0 4px; }
-  .goal-row { display:flex; justify-content:space-between; font-size:13.5px; color:var(--ink-2); margin-bottom:6px; }
-  .goal-bar { height:12px; border-radius:6px; background:var(--line); overflow:hidden; }
-  .goal-bar div { height:100%; background:var(--accent); border-radius:6px; transition:width .3s; }
-  .goal-done { font-size:12.5px; color:#2ecc71; font-weight:700; margin-top:6px; }
-  .goal-left { font-size:11.5px; color:var(--ink-3); margin-top:5px; }
-  /* Stats temporelles : titre + courbe SVG + grille des records */
-  .stat-time-title { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-2); margin:16px 0 6px; }
-  .stat-chart { width:100%; max-width:640px; aspect-ratio:400/160; height:auto; display:block; margin:6px 0 4px; overflow:visible; }
-  .stat-time-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-top:10px; }
-  .stat-time-cell { background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
-  .stat-time-lbl { font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-3); font-weight:600; }
-  .stat-time-val { font-size:15px; font-weight:700; color:var(--ink); margin:3px 0; text-transform:capitalize; }
-  .stat-time-sub { font-size:11.5px; color:var(--ink-3); line-height:1.4; }
-  .stat-rank { font-size:11px; font-weight:700; color:var(--accent-ink); background:color-mix(in srgb,var(--accent) 15%,var(--surface)); padding:1px 7px; border-radius:8px; margin-left:5px; text-transform:none; }
   /* Page Profil, la meme pour soi et pour les autres. Refaite DEUX fois le 2026-10-19 : la
      premiere version (tuiles, emojis devant chaque titre) ne ressemblait pas au reste du site.
      Celle-ci reprend ce qui existe deja : choix colles du Classement pour les onglets, parties
@@ -2071,15 +2045,75 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .prof-photo { width:100%; aspect-ratio:1; object-fit:cover; border-radius:12px; background:var(--surface-2); cursor:zoom-in; display:block; }
   .prof-photo-fig figcaption { font-size:14px; color:var(--ink-2); margin-top:6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   @media (max-width:560px){ .prof-photos { grid-template-columns:repeat(2, minmax(0,1fr)); } }
-  /* L'onglet Statistiques : plus de boite grise, ses parties ont le dessin des autres onglets.
-     Ses textes passent aux tailles de la charte : ils datent d'avant la regle des 14 px. */
-  #viewProfil .statsbox { margin:0; padding:0; background:none; border:0; border-radius:0; }
-  #viewProfil .goal-prog { margin:0; max-width:720px; }
-  #viewProfil .goal-row, #viewProfil .stat-time-val { font-size:14px; }
-  #viewProfil .stat-time-sub { font-size:14px; }
-  #viewProfil .stat-time-lbl { font-size:13px; letter-spacing:.4px; }
-  #viewProfil .stat-rank { font-size:13px; }
-  #viewProfil .tl-labels, #viewProfil .tl-species { font-size:14px; }
+  /* Onglet Statistiques du profil, en tableau de bord (2026-10-19) : frise des jalons en haut,
+     la courbe a gauche, annees et mois a droite. Le texte des graphiques est en HTML (14 px
+     ecrits au moins pour ce qui se lit), le SVG ne trace que les lignes. */
+  #statsBox { margin:0; }
+  .st-grille { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr); gap:0 32px; align-items:start; }
+  @media (max-width:760px){ .st-grille { grid-template-columns:minmax(0,1fr); } }
+  .st-courbe { padding-left:40px; }
+  .st-plot { position:relative; height:300px; touch-action:pan-y; cursor:crosshair; }
+  @media (max-width:560px){ .st-plot { height:220px; } }
+  .st-plot svg { position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
+  .st-plot svg * { vector-effect:non-scaling-stroke; }
+  .st-grille line { stroke:var(--line); stroke-width:1; }
+  .st-grille .st-grille-an { stroke-dasharray:2 4; }
+  .st-autre { fill:none; stroke:var(--ink-3); stroke-opacity:.35; stroke-width:1.5; }
+  .st-autre.on { stroke:var(--ink); stroke-opacity:.9; stroke-width:2.5; }
+  .st-aire { fill:color-mix(in srgb, var(--accent) 12%, transparent); stroke:none; }
+  .st-lui { fill:none; stroke:var(--accent); stroke-width:2.5; stroke-linejoin:round; }
+  .st-objectif { stroke:var(--accent-ink); stroke-width:1.5; stroke-dasharray:6 5; }
+  .st-curseur { stroke:var(--ink-2); stroke-width:1; }
+  .st-y { position:absolute; right:calc(100% + 8px); transform:translateY(50%); font-size:13px; color:var(--ink-3); font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .st-objectif-lbl { position:absolute; left:6px; transform:translateY(-4px); font-size:13px; font-weight:600; color:var(--accent-ink);
+    background:var(--surface); padding:0 4px; border-radius:4px; }
+  .st-xaxe { position:relative; height:24px; margin-top:4px; }
+  .st-x { position:absolute; top:0; transform:translateX(-50%); font-size:13px; color:var(--ink-3); }
+  .st-bulle { position:absolute; top:6px; transform:translateX(12px); z-index:3; pointer-events:none; display:flex; flex-direction:column; gap:2px;
+    background:var(--surface); border:1px solid var(--line-2); border-radius:9px; box-shadow:var(--shadow); padding:7px 10px; font-size:14px; color:var(--ink-2); white-space:nowrap; }
+  .st-bulle[hidden] { display:none; }
+  .st-bulle.a-gauche { transform:translateX(calc(-100% - 12px)); }
+  .st-bulle b { color:var(--ink); }
+  .st-bulle-date { font-size:13px; color:var(--ink-3); }
+  .st-pastille { display:inline-block; width:10px; height:3px; border-radius:2px; background:var(--ink-3); vertical-align:4px; margin-right:6px; }
+  .st-pastille.lui { background:var(--accent); }
+  /* Barres verticales (annees, mois) : la plus haute en accent plein, les autres en accent pale. */
+  .st-barres { position:relative; display:grid; grid-template-columns:repeat(var(--nb), minmax(0,1fr)); gap:4px; height:150px; align-items:end; }
+  .st-barre-col { display:grid; grid-template-rows:20px 1fr 22px; height:100%; min-width:0; text-align:center; }
+  .st-barre-val { font-size:13px; font-weight:700; color:var(--accent-ink); align-self:end; }
+  .st-barre-col > .st-barre { align-self:end; display:block; width:100%; max-width:34px; margin:0 auto; border-radius:4px 4px 0 0;
+    background:color-mix(in srgb, var(--accent) 38%, var(--surface)); }
+  .st-barre-col > .st-barre.record { background:var(--accent); }
+  .st-barre-col > .st-barre:hover { background:var(--accent-ink); }
+  .st-barre-lbl { font-size:13px; color:var(--ink-3); padding-top:4px; overflow:hidden; white-space:nowrap; }
+  .st-bulle-barre { top:-6px; transform:translate(-50%, -100%); }
+  .st-bulle-barre.a-gauche { transform:translate(-50%, -100%); }
+  /* Frise des jalons. Les etiquettes se posent sur quatre rangees : deux au-dessus de la
+     ligne (r0, r2), deux au-dessous (r1, r3), choisies a l'ecriture pour ne pas se chevaucher. */
+  .st-frise { position:relative; height:190px; margin:0 6px; }
+  .st-frise-ligne { position:absolute; left:0; right:0; top:50%; height:2px; background:var(--line-2); }
+  .st-frise-an { position:absolute; top:calc(50% + 6px); transform:translateX(-50%); font-size:13px; color:var(--ink-3); }
+  .st-frise-an::before { content:''; position:absolute; left:50%; top:-9px; width:1px; height:7px; background:var(--line-2); }
+  .st-jalon { position:absolute; top:50%; width:0; height:0; text-decoration:none; color:inherit; border:0; }
+  .st-jalon:hover { border:0; }
+  .st-jalon-pt { position:absolute; left:-8px; top:-7px; width:16px; height:16px; box-sizing:border-box; border-radius:50%; background:var(--surface); border:3px solid var(--accent); }
+  .st-jalon:hover .st-jalon-pt, .st-jalon:focus-visible .st-jalon-pt { background:var(--accent); }
+  .st-jalon-txt { position:absolute; left:0; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; white-space:nowrap; font-size:13px; color:var(--ink-3); line-height:1.3; }
+  .st-jalon-txt b { font-size:14px; font-weight:600; color:var(--ink); }
+  .st-jalon:hover .st-jalon-txt b { color:var(--accent-ink); }
+  .st-jalon.r0 .st-jalon-txt { bottom:14px; }
+  .st-jalon.r2 .st-jalon-txt { bottom:54px; }
+  .st-jalon.r1 .st-jalon-txt { top:30px; }
+  .st-jalon.r3 .st-jalon-txt { top:70px; }
+  .st-jalon.r2::before, .st-jalon.r3::before { content:''; position:absolute; left:-0.5px; width:1px; background:var(--line-2); }
+  .st-jalon.r2::before { bottom:10px; height:44px; }
+  .st-jalon.r3::before { top:10px; height:58px; }
+  .st-jalons-liste { display:none; list-style:none; margin:0; padding:0; border-left:2px solid var(--line-2); }
+  .st-jalons-liste li { position:relative; padding:6px 0 10px 18px; font-size:14px; color:var(--ink-2); }
+  .st-jalons-liste li::before { content:''; position:absolute; left:-8px; top:10px; width:14px; height:14px; box-sizing:border-box; border-radius:50%; background:var(--surface); border:3px solid var(--accent); }
+  .st-jl-date { display:block; font-size:13px; color:var(--ink-3); }
+  .st-jalons-liste b { color:var(--ink); font-weight:600; }
+  @media (max-width:760px){ .st-frise { display:none; } .st-jalons-liste { display:block; } }
   /* Un nom de membre, cliquable partout ou il s'affiche : il garde l'apparence du texte
      qu'il remplace et ne se souligne qu'au survol. */
   .nom-profil { background:none; border:0; padding:0; margin:0; font:inherit; color:inherit; cursor:pointer; text-align:inherit; }
