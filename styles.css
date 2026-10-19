@@ -1998,8 +1998,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .stat-time-val { font-size:15px; font-weight:700; color:var(--ink); margin:3px 0; text-transform:capitalize; }
   .stat-time-sub { font-size:11.5px; color:var(--ink-3); line-height:1.4; }
   .stat-rank { font-size:11px; font-weight:700; color:var(--accent-ink); background:color-mix(in srgb,var(--accent) 15%,var(--surface)); padding:1px 7px; border-radius:8px; margin-left:5px; text-transform:none; }
-  /* Page Profil, refaite le 2026-10-19 (maquette A, une colonne) : la meme pour soi et pour
-     les autres. Tout ce qui se lit fait 14 px au moins, les etiquettes en capitales 13 px. */
+  /* Page Profil, la meme pour soi et pour les autres. Refaite DEUX fois le 2026-10-19 : la
+     premiere version (tuiles, emojis devant chaque titre) ne ressemblait pas au reste du site.
+     Celle-ci reprend ce qui existe deja : choix colles du Classement pour les onglets, parties
+     a titre + note + filet des Trophees, tableau de Ma liste, cartes du Birdydex. Sans emoji.
+     Tout ce qui se lit fait 14 px au moins. */
   .prof-tete { margin-top:12px; }
   .prof-id { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
   .prof-id-av .user-avatar { border:2px solid var(--line-2); }
@@ -2010,20 +2013,19 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .prof-enligne::before { content:''; display:inline-block; width:8px; height:8px; border-radius:50%; background:#2ecc71; margin-right:5px; vertical-align:0; }
   .prof-statut { font-size:15px; color:var(--ink-2); margin-top:3px; }
   .prof-meta { font-size:14px; color:var(--ink-3); margin-top:3px; }
-  .prof-meta b { color:var(--ink-2); font-weight:600; }
   .prof-meta code { font-size:13px; }
   .prof-id-act { display:flex; gap:8px; flex-wrap:wrap; }
   .prof-retirer { background:var(--surface); color:#b91c1c; border:1px solid #b91c1c; }
-  .prof-chiffres { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)) minmax(0,2fr); gap:10px; margin-top:16px; }
-  .prof-chiffre { background:var(--surface-2); border:1px solid var(--line); border-radius:12px; padding:12px 10px; text-align:center; min-width:0; }
-  .prof-chiffre-num { font:600 26px var(--titre); color:var(--ink); line-height:1.15; overflow-wrap:anywhere; }
-  .prof-chiffre-sur { font-size:16px; color:var(--ink-3); font-weight:600; }
-  .prof-chiffre-large .prof-chiffre-num { font-size:17px; line-height:1.3; padding-top:4px; }
-  .prof-chiffre-lbl { font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:var(--ink-3); margin-top:5px; }
-  @media (max-width:560px){
-    .prof-chiffres { grid-template-columns:repeat(2, minmax(0,1fr)); }
-    .prof-chiffre-large { grid-column:1 / -1; }
-  }
+  /* Les chiffres se lisent comme le compteur du Birdydex : le nombre en accent, le mot apres. */
+  .prof-ks { display:flex; flex-wrap:wrap; gap:6px 26px; margin-top:16px; }
+  .prof-k { font-size:15px; color:var(--ink-2); }
+  .prof-k b { font:700 24px var(--titre); color:var(--accent-ink); margin-right:2px; }
+  .prof-k sup { font-size:.55em; }
+  .prof-fiche { display:flex; flex-wrap:wrap; gap:8px 28px; margin:12px 0 0; }
+  .prof-fiche > div { min-width:0; }
+  .prof-fiche dt { font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:var(--ink-3); }
+  .prof-fiche dd { margin:2px 0 0; font-size:15px; font-weight:600; color:var(--ink); }
+  .prof-fiche-note { font-weight:400; color:var(--ink-3); font-size:14px; }
   #profilTete + #profilEmpty + .profile { margin-top:16px; padding-top:16px; border-top:1px solid var(--line); }
   .prof-favs-edit { margin-bottom:14px; }
   .prof-favs-chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
@@ -2031,37 +2033,50 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     background:color-mix(in srgb,var(--accent) 12%,var(--surface)); border-radius:999px; padding:4px 6px 4px 12px; }
   .prof-fav-chip button { background:none; border:0; color:inherit; font-size:17px; line-height:1; padding:0 4px; cursor:pointer; border-radius:50%; }
   .prof-fav-chip button:hover { background:color-mix(in srgb,var(--accent) 22%,var(--surface)); }
-  .prof-bloc { margin-top:22px; }
-  .prof-bloc > .bloc-titre { margin-bottom:8px; }
-  .prof-note { font-size:14px; color:var(--ink-3); margin:-4px 0 10px; }
-  .prof-favs { display:flex; flex-wrap:wrap; gap:8px; }
-  .prof-fav { font-size:15px; font-weight:600; color:var(--accent-ink); background:color-mix(in srgb,var(--accent) 12%,var(--surface));
-    border-radius:999px; padding:6px 14px; text-decoration:none; }
-  .prof-coches { border-top:1px solid var(--line); max-width:900px; }
-  .prof-coche { display:grid; grid-template-columns:100px minmax(0,1.4fr) minmax(0,1fr); gap:12px; align-items:center; padding:8px 4px; border-bottom:1px solid var(--line); font-size:14px; }
-  .prof-coche-date { color:var(--ink-3); font-variant-numeric:tabular-nums; }
-  .prof-coche-nom { font-weight:600; color:var(--ink); min-width:0; }
-  .prof-coche-nom .latin { font-weight:400; color:var(--ink-3); font-style:italic; }
-  .prof-coche-lieu { color:var(--ink-2); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .prof-coche-lieu img, .prof-pays-nom img { width:20px; height:auto; vertical-align:-3px; margin-right:6px; border-radius:2px; }
-  @media (max-width:560px){
-    .prof-coche { grid-template-columns:84px minmax(0,1fr); row-gap:2px; }
-    .prof-coche-lieu { grid-column:2; }
-    .prof-coche-nom .latin { display:none; }
-  }
-  .prof-pays { display:flex; flex-direction:column; gap:8px; max-width:640px; }
-  .prof-pays-ligne { display:grid; grid-template-columns:minmax(120px,190px) 1fr 44px; gap:12px; align-items:center; font-size:14px; }
-  .prof-pays-nom { font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .prof-pays-barre { height:9px; border-radius:5px; background:var(--line); overflow:hidden; }
-  .prof-pays-barre span { display:block; height:100%; background:var(--accent); border-radius:5px; }
-  .prof-pays-n { text-align:right; color:var(--ink-2); font-variant-numeric:tabular-nums; }
-  .prof-photos { display:grid; grid-template-columns:repeat(auto-fill, minmax(110px,1fr)); gap:8px; }
-  .prof-photo { width:100%; aspect-ratio:1; object-fit:cover; border-radius:10px; background:var(--surface-2); cursor:zoom-in; display:block; }
-  /* Les statistiques du profil passent aux tailles de la charte : elles datent d'avant la
-     regle des 14 px, et la refonte de la page les remet au niveau du reste. */
-  #viewProfil .stat-fam-title, #viewProfil .stat-time-title { font-size:13px; letter-spacing:.4px; color:var(--ink-3); }
-  #viewProfil .stat-fam-row, #viewProfil .goal-row, #viewProfil .stat-time-val { font-size:14px; }
-  #viewProfil .goal-left, #viewProfil .goal-done, #viewProfil .stat-time-sub { font-size:14px; }
+  /* Onglets : les choix colles du Classement, a leur taille de controle (34 px). */
+  .prof-onglets { display:inline-flex; margin-top:20px; max-width:100%; }
+  .prof-onglets[hidden] { display:none; }
+  /* Une partie d'onglet : titre, note, filet - le dessin des parties des Trophees. */
+  .prof-partie { margin-top:22px; }
+  .prof-partie-tete { padding:0 0 6px; margin-bottom:12px; border-bottom:1px solid var(--line); }
+  .prof-partie-note { font-size:14px; color:var(--ink-3); margin:3px 0 0; }
+  /* Especes preferees : les cases du Birdydex, en grand. */
+  /* Cinq colonnes fixes : la vitrine occupe toute la largeur (« plus grandes », Mathis). */
+  .prof-favs { display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:14px; }
+  @media (max-width:900px){ .prof-favs { grid-template-columns:repeat(3, minmax(0,1fr)); } }
+  .prof-fav-carte { position:relative; border:2px solid var(--line-2); background:var(--surface); border-radius:14px; padding:10px 10px 12px;
+    cursor:pointer; text-decoration:none; color:inherit; transition:transform .1s, box-shadow .1s; }
+  .prof-fav-carte:hover { transform:translateY(-2px); box-shadow:0 6px 14px rgba(0,0,0,.12); border-color:var(--accent); text-decoration:none; }
+  .prof-fav-img { aspect-ratio:1/1; background:var(--surface-2); border-radius:10px; overflow:hidden; margin-bottom:10px; }
+  .prof-fav-img img { width:100%; height:100%; object-fit:cover; display:block; }
+  .prof-fav-tier { position:absolute; top:16px; right:16px; width:28px; height:28px; border-radius:50%; color:#fff; font:800 14px var(--sans);
+    display:grid; place-items:center; z-index:1; }
+  .prof-fav-nom { font:600 15px var(--sans); color:var(--ink); text-align:center; line-height:1.25; }
+  .prof-fav-sci { font-size:14px; font-style:italic; color:var(--ink-3); text-align:center; margin-top:2px; }
+  @media (max-width:560px){ .prof-favs { grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px; } }
+  /* Dernieres coches : le tableau de Ma liste, sans sa hauteur maximale. */
+  .prof-table { border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+  .prof-table .mylist-loc img { width:20px; height:auto; vertical-align:-3px; margin-right:6px; border-radius:2px; }
+  /* Pays et familles : une barre par ligne. */
+  .prof-barres { display:flex; flex-direction:column; gap:10px; max-width:720px; }
+  .prof-barre-ligne { display:grid; grid-template-columns:minmax(140px,240px) 1fr 44px; gap:12px; align-items:center; font-size:14px; }
+  .prof-barre-nom { font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .prof-barre-nom img { width:20px; height:auto; vertical-align:-3px; margin-right:6px; border-radius:2px; }
+  .prof-barre { height:9px; border-radius:5px; background:var(--line); overflow:hidden; }
+  .prof-barre span { display:block; height:100%; background:var(--accent); border-radius:5px; }
+  .prof-barre-n { text-align:right; color:var(--ink-2); font-variant-numeric:tabular-nums; }
+  @media (max-width:560px){ .prof-barre-ligne { grid-template-columns:minmax(0,1fr) 70px 36px; } }
+  .prof-photos { display:grid; grid-template-columns:repeat(auto-fill, minmax(180px,1fr)); gap:12px; }
+  .prof-photo-fig { margin:0; min-width:0; }
+  .prof-photo { width:100%; aspect-ratio:1; object-fit:cover; border-radius:12px; background:var(--surface-2); cursor:zoom-in; display:block; }
+  .prof-photo-fig figcaption { font-size:14px; color:var(--ink-2); margin-top:6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  @media (max-width:560px){ .prof-photos { grid-template-columns:repeat(2, minmax(0,1fr)); } }
+  /* L'onglet Statistiques : plus de boite grise, ses parties ont le dessin des autres onglets.
+     Ses textes passent aux tailles de la charte : ils datent d'avant la regle des 14 px. */
+  #viewProfil .statsbox { margin:0; padding:0; background:none; border:0; border-radius:0; }
+  #viewProfil .goal-prog { margin:0; max-width:720px; }
+  #viewProfil .goal-row, #viewProfil .stat-time-val { font-size:14px; }
+  #viewProfil .stat-time-sub { font-size:14px; }
   #viewProfil .stat-time-lbl { font-size:13px; letter-spacing:.4px; }
   #viewProfil .stat-rank { font-size:13px; }
   #viewProfil .tl-labels, #viewProfil .tl-species { font-size:14px; }

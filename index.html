@@ -49,7 +49,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=397">
+<link rel="modulepreload" href="app.js?v=398">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -508,11 +508,11 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
       <div class="section-head"><div><h2 class="page-title" id="profilTitre">Mon profil</h2></div></div>
       <div id="profilTete" class="prof-tete" hidden></div>
       <div id="profilEmpty" class="onboarding" style="margin:6px 0 0;">
-        <h3>👤 Ton profil se construit avec ta liste</h3>
+        <h3>Ton profil se construit avec ta liste</h3>
         <ol>
           <li>Va sur l'onglet <b>Ma liste</b>.</li>
           <li>Dépose ta <b>life list eBird</b> (fichier .csv).</li>
-          <li>Reviens ici : objectif, meilleur mois, année record, courbe cumulative, familles préférées apparaissent 📈</li>
+          <li>Reviens ici : dernières coches, pays, familles, progression et records apparaissent.</li>
         </ol>
       </div>
       <div class="profile" id="profile" style="display:none;">
@@ -524,7 +524,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         </div>
         <div class="prof-grid">
           <label>Objectif (nombre d'espèces)<input type="number" id="profGoal" min="1" max="2000" placeholder="ex. 100"></label>
-          <label>Ton espèce la plus rare<input type="text" id="profRare" maxlength="40" placeholder="au choix (sinon calculée)"></label>
+          <label>Plus belle obs<input type="text" id="profRare" maxlength="40" placeholder="ex. Marouette ponctuée, Brenne, 2023"></label>
           <label>Espèce de rêve<input type="text" id="profDream" maxlength="40" placeholder="ex. Gypaète barbu"></label>
           <label>Statut perso (visible dans le tchat)<input type="text" id="profStatus" maxlength="30" placeholder="ex. 🔭 En affût ou Cherche l'Ibis chauve"></label>
         </div>
@@ -532,12 +532,15 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
           <div class="prof-avatar-preview" id="profAvatarPreview" title="Ton avatar"></div>
           <div class="prof-avatar-actions">
             <div class="prof-avatar-label">Avatar</div>
-            <label class="btn btn-slim">📷 Photo<input type="file" id="profAvatarInput" accept="image/*" class="visually-hidden"></label>
-            <button type="button" class="btn btn-slim" id="profAvatarEmojiBtn">😊 Emoji</button>
+            <label class="btn btn-slim">Photo<input type="file" id="profAvatarInput" accept="image/*" class="visually-hidden"></label>
+            <button type="button" class="btn btn-slim" id="profAvatarEmojiBtn">Emoji</button>
             <button type="button" class="btn btn-slim btn-ghost" id="profAvatarReset">Réinitialiser</button>
           </div>
         </div>
       </div>
+      <!-- Les onglets du profil : remplis par renderProfil(), sur le modele des choix colles du
+           Classement (.seg). -->
+      <div class="seg prof-onglets" id="profilOnglets" hidden></div>
       <div id="profilBlocs"></div>
       <div class="statsbox" id="statsBox" style="display:none;"></div>
     </section>
@@ -1419,4 +1422,4 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=397"></script>
+<script type="module" src="app.js?v=398"></script>

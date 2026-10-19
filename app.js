@@ -2616,6 +2616,7 @@ function ouvrirFicheJoueur(uid){
   if(!realPeople.some(x => x.id === uid)) return;
   profilUid = uid === myUid ? null : uid;
   _profilEdition = false;
+  _profilOnglet = 'apercu';
   // Ouvert depuis un panneau flottant (tchat, photos, fil) ou la fiche d'une photo : on les
   // referme, sinon la page s'ouvrirait dessous, invisible.
   _closeFabPanel();
@@ -9527,15 +9528,15 @@ function renderStats(me){
   if(!me || !me._active){ box.style.display='none'; box.innerHTML=''; return; }
   box.style.display='';
   const active=me._active;
-  // La meme page sert a tous : « Tes » pour soi, « Ses » pour un autre.
-  const moi = me.id===myUid, Ton = moi ? 'Tes' : 'Ses';
-  const { total, fams } = _profilChiffres(me);
-  const maxFam=fams.length?fams[0][1]:1;
+  // L'onglet Statistiques du profil, en parties comme les autres onglets (2026-10-19). Les
+  // familles sont passees dans l'onglet Especes, les emojis des titres sont retires.
+  const moi = me.id===myUid, ton = moi ? 'ta' : 'sa';
+  const { total } = _profilChiffres(me);
   const goal=parseInt(me.goal,10);
   const goalHtml = (goal>0) ? (()=>{ const pct=Math.min(100,Math.round(total/goal*100)); const done=total>=goal;
-    return `<div class="goal-prog"><div class="goal-row"><span>🎯 Objectif</span><span><b>${total}</b> / ${goal}</span></div>
-      <div class="goal-bar"><div style="width:${pct}%${done?';background:#2ecc71':''}"></div></div>
-      ${done?'<div class="goal-done">Objectif atteint ! 🎉</div>':`<div class="goal-left">Encore ${goal-total} pour l'atteindre</div>`}</div>`; })() : '';
+    return _profilPartie('Objectif', done ? 'Objectif atteint.' : `Encore ${goal-total} espèce${goal-total>1?'s':''} pour l'atteindre.`,
+      `<div class="goal-prog"><div class="goal-row"><span>Espèces</span><span><b>${total}</b> / ${goal}</span></div>
+      <div class="goal-bar"><div style="width:${pct}%"></div></div></div>`); })() : '';
 
   // Statistiques temporelles + comparaison avec les amis
   const ts = _timeStatsFor(active);
@@ -9547,23 +9548,17 @@ function renderStats(me){
   const rankBestYear  = state.people.length>1 ? _rankInLeague(me, p => { const s=p._active?_timeStatsFor(p._active):null; return s?(s.bestYear?s.bestYear[1]:0):0; }) : null;
   const rankTxt = r => r ? ` <span class="stat-rank">${r.rank}${r.rank===1?'ᵉʳ':'ᵉ'}/${r.n}</span>` : '';
 
-  // Les trois tuiles (especes, classement, la plus rare) sont montees dans l'en-tete du
-  // profil le 2026-10-19 : _profilTeteHtml.
-  box.innerHTML=`<h3 class="bloc-titre" style="margin-bottom:10px;">📊 ${Ton} statistiques</h3>`+
-    goalHtml+
-    // Bloc temporel : courbe + meilleur mois + meilleure année
-    (ts.timeline.length>=2
-      ? `<div class="stat-time-title">📈 Progression au fil du temps <span class="help" style="font-weight:400;">(${ts.totalDated} espèces datées)</span></div>
-         ${_renderCumulativeSVG(ts.timeline)}`
-      : (ts.totalDated>0 ? `<div class="stat-time-title">📈 Progression</div><p class="help" style="margin:2px 0 8px;">Pas assez de dates pour tracer une courbe (${ts.totalDated} espèce datée).</p>` : ''))+
-    (ts.bestMonthCount>0 || ts.bestYear
-      ? `<div class="stat-time-grid">
-           <div class="stat-time-cell"><div class="stat-time-lbl">Meilleur mois</div><div class="stat-time-val">${esc(bestMonthLabel)}${rankTxt(rankBestMonth)}</div><div class="stat-time-sub">${ts.bestMonthCount} espèce${ts.bestMonthCount>1?'s':''} cochée${ts.bestMonthCount>1?'s':''} sur toutes les années confondues</div></div>
-           <div class="stat-time-cell"><div class="stat-time-lbl">Année record</div><div class="stat-time-val">${esc(bestYearLabel)}${rankTxt(rankBestYear)}</div><div class="stat-time-sub">${bestYearCount} nouvelle${bestYearCount>1?'s':''} espèce${bestYearCount>1?'s':''} cette année-là</div></div>
-         </div>`
-      : '')+
-    (fams.length?`<div class="stat-fam-title">${Ton} familles</div><div class="stat-fams">`+fams.map(([f,n])=>`<div class="stat-fam"><div class="stat-fam-row"><span>${esc(f)}</span><span>${n}</span></div><div class="stat-fam-bar"><div style="width:${Math.round(n/maxFam*100)}%"></div></div></div>`).join('')+`</div>`:'')+
-    _renderPersonalTimeline(active, moi);
+  const progression = ts.timeline.length>=2
+    ? _profilPartie('Progression', `Le nombre d'espèces de ${ton} liste au fil du temps (${ts.totalDated} espèces datées).`, _renderCumulativeSVG(ts.timeline)
+      + (ts.bestMonthCount>0 || ts.bestYear
+        ? `<div class="stat-time-grid">
+             <div class="stat-time-cell"><div class="stat-time-lbl">Meilleur mois</div><div class="stat-time-val">${esc(bestMonthLabel)}${rankTxt(rankBestMonth)}</div><div class="stat-time-sub">${ts.bestMonthCount} espèce${ts.bestMonthCount>1?'s':''} cochée${ts.bestMonthCount>1?'s':''} sur toutes les années confondues</div></div>
+             <div class="stat-time-cell"><div class="stat-time-lbl">Année record</div><div class="stat-time-val">${esc(bestYearLabel)}${rankTxt(rankBestYear)}</div><div class="stat-time-sub">${bestYearCount} nouvelle${bestYearCount>1?'s':''} espèce${bestYearCount>1?'s':''} cette année-là</div></div>
+           </div>`
+        : ''))
+    : (ts.totalDated>0 ? _profilPartie('Progression', '', `<p class="help" style="margin:0;">Pas assez de dates pour tracer une courbe (${ts.totalDated} espèce datée).</p>`) : '');
+
+  box.innerHTML = goalHtml + progression + _renderPersonalTimeline(active, moi);
 }
 // Timeline personnelle : liste chronologique des jalons majeurs (1ere espece, 100e/500e/1000e,
 // 1er tier 8/9/10, 1ere espece de chaque annee). Affichee en bas du profil.
@@ -9630,21 +9625,22 @@ function _renderPersonalTimeline(active, moi){
   const rows = merged.map(m => `
     <div class="tl-row" data-sci="${esc(m.sci)}">
       <div class="tl-date">${esc(m.disp)}</div>
-      <div class="tl-dot">${m.icons.join('')}</div>
+      <div class="tl-dot" aria-hidden="true"></div>
       <div class="tl-body">
         <div class="tl-labels">${m.labels.join(' · ')}</div>
         <div class="tl-species"><span class="sp-link" data-sci="${esc(m.sci)}">${esc(m.sp)}</span></div>
       </div>
     </div>`).join('');
 
-  return `<div class="stat-time-title" style="margin-top:20px;">🎞️ ${moi ? 'Ma timeline' : 'Sa timeline'} <span class="help" style="font-weight:400;">(${merged.length} jalon${merged.length>1?'s':''} sur ${dated.length} espèces datées)</span></div>
-    <div class="tl-wrap">${rows}</div>
+  // Plus d'emoji dans les points (2026-10-19) : le libelle dit deja de quel jalon il s'agit.
+  return _profilPartie('Jalons', `${merged.length} étape${merged.length>1?'s':''} de ${moi ? 'ta' : 'sa'} liste, sur ${dated.length} espèces datées.`, `<div class="tl-wrap">${rows}</div>`)
+    + `
     <style>
       .tl-wrap { border-left: 2px solid var(--line); margin: 10px 0 0 8px; padding-left: 0; }
       .tl-row { display: grid; grid-template-columns: 86px 28px 1fr; gap: 8px; align-items: start; padding: 8px 0; position: relative; cursor: pointer; transition: background .15s; border-radius: 6px; padding-right: 6px; }
       .tl-row:hover { background: var(--surface-2); }
       .tl-date { font-size: 13px; font-variant-numeric: tabular-nums; color: var(--ink-3); padding-top: 4px; padding-left: 8px; }
-      .tl-dot { margin-left: -15px; background: var(--surface); border: 2px solid var(--line); border-radius: 50%; width: 26px; height: 26px; display: grid; place-items: center; font-size: 13px; z-index: 1; }
+      .tl-dot { margin: 5px 0 0 6px; background: var(--surface); border: 3px solid var(--accent); border-radius: 50%; width: 14px; height: 14px; box-sizing: border-box; z-index: 1; }
       .tl-body { padding-top: 2px; }
       .tl-labels { font-size: 13px; color: var(--ink); font-weight: 500; }
       .tl-species { font-size: 12px; color: var(--ink-2); margin-top: 2px; }
@@ -9844,8 +9840,10 @@ $('#profFavChips')?.addEventListener('click', e => {
   _enregistrerFavs(_favsDe(me).filter(n => n !== b.dataset.favRetirer));
 });
 
-// En-tete du profil : qui, depuis quand, et cinq chiffres. Les trois tuiles des statistiques
-// (especes, classement, la plus rare) y sont montees.
+// En-tete du profil : qui, depuis quand, et quelques chiffres en ligne. Refait le 2026-10-19
+// apres un premier jet juge « trop le bordel » par Mathis : cinq tuiles, des emojis devant
+// chaque titre, rien qui ressemble au reste du site. Les chiffres se lisent desormais comme
+// le compteur du Birdydex (« 212 especes vues sur 466 »), et aucun emoji n'est ajoute.
 function _profilTeteHtml(p){
   const moi = p.id === myUid, admin = isAdmin();
   const c = _profilChiffres(p);
@@ -9853,108 +9851,155 @@ function _profilTeteHtml(p){
   const jour = ms => ms ? new Date(ms).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' }) : '';
   const pays = new Set(); for(const v of p._active.values()) if(countsFR(v) && v.country) pays.add(v.country);
   const nbPhotos = (photos || []).filter(ph => ph.uid === p.id).length;
-  // La tuile garde l'espece la plus rare CALCULEE, avec son niveau, comme l'ancienne tuile des
-  // statistiques. Le texte libre du champ « Ton espece la plus rare » (souvent « Marouette
-  // ponctuee, Brenne, 2023 ») s'affiche a part, « Plus belle obs », comme dans l'ancienne fiche.
-  const rare = c.rareName;
-  const rareSci = _nameToSci(rare) || '';
+  // L'espece la plus rare CALCULEE, avec son niveau, comme l'ancienne tuile des statistiques.
+  // Le texte libre du champ « Ton espece la plus rare » (souvent « Marouette ponctuee, Brenne,
+  // 2023 ») s'affiche a part, « Plus belle obs », comme dans l'ancienne fiche joueur.
+  const rare = c.rareName && c.rareName !== '-' ? c.rareName : '';
+  const rareSci = rare ? (_nameToSci(rare) || '') : '';
   const meta = [
     p.joinedAt ? 'dans la ligue depuis ' + moisAn(p.joinedAt * 1000) : '',
     p.updatedAt ? 'liste mise à jour le ' + jour(p.updatedAt) : ''
   ].filter(Boolean).join(' · ');
-  const tuile = (num, lbl, cls) => `<div class="prof-chiffre${cls ? ' ' + cls : ''}"><div class="prof-chiffre-num">${num}</div><div class="prof-chiffre-lbl">${lbl}</div></div>`;
+  const chiffre = (n, lbl) => `<span class="prof-k"><b>${n}</b> ${lbl}</span>`;
   return `<div class="prof-id">
-      <div class="prof-id-av">${_avatarHtml(p.avatar || '', p.name || '?', 72)}</div>
+      <div class="prof-id-av">${_avatarHtml(p.avatar || '', p.name || '?', 64)}</div>
       <div class="prof-id-txt">
         <div class="prof-nom">${esc(p.name)}${moi ? ' <span class="youtag">toi</span>' : ''}${isOnline(p.id) ? ' <span class="prof-enligne">en ligne</span>' : ''}</div>
         ${p.status ? `<div class="prof-statut">${esc(p.status)}</div>` : ''}
         ${meta ? `<div class="prof-meta">${esc(meta)}</div>` : ''}
-        ${p.rare ? `<div class="prof-meta">Plus belle obs : <b>${esc(p.rare)}</b></div>` : ''}
-        ${p.dream ? `<div class="prof-meta">${moi ? 'Ton' : 'Son'} espèce de rêve : <b>${esc(p.dream)}</b></div>` : ''}
         ${admin ? `<div class="prof-meta">UID : <code>${esc(p.id)}</code></div>` : ''}
       </div>
       <div class="prof-id-act">
-        ${moi ? `<button type="button" class="btn tiny" data-profil-modifier>${_profilEdition ? 'Terminer' : '✏️ Modifier mon profil'}</button>` : ''}
+        ${moi ? `<button type="button" class="btn tiny" data-profil-modifier>${_profilEdition ? 'Terminer' : 'Modifier mon profil'}</button>` : ''}
         ${admin && !moi ? `<button type="button" class="btn tiny prof-retirer" data-fiche-retirer="${esc(p.id)}">Retirer de la ligue</button>` : ''}
       </div>
     </div>
-    <div class="prof-chiffres">
-      ${tuile(c.total, 'espèces')}
-      ${tuile(c.n > 1 ? c.rank + '<span class="prof-chiffre-sur">/' + c.n + '</span>' : '-', 'au classement')}
-      ${tuile(pays.size, 'pays')}
-      ${tuile(nbPhotos, 'photo' + (nbPhotos > 1 ? 's' : ''))}
-      ${tuile(rare && rare !== '-' ? (rareSci ? `<span class="sp-link" data-sci="${esc(rareSci)}">${esc(rare)}</span>` : esc(rare)) : '-',
-        (moi ? 'ta' : 'sa') + ' plus rare' + (c.rareTier ? ' · ' + esc(c.rareTier.label) : ''), 'prof-chiffre-large')}
-    </div>`;
+    <div class="prof-ks">
+      ${chiffre(c.total, 'espèces')}
+      ${c.n > 1 ? chiffre(c.rank + (c.rank === 1 ? '<sup>er</sup>' : '<sup>e</sup>'), 'sur ' + c.n + ' au classement') : ''}
+      ${chiffre(pays.size, 'pays')}
+      ${chiffre(nbPhotos, 'photo' + (nbPhotos > 1 ? 's' : ''))}
+    </div>
+    <dl class="prof-fiche">
+      ${rare ? `<div><dt>${moi ? 'Ta' : 'Sa'} plus rare</dt><dd>${rareSci ? `<a href="#" class="sp-link" data-sci="${esc(rareSci)}">${esc(rare)}</a>` : esc(rare)}${c.rareTier ? ` <span class="prof-fiche-note">${esc(c.rareTier.label)}</span>` : ''}</dd></div>` : ''}
+      ${p.rare ? `<div><dt>Plus belle obs</dt><dd>${esc(p.rare)}</dd></div>` : ''}
+      ${p.dream ? `<div><dt>Espèce de rêve</dt><dd>${esc(p.dream)}</dd></div>` : ''}
+      ${parseInt(p.goal, 10) > 0 ? `<div><dt>Objectif</dt><dd>${c.total} / ${parseInt(p.goal, 10)} espèces</dd></div>` : ''}
+    </dl>`;
 }
 
-// Les blocs propres a la refonte : especes preferees, dernieres coches, pays, photos.
-const PROFIL_COCHES = 8, PROFIL_PHOTOS = 12;
-function _profilBlocsHtml(p){
-  const moi = p.id === myUid, Ton = moi ? 'Tes' : 'Ses', ton = moi ? 'ta' : 'sa';
-  const bloc = (titre, corps, note) => `<section class="prof-bloc"><h3 class="bloc-titre">${titre}</h3>${note ? `<p class="prof-note">${note}</p>` : ''}${corps}</section>`;
-  let html = '';
+// Quatre onglets sous l'en-tete (choix de Mathis, 2026-10-19) : un ecran court par sujet,
+// plutot qu'une longue page ou tout se melait. Ils reprennent les choix colles du Classement
+// (.seg). Ouvrir le profil de quelqu'un d'autre ramene a l'Apercu.
+const PROFIL_ONGLETS = [['apercu', 'Aperçu'], ['especes', 'Espèces'], ['photos', 'Photos'], ['stats', 'Statistiques']];
+let _profilOnglet = 'apercu';
+const PROFIL_COCHES = 10, PROFIL_FAMILLES = 10;
+// Une partie d'onglet : titre, ligne d'explication, filet - comme les parties des Trophees.
+function _profilPartie(titre, note, corps){
+  return `<section class="prof-partie"><div class="prof-partie-tete"><h3 class="bloc-titre">${titre}</h3>${note ? `<p class="prof-partie-note">${note}</p>` : ''}</div>${corps}</section>`;
+}
+function _profilOngletHtml(p){
+  const moi = p.id === myUid, ton = moi ? 'ta' : 'sa', qui = moi ? 'toi' : esc(p.name);
+  const actives = [...p._active.values()].filter(v => countsFR(v) && !v.nonSpecies);
 
-  const favs = _favsDe(p);
-  if(favs.length) html += bloc('❤️ ' + Ton + ' espèces préférées',
-    '<div class="prof-favs">' + favs.map(n => `<span class="sp-link prof-fav" data-sci="${esc(_nameToSci(n) || '')}">${esc(n)}</span>`).join('') + '</div>');
-  else if(moi) html += bloc('❤️ Tes espèces préférées', '<p class="help" style="margin:0;">Choisis-en jusqu\'à 5 avec « Modifier mon profil ».</p>');
-
-  // Dernieres coches : par date d'OBSERVATION. La date d'ajout (addedAt) est la meme pour
-  // toute une liste deposee d'un coup : triee la-dessus, « la derniere » serait au hasard.
-  const datees = [];
-  for(const v of p._active.values()){
-    if(!countsFR(v) || v.nonSpecies) continue;
-    const pd = parseDate(v.date); if(!pd) continue;
-    datees.push({ v, pd });
+  if(_profilOnglet === 'apercu'){
+    let html = '';
+    // Especes preferees : de grandes cartes photo, la vitrine du profil (Mathis, 2026-10-19).
+    // Meme dessin que les cases du Birdydex - photo, pastille de palier, nom, nom latin - en
+    // plus grand ; un clic ouvre la fiche de l'espece.
+    const favs = _favsDe(p);
+    if(favs.length){
+      html += _profilPartie('Espèces préférées', 'Choisies par ' + qui + '.',
+        '<div class="prof-favs">' + favs.map(n => {
+          const sci = _nameToSci(n) || '';
+          const tt = sci ? realTier(sci, false) : null;
+          const photo = sci ? _photoCarteConnue(sci) : '';
+          return `<div class="prof-fav-carte${sci ? ' sp-link' : ''}"${sci ? ` data-sci="${esc(sci)}"` : ''}>
+            ${tt && tt.ord ? `<span class="prof-fav-tier" style="background:${tt.color}" title="${esc(tt.label)}">${tt.ord}</span>` : ''}
+            <div class="prof-fav-img"${!photo && sci ? ` data-prof-photo="${esc(sci)}"` : ''}>${photo ? `<img src="${esc(photo)}" alt="${esc(n)}" loading="lazy">` : ''}</div>
+            <div class="prof-fav-nom">${esc(n)}</div>
+            ${sci ? `<div class="prof-fav-sci">${esc(sci)}</div>` : ''}
+          </div>`;
+        }).join('') + '</div>');
+    } else if(moi){
+      html += _profilPartie('Espèces préférées', '', '<p class="help" style="margin:0;">Choisis-en jusqu\'à 5 avec « Modifier mon profil ».</p>');
+    }
+    // Dernieres coches, dans le tableau de Ma liste. Triees par date d'OBSERVATION : la date
+    // d'ajout (addedAt) est la meme pour toute une liste deposee d'un coup.
+    const datees = actives.map(v => ({ v, pd: parseDate(v.date) })).filter(x => x.pd).sort((a, b) => b.pd.ord - a.pd.ord);
+    if(datees.length){
+      const lignes = datees.slice(0, PROFIL_COCHES).map(({ v, pd }) => {
+        const nom = frName(v.sci, v.common);
+        const date = String(pd.ord).replace(/^(\d{4})(\d\d)(\d\d)$/, '$3/$2/$1');
+        const lieu = (v.country ? flagImg(v.country) : '') + esc(v.loc || '');
+        return '<div class="mylist-row"><span class="mylist-sp"><a href="#" class="sp-link" data-sci="' + esc(v.sci) + '">' + esc(nom) + '</a>'
+          + (v.sci && v.sci !== nom ? '<span class="mylist-lat">' + esc(v.sci) + '</span>' : '') + '</span>'
+          + '<span class="mylist-date">' + date + '</span><span class="mylist-loc">' + (lieu || '-') + '</span></div>';
+      }).join('');
+      html += _profilPartie('Dernières coches', 'Les espèces arrivées le plus récemment dans ' + ton + ' liste, par date d\'observation.',
+        '<div class="prof-table"><div class="mylist-row mylist-th"><span class="mylist-sp">Espèce</span><span class="mylist-date">Date</span><span class="mylist-loc">Lieu</span></div>' + lignes + '</div>');
+    }
+    return html || '<p class="help">Rien à montrer pour l\'instant.</p>';
   }
-  datees.sort((a, b) => b.pd.ord - a.pd.ord);
-  if(datees.length) html += bloc('🆕 ' + Ton + ' dernières coches',
-    '<div class="prof-coches">' + datees.slice(0, PROFIL_COCHES).map(({ v, pd }) => {
-      const cc = v.country || '';
-      return `<div class="prof-coche">
-        <span class="prof-coche-date">${esc(pd.disp)}</span>
-        <span class="prof-coche-nom"><span class="sp-link" data-sci="${esc(v.sci)}">${esc(frName(v.sci, v.common))}</span> <span class="latin">${esc(v.sci)}</span></span>
-        <span class="prof-coche-lieu">${cc && flagImg(cc) ? `<span title="${esc(countryLabel(cc))}">${flagImg(cc)}</span>` : ''}${esc(v.loc || '')}</span>
-      </div>`;
-    }).join('') + '</div>',
-    'Les espèces arrivées le plus récemment dans ' + ton + ' liste, par date d\'observation.');
 
-  // Pays : celui de la 1re observation de chaque espece, le seul que garde la life list eBird.
-  // Mesure sur la sauvegarde du 2026-10-04 : les 11 membres ont un pays pour chaque espece,
-  // mais la liste de TOUTES les observations n'existe que pour 4 d'entre eux, et en partie.
-  const parPays = new Map();
-  for(const v of p._active.values()){
-    if(!countsFR(v) || v.nonSpecies || !v.country) continue;
-    parPays.set(v.country, (parPays.get(v.country) || 0) + 1);
-  }
-  const pays = [...parPays.entries()].sort((a, b) => b[1] - a[1] || countryLabel(a[0]).localeCompare(countryLabel(b[0]), 'fr'));
-  if(pays.length){
-    const max = pays[0][1];
-    html += bloc('🌍 ' + Ton + ' pays',
-      '<div class="prof-pays">' + pays.map(([cc, n]) => `<div class="prof-pays-ligne">
-        <span class="prof-pays-nom">${flagImg(cc) || ''}${esc(countryLabel(cc))}</span>
-        <span class="prof-pays-barre"><span style="width:${Math.max(2, Math.round(n / max * 100))}%"></span></span>
-        <span class="prof-pays-n">${n}</span></div>`).join('') + '</div>',
-      'Le pays de la première observation de chaque espèce.');
+  if(_profilOnglet === 'especes'){
+    let html = '';
+    // Pays : celui de la 1re observation de chaque espece, le seul que garde la life list.
+    // Mesure sur la sauvegarde du 2026-10-04 : les 11 membres ont un pays pour chaque espece,
+    // la liste de TOUTES les observations n'existe que pour 4 d'entre eux, et en partie.
+    const parPays = new Map();
+    for(const v of actives) if(v.country) parPays.set(v.country, (parPays.get(v.country) || 0) + 1);
+    const pays = [...parPays.entries()].sort((a, b) => b[1] - a[1] || countryLabel(a[0]).localeCompare(countryLabel(b[0]), 'fr'));
+    if(pays.length){
+      const max = pays[0][1];
+      html += _profilPartie('Pays', 'Le pays de la première observation de chaque espèce.',
+        '<div class="prof-barres">' + pays.map(([cc, n]) => `<div class="prof-barre-ligne">
+          <span class="prof-barre-nom">${flagImg(cc) || ''}${esc(countryLabel(cc))}</span>
+          <span class="prof-barre"><span style="width:${Math.max(2, Math.round(n / max * 100))}%"></span></span>
+          <span class="prof-barre-n">${n}</span></div>`).join('') + '</div>');
+    }
+    const familles = {};
+    for(const v of actives){ const f = familyOf(v.sci); familles[f] = (familles[f] || 0) + 1; }
+    const fams = Object.entries(familles).sort((a, b) => b[1] - a[1]).slice(0, PROFIL_FAMILLES);
+    if(fams.length){
+      const max = fams[0][1];
+      html += _profilPartie('Familles', 'Les ' + fams.length + ' familles les mieux représentées dans ' + ton + ' liste.',
+        '<div class="prof-barres">' + fams.map(([f, n]) => `<div class="prof-barre-ligne">
+          <span class="prof-barre-nom">${esc(f)}</span>
+          <span class="prof-barre"><span style="width:${Math.max(2, Math.round(n / max * 100))}%"></span></span>
+          <span class="prof-barre-n">${n}</span></div>`).join('') + '</div>');
+    }
+    return html || '<p class="help">Rien à montrer pour l\'instant.</p>';
   }
 
-  const sesPhotos = (photos || []).filter(ph => ph.uid === p.id);
-  if(sesPhotos.length){
-    const vues = sesPhotos.slice(0, PROFIL_PHOTOS).map(ph => {
+  if(_profilOnglet === 'photos'){
+    const sesPhotos = (photos || []).filter(ph => ph.uid === p.id);
+    if(!sesPhotos.length) return _profilPartie('Photos', '', '<p class="help" style="margin:0;">'
+      + (moi ? 'Tu n\'as pas encore partagé de photo : le bouton Photos, en haut, est fait pour ça.' : esc(p.name) + ' n\'a pas encore partagé de photo.') + '</p>');
+    const vues = sesPhotos.map(ph => {
       const legacy = (typeof ph.image === 'string' && /^data:image\//.test(ph.image)) ? ph.image : '';
       const blur = (typeof ph.blur === 'string' && /^data:image\//.test(ph.blur)) ? ph.blur : '';
       const th = legacy ? { src:legacy, attr:'' } : thumbAttrs('photoThumbs', ph.id);
       const src = (th.src || blur).replace(/"/g, '%22');
       const full = legacy ? '' : ` data-full="photoFull:${esc(ph.id)}"`;
-      return `<img class="prof-photo" src="${src}"${th.attr}${full} alt="${esc(ph.caption || 'photo d\'observation')}"${ph.caption ? ` title="${esc(ph.caption)}"` : ''}>`;
+      return `<figure class="prof-photo-fig"><img class="prof-photo" src="${src}"${th.attr}${full} alt="${esc(ph.caption || 'photo d\'observation')}">`
+        + (ph.caption ? `<figcaption>${esc(ph.caption)}</figcaption>` : '') + '</figure>';
     }).join('');
-    const reste = sesPhotos.length - PROFIL_PHOTOS;
-    html += bloc('📷 ' + Ton + ' photos', '<div class="prof-photos">' + vues + '</div>'
-      + (reste > 0 ? `<p class="help" style="margin:8px 0 0;">Et ${reste} autre${reste > 1 ? 's' : ''} dans Photos.</p>` : ''));
-  } else if(moi) html += bloc('📷 Tes photos', '<p class="help" style="margin:0;">Tu n\'as pas encore partagé de photo : le bouton Photos, en haut, est fait pour ça.</p>');
-
-  return html;
+    return _profilPartie('Photos', sesPhotos.length + ' photo' + (sesPhotos.length > 1 ? 's' : '') + ' publiée' + (sesPhotos.length > 1 ? 's' : '') + ' dans la ligue.',
+      '<div class="prof-photos">' + vues + '</div>');
+  }
+  return '';   // « stats » : c'est #statsBox qui s'affiche
+}
+// Les photos des especes preferees : celles du Birdydex, deja en memoire le plus souvent,
+// sinon demandees a Wikipedia comme le fait la grille.
+function _profilPhotosFavs(racine){
+  racine.querySelectorAll('[data-prof-photo]').forEach(el => {
+    const sci = el.dataset.profPhoto; delete el.dataset.profPhoto;
+    _fetchWikiPhoto(sci).then(ph => {
+      const src = ph?.thumb || ph?.url;
+      if(src && el.isConnected) el.innerHTML = `<img src="${esc(src)}" alt="" loading="lazy">`;
+    }).catch(() => {});
+  });
 }
 
 // Dessine la page Profil pour profilUid (null = soi). Ne fait rien page cachee : l'ouvrir
@@ -9967,16 +10012,27 @@ function renderProfil(){
   const estMoi = !profilUid;
   const titre = $('#profilTitre'); if(titre) titre.textContent = estMoi ? 'Mon profil' : 'Profil de ' + p.name;
   const empty = $('#profilEmpty'); if(empty) empty.style.display = (estMoi && !p) ? '' : 'none';
-  const tete = $('#profilTete'), blocs = $('#profilBlocs');
+  const tete = $('#profilTete'), blocs = $('#profilBlocs'), onglets = $('#profilOnglets');
   const pret = p && p._active;
   if(tete){ tete.hidden = !pret; tete.innerHTML = pret ? _profilTeteHtml(p) : ''; }
   fillProfile(estMoi ? moi : null);
-  if(blocs){ blocs.innerHTML = pret ? _profilBlocsHtml(p) : ''; watchThumbs(blocs); }
-  renderStats(pret ? p : null);
+  if(onglets){
+    onglets.hidden = !pret;
+    onglets.innerHTML = PROFIL_ONGLETS.map(([k, lbl]) =>
+      `<button type="button" data-profil-onglet="${k}" class="${k === _profilOnglet ? 'on' : ''}" aria-pressed="${k === _profilOnglet}">${lbl}</button>`).join('');
+  }
+  if(blocs){
+    blocs.innerHTML = pret ? _profilOngletHtml(p) : '';
+    watchThumbs(blocs);
+    _profilPhotosFavs(blocs);
+  }
+  renderStats(pret && _profilOnglet === 'stats' ? p : null);
 }
 document.addEventListener('click', e => {
   if(!e.target.isConnected) return;
   if(e.target.closest('[data-profil-modifier]')){ _profilEdition = !_profilEdition; renderProfil(); return; }
+  const o = e.target.closest('[data-profil-onglet]');
+  if(o){ _profilOnglet = o.dataset.profilOnglet; renderProfil(); return; }
   const im = e.target.closest('#profilBlocs .prof-photo');
   if(im){ _setModalImage(im.src, im.dataset.full || ''); $('#imgModal').classList.add('open'); document.body.classList.add('img-modal-open'); }
 });
@@ -11045,7 +11101,7 @@ document.addEventListener('click', e => {
   const item = e.target.closest('.ham-item[data-view]');
   if(item){
     // « Profil » dans le menu ramene toujours au sien, meme apres avoir regarde celui d'un autre.
-    if(item.dataset.view === 'profil') profilUid = null;
+    if(item.dataset.view === 'profil'){ profilUid = null; _profilOnglet = 'apercu'; }
     const btn = [...document.querySelectorAll('.tab[data-view]')].find(b => b.dataset.view === item.dataset.view);
     if(btn) btn.click();
     const m = document.getElementById('hamburgerMenu'); if(m) m.hidden = true;

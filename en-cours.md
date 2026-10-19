@@ -1,3 +1,10 @@
+# EN LOCAL, PAS POUSSÉ (2026-10-19) : profil refait une 2e fois, en onglets (v824, app.js?v=398)
+- Retour de Mathis sur la v823 en ligne : « trop le bordel », emojis partout, ne ressemble pas au reste du site ; préférées voulues en photos comme le Birdydex.
+- Ses choix (maquette en deux directions) : onglets Aperçu / Espèces / Photos / Statistiques ; PAS de jetons de personne en haut ; préférées en grandes cartes photo sur toute la largeur.
+- Fait : aucun emoji ajouté (titres, boutons, timeline : points ronds) ; chiffres en ligne comme le compteur du Birdydex ; parties titre + note + filet comme les Trophées ; dernières coches dans le tableau de Ma liste ; pays et familles (10) dans Espèces ; Objectif, Progression, Jalons dans Statistiques, sans la boîte grise. Champ « Ton espèce la plus rare » renommé « Plus belle obs » (c'est ce qu'il affiche).
+- Vérifié dans la démo (Playwright) : 4 onglets sur ordinateur et téléphone, sans débordement ni erreur ; navigation par les noms (classement, tchat, photos, fil), préférées ajout/retrait. Seul emoji restant : l'avatar choisi par le membre. 11 bancs CONFORME.
+- Reste : Mathis regarde en local (recharger deux fois), puis pousse s'il valide.
+---
 # POUSSÉ et vérifié en ligne le 2026-10-19 : page Profil refaite, ouverte à tous (v823, app.js?v=397, commit 5f15e1fe)
 - Demande : profil « plus complet » et consultable par les autres. Choix de Mathis (questions + maquette fil de fer en trois directions) : une seule colonne (A), jusqu'à 5 espèces préférées, champs à remplir derrière « Modifier mon profil », tout visible sauf les réglages, nouveaux blocs = préférées, dernières coches, pays, photos.
 - Un clic sur un nom ouvre la page de la personne : classement, tchat (messages et liste « En ligne »), fil, photos (carte et fiche), commentaires, requêtes. PAS fait, exprès : en-têtes de colonnes de « Qui a vu quoi » (le clic y choisit le joueur principal), bulles de la carte (Leaflet garde ses clics), sélecteurs de personne des Trophées. Le menu « Profil » ramène toujours au sien. La petite fenêtre « Fiche joueur » a disparu ; son bouton admin « Retirer de la ligue » est passé sur la page.
