@@ -9846,7 +9846,7 @@ function _profilTeteHtml(p){
   return `<div class="prof-id">
       <div class="prof-id-av"${admin ? ` title="UID : ${esc(p.id)}"` : ''}>${_avatarHtml(p.avatar || '', p.name || '?', 64)}</div>
       <div class="prof-id-txt">
-        <div class="prof-nom">${esc(p.name)}${moi ? ' <span class="youtag">toi</span>' : ''}${isOnline(p.id) ? ' <span class="prof-enligne">en ligne</span>' : ''}</div>
+        <div class="prof-nom"><span>${esc(p.name)}</span>${moi ? '<span class="youtag">toi</span>' : ''}${isOnline(p.id) ? '<span class="prof-enligne">en ligne</span>' : ''}</div>
         ${p.status ? `<div class="prof-statut">${esc(p.status)}</div>` : ''}
         ${infos.length ? `<dl class="prof-infos">${infos.map(([t, v]) => `<div><dt>${t}</dt><dd>${v}</dd></div>`).join('')}</dl>` : ''}
         ${meta ? `<div class="prof-meta">${esc(meta)}</div>` : ''}

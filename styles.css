@@ -1983,9 +1983,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     border:1px solid var(--line); border-radius:14px; padding:18px 20px; }
   .prof-id-av .user-avatar { border:2px solid var(--line-2); }
   .prof-id-txt { min-width:0; }
-  .prof-nom { font:700 21px var(--titre); color:var(--ink); line-height:1.2; }
-  .prof-nom .youtag { font-family:var(--sans); font-size:12px; vertical-align:3px; }
-  .prof-enligne { font:600 13px var(--sans); color:var(--accent-ink); vertical-align:3px; }
+  /* Nom, « toi » et « en ligne » en rangee : 3 px les separaient (Mathis : « trop colle »). */
+  .prof-nom { display:flex; align-items:center; flex-wrap:wrap; gap:4px 10px; font:700 21px var(--titre); color:var(--ink); line-height:1.2; }
+  .prof-nom .youtag { font-family:var(--sans); font-size:12px; margin:0; vertical-align:0; }
+  .prof-enligne { font:600 13px var(--sans); color:var(--accent-ink); }
   .prof-enligne::before { content:''; display:inline-block; width:8px; height:8px; border-radius:50%; background:#2ecc71; margin-right:5px; vertical-align:0; }
   .prof-statut { font-size:15px; color:var(--ink-2); margin-top:3px; }
   /* Champs libres : une ligne chacun, l'intitule en gris devant la valeur. */
