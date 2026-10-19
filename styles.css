@@ -606,15 +606,52 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* max-width 190 -> 260 : a 1 500 px le tableau laissait 220 px vides a droite pendant que
      chaque texte passait sur trois lignes. */
   .board-sheet td.c-txt { min-width:120px; max-width:260px; white-space:normal; }
-  /* Especes en photos rondes sur une seule ligne, comme les jetons du quiz. 56 px choisis par
-     Mathis le 2026-10-19 parmi 40, 56 et 72 (a 40 on ne voyait pas l'oiseau). Cinq preferees
-     tiennent en 304 px ; au doigt, 56 depasse deja les 52 px d'une cible tactile. */
-  .board-sheet td.c-ronds { max-width:none; }
-  .board-ronds { display:flex; flex-wrap:nowrap; align-items:center; gap:6px; white-space:nowrap; }
-  .board-rond { flex:none; width:56px; height:56px; padding:0; border:0; border-radius:50%; overflow:hidden;
-    background:var(--surface-3); cursor:pointer; }
-  .board-rond img { width:100%; height:100%; object-fit:cover; display:block; }
-  .board-rond:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
+  /* Version « I » du classement, choisie par Mathis le 2026-10-19 (maquettes dans
+     notes-privees/maquettes/classement-3/). Deux blocs nommes en tete, « Le joueur » et
+     « Ses oiseaux », separes par un filet. */
+  .board-sheet tr.board-groupes th { background:var(--surface); color:var(--ink-2); text-align:left; border-bottom:1px solid var(--line); }
+  .board-sheet .debut-oiseaux { border-left:2px solid var(--line-2); }
+  /* Ta ligne : a 7 % d'accent elle etait plus pale que l'alternance des lignes paires (surface-2
+     a 45 %), mesure le 2026-10-19 ; 10 % et un trait d'accent en tete la distinguent. */
+  .board-sheet tbody tr.board-moi td:not(.c-rank):not(.on-metric) { background:color-mix(in srgb, var(--accent) 10%, var(--surface)); }
+  .board-sheet tbody tr.board-moi td.c-rank { box-shadow:inset 3px 0 0 var(--accent); }
+  /* Sous le score, sa part de celui du premier. */
+  .board-score { display:inline-flex; flex-direction:column; align-items:flex-end; gap:5px; }
+  .board-ecart { display:block; width:56px; height:4px; border-radius:2px; overflow:hidden; background:color-mix(in srgb, var(--accent) 18%, var(--surface)); }
+  .board-ecart i, .board-obj-barre i { display:block; height:100%; background:var(--accent); }
+  .board-obj { display:flex; flex-direction:column; gap:6px; }
+  .board-obj-barre { display:block; width:120px; height:6px; border-radius:3px; overflow:hidden; background:var(--surface-2); }
+  /* Une espece : petite photo ronde puis son nom, le tout cliquable (ouvre la fiche). La photo
+     seule, sans nom, ne se lisait pas dans un tableau. */
+  .board-sheet td.c-esp { max-width:none; }
+  .board-sp { display:flex; align-items:center; gap:12px; min-width:150px; padding:0; margin:0; border:0; background:none;
+    font:inherit; color:inherit; text-align:left; cursor:pointer; }
+  .board-sp:hover .board-sp-txt { text-decoration:underline; }
+  .board-sp-txt { color:var(--ink); line-height:1.25; }
+  .board-sp-sous { display:block; color:var(--ink-3); }
+  .board-sp:focus-visible, .board-pile .board-rond:focus-visible { outline:3px solid var(--accent); outline-offset:2px; border-radius:8px; }
+  .board-rond { position:relative; flex:none; display:block; width:38px; height:38px; padding:0; border:0; border-radius:50%; background:none; }
+  .board-ph { display:block; width:100%; height:100%; border-radius:50%; overflow:hidden; background:var(--surface-3); }
+  .board-ph img { width:100%; height:100%; object-fit:cover; display:block; }
+  /* La plus rare : anneau et chiffre a la couleur de son palier (couleur de donnees). */
+  .board-rond.palier { box-shadow:0 0 0 2px var(--surface), 0 0 0 4px var(--pal); }
+  .board-badge { position:absolute; right:-5px; bottom:-5px; min-width:20px; height:20px; border-radius:50%; background:var(--pal, var(--accent));
+    color:#fff; font:800 11px/20px var(--sans); text-align:center; box-shadow:0 0 0 2px var(--surface); }
+  /* Espece de reve : en gris dans un cercle en pointilles tant qu'elle n'est pas vue,
+     cerclee d'accent et cochee ensuite. */
+  .board-rond.reve { width:44px; height:44px; padding:3px; border:2px dashed var(--line-2); }
+  .board-rond.reve .board-ph { filter:grayscale(1); opacity:.75; }
+  .board-rond.exauce { box-shadow:0 0 0 2px var(--surface), 0 0 0 4px var(--accent); }
+  /* Ce qui a moins d'une semaine s'allume. */
+  .board-neuf { color:var(--accent-ink); font-weight:600; }
+  .board-neuf:not(.sans-point)::before { content:''; display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--accent); margin-right:6px; vertical-align:1px; }
+  /* Preferees empilees, qui s'ecartent au survol pour montrer chaque photo. */
+  .board-pile { display:flex; align-items:center; }
+  .board-pile .board-rond { width:36px; height:36px; cursor:pointer; box-shadow:0 0 0 2px var(--surface); transition:margin-left .18s ease; }
+  .board-pile .board-rond + .board-rond { margin-left:-12px; }
+  .board-pile:hover .board-rond + .board-rond { margin-left:4px; }
+  .board-pile-txt { margin-left:8px; }
+  .board-pile-txt:first-child { margin-left:0; }
   /* Hauteur uniforme des lignes du board : posée en JS après render (--rowh) sur chaque tr. */
   .board-sheet tbody tr { height:var(--rowh); }
   /* Matrice "Qui a vu quoi" : largeurs des colonnes non-personne bloquées,
@@ -3241,6 +3278,12 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   }
 
   @media (pointer: coarse) {
+    /* Classement : au doigt, les preferees ne s'empilent plus (pas de survol pour les
+       ecarter) et chaque espece est une cible de doigt. */
+    .board-pile .board-rond { width:52px; height:52px; }
+    .board-pile .board-rond + .board-rond { margin-left:4px; }
+    .board-sp { min-height:52px; }
+
     /* Espèce débloquée : le bouton de la fiche et « Continuer » */
     .species-modal .sm-vu, .debloque-ok { min-height:52px; }
     .species-modal .sm-vu { height:auto; }

@@ -2493,7 +2493,7 @@ function build(){
   // Exclut les exotiques X/C (Cygne noir, perroquets echappes, Coq bankiva). Meme critere que
   // Mike Horn + profil stats.
   state.people.forEach(p=>{
-    let rarest=null, rarestSci=null, rarestW=0, rarestF=Infinity, last=null, lastSci=null, lastOrd=-1, lastDisp='', real=0;
+    let rarest=null, rarestSci=null, rarestW=0, rarestF=Infinity, last=null, lastSci=null, lastOrd=-1, lastDisp='', lastTime=0, real=0;
     const rrNames=[];
     for(const [key,v] of p._active){
       if(!countsFR(v)) continue;   // hors compétition (étranger)
@@ -2506,9 +2506,10 @@ function build(){
       }
       // Dernière acquisition : date d'obs si dispo, sinon date d'ajout manuel (v.addedAt).
       const pd=parseDate(v.date);
-      if(pd && pd.ord>lastOrd){ lastOrd=pd.ord; last=nm; lastSci=v.sci; lastDisp=pd.disp; }
+      if(pd && pd.ord>lastOrd){ lastOrd=pd.ord; last=nm; lastSci=v.sci; lastDisp=pd.disp;
+        lastTime=new Date(Math.floor(pd.ord/1e4), Math.floor(pd.ord/100)%100-1, pd.ord%100).getTime(); }
       else if(!pd && typeof v.addedAt === 'number' && v.addedAt > lastOrd){
-        lastOrd = v.addedAt; last = nm; lastSci = v.sci;
+        lastOrd = v.addedAt; last = nm; lastSci = v.sci; lastTime = v.addedAt;
         const d = new Date(v.addedAt);
         lastDisp = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
       }
@@ -2519,7 +2520,7 @@ function build(){
       }
     }
     rrNames.sort((a,b)=>a.localeCompare(b,'fr'));
-    p.rarestName=rarest; p.rarestSci=rarestSci; p.lastAcqName=last; p.lastAcqSci=lastSci; p.lastAcqDisp=lastDisp; p.scoreReal=real;
+    p.rarestName=rarest; p.rarestSci=rarestSci; p.lastAcqName=last; p.lastAcqSci=lastSci; p.lastAcqDisp=lastDisp; p.lastAcqTime=lastTime; p.scoreReal=real;
   });
   // Mike Horn : UNE seule personne = celle qui détient l'oiseau le plus rare de la ligue.
   // Rareté d'un oiseau = poids (1-9) puis, à poids égal, la fréquence eBird (plus fine).
@@ -2823,43 +2824,71 @@ function renderBoard(){
   document.querySelectorAll('#boardModes button').forEach(b=>b.classList.toggle('on', b.dataset.mode===mode));
   const dash='<span class="muted">-</span>';
   const cell=v=>v?esc(v):dash;
-  // Les especes en petites photos rondes, au format des jetons du quiz (Mathis, 2026-10-19) :
-  // avec jusqu'a cinq especes preferees, les noms en clair agrandissaient les lignes. Le nom
-  // passe au survol, un clic ouvre la fiche. Un nom qu'on ne reconnait pas (une espece de
-  // reve ecrite en phrase) reste en texte.
+  // Version « I » choisie par Mathis le 2026-10-19 parmi neuf maquettes
+  // (notes-privees/maquettes/classement-3/) : deux blocs nommes, « Le joueur » et « Ses
+  // oiseaux » ; chaque espece en petite photo suivie de son nom (la photo seule, sans nom, ne
+  // se lisait pas dans un tableau) ; les preferees empilees, qui s'ecartent au survol ; la
+  // plus rare cerclee de la couleur de son palier ; la derniere en date relative, en couleur
+  // si elle a moins d'une semaine ; l'espece de reve en gris tant qu'elle n'est pas vue, en
+  // couleur cochee ensuite ; sous le score, l'ecart avec le premier ; ta ligne teintee. Pas de
+  // pourcentage sur l'objectif (refuse).
   // « La plus rare » est toujours celle calculee d'apres la liste : la « plus belle obs » du
-  // profil y passait devant, or c'est une phrase libre, ni forcement rare ni en France
-  // (Mathis, 2026-10-19).
-  const rond=(nom, sci=_nomLibreVersSci(nom))=>{
-    if(!sci) return `<span>${esc(nom)}</span>`;
-    const photo=_photoCarteConnue(sci), titre=esc(nom);
-    return `<button type="button" class="board-rond sp-link" data-sci="${esc(sci)}" title="${titre}" aria-label="${titre}"${photo?'':` data-prof-photo="${esc(sci)}"`}>${photo?`<img src="${esc(photo)}" alt="" loading="lazy">`:''}</button>`;
-  };
-  const ronds=html=>html?`<span class="board-ronds">${html}</span>`:dash;
+  // profil y passait devant, or c'est une phrase libre, ni forcement rare ni en France.
+  // Un nom de profil qu'on ne reconnait pas (un reve ecrit en phrase) reste en texte.
+  const photoHtml=sci=>{ const ph=_photoCarteConnue(sci);
+    return `<span class="board-ph"${ph?'':` data-prof-photo="${esc(sci)}"`}>${ph?`<img src="${esc(ph)}" alt="" loading="lazy">`:''}</span>`; };
+  // Une espece : la photo (et sa decoration eventuelle) puis le nom, le tout cliquable.
+  const espece=(sci, nom, {cls='', style='', deco='', sous='', titre=nom}={})=>`<button type="button" class="board-sp sp-link" data-sci="${esc(sci)}" title="${esc(titre)}">`
+    + `<span class="board-rond ${cls}"${style?` style="${style}"`:''}>${photoHtml(sci)}${deco}</span><span class="board-sp-txt">${esc(nom)}${sous?`<span class="board-sp-sous">${sous}</span>`:''}</span></button>`;
+  const pile=noms=>{ const l=noms.map(n=>[n, _nomLibreVersSci(n)]);
+    return l.length ? `<span class="board-pile">${l.map(([n,sci])=>sci
+      ? `<button type="button" class="board-rond sp-link" data-sci="${esc(sci)}" title="${esc(n)}" aria-label="${esc(n)}">${photoHtml(sci)}</button>`
+      : `<span class="board-pile-txt">${esc(n)}</span>`).join('')}</span>` : dash; };
+  const plusRare=p=>{ if(!p.rarestSci) return dash;
+    const t=realTier(p.rarestSci, false);
+    return t.ord ? espece(p.rarestSci, p.rarestName, {cls:'palier', style:`--pal:${t.color}`, titre:`${p.rarestName}, ${t.label}`, deco:`<span class="board-badge">${t.ord}</span>`})
+      : espece(p.rarestSci, p.rarestName); };
+  const ilYa=t=>{ const n=Math.floor((Date.now()-t)/864e5);
+    return n<=0 ? 'aujourd\'hui' : n===1 ? 'hier' : n<30 ? `il y a ${n} jours` : n<60 ? 'il y a 1 mois' : n<365 ? `il y a ${Math.floor(n/30)} mois` : n<730 ? 'il y a 1 an' : `il y a ${Math.floor(n/365)} ans`; };
+  const derniere=p=>{ if(!p.lastAcqSci) return dash;
+    const recent=p.lastAcqTime && Date.now()-p.lastAcqTime < 7*864e5;
+    const quand=p.lastAcqTime ? ilYa(p.lastAcqTime) : (p.lastAcqDisp||'');
+    return espece(p.lastAcqSci, p.lastAcqName, {titre:p.lastAcqName+(p.lastAcqDisp?', '+p.lastAcqDisp:''),
+      sous: recent ? `<span class="board-neuf">${quand}</span>` : esc(quand)}); };
+  const reve=p=>{ if(!p.dream) return dash;
+    const sci=_nomLibreVersSci(p.dream); if(!sci) return `<span>${esc(p.dream)}</span>`;
+    const vu=[...p._active.values()].some(v=>(v.sci||'').toLowerCase()===sci);
+    return vu ? espece(sci, p.dream, {cls:'exauce', deco:'<span class="board-badge">✓</span>', sous:'<span class="board-neuf sans-point">vu !</span>'})
+      : espece(sci, p.dream, {cls:'reve'}); };
   // Une seule colonne score selon le mode (comme le layout du mode count qui a des cellules
   // moins hautes car les colonnes textuelles ont plus de place). Uniformise les 3 modes.
   const scoreCols=[];
-  if(mode==='league') scoreCols.push({h:'Rareté ligue', v:p=>fmt(p.score), active:true});
-  else if(mode==='real') scoreCols.push({h:'Rareté réelle', v:p=>fmt(p.scoreReal||0), active:true});
-  else scoreCols.push({h:'Espèces', v:p=>p.total, active:true});
+  if(mode==='league') scoreCols.push({h:'Rareté ligue', v:p=>fmt(p.score), n:p=>p.score||0, active:true});
+  else if(mode==='real') scoreCols.push({h:'Rareté réelle', v:p=>fmt(p.scoreReal||0), n:p=>p.scoreReal||0, active:true});
+  else scoreCols.push({h:'Espèces', v:p=>p.total, n:p=>p.total||0, active:true});
   const scoreTh=scoreCols.map(c=>`<th class="c-num${c.active?' on-metric':''}">${c.h}</th>`).join('');
-  const scoreTd=p=>scoreCols.map(c=>`<td class="c-num${c.active?' strong on-metric':''}">${c.v(p)}</td>`).join('');
+  // Sous le score, sa part de celui du premier : l'ecart se lit sans faire la soustraction.
+  const tete=ranked.length ? scoreCols[0].n(ranked[0]) : 0;
+  const scoreTd=p=>scoreCols.map(c=>`<td class="c-num${c.active?' strong on-metric':''}"><span class="board-score">${c.v(p)}`
+    + (tete>0 ? `<span class="board-ecart" title="${esc(String(c.v(p)))} sur ${esc(String(c.v(ranked[0])))}"><i style="width:${Math.round(c.n(p)/tete*100)}%"></i></span>` : '')
+    + `</span></td>`).join('');
   $('#boardList').innerHTML = `<div class="sheet-scroll"><table class="board-sheet">
-    <thead><tr>
+    <thead><tr class="board-groupes"><th colspan="4">Le joueur</th><th colspan="4" class="debut-oiseaux">Ses oiseaux</th></tr>
+    <tr>
       <th class="c-rank">#</th><th>Joueur</th>
       ${scoreTh}
-      <th class="c-txt">Objectif</th><th class="c-txt">Espèces préférées</th>
+      <th class="c-txt">Objectif</th><th class="c-txt debut-oiseaux">Espèces préférées</th>
       <th class="c-txt">La plus rare en France</th><th class="c-txt">Dernière acquisition</th><th class="c-txt">Espèce de rêve</th>
     </tr></thead>
-    <tbody>${ranked.map((p,i)=>`<tr class="${i<3?'podium-'+(i+1):''}">
+    <tbody>${ranked.map((p,i)=>`<tr class="${i<3?'podium-'+(i+1):''}${p.isMe?' board-moi':''}">
       <td class="c-rank">${i===0?'★':(i+1)}</td>
       <td class="who-cell" style="--series:var(--s${p.si})"><span class="who-in"><span class="dot"></span>${isOnline(p.id)?'<span class="pname-dot" title="en ligne"></span>':''}<button type="button" class="who-name" data-fiche-joueur="${esc(p.id)}" title="Voir le profil de ${esc(p.name)}">${esc(p.name)}</button>${p.isMe?'<span class="youtag">toi</span>':''}</span></td>
       ${scoreTd(p)}
-      <td class="c-txt">${parseInt(p.goal,10)>0 ? `${p.total} / ${parseInt(p.goal,10)}` : cell(p.goal)}</td>
-      <td class="c-txt c-ronds">${ronds(_favsDe(p).map(n=>rond(n)).join(''))}</td>
-      <td class="c-txt c-ronds">${ronds(p.rarestName?rond(p.rarestName, p.rarestSci):'')}</td>
-      <td class="c-txt c-ronds">${ronds(p.lastAcqName?rond(p.lastAcqName, p.lastAcqSci)+(p.lastAcqDisp?` <span class="muted">${p.lastAcqDisp}</span>`:''):'')}</td>
-      <td class="c-txt c-ronds">${ronds(p.dream?rond(p.dream):'')}</td>
+      <td class="c-txt">${parseInt(p.goal,10)>0 ? `<span class="board-obj"><span>${p.total} / ${parseInt(p.goal,10)}</span><span class="board-obj-barre"><i style="width:${Math.min(100, Math.round(p.total/parseInt(p.goal,10)*100))}%"></i></span></span>` : cell(p.goal)}</td>
+      <td class="c-txt c-esp debut-oiseaux">${pile(_favsDe(p))}</td>
+      <td class="c-txt c-esp">${plusRare(p)}</td>
+      <td class="c-txt c-esp">${derniere(p)}</td>
+      <td class="c-txt c-esp">${reve(p)}</td>
     </tr>`).join('')}</tbody></table></div>`;
   _profilPhotosFavs($('#boardList'));   // les photos pas encore en memoire
   // Uniformise la hauteur des lignes du board sur celle du plus grand (contenus texte
