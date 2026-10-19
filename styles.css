@@ -606,11 +606,12 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* max-width 190 -> 260 : a 1 500 px le tableau laissait 220 px vides a droite pendant que
      chaque texte passait sur trois lignes. */
   .board-sheet td.c-txt { min-width:120px; max-width:260px; white-space:normal; }
-  /* Especes en petites photos rondes sur une seule ligne, au format des jetons du quiz
-     (.pc-jeton-ph, 40 px). Cinq preferees tiennent en 224 px. */
+  /* Especes en photos rondes sur une seule ligne, comme les jetons du quiz. 56 px choisis par
+     Mathis le 2026-10-19 parmi 40, 56 et 72 (a 40 on ne voyait pas l'oiseau). Cinq preferees
+     tiennent en 304 px ; au doigt, 56 depasse deja les 52 px d'une cible tactile. */
   .board-sheet td.c-ronds { max-width:none; }
   .board-ronds { display:flex; flex-wrap:nowrap; align-items:center; gap:6px; white-space:nowrap; }
-  .board-rond { flex:none; width:40px; height:40px; padding:0; border:0; border-radius:50%; overflow:hidden;
+  .board-rond { flex:none; width:56px; height:56px; padding:0; border:0; border-radius:50%; overflow:hidden;
     background:var(--surface-3); cursor:pointer; }
   .board-rond img { width:100%; height:100%; object-fit:cover; display:block; }
   .board-rond:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
@@ -3240,9 +3241,6 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   }
 
   @media (pointer: coarse) {
-    /* Photos rondes du classement : une cible de doigt */
-    .board-rond { width:52px; height:52px; }
-
     /* Espèce débloquée : le bouton de la fiche et « Continuer » */
     .species-modal .sm-vu, .debloque-ok { min-height:52px; }
     .species-modal .sm-vu { height:auto; }
