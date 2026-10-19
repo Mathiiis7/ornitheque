@@ -1,3 +1,11 @@
+# PAS POUSSÉ (2026-10-19) : en-tête du profil refait une 3e fois, en carte compacte (v827, app.js?v=401)
+- Demande de Mathis : « refais toute cette partie, ce bordel » (l'en-tête), plus de rareté sur les préférées, et le nombre d'espèces sur CHAQUE palier de Rareté.
+- Son choix (question à options) : carte compacte. Identité à gauche (nom, statut, Plus belle obs / Espèce de rêve / Objectif en lignes courtes, date d'arrivée), 4 chiffres en grille 2 x 2 à droite avec le bouton dessous ; sous 640 px les chiffres passent en une rangée de 4. « Ta plus rare » calculée retirée (doublon de Plus belle obs, la rareté a son onglet).
+- Préférées : plus de pastille de palier (_carteEspeceHtml(sci, nom, false)) ; les plus rares et les uniques la gardent.
+- Rareté : chiffre sur les 10 paliers, 0 compris.
+- Vérifié dans la démo : ordinateur, téléphone sombre (rien ne déborde), préférées sans pastille, chiffres 13,26,25,46,40,33,28,1,0,0. 11 bancs CONFORME.
+- Reste : Mathis regarde en local (recharger deux fois), puis pousse s'il valide.
+---
 # POUSSÉ et vérifié en ligne le 2026-10-19 : onglet Espèces refait, jalons retirés des Statistiques (v826, app.js?v=400, commit c8b82bfd)
 - Espèces : Rareté (barres par palier 1-10 aux couleurs de rareté + ses 5 plus rares en cartes photo) ; Espèces uniques dans la ligue (cartes, 10 max) ; Familles vues / présentes en France, compte du Birdydex (_catalogueFR, même filtre que _pkdxRender), 12 puis « Voir les N autres », triées par nombre vu ; Où (régions FR-ARA… et pays, le bloc pays seulement s'il y en a plus d'un).
 - Fait sans questions : Mathis a refusé la question à choix et dit « reprend ».

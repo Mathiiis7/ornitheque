@@ -1978,28 +1978,41 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      a titre + note + filet des Trophees, tableau de Ma liste, cartes du Birdydex. Sans emoji.
      Tout ce qui se lit fait 14 px au moins. */
   .prof-tete { margin-top:12px; }
-  .prof-id { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+  /* L'en-tete est une carte : identite a gauche, chiffres et bouton a droite (3e version, 2026-10-19). */
+  .prof-id { display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:16px 22px; align-items:start;
+    border:1px solid var(--line); border-radius:14px; padding:18px 20px; }
   .prof-id-av .user-avatar { border:2px solid var(--line-2); }
-  .prof-id-txt { flex:1 1 240px; min-width:0; }
+  .prof-id-txt { min-width:0; }
   .prof-nom { font:700 21px var(--titre); color:var(--ink); line-height:1.2; }
   .prof-nom .youtag { font-family:var(--sans); font-size:12px; vertical-align:3px; }
   .prof-enligne { font:600 13px var(--sans); color:var(--accent-ink); vertical-align:3px; }
   .prof-enligne::before { content:''; display:inline-block; width:8px; height:8px; border-radius:50%; background:#2ecc71; margin-right:5px; vertical-align:0; }
   .prof-statut { font-size:15px; color:var(--ink-2); margin-top:3px; }
-  .prof-meta { font-size:14px; color:var(--ink-3); margin-top:3px; }
+  /* Champs libres : une ligne chacun, l'intitule en gris devant la valeur. */
+  .prof-infos { margin:10px 0 0; display:grid; gap:3px; }
+  .prof-infos > div { display:flex; gap:8px; min-width:0; font-size:15px; }
+  .prof-infos dt { color:var(--ink-3); flex:0 0 auto; }
+  .prof-infos dt::after { content:' :'; }
+  .prof-infos dd { margin:0; color:var(--ink); font-weight:600; min-width:0; overflow-wrap:anywhere; }
+  .prof-meta { font-size:14px; color:var(--ink-3); margin-top:10px; }
+  .prof-meta + .prof-meta { margin-top:3px; }
   .prof-meta code { font-size:13px; }
-  .prof-id-act { display:flex; gap:8px; flex-wrap:wrap; }
+  .prof-id-droite { display:flex; flex-direction:column; align-items:flex-end; gap:14px; }
+  .prof-id-act { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
   .prof-retirer { background:var(--surface); color:#b91c1c; border:1px solid #b91c1c; }
-  /* Les chiffres se lisent comme le compteur du Birdydex : le nombre en accent, le mot apres. */
-  .prof-ks { display:flex; flex-wrap:wrap; gap:6px 26px; margin-top:16px; }
-  .prof-k { font-size:15px; color:var(--ink-2); }
-  .prof-k b { font:700 24px var(--titre); color:var(--accent-ink); margin-right:2px; }
+  /* Quatre chiffres en grille 2 x 2 : le nombre en accent, le mot dessous. */
+  .prof-ks { display:grid; grid-template-columns:repeat(2, auto); gap:12px 28px; }
+  .prof-k { display:flex; flex-direction:column; min-width:0; }
+  .prof-k b { font:700 24px/1.1 var(--titre); color:var(--accent-ink); }
   .prof-k sup { font-size:.55em; }
-  .prof-fiche { display:flex; flex-wrap:wrap; gap:8px 28px; margin:12px 0 0; }
-  .prof-fiche > div { min-width:0; }
-  .prof-fiche dt { font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:var(--ink-3); }
-  .prof-fiche dd { margin:2px 0 0; font-size:15px; font-weight:600; color:var(--ink); }
-  .prof-fiche-note { font-weight:400; color:var(--ink-3); font-size:14px; }
+  .prof-k span { font-size:14px; color:var(--ink-3); }
+  @media (max-width:640px){
+    .prof-id { grid-template-columns:auto minmax(0,1fr); padding:14px; }
+    .prof-id-droite { grid-column:1 / -1; align-items:stretch; }
+    .prof-ks { grid-template-columns:repeat(4, minmax(0,1fr)); gap:10px; }
+    .prof-k b { font-size:21px; }
+    .prof-id-act { justify-content:flex-start; }
+  }
   #profilTete + #profilEmpty + .profile { margin-top:16px; padding-top:16px; border-top:1px solid var(--line); }
   .prof-favs-edit { margin-bottom:14px; }
   .prof-favs-chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }

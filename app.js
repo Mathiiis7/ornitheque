@@ -9535,7 +9535,7 @@ function _stBarresHtml(items, idxRecord, montrerVal){
   const max = Math.max(1, ...items.map(it => it.n));
   return `<div class="st-barres" style="--nb:${items.length}">` + items.map((it, i) => `
       <div class="st-barre-col">
-        <span class="st-barre-val">${(montrerVal ? montrerVal(i) : i === idxRecord) && it.n ? it.n : ''}</span>
+        <span class="st-barre-val">${(montrerVal ? montrerVal(i) : i === idxRecord && it.n) ? it.n : ''}</span>
         <span class="st-barre${i === idxRecord && !it.couleur ? ' record' : ''}" style="height:${Math.max(it.n ? 3 : 0, it.n / max * 100).toFixed(1)}%${it.couleur ? ';background:' + it.couleur : ''}"
           role="img" aria-label="${esc(it.long)} : ${it.n} espèce${it.n > 1 ? 's' : ''}" data-bulle="${esc(it.long)} : ${it.n} espèce${it.n > 1 ? 's' : ''}"></span>
         <span class="st-barre-lbl">${esc(it.court)}</span>
@@ -9821,10 +9821,11 @@ $('#profFavChips')?.addEventListener('click', e => {
   _enregistrerFavs(_favsDe(me).filter(n => n !== b.dataset.favRetirer));
 });
 
-// En-tete du profil : qui, depuis quand, et quelques chiffres en ligne. Refait le 2026-10-19
-// apres un premier jet juge « trop le bordel » par Mathis : cinq tuiles, des emojis devant
-// chaque titre, rien qui ressemble au reste du site. Les chiffres se lisent desormais comme
-// le compteur du Birdydex (« 212 especes vues sur 466 »), et aucun emoji n'est ajoute.
+// En-tete du profil : une carte compacte, l'identite a gauche, les quatre chiffres a droite.
+// Refait une 3e fois le 2026-10-19 (« ce bordel ») : trois rangees de styles differents
+// s'empilaient, et « Ta plus rare » (calculee) repetait souvent « Plus belle obs » - Mathis a
+// choisi de la retirer, la rarete a son onglet. Les champs libres (plus belle obs, reve,
+// objectif) tiennent en lignes courtes sous le statut.
 function _profilTeteHtml(p){
   const moi = p.id === myUid, admin = isAdmin();
   const c = _profilChiffres(p);
@@ -9832,41 +9833,39 @@ function _profilTeteHtml(p){
   const jour = ms => ms ? new Date(ms).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' }) : '';
   const pays = new Set(); for(const v of p._active.values()) if(countsFR(v) && v.country) pays.add(v.country);
   const nbPhotos = (photos || []).filter(ph => ph.uid === p.id).length;
-  // L'espece la plus rare CALCULEE, avec son niveau, comme l'ancienne tuile des statistiques.
-  // Le texte libre du champ « Ton espece la plus rare » (souvent « Marouette ponctuee, Brenne,
-  // 2023 ») s'affiche a part, « Plus belle obs », comme dans l'ancienne fiche joueur.
-  const rare = c.rareName && c.rareName !== '-' ? c.rareName : '';
-  const rareSci = rare ? (_nameToSci(rare) || '') : '';
   const meta = [
     p.joinedAt ? 'dans la ligue depuis ' + moisAn(p.joinedAt * 1000) : '',
     p.updatedAt ? 'liste mise à jour le ' + jour(p.updatedAt) : ''
   ].filter(Boolean).join(' · ');
-  const chiffre = (n, lbl) => `<span class="prof-k"><b>${n}</b> ${lbl}</span>`;
+  const objectif = parseInt(p.goal, 10);
+  const infos = [
+    p.rare ? ['Plus belle obs', esc(p.rare)] : null,
+    p.dream ? ['Espèce de rêve', esc(p.dream)] : null,
+    objectif > 0 ? ['Objectif', c.total + ' / ' + objectif + ' espèces'] : null
+  ].filter(Boolean);
+  const chiffre = (n, lbl) => `<div class="prof-k"><b>${n}</b><span>${lbl}</span></div>`;
   return `<div class="prof-id">
       <div class="prof-id-av">${_avatarHtml(p.avatar || '', p.name || '?', 64)}</div>
       <div class="prof-id-txt">
         <div class="prof-nom">${esc(p.name)}${moi ? ' <span class="youtag">toi</span>' : ''}${isOnline(p.id) ? ' <span class="prof-enligne">en ligne</span>' : ''}</div>
         ${p.status ? `<div class="prof-statut">${esc(p.status)}</div>` : ''}
+        ${infos.length ? `<dl class="prof-infos">${infos.map(([t, v]) => `<div><dt>${t}</dt><dd>${v}</dd></div>`).join('')}</dl>` : ''}
         ${meta ? `<div class="prof-meta">${esc(meta)}</div>` : ''}
         ${admin ? `<div class="prof-meta">UID : <code>${esc(p.id)}</code></div>` : ''}
       </div>
-      <div class="prof-id-act">
-        ${moi ? `<button type="button" class="btn tiny" data-profil-modifier>${_profilEdition ? 'Terminer' : 'Modifier mon profil'}</button>` : ''}
-        ${admin && !moi ? `<button type="button" class="btn tiny prof-retirer" data-fiche-retirer="${esc(p.id)}">Retirer de la ligue</button>` : ''}
+      <div class="prof-id-droite">
+        <div class="prof-ks">
+          ${chiffre(c.total, 'espèces')}
+          ${c.n > 1 ? chiffre(c.rank + (c.rank === 1 ? '<sup>er</sup>' : '<sup>e</sup>'), 'sur ' + c.n + ' au classement') : ''}
+          ${chiffre(pays.size, 'pays')}
+          ${chiffre(nbPhotos, 'photo' + (nbPhotos > 1 ? 's' : ''))}
+        </div>
+        ${moi || (admin && !moi) ? `<div class="prof-id-act">
+          ${moi ? `<button type="button" class="btn tiny" data-profil-modifier>${_profilEdition ? 'Terminer' : 'Modifier mon profil'}</button>` : ''}
+          ${admin && !moi ? `<button type="button" class="btn tiny prof-retirer" data-fiche-retirer="${esc(p.id)}">Retirer de la ligue</button>` : ''}
+        </div>` : ''}
       </div>
-    </div>
-    <div class="prof-ks">
-      ${chiffre(c.total, 'espèces')}
-      ${c.n > 1 ? chiffre(c.rank + (c.rank === 1 ? '<sup>er</sup>' : '<sup>e</sup>'), 'sur ' + c.n + ' au classement') : ''}
-      ${chiffre(pays.size, 'pays')}
-      ${chiffre(nbPhotos, 'photo' + (nbPhotos > 1 ? 's' : ''))}
-    </div>
-    <dl class="prof-fiche">
-      ${rare ? `<div><dt>${moi ? 'Ta' : 'Sa'} plus rare</dt><dd>${rareSci ? `<a href="#" class="sp-link" data-sci="${esc(rareSci)}">${esc(rare)}</a>` : esc(rare)}${c.rareTier ? ` <span class="prof-fiche-note">${esc(c.rareTier.label)}</span>` : ''}</dd></div>` : ''}
-      ${p.rare ? `<div><dt>Plus belle obs</dt><dd>${esc(p.rare)}</dd></div>` : ''}
-      ${p.dream ? `<div><dt>Espèce de rêve</dt><dd>${esc(p.dream)}</dd></div>` : ''}
-      ${parseInt(p.goal, 10) > 0 ? `<div><dt>Objectif</dt><dd>${c.total} / ${parseInt(p.goal, 10)} espèces</dd></div>` : ''}
-    </dl>`;
+    </div>`;
 }
 
 // Quatre onglets sous l'en-tete (choix de Mathis, 2026-10-19) : un ecran court par sujet,
@@ -9881,8 +9880,9 @@ function _profilPartie(titre, note, corps){
 }
 // Une carte d'espece facon Birdydex, en grand : photo, pastille de palier, nom, nom latin.
 // Sert aux especes preferees, aux plus rares et aux uniques. Un clic ouvre la fiche.
-function _carteEspeceHtml(sci, nom){
-  const tt = sci ? realTier(sci, false) : null;
+// Les preferees n'ont pas la pastille : on les aime pour elles, pas pour leur rarete (Mathis, 2026-10-19).
+function _carteEspeceHtml(sci, nom, avecPalier = true){
+  const tt = sci && avecPalier ? realTier(sci, false) : null;
   const photo = sci ? _photoCarteConnue(sci) : '';
   return `<div class="prof-fav-carte${sci ? ' sp-link' : ''}"${sci ? ` data-sci="${esc(sci)}"` : ''}>
     ${tt && tt.ord ? `<span class="prof-fav-tier" style="background:${tt.color}" title="${esc(tt.label)}">${tt.ord}</span>` : ''}
@@ -9918,7 +9918,7 @@ function _profilOngletHtml(p){
     const favs = _favsDe(p);
     if(favs.length){
       html += _profilPartie('Espèces préférées', 'Choisies par ' + qui + '.',
-        '<div class="prof-favs">' + favs.map(n => _carteEspeceHtml(_nameToSci(n) || '', n)).join('') + '</div>');
+        '<div class="prof-favs">' + favs.map(n => _carteEspeceHtml(_nameToSci(n) || '', n, false)).join('') + '</div>');
     } else if(moi){
       html += _profilPartie('Espèces préférées', '', '<p class="help" style="margin:0;">Choisis-en jusqu\'à 5 avec « Modifier mon profil ».</p>');
     }
@@ -9954,12 +9954,12 @@ function _profilOngletHtml(p){
     const horsBareme = actives.length - parPalier.reduce((a, b) => a + b, 0);
     if(parPalier.some(n => n)){
       const items = parPalier.slice(1).map((n, i) => ({ n, court:String(i + 1), long:'Palier ' + (i + 1), couleur:realColor(i + 1) }));
-      // Chiffre affiche sur les paliers rares (7 a 10) et sur le plus garni : pas sur toutes.
+      // Chiffre sur chaque palier, 0 compris : Mathis veut lire le compte partout (2026-10-19).
       const iMax = items.reduce((b, it, i, arr) => it.n > arr[b].n ? i : b, 0);
       const rares = actives.filter(v => _countsForRarity(v))
         .sort((a, b) => (rarityForFilter(b.sci) - rarityForFilter(a.sci)) || (realFreq(a.sci) - realFreq(b.sci))).slice(0, 5);
       html += _profilPartie('Rareté', `${moi ? 'Tes' : 'Ses'} espèces par palier, de 1 (la plus commune) à 10 (exceptionnelle).${horsBareme ? ` ${horsBareme} hors barème (vues seulement à l'étranger, ou exotiques).` : ''}`,
-        _stBarresHtml(items, iMax, i => i >= 6 || i === iMax)
+        _stBarresHtml(items, iMax, () => true)
         + (rares.length ? `<h4 class="prof-sous-titre">${moi ? 'Tes' : 'Ses'} ${rares.length} plus rares</h4><div class="prof-favs">${rares.map(v => _carteEspeceHtml(v.sci, frName(v.sci, v.common))).join('')}</div>` : ''));
     }
 
