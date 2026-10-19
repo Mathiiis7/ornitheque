@@ -174,6 +174,7 @@ function listeDe(m){
   const { graine, especes: combien } = m;
   const coins = coinsDe(m);
   const out = [];
+  const deps = [];   // le departement de chaque espece, au meme rang que dans out
   for(let i = 0; i < ESPECES.length && out.length < combien; i++){
     // Les especes communes entrent presque toujours, les rares de moins en moins : une life
     // list vraisemblable, et deux joueurs ne se retrouvent pas avec la meme.
@@ -191,6 +192,7 @@ function listeDe(m){
     const d = annee + '-' + String(mois).padStart(2, '0') + '-' + String(jour).padStart(2, '0');
     out.push({ k: sci, c: FR_NAMES[sci], s: sci, d, l: lieu.l, o: 1, f: 1, co: 'FR',
                la: lieu.la, lo: lieu.lo, a: Date.UTC(annee, mois - 1, jour) });
+    deps.push(lieu.cle);
   }
   // L espece « la plus rare » de la fiche doit etre dans la liste : le Classement affichait
   // la Chevechette de Hugo, que « Qui a vu quoi » ne lui donnait pas (vu le 2026-10-06).
@@ -201,8 +203,14 @@ function listeDe(m){
     const a = Date.UTC(m.rareAn, 4, 15);
     out[out.length - 1] = { k: m.rareSci, c: FR_NAMES[m.rareSci], s: m.rareSci,
       d: m.rareAn + '-05-15', l: DEP[m.rareDep].nom, o: 1, f: 1, co: 'FR', la, lo, a };
+    deps[deps.length - 1] = m.rareDep;
   }
-  return out;
+  // Les regions visitees se deduisent des lieux, comme l appli les tire de la colonne
+  // State/Province d un CSV eBird : « FR-NAQ-33 » donne « FR-NAQ ». Jusqu au 2026-10-19 elles
+  // etaient ecrites en dur en codes INSEE d avant 2016 (« FR-11 »), que l appli ne reconnait
+  // pas : le bloc « Regions francaises » du profil restait absent et le trophee Terroir a 0.
+  const regions = [...new Set(deps.map(cle => cle.split('-').slice(0, 2).join('-')))].sort();
+  return { especes: out, regions };
 }
 
 /* ============================================================
@@ -237,10 +245,11 @@ DONNEES['leagues/' + LIGUE] = {
 };
 
 for(const m of MEMBRES){
+  const { especes, regions } = listeDe(m);
   DONNEES['leagues/' + LIGUE + '/members/' + m.id] = {
-    name: m.nom, species: listeDe(m),
+    name: m.nom, species: especes,
     goal: m.but, dream: m.reve, rare: m.rare, status: m.statut, avatar: m.avatar,
-    fav: '', regions: ['FR-11', 'FR-93', 'FR-75', 'FR-53'],
+    fav: '', regions,
     joinedAt: ts(MAINTENANT - m.jours * JOUR), updatedAt: ts(MAINTENANT - 2 * JOUR),
   };
 }
