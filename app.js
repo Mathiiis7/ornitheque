@@ -2817,7 +2817,7 @@ function renderBoard(){
       <th class="c-rank">#</th><th>Joueur</th>
       ${scoreTh}
       <th class="c-txt">Objectif</th><th class="c-txt">Espèces préférées</th>
-      <th class="c-txt">La plus rare</th><th class="c-txt">Dernière acquisition</th><th class="c-txt">Espèce de rêve</th>
+      <th class="c-txt">La plus rare en France</th><th class="c-txt">Dernière acquisition</th><th class="c-txt">Espèce de rêve</th>
     </tr></thead>
     <tbody>${ranked.map((p,i)=>`<tr class="${i<3?'podium-'+(i+1):''}">
       <td class="c-rank">${i===0?'★':(i+1)}</td>
@@ -9950,7 +9950,7 @@ function _profilOngletHtml(p){
         .sort((a, b) => (rarityForFilter(b.sci) - rarityForFilter(a.sci)) || (realFreq(a.sci) - realFreq(b.sci))).slice(0, 5);
       html += _profilPartie('Rareté', `${moi ? 'Tes' : 'Ses'} espèces par palier, de 1 (la plus commune) à 10 (exceptionnelle).${horsBareme ? ` ${horsBareme} hors barème (vues seulement à l'étranger, ou exotiques).` : ''}`,
         _stBarresHtml(items, iMax, () => true)
-        + (rares.length ? `<h4 class="prof-sous-titre">${moi ? 'Tes' : 'Ses'} ${rares.length} plus rares</h4><div class="prof-favs">${rares.map(v => _carteEspeceHtml(v.sci, frName(v.sci, v.common))).join('')}</div>` : ''));
+        + (rares.length ? `<h4 class="prof-sous-titre">${moi ? 'Tes' : 'Ses'} ${rares.length} plus rares en France</h4><div class="prof-favs">${rares.map(v => _carteEspeceHtml(v.sci, frName(v.sci, v.common))).join('')}</div>` : ''));
     }
 
     // 2. Especes que personne d'autre n'a dans la ligue.
@@ -9961,7 +9961,7 @@ function _profilOngletHtml(p){
       const uniques = actives.filter(v => !ailleurs.has((v.sci || '').toLowerCase()))
         .sort((a, b) => (rarityForFilter(b.sci) - rarityForFilter(a.sci)) || frName(a.sci, a.common).localeCompare(frName(b.sci, b.common), 'fr'));
       html += _profilPartie('Espèces uniques dans la ligue', uniques.length
-          ? `${uniques.length} espèce${uniques.length > 1 ? 's' : ''} que personne d'autre n'a vue${uniques.length > 1 ? 's' : ''} parmi les ${autres.length + 1} membres.${uniques.length > 10 ? ' Les 10 plus rares :' : ''}`
+          ? `${uniques.length} espèce${uniques.length > 1 ? 's' : ''} que personne d'autre n'a vue${uniques.length > 1 ? 's' : ''} parmi les ${autres.length + 1} membres.${uniques.length > 10 ? ' Les 10 plus rares en France :' : ''}`
           : 'Toutes ' + (moi ? 'tes' : 'ses') + ' espèces ont aussi été vues par un autre membre.',
         uniques.length ? `<div class="prof-favs">${uniques.slice(0, 10).map(v => _carteEspeceHtml(v.sci, frName(v.sci, v.common))).join('')}</div>` : '');
     }
