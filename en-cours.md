@@ -1,4 +1,4 @@
-# EN LOCAL (2026-10-19) : onglet Espèces refait, jalons retirés des Statistiques (v826, app.js?v=400)
+# POUSSÉ et vérifié en ligne le 2026-10-19 : onglet Espèces refait, jalons retirés des Statistiques (v826, app.js?v=400, commit c8b82bfd)
 - Espèces : Rareté (barres par palier 1-10 aux couleurs de rareté + ses 5 plus rares en cartes photo) ; Espèces uniques dans la ligue (cartes, 10 max) ; Familles vues / présentes en France, compte du Birdydex (_catalogueFR, même filtre que _pkdxRender), 12 puis « Voir les N autres », triées par nombre vu ; Où (régions FR-ARA… et pays, le bloc pays seulement s'il y en a plus d'un).
 - Fait sans questions : Mathis a refusé la question à choix et dit « reprend ».
 - Jalons retirés des Statistiques à sa demande (« on s'en fout ») : _jalonsDe, _stFriseHtml et leur CSS supprimés.
