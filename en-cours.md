@@ -2,7 +2,7 @@
 - Espèces : Rareté (barres par palier 1-10 aux couleurs de rareté + ses 5 plus rares en cartes photo) ; Espèces uniques dans la ligue (cartes, 10 max) ; Familles vues / présentes en France, compte du Birdydex (_catalogueFR, même filtre que _pkdxRender), 12 puis « Voir les N autres », triées par nombre vu ; Où (régions FR-ARA… et pays, le bloc pays seulement s'il y en a plus d'un).
 - Fait sans questions : Mathis a refusé la question à choix et dit « reprend ».
 - Jalons retirés des Statistiques à sa demande (« on s'en fout ») : _jalonsDe, _stFriseHtml et leur CSS supprimés.
-- DÉFAUT DE LA DÉMO, pas corrigé : outils/build/genere-demo.mjs écrit d'anciens codes de région INSEE (FR-11…) au lieu de FR-ARA… ; les régions n'apparaissent donc pas dans la démo, et le trophée Terroir y reste à 0. La vraie ligue a les bons codes (vérifié sur la sauvegarde du 04/10).
+- DÉFAUT DE LA DÉMO, CORRIGÉ et poussé le 2026-10-19 (session à part, commit a6197049, fusion 6b60648b ; régions déduites des lieux). Avant : outils/build/genere-demo.mjs écrit d'anciens codes de région INSEE (FR-11…) au lieu de FR-ARA… ; les régions n'apparaissent donc pas dans la démo, et le trophée Terroir y reste à 0. La vraie ligue a les bons codes (vérifié sur la sauvegarde du 04/10).
 - Vérifié dans la démo : ordinateur, sombre, téléphone ; photos des cartes chargées 5/5 ; bulle des barres ; clic carte = fiche espèce ; profil de Samir (78 uniques, 12 hors barème). Erreurs console = xeno-canto qui refuse le navigateur de test (préchargement au survol, déjà existant). 11 bancs CONFORME.
 ---
 # POUSSÉ (2026-10-19) : onglet Statistiques du profil en tableau de bord (v825, app.js?v=399)
