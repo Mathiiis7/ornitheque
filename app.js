@@ -2603,73 +2603,57 @@ document.addEventListener('click', async e=>{
   }
 });
 
-// Fiche d'un joueur, ouverte en cliquant son nom dans le classement. La vue "Profil" de
-// l'appli ne montre que la sienne ; il n'y avait aucun moyen de regarder celle des autres,
-// alors que chacun y renseigne son objectif, son oiseau fetiche et son oiseau de reve.
+// La page Profil d'un joueur, ouverte en cliquant son nom n'importe ou dans l'appli
+// (classement, tchat, fil, photos, requetes). Jusqu'au 2026-10-19 un clic dans le classement
+// ouvrait une petite fenetre de sept lignes ; Mathis a voulu la vraie page, la meme pour tous.
+// profilUid vaut null pour son propre profil : le menu « Profil » y ramene toujours.
 //
-// Elle porte aussi le retrait admin, qui vivait sur les cartes membres - un ecran devenu
-// inatteignable, son conteneur etant reste `hidden` dans index.html.
-//
-// L'email du titulaire n'y figure pas : la fiche est ouvrable par n'importe quel joueur.
-// Pour departager deux lignes du meme nom, l'admin y lit l'UID et la date de derniere
-// mise a jour, et retrouve le compte correspondant dans la console Firebase.
+// Le retrait admin vivait dans cette fenetre ; il a suivi sur la page (_profilTeteHtml).
+// L'email du titulaire n'y figure pas : la page est ouvrable par n'importe quel joueur. Pour
+// departager deux lignes du meme nom, l'admin y lit l'UID et la date de derniere mise a jour.
+let profilUid = null;
 function ouvrirFicheJoueur(uid){
-  const p = realPeople.find(x => x.id === uid);
-  if(!p) return;
-  const admin = isAdmin();
-  const dateFr = (ms) => ms ? new Date(ms).toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' }) : null;
-  const ligne = (lbl, val) => val
-    ? '<div style="display:flex; gap:10px; padding:7px 0; border-top:1px solid var(--line);">'
-      + '<span style="flex:0 0 130px; color:var(--ink-3); font-size:12px;">' + lbl + '</span>'
-      + '<span style="flex:1; font-size:13px;">' + esc(String(val)) + '</span></div>'
-    : '';
-  const backdrop = document.createElement('div');
-  backdrop.className = 'cp-modal-backdrop';
-  backdrop.innerHTML = '<div class="cp-modal-inner">'
-    + '<div class="cp-modal-title"><span>Fiche joueur</span>'
-      + '<button type="button" class="cp-modal-close" aria-label="Fermer">×</button></div>'
-    + '<div style="display:flex; align-items:center; gap:12px; padding:2px 0 10px;">'
-      + _avatarHtml(p.avatar || '', p.name || '?', 52)
-      + '<div><div style="font:700 17px var(--sans);">' + esc(p.name) + (p.isMe ? ' <span class="youtag">toi</span>' : '') + '</div>'
-      + (p.status ? '<div style="font-size:12.5px; color:var(--ink-2); margin-top:2px;">' + esc(p.status) + '</div>' : '')
-      + '</div></div>'
-    + '<div class="cp-list">'
-      + ligne('Espèces', p.species.size)
-      + ligne('Objectif', p.goal)
-      + ligne('Oiseau fétiche', p.fav)
-      + ligne('Oiseau de rêve', p.dream)
-      + ligne('Plus belle obs', p.rare)
-      + ligne('Dans la ligue depuis', dateFr(p.joinedAt ? p.joinedAt * 1000 : 0))
-      + ligne('Dernière mise à jour', dateFr(p.updatedAt))
-      + (admin ? ligne('UID', p.id) : '')
-    + '</div>'
-    + (admin && !p.isMe
-      ? '<div style="margin-top:12px; padding-top:10px; border-top:1px dashed var(--line-2); text-align:right;">'
-        + '<button type="button" class="btn tiny" data-fiche-retirer="' + esc(p.id) + '"'
-        + ' style="background:var(--surface); color:#b91c1c; border:1px solid #b91c1c;">'
-        + 'Retirer de la ligue</button></div>'
-      : '')
-    + '</div>';
-  const fermer = () => { backdrop.remove(); document.removeEventListener('keydown', echap); };
-  const echap = (e) => { if(e.key === 'Escape') fermer(); };
-  document.addEventListener('keydown', echap);
-  backdrop.addEventListener('click', async (e) => {
-    if(e.target === backdrop || e.target.closest('.cp-modal-close')){ fermer(); return; }
-    const ret = e.target.closest('[data-fiche-retirer]');
-    if(!ret || !isAdmin()) return;
-    // Le nombre d'especes et la date de mise a jour sont rappeles : devant deux lignes du
-    // meme nom, c'est ce qui distingue la vivante de celle laissee par un ancien compte.
-    if(!confirm('Retirer « ' + p.name + ' » de la ligue ?\n'
-      + p.species.size + ' espèces · dernière mise à jour ' + (dateFr(p.updatedAt) || 'inconnue') + '\n'
-      + 'UID : ' + p.id + '\n\nSes observations et son profil seront supprimés (irréversible).')) return;
-    try{ await deleteDoc(doc(db, 'leagues', leagueId, 'members', p.id)); fermer(); }
-    catch(err){ showError(err); }
-  });
-  document.body.appendChild(backdrop);
+  if(!realPeople.some(x => x.id === uid)) return;
+  profilUid = uid === myUid ? null : uid;
+  _profilEdition = false;
+  // Ouvert depuis un panneau flottant (tchat, photos, fil) ou la fiche d'une photo : on les
+  // referme, sinon la page s'ouvrirait dessous, invisible.
+  _closeFabPanel();
+  _fermerFichePhoto();
+  const btn = document.querySelector('.tab[data-view="profil"]');
+  if(btn) btn.click();
+  window.scrollTo(0, 0);
+}
+// Un nom de membre rendu cliquable. Un invite du tchat n'a pas de fiche : son nom reste du
+// texte, pour ne pas promettre un clic qui ne mene nulle part.
+function _nomProfil(uid, nom, cls){
+  if(!uid || !realPeople.some(x => x.id === uid)) return '<b' + (cls ? ' class="' + cls + '"' : '') + '>' + esc(nom) + '</b>';
+  return '<button type="button" class="nom-profil' + (cls ? ' ' + cls : '') + '" data-fiche-joueur="' + esc(uid)
+    + '" title="Voir le profil de ' + esc(nom) + '">' + esc(nom) + '</button>';
 }
 document.addEventListener('click', e => {
+  // Un nom redessine pendant son propre clic (le tchat se redessine a chaque message) n'est
+  // plus dans la page : closest() n'y trouverait rien.
+  if(!e.target.isConnected) return;
   const b = e.target.closest('[data-fiche-joueur]');
   if(b) ouvrirFicheJoueur(b.dataset.ficheJoueur);
+});
+document.addEventListener('click', async e => {
+  const ret = e.target.closest('[data-fiche-retirer]');
+  if(!ret || !isAdmin()) return;
+  const p = realPeople.find(x => x.id === ret.dataset.ficheRetirer);
+  if(!p) return;
+  const dateFr = ms => ms ? new Date(ms).toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' }) : null;
+  // Le nombre d'especes et la date de mise a jour sont rappeles : devant deux lignes du
+  // meme nom, c'est ce qui distingue la vivante de celle laissee par un ancien compte.
+  if(!confirm('Retirer « ' + p.name + ' » de la ligue ?\n'
+    + p.species.size + ' espèces · dernière mise à jour ' + (dateFr(p.updatedAt) || 'inconnue') + '\n'
+    + 'UID : ' + p.id + '\n\nSes observations et son profil seront supprimés (irréversible).')) return;
+  try{
+    await deleteDoc(doc(db, 'leagues', leagueId, 'members', p.id));
+    profilUid = null;
+    renderProfil();
+  }catch(err){ showError(err); }
 });
 
 // Flags "dirty" pour render lazy : quand renderResults est appele mais que la view
@@ -2699,6 +2683,7 @@ function _renderResultsImpl(){
     res.classList.remove('show');
     if(videRang) videRang.hidden = false;
     renderTrophies({N:0});   // etat vide = juste un message, cheap
+    renderProfil();          // invite « ton profil se construit avec ta liste »
     return;
   }
   if(videRang) videRang.hidden = true;
@@ -2718,6 +2703,10 @@ function _renderResultsImpl(){
   } else {
     _trophiesDirty = true;
   }
+  // Le profil lit _active, le total et le rang, que build() vient de poser. Appele depuis
+  // rebuild(), il passait AVANT build (differe d'une image) et trouvait des fiches neuves
+  // sans liste : la page restait vide (2026-10-19).
+  renderProfil();
   // Rafraichit les cibles seulement si l'onglet est visible (evite compute inutile
 }
 // Appele au tab switch : si la view etait dirty, la rebuild maintenant.
@@ -2831,10 +2820,10 @@ function renderBoard(){
     </tr></thead>
     <tbody>${ranked.map((p,i)=>`<tr class="${i<3?'podium-'+(i+1):''}">
       <td class="c-rank">${i===0?'★':(i+1)}</td>
-      <td class="who-cell" style="--series:var(--s${p.si})"><span class="who-in"><span class="dot"></span>${isOnline(p.id)?'<span class="pname-dot" title="en ligne"></span>':''}<button type="button" class="who-name" data-fiche-joueur="${esc(p.id)}" title="Voir la fiche de ${esc(p.name)}">${esc(p.name)}</button>${p.isMe?'<span class="youtag">toi</span>':''}</span></td>
+      <td class="who-cell" style="--series:var(--s${p.si})"><span class="who-in"><span class="dot"></span>${isOnline(p.id)?'<span class="pname-dot" title="en ligne"></span>':''}<button type="button" class="who-name" data-fiche-joueur="${esc(p.id)}" title="Voir le profil de ${esc(p.name)}">${esc(p.name)}</button>${p.isMe?'<span class="youtag">toi</span>':''}</span></td>
       ${scoreTd(p)}
       <td class="c-txt">${parseInt(p.goal,10)>0 ? `${p.total} / ${parseInt(p.goal,10)}` : cell(p.goal)}</td>
-      <td class="c-txt">${cell(p.fav)}</td>
+      <td class="c-txt">${cell(_favsDe(p).join(', '))}</td>
       <td class="c-txt">${p.rare?esc(p.rare):(p.rarestName?`<span class="muted">${esc(p.rarestName)}</span>`:dash)}</td>
       <td class="c-txt">${p.lastAcqName?esc(p.lastAcqName)+(p.lastAcqDisp?` <span class="muted">${p.lastAcqDisp}</span>`:''):dash}</td>
       <td class="c-txt">${cell(p.dream)}</td>
@@ -5673,7 +5662,6 @@ function rebuild(){
     if(p.updatedAt && p.updatedAt>maxAdded) maxAdded = p.updatedAt;
   }
   feedLatest = maxAdded; updateTabDots();
-  renderStats(realPeople.find(p=>p.id===myUid));
   // Les vues qui lisent la liste du joueur sont dessinees au demarrage, quand l'onglet
   // visite la derniere fois est restaure - c'est-a-dire AVANT que Firestore ait repondu.
   // Sans un rappel ici, elles restent telles quelles jusqu'a ce qu'on change d'onglet et
@@ -5780,7 +5768,6 @@ function applySnapshot(snap){
   // Le nombre d'especes vit dans le titre de la liste : plus de bloc vert dans la zone de depot.
   const dropSmall = $('#dropSmall');
   if(dropSmall) dropSmall.textContent = me ? 'ou clique pour le choisir - il remplace ta liste actuelle' : 'ou clique pour le choisir';
-  fillProfile(me);
   renderMyList(me || null);
   if(typeof _lockMyNameIfSet==='function') _lockMyNameIfSet();
   if(typeof _refreshChatWriteAccess==='function') _refreshChatWriteAccess();
@@ -6112,7 +6099,7 @@ function renderChat(msgs){
     const editBtn = canEdit ? `<button class="msg-act msg-edit" data-id="${esc(m.id)}" title="Éditer" aria-label="Éditer mon message">✏️</button>` : '';
     const delBtn = canDelete ? `<button class="msg-act msg-del" data-id="${esc(m.id)}" title="Supprimer" aria-label="Supprimer ce message">🗑️</button>` : '';
     return `<div class="msg${mine?' mine':''}${mentionsMe?' mentions-me':''}${isDeleted?' msg-is-deleted':''}" data-msg-id="${esc(m.id)}">
-      <div class="msg-header">${avatarHtml}<div class="msg-name">${esc(nm)}${guestTag}${statusTag}</div><span class="msg-time">${esc(time)}${editedTag}</span></div>
+      <div class="msg-header">${avatarHtml}<div class="msg-name">${authoritative ? _nomProfil(m.uid, nm) : esc(nm)}${guestTag}${statusTag}</div><span class="msg-time">${esc(time)}${editedTag}</span></div>
       <div class="msg-bubble${emojiOnly?' emoji-only':''}">${deletedNote}${replyHtml}${imgHtml}${voiceHtml}${gifHtml}${txtHtml}</div>
       ${_reactionsSeules('chat:'+m.id)}
       <div class="msg-actions">${myUid?`<button class="react-add" data-target="${esc('chat:'+m.id)}" title="Réagir">＋</button>`:''}${replyBtn}${editBtn}${delBtn}</div>
@@ -6343,7 +6330,7 @@ function renderPhotos(){
     const nbBulle = nbCom + nbReac;
     return `<div class="photo-card">
       <img class="photo-img" src="${safeImg}"${th.attr}${fullAttr} alt="photo d'observation">
-      <div class="photo-meta"><b>${esc(nm)}</b>${guest}<span class="photo-date">${esc(_datePhoto(t))}</span>
+      <div class="photo-meta">${_nomProfil(authoritative ? ph.uid : '', nm)}${guest}<span class="photo-date">${esc(_datePhoto(t))}</span>
         <span class="photo-acts">${heartButton(target)}<button type="button" class="photo-act" data-photo-fiche="${esc(ph.id)}" title="Réactions et commentaires" aria-label="Réactions et commentaires${nbBulle?' ('+nbBulle+')':''}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>${nbBulle?`<span>${nbBulle}</span>`:''}</button></span></div>
       ${ph.caption?`<div class="photo-cap" data-tip-coupe="${esc(ph.caption)}">${esc(ph.caption)}</div>`:'<div class="photo-cap" aria-hidden="true"></div>'}
     </div>`;
@@ -6382,7 +6369,7 @@ function _ouvrirFichePhoto(id){
   // Le champ de commentaire garde sa saisie si la fiche se redessine pendant qu'on ecrit.
   const saisie = fond.querySelector('.cmt-input'), texte = saisie ? saisie.value : '', focus = saisie && document.activeElement === saisie;
   fond.innerHTML = `<div class="cp-modal-inner photo-fiche">
-    <div class="cp-modal-title"><span>${esc(nm)} · ${esc(_datePhoto(t))}</span><button type="button" class="cp-modal-close" aria-label="Fermer">×</button></div>
+    <div class="cp-modal-title"><span>${_nomProfil(ph.uid, nm)} · ${esc(_datePhoto(t))}</span><button type="button" class="cp-modal-close" aria-label="Fermer">×</button></div>
     ${ph.caption?`<p class="photo-fiche-cap">${esc(ph.caption)}</p>`:''}
     <div class="photo-fiche-reac">${heartButton(target)}${reactionBar(target, {excludeEmojis:[HEART_EMOJI]})}</div>
     ${commentsBar(target).replace('<details class="cmt-wrap">', '<details class="cmt-wrap" open>')}
@@ -6627,7 +6614,7 @@ function renderFeed(){
       <span class="feed-pas" style="background:${tt.color}" title="${esc(tt.label)}">${niveau}</span>
       <div class="feed-body">
         <div class="feed-l1"><span class="sp-link feed-sp" data-sci="${esc(it.sci)}">${esc(it.bird)}</span> <span class="latin">${esc(it.sci)}</span></div>
-        <div class="feed-l2"><b>${esc(it.name)}</b>${it.pays && flagImg(it.pays) ? `<span class="feed-pays" title="${esc(countryLabel(it.pays))}">${flagImg(it.pays)}</span>` : ''}<span class="feed-rar" style="color:${tt.color}">${esc(tt.label)}</span>${dateObs}</div>
+        <div class="feed-l2">${_nomProfil(it.uid, it.name)}${it.pays && flagImg(it.pays) ? `<span class="feed-pays" title="${esc(countryLabel(it.pays))}">${flagImg(it.pays)}</span>` : ''}<span class="feed-rar" style="color:${tt.color}">${esc(tt.label)}</span>${dateObs}</div>
       </div>
       <span class="feed-acts">${reagir}<button type="button" class="feed-act" data-feed-cmt="${esc(target)}" title="Commentaires" aria-label="Commentaires${nbCom?' ('+nbCom+')':''}">${IC_COMM}${nbCom?`<span class="feed-n">${nbCom}</span>`:''}</button></span>
       <div class="feed-suite">${_reactionsSeules(target)}${commentsBar(target).replace('<details class="cmt-wrap" open>', '<details class="cmt-wrap">').replace('<details class="cmt-wrap">', _feedCmtOuverts.has(target) ? '<details class="cmt-wrap" open>' : '<details class="cmt-wrap">')}</div>
@@ -6673,7 +6660,7 @@ function renderRequests(){
         <div class="req-text">${esc(r.text||'')}</div>
         <div class="req-meta">
           <span class="req-status ${st.cls}${admin?' select':''}"${admin?` data-status-cycle="${esc(r.id)}" title="Cliquer pour changer le statut"`:''}>${esc(st.label)}</span>
-          <span>par <b>${esc(author)}</b>${time?' · '+esc(time):''}</span>
+          <span>par ${_nomProfil(r.uid, author)}${time?' · '+esc(time):''}</span>
           ${canDelete?`<button type="button" class="req-del" data-del="${esc(r.id)}">supprimer</button>`:''}
         </div>
       </div>
@@ -9509,10 +9496,8 @@ function _rankInLeague(me, valueFn){
   const rank = list.findIndex(x => x.id === me.id) + 1;
   return { rank, n:list.length };
 }
-function renderStats(me){
-  const box=$('#statsBox'); if(!box) return;
-  if(!me || !me._active){ box.style.display='none'; box.innerHTML=''; return; }
-  box.style.display='';
+// Les chiffres de l'en-tete du profil et de ses statistiques, calcules une seule fois.
+function _profilChiffres(me){
   const active=me._active;
   let total=0, rareName='-', rareTier=null, maxW=0, maxFreq=Infinity; const famCount={};
   for(const v of active.values()){
@@ -9528,9 +9513,19 @@ function renderStats(me){
     if(w>maxW || (w===maxW && rf<maxFreq)){ maxW=w; maxFreq=rf; rareName=frName(v.sci,v.common); rareTier=realTier(v.sci, false); }
   }
   const fams=Object.entries(famCount).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  const maxFam=fams.length?fams[0][1]:1;
   const ranked=[...state.people].sort((a,b)=>b.total-a.total);
   const rank=ranked.findIndex(p=>p.id===me.id)+1;
+  return { total, rareName, rareTier, fams, rank, n:state.people.length };
+}
+function renderStats(me){
+  const box=$('#statsBox'); if(!box) return;
+  if(!me || !me._active){ box.style.display='none'; box.innerHTML=''; return; }
+  box.style.display='';
+  const active=me._active;
+  // La meme page sert a tous : « Tes » pour soi, « Ses » pour un autre.
+  const moi = me.id===myUid, Ton = moi ? 'Tes' : 'Ses';
+  const { total, fams } = _profilChiffres(me);
+  const maxFam=fams.length?fams[0][1]:1;
   const goal=parseInt(me.goal,10);
   const goalHtml = (goal>0) ? (()=>{ const pct=Math.min(100,Math.round(total/goal*100)); const done=total>=goal;
     return `<div class="goal-prog"><div class="goal-row"><span>🎯 Objectif</span><span><b>${total}</b> / ${goal}</span></div>
@@ -9547,12 +9542,9 @@ function renderStats(me){
   const rankBestYear  = state.people.length>1 ? _rankInLeague(me, p => { const s=p._active?_timeStatsFor(p._active):null; return s?(s.bestYear?s.bestYear[1]:0):0; }) : null;
   const rankTxt = r => r ? ` <span class="stat-rank">${r.rank}${r.rank===1?'ᵉʳ':'ᵉ'}/${r.n}</span>` : '';
 
-  box.innerHTML=`<h3 class="bloc-titre" style="margin-bottom:10px;">Tes statistiques</h3>
-    <div class="stat-tiles">
-      <div class="stat-tile"><div class="stat-num">${total}</div><div class="stat-lbl">espèces</div></div>
-      <div class="stat-tile"><div class="stat-num">${state.people.length>1?('#'+rank):'-'}</div><div class="stat-lbl">au classement</div></div>
-      <div class="stat-tile"><div class="stat-num small"><span class="sp-link" data-sci="${esc(_nameToSci(rareName)||'')}">${esc(rareName)}</span></div><div class="stat-lbl">ta plus rare${rareTier?' · '+esc(rareTier.label):''}</div></div>
-    </div>`+
+  // Les trois tuiles (especes, classement, la plus rare) sont montees dans l'en-tete du
+  // profil le 2026-10-19 : _profilTeteHtml.
+  box.innerHTML=`<h3 class="bloc-titre" style="margin-bottom:10px;">📊 ${Ton} statistiques</h3>`+
     goalHtml+
     // Bloc temporel : courbe + meilleur mois + meilleure année
     (ts.timeline.length>=2
@@ -9565,12 +9557,12 @@ function renderStats(me){
            <div class="stat-time-cell"><div class="stat-time-lbl">Année record</div><div class="stat-time-val">${esc(bestYearLabel)}${rankTxt(rankBestYear)}</div><div class="stat-time-sub">${bestYearCount} nouvelle${bestYearCount>1?'s':''} espèce${bestYearCount>1?'s':''} cette année-là</div></div>
          </div>`
       : '')+
-    (fams.length?`<div class="stat-fam-title">Tes familles</div><div class="stat-fams">`+fams.map(([f,n])=>`<div class="stat-fam"><div class="stat-fam-row"><span>${esc(f)}</span><span>${n}</span></div><div class="stat-fam-bar"><div style="width:${Math.round(n/maxFam*100)}%"></div></div></div>`).join('')+`</div>`:'')+
-    _renderPersonalTimeline(active);
+    (fams.length?`<div class="stat-fam-title">${Ton} familles</div><div class="stat-fams">`+fams.map(([f,n])=>`<div class="stat-fam"><div class="stat-fam-row"><span>${esc(f)}</span><span>${n}</span></div><div class="stat-fam-bar"><div style="width:${Math.round(n/maxFam*100)}%"></div></div></div>`).join('')+`</div>`:'')+
+    _renderPersonalTimeline(active, moi);
 }
 // Timeline personnelle : liste chronologique des jalons majeurs (1ere espece, 100e/500e/1000e,
 // 1er tier 8/9/10, 1ere espece de chaque annee). Affichee en bas du profil.
-function _renderPersonalTimeline(active){
+function _renderPersonalTimeline(active, moi){
   // Extrait toutes les especes avec date valide, trie chronologiquement
   const dated = [];
   for(const v of active.values()){
@@ -9640,13 +9632,13 @@ function _renderPersonalTimeline(active){
       </div>
     </div>`).join('');
 
-  return `<div class="stat-time-title" style="margin-top:20px;">🎞️ Ma timeline <span class="help" style="font-weight:400;">(${merged.length} jalon${merged.length>1?'s':''} sur ${dated.length} espèces datées)</span></div>
+  return `<div class="stat-time-title" style="margin-top:20px;">🎞️ ${moi ? 'Ma timeline' : 'Sa timeline'} <span class="help" style="font-weight:400;">(${merged.length} jalon${merged.length>1?'s':''} sur ${dated.length} espèces datées)</span></div>
     <div class="tl-wrap">${rows}</div>
     <style>
       .tl-wrap { border-left: 2px solid var(--line); margin: 10px 0 0 8px; padding-left: 0; }
-      .tl-row { display: grid; grid-template-columns: 60px 28px 1fr; gap: 8px; align-items: start; padding: 8px 0; position: relative; cursor: pointer; transition: background .15s; border-radius: 6px; padding-right: 6px; }
+      .tl-row { display: grid; grid-template-columns: 86px 28px 1fr; gap: 8px; align-items: start; padding: 8px 0; position: relative; cursor: pointer; transition: background .15s; border-radius: 6px; padding-right: 6px; }
       .tl-row:hover { background: var(--surface-2); }
-      .tl-date { font-family: ui-monospace, monospace; font-size: 11px; color: var(--ink-3); padding-top: 4px; padding-left: 8px; }
+      .tl-date { font-size: 13px; font-variant-numeric: tabular-nums; color: var(--ink-3); padding-top: 4px; padding-left: 8px; }
       .tl-dot { margin-left: -15px; background: var(--surface); border: 2px solid var(--line); border-radius: 50%; width: 26px; height: 26px; display: grid; place-items: center; font-size: 13px; z-index: 1; }
       .tl-body { padding-top: 2px; }
       .tl-labels { font-size: 13px; color: var(--ink); font-weight: 500; }
@@ -9791,10 +9783,20 @@ function updateChatIdentity(){
   if(mn){ if(document.activeElement!==ni) ni.value=mn; ni.readOnly=true; ni.classList.add('locked'); ni.title='Ton nom de la ligue (non modifiable)'; }
   else { ni.readOnly=false; ni.classList.remove('locked'); ni.title=''; ni.placeholder='Ton nom (invité)'; if(!ni.value) ni.value=localStorage.getItem('mb-chatname')||''; }
 }
+// Especes preferees : jusqu'a 5 depuis le 2026-10-19 (une seule avant). Elles vivent dans le
+// meme champ fav qu'avant, separees par « | » : les regles Firestore l'acceptent deja (300
+// caracteres), il n'y a rien a recoller dans la console, et une ancienne fiche a une seule
+// espece se lit telle quelle. Aucun nom d'oiseau ne contient ce caractere.
+const FAVS_MAX = 5;
+function _favsDe(p){
+  return String(p?.fav || '').split('|').map(s => s.trim()).filter(Boolean).slice(0, FAVS_MAX);
+}
+// Les champs a remplir, replies derriere « Modifier mon profil » (choix de Mathis, 2026-10-19) :
+// son profil ressemble ainsi a celui que voient les autres.
+let _profilEdition = false;
 function fillProfile(me){
   const prof=$('#profile'); if(!prof) return;
-  prof.style.display = me ? 'block' : 'none';
-  const empty=$('#profilEmpty'); if(empty) empty.style.display = me ? 'none' : '';
+  prof.style.display = (me && _profilEdition) ? 'block' : 'none';
   if(!me) return;
   const g=$('#profGoal'), d=$('#profDream'), fav=$('#profFav'), rr=$('#profRare'), st=$('#profStatus');
   if(document.activeElement!==g) g.value=me.goal||'';
@@ -9802,13 +9804,174 @@ function fillProfile(me){
   if(rr && document.activeElement!==rr) rr.value=me.rare||'';
   if(st && document.activeElement!==st) st.value=me.status||'';
   _renderAvatarPreview(me);
+  const favs = _favsDe(me);
+  const chips = $('#profFavChips');
+  if(chips) chips.innerHTML = favs.length
+    ? favs.map(n => `<span class="prof-fav-chip">${esc(n)}<button type="button" data-fav-retirer="${esc(n)}" aria-label="Retirer ${esc(n)}">×</button></span>`).join('')
+    : '<span class="help">Aucune pour l\'instant.</span>';
   if(document.activeElement!==fav){
-    const names=[...me.species.values()].filter(v=>!isNonSpecies(v.common,v.sci))
-      .map(v=>frName(v.sci,v.common)).sort((a,b)=>a.localeCompare(b,'fr'));
-    fav.innerHTML='<option value="">- aucune -</option>'+names.map(n=>`<option${n===me.fav?' selected':''}>${esc(n)}</option>`).join('');
-    fav.value=me.fav||'';
+    const pris = new Set(favs);
+    const names=[...new Set([...me.species.values()].filter(v=>!isNonSpecies(v.common,v.sci))
+      .map(v=>frName(v.sci,v.common)))].filter(n=>!pris.has(n)).sort((a,b)=>a.localeCompare(b,'fr'));
+    fav.innerHTML='<option value="">+ Ajouter une espèce</option>'+names.map(n=>`<option>${esc(n)}</option>`).join('');
+    fav.value='';
+    // Plein : la liste disparait plutot que de refuser en silence un sixieme choix.
+    fav.hidden = favs.length >= FAVS_MAX;
   }
 }
+async function _enregistrerFavs(liste){
+  const me = realPeople.find(p => p.id === myUid); if(!me) return;
+  const val = liste.slice(0, FAVS_MAX).join('|');
+  if(val.length > 300) return;   // plafond des regles Firestore ; 5 noms n'en approchent pas
+  me.fav = val;                  // tout de suite a l'ecran, sans attendre le retour de Firestore
+  renderProfil();
+  await saveProfile({ fav: val });
+}
+$('#profFav').addEventListener('change', e => {
+  const me = realPeople.find(p => p.id === myUid), n = e.target.value;
+  if(!me || !n) return;
+  const favs = _favsDe(me);
+  if(!favs.includes(n) && favs.length < FAVS_MAX) _enregistrerFavs([...favs, n]);
+});
+$('#profFavChips')?.addEventListener('click', e => {
+  const b = e.target.closest('[data-fav-retirer]'); if(!b) return;
+  const me = realPeople.find(p => p.id === myUid); if(!me) return;
+  _enregistrerFavs(_favsDe(me).filter(n => n !== b.dataset.favRetirer));
+});
+
+// En-tete du profil : qui, depuis quand, et cinq chiffres. Les trois tuiles des statistiques
+// (especes, classement, la plus rare) y sont montees.
+function _profilTeteHtml(p){
+  const moi = p.id === myUid, admin = isAdmin();
+  const c = _profilChiffres(p);
+  const moisAn = ms => ms ? new Date(ms).toLocaleDateString('fr-FR', { month:'long', year:'numeric' }) : '';
+  const jour = ms => ms ? new Date(ms).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' }) : '';
+  const pays = new Set(); for(const v of p._active.values()) if(countsFR(v) && v.country) pays.add(v.country);
+  const nbPhotos = (photos || []).filter(ph => ph.uid === p.id).length;
+  // L'espece « la plus rare » choisie a la main passe devant la calculee, comme au classement.
+  const rare = p.rare || c.rareName;
+  const rareSci = _nameToSci(rare) || '';
+  const meta = [
+    p.joinedAt ? 'dans la ligue depuis ' + moisAn(p.joinedAt * 1000) : '',
+    p.updatedAt ? 'liste mise à jour le ' + jour(p.updatedAt) : ''
+  ].filter(Boolean).join(' · ');
+  const tuile = (num, lbl, cls) => `<div class="prof-chiffre${cls ? ' ' + cls : ''}"><div class="prof-chiffre-num">${num}</div><div class="prof-chiffre-lbl">${lbl}</div></div>`;
+  return `<div class="prof-id">
+      <div class="prof-id-av">${_avatarHtml(p.avatar || '', p.name || '?', 72)}</div>
+      <div class="prof-id-txt">
+        <div class="prof-nom">${esc(p.name)}${moi ? ' <span class="youtag">toi</span>' : ''}${isOnline(p.id) ? ' <span class="prof-enligne">en ligne</span>' : ''}</div>
+        ${p.status ? `<div class="prof-statut">${esc(p.status)}</div>` : ''}
+        ${meta ? `<div class="prof-meta">${esc(meta)}</div>` : ''}
+        ${p.dream ? `<div class="prof-meta">${moi ? 'Ton' : 'Son'} espèce de rêve : <b>${esc(p.dream)}</b></div>` : ''}
+        ${admin ? `<div class="prof-meta">UID : <code>${esc(p.id)}</code></div>` : ''}
+      </div>
+      <div class="prof-id-act">
+        ${moi ? `<button type="button" class="btn tiny" data-profil-modifier>${_profilEdition ? 'Terminer' : '✏️ Modifier mon profil'}</button>` : ''}
+        ${admin && !moi ? `<button type="button" class="btn tiny prof-retirer" data-fiche-retirer="${esc(p.id)}">Retirer de la ligue</button>` : ''}
+      </div>
+    </div>
+    <div class="prof-chiffres">
+      ${tuile(c.total, 'espèces')}
+      ${tuile(c.n > 1 ? c.rank + '<span class="prof-chiffre-sur">/' + c.n + '</span>' : '-', 'au classement')}
+      ${tuile(pays.size, 'pays')}
+      ${tuile(nbPhotos, 'photo' + (nbPhotos > 1 ? 's' : ''))}
+      ${tuile(rare && rare !== '-' ? `<span class="sp-link" data-sci="${esc(rareSci)}">${esc(rare)}</span>` : '-',
+        (moi ? 'ta' : 'sa') + ' plus rare' + (!p.rare && c.rareTier ? ' · ' + esc(c.rareTier.label) : ''), 'prof-chiffre-large')}
+    </div>`;
+}
+
+// Les blocs propres a la refonte : especes preferees, dernieres coches, pays, photos.
+const PROFIL_COCHES = 8, PROFIL_PHOTOS = 12;
+function _profilBlocsHtml(p){
+  const moi = p.id === myUid, Ton = moi ? 'Tes' : 'Ses', ton = moi ? 'ta' : 'sa';
+  const bloc = (titre, corps, note) => `<section class="prof-bloc"><h3 class="bloc-titre">${titre}</h3>${note ? `<p class="prof-note">${note}</p>` : ''}${corps}</section>`;
+  let html = '';
+
+  const favs = _favsDe(p);
+  if(favs.length) html += bloc('❤️ ' + Ton + ' espèces préférées',
+    '<div class="prof-favs">' + favs.map(n => `<span class="sp-link prof-fav" data-sci="${esc(_nameToSci(n) || '')}">${esc(n)}</span>`).join('') + '</div>');
+  else if(moi) html += bloc('❤️ Tes espèces préférées', '<p class="help" style="margin:0;">Choisis-en jusqu\'à 5 avec « Modifier mon profil ».</p>');
+
+  // Dernieres coches : par date d'OBSERVATION. La date d'ajout (addedAt) est la meme pour
+  // toute une liste deposee d'un coup : triee la-dessus, « la derniere » serait au hasard.
+  const datees = [];
+  for(const v of p._active.values()){
+    if(!countsFR(v) || v.nonSpecies) continue;
+    const pd = parseDate(v.date); if(!pd) continue;
+    datees.push({ v, pd });
+  }
+  datees.sort((a, b) => b.pd.ord - a.pd.ord);
+  if(datees.length) html += bloc('🆕 ' + Ton + ' dernières coches',
+    '<div class="prof-coches">' + datees.slice(0, PROFIL_COCHES).map(({ v, pd }) => {
+      const cc = v.country || '';
+      return `<div class="prof-coche">
+        <span class="prof-coche-date">${esc(pd.disp)}</span>
+        <span class="prof-coche-nom"><span class="sp-link" data-sci="${esc(v.sci)}">${esc(frName(v.sci, v.common))}</span> <span class="latin">${esc(v.sci)}</span></span>
+        <span class="prof-coche-lieu">${cc && flagImg(cc) ? `<span title="${esc(countryLabel(cc))}">${flagImg(cc)}</span>` : ''}${esc(v.loc || '')}</span>
+      </div>`;
+    }).join('') + '</div>',
+    'Les espèces arrivées le plus récemment dans ' + ton + ' liste, par date d\'observation.');
+
+  // Pays : celui de la 1re observation de chaque espece, le seul que garde la life list eBird.
+  // Mesure sur la sauvegarde du 2026-10-04 : les 11 membres ont un pays pour chaque espece,
+  // mais la liste de TOUTES les observations n'existe que pour 4 d'entre eux, et en partie.
+  const parPays = new Map();
+  for(const v of p._active.values()){
+    if(!countsFR(v) || v.nonSpecies || !v.country) continue;
+    parPays.set(v.country, (parPays.get(v.country) || 0) + 1);
+  }
+  const pays = [...parPays.entries()].sort((a, b) => b[1] - a[1] || countryLabel(a[0]).localeCompare(countryLabel(b[0]), 'fr'));
+  if(pays.length){
+    const max = pays[0][1];
+    html += bloc('🌍 ' + Ton + ' pays',
+      '<div class="prof-pays">' + pays.map(([cc, n]) => `<div class="prof-pays-ligne">
+        <span class="prof-pays-nom">${flagImg(cc) || ''}${esc(countryLabel(cc))}</span>
+        <span class="prof-pays-barre"><span style="width:${Math.max(2, Math.round(n / max * 100))}%"></span></span>
+        <span class="prof-pays-n">${n}</span></div>`).join('') + '</div>',
+      'Le pays de la première observation de chaque espèce.');
+  }
+
+  const sesPhotos = (photos || []).filter(ph => ph.uid === p.id);
+  if(sesPhotos.length){
+    const vues = sesPhotos.slice(0, PROFIL_PHOTOS).map(ph => {
+      const legacy = (typeof ph.image === 'string' && /^data:image\//.test(ph.image)) ? ph.image : '';
+      const blur = (typeof ph.blur === 'string' && /^data:image\//.test(ph.blur)) ? ph.blur : '';
+      const th = legacy ? { src:legacy, attr:'' } : thumbAttrs('photoThumbs', ph.id);
+      const src = (th.src || blur).replace(/"/g, '%22');
+      const full = legacy ? '' : ` data-full="photoFull:${esc(ph.id)}"`;
+      return `<img class="prof-photo" src="${src}"${th.attr}${full} alt="${esc(ph.caption || 'photo d\'observation')}"${ph.caption ? ` title="${esc(ph.caption)}"` : ''}>`;
+    }).join('');
+    const reste = sesPhotos.length - PROFIL_PHOTOS;
+    html += bloc('📷 ' + Ton + ' photos', '<div class="prof-photos">' + vues + '</div>'
+      + (reste > 0 ? `<p class="help" style="margin:8px 0 0;">Et ${reste} autre${reste > 1 ? 's' : ''} dans Photos.</p>` : ''));
+  } else if(moi) html += bloc('📷 Tes photos', '<p class="help" style="margin:0;">Tu n\'as pas encore partagé de photo : le bouton Photos, en haut, est fait pour ça.</p>');
+
+  return html;
+}
+
+// Dessine la page Profil pour profilUid (null = soi). Ne fait rien page cachee : l'ouvrir
+// la redessine (gestionnaire des onglets), comme le classement et ses drapeaux « dirty ».
+function renderProfil(){
+  if(!_isViewVisible('viewProfil')) return;
+  const moi = realPeople.find(p => p.id === myUid) || null;
+  let p = profilUid ? realPeople.find(x => x.id === profilUid) : moi;
+  if(profilUid && !p){ profilUid = null; p = moi; }   // membre retire entre-temps
+  const estMoi = !profilUid;
+  const titre = $('#profilTitre'); if(titre) titre.textContent = estMoi ? 'Mon profil' : 'Profil de ' + p.name;
+  const empty = $('#profilEmpty'); if(empty) empty.style.display = (estMoi && !p) ? '' : 'none';
+  const tete = $('#profilTete'), blocs = $('#profilBlocs');
+  const pret = p && p._active;
+  if(tete){ tete.hidden = !pret; tete.innerHTML = pret ? _profilTeteHtml(p) : ''; }
+  fillProfile(estMoi ? moi : null);
+  if(blocs){ blocs.innerHTML = pret ? _profilBlocsHtml(p) : ''; watchThumbs(blocs); }
+  renderStats(pret ? p : null);
+}
+document.addEventListener('click', e => {
+  if(!e.target.isConnected) return;
+  if(e.target.closest('[data-profil-modifier]')){ _profilEdition = !_profilEdition; renderProfil(); return; }
+  const im = e.target.closest('#profilBlocs .prof-photo');
+  if(im){ _setModalImage(im.src, im.dataset.full || ''); $('#imgModal').classList.add('open'); document.body.classList.add('img-modal-open'); }
+});
 
 async function saveMyList(name, speciesMap, regions){
   const arr=[...speciesMap.entries()].map(([k,v])=>{
@@ -10509,7 +10672,6 @@ async function saveProfile(patch){
 $('#profGoal').addEventListener('change',e=>saveProfile({goal:e.target.value.trim()}));
 $('#profDream').addEventListener('change',e=>saveProfile({dream:e.target.value.trim()}));
 $('#profRare').addEventListener('change',e=>saveProfile({rare:e.target.value.trim()}));
-$('#profFav').addEventListener('change',e=>saveProfile({fav:e.target.value}));
 $('#profStatus')?.addEventListener('change',e=>saveProfile({status:e.target.value.trim().slice(0,30)}));
 
 // ============ AVATAR ============
@@ -10826,7 +10988,7 @@ $('#manualAddBtn')?.addEventListener('click', async ()=>{
     // Rafraîchit immédiatement classement, matrice, fiche stats et carte
     // (au lieu d'attendre le round-trip Firestore snapshot)
     renderResults();
-    renderStats(me);
+    renderProfil();
     const vue = document.querySelector('.tab.on')?.dataset.view;
     if(vue==='map') renderMap();
     // La grille se redessine d'elle-meme au retour de Firestore ; on n'attend pas ce
@@ -10874,6 +11036,8 @@ document.addEventListener('click', e => {
   }
   const item = e.target.closest('.ham-item[data-view]');
   if(item){
+    // « Profil » dans le menu ramene toujours au sien, meme apres avoir regarde celui d'un autre.
+    if(item.dataset.view === 'profil') profilUid = null;
     const btn = [...document.querySelectorAll('.tab[data-view]')].find(b => b.dataset.view === item.dataset.view);
     if(btn) btn.click();
     const m = document.getElementById('hamburgerMenu'); if(m) m.hidden = true;
@@ -10971,7 +11135,7 @@ document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{
   }
   if(b.dataset.view==='photos'){ renderPhotos(); markSeen('photos'); }
   if(b.dataset.view==='feed'){ renderFeed(); markSeen('feed'); }
-  if(b.dataset.view==='profil'){ const me=realPeople.find(p=>p.id===myUid); fillProfile(me); renderStats(me); }
+  if(b.dataset.view==='profil') renderProfil();
   if(b.dataset.view==='requests'){ renderRequests(); markSeen('requests'); }
   if(b.dataset.view==='quiz') renderQuizInit();
   if(b.dataset.view==='pokedex') renderPokedex();

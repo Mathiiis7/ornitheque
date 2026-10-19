@@ -134,6 +134,7 @@ règles communes dans le bloc « Schémas communs », juste avant celui du doigt
 | **Choisir une rareté** | Carte, Fil, Birdydex | toujours de 1 (le plus commun) à 10 (le plus rare) ; la Carte allait de 10 à 1. |
 | **Petit bouton** (`.btn.tiny` : Copier, Envoyer…) | fenêtres, Profil | 14 px (12,5 avant). |
 | **Petit titre de bloc** | Ma liste, Profil, À propos | `.bloc-titre` : Source Serif 4, 17 px, 600. Les titres de l'À propos étaient en Segoe UI 16 px. Les emojis devant les titres de blocs restent (décidé par Mathis le 2026-10-06). |
+| **Nom d'un membre** | Classement, Tchat, Fil, Photos, Requêtes | `.nom-profil` (fabriqué par `_nomProfil()`) : un bouton qui garde l'apparence du texte qu'il remplace, souligné au survol, et ouvre la page Profil de la personne (2026-10-19). Le Classement garde son `.who-name`, qui fait de même. Le nom d'un invité du tchat reste du texte : il n'a pas de profil. |
 
 ## Ton des textes
 

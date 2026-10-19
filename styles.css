@@ -1998,6 +1998,81 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .stat-time-val { font-size:15px; font-weight:700; color:var(--ink); margin:3px 0; text-transform:capitalize; }
   .stat-time-sub { font-size:11.5px; color:var(--ink-3); line-height:1.4; }
   .stat-rank { font-size:11px; font-weight:700; color:var(--accent-ink); background:color-mix(in srgb,var(--accent) 15%,var(--surface)); padding:1px 7px; border-radius:8px; margin-left:5px; text-transform:none; }
+  /* Page Profil, refaite le 2026-10-19 (maquette A, une colonne) : la meme pour soi et pour
+     les autres. Tout ce qui se lit fait 14 px au moins, les etiquettes en capitales 13 px. */
+  .prof-tete { margin-top:12px; }
+  .prof-id { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+  .prof-id-av .user-avatar { border:2px solid var(--line-2); }
+  .prof-id-txt { flex:1 1 240px; min-width:0; }
+  .prof-nom { font:700 21px var(--titre); color:var(--ink); line-height:1.2; }
+  .prof-nom .youtag { font-family:var(--sans); font-size:12px; vertical-align:3px; }
+  .prof-enligne { font:600 13px var(--sans); color:var(--accent-ink); vertical-align:3px; }
+  .prof-enligne::before { content:''; display:inline-block; width:8px; height:8px; border-radius:50%; background:#2ecc71; margin-right:5px; vertical-align:0; }
+  .prof-statut { font-size:15px; color:var(--ink-2); margin-top:3px; }
+  .prof-meta { font-size:14px; color:var(--ink-3); margin-top:3px; }
+  .prof-meta b { color:var(--ink-2); font-weight:600; }
+  .prof-meta code { font-size:13px; }
+  .prof-id-act { display:flex; gap:8px; flex-wrap:wrap; }
+  .prof-retirer { background:var(--surface); color:#b91c1c; border:1px solid #b91c1c; }
+  .prof-chiffres { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)) minmax(0,2fr); gap:10px; margin-top:16px; }
+  .prof-chiffre { background:var(--surface-2); border:1px solid var(--line); border-radius:12px; padding:12px 10px; text-align:center; min-width:0; }
+  .prof-chiffre-num { font:600 26px var(--titre); color:var(--ink); line-height:1.15; overflow-wrap:anywhere; }
+  .prof-chiffre-sur { font-size:16px; color:var(--ink-3); font-weight:600; }
+  .prof-chiffre-large .prof-chiffre-num { font-size:17px; line-height:1.3; padding-top:4px; }
+  .prof-chiffre-lbl { font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:var(--ink-3); margin-top:5px; }
+  @media (max-width:560px){
+    .prof-chiffres { grid-template-columns:repeat(2, minmax(0,1fr)); }
+    .prof-chiffre-large { grid-column:1 / -1; }
+  }
+  #profilTete + #profilEmpty + .profile { margin-top:16px; padding-top:16px; border-top:1px solid var(--line); }
+  .prof-favs-edit { margin-bottom:14px; }
+  .prof-favs-chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
+  .prof-fav-chip { display:inline-flex; align-items:center; gap:4px; font-size:14px; font-weight:600; color:var(--accent-ink);
+    background:color-mix(in srgb,var(--accent) 12%,var(--surface)); border-radius:999px; padding:4px 6px 4px 12px; }
+  .prof-fav-chip button { background:none; border:0; color:inherit; font-size:17px; line-height:1; padding:0 4px; cursor:pointer; border-radius:50%; }
+  .prof-fav-chip button:hover { background:color-mix(in srgb,var(--accent) 22%,var(--surface)); }
+  .prof-bloc { margin-top:22px; }
+  .prof-bloc > .bloc-titre { margin-bottom:8px; }
+  .prof-note { font-size:14px; color:var(--ink-3); margin:-4px 0 10px; }
+  .prof-favs { display:flex; flex-wrap:wrap; gap:8px; }
+  .prof-fav { font-size:15px; font-weight:600; color:var(--accent-ink); background:color-mix(in srgb,var(--accent) 12%,var(--surface));
+    border-radius:999px; padding:6px 14px; text-decoration:none; }
+  .prof-coches { border-top:1px solid var(--line); max-width:900px; }
+  .prof-coche { display:grid; grid-template-columns:100px minmax(0,1.4fr) minmax(0,1fr); gap:12px; align-items:center; padding:8px 4px; border-bottom:1px solid var(--line); font-size:14px; }
+  .prof-coche-date { color:var(--ink-3); font-variant-numeric:tabular-nums; }
+  .prof-coche-nom { font-weight:600; color:var(--ink); min-width:0; }
+  .prof-coche-nom .latin { font-weight:400; color:var(--ink-3); font-style:italic; }
+  .prof-coche-lieu { color:var(--ink-2); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .prof-coche-lieu img, .prof-pays-nom img { width:20px; height:auto; vertical-align:-3px; margin-right:6px; border-radius:2px; }
+  @media (max-width:560px){
+    .prof-coche { grid-template-columns:84px minmax(0,1fr); row-gap:2px; }
+    .prof-coche-lieu { grid-column:2; }
+    .prof-coche-nom .latin { display:none; }
+  }
+  .prof-pays { display:flex; flex-direction:column; gap:8px; max-width:640px; }
+  .prof-pays-ligne { display:grid; grid-template-columns:minmax(120px,190px) 1fr 44px; gap:12px; align-items:center; font-size:14px; }
+  .prof-pays-nom { font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .prof-pays-barre { height:9px; border-radius:5px; background:var(--line); overflow:hidden; }
+  .prof-pays-barre span { display:block; height:100%; background:var(--accent); border-radius:5px; }
+  .prof-pays-n { text-align:right; color:var(--ink-2); font-variant-numeric:tabular-nums; }
+  .prof-photos { display:grid; grid-template-columns:repeat(auto-fill, minmax(110px,1fr)); gap:8px; }
+  .prof-photo { width:100%; aspect-ratio:1; object-fit:cover; border-radius:10px; background:var(--surface-2); cursor:zoom-in; display:block; }
+  /* Les statistiques du profil passent aux tailles de la charte : elles datent d'avant la
+     regle des 14 px, et la refonte de la page les remet au niveau du reste. */
+  #viewProfil .stat-fam-title, #viewProfil .stat-time-title { font-size:13px; letter-spacing:.4px; color:var(--ink-3); }
+  #viewProfil .stat-fam-row, #viewProfil .goal-row, #viewProfil .stat-time-val { font-size:14px; }
+  #viewProfil .goal-left, #viewProfil .goal-done, #viewProfil .stat-time-sub { font-size:14px; }
+  #viewProfil .stat-time-lbl { font-size:13px; letter-spacing:.4px; }
+  #viewProfil .stat-rank { font-size:13px; }
+  #viewProfil .tl-labels, #viewProfil .tl-species { font-size:14px; }
+  /* Un nom de membre, cliquable partout ou il s'affiche : il garde l'apparence du texte
+     qu'il remplace et ne se souligne qu'au survol. */
+  .nom-profil { background:none; border:0; padding:0; margin:0; font:inherit; color:inherit; cursor:pointer; text-align:inherit; }
+  .nom-profil:hover { text-decoration:underline; }
+  .nom-profil:focus-visible { outline:3px solid var(--accent); outline-offset:2px; border-radius:3px; }
+  .feed-l2 .nom-profil, .photo-meta .nom-profil { color:var(--ink); font-weight:600; }
+  .photo-meta .nom-profil { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+  .req-meta .nom-profil, .cp-modal-title .nom-profil { font-weight:700; }
   /* Onboarding vide (viewLoad quand pas encore de liste) */
   .onboarding { background:color-mix(in srgb,var(--accent) 8%,var(--surface-2)); border:1px solid color-mix(in srgb,var(--accent) 25%,var(--line)); border-radius:14px; padding:16px 18px; margin:14px 0 6px; }
   .onboarding h3 { margin:0 0 8px; font-size:15px; color:var(--ink); }

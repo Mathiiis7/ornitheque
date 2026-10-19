@@ -124,7 +124,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=396">
+<link rel="modulepreload" href="app.js?v=397">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -569,9 +569,14 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </div><!-- /viewLoad -->
 
 
+  <!-- La page Profil sert a tout membre depuis le 2026-10-19 : un clic sur un nom (classement,
+       tchat, fil, photos, requetes) l'ouvre sur cette personne. Les champs a remplir ne valent
+       que pour soi et restent replies derriere « Modifier mon profil ». Remplie par
+       renderProfil() dans app.js, sans aucune lecture Firestore de plus : tout est deja la. -->
   <div id="viewProfil" style="display:none;">
     <section class="panel" style="padding:20px; margin-top:22px;">
-      <div class="section-head"><div><h2 class="page-title">Mon profil</h2></div></div>
+      <div class="section-head"><div><h2 class="page-title" id="profilTitre">Mon profil</h2></div></div>
+      <div id="profilTete" class="prof-tete" hidden></div>
       <div id="profilEmpty" class="onboarding" style="margin:6px 0 0;">
         <h3>👤 Ton profil se construit avec ta liste</h3>
         <ol>
@@ -581,10 +586,14 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         </ol>
       </div>
       <div class="profile" id="profile" style="display:none;">
-        <h3 class="bloc-titre" style="margin-bottom:10px;">Ta fiche <span class="bloc-titre-note">- visible dans le classement par tout le groupe</span></h3>
+        <h3 class="bloc-titre" style="margin-bottom:10px;">Ta fiche <span class="bloc-titre-note">- visible par tout le groupe</span></h3>
+        <div class="prof-favs-edit">
+          <div class="prof-avatar-label">Espèces préférées (jusqu'à 5)</div>
+          <div class="prof-favs-chips" id="profFavChips"></div>
+          <select id="profFav" class="filt-sel" aria-label="Ajouter une espèce préférée"><option value="">+ Ajouter une espèce</option></select>
+        </div>
         <div class="prof-grid">
           <label>Objectif (nombre d'espèces)<input type="number" id="profGoal" min="1" max="2000" placeholder="ex. 100"></label>
-          <label>Espèce préférée<select id="profFav"><option value="">- aucune -</option></select></label>
           <label>Ton espèce la plus rare<input type="text" id="profRare" maxlength="40" placeholder="au choix (sinon calculée)"></label>
           <label>Espèce de rêve<input type="text" id="profDream" maxlength="40" placeholder="ex. Gypaète barbu"></label>
           <label>Statut perso (visible dans le tchat)<input type="text" id="profStatus" maxlength="30" placeholder="ex. 🔭 En affût ou Cherche l'Ibis chauve"></label>
@@ -599,6 +608,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
           </div>
         </div>
       </div>
+      <div id="profilBlocs"></div>
       <div class="statsbox" id="statsBox" style="display:none;"></div>
     </section>
   </div>
@@ -1479,5 +1489,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=396"></script>
+<script type="module" src="app.js?v=397"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>
