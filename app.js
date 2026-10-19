@@ -2823,9 +2823,12 @@ function renderBoard(){
   // avec jusqu'a cinq especes preferees, les noms en clair agrandissaient les lignes. Le nom
   // passe au survol, un clic ouvre la fiche. Un nom qu'on ne reconnait pas (une espece de
   // reve ecrite en phrase) reste en texte.
-  const rond=(nom, sci=_nomLibreVersSci(nom), note='')=>{
+  // « La plus rare » est toujours celle calculee d'apres la liste : la « plus belle obs » du
+  // profil y passait devant, or c'est une phrase libre, ni forcement rare ni en France
+  // (Mathis, 2026-10-19).
+  const rond=(nom, sci=_nomLibreVersSci(nom))=>{
     if(!sci) return `<span>${esc(nom)}</span>`;
-    const photo=_photoCarteConnue(sci), titre=esc(nom+note);
+    const photo=_photoCarteConnue(sci), titre=esc(nom);
     return `<button type="button" class="board-rond sp-link" data-sci="${esc(sci)}" title="${titre}" aria-label="${titre}"${photo?'':` data-prof-photo="${esc(sci)}"`}>${photo?`<img src="${esc(photo)}" alt="" loading="lazy">`:''}</button>`;
   };
   const ronds=html=>html?`<span class="board-ronds">${html}</span>`:dash;
@@ -2850,7 +2853,7 @@ function renderBoard(){
       ${scoreTd(p)}
       <td class="c-txt">${parseInt(p.goal,10)>0 ? `${p.total} / ${parseInt(p.goal,10)}` : cell(p.goal)}</td>
       <td class="c-txt c-ronds">${ronds(_favsDe(p).map(n=>rond(n)).join(''))}</td>
-      <td class="c-txt c-ronds">${ronds(p.rare?rond(p.rare):(p.rarestName?rond(p.rarestName, p.rarestSci, ' (d\'après sa liste)'):''))}</td>
+      <td class="c-txt c-ronds">${ronds(p.rarestName?rond(p.rarestName, p.rarestSci):'')}</td>
       <td class="c-txt c-ronds">${ronds(p.lastAcqName?rond(p.lastAcqName, p.lastAcqSci)+(p.lastAcqDisp?` <span class="muted">${p.lastAcqDisp}</span>`:''):'')}</td>
       <td class="c-txt c-ronds">${ronds(p.dream?rond(p.dream):'')}</td>
     </tr>`).join('')}</tbody></table></div>`;
