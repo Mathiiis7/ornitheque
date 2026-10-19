@@ -2033,19 +2033,29 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .prof-table .mylist-loc img { width:20px; height:auto; vertical-align:-3px; margin-right:6px; border-radius:2px; }
   /* Pays et familles : une barre par ligne. */
   .prof-barres { display:flex; flex-direction:column; gap:10px; max-width:720px; }
-  .prof-barre-ligne { display:grid; grid-template-columns:minmax(140px,240px) 1fr 44px; gap:12px; align-items:center; font-size:14px; }
+  .prof-barre-ligne { display:grid; grid-template-columns:minmax(140px,240px) 1fr 64px; gap:12px; align-items:center; font-size:14px; }
   .prof-barre-nom { font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .prof-barre-nom img { width:20px; height:auto; vertical-align:-3px; margin-right:6px; border-radius:2px; }
   .prof-barre { height:9px; border-radius:5px; background:var(--line); overflow:hidden; }
   .prof-barre span { display:block; height:100%; background:var(--accent); border-radius:5px; }
   .prof-barre-n { text-align:right; color:var(--ink-2); font-variant-numeric:tabular-nums; }
-  @media (max-width:560px){ .prof-barre-ligne { grid-template-columns:minmax(0,1fr) 70px 36px; } }
+  @media (max-width:560px){ .prof-barre-ligne { grid-template-columns:minmax(0,1fr) 70px 56px; } }
+  /* Onglet Especes (2026-10-19) : sous-titres, regions, familles repliees au-dela de 12. */
+  .prof-sous-titre { font:600 15px var(--sans); color:var(--ink-2); margin:22px 0 10px; }
+  .prof-regions { display:flex; flex-wrap:wrap; gap:6px; }
+  .prof-region { font-size:14px; padding:5px 12px; border-radius:999px; border:1px solid var(--line-2); color:var(--ink-3); }
+  .prof-region.vue { background:color-mix(in srgb, var(--accent) 12%, var(--surface)); border-color:transparent; color:var(--accent-ink); font-weight:600; }
+  .prof-plus { margin-top:12px; max-width:720px; }
+  .prof-plus summary { cursor:pointer; font-size:14px; font-weight:600; color:var(--accent-ink); padding:6px 0; }
+  .prof-plus .prof-barres { margin-top:10px; }
+  .st-barre-col > .st-barre[style*="background"]:hover { filter:brightness(.88); }
+  #profilBlocs .st-barres { max-width:640px; }
   .prof-photos { display:grid; grid-template-columns:repeat(auto-fill, minmax(180px,1fr)); gap:12px; }
   .prof-photo-fig { margin:0; min-width:0; }
   .prof-photo { width:100%; aspect-ratio:1; object-fit:cover; border-radius:12px; background:var(--surface-2); cursor:zoom-in; display:block; }
   .prof-photo-fig figcaption { font-size:14px; color:var(--ink-2); margin-top:6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   @media (max-width:560px){ .prof-photos { grid-template-columns:repeat(2, minmax(0,1fr)); } }
-  /* Onglet Statistiques du profil, en tableau de bord (2026-10-19) : frise des jalons en haut,
+  /* Onglet Statistiques du profil, en tableau de bord (2026-10-19) :
      la courbe a gauche, annees et mois a droite. Le texte des graphiques est en HTML (14 px
      ecrits au moins pour ce qui se lit), le SVG ne trace que les lignes. */
   #statsBox { margin:0; }
@@ -2088,32 +2098,6 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .st-barre-lbl { font-size:13px; color:var(--ink-3); padding-top:4px; overflow:hidden; white-space:nowrap; }
   .st-bulle-barre { top:-6px; transform:translate(-50%, -100%); }
   .st-bulle-barre.a-gauche { transform:translate(-50%, -100%); }
-  /* Frise des jalons. Les etiquettes se posent sur quatre rangees : deux au-dessus de la
-     ligne (r0, r2), deux au-dessous (r1, r3), choisies a l'ecriture pour ne pas se chevaucher. */
-  .st-frise { position:relative; height:190px; margin:0 6px; }
-  .st-frise-ligne { position:absolute; left:0; right:0; top:50%; height:2px; background:var(--line-2); }
-  .st-frise-an { position:absolute; top:calc(50% + 6px); transform:translateX(-50%); font-size:13px; color:var(--ink-3); }
-  .st-frise-an::before { content:''; position:absolute; left:50%; top:-9px; width:1px; height:7px; background:var(--line-2); }
-  .st-jalon { position:absolute; top:50%; width:0; height:0; text-decoration:none; color:inherit; border:0; }
-  .st-jalon:hover { border:0; }
-  .st-jalon-pt { position:absolute; left:-8px; top:-7px; width:16px; height:16px; box-sizing:border-box; border-radius:50%; background:var(--surface); border:3px solid var(--accent); }
-  .st-jalon:hover .st-jalon-pt, .st-jalon:focus-visible .st-jalon-pt { background:var(--accent); }
-  .st-jalon-txt { position:absolute; left:0; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; white-space:nowrap; font-size:13px; color:var(--ink-3); line-height:1.3; }
-  .st-jalon-txt b { font-size:14px; font-weight:600; color:var(--ink); }
-  .st-jalon:hover .st-jalon-txt b { color:var(--accent-ink); }
-  .st-jalon.r0 .st-jalon-txt { bottom:14px; }
-  .st-jalon.r2 .st-jalon-txt { bottom:54px; }
-  .st-jalon.r1 .st-jalon-txt { top:30px; }
-  .st-jalon.r3 .st-jalon-txt { top:70px; }
-  .st-jalon.r2::before, .st-jalon.r3::before { content:''; position:absolute; left:-0.5px; width:1px; background:var(--line-2); }
-  .st-jalon.r2::before { bottom:10px; height:44px; }
-  .st-jalon.r3::before { top:10px; height:58px; }
-  .st-jalons-liste { display:none; list-style:none; margin:0; padding:0; border-left:2px solid var(--line-2); }
-  .st-jalons-liste li { position:relative; padding:6px 0 10px 18px; font-size:14px; color:var(--ink-2); }
-  .st-jalons-liste li::before { content:''; position:absolute; left:-8px; top:10px; width:14px; height:14px; box-sizing:border-box; border-radius:50%; background:var(--surface); border:3px solid var(--accent); }
-  .st-jl-date { display:block; font-size:13px; color:var(--ink-3); }
-  .st-jalons-liste b { color:var(--ink); font-weight:600; }
-  @media (max-width:760px){ .st-frise { display:none; } .st-jalons-liste { display:block; } }
   /* Un nom de membre, cliquable partout ou il s'affiche : il garde l'apparence du texte
      qu'il remplace et ne se souligne qu'au survol. */
   .nom-profil { background:none; border:0; padding:0; margin:0; font:inherit; color:inherit; cursor:pointer; text-align:inherit; }

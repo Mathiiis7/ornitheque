@@ -9434,9 +9434,10 @@ function _profilChiffres(me){
 }
 const _JOUR_MS = 864e5;
 // ---- Onglet Statistiques du profil : un tableau de bord (2026-10-19) ----
-// Mathis le trouvait « pas dingue ». Choix sur maquette : disposition B (frise des jalons en
-// haut, la courbe a gauche, annees et mois a droite) ; les autres membres en gris pale, leur
-// nom au survol ; l'objectif et les records fondus dans les graphiques au lieu de cases a part.
+// Mathis le trouvait « pas dingue ». Choix sur maquette : la courbe a gauche, annees et mois a
+// droite ; les autres membres en gris pale, leur nom au survol ; l'objectif et les records
+// fondus dans les graphiques au lieu de cases a part. La frise des jalons (1re espece, 100e,
+// 1re rarete 8...) a ete retiree le meme jour : « on s'en fout », a dit Mathis.
 //
 // L'ancienne courbe placait les dates sur leur nombre AAAAMMJJ : du 31 decembre au 1er janvier
 // il y a 8 870 « unites » contre 1 d'un jour a l'autre, d'ou des marches qui n'existaient pas.
@@ -9528,61 +9529,17 @@ function _stCourbeHtml(p, moi){
 
 // Barres verticales (annees ou mois). La plus haute est en accent plein et porte son chiffre ;
 // les autres en accent pale. Chaque barre dit sa valeur au survol (bulle commune).
-function _stBarresHtml(items, idxRecord){
+// Une barre peut porter sa propre couleur (it.couleur : les paliers de rarete), et montrerVal
+// choisit les barres qui affichent leur chiffre (par defaut le seul record).
+function _stBarresHtml(items, idxRecord, montrerVal){
   const max = Math.max(1, ...items.map(it => it.n));
   return `<div class="st-barres" style="--nb:${items.length}">` + items.map((it, i) => `
       <div class="st-barre-col">
-        <span class="st-barre-val">${i === idxRecord ? it.n : ''}</span>
-        <span class="st-barre${i === idxRecord ? ' record' : ''}" style="height:${Math.max(it.n ? 3 : 0, it.n / max * 100).toFixed(1)}%"
+        <span class="st-barre-val">${(montrerVal ? montrerVal(i) : i === idxRecord) && it.n ? it.n : ''}</span>
+        <span class="st-barre${i === idxRecord && !it.couleur ? ' record' : ''}" style="height:${Math.max(it.n ? 3 : 0, it.n / max * 100).toFixed(1)}%${it.couleur ? ';background:' + it.couleur : ''}"
           role="img" aria-label="${esc(it.long)} : ${it.n} espèce${it.n > 1 ? 's' : ''}" data-bulle="${esc(it.long)} : ${it.n} espèce${it.n > 1 ? 's' : ''}"></span>
         <span class="st-barre-lbl">${esc(it.court)}</span>
       </div>`).join('') + '</div>';
-}
-
-// Jalons : la 1re espece, chaque centaine, la 1re rarete 8, 9 et 10. Les « 1re espece de
-// l'annee » de l'ancienne liste n'y sont plus : la frise porte deja les annees.
-function _jalonsDe(active){
-  const dated = [];
-  for(const v of active.values()){
-    if(!countsFR(v)) continue;
-    const pd = parseDate(v.date); if(!pd) continue;
-    dated.push({ sci:v.sci, common:v.common, ord:pd.ord });
-  }
-  dated.sort((a, b) => a.ord - b.ord);
-  const out = []; let t8 = 0, t9 = 0, t10 = 0;
-  dated.forEach((v, i) => {
-    const n = i + 1, tier = rarityForFilter(v.sci), labels = [];
-    if(n === 1) labels.push('1re espèce');
-    if([100, 200, 300, 400, 500, 750, 1000, 1500, 2000].includes(n)) labels.push(n + 'e espèce');
-    if(tier >= 8 && !t8){ t8 = 1; labels.push('1re rareté 8'); }
-    if(tier >= 9 && !t9){ t9 = 1; labels.push('1re rareté 9'); }
-    if(tier >= 10 && !t10){ t10 = 1; labels.push('1re rareté 10'); }
-    if(labels.length) out.push({ ms:_ordVersMs(v.ord), labels, sci:v.sci, nom:frName(v.sci, v.common) });
-  });
-  return out;
-}
-// La frise sur ordinateur, une liste sur telephone (la frise y serait illisible). Sur la frise,
-// chaque etiquette prend la premiere rangee libre, au-dessus puis au-dessous de la ligne :
-// la largeur d'une etiquette est estimee (7,5 px par caractere sur ~1 100 px de frise).
-function _stFriseHtml(jalons){
-  if(!jalons.length) return '';
-  const t0 = jalons[0].ms, t1 = Math.max(jalons[jalons.length - 1].ms, t0 + _JOUR_MS);
-  const pos = t => 3 + (t - t0) / (t1 - t0) * 94;   // 3 % de marge de chaque cote
-  const rangees = [-1, -1, -1, -1];                    // fin occupee (en %) : haut 1, bas 1, haut 2, bas 2
-  const points = jalons.map(j => {
-    const x = pos(j.ms), titre = j.labels.join(' · ');
-    const larg = (Math.max(titre.length, j.nom.length) * 7.5 + 16) / 1100 * 100;
-    let r = rangees.findIndex(fin => fin < x - larg / 2);
-    if(r < 0) r = rangees.indexOf(Math.min(...rangees));
-    rangees[r] = x + larg / 2;
-    return `<a href="#" class="st-jalon sp-link r${r}" data-sci="${esc(j.sci)}" style="left:${x.toFixed(2)}%" title="${esc(titre + ' : ' + j.nom + ', ' + _jourFr(j.ms))}">
-        <span class="st-jalon-pt"></span><span class="st-jalon-txt"><b>${esc(titre)}</b>${esc(j.nom)}</span></a>`;
-  }).join('');
-  const ans = [];
-  for(let a = new Date(t0).getUTCFullYear() + 1; a <= new Date(t1).getUTCFullYear(); a++)
-    ans.push(`<span class="st-frise-an" style="left:${pos(Date.UTC(a, 0, 1)).toFixed(2)}%">${a}</span>`);
-  const liste = jalons.map(j => `<li><span class="st-jl-date">${esc(_jourFr(j.ms))}</span><span><b>${esc(j.labels.join(' · '))}</b> <a href="#" class="sp-link" data-sci="${esc(j.sci)}">${esc(j.nom)}</a></span></li>`).join('');
-  return `<div class="st-frise"><div class="st-frise-ligne"></div>${ans.join('')}${points}</div><ol class="st-jalons-liste">${liste}</ol>`;
 }
 
 function renderStats(me){
@@ -9609,11 +9566,9 @@ function renderStats(me){
   const idxAn = annees.reduce((b, it, i, arr) => it.n > arr[b].n ? i : b, 0);
   const mois = ts.perMonth.map((v, i) => ({ n:v, court:_MONTH_FR[i][0].toUpperCase(), long:_MONTH_FR[i] }));
 
-  const frise = _stFriseHtml(_jalonsDe(active));
   const autresN = state.people.filter(x => x.id !== me.id && x._active).length;
   box.innerHTML =
-    (frise ? _profilPartie('Jalons', 'Les étapes de ' + ton + ' liste. Un clic ouvre la fiche de l\'espèce.', frise) : '')
-    + `<div class="st-grille">
+    `<div class="st-grille">
         ${_profilPartie('Progression', Ta + ' liste au fil du temps' + (autresN ? `, face aux ${autresN} autre${autresN > 1 ? 's' : ''} membre${autresN > 1 ? 's' : ''} en gris. Survole une ligne pour voir à qui elle est.` : '.'), _stCourbeHtml(me, moi))}
         <div>
           ${_profilPartie('Par année', `Nouvelles espèces chaque année. Record : ${annees[idxAn].long}, ${annees[idxAn].n} espèces${rang(rangAn)}.`, _stBarresHtml(annees, idxAn))}
@@ -9662,7 +9617,7 @@ document.addEventListener('pointerdown', _stSurvol);
 document.addEventListener('pointerout', e => { if(e.target.closest?.('.st-plot') && !e.relatedTarget?.closest?.('.st-plot')) _stSortie(e); });
 // Bulle des barres : la valeur exacte, au survol ou au doigt.
 document.addEventListener('pointerover', e => {
-  const barre = e.target.closest?.('#statsBox [data-bulle]');
+  const barre = e.target.closest?.('#viewProfil [data-bulle]');
   const vieille = document.getElementById('stBulleBarre');
   if(!barre){ if(vieille && !e.target.closest?.('#stBulleBarre')) vieille.remove(); return; }
   const col = barre.closest('.st-barres');
@@ -9924,6 +9879,33 @@ const PROFIL_COCHES = 10, PROFIL_FAMILLES = 10;
 function _profilPartie(titre, note, corps){
   return `<section class="prof-partie"><div class="prof-partie-tete"><h3 class="bloc-titre">${titre}</h3>${note ? `<p class="prof-partie-note">${note}</p>` : ''}</div>${corps}</section>`;
 }
+// Une carte d'espece facon Birdydex, en grand : photo, pastille de palier, nom, nom latin.
+// Sert aux especes preferees, aux plus rares et aux uniques. Un clic ouvre la fiche.
+function _carteEspeceHtml(sci, nom){
+  const tt = sci ? realTier(sci, false) : null;
+  const photo = sci ? _photoCarteConnue(sci) : '';
+  return `<div class="prof-fav-carte${sci ? ' sp-link' : ''}"${sci ? ` data-sci="${esc(sci)}"` : ''}>
+    ${tt && tt.ord ? `<span class="prof-fav-tier" style="background:${tt.color}" title="${esc(tt.label)}">${tt.ord}</span>` : ''}
+    <div class="prof-fav-img"${!photo && sci ? ` data-prof-photo="${esc(sci)}"` : ''}>${photo ? `<img src="${esc(photo)}" alt="${esc(nom)}" loading="lazy">` : ''}</div>
+    <div class="prof-fav-nom">${esc(nom)}</div>
+    ${sci ? `<div class="prof-fav-sci">${esc(sci)}</div>` : ''}
+  </div>`;
+}
+// Les especes de France telles que le Birdydex les compte (meme filtre que _pkdxRender) :
+// au catalogue du pays, avec un palier, l'accidentelle marquee. Calcule une fois : ces
+// tables ne changent pas pendant la visite. Pas memorise tant qu'elles ne sont pas chargees.
+let _catFR = null;
+function _catalogueFR(){
+  if(_catFR) return _catFR;
+  const m = new Map();
+  for(const sci in FR_NAMES){
+    if(_isSciAliasSource(sci) || isParkOnlyExotic(sci)) continue;
+    if(!_countryHasSpecies('FR', sci) || rarityForCountry(sci, 'FR') == null) continue;
+    m.set(sci, { famille:familyOf(sci), accidentelle:!_estReguliere(sci, 'FR') });
+  }
+  if(m.size) _catFR = m;
+  return m;
+}
 function _profilOngletHtml(p){
   const moi = p.id === myUid, ton = moi ? 'ta' : 'sa', qui = moi ? 'toi' : esc(p.name);
   const actives = [...p._active.values()].filter(v => countsFR(v) && !v.nonSpecies);
@@ -9936,17 +9918,7 @@ function _profilOngletHtml(p){
     const favs = _favsDe(p);
     if(favs.length){
       html += _profilPartie('Espèces préférées', 'Choisies par ' + qui + '.',
-        '<div class="prof-favs">' + favs.map(n => {
-          const sci = _nameToSci(n) || '';
-          const tt = sci ? realTier(sci, false) : null;
-          const photo = sci ? _photoCarteConnue(sci) : '';
-          return `<div class="prof-fav-carte${sci ? ' sp-link' : ''}"${sci ? ` data-sci="${esc(sci)}"` : ''}>
-            ${tt && tt.ord ? `<span class="prof-fav-tier" style="background:${tt.color}" title="${esc(tt.label)}">${tt.ord}</span>` : ''}
-            <div class="prof-fav-img"${!photo && sci ? ` data-prof-photo="${esc(sci)}"` : ''}>${photo ? `<img src="${esc(photo)}" alt="${esc(n)}" loading="lazy">` : ''}</div>
-            <div class="prof-fav-nom">${esc(n)}</div>
-            ${sci ? `<div class="prof-fav-sci">${esc(sci)}</div>` : ''}
-          </div>`;
-        }).join('') + '</div>');
+        '<div class="prof-favs">' + favs.map(n => _carteEspeceHtml(_nameToSci(n) || '', n)).join('') + '</div>');
     } else if(moi){
       html += _profilPartie('Espèces préférées', '', '<p class="help" style="margin:0;">Choisis-en jusqu\'à 5 avec « Modifier mon profil ».</p>');
     }
@@ -9969,31 +9941,89 @@ function _profilOngletHtml(p){
   }
 
   if(_profilOnglet === 'especes'){
+    // Refait le 2026-10-19 : il n'y avait que les pays (souvent une seule barre « France ») et
+    // dix familles. Quatre parties : rarete, especes uniques dans la ligue, familles
+    // completees, regions et pays.
     let html = '';
-    // Pays : celui de la 1re observation de chaque espece, le seul que garde la life list.
-    // Mesure sur la sauvegarde du 2026-10-04 : les 11 membres ont un pays pour chaque espece,
-    // la liste de TOUTES les observations n'existe que pour 4 d'entre eux, et en partie.
+    const parSci = new Map(actives.map(v => [(v.sci || '').toLowerCase(), v]));
+
+    // 1. Rarete : une barre par palier, aux couleurs de rarete du site (couleurs de donnees,
+    // la charte les reserve a ca), puis les cinq plus rares en cartes photo.
+    const parPalier = new Array(11).fill(0);
+    for(const v of actives){ const o = realTier(v.sci, false).ord; if(o >= 1 && o <= 10) parPalier[o]++; }
+    const horsBareme = actives.length - parPalier.reduce((a, b) => a + b, 0);
+    if(parPalier.some(n => n)){
+      const items = parPalier.slice(1).map((n, i) => ({ n, court:String(i + 1), long:'Palier ' + (i + 1), couleur:realColor(i + 1) }));
+      // Chiffre affiche sur les paliers rares (7 a 10) et sur le plus garni : pas sur toutes.
+      const iMax = items.reduce((b, it, i, arr) => it.n > arr[b].n ? i : b, 0);
+      const rares = actives.filter(v => _countsForRarity(v))
+        .sort((a, b) => (rarityForFilter(b.sci) - rarityForFilter(a.sci)) || (realFreq(a.sci) - realFreq(b.sci))).slice(0, 5);
+      html += _profilPartie('Rareté', `${moi ? 'Tes' : 'Ses'} espèces par palier, de 1 (la plus commune) à 10 (exceptionnelle).${horsBareme ? ` ${horsBareme} hors barème (vues seulement à l'étranger, ou exotiques).` : ''}`,
+        _stBarresHtml(items, iMax, i => i >= 6 || i === iMax)
+        + (rares.length ? `<h4 class="prof-sous-titre">${moi ? 'Tes' : 'Ses'} ${rares.length} plus rares</h4><div class="prof-favs">${rares.map(v => _carteEspeceHtml(v.sci, frName(v.sci, v.common))).join('')}</div>` : ''));
+    }
+
+    // 2. Especes que personne d'autre n'a dans la ligue.
+    const autres = state.people.filter(x => x.id !== p.id && x._active);
+    if(autres.length){
+      const ailleurs = new Set();
+      for(const x of autres) for(const v of x._active.values()) ailleurs.add((v.sci || '').toLowerCase());
+      const uniques = actives.filter(v => !ailleurs.has((v.sci || '').toLowerCase()))
+        .sort((a, b) => (rarityForFilter(b.sci) - rarityForFilter(a.sci)) || frName(a.sci, a.common).localeCompare(frName(b.sci, b.common), 'fr'));
+      html += _profilPartie('Espèces uniques dans la ligue', uniques.length
+          ? `${uniques.length} espèce${uniques.length > 1 ? 's' : ''} que personne d'autre n'a vue${uniques.length > 1 ? 's' : ''} parmi les ${autres.length + 1} membres.${uniques.length > 10 ? ' Les 10 plus rares :' : ''}`
+          : 'Toutes ' + (moi ? 'tes' : 'ses') + ' espèces ont aussi été vues par un autre membre.',
+        uniques.length ? `<div class="prof-favs">${uniques.slice(0, 10).map(v => _carteEspeceHtml(v.sci, frName(v.sci, v.common))).join('')}</div>` : '');
+    }
+
+    // 3. Familles : combien vues sur combien existent en France, le compte du Birdydex.
+    const cat = _catalogueFR();
+    const parFam = new Map();
+    for(const [sci, info] of cat){
+      const vu = parSci.has(sci);
+      if(info.accidentelle && !vu) continue;   // comme le Birdydex : une accidentelle ne compte que cochee
+      const f = info.famille;
+      if(!parFam.has(f)) parFam.set(f, { vues:0, total:0 });
+      const e = parFam.get(f); e.total++; if(vu) e.vues++;
+    }
+    const fams = [...parFam.entries()].filter(([, e]) => e.vues)
+      // Les plus fournies d'abord : triees au pourcentage, les familles d'une seule espece
+      // (« 1 / 1 ») passaient devant les canards ou les rapaces.
+      .sort((a, b) => (b[1].vues - a[1].vues) || (b[1].vues / b[1].total - a[1].vues / a[1].total));
+    if(fams.length){
+      const completes = fams.filter(([, e]) => e.vues === e.total).length;
+      const ligne = ([f, e]) => `<div class="prof-barre-ligne">
+          <span class="prof-barre-nom">${esc(f)}</span>
+          <span class="prof-barre"><span style="width:${Math.max(2, Math.round(e.vues / e.total * 100))}%"></span></span>
+          <span class="prof-barre-n">${e.vues} / ${e.total}</span></div>`;
+      html += _profilPartie('Familles', `${fams.length} familles commencées sur ${parFam.size} présentes en France${completes ? `, dont ${completes} complète${completes > 1 ? 's' : ''}` : ''}. Les plus fournies d'abord.`,
+        '<div class="prof-barres">' + fams.slice(0, 12).map(ligne).join('') + '</div>'
+        + (fams.length > 12 ? `<details class="prof-plus"><summary>Voir les ${fams.length - 12} autres familles</summary><div class="prof-barres">${fams.slice(12).map(ligne).join('')}</div></details>` : ''));
+    }
+
+    // 4. Regions francaises (celles que le fichier eBird indique) et pays de 1re observation.
+    // Le bloc des pays ne parait que s'il y en a plus d'un : une seule barre « France » ne
+    // disait rien.
+    // Seuls les codes de region actuels (FR-ARA...) comptent. La demo garde d'anciens codes
+    // INSEE (FR-11...) : on n'affiche alors rien plutot qu'un faux « 0 sur 13 ».
+    const regions = new Set([...(p.regionsFR || [])].filter(c => FR_REGIONS.some(r => r.code === c)));
     const parPays = new Map();
     for(const v of actives) if(v.country) parPays.set(v.country, (parPays.get(v.country) || 0) + 1);
     const pays = [...parPays.entries()].sort((a, b) => b[1] - a[1] || countryLabel(a[0]).localeCompare(countryLabel(b[0]), 'fr'));
-    if(pays.length){
-      const max = pays[0][1];
-      html += _profilPartie('Pays', 'Le pays de la première observation de chaque espèce.',
-        '<div class="prof-barres">' + pays.map(([cc, n]) => `<div class="prof-barre-ligne">
+    if(regions.size || pays.length > 1){
+      let corps = '';
+      if(regions.size){
+        corps += `<h4 class="prof-sous-titre">Régions françaises : ${regions.size} sur ${FR_REGIONS.length}</h4>`
+          + '<div class="prof-regions">' + FR_REGIONS.map(r => `<span class="prof-region${regions.has(r.code) ? ' vue' : ''}">${esc(r.name)}</span>`).join('') + '</div>';
+      }
+      if(pays.length > 1){
+        const max = pays[0][1];
+        corps += `<h4 class="prof-sous-titre">${pays.length} pays</h4><div class="prof-barres">` + pays.map(([cc, n]) => `<div class="prof-barre-ligne">
           <span class="prof-barre-nom">${flagImg(cc) || ''}${esc(countryLabel(cc))}</span>
           <span class="prof-barre"><span style="width:${Math.max(2, Math.round(n / max * 100))}%"></span></span>
-          <span class="prof-barre-n">${n}</span></div>`).join('') + '</div>');
-    }
-    const familles = {};
-    for(const v of actives){ const f = familyOf(v.sci); familles[f] = (familles[f] || 0) + 1; }
-    const fams = Object.entries(familles).sort((a, b) => b[1] - a[1]).slice(0, PROFIL_FAMILLES);
-    if(fams.length){
-      const max = fams[0][1];
-      html += _profilPartie('Familles', 'Les ' + fams.length + ' familles les mieux représentées dans ' + ton + ' liste.',
-        '<div class="prof-barres">' + fams.map(([f, n]) => `<div class="prof-barre-ligne">
-          <span class="prof-barre-nom">${esc(f)}</span>
-          <span class="prof-barre"><span style="width:${Math.max(2, Math.round(n / max * 100))}%"></span></span>
-          <span class="prof-barre-n">${n}</span></div>`).join('') + '</div>');
+          <span class="prof-barre-n">${n}</span></div>`).join('') + '</div>';
+      }
+      html += _profilPartie('Où', 'Les régions où ' + (moi ? 'tu as' : esc(p.name) + ' a') + ' observé, et le pays de la première observation de chaque espèce.', corps);
     }
     return html || '<p class="help">Rien à montrer pour l\'instant.</p>';
   }
