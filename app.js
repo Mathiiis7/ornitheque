@@ -2815,7 +2815,7 @@ function renderBoard(){
     <thead><tr>
       <th class="c-rank">#</th><th>Joueur</th>
       ${scoreTh}
-      <th class="c-txt">Objectif</th><th class="c-txt">Espèce préférée</th>
+      <th class="c-txt">Objectif</th><th class="c-txt">Espèces préférées</th>
       <th class="c-txt">La plus rare</th><th class="c-txt">Dernière acquisition</th><th class="c-txt">Espèce de rêve</th>
     </tr></thead>
     <tbody>${ranked.map((p,i)=>`<tr class="${i<3?'podium-'+(i+1):''}">
@@ -5940,10 +5940,15 @@ function subscribePresence(){
 function renderOnline(){
   const el=$('#chatOnline'); if(!el) return;
   const byId=new Map(realPeople.map(p=>[p.id,p.name]));
-  const names=[...onlineMap.keys()].map(uid=> byId.get(uid) || onlineMap.get(uid)).filter(Boolean);
-  const uniq=[...new Set(names)];
+  // Un membre en ligne ouvre son profil d'un clic ; un invite reste du texte.
+  const vus=new Set(), uniq=[];
+  for(const uid of onlineMap.keys()){
+    const nm = byId.get(uid) || onlineMap.get(uid);
+    if(!nm || vus.has(nm)) continue;
+    vus.add(nm); uniq.push(byId.has(uid) ? _nomProfil(uid, nm) : esc(nm));
+  }
   el.innerHTML = uniq.length
-    ? `<span class="online-dot"></span> En ligne (${uniq.length}) : ${uniq.map(esc).join(', ')}`
+    ? `<span class="online-dot"></span> En ligne (${uniq.length}) : ${uniq.join(', ')}`
     : `<span class="online-dot off"></span> Personne en ligne pour le moment`;
 }
 function isOnline(uid){ return onlineMap.has(uid); }
@@ -6179,7 +6184,7 @@ function commentsBar(target){
     const time = t ? t.toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
     const canDelete = c.uid === myUid || isAdmin();
     const del = canDelete ? `<button class="cmt-del" data-cmt-del="${esc(c.id)}" title="Supprimer" aria-label="Supprimer ce commentaire"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></button>` : '';
-    return `<div class="cmt-item"><span class="cmt-who">${esc(nm)}</span> <span class="cmt-txt">${esc(c.text)}</span>${time?` <span class="cmt-time">${esc(time)}</span>`:''}${del}</div>`;
+    return `<div class="cmt-item"><span class="cmt-who">${byUid.has(c.uid) ? _nomProfil(c.uid, nm) : esc(nm)}</span> <span class="cmt-txt">${esc(c.text)}</span>${time?` <span class="cmt-time">${esc(time)}</span>`:''}${del}</div>`;
   }).join('');
   const form = myUid
     ? `<form class="cmt-form" data-cmt-target="${esc(target)}"><input type="text" name="cmt-input" aria-label="Commenter" class="cmt-input" placeholder="Commenter…" maxlength="500" required><button type="submit" class="cmt-send" title="Envoyer" aria-label="Envoyer le commentaire"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l16-8-6 16-3-7z"/><path d="M11 13l9-9"/></svg></button></form>`
@@ -9848,8 +9853,10 @@ function _profilTeteHtml(p){
   const jour = ms => ms ? new Date(ms).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' }) : '';
   const pays = new Set(); for(const v of p._active.values()) if(countsFR(v) && v.country) pays.add(v.country);
   const nbPhotos = (photos || []).filter(ph => ph.uid === p.id).length;
-  // L'espece « la plus rare » choisie a la main passe devant la calculee, comme au classement.
-  const rare = p.rare || c.rareName;
+  // La tuile garde l'espece la plus rare CALCULEE, avec son niveau, comme l'ancienne tuile des
+  // statistiques. Le texte libre du champ « Ton espece la plus rare » (souvent « Marouette
+  // ponctuee, Brenne, 2023 ») s'affiche a part, « Plus belle obs », comme dans l'ancienne fiche.
+  const rare = c.rareName;
   const rareSci = _nameToSci(rare) || '';
   const meta = [
     p.joinedAt ? 'dans la ligue depuis ' + moisAn(p.joinedAt * 1000) : '',
@@ -9862,6 +9869,7 @@ function _profilTeteHtml(p){
         <div class="prof-nom">${esc(p.name)}${moi ? ' <span class="youtag">toi</span>' : ''}${isOnline(p.id) ? ' <span class="prof-enligne">en ligne</span>' : ''}</div>
         ${p.status ? `<div class="prof-statut">${esc(p.status)}</div>` : ''}
         ${meta ? `<div class="prof-meta">${esc(meta)}</div>` : ''}
+        ${p.rare ? `<div class="prof-meta">Plus belle obs : <b>${esc(p.rare)}</b></div>` : ''}
         ${p.dream ? `<div class="prof-meta">${moi ? 'Ton' : 'Son'} espèce de rêve : <b>${esc(p.dream)}</b></div>` : ''}
         ${admin ? `<div class="prof-meta">UID : <code>${esc(p.id)}</code></div>` : ''}
       </div>
@@ -9875,8 +9883,8 @@ function _profilTeteHtml(p){
       ${tuile(c.n > 1 ? c.rank + '<span class="prof-chiffre-sur">/' + c.n + '</span>' : '-', 'au classement')}
       ${tuile(pays.size, 'pays')}
       ${tuile(nbPhotos, 'photo' + (nbPhotos > 1 ? 's' : ''))}
-      ${tuile(rare && rare !== '-' ? `<span class="sp-link" data-sci="${esc(rareSci)}">${esc(rare)}</span>` : '-',
-        (moi ? 'ta' : 'sa') + ' plus rare' + (!p.rare && c.rareTier ? ' · ' + esc(c.rareTier.label) : ''), 'prof-chiffre-large')}
+      ${tuile(rare && rare !== '-' ? (rareSci ? `<span class="sp-link" data-sci="${esc(rareSci)}">${esc(rare)}</span>` : esc(rare)) : '-',
+        (moi ? 'ta' : 'sa') + ' plus rare' + (c.rareTier ? ' · ' + esc(c.rareTier.label) : ''), 'prof-chiffre-large')}
     </div>`;
 }
 
@@ -10477,7 +10485,7 @@ const GUIDE_ETAPES = [
   // menu : le guide ouvre le menu ☰ (vrai clic sur le bouton) et pointe une de ses lignes.
   // Une bulle chacune, voulu par Mathis le 2026-10-07.
   { menu:true, cible:'.ham-item[data-view="profil"]', titre:'Profil',
-    texte:"Ta fiche, visible par toute la ligue : objectif, espèce préférée, espèce de rêve, avatar. Et tes statistiques : meilleur mois, année record, courbe de ta liste, familles préférées." },
+    texte:"Ta page, visible par toute la ligue : objectif, espèces préférées, espèce de rêve, avatar, dernières coches, pays, photos. Un clic sur un nom ouvre celle des autres. Et tes statistiques : meilleur mois, année record, courbe de ta liste, familles préférées." },
   { menu:true, cible:'.ham-item[data-view="requests"]', titre:'Requêtes',
     texte:"Propose une amélioration du site et vote pour celles des autres. Les plus populaires passent en haut." },
   { menu:true, cible:'.ham-item[data-view="about"]', titre:'À propos',

@@ -501,7 +501,8 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   <!-- La page Profil sert a tout membre depuis le 2026-10-19 : un clic sur un nom (classement,
        tchat, fil, photos, requetes) l'ouvre sur cette personne. Les champs a remplir ne valent
        que pour soi et restent replies derriere « Modifier mon profil ». Remplie par
-       renderProfil() dans app.js, sans aucune lecture Firestore de plus : tout est deja la. -->
+       renderProfil() dans app.js. Aucun abonnement Firestore de plus : listes et photos sont deja
+       la ; seules les vignettes se lisent a l approche de l ecran, comme dans Photos. -->
   <div id="viewProfil" style="display:none;">
     <section class="panel" style="padding:20px; margin-top:22px;">
       <div class="section-head"><div><h2 class="page-title" id="profilTitre">Mon profil</h2></div></div>

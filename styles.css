@@ -3254,6 +3254,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .theme-sw::before { content:""; position:absolute; inset:-10px -4px; }
     /* Réagir et commenter au bout d'une ligne du fil. */
     .feed-act, .feed-act.react-add { width:52px; height:52px; }
+    /* Profil : la croix qui retire une espèce préférée (20 px à la souris) et le bouton
+       « Modifier mon profil ». */
+    .prof-fav-chip { padding:0 0 0 14px; }
+    .prof-fav-chip button { width:52px; height:52px; font-size:22px; }
+    .prof-id-act .btn { min-height:52px; }
   }
 
   /* Une seule police pour TOUS les noms latins, partout : celle du texte, en italique (--sans).
