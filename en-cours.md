@@ -1,3 +1,8 @@
+# PAS POUSSÉ (2026-10-19) : en-tête du profil sans les 4 chiffres ni l'UID (v828, app.js?v=402)
+- Demande de Mathis : retirer « 143 espèces / 4e sur 11 / 2 pays / 23 photos » et l'UID affiché. L'UID reste au survol de l'avatar, pour l'admin seulement. Le bouton n'occupe plus de colonne quand il n'y en a pas (profil d'un autre membre).
+- Vérifié dans la démo : ordinateur et téléphone, rien ne déborde. 11 bancs CONFORME.
+- DATE D'ARRIVÉE FAUSSE sur la fiche de Mathis (uid pCf1Hu…, ligue merlin-bird) : son compte supprimé puis recréé pour un test a reposé joinedAt au 29/09/2026. La vraie, dans la sauvegarde du 28/09 : 2026-07-27T23:54:04.855Z (28 juillet, heure de Paris). Les règles gèlent joinedAt, seul l'Admin SDK peut le remettre ; l'écriture a été bloquée par les permissions de Claude Code, en attente de l'accord de Mathis.
+---
 # POUSSÉ et vérifié en ligne le 2026-10-19 : en-tête du profil refait une 3e fois, en carte compacte (v827, app.js?v=401)
 - Demande de Mathis : « refais toute cette partie, ce bordel » (l'en-tête), plus de rareté sur les préférées, et le nombre d'espèces sur CHAQUE palier de Rareté.
 - Son choix (question à options) : carte compacte. Identité à gauche (nom, statut, Plus belle obs / Espèce de rêve / Objectif en lignes courtes, date d'arrivée), 4 chiffres en grille 2 x 2 à droite avec le bouton dessous ; sous 640 px les chiffres passent en une rangée de 4. « Ta plus rare » calculée retirée (doublon de Plus belle obs, la rareté a son onglet).

@@ -9825,14 +9825,14 @@ $('#profFavChips')?.addEventListener('click', e => {
 // Refait une 3e fois le 2026-10-19 (« ce bordel ») : trois rangees de styles differents
 // s'empilaient, et « Ta plus rare » (calculee) repetait souvent « Plus belle obs » - Mathis a
 // choisi de la retirer, la rarete a son onglet. Les champs libres (plus belle obs, reve,
-// objectif) tiennent en lignes courtes sous le statut.
+// objectif) tiennent en lignes courtes sous le statut. Les quatre chiffres (especes, rang,
+// pays, photos) et l'UID visible ont ete retires ensuite a la demande de Mathis ; l'UID reste
+// au survol de l'avatar pour l'admin, qui s'en sert dans la console Firebase.
 function _profilTeteHtml(p){
   const moi = p.id === myUid, admin = isAdmin();
   const c = _profilChiffres(p);
   const moisAn = ms => ms ? new Date(ms).toLocaleDateString('fr-FR', { month:'long', year:'numeric' }) : '';
   const jour = ms => ms ? new Date(ms).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' }) : '';
-  const pays = new Set(); for(const v of p._active.values()) if(countsFR(v) && v.country) pays.add(v.country);
-  const nbPhotos = (photos || []).filter(ph => ph.uid === p.id).length;
   const meta = [
     p.joinedAt ? 'dans la ligue depuis ' + moisAn(p.joinedAt * 1000) : '',
     p.updatedAt ? 'liste mise à jour le ' + jour(p.updatedAt) : ''
@@ -9843,28 +9843,18 @@ function _profilTeteHtml(p){
     p.dream ? ['Espèce de rêve', esc(p.dream)] : null,
     objectif > 0 ? ['Objectif', c.total + ' / ' + objectif + ' espèces'] : null
   ].filter(Boolean);
-  const chiffre = (n, lbl) => `<div class="prof-k"><b>${n}</b><span>${lbl}</span></div>`;
   return `<div class="prof-id">
-      <div class="prof-id-av">${_avatarHtml(p.avatar || '', p.name || '?', 64)}</div>
+      <div class="prof-id-av"${admin ? ` title="UID : ${esc(p.id)}"` : ''}>${_avatarHtml(p.avatar || '', p.name || '?', 64)}</div>
       <div class="prof-id-txt">
         <div class="prof-nom">${esc(p.name)}${moi ? ' <span class="youtag">toi</span>' : ''}${isOnline(p.id) ? ' <span class="prof-enligne">en ligne</span>' : ''}</div>
         ${p.status ? `<div class="prof-statut">${esc(p.status)}</div>` : ''}
         ${infos.length ? `<dl class="prof-infos">${infos.map(([t, v]) => `<div><dt>${t}</dt><dd>${v}</dd></div>`).join('')}</dl>` : ''}
         ${meta ? `<div class="prof-meta">${esc(meta)}</div>` : ''}
-        ${admin ? `<div class="prof-meta">UID : <code>${esc(p.id)}</code></div>` : ''}
       </div>
-      <div class="prof-id-droite">
-        <div class="prof-ks">
-          ${chiffre(c.total, 'espèces')}
-          ${c.n > 1 ? chiffre(c.rank + (c.rank === 1 ? '<sup>er</sup>' : '<sup>e</sup>'), 'sur ' + c.n + ' au classement') : ''}
-          ${chiffre(pays.size, 'pays')}
-          ${chiffre(nbPhotos, 'photo' + (nbPhotos > 1 ? 's' : ''))}
-        </div>
-        ${moi || (admin && !moi) ? `<div class="prof-id-act">
+      ${moi || admin ? `<div class="prof-id-droite"><div class="prof-id-act">
           ${moi ? `<button type="button" class="btn tiny" data-profil-modifier>${_profilEdition ? 'Terminer' : 'Modifier mon profil'}</button>` : ''}
           ${admin && !moi ? `<button type="button" class="btn tiny prof-retirer" data-fiche-retirer="${esc(p.id)}">Retirer de la ligue</button>` : ''}
-        </div>` : ''}
-      </div>
+        </div></div>` : ''}
     </div>`;
 }
 

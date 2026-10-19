@@ -1978,7 +1978,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      a titre + note + filet des Trophees, tableau de Ma liste, cartes du Birdydex. Sans emoji.
      Tout ce qui se lit fait 14 px au moins. */
   .prof-tete { margin-top:12px; }
-  /* L'en-tete est une carte : identite a gauche, chiffres et bouton a droite (3e version, 2026-10-19). */
+  /* L'en-tete est une carte : identite a gauche, bouton a droite (3e version, 2026-10-19 ; chiffres retires ensuite). */
   .prof-id { display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:16px 22px; align-items:start;
     border:1px solid var(--line); border-radius:14px; padding:18px 20px; }
   .prof-id-av .user-avatar { border:2px solid var(--line-2); }
@@ -1995,22 +1995,12 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .prof-infos dt::after { content:' :'; }
   .prof-infos dd { margin:0; color:var(--ink); font-weight:600; min-width:0; overflow-wrap:anywhere; }
   .prof-meta { font-size:14px; color:var(--ink-3); margin-top:10px; }
-  .prof-meta + .prof-meta { margin-top:3px; }
-  .prof-meta code { font-size:13px; }
   .prof-id-droite { display:flex; flex-direction:column; align-items:flex-end; gap:14px; }
   .prof-id-act { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
   .prof-retirer { background:var(--surface); color:#b91c1c; border:1px solid #b91c1c; }
-  /* Quatre chiffres en grille 2 x 2 : le nombre en accent, le mot dessous. */
-  .prof-ks { display:grid; grid-template-columns:repeat(2, auto); gap:12px 28px; }
-  .prof-k { display:flex; flex-direction:column; min-width:0; }
-  .prof-k b { font:700 24px/1.1 var(--titre); color:var(--accent-ink); }
-  .prof-k sup { font-size:.55em; }
-  .prof-k span { font-size:14px; color:var(--ink-3); }
   @media (max-width:640px){
     .prof-id { grid-template-columns:auto minmax(0,1fr); padding:14px; }
-    .prof-id-droite { grid-column:1 / -1; align-items:stretch; }
-    .prof-ks { grid-template-columns:repeat(4, minmax(0,1fr)); gap:10px; }
-    .prof-k b { font-size:21px; }
+    .prof-id-droite { grid-column:1 / -1; align-items:flex-start; }
     .prof-id-act { justify-content:flex-start; }
   }
   #profilTete + #profilEmpty + .profile { margin-top:16px; padding-top:16px; border-top:1px solid var(--line); }
