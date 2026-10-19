@@ -1,4 +1,4 @@
-# EN LOCAL, PAS POUSSÉ (2026-10-19) : profil refait une 2e fois, en onglets (v824, app.js?v=398)
+# POUSSÉ et vérifié en ligne le 2026-10-19 : profil refait une 2e fois, en onglets (v824, app.js?v=398, commit 935e250e)
 - Retour de Mathis sur la v823 en ligne : « trop le bordel », emojis partout, ne ressemble pas au reste du site ; préférées voulues en photos comme le Birdydex.
 - Ses choix (maquette en deux directions) : onglets Aperçu / Espèces / Photos / Statistiques ; PAS de jetons de personne en haut ; préférées en grandes cartes photo sur toute la largeur.
 - Fait : aucun emoji ajouté (titres, boutons, timeline : points ronds) ; chiffres en ligne comme le compteur du Birdydex ; parties titre + note + filet comme les Trophées ; dernières coches dans le tableau de Ma liste ; pays et familles (10) dans Espèces ; Objectif, Progression, Jalons dans Statistiques, sans la boîte grise. Champ « Ton espèce la plus rare » renommé « Plus belle obs » (c'est ce qu'il affiche).
