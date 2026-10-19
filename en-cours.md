@@ -1,3 +1,9 @@
+# PAS POUSSÉ (2026-10-19) : ligne du nom espacée (v829) + photos choisies (v830, app.js?v=404)
+- Ligne du nom : « Mathis », « toi », « en ligne » à 10 px les uns des autres (3 px avant), alignés à 0,5 px près (mesuré).
+- Photos : galerie notes-privees/choix-photos/lot-2026-10-19.html (rond du quiz + case du Birdydex à côté de chaque candidate, 11 par espèce, iNaturalist). Choix de Mathis : Hirondelle rousseline H3, Fuligule nyroca F7, Bruant lapon B11, Balbuzard garde la sienne « définitivement », Cormoran pygmée inchangé. Les quatre sont dans PHOTO_OVERRIDE_WIKI (le Balbuzard recopié de frozen-photos.json) ; le Cormoran reste sur frozen-photos.json.
+- Vérifié dans la démo : fiches des trois espèces avec la nouvelle photo, case du Balbuzard inchangée. 11 bancs CONFORME.
+- Reste : Mathis regarde en local, puis pousse s'il valide.
+---
 # POUSSÉ et en ligne le 2026-10-19 : en-tête du profil sans les 4 chiffres ni l'UID (v828, app.js?v=402)
 - Demande de Mathis : retirer « 143 espèces / 4e sur 11 / 2 pays / 23 photos » et l'UID affiché. L'UID reste au survol de l'avatar, pour l'admin seulement. Le bouton n'occupe plus de colonne quand il n'y en a pas (profil d'un autre membre).
 - Vérifié dans la démo : ordinateur et téléphone, rien ne déborde. 11 bancs CONFORME.

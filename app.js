@@ -12251,6 +12251,12 @@ const PHOTO_OVERRIDE_WIKI = {
   'acanthis hornemanni': { url:'https://upload.wikimedia.org/wikipedia/commons/8/8d/Hoary_Redpoll_%285308630118%29.jpg' },
   'acanthis cabaret': { url:'https://upload.wikimedia.org/wikipedia/commons/d/d3/Lesser_Redpoll_%28Acanthis_cabaret%29_%2813667838704%29.jpg' },
   'coccothraustes coccothraustes': { url:'https://upload.wikimedia.org/wikipedia/commons/4/48/Hawfinch_%28Coccothraustes_coccothraustes%29_male_Drenthe.jpg' },
+  // Choix de Mathis le 2026-10-19 sur la galerie notes-privees/choix-photos/lot-2026-10-19.html.
+  // Le Balbuzard garde sa photo de frozen-photos.json, recopiee ici pour qu'elle ne bouge plus.
+  'cecropis rufula': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/378200046/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/378200046/medium.jpeg', credit:'iNaturalist' },
+  'aythya nyroca': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/6567248/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/6567248/medium.jpg', credit:'iNaturalist' },
+  'calcarius lapponicus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/45894540/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/45894540/medium.jpg', credit:'iNaturalist' },
+  'pandion haliaetus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/6903515/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/6903515/medium.jpg', credit:'iNaturalist' },
 };
 async function _fetchWikiPhoto(sci){
   const key = sci.toLowerCase();
