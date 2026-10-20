@@ -12201,7 +12201,6 @@ const PHOTO_OVERRIDE_WIKI = {
   'delichon urbicum': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/370662370/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/370662370/medium.jpg', credit:'iNaturalist' },
   'parus major': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/340613122/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/340613122/medium.jpg', credit:'iNaturalist' },
   'circus hudsonius': { url:'https://upload.wikimedia.org/wikipedia/commons/7/71/Male_Northern_Harrier_%2814364839779%29.jpg' },   // Busard des marais : male en vol, 4695x3259
-  'branta bernicla': { url:'https://upload.wikimedia.org/wikipedia/commons/7/75/Branta_bernicla_bernicla_-_Brent_Goose.jpg' },
   // Autruche d'Afrique : l'article francais renvoyait sa carte de repartition (2026-10-19).
   // Photo de l'article anglais « Common ostrich ».
   'struthio camelus': { url:'https://upload.wikimedia.org/wikipedia/commons/9/9d/Struthio_camelus_-_Etosha_2014_%283%29.jpg', thumb:'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Struthio_camelus_-_Etosha_2014_%283%29.jpg/330px-Struthio_camelus_-_Etosha_2014_%283%29.jpg' },
@@ -12219,9 +12218,7 @@ const PHOTO_OVERRIDE_WIKI = {
   'anas poecilorhyncha': { url:'https://upload.wikimedia.org/wikipedia/commons/8/8f/Indian_Spot-billed_Duck.jpg' },
   // Photo par defaut Wikipedia est domestique blanche : on utilise le male sauvage type.
   'cairina moschata': { url:'https://upload.wikimedia.org/wikipedia/commons/b/b4/Muscovy_Duck_%28Cairina_moschata%29_male.jpg' },
-  'dendrocygna viduata': { url:'https://upload.wikimedia.org/wikipedia/commons/b/bf/Dendrocygna_viduata_001.jpg' },
   // Photos iNat curatees par les birders : mieux cadrees que les defaut wiki.
-  'anser cygnoides': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/479827075/original.jpg', credit:'iNaturalist' },
   'amazonetta brasiliensis': { url:'https://static.inaturalist.org/photos/423943353/original.jpeg', credit:'iNaturalist' },
   // Photo Wikipedia EN "Yellow_backed_weaver" : le male en plumage nuptial avec la vraie
   // tete noire diagnostique (les autres photos iNat/wiki montraient souvent le male non
@@ -12232,7 +12229,6 @@ const PHOTO_OVERRIDE_WIKI = {
   'garrulus glandarius': { url:'https://upload.wikimedia.org/wikipedia/commons/6/6d/Garrulus_glandarius_1_Luc_Viatour.jpg' },
   'apus apus': { url:'https://upload.wikimedia.org/wikipedia/commons/d/d5/Common_Swift_2025_07_18_02_%28cropped%29.jpg' },
   'picus viridis': { url:'https://odata-inpn.mnhn.fr/photos/images/4/214944.jpg', credit:'Julien Bonnaud / INPN' },
-  'cygnus olor': { url:'https://upload.wikimedia.org/wikipedia/commons/a/a2/CygneVaires.jpg' },
   'falco tinnunculus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/115746261/original.jpg', credit:'iNaturalist' },
   'oriolus oriolus': { url:'https://upload.wikimedia.org/wikipedia/commons/6/69/Rigogolo-%28Oriolus_oriolus%29_Lazio%2C_isola_di_Ventotene_%28LT%29_19.4.2024_%28cropped%29.png' },
   'gyps fulvus': { url:'https://upload.wikimedia.org/wikipedia/commons/7/70/Griffon_Vulture_1.jpg' },
@@ -12332,6 +12328,27 @@ const PHOTO_OVERRIDE_WIKI = {
   'aythya nyroca': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/6567248/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/6567248/medium.jpg', credit:'iNaturalist' },
   'calcarius lapponicus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/45894540/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/45894540/medium.jpg', credit:'iNaturalist' },
   'pandion haliaetus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/6903515/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/6903515/medium.jpg', credit:'iNaturalist' },
+  // Choix de Mathis dans la galerie du 2026-10-20 (notes-privees/choix-photos/) : 1-3, 2-1, 3-1, 4-1, 5-1, 6-1, 7-4, 8-1, 9-6, 10-7, 11-0, 12-11, 13-8, 14-4, 15-4, 16-10, 17-12, 18-3, 19-4, 20-1.
+  'dendrocygna viduata': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/98672709/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/98672709/medium.jpeg', credit:'Elio Giacone · CC BY-NC · iNaturalist' },
+  'dendrocygna bicolor': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/91528685/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/91528685/medium.jpg', credit:'Tom Benson · CC BY-NC-ND · iNaturalist' },
+  'anser indicus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/151124905/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/151124905/medium.jpg', credit:'Imran Shah · CC BY-SA · iNaturalist' },
+  'anser canagicus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/64260583/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/64260583/medium.jpg', credit:'Donna Pomeroy · CC BY-NC · iNaturalist' },
+  'anser caerulescens': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/467051457/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/467051457/medium.jpg', credit:'Miguel A Mejias, PhD. · CC BY-NC · iNaturalist' },
+  'anser anser': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/61334030/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/61334030/medium.jpg', credit:'Frans Vandewalle · CC BY-NC · iNaturalist' },
+  'anser cygnoides': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/204763232/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/204763232/medium.jpg', credit:'lrathbone · CC BY-NC · iNaturalist' },
+  'anser albifrons': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/393841552/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/393841552/medium.jpg', credit:'Erik Eckstein · CC BY-NC · iNaturalist' },
+  'anser erythropus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/242786617/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/242786617/medium.jpg', credit:'Vyacheslav Luzanov · CC BY-NC · iNaturalist' },
+  'anser fabalis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/104119286/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/104119286/medium.jpg', credit:'Анна Голубева · CC BY-NC-ND · iNaturalist' },
+  'anser serrirostris': { url:'https://upload.wikimedia.org/wikipedia/commons/d/db/101777%E5%8F%B0%E5%8D%97%E7%99%BC%E7%8F%BE%E8%B1%86%E9%9B%81.jpg?utm_source=fr.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled', thumb:'https://thumb.wikimedia.org/wikipedia/commons/thumb/d/db/101777%E5%8F%B0%E5%8D%97%E7%99%BC%E7%8F%BE%E8%B1%86%E9%9B%81.jpg/330px-101777%E5%8F%B0%E5%8D%97%E7%99%BC%E7%8F%BE%E8%B1%86%E9%9B%81.jpg?utm_source=fr.wikipedia.org&utm_campaign=api&utm_content=thumbnail', credit:'Wikipédia FR' },
+  'anser brachyrhynchus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/562734881/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/562734881/medium.jpg', credit:'Michael Hochstetler · CC BY-NC · iNaturalist' },
+  'branta bernicla': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/2713374/original.JPG', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/2713374/medium.JPG', credit:'Bridget Spencer · CC BY-NC · iNaturalist' },
+  'branta leucopsis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/98751511/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/98751511/medium.jpeg', credit:'Christoph Moning · CC BY · iNaturalist' },
+  'branta hutchinsii': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/248771691/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/248771691/medium.jpg', credit:'MarvalPhotography19 · CC BY · iNaturalist' },
+  'branta canadensis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/33794564/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/33794564/medium.jpg', credit:'Bridget Spencer · CC BY-NC · iNaturalist' },
+  'branta ruficollis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/461434558/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/461434558/medium.jpg', credit:'Дмитрий · CC BY-NC · iNaturalist' },
+  'cygnus olor': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/482124381/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/482124381/medium.jpeg', credit:'Пакалнис Дэниел · CC BY-NC · iNaturalist' },
+  'cygnus atratus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/438378692/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/438378692/medium.jpg', credit:'Caiden · CC BY-NC · iNaturalist' },
+  'cygnus columbianus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/183205026/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/183205026/medium.jpeg', credit:'CC0 · iNaturalist' },
 };
 async function _fetchWikiPhoto(sci){
   const key = sci.toLowerCase();

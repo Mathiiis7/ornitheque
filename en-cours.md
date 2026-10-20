@@ -1,8 +1,23 @@
-# EN LOCAL le 2026-10-20, PAS POUSSÉ : plus rares vues en France, objectif au téléphone, deux photos (v839, app.js?v=413, commit e4777a1a)
+# EN ATTENTE DE MATHIS (2026-10-20) : choix des photos des 540 oiseaux de France
+- Galerie : http://localhost:8765/notes-privees/choix-photos/france-2026-10-20/index.html (11 onglets par groupe d'oiseaux). 540 espèces du Birdydex France, dans son ordre ; 12 candidates iNaturalist chacune (curateurs, puis observations les plus aimées), 6 480 au total ; chaque photo montrée dans les recadrages du site (ronds 38 et 54 px, vignette 52, fiche 16/9, quiz 320 x 200, case Birdydex = carte du profil), sous zoom 0,85.
+- Choix : numéro « espèce-photo » (ex. 142-3), « -0 » = garder l'actuelle. Clic sur le numéro = choisi, gardé d'une page à l'autre (même adresse), barre du haut « Copier ». Une espèce sans choix garde sa photo.
+- Refaire : notes-privees/choix-photos/outils/ catalogue.mjs (lit la démo, expose _catalogueFR au vol sans toucher app.js) -> candidats.mjs (cache-inat/, reprise possible) -> galerie.mjs ; verifie-actuelles.mjs teste les photos actuelles.
+- Piège : la recherche iNaturalist libre confondait 3 espèces (alle alle = une plante, bubo bubo = un grèbe, puffinus puffinus = un autre puffin). Repli sur l'autocomplétion limitée aux oiseaux.
+- Licences (demande de Mathis) : les « tous droits réservés » sont ÉCARTÉES des candidates (6 475 restantes, toutes libres ; Bec-croisé d'Écosse n'en a que 7). Constat : 62 photos ACTUELLES du site sont « tous droits réservés » et 19 de licence inconnue (outils/licences-actuelles.mjs), marquées « à remplacer » dans la galerie. Règle désormais : ne plus utiliser de photo sans licence.
+- 1er lot APPLIQUÉ (v843, app.js?v=417, commité, PAS poussé) : espèces 1 à 20 (dendrocygnes, oies, bernaches, cygnes). 11-0 = actuelle recopiée. Crédit = auteur · licence · iNaturalist (affiché « Photo : … » sur la fiche). Outil : outils/appliquer.mjs "1-3, 2-1, ..." écrit dans PHOTO_OVERRIDE_WIKI et note faits.json ; galerie.mjs n'affiche plus les espèces faites.
+- Case « Aucune ne convient » par espèce : ces oiseaux-là seront à rechercher dans une 2e passe.
+- Reste : les lots suivants. Pour chaque lot : appliquer.mjs, galerie.mjs, versions (CACHE_VERSION + 2 app.js?v), genere-demo, bancs, commit.
+---
+# POUSSÉ et en ligne le 2026-10-20 : classement retouché (v841, app.js?v=415, commit 962501e6)
+- Colonne Objectif retirée du classement (« elle sert à rien ») : il reste sur le profil, qui ne l'affiche que si c'est un nombre. Les 7 vrais objectifs sont des nombres (sauvegarde du 04/10) ; seule la démo en a en phrase, désormais visibles nulle part.
+- Préférées côte à côte (6 px), sans bord blanc ni chevauchement. La plus rare garde un mince trait blanc entre photo et anneau de palier : à enlever s'il le demande.
+- Vérifié en ligne (app.js?v=415 servi). La 1re publication GitHub du 20/10 avait échoué côté GitHub, la suivante est passée.
+---
+# POUSSÉ le 2026-10-20 (dans v841) : plus rares vues en France, objectif au téléphone, deux photos (v839, commit e4777a1a)
 - « La plus rare en France » (classement), « Tes 5 plus rares en France » et « Les 10 plus rares en France » des uniques (profil) : seulement les espèces vues au moins une fois en France (seenFR). Testé dans la démo avec un Robin à flancs roux (palier 10) ajouté « vu en Espagne » : il n'apparaît dans aucune des trois listes.
 - Objectif au téléphone : 220 px minimum, deux lignes au plus, lignes de 101 à 70 px.
 - Revue des photos (France + listes des membres, 732 espèces) : seules deux mauvaises, dans frozen-photos.json (carte du Cacatoès rosalbin, croquis du Pétrel de Madère), remplacées en surcharge. Les 110 espèces sans photo figée reçoivent toutes une photo iNaturalist.
-- 11 bancs CONFORME. Reste : qu'il regarde en local, puis pousser.
+- 11 bancs CONFORME.
 ---
 # POUSSÉ et en ligne le 2026-10-19 : tableau du Classement refait, version « I » (v837, app.js?v=411, commit 49ec0bc9)
 - Choisie par Mathis parmi neuf maquettes (notes-privees/maquettes/classement/, classement-2/, classement-3/) : blocs « Le joueur » / « Ses oiseaux » ; chaque espèce = petite photo + nom (la photo seule « ne correspond pas à un tableau ») ; préférées empilées qui s'écartent au survol ; la plus rare cerclée de son palier, chiffre sur la photo, SANS « palier N » écrit ; dernière en date relative, allumée sous 7 jours ; rêve en gris pointillé, en couleur coché « vu ! » si la personne l'a vu ; écart au premier sous le score ; ta ligne teintée + trait d'accent (7 % était plus pâle que l'alternance des lignes, mesuré). PAS de pourcentage sur l'objectif (refusé).
