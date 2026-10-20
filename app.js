@@ -2498,7 +2498,10 @@ function build(){
     for(const [key,v] of p._active){
       if(!countsFR(v)) continue;   // hors compétition (étranger)
       const nm=frName(v.sci, v.common);
-      if(!_isExoticNotCounted(v.sci)){
+      // « La plus rare EN FRANCE » : seulement une espece vue au moins une fois en France.
+      // Une Pie-grieche vue en Espagne seulement se disait sinon la plus rare « en France »
+      // (Mathis, 2026-10-20). Meme test que Mike Horn.
+      if(!_isExoticNotCounted(v.sci) && seenFR(v)){
         const rw=rarityReal(v.sci), rf=realFreq(v.sci);
         if(rw>rarestW || (rw===rarestW && rf<rarestF) || (rw===rarestW && rf===rarestF && rarest && nm.localeCompare(rarest,'fr')<0)){
           rarestW=rw; rarestF=rf; rarest=nm; rarestSci=v.sci;
@@ -2877,14 +2880,14 @@ function renderBoard(){
     <tr>
       <th class="c-rank">#</th><th>Joueur</th>
       ${scoreTh}
-      <th class="c-txt">Objectif</th><th class="c-txt debut-oiseaux">Espèces préférées</th>
+      <th class="c-txt c-obj">Objectif</th><th class="c-txt debut-oiseaux">Espèces préférées</th>
       <th class="c-txt">La plus rare en France</th><th class="c-txt">Dernière acquisition</th><th class="c-txt">Espèce de rêve</th>
     </tr></thead>
     <tbody>${ranked.map((p,i)=>`<tr class="${i<3?'podium-'+(i+1):''}${p.isMe?' board-moi':''}">
       <td class="c-rank">${i===0?'★':(i+1)}</td>
       <td class="who-cell" style="--series:var(--s${p.si})"><span class="who-in"><span class="dot"></span>${isOnline(p.id)?'<span class="pname-dot" title="en ligne"></span>':''}<button type="button" class="who-name" data-fiche-joueur="${esc(p.id)}" title="Voir le profil de ${esc(p.name)}">${esc(p.name)}</button>${p.isMe?'<span class="youtag">toi</span>':''}</span></td>
       ${scoreTd(p)}
-      <td class="c-txt">${parseInt(p.goal,10)>0 ? `<span class="board-obj"><span>${p.total} / ${parseInt(p.goal,10)}</span><span class="board-obj-barre"><i style="width:${Math.min(100, Math.round(p.total/parseInt(p.goal,10)*100))}%"></i></span></span>` : cell(p.goal)}</td>
+      <td class="c-txt c-obj">${parseInt(p.goal,10)>0 ? `<span class="board-obj"><span>${p.total} / ${parseInt(p.goal,10)}</span><span class="board-obj-barre"><i style="width:${Math.min(100, Math.round(p.total/parseInt(p.goal,10)*100))}%"></i></span></span>` : cell(p.goal)}</td>
       <td class="c-txt c-esp debut-oiseaux">${pile(_favsDe(p))}</td>
       <td class="c-txt c-esp">${plusRare(p)}</td>
       <td class="c-txt c-esp">${derniere(p)}</td>
@@ -10008,7 +10011,8 @@ function _profilOngletHtml(p){
       const items = parPalier.slice(1).map((n, i) => ({ n, court:String(i + 1), long:'Palier ' + (i + 1), couleur:realColor(i + 1) }));
       // Chiffre sur chaque palier, 0 compris : Mathis veut lire le compte partout (2026-10-19).
       const iMax = items.reduce((b, it, i, arr) => it.n > arr[b].n ? i : b, 0);
-      const rares = actives.filter(v => _countsForRarity(v))
+      // « plus rares en France » : vues au moins une fois en France (Mathis, 2026-10-20).
+      const rares = actives.filter(v => _countsForRarity(v) && seenFR(v))
         .sort((a, b) => (rarityForFilter(b.sci) - rarityForFilter(a.sci)) || (realFreq(a.sci) - realFreq(b.sci))).slice(0, 5);
       html += _profilPartie('Rareté', `${moi ? 'Tes' : 'Ses'} espèces par palier, de 1 (la plus commune) à 10 (exceptionnelle).${horsBareme ? ` ${horsBareme} hors barème (vues seulement à l'étranger, ou exotiques).` : ''}`,
         _stBarresHtml(items, iMax, () => true)
@@ -10022,10 +10026,13 @@ function _profilOngletHtml(p){
       for(const x of autres) for(const v of x._active.values()) ailleurs.add((v.sci || '').toLowerCase());
       const uniques = actives.filter(v => !ailleurs.has((v.sci || '').toLowerCase()))
         .sort((a, b) => (rarityForFilter(b.sci) - rarityForFilter(a.sci)) || frName(a.sci, a.common).localeCompare(frName(b.sci, b.common), 'fr'));
+      // Au-dela de 10, on montre « les plus rares en France » : seulement celles vues au moins
+      // une fois en France (Mathis, 2026-10-20). Jusqu'a 10, toutes, sans parler de France.
+      const montrees = uniques.length > 10 ? uniques.filter(seenFR).slice(0, 10) : uniques;
       html += _profilPartie('Espèces uniques dans la ligue', uniques.length
-          ? `${uniques.length} espèce${uniques.length > 1 ? 's' : ''} que personne d'autre n'a vue${uniques.length > 1 ? 's' : ''} parmi les ${autres.length + 1} membres.${uniques.length > 10 ? ' Les 10 plus rares en France :' : ''}`
+          ? `${uniques.length} espèce${uniques.length > 1 ? 's' : ''} que personne d'autre n'a vue${uniques.length > 1 ? 's' : ''} parmi les ${autres.length + 1} membres.${uniques.length > 10 && montrees.length ? ` Les ${montrees.length > 1 ? montrees.length + ' plus rares' : 'plus rare'} en France :` : ''}`
           : 'Toutes ' + (moi ? 'tes' : 'ses') + ' espèces ont aussi été vues par un autre membre.',
-        uniques.length ? `<div class="prof-favs">${uniques.slice(0, 10).map(v => _carteEspeceHtml(v.sci, frName(v.sci, v.common))).join('')}</div>` : '');
+        montrees.length ? `<div class="prof-favs">${montrees.map(v => _carteEspeceHtml(v.sci, frName(v.sci, v.common))).join('')}</div>` : '');
     }
 
     // 3. Familles : combien vues sur combien existent en France, le compte du Birdydex.
@@ -12200,6 +12207,11 @@ const PHOTO_OVERRIDE_WIKI = {
   // Autruche d'Afrique : l'article francais renvoyait sa carte de repartition (2026-10-19).
   // Photo de l'article anglais « Common ostrich ».
   'struthio camelus': { url:'https://upload.wikimedia.org/wikipedia/commons/9/9d/Struthio_camelus_-_Etosha_2014_%283%29.jpg', thumb:'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Struthio_camelus_-_Etosha_2014_%283%29.jpg/330px-Struthio_camelus_-_Etosha_2014_%283%29.jpg' },
+  // Revue des photos du 2026-10-20 (732 especes : France + listes des membres) : frozen-photos.json
+  // gardait une carte pour le Cacatoes rosalbin et un croquis pour le Petrel de Madere. Les 110
+  // especes sans photo figee recoivent toutes une vraie photo d'iNaturalist. Photos des articles anglais.
+  'eolophus roseicapilla': { url:'https://upload.wikimedia.org/wikipedia/commons/9/9d/Galah_%28Eolophus_roseicapilla_albiceps%29_male_Adelaide.jpg', thumb:'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Galah_%28Eolophus_roseicapilla_albiceps%29_male_Adelaide.jpg/330px-Galah_%28Eolophus_roseicapilla_albiceps%29_male_Adelaide.jpg' },
+  'pterodroma madeira': { url:'https://upload.wikimedia.org/wikipedia/commons/0/09/Pterodroma_madeira_92954030_%28cropped%29.jpg', thumb:'https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Pterodroma_madeira_92954030_%28cropped%29.jpg/330px-Pterodroma_madeira_92954030_%28cropped%29.jpg' },
   'otis tarda': { url:'https://upload.wikimedia.org/wikipedia/commons/d/d8/Abetarda-comum%2C_macho%2C_concentrado_e_a_fazer_o_seu_melhor..%21_Great_Bustard%2C_male%2C_focused_and_doing_his_best..%21_%2854460360805%29.jpg' },
   'curruca sarda': { url:'https://upload.wikimedia.org/wikipedia/commons/3/37/Fauvette_sarde_Fejjet_errih014.jpg' },
   // Photo Wikipedia par defaut trop cropee : on utilise directement une meilleure photo Commons.
