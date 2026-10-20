@@ -2490,8 +2490,9 @@ function build(){
   for(const u of universe.values()){ if(u.counts===0) continue; if(_isExoticNotCounted(u.sci)) continue; const w=rarityReal(u.sci); if(w>maxRW) maxRW=w; }
   // par joueur : espèce la plus rare (rarete REELLE, pas nb de detenteurs) + derniere acquisition.
   // "Plus rare" = tier REAL_RARITY le plus haut, tie-break sur frequence eBird la plus basse.
-  // Exclut les exotiques X/C (Cygne noir, perroquets echappes, Coq bankiva). Meme critere que
-  // Mike Horn + profil stats.
+  // Exclut TOUTES les exotiques, N compris (_countsForRarity) : meme critere que Mike Horn et le
+  // profil. Une N etablie mais peu notee (Euodice malabarica, Leiothrix lutea) ressortait sinon
+  // « la plus rare », rarete biaisee par le peu de listes qui la notent (Mathis, 2026-10-21).
   state.people.forEach(p=>{
     let rarest=null, rarestSci=null, rarestW=0, rarestF=Infinity, last=null, lastSci=null, lastOrd=-1, lastDisp='', lastTime=0, real=0;
     const rrNames=[];
@@ -2501,7 +2502,7 @@ function build(){
       // « La plus rare EN FRANCE » : seulement une espece vue au moins une fois en France.
       // Une Pie-grieche vue en Espagne seulement se disait sinon la plus rare « en France »
       // (Mathis, 2026-10-20). Meme test que Mike Horn.
-      if(!_isExoticNotCounted(v.sci) && seenFR(v)){
+      if(_countsForRarity(v) && seenFR(v)){
         const rw=rarityReal(v.sci), rf=realFreq(v.sci);
         if(rw>rarestW || (rw===rarestW && rf<rarestF) || (rw===rarestW && rf===rarestF && rarest && nm.localeCompare(rarest,'fr')<0)){
           rarestW=rw; rarestF=rf; rarest=nm; rarestSci=v.sci;
@@ -10028,8 +10029,9 @@ function _profilOngletHtml(p){
       for(const x of autres) for(const v of x._active.values()) ailleurs.add((v.sci || '').toLowerCase());
       const uniques = actives.filter(v => !ailleurs.has((v.sci || '').toLowerCase())).sort(_parRarete);
       // Au-dela de 10, on montre « les plus rares en France » : seulement celles vues au moins
-      // une fois en France (Mathis, 2026-10-20). Jusqu'a 10, toutes, sans parler de France.
-      const montrees = uniques.length > 10 ? uniques.filter(seenFR).slice(0, 10) : uniques;
+      // une fois en France (Mathis, 2026-10-20), et sans exotique, N compris (2026-10-21).
+      // Jusqu'a 10, toutes, sans parler de France ni de rarete.
+      const montrees = uniques.length > 10 ? uniques.filter(v => _countsForRarity(v) && seenFR(v)).slice(0, 10) : uniques;
       html += _profilPartie('Espèces uniques dans la ligue', uniques.length
           ? `${uniques.length} espèce${uniques.length > 1 ? 's' : ''} que personne d'autre n'a vue${uniques.length > 1 ? 's' : ''} parmi les ${autres.length + 1} membres.${uniques.length > 10 && montrees.length ? ` Les ${montrees.length > 1 ? montrees.length + ' plus rares' : 'plus rare'} en France :` : ''}`
           : 'Toutes ' + (moi ? 'tes' : 'ses') + ' espèces ont aussi été vues par un autre membre.',
