@@ -12192,10 +12192,8 @@ async function _loadFrozenPhotos(){
 const PHOTO_OVERRIDE_WIKI = {
   // Batch changement photos utilisateur (2026-09-10) : remplace les photos wiki par defaut
   // (contrepoint, mauvais angle, etc.) par des photos iNat actuelles de qualite.
-  'columba palumbus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/108521205/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/108521205/medium.jpg', credit:'iNaturalist' },
   'sturnus vulgaris': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/32152001/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/32152001/medium.jpg', credit:'iNaturalist' },
   'chroicocephalus ridibundus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/198109587/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/198109587/medium.jpg', credit:'iNaturalist' },
-  'streptopelia decaocto': { url:'https://static.inaturalist.org/photos/61919353/original.jpeg', thumb:'https://static.inaturalist.org/photos/61919353/medium.jpeg', credit:'iNaturalist' },
   'sylvia atricapilla': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/187041112/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/187041112/medium.jpg', credit:'iNaturalist' },
   'certhia brachydactyla': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/6260571/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/6260571/medium.jpg', credit:'iNaturalist' },
   'pica pica': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/103446096/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/103446096/medium.jpg', credit:'iNaturalist' },
@@ -12211,7 +12209,6 @@ const PHOTO_OVERRIDE_WIKI = {
   // especes sans photo figee recoivent toutes une vraie photo d'iNaturalist. Photos des articles anglais.
   'eolophus roseicapilla': { url:'https://upload.wikimedia.org/wikipedia/commons/9/9d/Galah_%28Eolophus_roseicapilla_albiceps%29_male_Adelaide.jpg', thumb:'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Galah_%28Eolophus_roseicapilla_albiceps%29_male_Adelaide.jpg/330px-Galah_%28Eolophus_roseicapilla_albiceps%29_male_Adelaide.jpg' },
   'pterodroma madeira': { url:'https://upload.wikimedia.org/wikipedia/commons/0/09/Pterodroma_madeira_92954030_%28cropped%29.jpg', thumb:'https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Pterodroma_madeira_92954030_%28cropped%29.jpg/330px-Pterodroma_madeira_92954030_%28cropped%29.jpg' },
-  'otis tarda': { url:'https://upload.wikimedia.org/wikipedia/commons/d/d8/Abetarda-comum%2C_macho%2C_concentrado_e_a_fazer_o_seu_melhor..%21_Great_Bustard%2C_male%2C_focused_and_doing_his_best..%21_%2854460360805%29.jpg' },
   'curruca sarda': { url:'https://upload.wikimedia.org/wikipedia/commons/3/37/Fauvette_sarde_Fejjet_errih014.jpg' },
   // Photo Wikipedia par defaut trop cropee : on utilise directement une meilleure photo Commons.
   // Format alternatif { url } : renvoie directement cette URL sans passer par un article wiki.
@@ -12233,10 +12230,8 @@ const PHOTO_OVERRIDE_WIKI = {
   'falco tinnunculus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/115746261/original.jpg', credit:'iNaturalist' },
   'oriolus oriolus': { url:'https://upload.wikimedia.org/wikipedia/commons/6/69/Rigogolo-%28Oriolus_oriolus%29_Lazio%2C_isola_di_Ventotene_%28LT%29_19.4.2024_%28cropped%29.png' },
   'gyps fulvus': { url:'https://upload.wikimedia.org/wikipedia/commons/7/70/Griffon_Vulture_1.jpg' },
-  'streptopelia turtur': { url:'https://upload.wikimedia.org/wikipedia/commons/e/ec/Turtle_dove_%28Streptopelia_turtur_turtur%29_Hungary.jpg' },
   'dendrocopos major': { url:'https://upload.wikimedia.org/wikipedia/commons/d/df/Great_spotted_woodpecker_%28Dendrocopos_major%29_male_Drenthe.jpg' },
   'tachybaptus ruficollis': { url:'https://upload.wikimedia.org/wikipedia/commons/8/84/Little_grebe_Zwergtaucher.jpg' },
-  'columba oenas': { url:'https://upload.wikimedia.org/wikipedia/commons/b/b5/Pigeon_colombin_%28Colulmba_oenas%29%2C_Parc_de_Woluwe%2C_Bruxelles_%2851921513878%29.jpg' },
   'haematopus ostralegus': { url:'https://upload.wikimedia.org/wikipedia/commons/5/51/Haematopus_ostralegus_He.jpg' },
   'gallinago gallinago': { url:'https://upload.wikimedia.org/wikipedia/commons/c/c6/Common_snipe_%28Gallinago_gallinago%29_2022.jpg' },
   'larus canus': { url:'https://upload.wikimedia.org/wikipedia/commons/b/b1/Larus_canus_Common_Gull_in_Norway.jpg' },
@@ -12250,7 +12245,6 @@ const PHOTO_OVERRIDE_WIKI = {
   'tachymarptis melba': { url:'https://upload.wikimedia.org/wikipedia/commons/8/84/Alpine_Swift_%284781590209%29.jpg' },
   'apus melba': { url:'https://upload.wikimedia.org/wikipedia/commons/8/84/Alpine_Swift_%284781590209%29.jpg' },
   'curruca melanocephala': { url:'https://upload.wikimedia.org/wikipedia/commons/e/e1/Sardinian_Warbler.jpg' },
-  'alectoris rufa': { url:'https://upload.wikimedia.org/wikipedia/commons/1/19/Perdiz_%28Alectoris_rufa%29_%2853032047788%29.jpg' },
   'calidris alba': { url:'https://upload.wikimedia.org/wikipedia/commons/d/df/Calidris_alba_%28breeding_plumage%29.jpg' },
   'ardea purpurea': { url:'https://upload.wikimedia.org/wikipedia/commons/c/c9/Ardpur2.jpg' },
   'aquila chrysaetos': { url:'https://upload.wikimedia.org/wikipedia/commons/c/c2/Maakotka_%28Aquila_chrysaetos%29_by_Jarkko_J%C3%A4rvinen.jpg' },
@@ -12280,8 +12274,6 @@ const PHOTO_OVERRIDE_WIKI = {
   // Choisie par Mathis le 2026-10-18 (P1) : Jonny Andrews, CC BY-NC.
   'fringilla coelebs': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/151143058/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/151143058/medium.jpg', credit:'iNaturalist' },
   'loxia curvirostra': { url:'https://upload.wikimedia.org/wikipedia/commons/e/e6/Cruza-bico_comum%2C_f%C3%AAmea%2C_Red_Crossbill%2C_female_%2851692602998%29.jpg' },
-  'tetrao urogallus': { url:'https://upload.wikimedia.org/wikipedia/commons/b/ba/David_Palmer_Capercaillie.jpg' },
-  'streptopelia orientalis': { url:'https://upload.wikimedia.org/wikipedia/commons/4/44/2026-08-27_Streptopelia_orientalis_in_Chitose.jpg' },
   'apus caffer': { url:'https://upload.wikimedia.org/wikipedia/commons/6/6a/White-rumped_swift%2C_Apus_caffer%2C_at_Suikerbosrand_Nature_Reserve%2C_Gauteng%2C_South_Africa_%2830511369955%29.jpg' },
   'grus virgo': { url:'https://upload.wikimedia.org/wikipedia/commons/6/69/Demoiselle_Crane_%28Grus_virgo%29_%2849049108046%29.jpg' },
   'anthropoides virgo': { url:'https://upload.wikimedia.org/wikipedia/commons/6/69/Demoiselle_Crane_%28Grus_virgo%29_%2849049108046%29.jpg' },
@@ -12394,6 +12386,34 @@ const PHOTO_OVERRIDE_WIKI = {
   'mergus serrator': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/254681236/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/254681236/medium.jpeg', credit:'Mario Lietz-Finkel · CC BY-NC · iNaturalist' },
   'oxyura jamaicensis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/384876253/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/384876253/medium.jpg', credit:'Andrew Thomas · CC BY-NC · iNaturalist' },
   'oxyura leucocephala': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/202438986/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/202438986/medium.jpg', credit:'Luca Ghiraldi · CC BY-NC · iNaturalist' },
+  // Choix de Mathis dans la galerie du 2026-10-21 (notes-privees/choix-photos/) : 65-4, 66-8, 67-1, 68-6, 69-1, 70-2, 71-4, 72-5, 73-12, 74-6, 75-0, 76-8, 77-2, 78-1, 79-4, 80-1, 81-4, 82-12, 83-6, 84-2, 85-3, 86-6, 87-1, 88-4, 89-7, 90-7, 91-5.
+  'callipepla californica': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/82887869/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/82887869/medium.jpg', credit:'steinhardt · CC BY-NC · iNaturalist' },
+  'tetrastes bonasia': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/125117985/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/125117985/medium.jpg', credit:'vyatka · CC BY-NC · iNaturalist' },
+  'lagopus muta': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/45166074/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/45166074/medium.jpg', credit:'Ryan Shaw · CC BY-NC · iNaturalist' },
+  'tetrao urogallus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/112460696/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/112460696/medium.jpg', credit:'chorthippus · CC BY-NC · iNaturalist' },
+  'lyrurus tetrix': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/61329120/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/61329120/medium.jpg', credit:'Tatyana Zarubo · CC BY-NC · iNaturalist' },
+  'perdix perdix': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/332169780/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/332169780/medium.jpg', credit:'Gabi Rusu · CC BY-NC · iNaturalist' },
+  'syrmaticus reevesii': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/330558265/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/330558265/medium.jpeg', credit:'loan_1221 · CC BY-NC · iNaturalist' },
+  'phasianus colchicus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/188318225/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/188318225/medium.jpg', credit:'Kurilin M S · CC BY-NC · iNaturalist' },
+  'phasianus versicolor': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/497248924/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/497248924/medium.jpg', credit:'m_sato · CC BY-NC · iNaturalist' },
+  'pavo cristatus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/93844962/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/93844962/medium.jpg', credit:'Carlos Sanchez · CC BY-NC · iNaturalist' },
+  'coturnix coturnix': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/5788480/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/5788480/medium.jpg', credit:'iNaturalist' },
+  'alectoris rufa': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/141650676/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/141650676/medium.jpg', credit:'xulescu_g · CC BY-SA · iNaturalist' },
+  'alectoris graeca': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/577243551/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/577243551/medium.jpg', credit:'hristovskis · CC BY-NC · iNaturalist' },
+  'columba livia': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/466776975/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/466776975/medium.jpg', credit:'Birds of Gilgit-Baltistan · CC BY-SA · iNaturalist' },
+  'columba oenas': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/5718408/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/5718408/medium.jpg', credit:'Carles Pastor · CC BY-SA · iNaturalist' },
+  'columba palumbus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/108521205/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/108521205/medium.jpg', credit:'hedera.baltica · CC BY-SA · iNaturalist' },
+  'streptopelia turtur': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/74579768/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/74579768/medium.jpeg', credit:'Aissa Djamel Filali · CC BY-SA · iNaturalist' },
+  'streptopelia orientalis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/144293490/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/144293490/medium.jpg', credit:'egorbirder · CC BY · iNaturalist' },
+  'streptopelia decaocto': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/168148070/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/168148070/medium.jpg', credit:'Dhaval Vargiya · CC BY-SA · iNaturalist' },
+  'pterocles alchata': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/585267533/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/585267533/medium.jpg', credit:'Anaëlle FRANCIA · CC BY-NC · iNaturalist' },
+  'otis tarda': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/493823096/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/493823096/medium.jpg', credit:'lonelyshrimp · CC BY-NC · iNaturalist' },
+  'tetrax tetrax': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/13754/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/13754/medium.jpg', credit:'Blake Matheson · CC BY-NC · iNaturalist' },
+  'clamator glandarius': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/182820083/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/182820083/medium.jpg', credit:'Frank Vassen · CC BY · iNaturalist' },
+  'cuculus canorus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/148126381/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/148126381/medium.jpeg', credit:'Korbinian von Königslöw · CC BY-NC · iNaturalist' },
+  'chordeiles minor': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/245136100/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/245136100/medium.jpeg', credit:'James Bailey · CC BY-NC · iNaturalist' },
+  'caprimulgus ruficollis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/135125994/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/135125994/medium.jpeg', credit:'Christoph Moning · CC BY · iNaturalist' },
+  'caprimulgus europaeus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/161683140/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/161683140/medium.jpeg', credit:'Andrew Bazdyrev · CC BY · iNaturalist' },
 };
 async function _fetchWikiPhoto(sci){
   const key = sci.toLowerCase();
