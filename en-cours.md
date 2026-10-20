@@ -1,3 +1,11 @@
+# À REPRENDRE (2026-10-21) : cartes de répartition, Mathis « pas satisfait des DONNÉES »
+- Ce qu'il reproche : les données (pas l'apparence, pas les saisons). Exemples précis à lui demander : quelles espèces, quelles zones en trop ou manquantes.
+- Cartes actuelles : ornitheque-data/cartes/, observations eBird via GBIF, générées par outils/build/cartes-gbif.mjs ; méthode dans docs/sources-cartes.md. Ordre de mise en ligne : ornitheque-data d'abord, puis ce dépôt.
+---
+# POUSSÉ le 2026-10-21 : profil, familles au % de remplissage (v845) ; plus rares et uniques dans le même ordre (v846, app.js?v=420)
+- Familles : % décroissant, puis la plus grosse à % égal. Texte « Les plus complètes d'abord ».
+- Plus rares / uniques : un seul tri _parRarete (palier, puis la moins fréquente, puis le nom) ; avant, les uniques départageaient à l'alphabet (Percnoptère et Coucou geai inversés). Vérifié sur la démo.
+---
 # EN ATTENTE DE MATHIS (2026-10-20) : choix des photos des 540 oiseaux de France
 - Galerie : http://localhost:8765/notes-privees/choix-photos/france-2026-10-20/index.html (11 onglets par groupe d'oiseaux). 540 espèces du Birdydex France, dans son ordre ; 12 candidates iNaturalist chacune (curateurs, puis observations les plus aimées), 6 480 au total ; chaque photo montrée dans les recadrages du site (ronds 38 et 54 px, vignette 52, fiche 16/9, quiz 320 x 200, case Birdydex = carte du profil), sous zoom 0,85.
 - Choix : numéro « espèce-photo » (ex. 142-3), « -0 » = garder l'actuelle. Clic sur le numéro = choisi, gardé d'une page à l'autre (même adresse), barre du haut « Copier ». Une espèce sans choix garde sa photo.
