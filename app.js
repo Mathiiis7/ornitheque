@@ -12227,7 +12227,6 @@ const PHOTO_OVERRIDE_WIKI = {
   // Photos Wiki FR summary : bien cadrees, curatees par les redacteurs Wikipedia.
   'corvus corone': { url:'https://upload.wikimedia.org/wikipedia/commons/2/2a/Carrion_crow_2022_04_05_05_01.jpg' },
   'garrulus glandarius': { url:'https://upload.wikimedia.org/wikipedia/commons/6/6d/Garrulus_glandarius_1_Luc_Viatour.jpg' },
-  'apus apus': { url:'https://upload.wikimedia.org/wikipedia/commons/d/d5/Common_Swift_2025_07_18_02_%28cropped%29.jpg' },
   'picus viridis': { url:'https://odata-inpn.mnhn.fr/photos/images/4/214944.jpg', credit:'Julien Bonnaud / INPN' },
   'falco tinnunculus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/115746261/original.jpg', credit:'iNaturalist' },
   'oriolus oriolus': { url:'https://upload.wikimedia.org/wikipedia/commons/6/69/Rigogolo-%28Oriolus_oriolus%29_Lazio%2C_isola_di_Ventotene_%28LT%29_19.4.2024_%28cropped%29.png' },
@@ -12259,7 +12258,6 @@ const PHOTO_OVERRIDE_WIKI = {
   'dryocopus martius': { url:'https://upload.wikimedia.org/wikipedia/commons/b/b8/87_picchio_nero_%283%29.jpg' },
   'pyrrhocorax graculus': { url:'https://upload.wikimedia.org/wikipedia/commons/4/49/Chocard_%C3%A0_bec_jaune.jpg' },
   'alopochen aegyptiacus': { url:'https://upload.wikimedia.org/wikipedia/commons/6/60/Nile_Goose_%2851171596345%29.jpg' },
-  'porphyrio porphyrio': { url:'https://upload.wikimedia.org/wikipedia/commons/5/55/Western_swamphen_%28Porphyrio_porphyrio%29.jpg' },
   'rissa tridactyla': { url:'https://upload.wikimedia.org/wikipedia/commons/d/d1/Bear_Island_Svalbard_Arctic_%2820095735989%29.jpg' },
   'nycticorax nycticorax': { url:'https://upload.wikimedia.org/wikipedia/commons/1/10/Black-crowned_Night_Heron_by_Tisha_Mukherjee_14.jpg' },
   'circus pygargus': { url:'https://upload.wikimedia.org/wikipedia/commons/7/7a/A_Spooked_Montagu_Harrier_-_with_breakfast_at_her_Feet_%28thumb_like_creature%29.jpg' },
@@ -12416,6 +12414,20 @@ const PHOTO_OVERRIDE_WIKI = {
   'chordeiles minor': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/245136100/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/245136100/medium.jpeg', credit:'James Bailey · CC BY-NC · iNaturalist' },
   'caprimulgus ruficollis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/135125994/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/135125994/medium.jpeg', credit:'Christoph Moning · CC BY · iNaturalist' },
   'caprimulgus europaeus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/161683140/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/161683140/medium.jpeg', credit:'Andrew Bazdyrev · CC BY · iNaturalist' },
+  // Choix de Mathis dans la galerie du 2026-10-21 (notes-privees/choix-photos/) : 92-0, 93-1, 94-1, 95-8, 96-0, 97-9, 98-6, 99-1, 100-4, 101-5, 102-5, 103-5, 104-3, 105-2, 106-1.
+  'apus apus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/40612214/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/40612214/medium.jpg', credit:'Алексей Эбель · CC BY-NC · iNaturalist' },
+  'apus pallidus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/189184432/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/189184432/medium.jpg', credit:'cog2022 · CC BY-NC · iNaturalist' },
+  'apus affinis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/101615915/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/101615915/medium.jpeg', credit:'Ashit Gandhi · CC BY-NC · iNaturalist' },
+  'rallus aquaticus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/211063163/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/211063163/medium.jpg', credit:'Максим Стефанович · CC BY-NC · iNaturalist' },
+  'crex crex': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/139568465/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/139568465/medium.jpg', credit:'Mikhail Ezdakov · CC BY-NC · iNaturalist' },
+  'porzana porzana': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/41827491/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/41827491/medium.jpg', credit:'Dmitry Dubikovskiy · CC BY-NC · iNaturalist' },
+  'paragallinula angulata': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/356966249/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/356966249/medium.jpg', credit:'Julien Renoult · CC BY · iNaturalist' },
+  'gallinula chloropus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/620282104/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/620282104/medium.jpg', credit:'Radu Teodoreanu · CC BY · iNaturalist' },
+  'fulica atra': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/41534613/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/41534613/medium.jpg', credit:'Kholodnyak Svetlana · CC BY-NC · iNaturalist' },
+  'porphyrio porphyrio': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/5693868/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/5693868/medium.jpeg', credit:'Carles Pastor · CC BY-SA · iNaturalist' },
+  'zapornia parva': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/59613960/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/59613960/medium.jpg', credit:'Tatyana Zarubo · CC BY-NC · iNaturalist' },
+  'zapornia pusilla': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/32857758/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/32857758/medium.jpg', credit:'avi_chat · CC BY-NC · iNaturalist' },
+  'grus grus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/13745/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/13745/medium.jpg', credit:'Tarique Sani · CC BY-NC-SA · iNaturalist' },
 };
 async function _fetchWikiPhoto(sci){
   const key = sci.toLowerCase();
