@@ -2826,15 +2826,14 @@ function renderBoard(){
   const ranked=_joueursClasses();
   document.querySelectorAll('#boardModes button').forEach(b=>b.classList.toggle('on', b.dataset.mode===mode));
   const dash='<span class="muted">-</span>';
-  const cell=v=>v?esc(v):dash;
   // Version « I » choisie par Mathis le 2026-10-19 parmi neuf maquettes
   // (notes-privees/maquettes/classement-3/) : deux blocs nommes, « Le joueur » et « Ses
   // oiseaux » ; chaque espece en petite photo suivie de son nom (la photo seule, sans nom, ne
   // se lisait pas dans un tableau) ; les preferees empilees, qui s'ecartent au survol ; la
   // plus rare cerclee de la couleur de son palier ; la derniere en date relative, en couleur
   // si elle a moins d'une semaine ; l'espece de reve en gris tant qu'elle n'est pas vue, en
-  // couleur cochee ensuite ; sous le score, l'ecart avec le premier ; ta ligne teintee. Pas de
-  // pourcentage sur l'objectif (refuse).
+  // couleur cochee ensuite ; sous le score, l'ecart avec le premier ; ta ligne teintee.
+  // Plus de colonne Objectif : il reste sur le profil (Mathis, 2026-10-20, « elle sert a rien »).
   // « La plus rare » est toujours celle calculee d'apres la liste : la « plus belle obs » du
   // profil y passait devant, or c'est une phrase libre, ni forcement rare ni en France.
   // Un nom de profil qu'on ne reconnait pas (un reve ecrit en phrase) reste en texte.
@@ -2876,18 +2875,17 @@ function renderBoard(){
     + (tete>0 ? `<span class="board-ecart" title="${esc(String(c.v(p)))} sur ${esc(String(c.v(ranked[0])))}"><i style="width:${Math.round(c.n(p)/tete*100)}%"></i></span>` : '')
     + `</span></td>`).join('');
   $('#boardList').innerHTML = `<div class="sheet-scroll"><table class="board-sheet">
-    <thead><tr class="board-groupes"><th colspan="4">Le joueur</th><th colspan="4" class="debut-oiseaux">Ses oiseaux</th></tr>
+    <thead><tr class="board-groupes"><th colspan="3">Le joueur</th><th colspan="4" class="debut-oiseaux">Ses oiseaux</th></tr>
     <tr>
       <th class="c-rank">#</th><th>Joueur</th>
       ${scoreTh}
-      <th class="c-txt c-obj">Objectif</th><th class="c-txt debut-oiseaux">Espèces préférées</th>
+      <th class="c-txt debut-oiseaux">Espèces préférées</th>
       <th class="c-txt">La plus rare en France</th><th class="c-txt">Dernière acquisition</th><th class="c-txt">Espèce de rêve</th>
     </tr></thead>
     <tbody>${ranked.map((p,i)=>`<tr class="${i<3?'podium-'+(i+1):''}${p.isMe?' board-moi':''}">
       <td class="c-rank">${i===0?'★':(i+1)}</td>
       <td class="who-cell" style="--series:var(--s${p.si})"><span class="who-in"><span class="dot"></span>${isOnline(p.id)?'<span class="pname-dot" title="en ligne"></span>':''}<button type="button" class="who-name" data-fiche-joueur="${esc(p.id)}" title="Voir le profil de ${esc(p.name)}">${esc(p.name)}</button>${p.isMe?'<span class="youtag">toi</span>':''}</span></td>
       ${scoreTd(p)}
-      <td class="c-txt c-obj">${parseInt(p.goal,10)>0 ? `<span class="board-obj"><span>${p.total} / ${parseInt(p.goal,10)}</span><span class="board-obj-barre"><i style="width:${Math.min(100, Math.round(p.total/parseInt(p.goal,10)*100))}%"></i></span></span>` : cell(p.goal)}</td>
       <td class="c-txt c-esp debut-oiseaux">${pile(_favsDe(p))}</td>
       <td class="c-txt c-esp">${plusRare(p)}</td>
       <td class="c-txt c-esp">${derniere(p)}</td>

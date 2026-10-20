@@ -618,13 +618,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* Sous le score, sa part de celui du premier. */
   .board-score { display:inline-flex; flex-direction:column; align-items:flex-end; gap:5px; }
   .board-ecart { display:block; width:56px; height:4px; border-radius:2px; overflow:hidden; background:color-mix(in srgb, var(--accent) 18%, var(--surface)); }
-  .board-ecart i, .board-obj-barre i { display:block; height:100%; background:var(--accent); }
-  .board-obj { display:flex; flex-direction:column; gap:6px; }
-  /* Au telephone, le tableau defile deja de cote, mais le navigateur serrait l'Objectif a
-     ~100 px : une phrase passait sur 3 ou 4 lignes et toutes les lignes montaient a 101 px
-     (hauteur uniformisee sur la plus haute), mesure le 2026-10-19. */
-  @media (max-width:560px){ .board-sheet .c-obj { min-width:220px; } }
-  .board-obj-barre { display:block; width:120px; height:6px; border-radius:3px; overflow:hidden; background:var(--surface-2); }
+  .board-ecart i { display:block; height:100%; background:var(--accent); }
   /* Une espece : petite photo ronde puis son nom, le tout cliquable (ouvre la fiche). La photo
      seule, sans nom, ne se lisait pas dans un tableau. */
   .board-sheet td.c-esp { max-width:none; }
