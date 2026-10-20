@@ -9999,6 +9999,11 @@ function _profilOngletHtml(p){
     // completees, regions et pays.
     let html = '';
     const parSci = new Map(actives.map(v => [(v.sci || '').toLowerCase(), v]));
+    // Un seul ordre pour « plus rares » et « uniques » : palier, puis la moins frequente, puis le
+    // nom. Departagees l'une a la frequence, l'autre a l'alphabet, les deux listes inversaient
+    // Percnoptere et Coucou geai, tous deux palier 8 (Mathis, 2026-10-21).
+    const _parRarete = (a, b) => (rarityForFilter(b.sci) - rarityForFilter(a.sci)) || (realFreq(a.sci) - realFreq(b.sci))
+      || frName(a.sci, a.common).localeCompare(frName(b.sci, b.common), 'fr');
 
     // 1. Rarete : une barre par palier, aux couleurs de rarete du site (couleurs de donnees,
     // la charte les reserve a ca), puis les cinq plus rares en cartes photo.
@@ -10010,8 +10015,7 @@ function _profilOngletHtml(p){
       // Chiffre sur chaque palier, 0 compris : Mathis veut lire le compte partout (2026-10-19).
       const iMax = items.reduce((b, it, i, arr) => it.n > arr[b].n ? i : b, 0);
       // « plus rares en France » : vues au moins une fois en France (Mathis, 2026-10-20).
-      const rares = actives.filter(v => _countsForRarity(v) && seenFR(v))
-        .sort((a, b) => (rarityForFilter(b.sci) - rarityForFilter(a.sci)) || (realFreq(a.sci) - realFreq(b.sci))).slice(0, 5);
+      const rares = actives.filter(v => _countsForRarity(v) && seenFR(v)).sort(_parRarete).slice(0, 5);
       html += _profilPartie('Rareté', `${moi ? 'Tes' : 'Ses'} espèces par palier, de 1 (la plus commune) à 10 (exceptionnelle).${horsBareme ? ` ${horsBareme} hors barème (vues seulement à l'étranger, ou exotiques).` : ''}`,
         _stBarresHtml(items, iMax, () => true)
         + (rares.length ? `<h4 class="prof-sous-titre">${moi ? 'Tes' : 'Ses'} ${rares.length} plus rares en France</h4><div class="prof-favs">${rares.map(v => _carteEspeceHtml(v.sci, frName(v.sci, v.common))).join('')}</div>` : ''));
@@ -10022,8 +10026,7 @@ function _profilOngletHtml(p){
     if(autres.length){
       const ailleurs = new Set();
       for(const x of autres) for(const v of x._active.values()) ailleurs.add((v.sci || '').toLowerCase());
-      const uniques = actives.filter(v => !ailleurs.has((v.sci || '').toLowerCase()))
-        .sort((a, b) => (rarityForFilter(b.sci) - rarityForFilter(a.sci)) || frName(a.sci, a.common).localeCompare(frName(b.sci, b.common), 'fr'));
+      const uniques = actives.filter(v => !ailleurs.has((v.sci || '').toLowerCase())).sort(_parRarete);
       // Au-dela de 10, on montre « les plus rares en France » : seulement celles vues au moins
       // une fois en France (Mathis, 2026-10-20). Jusqu'a 10, toutes, sans parler de France.
       const montrees = uniques.length > 10 ? uniques.filter(seenFR).slice(0, 10) : uniques;
