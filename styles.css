@@ -620,7 +620,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .board-ecart { display:block; width:56px; height:4px; border-radius:2px; overflow:hidden; background:color-mix(in srgb, var(--accent) 18%, var(--surface)); }
   .board-ecart i { display:block; height:100%; background:var(--accent); }
   /* Une espece : petite photo ronde puis son nom, le tout cliquable (ouvre la fiche). La photo
-     seule, sans nom, ne se lisait pas dans un tableau. */
+     seule, sans nom, ne se lisait pas dans un tableau. Photos passees de 38 a 46 px (36 a 44
+     pour les preferees) : dans des lignes de 62 px, elles paraissaient perdues (Mathis, 2026-10-20). */
   .board-sheet td.c-esp { max-width:none; }
   .board-sp { display:flex; align-items:center; gap:12px; min-width:150px; padding:0; margin:0; border:0; background:none;
     font:inherit; color:inherit; text-align:left; cursor:pointer; }
@@ -628,7 +629,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .board-sp-txt { color:var(--ink); line-height:1.25; }
   .board-sp-sous { display:block; color:var(--ink-3); }
   .board-sp:focus-visible, .board-pile .board-rond:focus-visible { outline:3px solid var(--accent); outline-offset:2px; border-radius:8px; }
-  .board-rond { position:relative; flex:none; display:block; width:38px; height:38px; padding:0; border:0; border-radius:50%; background:none; }
+  .board-rond { position:relative; flex:none; display:block; width:46px; height:46px; padding:0; border:0; border-radius:50%; background:none; }
   .board-ph { display:block; width:100%; height:100%; border-radius:50%; overflow:hidden; background:var(--surface-3); }
   .board-ph img { width:100%; height:100%; object-fit:cover; display:block; }
   /* La plus rare : anneau et chiffre a la couleur de son palier (couleur de donnees). */
@@ -637,7 +638,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     color:#fff; font:800 11px/20px var(--sans); text-align:center; box-shadow:0 0 0 2px var(--surface); }
   /* Espece de reve : en gris dans un cercle en pointilles tant qu'elle n'est pas vue,
      cerclee d'accent et cochee ensuite. */
-  .board-rond.reve { width:44px; height:44px; padding:3px; border:2px dashed var(--line-2); }
+  .board-rond.reve { width:52px; height:52px; padding:3px; border:2px dashed var(--line-2); }
   .board-rond.reve .board-ph { filter:grayscale(1); opacity:.75; }
   .board-rond.exauce { box-shadow:0 0 0 2px var(--surface), 0 0 0 4px var(--accent); }
   /* Ce qui a moins d'une semaine s'allume. */
@@ -646,7 +647,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* Preferees cote a cote, sans bord : empilees, et cerclees de blanc pour se detacher les
      unes des autres, elles paraissaient plus petites (Mathis, 2026-10-20). */
   .board-pile { display:flex; align-items:center; gap:6px; }
-  .board-pile .board-rond { width:36px; height:36px; cursor:pointer; }
+  .board-pile .board-rond { width:44px; height:44px; cursor:pointer; }
   .board-pile-txt { margin-left:8px; }
   .board-pile-txt:first-child { margin-left:0; }
   /* Hauteur uniforme des lignes du board : posée en JS après render (--rowh) sur chaque tr. */
