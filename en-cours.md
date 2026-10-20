@@ -1,4 +1,4 @@
-# COMMITÉ, PAS POUSSÉ (2026-10-21) : plus rares sans exotiques N (v849, app.js?v=423, commit ce83974f)
+# POUSSÉ (2026-10-21) : plus rares sans exotiques N (v849, app.js?v=423, commit ce83974f)
 - « La plus rare en France » (classement) et « Les N plus rares en France » des uniques (profil) écartent désormais toutes les exotiques, N compris. X/P/C l'étaient déjà ; Mike Horn, « Tes 5 plus rares » et la stat du profil écartaient déjà les N.
 - Testé dans la démo : Érismature rousse (N, palier 9) ajoutée à Lina sortait « la plus rare » avant, Torcol (palier 7) après. 11 bancs CONFORME.
 - Non touché : le score de rareté (scoreReal) compte encore les N ; ce n'est pas une phrase « plus rare ».
