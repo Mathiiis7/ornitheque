@@ -12189,8 +12189,6 @@ const PHOTO_OVERRIDE_WIKI = {
   // Batch changement photos utilisateur (2026-09-10) : remplace les photos wiki par defaut
   // (contrepoint, mauvais angle, etc.) par des photos iNat actuelles de qualite.
   'columba palumbus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/108521205/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/108521205/medium.jpg', credit:'iNaturalist' },
-  'aythya fuligula': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/187419966/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/187419966/medium.jpg', credit:'iNaturalist' },
-  'anas platyrhynchos': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/95268822/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/95268822/medium.jpg', credit:'iNaturalist' },
   'sturnus vulgaris': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/32152001/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/32152001/medium.jpg', credit:'iNaturalist' },
   'chroicocephalus ridibundus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/198109587/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/198109587/medium.jpg', credit:'iNaturalist' },
   'streptopelia decaocto': { url:'https://static.inaturalist.org/photos/61919353/original.jpeg', thumb:'https://static.inaturalist.org/photos/61919353/medium.jpeg', credit:'iNaturalist' },
@@ -12217,7 +12215,6 @@ const PHOTO_OVERRIDE_WIKI = {
   // Photo par defaut cropee, on utilise une photo plein cadre du couple.
   'anas poecilorhyncha': { url:'https://upload.wikimedia.org/wikipedia/commons/8/8f/Indian_Spot-billed_Duck.jpg' },
   // Photo par defaut Wikipedia est domestique blanche : on utilise le male sauvage type.
-  'cairina moschata': { url:'https://upload.wikimedia.org/wikipedia/commons/b/b4/Muscovy_Duck_%28Cairina_moschata%29_male.jpg' },
   // Photos iNat curatees par les birders : mieux cadrees que les defaut wiki.
   'amazonetta brasiliensis': { url:'https://static.inaturalist.org/photos/423943353/original.jpeg', credit:'iNaturalist' },
   // Photo Wikipedia EN "Yellow_backed_weaver" : le male en plumage nuptial avec la vraie
@@ -12261,7 +12258,6 @@ const PHOTO_OVERRIDE_WIKI = {
   'dendrocoptes medius': { url:'https://upload.wikimedia.org/wikipedia/commons/5/5f/%D0%A1%D1%80%D0%B5%D0%B4%D0%BD%D0%B8%D0%B9_%D0%BF%D1%91%D1%81%D1%82%D1%80%D1%8B%D0%B9_%D0%B4%D1%8F%D1%82%D0%B5%D0%BB_%28Dendrocoptes_medius%29%2C_%D0%91%D0%B8%D1%82%D1%86%D0%B5%D0%B2%D1%81%D0%BA%D0%B8%D0%B9_%D0%BB%D0%B5%D1%81.jpg' },
   'dryocopus martius': { url:'https://upload.wikimedia.org/wikipedia/commons/b/b8/87_picchio_nero_%283%29.jpg' },
   'pyrrhocorax graculus': { url:'https://upload.wikimedia.org/wikipedia/commons/4/49/Chocard_%C3%A0_bec_jaune.jpg' },
-  'alopochen aegyptiaca': { url:'https://upload.wikimedia.org/wikipedia/commons/6/60/Nile_Goose_%2851171596345%29.jpg' },
   'alopochen aegyptiacus': { url:'https://upload.wikimedia.org/wikipedia/commons/6/60/Nile_Goose_%2851171596345%29.jpg' },
   'porphyrio porphyrio': { url:'https://upload.wikimedia.org/wikipedia/commons/5/55/Western_swamphen_%28Porphyrio_porphyrio%29.jpg' },
   'rissa tridactyla': { url:'https://upload.wikimedia.org/wikipedia/commons/d/d1/Bear_Island_Svalbard_Arctic_%2820095735989%29.jpg' },
@@ -12349,6 +12345,36 @@ const PHOTO_OVERRIDE_WIKI = {
   'cygnus olor': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/482124381/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/482124381/medium.jpeg', credit:'Пакалнис Дэниел · CC BY-NC · iNaturalist' },
   'cygnus atratus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/438378692/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/438378692/medium.jpg', credit:'Caiden · CC BY-NC · iNaturalist' },
   'cygnus columbianus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/183205026/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/183205026/medium.jpeg', credit:'CC0 · iNaturalist' },
+  // Choix de Mathis dans la galerie du 2026-10-20 (notes-privees/choix-photos/) : 21-5, 22-2, 23-3, 24-4, 25-4, 26-2, 27-1, 28-7, 29-6, 30-1, 31-3, 32-1, 33-6, 34-5, 35-12, 36-12, 37-7, 38-3, 39-1, 40-1, 41-10, 42-10, 43-3, 44-11, 45-4, 46-11, 48-4, 49-7, 50-2.
+  'cygnus cygnus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/261633266/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/261633266/medium.jpeg', credit:'Ramunė Vakarė · CC BY-NC-SA · iNaturalist' },
+  'alopochen aegyptiaca': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/372916483/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/372916483/medium.jpg', credit:'Nik Borrow · CC BY-NC · iNaturalist' },
+  'tadorna ferruginea': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/280443135/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/280443135/medium.jpg', credit:'holycrab · CC BY · iNaturalist' },
+  'tadorna tadorna': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/392382665/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/392382665/medium.jpg', credit:'thegreatdodo · CC BY-NC · iNaturalist' },
+  'cairina moschata': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/9455880/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/9455880/medium.jpg', credit:'davy · CC BY-NC · iNaturalist' },
+  'callonetta leucophrys': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/447978161/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/447978161/medium.jpeg', credit:'joseluisblazquez · CC BY-NC · iNaturalist' },
+  'aix sponsa': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/171626985/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/171626985/medium.jpg', credit:'Kent Ross · CC BY-NC · iNaturalist' },
+  'aix galericulata': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/464334564/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/464334564/medium.jpg', credit:'Manuel Raab · CC BY-NC · iNaturalist' },
+  'sibirionetta formosa': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/336375646/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/336375646/medium.jpg', credit:'Paul Werner Süss · CC BY-NC · iNaturalist' },
+  'spatula querquedula': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/188324274/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/188324274/medium.jpg', credit:'Ксения Соварцева · CC BY-NC · iNaturalist' },
+  'spatula versicolor': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/31580317/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/31580317/medium.jpeg', credit:'CC0 · iNaturalist' },
+  'spatula discors': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/286292345/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/286292345/medium.jpeg', credit:'Ed O\'Connor · CC BY-NC · iNaturalist' },
+  'spatula clypeata': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/332366745/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/332366745/medium.jpg', credit:'Andrew Thomas · CC BY-NC · iNaturalist' },
+  'mareca strepera': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/84703212/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/84703212/medium.jpeg', credit:'Bridget Spencer · CC BY-NC · iNaturalist' },
+  'mareca penelope': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/111649225/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/111649225/medium.jpeg', credit:'zametnya · CC BY-NC · iNaturalist' },
+  'mareca americana': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/2710829/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/2710829/medium.jpg', credit:'JimBob\'s Birds · CC BY-NC · iNaturalist' },
+  'mareca sibilatrix': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/447798047/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/447798047/medium.jpeg', credit:'joseluisblazquez · CC BY-NC · iNaturalist' },
+  'anas platyrhynchos': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/28620553/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/28620553/medium.jpg', credit:'Alberto_VO5 · CC BY-NC · iNaturalist' },
+  'anas bahamensis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/173806806/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/173806806/medium.jpg', credit:'Mariano Fernández Kloster · CC BY-NC · iNaturalist' },
+  'anas acuta': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/353707196/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/353707196/medium.jpg', credit:'Matt Felperin · CC BY · iNaturalist' },
+  'anas crecca': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/353673617/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/353673617/medium.jpg', credit:'eric gofreed · CC BY-NC · iNaturalist' },
+  'anas flavirostris': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/244577514/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/244577514/medium.jpeg', credit:'Julián Rolando Tocce · CC BY-NC · iNaturalist' },
+  'marmaronetta angustirostris': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/181673994/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/181673994/medium.jpg', credit:'jjulio2000 · CC BY-NC · iNaturalist' },
+  'netta rufina': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/580132577/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/580132577/medium.jpg', credit:'Vasily Kalinichenko · CC BY-NC · iNaturalist' },
+  'aythya ferina': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/232744062/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/232744062/medium.jpg', credit:'Яна · CC BY-NC · iNaturalist' },
+  'aythya collaris': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/603560508/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/603560508/medium.jpg', credit:'Andrew Thomas · CC BY-NC · iNaturalist' },
+  'aythya fuligula': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/6183058/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/6183058/medium.jpg', credit:'Katja Schulz · CC BY · iNaturalist' },
+  'aythya marila': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/111538645/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/111538645/medium.jpeg', credit:'guyincognito · CC BY-NC · iNaturalist' },
+  'aythya affinis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/108020246/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/108020246/medium.jpg', credit:'Ad Konings · CC BY-NC · iNaturalist' },
 };
 async function _fetchWikiPhoto(sci){
   const key = sci.toLowerCase();
