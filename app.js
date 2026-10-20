@@ -2829,7 +2829,7 @@ function renderBoard(){
   // Version « I » choisie par Mathis le 2026-10-19 parmi neuf maquettes
   // (notes-privees/maquettes/classement-3/) : deux blocs nommes, « Le joueur » et « Ses
   // oiseaux » ; chaque espece en petite photo suivie de son nom (la photo seule, sans nom, ne
-  // se lisait pas dans un tableau) ; les preferees empilees, qui s'ecartent au survol ; la
+  // se lisait pas dans un tableau) ; les preferees cote a cote, sans bord blanc ; la
   // plus rare cerclee de la couleur de son palier ; la derniere en date relative, en couleur
   // si elle a moins d'une semaine ; l'espece de reve en gris tant qu'elle n'est pas vue, en
   // couleur cochee ensuite ; sous le score, l'ecart avec le premier ; ta ligne teintee.

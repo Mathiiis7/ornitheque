@@ -643,11 +643,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* Ce qui a moins d'une semaine s'allume. */
   .board-neuf { color:var(--accent-ink); font-weight:600; }
   .board-neuf:not(.sans-point)::before { content:''; display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--accent); margin-right:6px; vertical-align:1px; }
-  /* Preferees empilees, qui s'ecartent au survol pour montrer chaque photo. */
-  .board-pile { display:flex; align-items:center; }
-  .board-pile .board-rond { width:36px; height:36px; cursor:pointer; box-shadow:0 0 0 2px var(--surface); transition:margin-left .18s ease; }
-  .board-pile .board-rond + .board-rond { margin-left:-12px; }
-  .board-pile:hover .board-rond + .board-rond { margin-left:4px; }
+  /* Preferees cote a cote, sans bord : empilees, et cerclees de blanc pour se detacher les
+     unes des autres, elles paraissaient plus petites (Mathis, 2026-10-20). */
+  .board-pile { display:flex; align-items:center; gap:6px; }
+  .board-pile .board-rond { width:36px; height:36px; cursor:pointer; }
   .board-pile-txt { margin-left:8px; }
   .board-pile-txt:first-child { margin-left:0; }
   /* Hauteur uniforme des lignes du board : posée en JS après render (--rowh) sur chaque tr. */
@@ -3276,10 +3275,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   }
 
   @media (pointer: coarse) {
-    /* Classement : au doigt, les preferees ne s'empilent plus (pas de survol pour les
-       ecarter) et chaque espece est une cible de doigt. */
+    /* Classement : au doigt, chaque espece est une cible de doigt. */
     .board-pile .board-rond { width:52px; height:52px; }
-    .board-pile .board-rond + .board-rond { margin-left:4px; }
     .board-sp { min-height:52px; }
 
     /* Espèce débloquée : le bouton de la fiche et « Continuer » */
