@@ -10044,16 +10044,17 @@ function _profilOngletHtml(p){
       const e = parFam.get(f); e.total++; if(vu) e.vues++;
     }
     const fams = [...parFam.entries()].filter(([, e]) => e.vues)
-      // Les plus fournies d'abord : triees au pourcentage, les familles d'une seule espece
-      // (« 1 / 1 ») passaient devant les canards ou les rapaces.
-      .sort((a, b) => (b[1].vues - a[1].vues) || (b[1].vues / b[1].total - a[1].vues / a[1].total));
+      // Les plus completes d'abord, au pourcentage (Mathis, 2026-10-21 : au nombre d'especes vues,
+      // 5 / 56 canards passaient devant 3 / 5 hirondelles). A pourcentage egal, la plus grosse
+      // d'abord, pour que 6 / 6 mesanges precede 1 / 1.
+      .sort((a, b) => (b[1].vues / b[1].total - a[1].vues / a[1].total) || (b[1].vues - a[1].vues));
     if(fams.length){
       const completes = fams.filter(([, e]) => e.vues === e.total).length;
       const ligne = ([f, e]) => `<div class="prof-barre-ligne">
           <span class="prof-barre-nom">${esc(f)}</span>
           <span class="prof-barre"><span style="width:${Math.max(2, Math.round(e.vues / e.total * 100))}%"></span></span>
           <span class="prof-barre-n">${e.vues} / ${e.total}</span></div>`;
-      html += _profilPartie('Familles', `${fams.length} familles commencées sur ${parFam.size} présentes en France${completes ? `, dont ${completes} complète${completes > 1 ? 's' : ''}` : ''}. Les plus fournies d'abord.`,
+      html += _profilPartie('Familles', `${fams.length} familles commencées sur ${parFam.size} présentes en France${completes ? `, dont ${completes} complète${completes > 1 ? 's' : ''}` : ''}. Les plus complètes d'abord.`,
         '<div class="prof-barres">' + fams.slice(0, 12).map(ligne).join('') + '</div>'
         + (fams.length > 12 ? `<details class="prof-plus"><summary>Voir les ${fams.length - 12} autres familles</summary><div class="prof-barres">${fams.slice(12).map(ligne).join('')}</div></details>` : ''));
     }
