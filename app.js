@@ -12246,7 +12246,6 @@ const PHOTO_OVERRIDE_WIKI = {
   'circus pygargus': { url:'https://upload.wikimedia.org/wikipedia/commons/7/7a/A_Spooked_Montagu_Harrier_-_with_breakfast_at_her_Feet_%28thumb_like_creature%29.jpg' },
   'elanus caeruleus': { url:'https://upload.wikimedia.org/wikipedia/commons/2/2f/Black-winged_kite_%28Elanus_caeruleus_caeruleus%29_Serengeti.jpg' },
   'haliaeetus albicilla': { url:'https://upload.wikimedia.org/wikipedia/commons/9/90/Fighting_white-tailed_eagles_%28Haliaeetus_albicilla%29_%281%29.jpg' },
-  'coracias garrulus': { url:'https://upload.wikimedia.org/wikipedia/commons/e/ec/Coracias_garrulus%2C_Alentejo%2C_Portugal.jpg' },
   'nucifraga caryocatactes': { url:'https://upload.wikimedia.org/wikipedia/commons/5/54/Nucifraga_caryocatactes_Davos_2.jpg' },
   'remiz pendulinus': { url:'https://upload.wikimedia.org/wikipedia/commons/6/66/Chapim-de-faces-pretas_%28Remiz_pendulinus%29_%2852712339112%29.jpg' },
   'acrocephalus palustris': { url:'https://upload.wikimedia.org/wikipedia/commons/a/af/Acrocephalus_palustris._Lazaritskaya_Luka.jpg' },
@@ -12588,6 +12587,10 @@ const PHOTO_OVERRIDE_WIKI = {
   'melopsittacus undulatus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/177531748/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/177531748/medium.jpg', credit:'dancg · CC BY-NC · iNaturalist' },
   'myiopsitta monachus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/159010359/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/159010359/medium.jpg', credit:'Juan Emilio · CC BY-SA · iNaturalist' },
   'psittacara mitratus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/587457443/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/587457443/medium.jpg', credit:'Eric Johnson · CC BY-NC · iNaturalist' },
+  // Choix de Mathis dans la galerie du 2026-10-21 (notes-privees/choix-photos/) : 183-1, 267-1, 318-15, 321-0.
+  'uria aalge': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/96826556/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/96826556/medium.jpg', credit:'Анна Голубева · CC BY-NC-ND · iNaturalist' },
+  'egretta gularis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/119813364/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/119813364/medium.jpeg', credit:'amolmm · CC BY-NC · iNaturalist' },
+  'coracias garrulus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/168391248/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/168391248/medium.jpg', credit:'Геннадий · CC BY-NC · iNaturalist' },
 };
 async function _fetchWikiPhoto(sci){
   const key = sci.toLowerCase();
