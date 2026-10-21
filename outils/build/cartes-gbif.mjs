@@ -44,6 +44,12 @@ const PARTS = SEUL ? 1 : +(process.env.PARTS || 6);
 const CASE = 0.25, NI = 1440, NJ = 720, N = NI * NJ;
 const OBS_MIN = 2, EFFORT_MIN = 30, RETENUE = 300;
 const SIGMA = 1.4, RAYON = 3, NIV = +(process.env.NIV || 32);
+// Mois voisins (option VOISINS=1, essayée le 2026-10-21, docs/cartes-combler-les-trous.md section 3) : la
+// carte d'un mois emprunte les observations et l'effort des deux mois d'à côté, avec un poids de moitié,
+// seulement dans les cases où l'effort du mois est sous 300 observations. +10 à +69 % de cases par mois sur
+// 23 espèces ; sans la condition d'effort faible, le Martinet noir passait de 7 à 49 cases en Europe en janvier.
+// La carte de l'année ne change pas.
+const VOISINS = process.env.VOISINS === '1', POIDS_VOISINS = 0.5, EMPRUNT_SOUS = 300;
 const VOISINS_DIJ = [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]];
 
 const lire = f => JSON.parse(fs.readFileSync(path.join(SOURCES, f), 'utf8'));
@@ -107,11 +113,28 @@ function lisser(src, W, H) {
 
 // ---------- Effort mondial par mois ----------
 const effort = Array.from({ length: 12 }, () => new Float64Array(N));
-let effortLisse = null, effortAn = null, effortAnLisse = null;
+let effortLisse = null, effortAn = null, effortAnLisse = null, effortVoisins = null, effortVoisinsLisse = null;
 function preparerEffort() {
   effortLisse = effort.map(e => lisser(e, NI, NJ));
   effortAn = new Float64Array(N); effortAnLisse = new Float64Array(N);
   effort.forEach((e, m) => { for (let k = 0; k < N; k++) { effortAn[k] += e[k]; effortAnLisse[k] += effortLisse[m][k]; } });
+  if (VOISINS) {
+    effortVoisins = effort.map((e, m) => {
+      const p = effort[(m + 11) % 12], s = effort[(m + 1) % 12], o = new Float64Array(N);
+      for (let k = 0; k < N; k++) o[k] = e[k] + (e[k] < EMPRUNT_SOUS ? POIDS_VOISINS : 0) * (p[k] + s[k]);
+      return o;
+    });
+    effortVoisinsLisse = effortVoisins.map(e => lisser(e, NI, NJ));
+  }
+}
+// observations d'un mois avec l'emprunt aux mois voisins (fenêtre W x H en (iw, jw))
+function obsVoisins(parMois, m, W, H, iw, jw) {
+  const o = parMois[m], p = parMois[(m + 11) % 12], s = parMois[(m + 1) % 12], out = new Float64Array(W * H);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const l = y * W + x, w = effort[m][(jw + y) * NI + iw + x] < EMPRUNT_SOUS ? POIDS_VOISINS : 0;
+    out[l] = o[l] + w * (p[l] + s[l]);
+  }
+  return out;
 }
 
 // ---------- Une image d'une espèce : fréquences sur la fenêtre ----------
@@ -211,7 +234,9 @@ function carteEspece(code, mois, presenceSeule) {
   const an = new Float64Array(W * H);
   parMois.forEach(o => { for (let k = 0; k < an.length; k++) an[k] += o[k]; });
   const frames = [valeursImage(an, W, H, iw, jw, presenceSeule ? null : effortAn, effortAnLisse),
-    ...parMois.map((o, m) => valeursImage(o, W, H, iw, jw, presenceSeule ? null : effort[m], effortLisse[m]))];
+    ...parMois.map((o, m) => presenceSeule ? valeursImage(o, W, H, iw, jw, null, effortLisse[m])
+      : VOISINS ? valeursImage(obsVoisins(parMois, m, W, H, iw, jw), W, H, iw, jw, effortVoisins[m], effortVoisinsLisse[m])
+      : valeursImage(o, W, H, iw, jw, effort[m], effortLisse[m]))];
   // cadre commun aux 13 images
   let a0 = W, a1 = -1, b0 = H, b1 = -1;
   for (const f of frames) for (let l = 0; l < f.length; l++) if (!Number.isNaN(f[l])) {
