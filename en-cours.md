@@ -3,7 +3,14 @@
 - Testé dans la démo : Érismature rousse (N, palier 9) ajoutée à Lina sortait « la plus rare » avant, Torcol (palier 7) après. 11 bancs CONFORME.
 - Non touché : le score de rareté (scoreReal) compte encore les N ; ce n'est pas une phrase « plus rare ».
 ---
-# EN ATTENTE DE MATHIS (2026-10-21) : cartes de répartition, ÉTAT DES LIEUX en images
+# EN ATTENTE DE MATHIS (2026-10-21) : recherche approfondie des sources de données, FAITE
+- Rapport : docs/sources-donnees-oiseaux.md ; fiches détaillées (6 zones, ~175 sources, URL et dates) : notes-privees/essai-cartes/sources-recherche/ ; carte du monde des sources ajoutée en bas de la page cartes-etat.
+- Revérifié à la source : eBird absent de GBIF en 2025-2026 (jeu publié une fois par an, dernière fois le 08/08/2025) ; Russie 2015+ : iNat 2,68 M, RU-BIRDS 1,75 M, eBird 1,15 M ; API ABAP ouverte sans compte ; BirdLife clauses 11 et 13 ; Article 12 CC BY 4.0 ; Rego 2023 et Lumbierres 2022 CC0 ; EBBA1 CC BY ; INPN hors service du 26/07/2025 au 22/07/2026, OpenObs « dans les prochains mois ».
+- Non lu : conditions exactes du fichier complet d'eBird (page refusée à l'outil) : à lire par Mathis avant de le demander.
+- Décision de méthode ouverte : mélanger des observations isolées (iNat, RU-BIRDS) aux listes eBird fausse le dénominateur.
+- Messages possibles (par Mathis, rien d'envoyé) : BirdLife (clause 13 + Lumbierres), ABAP, LPO Faune-France + Faune-Guyane, Sibecocenter, WABDaB, compte EBBA2.
+- Vu en passant, PAS corrigé : index.html ligne 1004 annonce CC BY 4.0 alors que GBIF classe dl.rb9sut en CC BY-NC (revérifié).
+# (même jour, avant) ÉTAT DES LIEUX des cartes en images
 - Mathis « perdu » devant les décisions de la maquette (il demandait « on peut pas juste utiliser l'aire iNaturalist ? ») : page http://localhost:8765/notes-privees/maquettes/cartes-etat/index.html (etat.mjs la refait). Tout sur le Bulbul des jardins, cartes liées : d'où viennent les trous (carte + effort), schéma des trois familles (mieux utiliser / ajouter des observations / estimer), mois voisins en janvier (1 915 -> 3 069 cases, moyenne +59 %), autres bases GBIF (+2 810 cases sur 8 446 dans le cadre), aire iNaturalist de trois façons (près des observations x3,1 ; toute l'aire x5,2, Sahara rempli ; aire seule).
 - Contrôle : le janvier « aujourd'hui » recalculé par etat.mjs est identique au pixel près à cartes-locales/combul2-m.png (74 907 pixels, 0 différent).
 - Proposé sur la page : 1. mois voisins tout de suite ; 2. demande GBIF préparée par moi, lancée par lui ; 3. teinte près des observations s'il la valide. Déconseillé : toute l'aire, aire seule.
