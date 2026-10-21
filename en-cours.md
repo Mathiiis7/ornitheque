@@ -3,7 +3,13 @@
 - Testé dans la démo : Érismature rousse (N, palier 9) ajoutée à Lina sortait « la plus rare » avant, Torcol (palier 7) après. 11 bancs CONFORME.
 - Non touché : le score de rareté (scoreReal) compte encore les N ; ce n'est pas une phrase « plus rare ».
 ---
-# EN ATTENTE DE MATHIS (2026-10-21) : recherche approfondie des sources de données, FAITE
+# EN ATTENTE DE MATHIS (2026-10-21) : DEMANDE GBIF « TOUTES BASES » PRÊTE, à lancer par lui
+- Choix de Mathis : UNE seule source, la plus complète et utilisable sans problème -> GBIF toutes bases (eBird compris), un seul téléchargement, licence d'ensemble CC BY-NC (CC0 + CC BY + CC BY-NC, rien d'autre chez les observations humaines d'oiseaux, compté le 21/10).
+- Requête : notes-privees/essai-cartes/gbif-requete-tout.json, VALIDÉE par l'API GBIF (/request/validate, 201). Oiseaux (class = 'Aves' OU v_class = 'Aves' : classKey = 212 rendait 0 ligne le 01/10, la base SQL suit une autre classification où Aves = « V2 »), depuis 2015, observations humaines seulement (écarte les balises GPS), incertitude <= 10 km, mois connu ; regroupée par species, v_scientificName, mois, case 0,25° et les 8 premiers caractères de la clé du jeu (« jeu »), pour trier ensuite par source : dédoublonner le Nigeria, écarter le baguage TIPU / Operation Baltic, le Batumi Raptor Count, Faune-France par commune, et traiter à part les listes complètes (eBird, SABAP2, Nigeria, Kenya) et les observations isolées.
+- Lancement : powershell -ExecutionPolicy Bypass -File notes-privees/essai-cartes/lancer-gbif.ps1 -Requete gbif-requete-tout.json -Cle gbif-cle-tout.txt (le script prend désormais -Cle, pour ne pas écraser gbif-cle.txt). État sans mot de passe : https://api.gbif.org/v1/occurrence/download/<clé>.
+- eBird s'y arrête fin 2024 : refaire ce même téléchargement quand GBIF publiera eBird 2025.
+- Ensuite : lire le zip en flux, compter par jeu, choisir la règle de mélange (montrer l'avant/après sur quelques oiseaux à Mathis), puis adapter outils/build/cartes-gbif.mjs.
+# (même jour, avant) recherche approfondie des sources de données, FAITE
 - Rapport : docs/sources-donnees-oiseaux.md ; fiches détaillées (6 zones, ~175 sources, URL et dates) : notes-privees/essai-cartes/sources-recherche/ ; carte du monde des sources ajoutée en bas de la page cartes-etat.
 - Revérifié à la source : eBird absent de GBIF en 2025-2026 (jeu publié une fois par an, dernière fois le 08/08/2025) ; Russie 2015+ : iNat 2,68 M, RU-BIRDS 1,75 M, eBird 1,15 M ; API ABAP ouverte sans compte ; BirdLife clauses 11 et 13 ; Article 12 CC BY 4.0 ; Rego 2023 et Lumbierres 2022 CC0 ; EBBA1 CC BY ; INPN hors service du 26/07/2025 au 22/07/2026, OpenObs « dans les prochains mois ».
 - Non lu : conditions exactes du fichier complet d'eBird (page refusée à l'outil) : à lire par Mathis avant de le demander.
