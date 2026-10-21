@@ -3,7 +3,11 @@
 - Testé dans la démo : Érismature rousse (N, palier 9) ajoutée à Lina sortait « la plus rare » avant, Torcol (palier 7) après. 11 bancs CONFORME.
 - Non touché : le score de rareté (scoreReal) compte encore les N ; ce n'est pas une phrase « plus rare ».
 ---
-# EN ATTENTE DE MATHIS (2026-10-21) : cartes de répartition, MAQUETTE « aire estimée » faite
+# EN ATTENTE DE MATHIS (2026-10-21) : cartes de répartition, ÉTAT DES LIEUX en images
+- Mathis « perdu » devant les décisions de la maquette (il demandait « on peut pas juste utiliser l'aire iNaturalist ? ») : page http://localhost:8765/notes-privees/maquettes/cartes-etat/index.html (etat.mjs la refait). Tout sur le Bulbul des jardins, cartes liées : d'où viennent les trous (carte + effort), schéma des trois familles (mieux utiliser / ajouter des observations / estimer), mois voisins en janvier (1 915 -> 3 069 cases, moyenne +59 %), autres bases GBIF (+2 810 cases sur 8 446 dans le cadre), aire iNaturalist de trois façons (près des observations x3,1 ; toute l'aire x5,2, Sahara rempli ; aire seule).
+- Contrôle : le janvier « aujourd'hui » recalculé par etat.mjs est identique au pixel près à cartes-locales/combul2-m.png (74 907 pixels, 0 différent).
+- Proposé sur la page : 1. mois voisins tout de suite ; 2. demande GBIF préparée par moi, lancée par lui ; 3. teinte près des observations s'il la valide. Déconseillé : toute l'aire, aire seule.
+# (même jour, juste avant) MAQUETTE « aire estimée » faite
 - Maquette : http://localhost:8765/notes-privees/maquettes/aire-estimee/index.html (donnees.mjs la refait). Bulbul des jardins, Huppe, Mésange charbonnière, Tyran quiquivi ; pour chacun, 3 cartes liées : aujourd'hui / teinte partout / teinte seulement où personne n'observe. Pie bavarde en texte (0 % de nos cases dans son aire, refusée par la règle des 80 %).
 - Tranché par moi : cases colorées lues dans les VRAIES cartes (cartes-locales/<code>-a.png) ; 110 km = disque de 4 cases (le carré de l'essai faisait des carrés de 9 x 9 au Sahara) ; « personne n'observe » = moins de 30 observations eBird dans la case même (l'effort lissé prête l'effort des voisines : sur 12 542 cases teintées du bulbul, 10 596 « observées » au lissé, 707 en vrai) ; teinte rgb(70,100,160) à 35 %, posée sous les couleurs et seulement hors des cases colorées. Alignement mesuré : 0,1 px entre les deux couches.
 - Gains mesurés (surface x) : bulbul 3,2 / 3,1 ; huppe 3,1 / 2,7 ; mésange 2,0 / 1,8 ; tyran 1,7 / 1,6 (partout / où personne n'observe).
