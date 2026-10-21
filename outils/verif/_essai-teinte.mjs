@@ -1,7 +1,8 @@
-// Essai de la teinte « aire estimée » dans la fiche espèce (2026-10-21), sur la démo servie par
+// Lancé à la main seulement : le tiret bas du nom le fait sauter par tous.mjs, qui importe (donc exécute)
+// tous les autres fichiers du dossier. Essai de la teinte « aire estimée » dans la fiche espèce (2026-10-21), sur la démo servie par
 // http://localhost:8765 (ou PORT=...). Pour chaque espèce : la teinte est-elle là quand elle doit l'être,
 // SOUS la carte, avec sa légende et son crédit ; combien de temps pour la dessiner ; capture d'écran dans
-// le dossier SORTIE. Lancé à la main : node outils/verif/essai-teinte.mjs
+// le dossier SORTIE. node outils/verif/_essai-teinte.mjs
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
