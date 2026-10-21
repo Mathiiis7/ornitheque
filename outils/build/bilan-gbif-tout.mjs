@@ -11,7 +11,7 @@
 // Les en-têtes du fichier sont en minuscules (la validation GBIF renvoie la requête normalisée) : les
 // colonnes sont lues par leur nom, pas par leur place.
 import { spawn } from 'node:child_process';
-import readline from 'node:readline';
+
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -28,6 +28,10 @@ const jeux = lire('gbif-jeux.json');
 const classeDe = new Map(jeux.map(j => [j.prefixe, j.classe]));
 const CLASSES = ['ebird', 'listes', 'isolees', 'ecarter'];
 
+// Un morceau d'une chaîne garde en mémoire toute la chaîne d'où il vient : un code de case rangé tel quel
+// dans un cache retenait le morceau de 64 Ko lu avec lui, et la mémoire saturait vers 30 millions de lignes
+// (2026-10-21). On range donc une copie, une seule fois par clé nouvelle.
+const copie = s => Buffer.from(s, 'utf8').toString('utf8');
 // noms : même rattachement que cartes-gbif.mjs (nom exact, renommages, binôme)
 const taxo = lire('taxonomie-ebird.json'), renommages = lire('gbif-renommages.json');
 const indexEspece = new Map(taxo.map((t, i) => [t.sciName, i]));
@@ -40,7 +44,7 @@ function especeDe(nom) {
     const deux = nom.split(' ').slice(0, 2).join(' ');
     for (const essai of [nom, renommages[nom], deux, renommages[deux]]) if (essai !== undefined && indexEspece.has(essai)) { r = indexEspece.get(essai); break; }
   }
-  cacheNom.set(nom, r);
+  cacheNom.set(copie(nom), r);
   return r;
 }
 // cases : même lecture du code GBIF_DMSGCode que cartes-gbif.mjs (coin sud-ouest)
@@ -53,7 +57,7 @@ function indexCase(code) {
   const lon = dms(code.slice(a + 3, b)), lat = dms(code.slice(b + 3));
   const i = Math.round((lon + 180) / CASE), j = Math.round((90 - (lat + CASE)) / CASE);
   k = i >= 0 && i < NI && j >= 0 && j < NJ ? j * NI + i : -1;
-  cacheCase.set(code, k);
+  cacheCase.set(copie(code), k);
   return k;
 }
 
@@ -63,24 +67,40 @@ const nonRattaches = new Map();
 let lignes = 0, obs = 0, horsGrille = 0, inconnus = 0, rattachees = 0;
 let col = null;
 const t0 = Date.now();
-const entree = ZIP.endsWith('.zip') ? spawn('unzip', ['-p', ZIP]).stdout : fs.createReadStream(ZIP);
-for await (const l of readline.createInterface({ input: entree, crlfDelay: Infinity })) {
-  if (!col) { col = Object.fromEntries(l.toLowerCase().split('\t').map((c, i) => [c, i])); continue; }
+function traiter(l) {
+  if (l.endsWith('\r')) l = l.slice(0, -1);
+  if (!l) return;
+  if (!col) { col = Object.fromEntries(l.toLowerCase().split('\t').map((c, i) => [c, i])); return; }
   const c = l.split('\t');
   const n = +c[col.n], jeu = c[col.jeu];
   lignes++; obs += n;
   let cl = classeDe.get(jeu);
   if (!cl) { cl = 'isolees'; inconnus += n; }
   parClasse[cl] += n;
-  parJeu.set(jeu, (parJeu.get(jeu) || 0) + n);
+  parJeu.set(parJeu.has(jeu) ? jeu : copie(jeu), (parJeu.get(jeu) || 0) + n);
   const k = indexCase(c[col.cellcode]);
-  if (k < 0) { horsGrille += n; continue; }
+  if (k < 0) { horsGrille += n; return; }
   effort[cl][k] += n;
   const nom = c[col.v_scientificname];
   if (especeDe(nom) >= 0 || especeDe(c[col.species]) >= 0) rattachees += n;
-  else nonRattaches.set(nom, (nonRattaches.get(nom) || 0) + n);
+  else nonRattaches.set(nonRattaches.has(nom) ? nom : copie(nom), (nonRattaches.get(nom) || 0) + n);
   if (lignes % 10e6 === 0) console.log(lignes / 1e6, 'M lignes,', Math.round((Date.now() - t0) / 1000), 's');
 }
+// Lecture par morceaux, traités dans l'événement même : le flux attend qu'on ait fini. L'itérateur de
+// readline, lui, empile les lignes plus vite qu'on ne les traite : mémoire saturée sur les 6,7 Go du fichier
+// (plantage du 2026-10-21).
+const entree = ZIP.endsWith('.zip') ? spawn('unzip', ['-p', ZIP]).stdout : fs.createReadStream(ZIP);
+entree.setEncoding('utf8');
+await new Promise((ok, ko) => {
+  let reste = '';
+  entree.on('data', morceau => {
+    const ls = (reste + morceau).split('\n');
+    reste = ls.pop();
+    for (const l of ls) traiter(l);
+  });
+  entree.on('end', () => { traiter(reste); ok(); });
+  entree.on('error', ko);
+});
 for (const cl of CLASSES) fs.writeFileSync(path.join(SORTIE, `effort-${cl}.bin`), Buffer.from(effort[cl].buffer));
 
 // cases qui atteignent le seuil : eBird seul, puis en ajoutant les listes complètes, puis tout (sauf écartés)
