@@ -22,9 +22,10 @@ comme pour BirdLife et Cornell Status & Trends.
 2. **Le fichier complet d'eBird s'obtient sur simple demande** : un compte eBird gratuit et une courte
    description du projet, accord « en général sous 7 jours », mis à jour chaque mois. Il apporte ce que GBIF
    n'a pas : le numéro de liste, le protocole, la durée et la mention « liste complète », donc de vraies
-   fréquences, plus 2025 et 2026. Les conditions de Status & Trends disent elles-mêmes qu'elles ne
-   s'appliquent pas aux données brutes : l'ancien refus ne vaut pas ici. **Le texte exact des conditions
-   eBird n'a pas pu être lu** (la page refuse l'outil) : à lire par Mathis avant de demander.
+   fréquences, plus 2025 et 2026. D'après le PDF des conditions de Status & Trends lu par la recherche
+   (pas relu : la page en ligne ne renvoie à l'outil qu'une coquille vide), elles « do not apply to raw eBird
+   Data » : l'ancien refus ne vaudrait donc pas ici. **Le texte exact des conditions eBird n'a pas pu être
+   lu** (la page refuse l'outil) : à lire par Mathis avant de demander, avec cette phrase de Status & Trends.
 3. **En Russie, le gain est déjà sur GBIF** (**revérifié**) : depuis 2015, 5,89 M d'oiseaux, dont
    iNaturalist 2,68 M, RU-BIRDS.RU 1,75 M et eBird seulement 1,15 M (19 %). Les deux premiers sont sous des
    licences qui nous vont. Il suffit de les mettre dans le deuxième téléchargement GBIF. Une question de
@@ -52,7 +53,7 @@ comme pour BirdLife et Cornell Status & Trends.
 |---|---|---|---|
 | Mois voisins | +59 % de cases par mois pour le bulbul, sans nouvelle donnée | moi | prêt (`docs/cartes-combler-les-trous.md`) |
 | Deuxième téléchargement GBIF | Russie et Sibérie, Afrique australe, Nigeria, Kenya, Scandinavie, Australie (Birdata, 9,1 M depuis 2015) | je prépare, Mathis lance | à faire ; filtres ci-dessous |
-| Refaire le téléchargement eBird quand 2025 arrive sur GBIF | 2025 et 2026 (environ 250 M de fiches par an) | Mathis lance | attendre la publication |
+| Refaire le téléchargement eBird quand 2025 arrive sur GBIF | 2025 et 2026 (pour comparer : 2024 seule compte 248,7 M de fiches) | Mathis lance | attendre la publication |
 | Fichier complet d'eBird | vraies fréquences (listes complètes), mois à jour | Mathis : compte et formulaire | lire d'abord les conditions |
 | Aire iNaturalist en teinte pâle | surface x 1,6 à 3,1 | moi | maquette faite |
 | Aires en plus (Amazonie, Europe) | aires plus justes là où iNaturalist se trompe | moi | plus tard |
@@ -183,5 +184,6 @@ Classés par ce qu'ils peuvent rapporter. Les contacts sont dans les fichiers de
 ## À corriger ailleurs, vu en passant
 
 La page des crédits (`index.html`, ligne 1004) annonce « CC BY 4.0 » pour les cartes, alors que GBIF classe
-notre téléchargement 10.15468/dl.rb9sut (les 236 cartes « présence seule ») en CC BY-NC 4.0. Cohérent avec la
-décision du 2026-10-21 ; le texte reste à corriger quand les cartes passeront en CC BY-NC.
+notre téléchargement 10.15468/dl.rb9sut (436 jeux, les 236 cartes « présence seule ») en CC BY-NC 4.0
+(revérifié sur l'API GBIF). Ces cartes sont déjà en ligne : la mention est donc inexacte dès aujourd'hui,
+sans attendre le passage de toutes les cartes en CC BY-NC. Pas corrigé, en attente de l'accord de Mathis.
