@@ -253,6 +253,10 @@ redistribution. À garder pour plus tard.
 passeront en CC BY-NC) ; 2. une maquette d'abord, sur 3 ou 4 espèces, avec et sans la teinte pâle ;
 3. reste ouvert.
 
+**Décidé ensuite, le même jour** (après `docs/sources-donnees-oiseaux.md`) : une seule source, GBIF toutes
+bases, en un téléchargement ; puis la teinte iNaturalist en fond, **temporairement** ; puis essayer notre
+propre modèle pour des cartes pleines, sur le principe de Status & Trends (« je veux essayer »).
+
 ## 6. Recommandation, dans l'ordre
 
 1. **Mois voisins** : aucune nouvelle donnée, aucun risque de licence, +10 à +69 % de cases par
