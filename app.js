@@ -12233,20 +12233,16 @@ const PHOTO_OVERRIDE_WIKI = {
   'gyps fulvus': { url:'https://upload.wikimedia.org/wikipedia/commons/7/70/Griffon_Vulture_1.jpg' },
   'dendrocopos major': { url:'https://upload.wikimedia.org/wikipedia/commons/d/df/Great_spotted_woodpecker_%28Dendrocopos_major%29_male_Drenthe.jpg' },
   'tachybaptus ruficollis': { url:'https://upload.wikimedia.org/wikipedia/commons/8/84/Little_grebe_Zwergtaucher.jpg' },
-  'haematopus ostralegus': { url:'https://upload.wikimedia.org/wikipedia/commons/5/51/Haematopus_ostralegus_He.jpg' },
-  'gallinago gallinago': { url:'https://upload.wikimedia.org/wikipedia/commons/c/c6/Common_snipe_%28Gallinago_gallinago%29_2022.jpg' },
   'larus canus': { url:'https://upload.wikimedia.org/wikipedia/commons/b/b1/Larus_canus_Common_Gull_in_Norway.jpg' },
   'ichthyaetus melanocephalus': { url:'https://upload.wikimedia.org/wikipedia/commons/e/e7/Larus_melanocephalus_aka_Mediterranean_Gull_rare_guest_in_Sweden2.jpg' },
   'strix aluco': { url:'https://upload.wikimedia.org/wikipedia/commons/4/4c/Asleep_%2851116731229%29.jpg' },
   'merops apiaster': { url:'https://upload.wikimedia.org/wikipedia/commons/9/97/Gu%C3%A9pier_d%27Europe_Ichkeul_NP.jpg' },
   'corvus frugilegus': { url:'https://upload.wikimedia.org/wikipedia/commons/0/0b/Corvus_frugilegus_perched_Muirton.jpg' },
-  'calidris alpina': { url:'https://upload.wikimedia.org/wikipedia/commons/1/1c/Calidris_alpina_alpina%2C_Riga%2C_Latvia_1.jpg' },
   'ciconia ciconia': { url:'https://upload.wikimedia.org/wikipedia/commons/d/dd/20150720Ciconia_ciconia.jpg' },
   'pernis apivorus': { url:'https://upload.wikimedia.org/wikipedia/commons/a/a6/Honey_Buzzard_-_Flickr_-_Andy_Morffew.jpg' },
   'tachymarptis melba': { url:'https://upload.wikimedia.org/wikipedia/commons/8/84/Alpine_Swift_%284781590209%29.jpg' },
   'apus melba': { url:'https://upload.wikimedia.org/wikipedia/commons/8/84/Alpine_Swift_%284781590209%29.jpg' },
   'curruca melanocephala': { url:'https://upload.wikimedia.org/wikipedia/commons/e/e1/Sardinian_Warbler.jpg' },
-  'calidris alba': { url:'https://upload.wikimedia.org/wikipedia/commons/d/df/Calidris_alba_%28breeding_plumage%29.jpg' },
   'ardea purpurea': { url:'https://upload.wikimedia.org/wikipedia/commons/c/c9/Ardpur2.jpg' },
   'aquila chrysaetos': { url:'https://upload.wikimedia.org/wikipedia/commons/c/c2/Maakotka_%28Aquila_chrysaetos%29_by_Jarkko_J%C3%A4rvinen.jpg' },
   'circus cyaneus': { url:'https://upload.wikimedia.org/wikipedia/commons/9/90/Blauwe_kiekendief_masc.jpg' },
@@ -12277,9 +12273,6 @@ const PHOTO_OVERRIDE_WIKI = {
   'apus caffer': { url:'https://upload.wikimedia.org/wikipedia/commons/6/6a/White-rumped_swift%2C_Apus_caffer%2C_at_Suikerbosrand_Nature_Reserve%2C_Gauteng%2C_South_Africa_%2830511369955%29.jpg' },
   'grus virgo': { url:'https://upload.wikimedia.org/wikipedia/commons/6/69/Demoiselle_Crane_%28Grus_virgo%29_%2849049108046%29.jpg' },
   'anthropoides virgo': { url:'https://upload.wikimedia.org/wikipedia/commons/6/69/Demoiselle_Crane_%28Grus_virgo%29_%2849049108046%29.jpg' },
-  'pluvialis dominica': { url:'https://upload.wikimedia.org/wikipedia/commons/1/1f/American_golden_plover_%2851101437442%29.jpg' },
-  'scolopax rusticola': { url:'https://upload.wikimedia.org/wikipedia/commons/d/d2/Scolopax_rusticola_-_Doi_Inthanon.jpg' },
-  'limnodromus scolopaceus': { url:'https://upload.wikimedia.org/wikipedia/commons/8/82/Long-billed_dowitcher_%28Limnodromus_scolopaceus%29_2018.jpg' },
   'fratercula arctica': { url:'https://upload.wikimedia.org/wikipedia/commons/e/e7/Atlantic_puffin_%2827946409202%29.jpg' },
   'hydrocoloeus minutus': { url:'https://upload.wikimedia.org/wikipedia/commons/e/e5/Hydrocoloeus_minutus_Russia_04.jpg' },
   'larus minutus': { url:'https://upload.wikimedia.org/wikipedia/commons/e/e5/Hydrocoloeus_minutus_Russia_04.jpg' },
@@ -12428,6 +12421,74 @@ const PHOTO_OVERRIDE_WIKI = {
   'zapornia parva': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/59613960/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/59613960/medium.jpg', credit:'Tatyana Zarubo · CC BY-NC · iNaturalist' },
   'zapornia pusilla': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/32857758/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/32857758/medium.jpg', credit:'avi_chat · CC BY-NC · iNaturalist' },
   'grus grus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/13745/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/13745/medium.jpg', credit:'Tarique Sani · CC BY-NC-SA · iNaturalist' },
+  // Choix de Mathis dans la galerie du 2026-10-21 (notes-privees/choix-photos/) : 107-1, 108-11, 109-6, 110-4, 111-5, 112-12, 113-5, 114-3, 115-7, 116-1, 117-5, 118-7, 119-1, 120-3, 121-1, 122-1, 123-0, 124-3, 125-2, 126-10, 127-1, 128-1, 129-1, 130-8, 131-10, 132-1, 133-3, 134-2, 135-5, 136-4, 137-1, 138-12, 139-1, 140-5, 141-10, 142-4, 143-1, 144-2, 145-6, 146-1, 147-3, 148-1, 149-3, 150-3, 151-1, 152-1, 153-0, 154-2, 155-1, 156-1, 157-11, 158-4, 159-1, 160-11, 161-2, 162-11, 163-7, 164-2, 165-1, 166-6, 167-5, 168-6, 169-1, 170-6, 171-4, 172-5, 173-1.
+  'burhinus oedicnemus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/208423163/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/208423163/medium.jpg', credit:'Kudaibergen Amirekul · CC BY-SA · iNaturalist' },
+  'himantopus himantopus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/516202808/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/516202808/medium.jpg', credit:'Vasily Kalinichenko · CC BY-NC · iNaturalist' },
+  'recurvirostra avosetta': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/12235672/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/12235672/medium.jpg', credit:'Donata Jonuškienė · CC BY-NC · iNaturalist' },
+  'haematopus ostralegus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/384508277/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/384508277/medium.jpg', credit:'Antti Henttonen · CC BY-NC · iNaturalist' },
+  'pluvialis squatarola': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/458633483/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/458633483/medium.jpg', credit:'Andrew Reding · CC BY-NC-ND · iNaturalist' },
+  'pluvialis apricaria': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/744345302/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/744345302/medium.jpg', credit:'Vasily Kalinichenko · CC BY-NC · iNaturalist' },
+  'pluvialis dominica': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/19720451/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/19720451/medium.jpeg', credit:'Donna Pomeroy · CC BY-NC · iNaturalist' },
+  'pluvialis fulva': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/43835792/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/43835792/medium.jpg', credit:'James M. Maley · CC BY · iNaturalist' },
+  'eudromias morinellus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/548442803/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/548442803/medium.jpg', credit:'egorbirder · CC BY · iNaturalist' },
+  'charadrius vociferus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/15053771/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/15053771/medium.jpg', credit:'world_lineage · CC BY-NC · iNaturalist' },
+  'charadrius hiaticula': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/97508312/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/97508312/medium.jpg', credit:'Вячеслав Юсупов · CC BY · iNaturalist' },
+  'charadrius semipalmatus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/199377019/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/199377019/medium.jpg', credit:'Larry McGahey · CC BY-NC-ND · iNaturalist' },
+  'thinornis dubius': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/28895106/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/28895106/medium.jpg', credit:'Геннадий · CC BY-NC · iNaturalist' },
+  'vanellus vanellus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/483192042/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/483192042/medium.jpg', credit:'Erik Eckstein · CC BY-NC · iNaturalist' },
+  'vanellus spinosus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/337996994/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/337996994/medium.jpg', credit:'cog2022 · CC BY-NC · iNaturalist' },
+  'vanellus gregarius': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/320127133/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/320127133/medium.jpg', credit:'Shlomi Levi · CC BY-NC · iNaturalist' },
+  'vanellus leucurus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/171563160/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/171563160/medium.jpeg', credit:'iNaturalist' },
+  'anarhynchus leschenaultii': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/263652631/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/263652631/medium.jpg', credit:'Алексей Сизов · CC BY-NC · iNaturalist' },
+  'anarhynchus alexandrinus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/379996503/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/379996503/medium.jpg', credit:'Szymon Bzoma · CC BY-NC · iNaturalist' },
+  'bartramia longicauda': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/163597155/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/163597155/medium.jpeg', credit:'Jacob Saucier · CC BY · iNaturalist' },
+  'numenius hudsonicus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/1940369/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/1940369/medium.jpg', credit:'Paul Cools · CC BY-NC · iNaturalist' },
+  'numenius phaeopus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/588065881/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/588065881/medium.jpg', credit:'Pierre Dalous · CC BY-SA · iNaturalist' },
+  'numenius arquata': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/187467671/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/187467671/medium.jpg', credit:'Анна Голубева · CC BY-NC-ND · iNaturalist' },
+  'limosa lapponica': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/96821636/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/96821636/medium.jpg', credit:'Анна Голубева · CC BY-NC-ND · iNaturalist' },
+  'limosa limosa': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/109549696/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/109549696/medium.jpg', credit:'Otgonbayar Tsend · CC BY-NC · iNaturalist' },
+  'limnodromus scolopaceus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/412478087/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/412478087/medium.jpeg', credit:'Wendy Feltham · CC BY-NC · iNaturalist' },
+  'lymnocryptes minimus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/25746431/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/25746431/medium.jpg', credit:'Theodore · CC BY-NC-ND · iNaturalist' },
+  'scolopax rusticola': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/1935765/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/1935765/medium.jpg', credit:'Paul Cools · CC BY-NC · iNaturalist' },
+  'gallinago media': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/535174/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/535174/medium.jpg', credit:'Hiyashi Haka · CC BY-NC-SA · iNaturalist' },
+  'gallinago gallinago': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/203450551/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/203450551/medium.jpg', credit:'Shachar Hizkiya · CC BY-NC · iNaturalist' },
+  'phalaropus tricolor': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/381136722/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/381136722/medium.jpg', credit:'Leo Weiskittel · CC BY-NC · iNaturalist' },
+  'phalaropus fulicarius': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/351680787/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/351680787/medium.jpg', credit:'Liam Hutcheson · CC BY-NC · iNaturalist' },
+  'phalaropus lobatus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/438438392/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/438438392/medium.jpeg', credit:'Yinan Li · CC BY-NC · iNaturalist' },
+  'xenus cinereus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/197850958/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/197850958/medium.jpg', credit:'Сичинава Екатерина · CC BY-NC · iNaturalist' },
+  'actitis hypoleucos': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/96203944/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/96203944/medium.jpg', credit:'Анна Голубева · CC BY-NC-ND · iNaturalist' },
+  'actitis macularius': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/198183635/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/198183635/medium.jpg', credit:'Blake Ross · CC BY · iNaturalist' },
+  'tringa ochropus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/262067607/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/262067607/medium.jpg', credit:'Gabi Rusu · CC BY-NC · iNaturalist' },
+  'tringa brevipes': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/62003496/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/62003496/medium.jpg', credit:'Jeremy Gatten · CC BY-NC · iNaturalist' },
+  'tringa stagnatilis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/13230255/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/13230255/medium.jpg', credit:'maritzasouthafrica · CC BY-NC · iNaturalist' },
+  'tringa glareola': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/8758782/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/8758782/medium.jpg', credit:'Saurabh Agrawal · CC BY-NC · iNaturalist' },
+  'tringa totanus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/347059861/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/347059861/medium.jpg', credit:'In Memoriam: Mark Kilner · CC BY-NC-SA · iNaturalist' },
+  'tringa flavipes': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/260887463/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/260887463/medium.jpg', credit:'Jonathan Irons · CC BY-NC · iNaturalist' },
+  'tringa erythropus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/173273546/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/173273546/medium.jpeg', credit:'Pavel Shukov · CC BY-NC · iNaturalist' },
+  'tringa nebularia': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/324910095/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/324910095/medium.jpg', credit:'guyincognito · CC BY-NC · iNaturalist' },
+  'arenaria interpres': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/179638917/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/179638917/medium.jpg', credit:'Etienne Gaillard · CC BY-NC · iNaturalist' },
+  'calidris canutus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/198196733/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/198196733/medium.jpeg', credit:'Miguel A Mejias, PhD. · CC BY-NC · iNaturalist' },
+  'calidris pugnax': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/277856852/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/277856852/medium.jpeg', credit:'iNaturalist' },
+  'calidris falcinellus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/186250313/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/186250313/medium.jpg', credit:'Сергей Кукуев · CC BY-NC · iNaturalist' },
+  'calidris acuminata': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/447383422/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/447383422/medium.jpg', credit:'Samuel Amaris · CC BY-NC · iNaturalist' },
+  'calidris ferruginea': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/2324759/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/2324759/medium.jpg', credit:'Paul Cools · CC BY-NC · iNaturalist' },
+  'calidris himantopus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/428868099/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/428868099/medium.jpg', credit:'Ad Konings · CC BY-NC · iNaturalist' },
+  'calidris temminckii': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/16913/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/16913/medium.jpg', credit:'Sergey Yeliseev · CC BY-NC-ND · iNaturalist' },
+  'calidris ruficollis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/209826148/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/209826148/medium.jpg', credit:'Cameron Eckert · CC BY-NC · iNaturalist' },
+  'calidris subruficollis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/319467443/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/319467443/medium.jpeg', credit:'Ryan Leys · CC BY-NC · iNaturalist' },
+  'calidris alba': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/247900592/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/247900592/medium.jpg', credit:'dfaulder · CC BY · iNaturalist' },
+  'calidris alpina': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/241339375/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/241339375/medium.jpeg', credit:'Ben Zerante · CC BY-NC · iNaturalist' },
+  'calidris maritima': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/264523641/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/264523641/medium.jpeg', credit:'Stefan · CC BY-NC · iNaturalist' },
+  'calidris bairdii': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/5787/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/5787/medium.jpg', credit:'Jamie Chavez · CC BY-NC · iNaturalist' },
+  'calidris minuta': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/29188802/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/29188802/medium.jpg', credit:'Данилова Валерия · CC BY-NC · iNaturalist' },
+  'calidris fuscicollis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/13004389/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/13004389/medium.jpg', credit:'Cláudio Dias Timm · CC BY-NC-SA · iNaturalist' },
+  'calidris minutilla': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/222353/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/222353/medium.jpg', credit:'Greg Lasley · CC BY-NC · iNaturalist' },
+  'calidris melanotos': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/1936380/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/1936380/medium.jpg', credit:'Paul Cools · CC BY-NC · iNaturalist' },
+  'calidris mauri': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/3256542/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/3256542/medium.jpg', credit:'Greg Lasley · CC BY-NC · iNaturalist' },
+  'calidris pusilla': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/100738932/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/100738932/medium.jpg', credit:'brian stahls · CC BY-NC · iNaturalist' },
+  'cursorius cursor': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/395410916/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/395410916/medium.jpg', credit:'Aurelie Laurent · CC BY-NC-SA · iNaturalist' },
+  'glareola pratincola': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/54672/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/54672/medium.jpg', credit:'Werner Witte · CC BY-NC · iNaturalist' },
+  'glareola nordmanni': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/456389611/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/456389611/medium.jpg', credit:'Vyacheslav Luzanov · CC BY-NC · iNaturalist' },
 };
 async function _fetchWikiPhoto(sci){
   const key = sci.toLowerCase();
@@ -12999,6 +13060,25 @@ const CARTES_BASE = (location.hostname === 'localhost' || location.hostname === 
 const CARTES_VERSION = '20261005';
 const CARTES_CASE = 0.25, CARTES_NIV = 32;
 const CARTES_PALETTE = [[62, 168, 107], [168, 209, 85], [245, 197, 24], [240, 115, 58], [161, 20, 8]];
+// Aire estimée sous la carte de l'annee, TEMPORAIRE (Mathis, 2026-10-21) en attendant un modele a nous :
+// iNaturalist Open Range Map (Geomodel, CC BY), sur toute l'aire. <code>-t.png : 1 = dans l'aire, cadre
+// propre donne par data/cartes-teintes.json ; genere par outils/build/teintes-inat.mjs, qui refuse une aire
+// quand moins de 80 % de nos cases colorees tombent dedans. Teinte froide, hors de la rampe des frequences
+// et differente de l'accent ; 35 % d'opacite, choisis sur la maquette (notes-privees/maquettes/aire-estimee/).
+const TEINTES_VERSION = '20261021', TEINTES_GEOMODEL = '2.34';
+const TEINTE_COULEUR = [70, 100, 160], TEINTE_ALPHA = 0.35;
+let _teintesIndexCache = null;
+async function _loadTeintesIndex(){
+  if(_teintesIndexCache) return _teintesIndexCache;
+  try{
+    const res = await fetch('data/cartes-teintes.json?v=' + TEINTES_VERSION);
+    if(!res.ok) return (_teintesIndexCache = {});
+    const raw = await res.json();
+    _teintesIndexCache = {};
+    for(const [k, v] of Object.entries(raw)) _teintesIndexCache[k.toLowerCase()] = { i0:v[0], j0:v[1], w:v[2], h:v[3] };
+  }catch(_){ _teintesIndexCache = {}; }
+  return _teintesIndexCache;
+}
 let _rangeIndexCache = null;
 async function _loadRangeIndex(){
   if(_rangeIndexCache) return _rangeIndexCache;
@@ -13097,6 +13177,54 @@ function _carteImage(e, m){
     return { url:URL.createObjectURL(blob) };
   })();
   mem.rendus.set(m, p);
+  return p;
+}
+// Teinte de l'aire estimee (t : son cadre), meme reprojection que _carteImage. Elle est posee SOUS la carte
+// et seulement hors des cases colorees de l'annee : au bord commun, son opacite suit sa part des poids,
+// sinon les deux liseres doux laissaient un trait vide entre les couches (vu sur la maquette).
+function _carteTeinte(e, t){
+  const mem = _carteOuvrir(e);
+  if(mem.rendus.has('t')) return mem.rendus.get('t');
+  const p = (async () => {
+    if(!mem.an) mem.an = _carteLireGris(`${CARTES_BASE}/${e.code}-a.png?v=${CARTES_VERSION}`);
+    const [an, aire] = await Promise.all([mem.an, _carteLireGris(`${CARTES_BASE}/${e.code}-t.png?v=${TEINTES_VERSION}`)]);
+    const W = t.w, H = t.h, colore = new Uint8Array(W * H);
+    for(let y = 0; y < e.h; y++) for(let x = 0; x < e.w; x++){
+      if(!an[y * e.w + x]) continue;
+      const xx = x + e.i0 - t.i0, yy = y + e.j0 - t.j0;
+      if(xx >= 0 && xx < W && yy >= 0 && yy < H) colore[yy * W + xx] = 1;
+    }
+    const cadre = _carteCadre(t), sud = cadre[0][0], nord = cadre[1][0];
+    const mercY = phi => Math.log(Math.tan(Math.PI / 4 + (phi * Math.PI / 180) / 2));
+    const mN = mercY(nord), mS = mercY(sud);
+    const PX = W > 900 ? 2 : 3;
+    const cw = W * PX, ch = Math.round(cw * (mN - mS) / (W * CARTES_CASE * Math.PI / 180));
+    const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+    const ctx = cv.getContext('2d'), out = ctx.createImageData(cw, ch), d = out.data;
+    for(let y = 0; y < ch; y++){
+      const lat = (2 * Math.atan(Math.exp(mN - (y + 0.5) / ch * (mN - mS))) - Math.PI / 2) * 180 / Math.PI;
+      const v = (nord - lat) / CARTES_CASE, jf = Math.floor(v - 0.5), fv = v - 0.5 - jf;
+      for(let x = 0; x < cw; x++){
+        const u = (x + 0.5) / cw * W, i = Math.floor(u - 0.5), fu = u - 0.5 - i;
+        let wT = 0, wD = 0;
+        for(let q = 0; q < 4; q++){
+          const ii = i + (q & 1), jj = jf + (q >> 1);
+          if(ii < 0 || ii >= W || jj < 0 || jj >= H) continue;
+          const k = jj * W + ii, wt = ((q & 1) ? fu : 1 - fu) * ((q >> 1) ? fv : 1 - fv);
+          if(colore[k]) wD += wt; else if(aire[k]) wT += wt;
+        }
+        const w = wT + wD;
+        if(!wT || w < 0.35) continue;
+        const o = (y * cw + x) * 4;
+        d[o] = TEINTE_COULEUR[0]; d[o + 1] = TEINTE_COULEUR[1]; d[o + 2] = TEINTE_COULEUR[2];
+        d[o + 3] = 255 * TEINTE_ALPHA * (wT / w) * Math.min(1, w / 0.6);
+      }
+    }
+    ctx.putImageData(out, 0, 0);
+    const blob = await new Promise(r => cv.toBlob(r, 'image/png'));
+    return { url:URL.createObjectURL(blob) };
+  })();
+  mem.rendus.set('t', p);
   return p;
 }
 // Source et credit, a l'identique sur les deux cartes. 'e' : observations eBird, frequence corrigee
