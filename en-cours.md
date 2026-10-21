@@ -3,9 +3,12 @@
 - Testé dans la démo : Érismature rousse (N, palier 9) ajoutée à Lina sortait « la plus rare » avant, Torcol (palier 7) après. 11 bancs CONFORME.
 - Non touché : le score de rareté (scoreReal) compte encore les N ; ce n'est pas une phrase « plus rare ».
 ---
-# À REPRENDRE (2026-10-21) : cartes de répartition, Mathis « pas satisfait des DONNÉES »
-- Ce qu'il reproche : les données (pas l'apparence, pas les saisons). Exemples précis à lui demander : quelles espèces, quelles zones en trop ou manquantes.
-- Cartes actuelles : ornitheque-data/cartes/, observations eBird via GBIF, générées par outils/build/cartes-gbif.mjs ; méthode dans docs/sources-cartes.md. Ordre de mise en ligne : ornitheque-data d'abord, puis ce dépôt.
+# EN ATTENTE DE MATHIS (2026-10-21) : cartes de répartition, recherche « combler les trous » faite
+- Rapport : docs/cartes-combler-les-trous.md ; mesures et scripts : notes-privees/essai-cartes/trous/. Rien de changé dans les cartes ni dans l'appli.
+- Constat mesuré : nos seuils ne jettent que 1 à 3 % des cases vues ; les trous = endroits sans observateur eBird ; les cartes mensuelles ont 1,7 à 3,4 fois moins de cases que l'annuelle.
+- Ses 3 décisions (section 5 du rapport) : données « pas d'usage commercial » oui/non ; aire estimée iNaturalist (CC BY) en teinte pâle, limitée à 110 km d'une observation, oui/non ; demander l'accès à Faune-France (message de lui).
+- Ordre conseillé : 1. mois voisins (testé : +10 à +69 % de cases par mois, sans faux martinets en janvier) ; 2. deuxième téléchargement GBIF lancé par lui (jeux libres en liste blanche, observations humaines, licence filtrée, pseudo-listes) ; 3. aires iNaturalist avec rejet auto des aires fausses (Pie bavarde) ; 4. plus tard, mailles plus grosses ou modèle.
+- Cartes actuelles : ornitheque-data/cartes/, générées par outils/build/cartes-gbif.mjs ; méthode dans docs/sources-cartes.md. Ordre de mise en ligne : ornitheque-data d'abord, puis ce dépôt.
 ---
 # POUSSÉ le 2026-10-21 : profil, familles au % de remplissage (v845) ; plus rares et uniques dans le même ordre (v846, app.js?v=420)
 - Familles : % décroissant, puis la plus grosse à % égal. Texte « Les plus complètes d'abord ».

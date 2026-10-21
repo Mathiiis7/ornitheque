@@ -116,3 +116,5 @@ Générateur : `outils/build/cartes-gbif.mjs` (33 min, 6 passes sur le zip). Sor
 - **Trous** : une case jamais visitée au milieu de l'aire est comblée si au moins 5 de ses 8
   voisines sont occupées. Un simple lissage faisait déborder les cartes en mer.
 - **L'animation** passe de 52 semaines (Status & Trends, 304 espèces) à 12 mois, pour toutes.
+
+Suite, recherche du 2026-10-21 sur les zones vides : `docs/cartes-combler-les-trous.md`.
