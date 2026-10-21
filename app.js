@@ -12591,6 +12591,8 @@ const PHOTO_OVERRIDE_WIKI = {
   'uria aalge': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/96826556/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/96826556/medium.jpg', credit:'Анна Голубева · CC BY-NC-ND · iNaturalist' },
   'egretta gularis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/119813364/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/119813364/medium.jpeg', credit:'amolmm · CC BY-NC · iNaturalist' },
   'coracias garrulus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/168391248/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/168391248/medium.jpg', credit:'Геннадий · CC BY-NC · iNaturalist' },
+  // Choix de Mathis dans la galerie du 2026-10-21 (notes-privees/choix-photos/) : 238-51.
+  'hydrobates pelagicus': { url:'https://upload.wikimedia.org/wikipedia/commons/b/b4/European_storm_petrel_%28Hydrobates_pelagicus%29_Sagres.jpg', thumb:'https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b4/European_storm_petrel_%28Hydrobates_pelagicus%29_Sagres.jpg/500px-European_storm_petrel_%28Hydrobates_pelagicus%29_Sagres.jpg', credit:'Charles J. Sharp · CC BY-SA · Wikimedia Commons' },
 };
 async function _fetchWikiPhoto(sci){
   const key = sci.toLowerCase();
