@@ -101,11 +101,25 @@ Ce dépôt-là pèse 250 Mo servis - 142 Mo de `range-weekly`, 108 Mo de `range`
 2026-09-28. Les 443 Mo que ce fichier annonçait avant comptaient le dossier `.git` : c'est
 l'encombrement sur le disque, pas ce que GitHub Pages sert.
 
-**Depuis le 2026-10-05, les cartes sont celles de `ornitheque-data/cartes/`** (observations eBird
-via GBIF, 82,7 Mo, générées par `outils/build/cartes-gbif.mjs`, méthode dans
-`docs/sources-cartes.md`). Les anciennes cartes Cornell (`range/`, `range-weekly/`, 250 Mo) ont été
-retirées le même jour, une fois le nouveau site en ligne. **Ordre de mise en ligne quand on
-régénère les cartes : pousser `ornitheque-data` d'abord, puis ce dépôt.**
+**Les cartes sont celles de `ornitheque-data/cartes/`** : depuis le 2026-10-22, observations
+GBIF toutes bases (DOI 10.15468/dl.vnrtqk, CC BY-NC 4.0), 106 Mo, générées en 87 min par
+`outils/build/cartes-gbif.mjs`, méthode et limites dans `docs/sources-cartes.md` (eBird seul du
+2026-10-05 au 2026-10-21). Les anciennes cartes Cornell ont été retirées le 2026-10-05. **Ordre de
+mise en ligne quand on régénère les cartes : pousser `ornitheque-data`, puis ce dépôt JUSTE APRÈS** :
+les nouvelles images remplacent les anciennes, et entre les deux poussées le site les place avec
+les anciens cadres de `data/cartes-index.json`.
+
+**Les autres bases GBIF nomment les oiseaux à l'ancienne.** Trinômes (« Corvus corone cornix ») et
+espèces regroupées (« Phoenicopterus ruber » pour le Flamant rose de l'atlas sud-africain) : sans
+garde-fou, la Corneille noire couvrait la Russie et le Flamant des Caraïbes l'Afrique du Sud. Le
+générateur rattache les trinômes à l'espèce séparée par eBird et écarte un atlas qui note un oiseau
+hors de 0,25 à 4 fois le taux d'eBird ; les binômes regroupés des observations isolées restent une
+limite (Corneille noire en Fennoscandie). Avant de régénérer : refaire l'avant/après espèce par
+espèce (`notes-privees/essai-cartes/tout/verif/`), pas seulement sur les espèces d'essai.
+
+**Deux sessions dans le même dossier de travail** (2026-10-22, cartes et photos) : chacune commite
+seulement ses morceaux (`git apply --cached` d'un diff filtré), et elles se disent leurs numéros de
+version, pris l'un au-dessus de l'autre.
 
 ## Les pièges qui m'ont déjà fait perdre du temps
 
