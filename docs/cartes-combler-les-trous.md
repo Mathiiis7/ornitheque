@@ -148,6 +148,9 @@ Essai sur 12 espèces (`essai-aires-inat.mjs`), comparé à nos cartes annuelles
 | Tyran quiquivi | 97 % | x 1,6 |
 | Pie bavarde | **0 %** | aire iNaturalist fausse |
 
+« 110 km » veut dire ici 4 cases de 0,25° autour d'une case affichée : 111 km du nord au sud, moins
+d'est en ouest loin de l'équateur (environ 55 km à 60° N, pour la Grive litorne).
+
 Deux défauts, vus sur les planches de contrôle :
 - **Le modèle extrapole là où personne n'observe.** L'aire du Bulbul des jardins couvre presque tout
   le Sahara. Or au cœur du désert (18-30° N, 5° O - 25° E), GBIF n'a que 14 observations de bulbul,
