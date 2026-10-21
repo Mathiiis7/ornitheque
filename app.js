@@ -13244,23 +13244,30 @@ async function _renderSpeciesRangeCard(sci){
   if(_rangeMapInstance){ try{ _rangeMapInstance.remove(); }catch(_){}; _rangeMapInstance = null; }
   box.hidden = true;
   box.innerHTML = '';
-  const idx = await _loadRangeIndex();
+  const [idx, tidx] = await Promise.all([_loadRangeIndex(), _loadTeintesIndex()]);
   const entry = _carteEntry(idx, sci);
   if(!entry) return;
+  const teinte = _carteEntry(tidx, sci);
   const mapId = 'smRangeMap';
+  // Legende a 14 px : c'est le plancher de ce qui se lit (choix de Mathis), et la ligne gagne un libelle.
+  const legendeTeinte = teinte ? `<span style="display:inline-flex; align-items:center; gap:6px;"><b style="display:inline-block; width:24px; height:12px; border-radius:3px; background:linear-gradient(rgba(${TEINTE_COULEUR}, ${TEINTE_ALPHA}), rgba(${TEINTE_COULEUR}, ${TEINTE_ALPHA})), #e9e9e9;"></b>Aire estimée (iNaturalist)</span>` : '';
   box.innerHTML = `
     <div class="sm-card-title" style="display:flex; align-items:center; gap:8px;">Répartition <span style="font-size:10.5px; color:var(--ink-3); text-transform:none; font-weight:400; letter-spacing:0;">- ${entry.src === 'p' ? 'GBIF, présence' : 'observations eBird, moyenne annuelle'}</span></div>
     <div id="${mapId}" class="sm-range-map" style="margin-top:6px; height:440px; border-radius:8px; overflow:hidden; background:var(--surface-3);"></div>
-    <div style="margin-top:8px; display:flex; align-items:center; gap:10px; font-size:11px; color:var(--ink-2);">
-      <span>Rare</span>
-      <div style="flex:1; height:12px; border-radius:3px; background:linear-gradient(to right, #3ea86b, #a8d155, #f5c518, #f0733a, #a11408);"></div>
-      <span>${entry.src === 'p' ? 'Beaucoup d\'observations' : 'Fréquent'}</span>
+    <div style="margin-top:8px; display:flex; flex-wrap:wrap; align-items:center; gap:6px 16px; font-size:14px; color:var(--ink-2);">
+      <span style="flex:1 1 260px; display:flex; align-items:center; gap:10px;">
+        <span>Rare</span>
+        <div style="flex:1; height:12px; border-radius:3px; background:linear-gradient(to right, #3ea86b, #a8d155, #f5c518, #f0733a, #a11408);"></div>
+        <span>${entry.src === 'p' ? 'Beaucoup d\'observations' : 'Fréquent'}</span>
+      </span>
+      ${legendeTeinte}
     </div>
     <div style="margin-top:4px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
       <div style="font-size:10.5px; color:var(--ink-3);">${entry.src === 'p' ? 'Échelle relative à l\'espèce (percentiles du nombre d\'observations)' : 'Échelle relative à l\'espèce (percentiles de la fréquence de signalement)'}</div>
       <button type="button" data-map-render-toggle style="font-size:11px; padding:3px 8px; border:1px solid var(--line); background:var(--surface-2); border-radius:4px; cursor:pointer;">${document.body.dataset.mapRender === 'sharp' ? '🌊 Rendu flou' : '🔲 Rendu net'}</button>
     </div>
     <div style="margin-top:6px; font-size:10.5px; color:var(--ink-3);">${_carteSourceHtml(entry)}</div>
+    ${teinte ? `<div style="margin-top:2px; font-size:10.5px; color:var(--ink-3);">Aire estimée : <a href="https://www.inaturalist.org/pages/range_maps" target="_blank" rel="noopener">iNaturalist Open Range Map</a>, modèle Geomodel ${TEINTES_GEOMODEL}, CC BY. Une estimation : l'oiseau n'y a pas forcément été vu.</div>` : ''}
   `;
   box.hidden = false;
   const mapEl = box.querySelector('#' + mapId);
@@ -13288,6 +13295,14 @@ async function _renderSpeciesRangeCard(sci){
     _carteImage(entry, 0).then(r => {
       if(_rangeMapInstance === carte) L.imageOverlay(r.url, _carteCadre(entry), { opacity:0.75, interactive:false, className:'sharp-overlay' }).addTo(carte);
     }).catch(() => {});
+    // La teinte dans son propre plan, SOUS celui de la carte (400 pour les calques par defaut) : les deux
+    // images arrivent dans n'importe quel ordre. Fichier absent (depot de donnees pas encore pousse) : rien.
+    if(teinte){
+      carte.createPane('teinte').style.zIndex = 350;
+      _carteTeinte(entry, teinte).then(r => {
+        if(_rangeMapInstance === carte) L.imageOverlay(r.url, _carteCadre(teinte), { pane:'teinte', interactive:false, className:'sharp-overlay' }).addTo(carte);
+      }).catch(() => {});
+    }
     // Meme calcul minZoom que la migration plein ecran : le monde touche les bords lateraux
     const recalcRangeMinZoom = () => {
       if(!_rangeMapInstance) return;
