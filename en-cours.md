@@ -6,7 +6,7 @@
 # EN ATTENTE DE MATHIS (2026-10-21) : cartes de répartition, recherche « combler les trous » faite
 - Rapport : docs/cartes-combler-les-trous.md ; mesures et scripts : notes-privees/essai-cartes/trous/. Rien de changé dans les cartes ni dans l'appli.
 - Constat mesuré : nos seuils ne jettent que 1 à 3 % des cases vues ; les trous = endroits sans observateur eBird ; les cartes mensuelles ont 1,7 à 3,4 fois moins de cases que l'annuelle.
-- Ses 3 décisions (section 5 du rapport) : données « pas d'usage commercial » oui/non ; aire estimée iNaturalist (CC BY) en teinte pâle, limitée à 110 km d'une observation, oui/non ; demander l'accès à Faune-France (message de lui).
+- DÉCIDÉ le 2026-10-21 : sources libres ET « pas d'usage commercial » (les cartes passeront en CC BY-NC, à dire dans l'À propos) ; aire estimée iNaturalist : MAQUETTE d'abord (3-4 espèces avec et sans teinte pâle). Reste ouvert : demander l'accès à Faune-France (message de lui).
 - Ordre conseillé : 1. mois voisins (testé : +10 à +69 % de cases par mois, sans faux martinets en janvier) ; 2. deuxième téléchargement GBIF lancé par lui (jeux libres en liste blanche, observations humaines, licence filtrée, pseudo-listes) ; 3. aires iNaturalist avec rejet auto des aires fausses (Pie bavarde) ; 4. plus tard, mailles plus grosses ou modèle.
 - Cartes actuelles : ornitheque-data/cartes/, générées par outils/build/cartes-gbif.mjs ; méthode dans docs/sources-cartes.md. Ordre de mise en ligne : ornitheque-data d'abord, puis ce dépôt.
 ---

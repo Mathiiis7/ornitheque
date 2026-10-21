@@ -249,6 +249,10 @@ redistribution. À garder pour plus tard.
 3. **Demander l'accès à Faune-France ?** C'est le seul moyen d'avoir la France après 2022. Le
    message partirait de lui.
 
+**Décidé le 2026-10-21** : 1. oui, sources libres et « pas d'usage commercial » ensemble (les cartes
+passeront en CC BY-NC) ; 2. une maquette d'abord, sur 3 ou 4 espèces, avec et sans la teinte pâle ;
+3. reste ouvert.
+
 ## 6. Recommandation, dans l'ordre
 
 1. **Mois voisins** : aucune nouvelle donnée, aucun risque de licence, +10 à +69 % de cases par
