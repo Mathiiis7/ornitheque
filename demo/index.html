@@ -124,7 +124,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=424">
+<link rel="modulepreload" href="app.js?v=425">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -1072,7 +1072,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         <h3>📚 Sources des données</h3>
         <ul style="margin:0 0 10px 0; padding-left:22px;">
           <li><b>eBird</b> (Cornell Lab of Ornithology) - la life list, les bar charts par pays et par zone, la taxonomie</li>
-          <li><b>Observations eBird publiées sur GBIF</b> (<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>) - les cartes de répartition. GBIF.org (1er octobre 2026), <a href="https://doi.org/10.15468/dl.c7y4kg" target="_blank" rel="noopener">doi:10.15468/dl.c7y4kg</a> ; pour les 236 espèces sans donnée eBird, <a href="https://doi.org/10.15468/dl.rb9sut" target="_blank" rel="noopener">doi:10.15468/dl.rb9sut</a>.</li>
+          <li><b>Observations eBird publiées sur GBIF</b> (<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>) - les cartes de répartition. GBIF.org (1er octobre 2026), <a href="https://doi.org/10.15468/dl.c7y4kg" target="_blank" rel="noopener">doi:10.15468/dl.c7y4kg</a> ; pour les 236 espèces sans donnée eBird, observations de toutes les sources GBIF (<a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a>), <a href="https://doi.org/10.15468/dl.rb9sut" target="_blank" rel="noopener">doi:10.15468/dl.rb9sut</a>.</li>
           <li><b>GBIF</b> - la carte d'observations de la fiche espèce</li>
           <li><b>xeno-canto</b>, et <b>iNaturalist</b> en secours - chants et cris (fiche espèce, Quiz)</li>
           <li><b>Wikipedia</b>, <b>iNaturalist</b> et l'<b>INPN</b> - descriptions et photos</li>
@@ -1493,5 +1493,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=424"></script>
+<script type="module" src="app.js?v=425"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>
