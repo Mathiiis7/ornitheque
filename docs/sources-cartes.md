@@ -118,3 +118,61 @@ Générateur : `outils/build/cartes-gbif.mjs` (33 min, 6 passes sur le zip). Sor
 - **L'animation** passe de 52 semaines (Status & Trends, 304 espèces) à 12 mois, pour toutes.
 
 Suite, recherche du 2026-10-21 sur les zones vides : `docs/cartes-combler-les-trous.md`.
+
+## Refaites le 2026-10-21 : toutes les bases GBIF
+
+Décidé par Mathis : une seule source, la plus complète, utilisable sans accord à demander. Les cartes
+passent en **CC BY-NC 4.0** (licence d'ensemble du téléchargement : pas d'usage commercial).
+
+- **Données** : téléchargement SQL GBIF du 2026-10-21, **DOI 10.15468/dl.vnrtqk**, oiseaux depuis
+  2015, observations humaines, incertitude <= 10 km : 76 millions de lignes, 10 367 jeux,
+  1 777 millions d'observations dont 1 485 d'eBird (qui s'arrête fin 2024 sur GBIF). Les espèces
+  sans donnée eBird gardent leur carte de présence tirée de 10.15468/dl.rb9sut.
+- **Règle de mélange**, validée par Mathis sur 23 espèces (page `notes-privees/maquettes/melange/`) :
+  eBird et les atlas d'Afrique (SABAP2, Kenya, Nigeria), tous des listes complètes, dans un même
+  calcul ; les observations isolées (iNaturalist, Observation.org...) seulement là où les listes ont
+  moins de 30 observations, ramenées à l'échelle des listes ; mois voisins pour les cartes
+  mensuelles. Le détail est en tête de `outils/build/cartes-gbif.mjs`.
+- **Contrôle** : le générateur redonne les 23 cartes de la page à la case près (année) et au
+  compte près (12 mois).
+
+### Ajouté après la validation, sur la génération complète
+
+| Quoi | Pourquoi (mesuré) |
+|---|---|
+| Un atlas est aussi écarté pour un oiseau qu'il note **plus de 4 fois** autant qu'eBird | Les atlas gardent d'anciens noms : leurs Flamants roses allaient au Flamant des Caraïbes (Afrique du Sud colorée), leurs Hérons à bec jaune à l'Aigrette intermédiaire d'Asie, leurs oies domestiques à l'Oie cendrée (65 fois eBird). Entre 2 et 4 fois, ce sont de vrais oiseaux discrets (cisticoles, rousserolles). 200 espèces ont un atlas écarté. |
+| Un trinôme dont la sous-espèce est devenue espèce chez eBird va à cette espèce | « Corvus corone cornix » (1,07 million d'observations isolées) allait à la Corneille noire, qui gagnait 1 668 cases, en Russie entre autres. 256 noms changent d'espèce, tous des observations isolées, tous de vraies séparations. |
+| Pas de carte pour les 173 espèces éteintes selon eBird | Un Dronte de Maurice, un Grand Pingouin, un Eider du Labrador sortaient de spécimens de musée. |
+| Les espèces sans observation eBird ici gardent leur carte de présence d'avant | Par la règle, le Faucon taita passait de 23 cases à 3, le Râle à miroir de 10 à 1. |
+| Carte de présence d'après les listes seules pour une espèce qui en a trop peu pour la règle (37 espèces) | Avec les observations isolées, l'Ara canindé, qui ne vit qu'en Bolivie, couvrait 870 cases de large (oiseaux de zoo). |
+
+### Résultat
+
+- **10 935 cartes** (10 896 avant, aucune perdue) : 10 662 par la règle, 236 de présence d'avant,
+  37 de présence d'après les listes. 106,2 Mo d'images (82,7 avant).
+- **+6,8 % de cases colorées** au total ; 1,4 % des cases d'avant disparaissent, surtout 1 à 4 cases
+  d'espèces rares d'îles (le filtre de précision à 10 km). Aucune espèce ne perd plus de la moitié de
+  ses cases.
+- **Teinte iNaturalist** recalculée (règle des 80 %) : 5 501 espèces (5 528 avant), 66 perdues
+  surtout en Afrique australe, où l'atlas étend la carte au-delà de l'aire iNaturalist.
+
+### Limites connues, non corrigées
+
+- **Noms regroupés dans les autres bases** (le binôme seul, sans sous-espèce) : le Pipit de
+  Nouvelle-Zélande reçoit des pipits d'Australie (424 cases ajoutées), le Mérion de Lambert des
+  mérions de l'intérieur australien (455). Mesuré : part des cases bien observées où les isolées
+  voient l'oiseau et jamais les listes, 91 % et 75 % ; mais de vrais oiseaux discrets sont au même
+  niveau (Chouette de Tengmalm 69 %, Grand Tétras 61 %, Râle des genêts 54 %). Pas de seuil propre,
+  donc pas de garde-fou.
+- **Perroquet robuste** : SABAP2 y range aussi le Perroquet à cou brun, à 2,1 fois eBird, sous la
+  borne de 4.
+- **Chouette lapone** : un seul point, près d'Ottawa. eBird ne publie presque rien d'elle sur GBIF
+  (sans doute une espèce protégée des curieux, non vérifié).
+- **Oiseaux de cage** : comme avant, des cases isolées loin de l'aire (Coq bankiva, Paon bleu,
+  Perruche ondulée).
+
+Contrôles et mesures (hors dépôt) : `notes-privees/essai-cartes/tout/verif/` - `comparer23.mjs`
+(générateur contre la page validée), `avant-apres.mjs` (cases par espèce), `noms-sous-especes.mjs`
+(noms qui changent d'espèce), `fabrique-mesure.mjs` (part des isolées sans les listes),
+`nettoyer-cartes.mjs` (images sans carte). Journal de la génération (87 min) :
+`notes-privees/essai-cartes/generation-tout.log` ; détail par espèce : `tout/cartes-bilan.json`.

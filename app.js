@@ -13043,9 +13043,10 @@ async function _renderSpeciesTraitsCard(key){
   `;
   box.hidden = false;
 }
-// Cartes de repartition et de migration, depuis le 2026-10-05 : observations eBird publiees sur GBIF
-// (CC BY 4.0, DOI 10.15468/dl.c7y4kg), a la place de Cornell Status & Trends dont les conditions
-// interdisent l'usage sur un site sans accord ecrit. Detail et mesures : docs/sources-cartes.md.
+// Cartes de repartition et de migration, depuis le 2026-10-05 a la place de Cornell Status & Trends dont
+// les conditions interdisent l'usage sur un site sans accord ecrit ; depuis le 2026-10-21, observations
+// d'oiseaux publiees sur GBIF, toutes bases (CC BY-NC 4.0, DOI 10.15468/dl.vnrtqk), avant eBird seul.
+// Detail et mesures : docs/sources-cartes.md.
 // FORMAT : par espece, deux PNG en niveaux de gris dans le depot separe ornitheque-data/cartes/ :
 // <code>-a.png (annee) et <code>-m.png (12 mois empiles), 1 pixel par case de 0,25 degre, 0 = pas de
 // valeur, 1..32 = rang de la frequence de signalement. Le navigateur les colore et les reechantillonne
@@ -13057,7 +13058,7 @@ async function _renderSpeciesTraitsCard(key){
 const CARTES_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
   ? 'cartes-locales'   // jonction vers ../ornitheque-data/cartes, ignoree par git : voir CLAUDE.md
   : 'https://mathiiis7.github.io/ornitheque-data/cartes';
-const CARTES_VERSION = '20261005';
+const CARTES_VERSION = '20261021';
 const CARTES_CASE = 0.25, CARTES_NIV = 32;
 const CARTES_PALETTE = [[62, 168, 107], [168, 209, 85], [245, 197, 24], [240, 115, 58], [161, 20, 8]];
 // Aire estimée sous la carte de l'annee, TEMPORAIRE (Mathis, 2026-10-21) en attendant un modele a nous :
@@ -13065,7 +13066,7 @@ const CARTES_PALETTE = [[62, 168, 107], [168, 209, 85], [245, 197, 24], [240, 11
 // propre donne par data/cartes-teintes.json ; genere par outils/build/teintes-inat.mjs, qui refuse une aire
 // quand moins de 80 % de nos cases colorees tombent dedans. Teinte froide, hors de la rampe des frequences
 // et differente de l'accent ; 35 % d'opacite, choisis sur la maquette (notes-privees/maquettes/aire-estimee/).
-const TEINTES_VERSION = '20261021', TEINTES_GEOMODEL = '2.34';
+const TEINTES_VERSION = '20261021-2', TEINTES_GEOMODEL = '2.34';
 const TEINTE_COULEUR = [70, 100, 160], TEINTE_ALPHA = 0.35;
 let _teintesIndexCache = null;
 async function _loadTeintesIndex(){
@@ -13227,13 +13228,16 @@ function _carteTeinte(e, t){
   mem.rendus.set('t', p);
   return p;
 }
-// Source et credit, a l'identique sur les deux cartes. 'e' : observations eBird, frequence corrigee
-// de l'effort ; 'p' : especes sans donnee eBird, carte de presence tiree des autres sources GBIF.
+// Source et credit, a l'identique sur les deux cartes. 'e' : frequence corrigee de l'effort, listes eBird
+// et atlas completees par les observations isolees (regle de outils/build/cartes-gbif.mjs) ; 'p' et 'o' :
+// especes sans liste complete, carte de presence tiree des autres sources GBIF ('p', DOI rb9sut) ou du
+// telechargement toutes bases ('o'). Seul le DOI est obligatoire (contrat d'utilisation GBIF) : sa page
+// liste les 10 367 jeux d'origine.
 function _carteSourceHtml(e){
-  const doi = e.src === 'p' ? '10.15468/dl.rb9sut' : '10.15468/dl.c7y4kg';
-  return e.src === 'p'
-    ? `Observations GBIF, toutes sources : <b>présence seulement</b>, sans correction de l'effort d'observation. <a href="https://doi.org/${doi}" target="_blank" rel="noopener">GBIF.org, DOI ${doi}</a>`
-    : `Observations eBird publiées sur GBIF (CC BY 4.0), cases de 28 km. <a href="https://doi.org/${doi}" target="_blank" rel="noopener">GBIF.org, DOI ${doi}</a>`;
+  const doi = e.src === 'p' ? '10.15468/dl.rb9sut' : '10.15468/dl.vnrtqk';
+  return e.src !== 'e'
+    ? `Observations GBIF, toutes sources (CC BY-NC 4.0) : <b>présence seulement</b>, sans correction de l'effort d'observation. <a href="https://doi.org/${doi}" target="_blank" rel="noopener">GBIF.org, DOI ${doi}</a>`
+    : `Observations d'oiseaux publiées sur GBIF, toutes bases (eBird, atlas, iNaturalist...), CC BY-NC 4.0, cases de 28 km. <a href="https://doi.org/${doi}" target="_blank" rel="noopener">GBIF.org, DOI ${doi}</a>`;
 }
 // Carte interactive Leaflet embarquee directement dans la fiche espece (pas de modal).
 // Instance globale, destroy propre avant chaque nouvelle fiche pour eviter les leaks.
@@ -13252,18 +13256,18 @@ async function _renderSpeciesRangeCard(sci){
   // Legende a 14 px : c'est le plancher de ce qui se lit (choix de Mathis), et la ligne gagne un libelle.
   const legendeTeinte = teinte ? `<span style="display:inline-flex; align-items:center; gap:6px;"><b style="display:inline-block; width:24px; height:12px; border-radius:3px; background:linear-gradient(rgba(${TEINTE_COULEUR}, ${TEINTE_ALPHA}), rgba(${TEINTE_COULEUR}, ${TEINTE_ALPHA})), #e9e9e9;"></b>Aire estimée (iNaturalist)</span>` : '';
   box.innerHTML = `
-    <div class="sm-card-title" style="display:flex; align-items:center; gap:8px;">Répartition <span style="font-size:10.5px; color:var(--ink-3); text-transform:none; font-weight:400; letter-spacing:0;">- ${entry.src === 'p' ? 'GBIF, présence' : 'observations eBird, moyenne annuelle'}</span></div>
+    <div class="sm-card-title" style="display:flex; align-items:center; gap:8px;">Répartition <span style="font-size:10.5px; color:var(--ink-3); text-transform:none; font-weight:400; letter-spacing:0;">- ${entry.src !== 'e' ? 'GBIF, présence' : 'observations GBIF, moyenne annuelle'}</span></div>
     <div id="${mapId}" class="sm-range-map" style="margin-top:6px; height:440px; border-radius:8px; overflow:hidden; background:var(--surface-3);"></div>
     <div style="margin-top:8px; display:flex; flex-wrap:wrap; align-items:center; gap:6px 16px; font-size:14px; color:var(--ink-2);">
       <span style="flex:1 1 260px; display:flex; align-items:center; gap:10px;">
         <span>Rare</span>
         <div style="flex:1; height:12px; border-radius:3px; background:linear-gradient(to right, #3ea86b, #a8d155, #f5c518, #f0733a, #a11408);"></div>
-        <span>${entry.src === 'p' ? 'Beaucoup d\'observations' : 'Fréquent'}</span>
+        <span>${entry.src !== 'e' ? 'Beaucoup d\'observations' : 'Fréquent'}</span>
       </span>
       ${legendeTeinte}
     </div>
     <div style="margin-top:4px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
-      <div style="font-size:10.5px; color:var(--ink-3);">${entry.src === 'p' ? 'Échelle relative à l\'espèce (percentiles du nombre d\'observations)' : 'Échelle relative à l\'espèce (percentiles de la fréquence de signalement)'}</div>
+      <div style="font-size:10.5px; color:var(--ink-3);">${entry.src !== 'e' ? 'Échelle relative à l\'espèce (percentiles du nombre d\'observations)' : 'Échelle relative à l\'espèce (percentiles de la fréquence de signalement)'}</div>
       <button type="button" data-map-render-toggle style="font-size:11px; padding:3px 8px; border:1px solid var(--line); background:var(--surface-2); border-radius:4px; cursor:pointer;">${document.body.dataset.mapRender === 'sharp' ? '🌊 Rendu flou' : '🔲 Rendu net'}</button>
     </div>
     <div style="margin-top:6px; font-size:10.5px; color:var(--ink-3);">${_carteSourceHtml(entry)}</div>
@@ -13356,7 +13360,7 @@ async function _openMigrationFullscreen(sci){
       <div style="padding:8px 20px 4px; display:flex; align-items:center; gap:10px; font-size:11px; color:var(--ink-2);">
         <span>Rare</span>
         <div style="flex:1; height:12px; border-radius:3px; background:linear-gradient(to right, #3ea86b, #a8d155, #f5c518, #f0733a, #a11408);"></div>
-        <span>${entry.src === 'p' ? 'Beaucoup d\'observations' : 'Fréquent'}</span>
+        <span>${entry.src !== 'e' ? 'Beaucoup d\'observations' : 'Fréquent'}</span>
         <button type="button" data-map-render-toggle style="margin-left:12px; font-size:11px; padding:3px 10px; border:1px solid var(--line); background:var(--surface-2); border-radius:4px; cursor:pointer;">${document.body.dataset.mapRender === 'sharp' ? '🌊 Rendu flou' : '🔲 Rendu net'}</button>
       </div>
       <div style="padding:0 20px 12px; font-size:10.5px; color:var(--ink-3);">Les couleurs se comparent d'un lieu à l'autre au sein d'un même mois : elles disent où l'espèce est la plus fréquente ce mois-là, pas combien elle est nombreuse. Une zone qui se vide ou se remplit d'un mois à l'autre se lit à la carte. ${_carteSourceHtml(entry)}</div>

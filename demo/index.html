@@ -124,7 +124,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=427">
+<link rel="modulepreload" href="app.js?v=433">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -1072,7 +1072,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         <h3>📚 Sources des données</h3>
         <ul style="margin:0 0 10px 0; padding-left:22px;">
           <li><b>eBird</b> (Cornell Lab of Ornithology) - la life list, les bar charts par pays et par zone, la taxonomie</li>
-          <li><b>Observations eBird publiées sur GBIF</b> (<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>) - les cartes de répartition. GBIF.org (1er octobre 2026), <a href="https://doi.org/10.15468/dl.c7y4kg" target="_blank" rel="noopener">doi:10.15468/dl.c7y4kg</a> ; pour les 236 espèces sans donnée eBird, observations de toutes les sources GBIF (<a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a>), <a href="https://doi.org/10.15468/dl.rb9sut" target="_blank" rel="noopener">doi:10.15468/dl.rb9sut</a>.</li>
+          <li><b>Observations d'oiseaux publiées sur GBIF, toutes bases</b> (<a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a>) - les cartes de répartition : listes eBird et atlas d'Afrique (SABAP2, Kenya, Nigeria), complétées là où elles manquent par les observations isolées (iNaturalist, Observation.org...). GBIF.org (21 octobre 2026), <a href="https://doi.org/10.15468/dl.vnrtqk" target="_blank" rel="noopener">doi:10.15468/dl.vnrtqk</a> ; pour les 236 espèces sans donnée eBird, observations de toutes les sources GBIF (<a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a>), <a href="https://doi.org/10.15468/dl.rb9sut" target="_blank" rel="noopener">doi:10.15468/dl.rb9sut</a>.</li>
           <li><b>iNaturalist Open Range Map</b> (<a href="https://www.inaturalist.org/pages/range_maps" target="_blank" rel="noopener">CC BY</a>) - l'aire estimée, en teinte pâle sous les cartes de répartition. Modèle Geomodel 2.34, téléchargé le 21 octobre 2026.</li>
           <li><b>GBIF</b> - la carte d'observations de la fiche espèce</li>
           <li><b>xeno-canto</b>, et <b>iNaturalist</b> en secours - chants et cris (fiche espèce, Quiz)</li>
@@ -1084,17 +1084,18 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
 
         <!-- Schema « D'ou viennent les cartes » (ticket qg#49, 2026-10-12), redessine en HTML a partir
              du modele SVG du QG : en SVG, le texte retrecissait avec l'image en largeur telephone.
-             Chiffres verifies le 2026-10-12 : 10 896 cartes dans data/cartes-index.json, 82,7 Mo de PNG
-             dans ornitheque-data/cartes, 1 775 781 186 observations sur l'API GBIF. -->
+             Chiffres verifies le 2026-10-22 : 10 935 cartes dans data/cartes-index.json, 106,2 Mo de PNG
+             (annee et mois) dans ornitheque-data/cartes, 1 777 millions d'observations dans le telechargement
+             GBIF toutes bases (10.15468/dl.vnrtqk, notes-privees/essai-cartes/tout/bilan.json). -->
         <h3>🗺️ D'où viennent les cartes</h3>
         <ol class="carto-chemin">
-          <li class="carto-case"><b class="carto-nom">eBird</b><span>les observations des ornithologues</span></li>
-          <li class="carto-fleche" aria-hidden="true"><span>publie</span></li>
-          <li class="carto-case"><b class="carto-nom">GBIF</b><span>1,78 milliard d'observations libres</span></li>
+          <li class="carto-case"><b class="carto-nom">eBird et 10 000 autres bases</b><span>les observations des ornithologues</span></li>
+          <li class="carto-fleche" aria-hidden="true"><span>publient</span></li>
+          <li class="carto-case"><b class="carto-nom">GBIF</b><span>1,78 milliard d'observations depuis 2015</span></li>
           <li class="carto-fleche" aria-hidden="true"><span>envoie</span></li>
           <li class="carto-case carto-script"><b class="carto-nom">Un script</b><span>fabrique les cartes</span></li>
           <li class="carto-fleche" aria-hidden="true"><span>range</span></li>
-          <li class="carto-case"><b class="carto-nom">Les cartes</b><span>10 896 cartes, 82,7 Mo</span></li>
+          <li class="carto-case"><b class="carto-nom">Les cartes</b><span>10 935 cartes, 106 Mo</span></li>
           <li class="carto-fleche" aria-hidden="true"><span>lit</span></li>
           <li class="carto-case carto-vue"><b class="carto-nom">L’Ornithèque</b><span>les colore et les anime sur 12 mois</span></li>
         </ol>
@@ -1102,14 +1103,14 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         <div class="carto-gestes">
           <div class="carto-geste"><b>Compter juste</b><span>On suit les oiseaux, pas les observateurs.</span></div>
           <div class="carto-geste"><b>Boucher les trous</b><span>Une case vide entourée d'oiseaux est remplie.</span></div>
-          <div class="carto-geste"><b>Alléger</b><span>De 2,7 Go à 82,7 Mo.</span></div>
+          <div class="carto-geste"><b>Alléger</b><span>Un pixel gris par case : 106 Mo au lieu de plusieurs Go en couleur.</span></div>
         </div>
-        <p class="carto-pourquoi"><b>Pourquoi ce chemin</b> : les cartes de Cornell ne peuvent pas être montrées sur un site sans son accord écrit ; les observations brutes sont libres si on cite la source.</p>
+        <p class="carto-pourquoi"><b>Pourquoi ce chemin</b> : les cartes de Cornell ne peuvent pas être montrées sur un site sans son accord écrit ; les observations brutes, elles, peuvent l'être si on cite la source et qu'on n'en fait pas commerce.</p>
 
         <h3>📅 Versions des données</h3>
         <ul style="margin:0 0 10px 0; padding-left:22px;">
           <li>Bar charts eBird : <b>2019-2026</b></li>
-          <li>Cartes de répartition : observations eBird <b>2015-2026</b>, téléchargées le <b>1er octobre 2026</b></li>
+          <li>Cartes de répartition : observations <b>2015-2026</b> (eBird jusqu'à fin 2024), téléchargées le <b>21 octobre 2026</b></li>
         </ul>
 
         <h3>🐛 Remarques et idées</h3>
@@ -1489,10 +1490,10 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </dialog>
 
   <footer>
-    L’Ornithèque · rareté mesurée sur les observations eBird 2019-2026 · données <b>Merlin / eBird</b>, propriété du Cornell Lab of Ornithology ; cartes tirées des observations eBird publiées sur GBIF (CC BY 4.0).<br>
+    L’Ornithèque · rareté mesurée sur les observations eBird 2019-2026 · données <b>Merlin / eBird</b>, propriété du Cornell Lab of Ornithology ; cartes tirées des observations d'oiseaux publiées sur GBIF, toutes bases (CC BY-NC 4.0).<br>
     Compte réservé aux membres · tes listes ne sont partagées qu'au sein de la ligue.
   </footer>
 </div>
 
-<script type="module" src="app.js?v=427"></script>
+<script type="module" src="app.js?v=433"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>
