@@ -3,7 +3,11 @@
 - Testé dans la démo : Érismature rousse (N, palier 9) ajoutée à Lina sortait « la plus rare » avant, Torcol (palier 7) après. 11 bancs CONFORME.
 - Non touché : le score de rareté (scoreReal) compte encore les N ; ce n'est pas une phrase « plus rare ».
 ---
-# EN ATTENTE DE MATHIS (2026-10-21) : cartes de répartition, recherche « combler les trous » faite
+# EN ATTENTE DE MATHIS (2026-10-21) : cartes de répartition, MAQUETTE « aire estimée » faite
+- Maquette : http://localhost:8765/notes-privees/maquettes/aire-estimee/index.html (donnees.mjs la refait). Bulbul des jardins, Huppe, Mésange charbonnière, Tyran quiquivi ; pour chacun, 3 cartes liées : aujourd'hui / teinte partout / teinte seulement où personne n'observe. Pie bavarde en texte (0 % de nos cases dans son aire, refusée par la règle des 80 %).
+- Tranché par moi : cases colorées lues dans les VRAIES cartes (cartes-locales/<code>-a.png) ; 110 km = disque de 4 cases (le carré de l'essai faisait des carrés de 9 x 9 au Sahara) ; « personne n'observe » = moins de 30 observations eBird dans la case même (l'effort lissé prête l'effort des voisines : 10 927 cases du bulbul « observées » au lissé, 707 en vrai) ; teinte rgb(70,100,160) à 35 %, posée sous les couleurs et seulement hors des cases colorées. Alignement mesuré : 0,1 px entre les deux couches.
+- Gains mesurés (surface x) : bulbul 3,2 / 3,1 ; huppe 3,1 / 2,7 ; mésange 2,0 / 1,8 ; tyran 1,7 / 1,6 (partout / où personne n'observe).
+- À trancher par lui (écrit en bas de la page) : teinte oui/non ; partout ou seulement où personne n'observe ; nom dans la légende (3 propositions). La teinte ne vaudrait que pour la carte de l'année (les aires iNaturalist n'ont pas de saison).
 - Rapport : docs/cartes-combler-les-trous.md ; mesures et scripts : notes-privees/essai-cartes/trous/. Rien de changé dans les cartes ni dans l'appli.
 - Constat mesuré : nos seuils ne jettent que 1 à 3 % des cases vues ; les trous = endroits sans observateur eBird ; les cartes mensuelles ont 1,7 à 3,4 fois moins de cases que l'annuelle.
 - DÉCIDÉ le 2026-10-21 : sources libres ET « pas d'usage commercial » (les cartes passeront en CC BY-NC, à dire dans l'À propos) ; aire estimée iNaturalist : MAQUETTE d'abord (3-4 espèces avec et sans teinte pâle). Reste ouvert : demander l'accès à Faune-France (message de lui).
