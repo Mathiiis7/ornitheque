@@ -12664,6 +12664,9 @@ const PHOTO_OVERRIDE_WIKI = {
   'locustella naevia': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/659780226/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/659780226/medium.jpg', credit:'Erik Eckstein · CC BY-NC · iNaturalist' },
   'ptyonoprogne rupestris': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/501784601/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/501784601/medium.jpg', credit:'Manuel Raab · CC BY-NC · iNaturalist' },
   'delichon urbicum': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/323621902/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/323621902/medium.jpg', credit:'Erik Eckstein · CC BY-NC · iNaturalist' },
+  // Choix de Mathis dans la galerie du 2026-10-22 (notes-privees/choix-photos/) : 367-0, 396-0.
+  'poecile montanus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/458622888/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/458622888/medium.jpg', credit:'iNaturalist' },
+  'riparia riparia': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/165349740/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/165349740/medium.jpg', credit:'iNaturalist' },
 };
 async function _fetchWikiPhoto(sci){
   const key = sci.toLowerCase();
