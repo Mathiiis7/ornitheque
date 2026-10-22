@@ -171,14 +171,17 @@ passent en **CC BY-NC 4.0** (licence d'ensemble du téléchargement : pas d'usag
   Scandinavie et en Finlande, près de listes eBird qui la notent là (hybrides ou erreurs, non
   vérifié). En Scandinavie, 2 136 cases restent retirées à 131 espèces, dont Torcol 105,
   Bec-croisé bifascié 87, Orite 66 : une partie est sans doute vraie. Goéland argenté : 315 cases
-  retirées au Japon, au Kamtchatka et au large de la côte est des États-Unis, erreur de nom ou
-  aire iNaturalist trop étroite, non tranché. Oiseaux de mer : l'aire iNaturalist suit les côtes ;
+  retirées au Japon, au Kamtchatka et au large de la côte est des États-Unis, à juste titre (des
+  Goélands de la Vega et hudsoniens notés sous son nom, voir `docs/aires-inaturalist-cassees.md`).
+  Oiseaux de mer : l'aire iNaturalist suit les côtes ;
   l'Océanite d'Elliot perd ses cases au large de la Patagonie (d'autres océanites ? non vérifié).
 - **Aires iNaturalist cassées** : pour la Pie bavarde et l'Hirondelle rustique, le fichier
   d'iNaturalist (le gros comme celui de l'espèce) n'a pas le grand morceau de l'aire, seulement
   des bouts (Islande, Alaska, Madère pour la pie ; le plus grand fait 13 degrés carrés). La règle
-  des 80 % les refuse : ni teinte ni garde-fou pour elles. Combien d'espèces sont dans ce cas :
-  pas compté.
+  des 80 % les refuse : ni teinte ni garde-fou pour elles. Défaut des aires qui traversent le 180e
+  méridien : 118 espèces ont moins de 20 % de nos cases dans leur aire, beaucoup parmi les plus
+  courantes. Les tuiles du site iNaturalist sont intactes (Pie : 99,2 % de nos cases dedans) :
+  `docs/aires-inaturalist-cassees.md`.
 - **Perroquet robuste** : SABAP2 y range aussi le Perroquet à cou brun, à 2,1 fois eBird, sous la
   borne de 4.
 - **Chouette lapone** : un seul point, près d'Ottawa. eBird ne publie presque rien d'elle sur GBIF
