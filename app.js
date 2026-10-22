@@ -2530,6 +2530,18 @@ const _countsForRarity = v => countsFR(v) && !isExotic(v.sci);
 // Observé EN France (ou pays inconnu) - pour Mike Horn. v.fr d'abord : depuis le 2026-10-05 le
 // pays retenu est celui de la 1re obs, qui peut etre etranger pour une espece vue aussi en France.
 const seenFR = v => v.fr === true || !v.country || v.country==='FR';
+// Tous les pays ou l'espece a ete vue : celui de la 1re obs, la France si v.fr, et ceux des
+// observations gardees (allObs : vingt au plus par espece a l'enregistrement, dans l'ordre du
+// fichier eBird - un pays des suivantes peut donc manquer). Sert au filtre pays de « Qui a vu
+// quoi » (Mathis, 2026-10-23 : une espece vue d'abord en Espagne puis au Portugal doit sortir
+// sous le filtre Portugal).
+function paysVus(v){
+  const s = new Set();
+  if(v.country) s.add(v.country);
+  if(v.fr === true) s.add('FR');
+  for(const o of v.allObs || []) if(o && o.cc) s.add(o.cc);
+  return s;
+}
 const holdersFR = u => u.counts!=null ? u.counts : [...u.seenBy.values()].filter(countsFR).length;
 // Pays (code ISO 2 lettres)
 // Drapeau emoji : marche sur mobile mais s'affiche « US »/« FR » sur Windows desktop.
@@ -3268,7 +3280,7 @@ function renderMatrix({universe,N}){
 
   // remplit le menu des pays où des obs ont été faites (France + étranger)
   const countriesSet=new Set();
-  for(const u of uni){ for(const v of u.seenBy.values()){ if(v.country) countriesSet.add(v.country); } }
+  for(const u of uni){ for(const v of u.seenBy.values()){ for(const cc of paysVus(v)) countriesSet.add(cc); } }
   const countries=[...countriesSet].sort((a,b)=> a==='FR'?-1 : b==='FR'?1 : countryLabel(a).localeCompare(countryLabel(b),'fr'));
   const coKey=countries.join('|');
   if(coKey!==lastCountryKey){
@@ -3324,8 +3336,9 @@ function renderMatrix({universe,N}){
     for(const [pid,v] of u.seenBy){
       if(nCols && !displayPeople.some(p=>p.id===pid)) continue;
       if(garde(v.country || 'FR')) return true;
-      // 1re obs a l'etranger mais vue aussi en France : la France compte si elle est gardee
-      if(v.fr === true && garde('FR')) return true;
+      // Vue aussi ailleurs que dans le pays de sa 1re obs (la France, ou un pays de ses autres
+      // observations) : ce pays-la compte s'il est garde (Mathis, 2026-10-23).
+      for(const cc of paysVus(v)) if(garde(cc)) return true;
     }
     return false;
   };
@@ -3338,13 +3351,19 @@ function renderMatrix({universe,N}){
     list=list.filter(u => u.missing || passePays(u, cc => !state.countryExcl.has(cc)));
   }
   // Le pays que montre la case : celui de la 1re observation, sauf quand le filtre pays l'ecarte
-  // et garde la France, ou l'espece a aussi ete vue - la case dit alors pourquoi elle est la
+  // et garde un autre pays ou l'espece a aussi ete vue - la case dit alors pourquoi elle est la
   // (Mathis, 2026-10-23 : Fuligule nyroca vue au Montenegro puis en France, drapeau du
-  // Montenegro sous le filtre France). Meme regle que passePays. Sans filtre, rien ne change :
-  // la 1re observation reste la 1re (2026-10-05).
+  // Montenegro sous le filtre France). Meme regle que passePays : le plus ancien des pays
+  // gardes d'apres les observations, la France en dernier recours (v.fr ne date rien). Sans
+  // filtre, rien ne change : la 1re observation reste la 1re (2026-10-05).
   const paysCase = v => {
     const cc = v.country || 'FR';
-    return state.countryExcl.has(cc) && v.fr === true && !state.countryExcl.has('FR') ? 'FR' : cc;
+    if(!state.countryExcl.has(cc)) return cc;
+    const garde = c => c && !state.countryExcl.has(c);
+    const obs = (v.allObs || []).filter(o => o && garde(o.cc))
+      .sort((a, b) => (parseDate(a.date)?.ord || 99999999) - (parseDate(b.date)?.ord || 99999999));
+    if(obs.length) return obs[0].cc;
+    return v.fr === true && garde('FR') ? 'FR' : cc;
   };
   const enPays = cc => `${_PREP_PAYS[cc] || 'en'} ${countryLabel(cc)}`;
   const titreCase = v => { const cc = paysCase(v), premier = v.country || 'FR';
@@ -18881,9 +18900,6 @@ function _pkdxRender(){
     if(EXOTIQUES_EBIRD_PAR_PAYS[country] && EXOTIQUES_EBIRD_PAR_PAYS[country][s]) return true;
     return false;
   }).length;
-  if(counter) counter.innerHTML = `<strong>${totalOwned}</strong> espèces vues sur ${totalFR}${rows.length !== totalFR ? ` · filtré : ${rows.length}` : ''}`;
-  if(!rows.length){ grid.innerHTML = ''; empty.style.display = ''; return; }
-  empty.style.display = 'none';
   // Skip rebuild grille si rows + owned inchange depuis dernier render (evite le
   // innerHTML = ... de 597 cards qui coute 300ms sur switch d'onglet).
   // Echelle de lecture : le pays, ou la zone choisie dans le selecteur. Calculee ici et non
@@ -18906,6 +18922,11 @@ function _pkdxRender(){
   }
   const vues = new Map(rows.map(r => [r.sci, _pkdxVue(r, country, zone)]));
   rows = _pkdxGardeZone(rows, vues, zone);
+  // Apres le filtre par zone : « filtré : N » se calculait avant, et annoncait en Vendee les
+  // especes de toute la France que la grille ne montrait pas (Mathis, 2026-10-23).
+  if(counter) counter.innerHTML = `<strong>${totalOwned}</strong> espèces vues sur ${totalFR}${rows.length !== totalFR ? ` · filtré : ${rows.length}` : ''}`;
+  if(!rows.length){ grid.innerHTML = ''; empty.style.display = ''; return; }
+  empty.style.display = 'none';
   const tri = _pkdxFilters.sort || 'famille';
   if(tri === 'rarete'){
     // Sur la frequence precise, pas sur le palier : celui-ci met dans le meme sac tout un
