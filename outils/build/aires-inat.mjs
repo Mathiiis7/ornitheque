@@ -2,9 +2,11 @@
 // teintes-inat.mjs (la teinte « aire estimée » sous la carte) et cartes-gbif.mjs (les observations isolées ne
 // comblent une case que dans l'aire, depuis le 2026-10-22).
 // Entrées : notes-privees/essai-cartes/inat-aires/iNaturalist_geomodel_Aves_{1,2}.gpkg (stockage public
-// d'iNaturalist, version 2.34, 6 981 aires, téléchargés le 2026-10-21).
+// d'iNaturalist, version 2.34, 6 981 aires, téléchargés le 2026-10-21) ; pour les aires cassées de ce fichier,
+// les tuiles du site (voir aireTuiles).
 import fs from 'node:fs';
 import path from 'node:path';
+import zlib from 'node:zlib';
 import { DatabaseSync } from 'node:sqlite';
 
 export const NI = 1440, NJ = 720, CASE = 0.25;
@@ -65,12 +67,60 @@ export function rasteriser(polys, g) {
   }
 }
 
+// ---------- aires cassées du GeoPackage, relues dans les tuiles du site ----------
+// Le GeoPackage perd le grand morceau des aires qui traversent le 180e méridien : la Pie bavarde n'y a que des
+// bouts (Islande, Alaska, Madère), 0 % de nos cases dedans. Les tuiles « aire attendue » du site sont intactes :
+// 99,2 % (docs/aires-inaturalist-cassees.md). aires-tuiles.json {nom: taxon_id} liste les espèces remplacées
+// (récupérées par notes-privees/essai-cartes/inat-aires/recuperer-tuiles.mjs), tuiles/<taxon_id>/2-x-y.png les
+// 16 tuiles de zoom 2 (~0,18° par pixel à l'équateur, plus fin que nos cases).
+// Une case est dans l'aire si le pixel de son centre a un alpha d'au moins SEUIL_ALPHA : l'intérieur des
+// hexagones est à ~104, leurs bords flous en dessous de 96. Mesuré sur la Huppe, dont le GeoPackage est sain :
+// seuil 96, 121 946 cases contre 122 408, 99 % en commun ; seuil 1, 3 % de trop (le bord) ; seuil 120, 40 % de
+// moins. Au-delà de ±85° (limite de la projection des tuiles) : rien.
+const Z_TUILES = 2, SEUIL_ALPHA = 96;
+export function lireRemplacements(dossier) {
+  const f = path.join(dossier, 'aires-tuiles.json');
+  return fs.existsSync(f) ? new Map(Object.entries(JSON.parse(fs.readFileSync(f, 'utf8')))) : new Map();
+}
+function alphaPng(b) {
+  let p = 8, W = 0, H = 0, type = 0; const idat = [];
+  while (p < b.length) { const len = b.readUInt32BE(p), t = b.toString('latin1', p + 4, p + 8), d = b.subarray(p + 8, p + 8 + len); if (t === 'IHDR') { W = d.readUInt32BE(0); H = d.readUInt32BE(4); type = d[9]; } if (t === 'IDAT') idat.push(d); p += 12 + len; }
+  if (type !== 6) throw new Error('tuile attendue en RGBA, type ' + type);
+  const L = W * 4, brut = zlib.inflateSync(Buffer.concat(idat)), o = new Uint8Array(L * H), alpha = new Uint8Array(W * H);
+  for (let y = 0; y < H; y++) {
+    const f = brut[y * (L + 1)];
+    for (let x = 0; x < L; x++) {
+      let v = brut[y * (L + 1) + 1 + x];
+      const a = x >= 4 ? o[y * L + x - 4] : 0, h = y ? o[(y - 1) * L + x] : 0, c = x >= 4 && y ? o[(y - 1) * L + x - 4] : 0;
+      if (f === 1) v += a; else if (f === 2) v += h; else if (f === 3) v += (a + h) >> 1;
+      else if (f === 4) { const q = a + h - c, pa = Math.abs(q - a), pb = Math.abs(q - h), pc = Math.abs(q - c); v += pa <= pb && pa <= pc ? a : pb <= pc ? h : c; }
+      o[y * L + x] = v & 255;
+    }
+  }
+  for (let i = 0; i < W * H; i++) alpha[i] = o[i * 4 + 3];
+  return { W, H, alpha };
+}
+export function aireTuiles(dossier, taxon, g) {
+  const N2 = 2 ** Z_TUILES, tuiles = [];
+  for (let x = 0; x < N2; x++) for (let y = 0; y < N2; y++) tuiles.push(alphaPng(fs.readFileSync(path.join(dossier, 'tuiles', String(taxon), `${Z_TUILES}-${x}-${y}.png`))));
+  for (let j = 0; j < NJ; j++) {
+    const lat = 90 - (j + 0.5) * CASE;
+    if (Math.abs(lat) > 85) continue;
+    const Y = (1 - Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360)) / Math.PI) / 2 * N2, ty = Math.floor(Y);
+    for (let i = 0; i < NI; i++) {
+      const X = (i + 0.5) * CASE / 360 * N2, tx = Math.floor(X), t = tuiles[tx * N2 + ty];
+      const px = Math.min(t.W - 1, Math.floor((X - tx) * t.W)), py = Math.min(t.H - 1, Math.floor((Y - ty) * t.H));
+      if (t.alpha[py * t.W + px] >= SEUIL_ALPHA) g[j * NI + i] = 1;
+    }
+  }
+}
+
 // ---------- les aires d'espèce d'un dossier de GeoPackage, lues à la demande ----------
 // aire(nom, grille) remplit la grille mondiale (NI x NJ, remise à zéro) et rend true, ou rend false si
 // iNaturalist n'a pas d'aire sous ce nom exact (pas de renommage : une aire mal rattachée serait pire
-// qu'une aire absente).
+// qu'une aire absente). Les aires cassées viennent des tuiles (voir aireTuiles).
 export function ouvrirAires(dossier) {
-  const ou = new Map();
+  const ou = new Map(), tuiles = lireRemplacements(dossier);
   for (const f of fs.readdirSync(dossier).filter(f => f.endsWith('.gpkg')).sort()) {
     const db = new DatabaseSync(path.join(dossier, f), { readOnly: true });
     const table = db.prepare("SELECT table_name FROM gpkg_contents WHERE data_type = 'features'").get().table_name;
@@ -83,7 +133,8 @@ export function ouvrirAires(dossier) {
       const o = ou.get(nom);
       if (!o) return false;
       grille.fill(0);
-      rasteriser(polygones(o[0].get(o[1]).geom), grille);
+      if (tuiles.has(nom)) aireTuiles(dossier, tuiles.get(nom), grille);
+      else rasteriser(polygones(o[0].get(o[1]).geom), grille);
       return true;
     },
   };

@@ -178,10 +178,11 @@ passent en **CC BY-NC 4.0** (licence d'ensemble du téléchargement : pas d'usag
 - **Aires iNaturalist cassées** : pour la Pie bavarde et l'Hirondelle rustique, le fichier
   d'iNaturalist (le gros comme celui de l'espèce) n'a pas le grand morceau de l'aire, seulement
   des bouts (Islande, Alaska, Madère pour la pie ; le plus grand fait 13 degrés carrés). La règle
-  des 80 % les refuse : ni teinte ni garde-fou pour elles. Défaut des aires qui traversent le 180e
-  méridien : 118 espèces ont moins de 20 % de nos cases dans leur aire, beaucoup parmi les plus
-  courantes. Les tuiles du site iNaturalist sont intactes (Pie : 99,2 % de nos cases dedans) :
-  `docs/aires-inaturalist-cassees.md`.
+  des 80 % les refusait. Défaut des aires qui traversent le 180e méridien : 118 espèces avaient
+  moins de 20 % de nos cases dans leur aire, beaucoup parmi les plus courantes. CORRIGÉ le
+  2026-10-22 : 153 espèces relues dans les tuiles du site, intactes ; 96 ont désormais une aire
+  crue, teintes 5 598, garde-fou 347 cases de plus sur toutes les cartes
+  (`docs/aires-inaturalist-cassees.md`).
 - **Perroquet robuste** : SABAP2 y range aussi le Perroquet à cou brun, à 2,1 fois eBird, sous la
   borne de 4.
 - **Chouette lapone** : un seul point, près d'Ottawa. eBird ne publie presque rien d'elle sur GBIF

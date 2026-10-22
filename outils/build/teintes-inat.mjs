@@ -23,7 +23,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
 import { DatabaseSync } from 'node:sqlite';
-import { polygones, rasteriser, stat } from './aires-inat.mjs';
+import { polygones, rasteriser, stat, lireRemplacements, aireTuiles } from './aires-inat.mjs';
 
 const RACINE = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1')), '..', '..');
 const AIRES = path.join(RACINE, 'notes-privees', 'essai-cartes', 'inat-aires');
@@ -95,6 +95,8 @@ fs.mkdirSync(SORTIE, { recursive: true });
 const teintes = {}, bilan = {};
 let lues = 0, sansCarte = 0, refusees = 0, octets = 0;
 const grille = new Uint8Array(NI * NJ);
+// aires cassées du GeoPackage (le grand morceau manque) : relues dans les tuiles du site, voir aires-inat.mjs
+const tuiles = lireRemplacements(AIRES);
 for (const f of fs.readdirSync(AIRES).filter(f => f.endsWith('.gpkg')).sort()) {
   const db = new DatabaseSync(path.join(AIRES, f), { readOnly: true });
   const table = db.prepare("SELECT table_name FROM gpkg_contents WHERE data_type = 'features'").get().table_name;
@@ -105,7 +107,8 @@ for (const f of fs.readdirSync(AIRES).filter(f => f.endsWith('.gpkg')).sort()) {
     if (!e) { sansCarte++; continue; }
     const [code, a0, b0, w, h] = e;
     grille.fill(0);
-    rasteriser(polygones(r.geom), grille);
+    if (tuiles.has(r.name)) aireTuiles(AIRES, tuiles.get(r.name), grille);
+    else rasteriser(polygones(r.geom), grille);
     // cadre de l'aire ; une aire qui traverse l'antiméridien prend toute la largeur
     let i0 = NI, i1 = -1, j0 = NJ, j1 = -1, aire = 0;
     for (let k = 0; k < grille.length; k++) if (grille[k]) { aire++; const i = k % NI, j = (k - i) / NI; if (i < i0) i0 = i; if (i > i1) i1 = i; if (j < j0) j0 = j; if (j > j1) j1 = j; }
@@ -116,7 +119,7 @@ for (const f of fs.readdirSync(AIRES).filter(f => f.endsWith('.gpkg')).sort()) {
     let riches = 0;
     for (let k = 0; k < grille.length; k++) if (grille[k] && EFFORT[k] >= 30) riches++;
     const precision = riches ? dedans / riches : 1;
-    const fiche = { code, version: r.geomodel_version, aire, colorees, part: +part.toFixed(4), rapport: colorees ? +(aire / colorees).toFixed(2) : null, riches, precision: +precision.toFixed(4) };
+    const fiche = { code, version: r.geomodel_version, ...(tuiles.has(r.name) ? { source: 'tuiles' } : {}), aire, colorees, part: +part.toFixed(4), rapport: colorees ? +(aire / colorees).toFixed(2) : null, riches, precision: +precision.toFixed(4) };
     bilan[r.name] = fiche;
     if (!aire || part < PART_MIN) fiche.refusee = 'part';
     else if (precision < PRECISION_MIN) fiche.refusee = 'precision';
@@ -133,4 +136,4 @@ const tri = Object.fromEntries(Object.keys(teintes).sort().map(k => [k, teintes[
 if (!SEUL) fs.writeFileSync(path.join(RACINE, 'data', 'cartes-teintes.json'), JSON.stringify(tri) + '\n');
 fs.writeFileSync(path.join(AIRES, SEUL ? 'bilan-essai.json' : 'bilan.json'), JSON.stringify(bilan, null, 1));
 console.log(`aires lues ${lues} | sans carte chez nous (nom différent ou espèce absente) ${sansCarte} | refusées ${refusees} | gardées ${Object.keys(teintes).length} | ${(octets / 1e6).toFixed(1)} Mo de PNG`);
-console.log(`polygones ${stat.polygones}, dont ${stat.traversent} traversent l'antiméridien`);
+console.log(`polygones ${stat.polygones}, dont ${stat.traversent} traversent l'antiméridien ; ${tuiles.size} aires relues dans les tuiles, ${[...tuiles.keys()].filter(n => teintes[n]).length} gardées`);

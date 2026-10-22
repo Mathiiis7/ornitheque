@@ -54,13 +54,25 @@ La liste d'espèces de l'appli (eBird) sépare le Goéland hudsonien (*Larus smi
 de la Vega (*Larus vegae*) du Goéland argenté, et iNaturalist aussi. Ces cases viennent de bases qui les
 notent encore « *Larus argentatus* » : les retirer est juste. Les deux autres goélands ont leur carte.
 
-## Recommandation
+## Fait le 2026-10-22 (accord de Mathis) : 153 espèces reprises par les tuiles
 
-Reprendre par les tuiles les **153 espèces** refusées qui ont moins de 20 % de nos cases dedans ou
-touchent le 180e méridien : 2 448 tuiles, environ 45 min à une par seconde, sous les limites
-d'iNaturalist. Elles remplaceraient le fichier pour ces seules espèces, puis la règle des 80 %
-trancherait comme pour les autres. Ensuite : teintes recalculées (5 min) et cartes régénérées (1 h,
-le garde-fou s'en sert). Gain : une teinte et un garde-fou pour des oiseaux parmi les plus vus.
+Les espèces refusées qui ont moins de 20 % de nos cases dedans ou touchent le 180e méridien :
+2 448 tuiles, 81 min (`recuperer-tuiles.mjs`, liste dans `aires-tuiles.json`). Pas pour toutes les
+espèces : 112 000 tuiles, 12 jours au plafond d'iNaturalist, et le fichier est juste pour les autres.
 
-Autre voie, plus lente mais sans téléchargement : signaler le défaut à iNaturalist (message de
-Mathis sur leur forum) et attendre une version corrigée du fichier.
+- **Lecture** (`outils/build/aires-inat.mjs`, `aireTuiles`) : une case est dans l'aire si le pixel de
+  son centre a un alpha d'au moins 96 (intérieur des hexagones ~104, bord flou en dessous). Sur la
+  Huppe, au fichier sain : 121 946 cases contre 122 408, 99 % en commun.
+- **Règle des 80 %** inchangée : 96 de ces espèces ont désormais une aire crue (dont Pie bavarde
+  98,6 %, Hirondelle rustique 98,3 %, Canard colvert, Coucou gris, Alouette des champs). Les 51
+  autres restent refusées : surtout de petits oiseaux d'îles du Pacifique, dont l'aire touche le
+  180e méridien sans être cassée. Le Coq bankiva est refusé comme « partout » (sans doute la poule
+  domestique, comptée avec lui chez iNaturalist).
+- **Teintes** : 5 598 espèces (5 507 avant). **Garde-fou** : 372 cases retirées à 52 de ces
+  espèces (Pie 17 sur 3 541 ajoutées, Hirondelle 10 sur 4 149) ; sur toutes les cartes, 347 cases
+  de moins, aucune espèce ne perd plus de 1 %.
+- **Limite** : le crédit dit « Geomodel 2.34 » ; les tuiles viennent du modèle en service sur le
+  site le 2026-10-22, dont la version n'est pas affichée.
+
+Signaler le défaut à iNaturalist (message de Mathis sur leur forum) reste possible : un fichier
+corrigé rendrait les tuiles inutiles.
