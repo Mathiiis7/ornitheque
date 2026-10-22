@@ -113,15 +113,24 @@ les anciens cadres de `data/cartes-index.json`.
 espèces regroupées (« Phoenicopterus ruber » pour le Flamant rose de l'atlas sud-africain) : sans
 garde-fou, la Corneille noire couvrait la Russie et le Flamant des Caraïbes l'Afrique du Sud. Le
 générateur rattache les trinômes à l'espèce séparée par eBird et écarte un atlas qui note un oiseau
-hors de 0,25 à 4 fois le taux d'eBird ; les binômes regroupés des observations isolées restent une
-limite (Corneille noire en Fennoscandie). Avant de régénérer : refaire l'avant/après espèce par
-espèce (`notes-privees/essai-cartes/tout/verif/`), pas seulement sur les espèces d'essai.
+hors de 0,25 à 4 fois le taux d'eBird. Les binômes regroupés des observations isolées passent par
+l'aire iNaturalist (2026-10-22) : une case qu'elles ajoutent doit tomber dans l'aire, ou à moins de
+4 cases d'une case des listes. Sans cette exception, l'aire iNaturalist, trop courte en Scandinavie,
+retirait de vraies cases à 151 espèces ; la mesure qui l'a montré est `aire-voisinage.mjs`. Avant de
+régénérer : refaire l'avant/après espèce par espèce (`notes-privees/essai-cartes/tout/verif/`), et
+par RÉGION (`perdues-regions.mjs`), pas seulement sur les espèces d'essai.
 
 **Deux sessions dans le même dossier de travail** (2026-10-22, cartes et photos) : chacune commite
 seulement ses morceaux (`git apply --cached` d'un diff filtré), et elles se disent leurs numéros de
 version, pris l'un au-dessus de l'autre.
 
 ## Les pièges qui m'ont déjà fait perdre du temps
+
+**WinZip tient des fichiers ouverts dans Documents.** Son outil d'arrière-plan (`WzBGTools64.exe`) a
+bloqué des images de `ornitheque-data/cartes` pendant des minutes : la génération des cartes est tombée
+deux fois sur `EBUSY` le 2026-10-22. Le générateur réessaie 20 fois, mais avant une génération longue,
+arrêter `WzBGTools64` (avec l'accord de Mathis ; il revient au démarrage). Qui tient un fichier : le
+gestionnaire de redémarrage de Windows (`RmGetList` de `rstrtmgr.dll`), sans droits admin.
 
 **`node --check app.js` ne marche pas** : la commande suppose du CommonJS et `app.js` est un
 module. Utiliser `node --input-type=module --check < app.js`.

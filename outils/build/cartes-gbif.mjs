@@ -46,6 +46,13 @@
 //   cases (Martinet noir : 8,3 niveaux d'écart contre 6,5), les cases ajoutées prennent le niveau médian : on
 //   sait que l'oiseau y est, pas s'il y est fréquent. Le rapport et ce choix se décident sur l'année et valent
 //   pour les 12 mois. Les rangs se calculent sur les seules cases de la base.
+// - AIRE iNaturalist (demandé par Mathis le 2026-10-22) : une case ajoutée par les isolées doit tomber dans
+//   l'aire estimée par iNaturalist, à 2 cases près, quand cette aire est crue (80 % des cases des listes
+//   complètes dedans). Contre les noms regroupés des autres bases : sur un échantillon, la Corneille noire perd
+//   755 cases ajoutées (Fennoscandie), le Pipit de Nouvelle-Zélande 424 sur 424 (Australie), alors que la
+//   Chouette de Tengmalm, le Grand Tétras ou le Pic tridactyle n'en perdent que 0 à 3. Voir aireFenetre.
+//   Exception : la case reste si les listes complètes voient l'oiseau à moins de 4 cases, car l'aire iNaturalist
+//   s'arrête trop au sud en Scandinavie (voir permisAire).
 // - MOIS VOISINS (docs/cartes-combler-les-trous.md section 3) : la carte d'un mois emprunte les observations et
 //   l'effort des deux mois d'à côté, avec un poids de moitié, seulement dans les cases où l'effort du mois est
 //   sous 300 observations ; sans cette condition, le Martinet noir passait de 7 à 49 cases en Europe en janvier.
@@ -69,6 +76,7 @@ import readline from 'node:readline';
 import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
+import { ouvrirAires } from './aires-inat.mjs';
 
 const RACINE = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1')), '..', '..');
 const SOURCES = path.join(RACINE, 'notes-privees', 'essai-cartes');
@@ -82,6 +90,10 @@ const OBS_MIN = 2, EFFORT_MIN = 30, RETENUE = 300;
 const SIGMA = 1.4, RAYON = 3, NIV = +(process.env.NIV || 32);
 const POIDS_VOISINS = 0.5, EMPRUNT_SOUS = 300;
 const ADEQUAT = 300, SEUIL_ATLAS = 0.25, CASES_ATLAS = 5, RECOUVREMENT_MIN = 20;
+// Aire iNaturalist (voir carteRegle) : crue si 80 % des cases des listes complètes tombent dedans, comme la
+// règle de la teinte ; marge de 2 cases (~55 km) pour ses bords ; hors de l'aire, une case reste si les listes
+// voient l'oiseau à moins de PROCHE_LISTES cases (voir permisAire).
+const PART_AIRE = 0.8, MARGE_AIRE = 2, PROCHE_LISTES = 4;
 const VOISINS_DIJ = [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]];
 
 const lire = f => JSON.parse(fs.readFileSync(path.join(SOURCES, f), 'utf8'));
@@ -345,8 +357,19 @@ function ecrireGris(fichier, W, H, octets) {
   }
   const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(W, 0); ihdr.writeUInt32BE(H, 4); ihdr[8] = 8; ihdr[9] = 0;
   const png = Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), CRC_BLOC('IHDR', ihdr), CRC_BLOC('IDAT', meilleur), CRC_BLOC('IEND', Buffer.alloc(0))]);
-  fs.writeFileSync(fichier, png);
+  ecrireFichier(fichier, png);
   return png.length;
+}
+// Un autre programme de Windows (antivirus, indexation) peut tenir une image ouverte un instant : la génération
+// du 2026-10-22 s'est arrêtée là au bout de 52 min (EBUSY sur une seule image). On réessaie, 250 ms d'écart.
+function ecrireFichier(fichier, octets) {
+  for (let essai = 1; ; essai++) {
+    try { fs.writeFileSync(fichier, octets); return; }
+    catch (e) {
+      if (!['EBUSY', 'EPERM', 'EACCES'].includes(e.code) || essai >= 20) throw e;
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 250);
+    }
+  }
 }
 
 // ---------- Fenêtre ----------
@@ -452,9 +475,46 @@ function obsBase(obs, { garde, nig }) {
   });
 }
 
+// ---------- Aire iNaturalist, garde-fou des observations isolées (2026-10-22, demandé par Mathis) ----------
+// Certaines bases notent un oiseau sous le nom de l'espèce dont eBird l'a séparé, sans sous-espèce : leurs
+// Corneilles mantelées de Suède et de Finlande sont des « Corvus corone », et la Corneille noire y passait de 284
+// à 1 019 cases. Une case ajoutée par les isolées doit donc tomber dans l'aire iNaturalist (taxonomie à jour),
+// à 2 cases près, quand cette aire est crue : 80 % des cases des listes complètes dedans. Aire absente ou fausse
+// (Pie bavarde : 0 %) : rien ne change. Les cases des listes, elles, ne sont jamais touchées.
+const aires = ouvrirAires(path.join(SOURCES, 'inat-aires'));
+const GRILLE_AIRE = new Uint8Array(N);
+// aire de l'espèce sur la fenêtre : stricte, et élargie de MARGE_AIRE cases (maximum glissant, ligne puis colonne)
+function aireFenetre(nom, f) {
+  if (!aires.aire(nom, GRILLE_AIRE)) return null;
+  const { W, H, iw, jw } = f, M = MARGE_AIRE, W2 = W + 2 * M, H2 = H + 2 * M;
+  const ext = new Uint8Array(W2 * H2), lig = new Uint8Array(W2 * H2);
+  for (let y = 0; y < H2; y++) { const j = jw + y - M; if (j < 0 || j >= NJ) continue; for (let x = 0; x < W2; x++) ext[y * W2 + x] = GRILLE_AIRE[j * NI + ((iw + x - M + NI) % NI)]; }
+  for (let y = 0; y < H2; y++) for (let x = M; x < W2 - M; x++) { let v = 0; for (let d = -M; d <= M; d++) v |= ext[y * W2 + x + d]; lig[y * W2 + x] = v; }
+  const stricte = new Uint8Array(W * H), large = new Uint8Array(W * H);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    stricte[y * W + x] = ext[(y + M) * W2 + x + M];
+    let v = 0; for (let d = 0; d <= 2 * M; d++) v |= lig[(y + d) * W2 + x + M];
+    large[y * W + x] = v;
+  }
+  return { stricte, large };
+}
+// Cases où les isolées peuvent ajouter l'oiseau : l'aire élargie, plus PROCHE_LISTES cases autour des cases des
+// listes complètes. iNaturalist a peu d'observateurs en Scandinavie (on y note sur les bases nationales) et son
+// aire s'y arrête trop au sud : sans cette exception, le garde-fou y retirait ~6 800 cases à 151 espèces (Merle
+// noir, Accenteur mouchet, Torcol, Geai...). Mesuré le 2026-10-22 (verif/aire-voisinage.mjs) : 56 à 94 % de leurs
+// cases retirées étaient à moins de 4 cases d'une case des listes hors de l'aire, contre 14 % pour la Corneille
+// noire et 0 à 1 % pour le Mérion de Lambert, le Pipit de Nouvelle-Zélande, le Tarier d'Afrique, la Macreuse noire.
+function permisAire(large, annee, { W, H }) {
+  const R = PROCHE_LISTES, lig = new Uint8Array(W * H), permis = Uint8Array.from(large);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (annee[y * W + x]) for (let d = Math.max(0, x - R); d <= Math.min(W - 1, x + R); d++) lig[y * W + d] = 1;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (lig[y * W + x]) for (let d = Math.max(0, y - R); d <= Math.min(H - 1, y + R); d++) permis[d * W + x] = 1;
+  return permis;
+}
+
 // ---------- Une espèce par la règle de mélange ----------
 // obs[classe][mois] : Map(case -> comptage) ; oB : obsBase(). Rend { cadre, fiche } ou null (aucune case).
-function carteRegle(code, obs, { atlas, garde, nig, defaut }, oB) {
+function carteRegle(e, obs, { atlas, garde, nig, defaut }, oB) {
+  const code = codeDe[e];
   const oI = obs[ISOLEES];
   const f = fenetre([...oB, ...oI]);
   if (!f) return null;
@@ -486,12 +546,23 @@ function carteRegle(code, obs, { atlas, garde, nig, defaut }, oB) {
   for (let q = 0; q < recB.length; q++) { ecart += Math.abs(niveau(refB, ratio * recI[q]) - nivRec[q]); ecartConstant += Math.abs(nivRec[q] - nivMed); }
   const etalonne = !repli && ecart < ecartConstant;
   const ajoutPossible = Number.isFinite(ratio) && refB.length > 0;
+  // aire iNaturalist, crue si 80 % des cases des listes tombent dedans
+  const aire = aireFenetre(nomDe(e), f);
+  let casesBase = 0, dansAire = 0;
+  if (aire) for (let l = 0; l < WH; l++) if (!Number.isNaN(vB[l])) { casesBase++; if (aire.stricte[l]) dansAire++; }
+  const partAire = aire && casesBase ? dansAire / casesBase : null;
+  const aireCrue = partAire !== null && partAire >= PART_AIRE;
   const annee = niveaux(vB, refB);
-  let ajoutees = 0;
+  // calculé sur les seules cases des listes, avant les ajouts ; vaut aussi pour les 12 mois (l'aire n'a pas de saison)
+  const permis = aireCrue ? permisAire(aire.large, annee, f) : null;
+  let ajoutees = 0, horsAire = 0, horsAireMois = 0, prochesListes = 0;
   if (ajoutPossible) for (let l = 0; l < WH; l++) {
     if (annee[l] || base.an[l] >= EFFORT_MIN || Number.isNaN(vI[l])) continue;
     const n = etalonne ? niveau(refB, ratio * vI[l]) : nivMed;
-    if (n >= 1) { annee[l] = n; ajoutees++; }
+    if (n < 1) continue;
+    if (aireCrue && !permis[l]) { horsAire++; continue; }
+    if (aireCrue && !aire.large[l]) prochesListes++;
+    annee[l] = n; ajoutees++;
   }
 
   // ----- les 12 mois, avec les mois voisins -----
@@ -507,6 +578,7 @@ function carteRegle(code, obs, { atlas, garde, nig, defaut }, oB) {
     const medM = nivB[nivB.length >> 1];
     if (ajoutPossible && ref.length) for (let l = 0; l < WH; l++) {
       if (im[l] || eBv[l] >= EFFORT_MIN || Number.isNaN(vIm[l])) continue;
+      if (aireCrue && !permis[l]) { horsAireMois++; continue; }
       im[l] = etalonne ? niveau(ref, ratio * vIm[l]) : medM;
     }
     images.push(im);
@@ -519,7 +591,8 @@ function carteRegle(code, obs, { atlas, garde, nig, defaut }, oB) {
     cadre,
     fiche: { code, cases: compte(annee), ajoutees, casesMois, ratio: +ratio.toPrecision(4), recouvrement: recB.length, repli, etalonne,
       ecart: recB.length ? +(ecart / recB.length).toFixed(2) : null, ecartConstant: recB.length ? +(ecartConstant / recB.length).toFixed(2) : null,
-      atlas, ...(ecartes.length ? { atlasEcartes: ecartes } : {}) },
+      atlas, ...(ecartes.length ? { atlasEcartes: ecartes } : {}),
+      aire: partAire === null ? (aire ? 'vide' : 'absente') : { part: +partAire.toFixed(3), crue: aireCrue }, horsAire, horsAireMois, prochesListes },
   };
 }
 
@@ -555,7 +628,7 @@ for (let p = 0; p < PARTS; p++) {
     }
     if (!total(obs[EBIRD])) sansEbird.add(e);
     const ctrl = controleAtlas(obs), oB = obsBase(obs, ctrl);
-    const r = carteRegle(codeDe[e], obs, ctrl, oB);
+    const r = carteRegle(e, obs, ctrl, oB);
     if (r) { index[nomDe(e)] = [codeDe[e], ...r.cadre, 'e']; bilan[nomDe(e)] = { src: 'e', ...r.fiche }; }
     // des listes complètes, mais pas assez pour la règle : carte de présence d'après ces listes SEULEMENT. Avec les
     // observations isolées, l'Ara canindé, qui ne vit qu'en Bolivie, couvrait 870 cases de large (oiseaux de zoo).
@@ -614,4 +687,5 @@ const noms = Object.keys(index), parSrc = s => noms.filter(n => index[n][5] === 
 const fiches = Object.values(bilan).filter(b => b.src === 'e');
 console.log(`${noms.length} cartes (${parSrc('e')} par la règle, ${parSrc('p')} + ${parSrc('o')} de présence), ${stat.vides} espèces sans carte, ${eteintes.size} éteintes écartées, ${(stat.octets / 1e6).toFixed(1)} Mo de PNG écrits, ${secondes()}`);
 console.log(`règle : ${fiches.filter(b => b.atlasEcartes).length} espèces avec un atlas écarté, ${fiches.filter(b => b.ajoutees && !b.etalonne).length} aux cases ajoutées au niveau médian, ${fiches.filter(b => b.ajoutees && b.etalonne).length} étalonnées`);
+console.log(`aire iNaturalist : crue pour ${fiches.filter(b => b.aire?.crue).length} espèces, pas crue pour ${fiches.filter(b => b.aire?.crue === false).length}, absente pour ${fiches.filter(b => b.aire === 'absente').length} ; cases retirées hors de l'aire : ${fiches.reduce((s, b) => s + b.horsAire, 0)} sur l'année (${fiches.filter(b => b.horsAire).length} espèces), ${fiches.reduce((s, b) => s + b.horsAireMois, 0)} sur les 12 mois ; gardées hors de l'aire car près des listes : ${fiches.reduce((s, b) => s + b.prochesListes, 0)} sur l'année`);
 console.log('index :', fichierIndex, Math.round(fs.statSync(fichierIndex).size / 1024), 'Ko');

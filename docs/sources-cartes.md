@@ -145,6 +145,7 @@ passent en **CC BY-NC 4.0** (licence d'ensemble du téléchargement : pas d'usag
 | Pas de carte pour les 173 espèces éteintes selon eBird | Un Dronte de Maurice, un Grand Pingouin, un Eider du Labrador sortaient de spécimens de musée. |
 | Les espèces sans observation eBird ici gardent leur carte de présence d'avant | Par la règle, le Faucon taita passait de 23 cases à 3, le Râle à miroir de 10 à 1. |
 | Carte de présence d'après les listes seules pour une espèce qui en a trop peu pour la règle (37 espèces) | Avec les observations isolées, l'Ara canindé, qui ne vit qu'en Bolivie, couvrait 870 cases de large (oiseaux de zoo). |
+| (2026-10-22, demandé par Mathis) Une case ajoutée par les observations isolées doit tomber dans l'aire iNaturalist élargie de 2 cases, quand cette aire est crue (80 % des cases des listes dedans), **ou** à moins de 4 cases d'une case des listes | Les autres bases notent sous le binôme seul des oiseaux qu'eBird a séparés : la Corneille noire couvrait la Scandinavie et la Finlande (Corneilles mantelées notées « Corvus corone »), le Pipit de Nouvelle-Zélande l'Australie, le Mérion de Lambert l'intérieur australien. Les cases retirées le sont presque toutes loin de toute liste qui voit l'oiseau (0 à 1 % à moins de 4 cases pour ces deux-là, 14 % pour la corneille). L'exception des 4 cases vient de la Scandinavie, où l'aire iNaturalist s'arrête trop au sud faute d'observateurs : sans elle, 151 espèces y perdaient environ 6 800 cases (Merle noir, Accenteur mouchet, Geai), à 56-94 % près d'une case des listes. |
 
 ### Résultat
 
@@ -155,24 +156,40 @@ passent en **CC BY-NC 4.0** (licence d'ensemble du téléchargement : pas d'usag
   ses cases.
 - **Teinte iNaturalist** recalculée (règle des 80 %) : 5 501 espèces (5 528 avant), 66 perdues
   surtout en Afrique australe, où l'atlas étend la carte au-delà de l'aire iNaturalist.
+- **Garde-fou de l'aire iNaturalist** (régénéré le 2026-10-22, 59 min) : aire crue pour 5 484
+  espèces, pas crue pour 1 373, absente pour 3 805 (rien ne change pour ces deux groupes).
+  **5 698 cases retirées** sur l'année, à 494 espèces (29 998 sur les 12 mois) ; 6 892 gardées hors
+  de l'aire parce que près des listes. 452 de ces espèces perdent moins de 1 % de leur carte ; le
+  Mérion de Lambert (438 cases, 56 % de sa carte), le Pipit de Nouvelle-Zélande (424, 40 %) et
+  l'Océanite d'Elliot (145, 26 %) le plus. Corneille noire dans 5-32° E, 55-72° N : 1 019 cases
+  -> 423 (284 avec eBird seul). Teinte recalculée : 5 507 espèces. Aucune case des listes ne
+  bouge, et un essai sur 22 espèces redonne la génération complète à l'identique.
 
 ### Limites connues, non corrigées
 
-- **Noms regroupés dans les autres bases** (le binôme seul, sans sous-espèce) : le Pipit de
-  Nouvelle-Zélande reçoit des pipits d'Australie (424 cases ajoutées), le Mérion de Lambert des
-  mérions de l'intérieur australien (455). Mesuré : part des cases bien observées où les isolées
-  voient l'oiseau et jamais les listes, 91 % et 75 % ; mais de vrais oiseaux discrets sont au même
-  niveau (Chouette de Tengmalm 69 %, Grand Tétras 61 %, Râle des genêts 54 %). Pas de seuil propre,
-  donc pas de garde-fou.
+- **Ce que le garde-fou laisse ou retire de trop** : la Corneille noire garde 423 cases en
+  Scandinavie et en Finlande, près de listes eBird qui la notent là (hybrides ou erreurs, non
+  vérifié). En Scandinavie, 2 136 cases restent retirées à 131 espèces, dont Torcol 105,
+  Bec-croisé bifascié 87, Orite 66 : une partie est sans doute vraie. Goéland argenté : 315 cases
+  retirées au Japon, au Kamtchatka et au large de la côte est des États-Unis, erreur de nom ou
+  aire iNaturalist trop étroite, non tranché. Oiseaux de mer : l'aire iNaturalist suit les côtes ;
+  l'Océanite d'Elliot perd ses cases au large de la Patagonie (d'autres océanites ? non vérifié).
+- **Aires iNaturalist cassées** : pour la Pie bavarde et l'Hirondelle rustique, le fichier
+  d'iNaturalist (le gros comme celui de l'espèce) n'a pas le grand morceau de l'aire, seulement
+  des bouts (Islande, Alaska, Madère pour la pie ; le plus grand fait 13 degrés carrés). La règle
+  des 80 % les refuse : ni teinte ni garde-fou pour elles. Combien d'espèces sont dans ce cas :
+  pas compté.
 - **Perroquet robuste** : SABAP2 y range aussi le Perroquet à cou brun, à 2,1 fois eBird, sous la
   borne de 4.
 - **Chouette lapone** : un seul point, près d'Ottawa. eBird ne publie presque rien d'elle sur GBIF
   (sans doute une espèce protégée des curieux, non vérifié).
 - **Oiseaux de cage** : comme avant, des cases isolées loin de l'aire (Coq bankiva, Paon bleu,
-  Perruche ondulée).
+  Perruche ondulée) ; le garde-fou ne leur retire rien.
 
 Contrôles et mesures (hors dépôt) : `notes-privees/essai-cartes/tout/verif/` - `comparer23.mjs`
 (générateur contre la page validée), `avant-apres.mjs` (cases par espèce), `noms-sous-especes.mjs`
 (noms qui changent d'espèce), `fabrique-mesure.mjs` (part des isolées sans les listes),
-`nettoyer-cartes.mjs` (images sans carte). Journal de la génération (87 min) :
-`notes-privees/essai-cartes/generation-tout.log` ; détail par espèce : `tout/cartes-bilan.json`.
+`nettoyer-cartes.mjs` (images sans carte), `aire-bilan.mjs`, `aire-voisinage.mjs`,
+`perdues-regions.mjs` et `perdues-ou.mjs` (ce que retire le garde-fou, et où). Journal de la
+génération (59 min, 2026-10-22) : `notes-privees/essai-cartes/generation-tout.log` ; détail par
+espèce : `tout/cartes-bilan.json`.
