@@ -1,7 +1,8 @@
 # COMMITÉ, PAS POUSSÉ (2026-10-23) : ordres et bulle de la rareté ligue (v871 / app.js?v=445), au-dessus du v870
 - Filtre famille (Birdydex et « Qui a vu quoi ») : chaque ordre (Passeriformes…) se choisit aussi, en tête de ses familles. Valeur « ordre:Passeriformes ».
 - Bulle de « Rareté ligue » : le barème en ronds comme la rareté terrain, calculé sur le nombre de membres (points 100/k par palier).
-- Vu en passant, pas corrigé : au Birdydex, le compte de la fenêtre famille inclut les accidentelles non cochées que la grille cache (Rapaces : 28 annoncées, 26 affichées en démo).
+- v872 / app.js?v=446 : les comptes des fenêtres du Birdydex (famille, milieu, vues) passent par le même filtre que la grille (_pkdxLignes + _pkdxGardeZone). Ils comptaient les accidentelles cachées et ignoraient X/P/N et la zone (Rapaces : 28 pour 26). Vérifié en démo : 104 choix sans filtre, avec X, avec « Vues seulement », en Vendée, zéro écart.
+- Remarqué, pas touché : le « filtré : N » du compteur du Birdydex se calcule avant le filtre par zone.
 
 # COMMITÉ, PAS POUSSÉ (2026-10-23) : Classement, suite (v870 / app.js?v=444), au-dessus du v869 ci-dessous, pas poussé non plus
 - Rareté ligue : une seule échelle de 12 paliers en part des membres (< 5 %, 5, 10, 20… 90 %, tous), légende sans paliers vides, bornes « 5–7 » quand un palier regroupe plusieurs nombres.

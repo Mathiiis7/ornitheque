@@ -18407,30 +18407,16 @@ function renderPokedex(){
       const lbl = b.querySelector('.cp-btn-label');
       if(lbl) lbl.textContent = label;
     };
-    // Applique tous les filtres Birdydex actifs (search, family, habitat, owned, tier)
-    // sauf le champ 'exclude' pour que le modal montre "combien il resterait si j'active X".
-    // Renvoie l'array _pkdxAllSorted filtré.
+    // Les lignes que la grille montrerait sans le filtre 'exclude', pour que le modal dise
+    // « combien il resterait si j'active X » : les memes filtres que la grille, zone comprise.
     const _filteredPkdxRows = (exclude) => {
-      if(!_pkdxAllSorted) return [];
-      const q = _mapNorm(_pkdxFilters.search || '');
-      const famF = (exclude === 'family') ? '' : (_pkdxFilters.family || '');
-      const habF = (exclude === 'habitat') ? '' : (_pkdxFilters.habitat || '');
-      const ownedF = (exclude === 'owned') ? '' : (_pkdxFilters.owned || '');
       const me = realPeople.find(p => p.id === myUid);
       const mine = me ? new Set([...me.species.keys()]) : new Set();
-      return _pkdxAllSorted.filter(r => {
-        if(q && !_mapNorm(r.nm).includes(q) && !r.sci.includes(q)) return false;
-        if(famF && !passeFamille(r.fam, famF)) return false;
-        const habs = habitatsOf(r.sci) || [];
-        if(habF && !habs.includes(habF)) return false;
-        if(_pkdxTierExcl && _pkdxTierExcl.has(r.tier)) return false;
-        if(ownedF){
-          const owned = _mineHasStrict(mine, r.sci);
-          if(ownedF === 'owned' && !owned) return false;
-          if(ownedF === 'missing' && owned) return false;
-        }
-        return true;
-      });
+      const rows = _pkdxLignes(mine, exclude);
+      const zone = _pkdxFilters.zone || '';
+      if(!zone) return rows;
+      const country = _pkdxFilters.country || 'FR';
+      return _pkdxGardeZone(rows, new Map(rows.map(r => [r.sci, _pkdxVue(r, country, zone)])), zone);
     };
     // Compte les especes par option d'un filtre, base sur les rows filtres par tous les
     // autres filtres actifs.
@@ -18642,6 +18628,65 @@ function _pkdxVue(r, cc, zone){
   return { tier: v > 0 ? annualFreqToTier(v) : 10, val: v, cat: catZone, absente: !(v > 0) };
 }
 function _pkdxSaveFilters(){ try{ localStorage.setItem('mb-pkdx-filters', JSON.stringify(_pkdxFilters)); }catch(_){} }
+// Les lignes que la grille du Birdydex garde, avant le filtre par zone (_pkdxGardeZone).
+// La grille ET les comptes de ses fenetres de choix (famille, milieu, vues) passent par ici :
+// les fenetres avaient leur propre copie de ces filtres, qui avait derive - elle comptait les
+// accidentelles que la grille cache, ignorait les statuts X / P / N et la zone. « Rapaces »
+// annoncait 28 especes pour 26 cases (2026-10-23). exclude retire un filtre, pour qu'une
+// fenetre dise combien il resterait en changeant le sien.
+function _pkdxLignes(mine, exclude){
+  // Filtres UI (appliques sur la liste triee, sans jamais recalculer les numeros).
+  const q = _mapNorm(_pkdxFilters.search || '');
+  const famF = exclude === 'family' ? '' : (_pkdxFilters.family || '');
+  const habF = exclude === 'habitat' ? '' : (_pkdxFilters.habitat || '');
+  const ownedF = exclude === 'owned' ? '' : (_pkdxFilters.owned || '');
+  const rows = [];
+  for(const r of _pkdxAllSorted || []){
+    // val - la frequence annuelle - doit voyager jusqu au rendu : c est sur elle que trie
+    // le mode « par rareté ». Sans elle la soustraction donnait NaN et le tri retombait
+    // silencieusement sur l ordre alphabétique, son seul départage.
+    const { sci, nm, fam, tier, val, exo, cat, cats, accidentelle, saison } = r;
+    // Accidentelle non cochee : hors catalogue, on ne l affiche pas. Cochee, elle reste —
+    // l utilisateur l a bien vue, ce n est pas a nous de l effacer de sa collection.
+    if(accidentelle && !mine.has(sci)) continue;
+    if(q && !_mapNorm(nm).includes(q) && !sci.includes(q)) continue;
+    if(famF && !passeFamille(fam, famF)) continue;
+    const habs = habitatsOf(sci) || [];
+    if(habF && !habs.includes(habF)) continue;
+    // Mode filtre : si des cats N/P/X sont selectionnees, on affiche UNIQUEMENT les
+    // especes matchant une de ces cats (les tier chips sont ignores). Sinon, filtre tier.
+    if(_pkdxCatSelected.size > 0){
+      // N'IMPORTE LEQUEL de ses statuts suffit : une espece dont la case porte un X sort
+      // quand on coche X, meme si eBird la classe N au national. Un deuxieme passage plus
+      // bas resserre sur le statut de la zone quand une zone est choisie.
+      if(!cats.length || !cats.some(c => _pkdxCatSelected.has(c))) continue;
+    } else if(_pkdxTierExcl.has(tier)){
+      continue;
+    }
+    const owned = _mineHasStrict(mine, sci);
+    if(ownedF === 'owned' && !owned) continue;
+    if(ownedF === 'missing' && owned) continue;
+    // `cats` voyage jusqu'au rendu : sans lui, la vignette retombait sur la seule categorie
+    // nationale et le Cygne noir perdait son X - celui-la meme qui venait de le faire sortir
+    // sous le filtre X, deux lignes plus haut.
+    rows.push({ sci, nm, fam, tier, val, exo, cat, cats, owned, saison });
+  }
+  return rows;
+}
+// Zone choisie : les especes qu elle n a jamais notees sortent de la grille. Les garder
+// en grise avait ete envisage - on voyait qu elles existaient ailleurs - mais la grille
+// d un departement doit montrer ce qu on peut y cocher, pas le catalogue national.
+// Le filtre de statut se lit a l'echelle affichee. Sans zone, il a deja laisse passer
+// toute espece portant l'un des statuts coches quelque part dans le pays. Avec une zone,
+// c'est son statut LA-BAS qui decide - celui que sa pastille montre alors -, sinon la
+// grille d'un departement ou le Cygne noir est N le sortait quand meme sous le filtre X.
+function _pkdxGardeZone(rows, vues, zone){
+  if(!zone) return rows;
+  rows = rows.filter(r => !(vues.get(r.sci) || {}).absente);
+  if(_pkdxCatSelected.size > 0)
+    rows = rows.filter(r => { const c = (vues.get(r.sci) || {}).cat; return c && _pkdxCatSelected.has(c); });
+  return rows;
+}
 function _pkdxRender(){
   const grid = $('#pkdxGrid'); const empty = $('#pkdxEmpty'); const counter = $('#pkdxCounter');
   if(!grid) return;
@@ -18756,45 +18801,10 @@ function _pkdxRender(){
     _pkdxAllSorted = all;
     _pkdxNumById = new Map(all.map((r, i) => [r.sci, i+1]));
   }
-  // Filtres UI (appliques sur la liste triee, sans jamais recalculer les numeros).
-  const q = _mapNorm(_pkdxFilters.search || '');
-  const famF = _pkdxFilters.family || '';
-  const habF = _pkdxFilters.habitat || '';
-  const ownedF = _pkdxFilters.owned || '';
   // let, pas const : le filtre par zone et le tri par rarete reassignent. Ils levaient une
   // TypeError qui tuait _pkdxRender au milieu - la grille ne bougeait plus, ni au changement
   // de zone ni au changement de tri.
-  let rows = [];
-  for(const r of _pkdxAllSorted){
-    // val - la frequence annuelle - doit voyager jusqu au rendu : c est sur elle que trie
-    // le mode « par rareté ». Sans elle la soustraction donnait NaN et le tri retombait
-    // silencieusement sur l ordre alphabétique, son seul départage.
-    const { sci, nm, fam, tier, val, exo, cat, cats, accidentelle, saison } = r;
-    // Accidentelle non cochee : hors catalogue, on ne l affiche pas. Cochee, elle reste —
-    // l utilisateur l a bien vue, ce n est pas a nous de l effacer de sa collection.
-    if(accidentelle && !mine.has(sci)) continue;
-    if(q && !_mapNorm(nm).includes(q) && !sci.includes(q)) continue;
-    if(famF && !passeFamille(fam, famF)) continue;
-    const habs = habitatsOf(sci) || [];
-    if(habF && !habs.includes(habF)) continue;
-    // Mode filtre : si des cats N/P/X sont selectionnees, on affiche UNIQUEMENT les
-    // especes matchant une de ces cats (les tier chips sont ignores). Sinon, filtre tier.
-    if(_pkdxCatSelected.size > 0){
-      // N'IMPORTE LEQUEL de ses statuts suffit : une espece dont la case porte un X sort
-      // quand on coche X, meme si eBird la classe N au national. Un deuxieme passage plus
-      // bas resserre sur le statut de la zone quand une zone est choisie.
-      if(!cats.length || !cats.some(c => _pkdxCatSelected.has(c))) continue;
-    } else if(_pkdxTierExcl.has(tier)){
-      continue;
-    }
-    const owned = _mineHasStrict(mine, sci);
-    if(ownedF === 'owned' && !owned) continue;
-    if(ownedF === 'missing' && owned) continue;
-    // `cats` voyage jusqu'au rendu : sans lui, la vignette retombait sur la seule categorie
-    // nationale et le Cygne noir perdait son X - celui-la meme qui venait de le faire sortir
-    // sous le filtre X, deux lignes plus haut.
-    rows.push({ sci, nm, fam, tier, val, exo, cat, cats, owned, saison });
-  }
+  let rows = _pkdxLignes(mine);
   // Rendu des chips rareté : style unifie avec le filtre carte (.rar-chip compact).
   const chipsBox = document.getElementById('pkdxTierChips');
   if(chipsBox){
@@ -18876,16 +18886,7 @@ function _pkdxRender(){
     }
   }
   const vues = new Map(rows.map(r => [r.sci, _pkdxVue(r, country, zone)]));
-  // Zone choisie : les especes qu elle n a jamais notees sortent de la grille. Les garder
-  // en grise avait ete envisage - on voyait qu elles existaient ailleurs - mais la grille
-  // d un departement doit montrer ce qu on peut y cocher, pas le catalogue national.
-  if(zone) rows = rows.filter(r => !(vues.get(r.sci) || {}).absente);
-  // Le filtre de statut se lit a l'echelle affichee. Sans zone, il a deja laisse passer
-  // toute espece portant l'un des statuts coches quelque part dans le pays. Avec une zone,
-  // c'est son statut LA-BAS qui decide - celui que sa pastille montre alors -, sinon la
-  // grille d'un departement ou le Cygne noir est N le sortait quand meme sous le filtre X.
-  if(zone && _pkdxCatSelected.size > 0)
-    rows = rows.filter(r => { const c = (vues.get(r.sci) || {}).cat; return c && _pkdxCatSelected.has(c); });
+  rows = _pkdxGardeZone(rows, vues, zone);
   const tri = _pkdxFilters.sort || 'famille';
   if(tri === 'rarete'){
     // Sur la frequence precise, pas sur le palier : celui-ci met dans le meme sac tout un
