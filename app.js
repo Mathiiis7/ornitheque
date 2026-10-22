@@ -1119,6 +1119,9 @@ function _openCountryPicker(currentCode, opts = {}){
     return grouped;
     };
     let grouped = grouper();
+    // 'attente' tant que les frequences des pays etrangers ne sont pas arrivees, 'echec' si
+    // le telechargement a rate : dans les deux cas, ces pays ne doivent pas lire « absente ».
+    let etatPays = _donneesPaysPretes() ? 'pret' : 'attente';
     const backdrop = document.createElement('div');
     backdrop.className = 'cp-modal-backdrop';
     backdrop.innerHTML = `
@@ -1238,7 +1241,11 @@ function _openCountryPicker(currentCode, opts = {}){
             // Meme regle que la fiche (noBarData), sans quoi le selecteur affichait « P » pour
             // l'Erismature a tete blanche au Royaume-Uni pendant que la fiche, juste derriere,
             // disait « jamais notee au Royaume-Uni entre 2019 et 2026 ».
-            const absent = tier === 0 && (!isExoLocal || vAn === 0);
+            // Pays dont le bar chart n'est pas encore arrive (fichier a part, charge a
+            // l'ouverture) : « absente » serait faux, on dit qu'on attend. Un echec du
+            // telechargement ne doit pas non plus passer pour une absence.
+            const sansDonnees = etatPays !== 'pret' && !Object.keys(reg.monthly() || {}).length;
+            const absent = !sansDonnees && tier === 0 && (!isExoLocal || vAn === 0);
             const col = realColor(tier);
             // Chip letter : aligne le comportement sur la fiche espece (renderLine).
             // - Tier 0 exotique : affiche la lettre categorie (N/P/X/C)
@@ -1283,7 +1290,13 @@ function _openCountryPicker(currentCode, opts = {}){
             // rien d'utile, et « X » a cote d'« absente » se lisait comme une contradiction
             // (Capucin bec-de-plomb en Suisse, Mathis, 2026-10-12). La case reste, vide, pour
             // l'alignement.
-            meta = absent
+            if(sansDonnees) titreLigne = (reg.name || cc) + ' - '
+              + (etatPays === 'echec' ? 'données indisponibles' : 'chargement des données…');
+            meta = sansDonnees
+              ? '<span class="cp-item-exo"></span><span class="reg-picker-val">'
+                + (etatPays === 'echec' ? 'indisponible' : 'chargement…') + '</span><div class="reg-picker-bar"></div>'
+                + tierChip('…', 'var(--line-2)', { cls: 'tier-rond' })
+              : absent
               ? '<span class="cp-item-exo"></span><span class="reg-picker-val">absente</span><div class="reg-picker-bar"></div>'
                 + tierChip('–', 'var(--line-2)', { cls: 'tier-rond' })
               : caseExo + '<span class="reg-picker-val">' + esc(fmtPct(vAn)) + '</span>'
@@ -1321,8 +1334,10 @@ function _openCountryPicker(currentCode, opts = {}){
     // 2026-09-27, et ce selecteur est le seul endroit qui les veuille TOUTES a la fois. Si
     // elles ne sont pas encore arrivees, chaque ligne afficherait « - » : on redessine des
     // qu'elles sont la, plutot que de retarder l'ouverture du selecteur.
-    if(!_donneesPaysPretes()){
-      _chargerDonneesPays().then(() => { try{ grouped = grouper(); render(searchEl.value); }catch(_){} });
+    if(etatPays !== 'pret'){
+      _chargerDonneesPays().then(() => { try{
+        etatPays = _donneesPaysPretes() ? 'pret' : 'echec';
+        grouped = grouper(); render(searchEl.value); }catch(_){} });
     }
     // Events
     const cleanup = () => {
@@ -2907,6 +2922,7 @@ function renderBoard(){
 }
 
 let _matrixUniverse = [];   // exposé pour la dropdown de suggestions de #q
+let _matrixTiers = [];      // raretés présentes, pour les étiquettes des filtres actifs
 // Hash du dernier rendu : skip renderMatrix si le contenu n'a pas change.
 // Firestore live updates (chat, presence, votes) peuvent redeclencher renderMatrix
 // sans que la data matrix ait bouge -> 96ms gaspilles chaque fois. Skip precoce.
@@ -2945,14 +2961,19 @@ function renderMatrix({universe,N}){
   const rMode = state.boardMode==='real' ? 'real' : 'league';
   const NONE_TIER={ id:'none', ord:-1, label:'Non observé', color:'#9aa5b1' };
   // Non observés : en rareté réelle -> on montre leur vraie rareté ; en rareté ligue -> "Non observé"
-  const rarOf = u => {
-    if(u.missing) return rMode!=='real' ? NONE_TIER : realTier(u.sci, false);
+  const rarDe = (u, mode) => {
+    if(u.missing) return mode!=='real' ? NONE_TIER : realTier(u.sci, false);
     // Mode reel : espece vue par personne "en France" -> FOREIGN_TIER (label 'Étranger'
     // avec couleur mauve). Sinon utilise realTier qui gere Étranger/Domestique/exotique.
-    if(rMode==='real') return u.counts===0 ? FOREIGN_TIER : realTier(u.sci, false);
+    if(mode==='real') return u.counts===0 ? FOREIGN_TIER : realTier(u.sci, false);
     // Mode ligue : toujours le tier ligue (jamais 'Étranger', 'Unique' minimum via u.tier).
     return u.tier;
   };
+  const rarOf = u => rarDe(u, rMode);
+  // Le filtre de rarete reste offert au classement « Nombre d'especes » (Mathis, 2026-10-22,
+  // en refaisant les filtres) alors que la colonne n'y est pas. Il y parle de rarete REELLE,
+  // de 1 a 10 : les paliers de la ligue (Titan…) ne se lisent qu'a cote de leur colonne.
+  const rarFiltre = u => rarDe(u, state.boardMode === 'league' ? 'league' : 'real');
   const rarHead = rMode==='real' ? 'Rareté réelle' : 'Rareté';
   // Classement au nombre d'especes : la rarete n'y compte pour rien, sa colonne et ses
   // pastilles disparaissent (Mathis, 2026-10-05). La classe libere aussi la largeur fixe
@@ -2962,8 +2983,7 @@ function renderMatrix({universe,N}){
   // Le tri « Par rarete » et le filtre de rarete partent avec la colonne (Mathis, meme soir) :
   // ils triaient et filtraient sur ce qu'on ne voyait plus. Ils sont ignores, pas oublies -
   // l'etat revient tel quel au retour sur un tri par rarete.
-  { const sg = $('#sortSeg'); if(sg) sg.style.display = avecRar ? '' : 'none';
-    const sec = $('#tierChips')?.closest('.fp-section'); if(sec) sec.style.display = avecRar ? '' : 'none'; }
+  { const sg = $('#sortSeg'); if(sg) sg.style.display = avecRar ? '' : 'none'; }
 
   // option : ajouter tous les oiseaux de France non encore observés par le groupe
   let uni = universe;
@@ -2977,14 +2997,14 @@ function renderMatrix({universe,N}){
     uni = universe.concat(missing);
   }
   _matrixUniverse = uni;   // rendu accessible à _updateMatrixSuggest() ci-dessous
-  if(typeof _updateFiltersBadge === 'function') _updateFiltersBadge();
 
   // raretés présentes, triées du plus commun au plus rare
-  const tiersPresent=[...new Map(uni.map(u=>{const t=rarOf(u); return [t.id,t];})).values()].sort((a,b)=>a.ord-b.ord);
+  const tiersPresent=[...new Map(uni.map(u=>{const t=rarFiltre(u); return [t.id,t];})).values()].sort((a,b)=>a.ord-b.ord);
+  _matrixTiers = tiersPresent;   // les etiquettes des filtres actifs y lisent les libelles
   // Ancienne légende séparée retirée : les chips rareté (dans le panneau filtres)
   // font maintenant office de légende + filtre en même temps.
 
-  const tierKey=rMode+':'+tiersPresent.map(t=>t.id).join(',');
+  const tierKey=state.boardMode+':'+tiersPresent.map(t=>t.id).join(',');
   if(tierKey!==lastTierKey){
     // Sur changement du mode de rareté (ligue↔réelle) ou de la liste des tiers présents :
     // on remet tout coché (tierExcl vide) - évite d'exclure par erreur un ancien id d'un autre mode.
@@ -3014,8 +3034,8 @@ function renderMatrix({universe,N}){
   // Familles présentes triées alpha : uniquement celles ayant >= 1 espece qui
   // passe le filtre tier courant (sinon on afficherait des familles vides apres
   // filtrage, ex : filtre 'tier 1-3' + famille 'Pouillots' → 0 obs).
-  const uniForFam = (avecRar && state.tierExcl?.size)
-    ? uni.filter(u => !state.tierExcl.has(rarOf(u).id))
+  const uniForFam = state.tierExcl?.size
+    ? uni.filter(u => !state.tierExcl.has(rarFiltre(u).id))
     : uni;
   const fams=[...new Set(uniForFam.map(u=>familyOf(u.sci)))].sort((a,b) => (FAMILY_ORDER[a] ?? 9999) - (FAMILY_ORDER[b] ?? 9999) || a.localeCompare(b, 'fr'));
   const famKey=fams.join('|');
@@ -3023,7 +3043,7 @@ function renderMatrix({universe,N}){
     lastFamKey=famKey;
     const sel=$('#familySel');
     if(sel){
-      sel.innerHTML='<option value="any">Toutes</option>'+fams.map(f=>`<option value="${esc(f)}">${esc(f)}</option>`).join('');
+      sel.innerHTML='<option value="any">Toutes les familles</option>'+fams.map(f=>`<option value="${esc(f)}">${esc(f)}</option>`).join('');
       if(!fams.includes(state.family)) state.family='any';
       sel.value=state.family;
     }
@@ -3034,20 +3054,24 @@ function renderMatrix({universe,N}){
   if(state.playerMain && !alive.has(state.playerMain)) state.playerMain='';
   for(const uid of [...state.playerCompareSet]) if(!alive.has(uid)) state.playerCompareSet.delete(uid);
   // Re-génère les chips à chaque changement de composition de la ligue.
-  const plKey=state.people.map(p=>p.id+':'+p.name).join('|');
+  // La cle porte aussi les choix : « Tout le monde » s'allume ou s'eteint, et la personne
+  // retenue sort des jetons.
+  const plKey=state.people.map(p=>p.id+':'+p.name).join('|')+'#'+state.playerMain+'#'+[...state.playerCompareSet].sort().join(',');
   if(plKey!==lastPlayerKey){
     lastPlayerKey=plKey;
-    const boxMain=$('#playerMainChips'), boxCmp=$('#playerCompareChips');
-    const chipHtml = (p, on, extraCls) => `<button type="button" class="person-chip${on?' on':''}${extraCls||''}" data-player="${esc(p.id)}" style="--series:var(--s${p.si})"><span class="dot"></span>${esc(p.name)}${p.isMe?' (toi)':''}</button>`;
-    if(boxMain) boxMain.innerHTML = state.people.map(p=>chipHtml(p, state.playerMain===p.id, state.playerMain===p.id?' main':'')).join('');
-    // Panel « À comparer » : on masque la personne deja selectionnee comme principale
-    // (se comparer a soi-meme n'a pas de sens). Message vide si la principale est le
-    // seul joueur du groupe.
+    const selMain=$('#playerMainSel'), boxCmp=$('#playerCompareChips');
+    const chipHtml = (p, on) => `<button type="button" class="person-chip${on?' on':''}" data-player="${esc(p.id)}" style="--series:var(--s${p.si})"><span class="dot"></span>${esc(p.name)}${p.isMe?' (toi)':''}</button>`;
+    if(selMain){
+      selMain.innerHTML = '<option value="">Tout le monde</option>'
+        + state.people.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}${p.isMe?' (toi)':''}</option>`).join('');
+      selMain.value = state.playerMain;
+    }
+    // « Qui afficher » : « Tout le monde » d'abord, comme partout ailleurs (charte). La
+    // personne dont on garde les oiseaux n'y figure pas : sa colonne est toujours la, en tete.
     if(boxCmp){
       const cmpPeople = state.people.filter(p => p.id !== state.playerMain);
-      boxCmp.innerHTML = cmpPeople.length
-        ? cmpPeople.map(p=>chipHtml(p, state.playerCompareSet.has(p.id))).join('')
-        : '<div class="fp-empty" style="color:var(--ink-3);font-size:13px;font-style:italic;padding:6px 2px;">Aucun autre joueur à comparer.</div>';
+      boxCmp.innerHTML = `<button type="button" class="person-chip${state.playerCompareSet.size?'':' on'}" data-player-tous>Tout le monde</button>`
+        + cmpPeople.map(p=>chipHtml(p, state.playerCompareSet.has(p.id))).join('');
     }
   }
 
@@ -3070,13 +3094,16 @@ function renderMatrix({universe,N}){
       return `<button type="button" class="person-chip flag-chip${on?' on':''}" data-country="${esc(cc)}" title="${esc(countryLabel(cc))}">${flagImg(cc)||('<span class="flag-fallback">'+esc(cc)+'</span>')}</button>`;
     }).join('');
     // Masqué tant qu'il n'y a pas au moins un pays étranger : filtrer par "FR seul" n'a aucun intérêt.
-    const wrap = coBox.closest('.fp-inline');
+    const wrap = coBox.closest('.fm');
     if(wrap) wrap.style.display = countries.some(c=>c!=='FR') ? '' : 'none';
   }
   const coBadge=$('#countryBadge'); if(coBadge) coBadge.style.display='none';
+  // Apres les nettoyages ci-dessus (rarete remise a zero, pays ou joueurs disparus) : les
+  // etiquettes ne doivent annoncer que des filtres qui s'appliquent vraiment.
+  if(typeof _majFiltresActifs === 'function') _majFiltresActifs();
 
   let list=[...uni];
-  if(avecRar && state.tierExcl.size) list=list.filter(u=>!state.tierExcl.has(rarOf(u).id));
+  if(state.tierExcl.size) list=list.filter(u=>!state.tierExcl.has(rarFiltre(u).id));
   if(state.family && state.family !== 'any') list=list.filter(u=>familyOf(u.sci) === state.family);
   // Filtre lignes :
   //  - liste principale choisie  → seules les espèces qu'ELLE a vues (peu importe si
@@ -3088,12 +3115,17 @@ function renderMatrix({universe,N}){
   } else if(state.playerCompareSet.size){
     list = list.filter(u => { for(const uid of state.playerCompareSet) if(u.seenBy.has(uid)) return true; return false; });
   }
-  // Colonnes à afficher : principale en 1ère position (mise en avant), puis les
-  // personnes à comparer dans l'ordre initial de state.people. Sans sélection = tout le monde.
-  const displayPeople = (state.playerMain || state.playerCompareSet.size)
-    ? [ ...(state.playerMain ? [state.people.find(p=>p.id===state.playerMain)].filter(Boolean) : []),
-        ...state.people.filter(p => p.id!==state.playerMain && state.playerCompareSet.has(p.id)) ]
+  // Colonnes à afficher : la personne dont on garde les oiseaux en 1ère position (mise en
+  // avant), puis celles cochées dans « Qui afficher » - ou tout le monde si rien n'est coché.
+  // Avant le 2026-10-22, une liste principale choisie seule ne montrait QUE sa colonne : on
+  // ne voyait plus qui d'autre avait ses oiseaux, ce qui est pourtant la question posée.
+  const autres = state.playerCompareSet.size
+    ? state.people.filter(p => state.playerCompareSet.has(p.id))
     : _joueursClasses();
+  const displayPeople = state.playerMain
+    ? [ ...[state.people.find(p=>p.id===state.playerMain)].filter(Boolean),
+        ...autres.filter(p => p.id!==state.playerMain) ]
+    : autres;
   const nCols = displayPeople.length;
   // Filtre pays (multi-exclusion) : garder une espèce s'il existe au moins une obs
   // (chez une personne affichée) dans un pays NON masqué.
@@ -17319,15 +17351,43 @@ $('#tierChips')?.addEventListener('click', e=>{
   if(state.tierExcl.has(id)) state.tierExcl.delete(id); else state.tierExcl.add(id);
   renderResults();
 });
-// Ouvre/ferme le panneau de filtres. Bouton = toujours visible, panneau = replié par défaut.
-$('#filtersToggle')?.addEventListener('click', ()=>{
-  const btn = $('#filtersToggle'), panel = $('#filtersPanel');
-  const open = btn.getAttribute('aria-expanded') === 'true';
-  btn.setAttribute('aria-expanded', open ? 'false' : 'true');
-  panel.hidden = open;
+// Un menu par filtre (2026-10-22, a la place du panneau repliable) : un seul ouvert a la fois,
+// referme par un clic dehors ou Echap.
+function _fermerMenusFiltres(sauf){
+  document.querySelectorAll('#filtMenus .fm').forEach(m => {
+    if(m === sauf) return;
+    m.querySelector('.fm-btn')?.setAttribute('aria-expanded', 'false');
+    const pop = m.querySelector('.fm-pop'); if(pop) pop.hidden = true;
+  });
+}
+$('#filtMenus')?.addEventListener('click', e=>{
+  const btn = e.target.closest('.fm-btn'); if(!btn) return;
+  const menu = btn.closest('.fm'), pop = menu.querySelector('.fm-pop');
+  const ouvrir = btn.getAttribute('aria-expanded') !== 'true';
+  _fermerMenusFiltres(menu);
+  btn.setAttribute('aria-expanded', ouvrir ? 'true' : 'false');
+  pop.hidden = !ouvrir;
+  if(!ouvrir) return;
+  // Pres du bord droit (Pays, Affichage sur telephone), le menu s'ouvre vers la gauche plutot
+  // que de sortir de l'ecran. Mesure dans le repere de getBoundingClientRect, celui de l'ecran.
+  pop.classList.remove('vers-gauche');
+  if(pop.getBoundingClientRect().right > document.documentElement.clientWidth - 8) pop.classList.add('vers-gauche');
 });
-// Reset : remet TOUS les filtres à l'état initial (tout visible), sans toucher au tri ni à la recherche.
-$('#filtersReset')?.addEventListener('click', ()=>{
+document.addEventListener('click', e=>{
+  // Les jetons d'un menu sont redessines pendant leur propre clic : la cible n'est alors plus
+  // dans la page, et « closest » la croirait dehors (meme piege que le panneau Photos).
+  if(!e.target.isConnected) return;
+  if(e.target.closest('#filtMenus .fm')) return;
+  _fermerMenusFiltres();
+});
+document.addEventListener('keydown', e=>{
+  if(e.key !== 'Escape') return;
+  const ouvert = document.querySelector('#filtMenus .fm-btn[aria-expanded="true"]');
+  if(!ouvert) return;
+  _fermerMenusFiltres(); ouvert.focus();
+});
+// Remet TOUS les filtres à l'état initial (tout visible), sans toucher au tri ni à la recherche.
+function _effacerFiltres(){
   state.tierExcl = new Set();
   state.family = 'any';
   state.playerMain = '';
@@ -17341,52 +17401,75 @@ $('#filtersReset')?.addEventListener('click', ()=>{
   lastPlayerKey = '';    // force le re-render des chips personne
   lastCountryKey = '';   // force le re-render des chips pays
   renderResults();
-});
-// Compte les filtres actifs et met à jour le badge du bouton "Filtres".
-function _updateFiltersBadge(){
-  let n = 0;
-  // Le filtre de rarete ne compte pas au tri « Nombre d'especes », ou il est masque et ignore.
-  if(state.boardMode !== 'count' && state.tierExcl && state.tierExcl.size) n++;
-  if(state.family && state.family !== 'any') n++;
-  if(state.playerMain) n++;
-  if(state.playerCompareSet && state.playerCompareSet.size) n++;
-  if(state.countryExcl && state.countryExcl.size) n++;
-  if(state.showMissing) n++;
-  if(state.showSci) n++;
-  const badge = $('#filtersCount'); if(!badge) return;
-  if(n>0){ badge.textContent = String(n); badge.hidden = false; }
-  else { badge.hidden = true; }
 }
-// Dropdown famille : simple onchange, filtre appliqué au re-render.
-$('#familySel')?.addEventListener('change', e=>{ state.family = e.target.value; renderResults(); });
-// Chip "liste principale" : sélection unique (re-clic = déselect). Force re-génération
-// des chips via lastPlayerKey pour appliquer/retirer la classe .main visuelle.
-$('#playerMainChips')?.addEventListener('click', e=>{
-  const b = e.target.closest('button[data-player]'); if(!b) return;
-  const uid = b.dataset.player;
-  state.playerMain = (state.playerMain === uid) ? '' : uid;
-  // Coherence : si le nouveau main etait deja coche en compare, on le retire du Set.
-  if(state.playerMain) state.playerCompareSet.delete(state.playerMain);
-  // Update chip visuals immediately (mirror compare's DOM-first approach). Autrefois on
-  // reposait sur renderResults + lastPlayerKey='' pour re-generer les chips, mais le
-  // check plKey!==lastPlayerKey pouvait skipper la re-generation dans certains cas ->
-  // le clic semblait sans effet. Ici on garantit le feedback visuel synchrone.
-  const boxMain = e.currentTarget;
-  for(const el of boxMain.querySelectorAll('button.person-chip')){
-    const active = (state.playerMain === el.dataset.player);
-    el.classList.toggle('on', active);
-    el.classList.toggle('main', active);
+// Les filtres actifs, en etiquettes sous la barre : chacune se retire d'un clic. Les menus
+// fermes ne disent rien de leur contenu, ce sont elles qui le rappellent. Le bouton de chaque
+// menu se marque aussi quand son filtre s'applique.
+function _majFiltresActifs(){
+  const box = $('#filtActifs'); if(!box) return;
+  const nomDe = id => { const p = state.people.find(x => x.id === id); return p ? p.name + (p.isMe ? ' (toi)' : '') : ''; };
+  // Le plus court des deux : ce qu'on garde, ou « sauf » ce qu'on a retire. Retirer un seul
+  // palier sur onze en enumerait dix, sur deux lignes.
+  const resume = (gardes, retires, aucun) => !gardes.length ? aucun
+    : gardes.length <= retires.length ? gardes.join(', ') : 'sauf ' + retires.join(', ');
+  const tags = [];
+  if(state.playerMain) tags.push(['main', 'Oiseaux de ' + nomDe(state.playerMain)]);
+  if(state.playerCompareSet.size) tags.push(['cmp', 'Affichés : ' + [...state.playerCompareSet].map(nomDe).filter(Boolean).join(', ')]);
+  if(state.tierExcl.size){
+    const lbl = t => t.label;
+    tags.push(['rar', 'Rareté : ' + resume(_matrixTiers.filter(t => !state.tierExcl.has(t.id)).map(lbl),
+      _matrixTiers.filter(t => state.tierExcl.has(t.id)).map(lbl), 'aucune')]);
   }
-  // Re-render aussi le panel compare (le main y est masque) et le tableau.
-  lastPlayerKey = '';
+  if(state.family && state.family !== 'any') tags.push(['fam', state.family]);
+  if(state.countryExcl.size){
+    const tous = [...document.querySelectorAll('#countryChips [data-country]')].map(b => b.dataset.country);
+    tags.push(['pays', 'Pays : ' + resume(tous.filter(cc => !state.countryExcl.has(cc)).map(countryLabel),
+      tous.filter(cc => state.countryExcl.has(cc)).map(countryLabel), 'aucun')]);
+  }
+  if(state.showMissing) tags.push(['miss', 'Oiseaux de France non observés']);
+  if(state.showSci) tags.push(['sci', 'Noms scientifiques']);
+  box.innerHTML = tags.map(([k, txt]) =>
+      `<button type="button" class="fm-tag" data-retire="${k}" aria-label="Retirer le filtre ${esc(txt)}">${esc(txt)}<span aria-hidden="true">×</span></button>`).join('')
+    + (tags.length > 1 ? '<button type="button" class="fm-tout" data-retire="tout">Tout effacer</button>' : '');
+  box.hidden = !tags.length;
+  const actif = {
+    personnes: !!state.playerMain || state.playerCompareSet.size > 0,
+    rarete: state.tierExcl.size > 0,
+    pays: state.countryExcl.size > 0,
+    affichage: state.showMissing || state.showSci,
+  };
+  for(const m of document.querySelectorAll('#filtMenus .fm'))
+    m.querySelector('.fm-btn')?.classList.toggle('actif', !!actif[m.dataset.fm]);
+  $('#familySel')?.classList.toggle('actif', state.family !== 'any');
+}
+$('#filtActifs')?.addEventListener('click', e=>{
+  const b = e.target.closest('[data-retire]'); if(!b) return;
+  const k = b.dataset.retire;
+  if(k === 'tout'){ _effacerFiltres(); return; }
+  if(k === 'main') state.playerMain = '';
+  if(k === 'cmp') state.playerCompareSet = new Set();
+  if(k === 'rar') state.tierExcl = new Set();
+  if(k === 'fam'){ state.family = 'any'; const fs = $('#familySel'); if(fs) fs.value = 'any'; }
+  if(k === 'pays') state.countryExcl = new Set();
+  if(k === 'miss'){ state.showMissing = false; const c = $('#showMissing'); if(c) c.checked = false; }
+  if(k === 'sci'){ state.showSci = false; const c = $('#showSci'); if(c) c.checked = false; }
   renderResults();
 });
-// Chips "à comparer" : toggle du Set state.playerCompareSet.
+// Dropdown famille : simple onchange, filtre appliqué au re-render.
+$('#familySel')?.addEventListener('change', e=>{ state.family = e.target.value; renderResults(); });
+// « Seulement les oiseaux de » : une personne ou personne. Sa colonne passe en tete, et elle
+// sort des jetons « Qui afficher » ou elle ferait doublon.
+$('#playerMainSel')?.addEventListener('change', e=>{
+  state.playerMain = e.target.value;
+  if(state.playerMain) state.playerCompareSet.delete(state.playerMain);
+  renderResults();
+});
+// « Qui afficher » : jetons a cocher ; « Tout le monde » vide la selection.
 $('#playerCompareChips')?.addEventListener('click', e=>{
+  if(e.target.closest('[data-player-tous]')){ state.playerCompareSet = new Set(); renderResults(); return; }
   const b = e.target.closest('button[data-player]'); if(!b) return;
   const uid = b.dataset.player;
   if(state.playerCompareSet.has(uid)) state.playerCompareSet.delete(uid); else state.playerCompareSet.add(uid);
-  b.classList.toggle('on', state.playerCompareSet.has(uid));
   renderResults();
 });
 $('#showSci')?.addEventListener('change', e=>{ state.showSci = e.target.checked; renderResults(); });

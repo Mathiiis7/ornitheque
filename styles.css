@@ -589,7 +589,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     display:inline-flex; align-items:center; justify-content:center; margin-left:8px; vertical-align:middle; }
   #viewRanking .fp-hint, #viewRanking .miss-toggle { font-size:14px; font-weight:400; text-transform:none; letter-spacing:0; color:var(--ink-3); }
   #viewRanking .miss-toggle { color:var(--ink-2); }
-  #viewRanking .person-chip, #viewRanking .fp-reset, #viewRanking .filters-toggle, #viewRanking .rar-chip,
+  #viewRanking .person-chip, #viewRanking .fp-reset, #viewRanking .rar-chip,
   #viewRanking .filt-sel { font-family:var(--sans); font-size:14px; }
   #viewRanking .mc-sp, #viewRanking .mc-person { font-size:14px; }
   #viewRanking .mc-count { font-family:var(--sans); font-size:14px; }
@@ -725,14 +725,43 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   #matrix { padding:20px; }
   .controls { display:flex; flex-direction:column; gap:10px; margin:14px 0 6px; }
   .ctrl-main { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-  .filters-toggle { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; background:var(--surface-2); border:1px solid var(--line-2); border-radius:9px; font:600 14px/1 var(--sans); color:var(--ink-2); cursor:pointer; white-space:nowrap; }
-  .filters-toggle:hover { background:color-mix(in srgb,var(--accent) 8%,var(--surface-2)); color:var(--ink); }
-  .filters-toggle[aria-expanded="true"] { background:color-mix(in srgb,var(--accent) 14%,var(--surface)); border-color:var(--accent); color:var(--accent-ink); }
-  .filters-count { display:inline-flex; align-items:center; justify-content:center; min-width:20px; height:20px; padding:0 6px; border-radius:10px; background:var(--accent); color:#fff; font:700 11px/1 var(--sans); }
-  .filters-panel { border:1px solid var(--line); background:var(--surface-2); border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; gap:12px; }
-  /* Bug classique : display:flex empêche l'attribut [hidden] de fonctionner → il faut le forcer. */
-  .filters-panel[hidden] { display:none; }
-  .filters-count[hidden] { display:none; }
+  /* Filtres de « Qui a vu quoi » : un menu par filtre sous la recherche (2026-10-22, a la place
+     du panneau repliable). Le bouton suit la charte des controles de filtre : 34 px, 14 px en
+     600, coins de 9 px. La fleche est dessinee en CSS, pas en caractere, pour tomber au milieu. */
+  .fm-barre { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .fm { position:relative; }
+  .fm-btn { display:inline-flex; align-items:center; gap:8px; min-height:34px; box-sizing:border-box; padding:0 12px;
+    background:var(--surface); border:1px solid var(--line-2); border-radius:9px; font:600 14px/1 var(--sans);
+    color:var(--ink-2); cursor:pointer; white-space:nowrap; }
+  .fm-btn::after { content:""; width:6px; height:6px; border:solid currentColor; border-width:0 1.5px 1.5px 0;
+    transform:translateY(-2px) rotate(45deg); }
+  .fm-btn[aria-expanded="true"]::after { transform:translateY(1px) rotate(-135deg); }
+  .fm-btn:hover, .fm-sel:hover { border-color:var(--accent); color:var(--ink); }
+  .fm-btn.actif, .fm-sel.actif { border-color:var(--accent); color:var(--accent-ink);
+    background:color-mix(in srgb,var(--accent) 12%,var(--surface)); }
+  .fm-pop { position:absolute; top:calc(100% + 6px); left:0; z-index:30; width:max-content; max-width:min(440px, 92vw);
+    box-sizing:border-box; display:flex; flex-direction:column; align-items:flex-start; gap:10px; padding:14px;
+    background:var(--surface); border:1px solid var(--line-2); border-radius:12px; box-shadow:var(--shadow); }
+  .fm-pop.vers-gauche { left:auto; right:0; }
+  /* Sur telephone, un menu ancre a son bouton sortait de l'ecran d'un cote ou de l'autre
+     (Rarete : 89 px a gauche, mesure en 375 px de large) : il s'ouvre sous toute la barre. */
+  @media (max-width:640px){
+    .fm-barre { position:relative; }
+    .fm { position:static; }
+    .fm-pop, .fm-pop.vers-gauche { left:0; right:0; width:auto; max-width:none; }
+  }
+  /* display:flex empeche l'attribut [hidden] de fonctionner : il faut le forcer. */
+  .fm-pop[hidden], .fm-actifs[hidden] { display:none; }
+  .fm-titre { font-size:13px; font-weight:700; color:var(--ink-3); text-transform:uppercase; letter-spacing:.4px; }
+  .fm-pop .fm-titre ~ .fm-titre { margin-top:4px; }
+  .fm-actifs { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .fm-tag { display:inline-flex; align-items:center; gap:8px; min-height:30px; padding:0 10px; box-sizing:border-box;
+    border:1px solid var(--accent); border-radius:15px; background:color-mix(in srgb,var(--accent) 12%,var(--surface));
+    color:var(--accent-ink); font:600 14px/1 var(--sans); cursor:pointer; }
+  .fm-tag span { font-size:17px; line-height:1; }
+  .fm-tag:hover { background:color-mix(in srgb,var(--accent) 20%,var(--surface)); }
+  .fm-tout { border:0; background:none; padding:0 6px; min-height:30px; color:var(--accent-ink); font:600 14px/1 var(--sans);
+    cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
   .fp-section { display:flex; flex-direction:column; gap:6px; }
   .fp-section.fp-row { flex-direction:row; flex-wrap:wrap; align-items:center; gap:14px; }
   .fp-title { font-size:13px; font-weight:700; color:var(--ink-3); text-transform:uppercase; letter-spacing:.4px; }
@@ -3204,7 +3233,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   code, kbd { font-family:var(--mono); }
   .seg button { padding:5px 11px; }
   /* Les contrôles de filtre ont tous la même hauteur : 34 px écrits (de 27 à 34 avant). */
-  .seg, .filt-sel, .cp-btn, .whochip, .person-chip, .qz-mode, .filters-toggle {
+  .seg, .filt-sel, .cp-btn, .whochip, .person-chip, .qz-mode {
     min-height:34px; box-sizing:border-box; }
   /* Un bloc qui ouvre une page tombe à 12 px sous le titre, comme partout. */
   .section-head + .profile, #profilEmpty[style*="none"] + .profile { margin-top:12px; padding-top:0; border-top:0; }
@@ -3280,6 +3309,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   }
 
   @media (pointer: coarse) {
+    /* Filtres de « Qui a vu quoi » : boutons des menus, ce qu'ils contiennent, etiquettes. */
+    .fm-btn, .fm-sel, .fm-pop .person-chip, .fm-pop .filt-sel, #tierChips .rar-chip, .fm-pop .miss-toggle,
+    .fm-tag, .fm-tout { min-height:52px; }
+    .fm-pop .miss-toggle { display:flex; align-items:center; }
+
     /* Classement : au doigt, chaque espece est une cible de doigt. */
     .board-pile .board-rond { width:52px; height:52px; }
     .board-sp { min-height:52px; }

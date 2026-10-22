@@ -124,7 +124,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=439">
+<link rel="modulepreload" href="app.js?v=440">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -650,48 +650,51 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
       <div class="controls">
         <!-- Barre principale : ce qu'on utilise le plus (recherche + tri) toujours visible. -->
         <div class="ctrl-main">
-          <div class="search matrix-search" style="position:relative;">🔎<input type="text" id="q" aria-label="Filtrer les espèces du tableau" placeholder="Filtrer une espèce…" autocomplete="off"><div class="map-search-suggest" id="matrixSearchSuggest"></div></div>
+          <div class="search matrix-search" style="position:relative;"><input type="text" id="q" aria-label="Filtrer les espèces du tableau" placeholder="Filtrer une espèce…" autocomplete="off"><div class="map-search-suggest" id="matrixSearchSuggest"></div></div>
           <div class="seg" id="sortSeg">
             <button data-sort="rarity" class="on">Par rareté</button>
             <button data-sort="name">A → Z</button>
           </div>
-          <button type="button" class="filters-toggle" id="filtersToggle" aria-expanded="false" title="Afficher les filtres">
-            <span>🎛️ Filtres</span>
-            <span class="filters-count" id="filtersCount" hidden>0</span>
-          </button>
         </div>
-        <!-- Panneau de filtres repliable (masqué par défaut). Ouvert = classe .open sur le div. -->
-        <div class="filters-panel" id="filtersPanel" hidden>
-          <div class="fp-section">
-            <div class="fp-title">Rareté</div>
-            <div class="person-chips rar-chips-matrix" id="tierChips" aria-label="Filtrer par rareté (multi)"></div>
-          </div>
-          <div class="fp-section">
-            <div class="fp-title">Liste principale <span class="fp-hint">(1 personne - sa liste devient la référence)</span></div>
-            <div class="person-chips" id="playerMainChips" aria-label="Choisir la personne principale (0 ou 1)"></div>
-          </div>
-          <div class="fp-section">
-            <div class="fp-title">À comparer <span class="fp-hint">(personnes affichées à côté pour voir si elles ont les mêmes oiseaux)</span></div>
-            <div class="person-chips" id="playerCompareChips" aria-label="Choisir les personnes à comparer (multi)"></div>
-          </div>
-          <div class="fp-section fp-row">
-            <div class="fp-inline">
-              <span class="fp-title-inline">Famille</span>
-              <select class="filt-sel" id="familySel" aria-label="Filtrer par famille">
-                <option value="any">Toutes</option>
+        <!-- Un menu par filtre, ouvert sous son bouton (2026-10-22, remplace le panneau repliable).
+             Les conteneurs gardent leurs identifiants : renderResults et leurs gestionnaires
+             n'ont pas change. -->
+        <div class="fm-barre" id="filtMenus">
+          <div class="fm" data-fm="personnes">
+            <button type="button" class="fm-btn" aria-expanded="false" aria-controls="fmPersonnes">Personnes</button>
+            <div class="fm-pop" id="fmPersonnes" hidden>
+              <div class="fm-titre">Qui afficher</div>
+              <div class="person-chips" id="playerCompareChips" aria-label="Personnes affichées dans le tableau"></div>
+              <div class="fm-titre">Seulement les oiseaux de</div>
+              <select class="filt-sel" id="playerMainSel" aria-label="Ne garder que les oiseaux d'une personne">
+                <option value="">Tout le monde</option>
               </select>
             </div>
-            <div class="fp-inline">
-              <span class="fp-title-inline">Pays</span>
+          </div>
+          <div class="fm" data-fm="rarete">
+            <button type="button" class="fm-btn" aria-expanded="false" aria-controls="fmRarete">Rareté</button>
+            <div class="fm-pop" id="fmRarete" hidden>
+              <div class="person-chips rar-chips-matrix" id="tierChips" aria-label="Filtrer par rareté (multi)"></div>
+            </div>
+          </div>
+          <select class="filt-sel fm-sel" id="familySel" aria-label="Filtrer par famille">
+            <option value="any">Toutes les familles</option>
+          </select>
+          <div class="fm" data-fm="pays">
+            <button type="button" class="fm-btn" aria-expanded="false" aria-controls="fmPays">Pays</button>
+            <div class="fm-pop" id="fmPays" hidden>
               <div class="person-chips flag-chips" id="countryChips" aria-label="Filtrer par pays (multi)"></div>
             </div>
           </div>
-          <div class="fp-section fp-row">
-            <label class="miss-toggle"><input type="checkbox" id="showMissing"> Oiseaux de France non observés</label>
-            <label class="miss-toggle"><input type="checkbox" id="showSci"> Afficher les noms scientifiques</label>
-            <button type="button" class="fp-reset" id="filtersReset" title="Remettre tous les filtres à zéro">↺ Réinitialiser</button>
+          <div class="fm" data-fm="affichage">
+            <button type="button" class="fm-btn" aria-expanded="false" aria-controls="fmAffichage">Affichage</button>
+            <div class="fm-pop" id="fmAffichage" hidden>
+              <label class="miss-toggle"><input type="checkbox" id="showMissing"> Oiseaux de France non observés</label>
+              <label class="miss-toggle"><input type="checkbox" id="showSci"> Noms scientifiques</label>
+            </div>
           </div>
         </div>
+        <div class="fm-actifs" id="filtActifs" hidden></div>
       </div>
       <div class="tbl-scroll">
         <table>
@@ -1493,5 +1496,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=439"></script>
+<script type="module" src="app.js?v=440"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>
