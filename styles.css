@@ -2009,6 +2009,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* Nom d'oiseau cliquable : soulignement discret au hover */
   .sp-link { cursor:pointer; text-decoration:none; color:inherit; border-bottom:1px dashed transparent; }
   .sp-link:hover { border-bottom-color:currentColor; }
+  /* Pas dans le classement : le pointille soulignait toute la case (photo comprise) et dessinait
+     un arc sous les ronds des especes preferees (Mathis, 2026-10-22). La bordure reste
+     transparente plutot que retiree, pour que la hauteur des lignes ne bouge pas. */
+  .board-sheet .sp-link:hover { border-bottom-color:transparent; }
   .tab { position:relative; }
   /* Compteur "N nouveaux" positionne en haut a droite de l'onglet. Pour >99, affiche "99+". */
   .tab-count { position:absolute; top:2px; right:2px; min-width:18px; height:18px; padding:0 5px; border-radius:9px; background:#e74c3c; color:#fff; font:700 11px/18px var(--sans); text-align:center; box-sizing:border-box; font-variant-numeric:tabular-nums; }
