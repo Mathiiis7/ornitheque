@@ -1817,7 +1817,7 @@ function _estReguliere(sci, cc){
 
 // « en France » mais « au Royaume-Uni » et « aux États-Unis » : le genre et le nombre du nom
 // de pays commandent la preposition, on ne peut pas la coller mecaniquement.
-const _PREP_PAYS = { ME:'au', GB:'au', PT:'au', CA:'au', LK:'au', US:'aux' };
+const _PREP_PAYS = { ME:'au', GB:'au', PT:'au', CA:'au', LK:'au', US:'aux', NL:'aux', DK:'au', LU:'au', XK:'au' };
 function _auPays(cc){
   const nom = (COUNTRIES_REG[cc] && COUNTRIES_REG[cc].name) || cc;
   return `${_PREP_PAYS[cc] || 'en'} ${nom}`;
@@ -2312,31 +2312,29 @@ function leagueColor(k, N){
   const l = Math.round(22 + p*30);                                  // 22 % -> 52 % de luminosite
   return { color:`hsl(177 ${Math.round(80 - p*30)}% ${l}%)`, ink:'#fff' };
 }
-// Jusqu'a 12 membres, un palier par nombre de membres. Au-dela, la legende en compterait
-// autant que de membres : les paliers deviennent 8 tranches de la PART des membres qui ont
-// vu l'espece (choix de Mathis, 2026-10-22, la ligue en comptant 11). Le rond de l'espece
-// garde le nombre exact (count) ; seuls sa couleur et la legende suivent la tranche (ord).
-const LIGUE_PALIERS_MAX = 12;
-const LIGUE_TRANCHES = [0.10, 0.25, 0.40, 0.60, 0.80];   // bornes hautes des tranches 2 a 6
+// Une seule echelle quelle que soit la taille de la ligue : 12 paliers de la PART des membres
+// qui ont vu l'espece, moins de 5 %, 5 %, 10 %, puis de 10 en 10 jusqu'a 90 %, et tous (choix
+// de Mathis, 2026-10-22, contre un palier par membre jusqu'a 12 puis 8 tranches). A 11
+// membres, chaque nombre de membres tombe dans son propre palier ; seul « moins de 5 % » reste
+// vide, et la legende ne montre que les paliers presents. Le rond de l'espece garde le nombre
+// exact (count) ; sa couleur et la legende suivent le palier (ord).
+const LIGUE_SEUILS = [5, 10, 20, 30, 40, 50, 60, 70, 80, 90];   // en %, bas des paliers 2 a 11
 function _trancheLigue(k, N){
-  if(k <= 1) return 1;
-  if(k >= N) return 8;
-  const i = LIGUE_TRANCHES.findIndex(b => k / N <= b);
-  return i < 0 ? 7 : i + 2;
+  if(k >= N) return 12;
+  // En entiers : 100*k >= s*N, pour qu'un 3/10 ne tombe pas sous 30 % par un arrondi.
+  return 1 + LIGUE_SEUILS.filter(s => 100 * k >= s * N).length;
 }
 function tierFor(k, N){
   const label = k >= N && N > 1 ? 'Vue par tous' : 'Vue par ' + k + (k > 1 ? ' membres' : ' membre');
-  if(N <= LIGUE_PALIERS_MAX){
-    const c = leagueColor(k, N);
-    return { id:String(k), count:k, ord:k, label, color:c.color, ink:c.ink };
-  }
-  const t = _trancheLigue(k, N), c = leagueColor(t, 8);
-  // Les bornes de la tranche en nombre de membres, pour la pastille de la legende (« 5–10 »).
+  const t = _trancheLigue(k, N), c = leagueColor(t, 12);
+  // Les bornes du palier en nombre de membres. Un palier d'un seul nombre garde son rond
+  // chiffre ; un palier qui en regroupe plusieurs ecrit ses bornes (« 5–10 ») dans la legende.
   let lo = k, hi = k;
   while(lo > 1 && _trancheLigue(lo - 1, N) === t) lo--;
   while(hi < N && _trancheLigue(hi + 1, N) === t) hi++;
-  const plage = lo === hi ? String(lo) : lo + '–' + hi;
-  const legende = t === 8 ? 'Vue par tous' : lo === hi ? 'Vue par ' + lo + (lo > 1 ? ' membres' : ' membre') : 'Vue par ' + lo + ' à ' + hi + ' membres';
+  const plage = lo === hi ? null : lo + '–' + hi;
+  const part = t === 12 ? '' : t === 1 ? ' (moins de 5 %)' : ' (' + LIGUE_SEUILS[t - 2] + ' % ou plus)';
+  const legende = t === 12 ? 'Vue par tous' : (lo === hi ? 'Vue par ' + lo + (lo > 1 ? ' membres' : ' membre') : 'Vue par ' + lo + ' à ' + hi + ' membres') + part;
   return { id:'t' + t, count:k, ord:t, label, legende, plage, color:c.color, ink:c.ink };
 }
 const REAL_LABELS={0:'Parc semi-libre',1:'Omniprésent',2:'Très commun',3:'Commun',4:'Assez commun',5:'Peu commun',6:'Assez rare',7:'Rare',8:'Très rare',9:'Ultra rare',10:'Exceptionnel'};
@@ -2462,6 +2460,21 @@ function realTier(sci, abroad){
   // (bar chart brut). Sinon le classement affiche un tier different de celui de la fiche.
   const w = rarityForCountry(sci, 'FR');
   return { id:'r'+w, ord:w, label:REAL_LABELS[w]||('niveau '+w), color:realColor(w) };
+}
+// La rarete terrain dans un autre pays : celle de « Qui a vu quoi » quand le filtre pays en
+// garde un seul (Mathis, 2026-10-23). Memes regles que realTier, lues dans le pays : un N
+// prend son palier, un X ou un P reste « exotique », et une espece sans ligne dans le bar
+// chart du pays n'a pas de palier.
+function realTierPays(sci, cc){
+  if(!cc || cc === 'FR') return realTier(sci, false);
+  const w = rarityForCountry(sci, cc);
+  const palier = () => ({ id:'r'+w, ord:w, label:REAL_LABELS[w]||('niveau '+w), color:realColor(w) });
+  if(isExoticInCountry(sci, cc)){
+    const cat = exoticCategoryInCountry(sci, cc) || _exoticCategory((sci||'').trim().toLowerCase());
+    if(_isEstablishedExotic(cat) && w) return palier();
+    return { id:'exo', ord:0, label: EXOTIC_CATEGORY_LABEL[cat] || 'Exotique', color:'#7e8a99' };
+  }
+  return w ? palier() : { id:'etr', ord:0, label:'Sans palier dans ce pays', color:'#8a7fb3' };
 }
 // Cochage hors compétition : visible mais non compté.
 const FOREIGN_TIER = { id:'etr', ord:-1, label:'Étranger', color:'#8a7fb3' };
@@ -2909,8 +2922,8 @@ function renderBoard(){
   document.querySelectorAll('#boardModes button').forEach(b=>b.classList.toggle('on', b.dataset.mode===mode));
   const dash='<span class="muted">-</span>';
   // Version « I » choisie par Mathis le 2026-10-19 parmi neuf maquettes
-  // (notes-privees/maquettes/classement-3/) : deux blocs nommes, « Le joueur » et « Ses
-  // oiseaux » ; chaque espece en petite photo suivie de son nom (la photo seule, sans nom, ne
+  // (notes-privees/maquettes/classement-3/) : deux blocs, le joueur et ses oiseaux, separes
+  // par un filet (leurs titres retires le 2026-10-23, a la demande de Mathis) ; chaque espece en petite photo suivie de son nom (la photo seule, sans nom, ne
   // se lisait pas dans un tableau) ; les preferees cote a cote, sans bord blanc ; la
   // plus rare cerclee de la couleur de son palier ; la derniere en date relative, en couleur
   // si elle a moins d'une semaine ; l'espece de reve en gris tant qu'elle n'est pas vue, en
@@ -2958,7 +2971,7 @@ function renderBoard(){
   // moins hautes car les colonnes textuelles ont plus de place). Uniformise les 3 modes.
   const scoreCols=[];
   if(mode==='league') scoreCols.push({h:'Rareté ligue', v:p=>fmt(p.score), n:p=>p.score||0, active:true});
-  else if(mode==='real') scoreCols.push({h:'Rareté réelle', v:p=>fmt(p.scoreReal||0), n:p=>p.scoreReal||0, active:true});
+  else if(mode==='real') scoreCols.push({h:'Rareté terrain', v:p=>fmt(p.scoreReal||0), n:p=>p.scoreReal||0, active:true});
   else scoreCols.push({h:'Espèces', v:p=>p.total, n:p=>p.total||0, active:true});
   const scoreTh=scoreCols.map(c=>`<th class="c-num${c.active?' on-metric':''}">${c.h}</th>`).join('');
   // Sous le score, sa part de celui du premier : l'ecart se lit sans faire la soustraction.
@@ -2967,8 +2980,7 @@ function renderBoard(){
     + (tete>0 ? `<span class="board-ecart" title="${esc(String(c.v(p)))} sur ${esc(String(c.v(ranked[0])))}"><i style="width:${Math.round(c.n(p)/tete*100)}%"></i></span>` : '')
     + `</span></td>`).join('');
   const htmlBoard = `<div class="sheet-scroll"><table class="board-sheet">
-    <thead><tr class="board-groupes"><th colspan="3">Le joueur</th><th colspan="4" class="debut-oiseaux">Ses oiseaux</th></tr>
-    <tr>
+    <thead><tr>
       <th class="c-rank">#</th><th>Joueur</th>
       ${scoreTh}
       <th class="c-txt debut-oiseaux">Espèces préférées</th>
@@ -2992,18 +3004,17 @@ function renderBoard(){
   _profilPhotosFavs($('#boardList'));   // les photos pas encore en memoire
   // Uniformise la hauteur des lignes du board sur celle du plus grand (contenus texte
   // très inégaux - objectif, dream, dernière obs - sinon effet peigne).
-  requestAnimationFrame(()=>{
-    const rows = document.querySelectorAll('#boardList .board-sheet tbody tr');
-    if(!rows.length) return;
-    // reset avant mesure pour ne pas mesurer une valeur figée d'un précédent render
-    rows.forEach(r=>r.style.removeProperty('--rowh'));
-    let maxH = 0;
-    rows.forEach(r=>{ if(r.offsetHeight > maxH) maxH = r.offsetHeight; });
-    if(maxH > 0) rows.forEach(r=>r.style.setProperty('--rowh', maxH+'px'));
-  });
+  // Tout de suite, et non a l'image suivante : le navigateur peignait d'abord les lignes a leur
+  // hauteur naturelle, 4 px plus basses, et toute la page remontait une demi-seconde puis
+  // redescendait a chaque changement de classement (Mathis, 2026-10-23). offsetHeight force
+  // la mise en page : la mesure est juste avant toute peinture.
+  const rows = document.querySelectorAll('#boardList .board-sheet tbody tr');
+  if(!rows.length) return;
+  let maxH = 0;
+  rows.forEach(r=>{ if(r.offsetHeight > maxH) maxH = r.offsetHeight; });
+  if(maxH > 0) rows.forEach(r=>r.style.setProperty('--rowh', maxH+'px'));
 }
 
-let _matrixTiers = [];      // raretés présentes, pour les étiquettes des filtres actifs
 let _matrixFams = new Map(), _matrixFamsTotal = 0;   // familles présentes et leur nombre d'espèces
 let _matrixPays = [];       // pays où la ligue a des observations
 let _matrixPaysCompte = new Map(), _matrixPaysTotal = 0;   // espèces que chaque pays ferait apparaître
@@ -3031,7 +3042,7 @@ function renderMatrix({universe,N}){
   const cmpFilterKey = state.playerCompareSet ? [...state.playerCompareSet].sort().join(',') : '';
   const tierFilterKey = (state.tierExcl ? [...state.tierExcl].sort().join(',') : '') + '/' + [...state.catSel].sort().join(',');
   const coFilterKey = state.countryExcl ? [...state.countryExcl].sort().join(',') : '';
-  const filtersKey = `${state.boardMode||''}|${state.showMissing?1:0}|${state.family||''}|${state.q||''}|${state.sort||''}|${state.playerMain||''}|${cmpFilterKey}|${tierFilterKey}|${coFilterKey}|${state.showSci?1:0}`;
+  const filtersKey = `${state.boardMode||''}|${state.showMissing?1:0}|${state.family||''}|${state.q||''}|${state.sort||''}|${state.playerMain||''}|${cmpFilterKey}|${tierFilterKey}|${coFilterKey}|${state.showSci?1:0}|${_donneesPaysPretes()?1:0}`;   // dernier : paliers etrangers arrives (rarete terrain d'un pays)
   const hash = _matrixHash(universe, N, filtersKey);
   if(hash === _matrixLastHash){
     return;
@@ -3041,13 +3052,29 @@ function renderMatrix({universe,N}){
   // la dimension de rareté suit le classement choisi (ligue ou réelle) ; les oiseaux
   // jamais observés par personne s'affichent simplement en "Non observé".
   const rMode = state.boardMode==='real' ? 'real' : 'league';
+  // Le pays dont la rarete terrain s'affiche : celui que le filtre pays garde seul, sinon la
+  // France. La rarete ligue reste celle de la France (choix de Mathis, 2026-10-23).
+  const pays = rMode==='real' ? _paysChoisi() : 'FR';
+  // Les paliers etrangers se chargent a la demande ; le tableau se redessine a leur arrivee.
+  if(pays !== 'FR' && !_donneesPaysPretes()) _chargerDonneesPays().then(() => { if(_donneesPaysPretes()) renderResults(); });
+  // Une phrase sous les filtres dit de quel pays vient la rarete, des qu'un pays est choisi en
+  // rarete terrain (maquette C, choisie par Mathis le 2026-10-23, notes-privees/maquettes/rarete-pays/).
+  { const note = $('#rarPaysNote');
+    if(note){
+      const montre = rMode === 'real' && state.countryExcl.size > 0;
+      note.hidden = !montre;
+      if(montre) note.innerHTML = flagImg(pays) + (_countryEntry(pays)
+        ? `<span><b>Rareté terrain ${esc(_auPays(pays))}</b> : les paliers viennent des listes eBird de ce pays.</span>`
+        : `<span><b>${esc(countryLabel(pays))} : pas de rareté terrain</b>, l'appli n'a pas les listes eBird de ce pays.</span>`);
+    } }
   const NONE_TIER={ id:'none', ord:-1, label:'Non observé', color:'#9aa5b1' };
   // Non observés : en rareté réelle -> on montre leur vraie rareté ; en rareté ligue -> "Non observé"
   const rarDe = (u, mode) => {
-    if(u.missing) return mode!=='real' ? NONE_TIER : realTier(u.sci, false);
+    if(u.missing) return mode!=='real' ? NONE_TIER : realTierPays(u.sci, pays);
     // Mode reel : espece vue par personne "en France" -> FOREIGN_TIER (label 'Étranger'
     // avec couleur mauve). Sinon utilise realTier qui gere Étranger/Domestique/exotique.
-    if(mode==='real') return u.counts===0 ? FOREIGN_TIER : realTier(u.sci, false);
+    // Un autre pays choisi : son palier, qu'on l'ait vue en France ou non.
+    if(mode==='real') return pays==='FR' && u.counts===0 ? FOREIGN_TIER : realTierPays(u.sci, pays);
     // Mode ligue : toujours le tier ligue (jamais 'Étranger', 'Unique' minimum via u.tier).
     return u.tier;
   };
@@ -3058,7 +3085,7 @@ function renderMatrix({universe,N}){
   // Le palier AFFICHE dans la colonne : une exotique sans palier au classement prend celui de
   // son bar chart, comme sa vignette du Birdydex. Le tri le suit, sinon le Paon bleu (8) et le
   // Faisan versicolore (9) tombaient sous les communs, a 0 (Mathis, meme soir).
-  const rarNum = u => { const t = rarOf(u); return t.id === 'exo' ? rarityForCountry(u.sci, 'FR') : t.id === 'etr' ? 0 : t.ord; };
+  const rarNum = u => { const t = rarOf(u); return t.id === 'exo' ? rarityForCountry(u.sci, pays) : t.id === 'etr' ? 0 : t.ord; };
   // Les deux raretes s'affichent en ronds : la colonne etroite vaut pour les deux (la ligue
   // en mots demandait 140 px, Mathis 2026-10-22 : « peut etre moins large »).
   $('#matrix')?.classList.add('rar-ronds');
@@ -3081,7 +3108,7 @@ function renderMatrix({universe,N}){
   { const tc = $('#tierChips'); if(tc) tc.style.display = avecRar ? '' : 'none'; }
   // Les statuts X / P / N, comme au Birdydex : les cocher ne garde QUE les especes qui portent
   // l'un d'eux en France, et les paliers sont alors ignores. Sans statut coche, filtre par palier.
-  const catsDe = u => exoticCategoriesInCountry(u.sci, 'FR') || [];
+  const catsDe = u => exoticCategoriesInCountry(u.sci, pays) || [];
   const catActif = avecRar && state.catSel.size > 0;
   const passeRar = u => !avecRar ? true
     : catActif ? catsDe(u).some(c => state.catSel.has(c))
@@ -3104,7 +3131,6 @@ function renderMatrix({universe,N}){
   // comme au Birdydex (Mathis, 2026-10-22). « Étranger » garde sa pastille en toutes lettres.
   const tiersPresent=[...new Map(uni.map(u=>{const t=rarAff(u); return [t.id,t];})).values()]
     .filter(t => t.id !== 'exo').sort((a,b)=>a.ord-b.ord);
-  _matrixTiers = tiersPresent;   // les etiquettes des filtres actifs y lisent les libelles
   // Ancienne légende séparée retirée : les chips rareté (dans le panneau filtres)
   // font maintenant office de légende + filtre en même temps.
 
@@ -3129,10 +3155,10 @@ function renderMatrix({universe,N}){
       // la colonne.
       if(t.id === 'etr' || t.id === 'none' || t.id === '0') return `<button type="button" class="rar-chip${on?' on':''}" data-tier="${esc(t.id)}" data-rar style="${on?'background:var(--line-2);':''}" title="${esc(t.label)}">–</button>`;
       // Ligue : le rond du nombre de membres, a sa teinte, chiffre fonce sur les teintes claires.
-      // Au-dela de 12 membres, une pastille par tranche, qui ecrit ses bornes (« 5–10 ») : ce n'est
-      // plus un rond mais une etiquette, a la couleur de la tranche.
+      // Un palier qui regroupe plusieurs nombres de membres ecrit ses bornes (« 5–10 ») : ce n'est
+      // plus un rond mais une etiquette, a la couleur du palier.
       if(rMode !== 'real' && t.plage) return `<button type="button" class="rar-chip rar-mot${on?' on':''}" data-tier="${esc(t.id)}" style="${on?`background:${t.color};color:${t.ink};`:''}" title="${esc(t.legende)}">${esc(t.plage)}</button>`;
-      if(rMode !== 'real') return `<button type="button" class="rar-chip${on?' on':''}" data-tier="${esc(t.id)}" data-rar style="${on?`background:${t.color};color:${t.ink};`:''}" title="${esc(t.label)}">${t.ord}</button>`;
+      if(rMode !== 'real') return `<button type="button" class="rar-chip${on?' on':''}" data-tier="${esc(t.id)}" data-rar style="${on?`background:${t.color};color:${t.ink};`:''}" title="${esc(t.legende || t.label)}">${t.count}</button>`;
       return palier
         ? `<button type="button" class="rar-chip${on?' on':''}" data-tier="${esc(t.id)}" data-rar style="${bgStyle}" title="${esc(t.label)}">${t.ord}</button>`
         : `<button type="button" class="rar-chip rar-mot${on?' on':''}" data-tier="${esc(t.id)}" style="${bgStyle}">${esc(t.label)}</button>`;
@@ -16987,6 +17013,12 @@ document.addEventListener('click', e=>{
     } else {
       setSpeciesNavPool(_getTaxonomicPool(), sp.dataset.sci);
     }
+    // Depuis « Qui a vu quoi » filtre sur un pays : la fiche s'ouvre sur ce pays, comme depuis
+    // le Birdydex (Mathis, 2026-10-23). « Tous les pays » laisse la fiche sur son dernier pays.
+    if(state.countryExcl.size && sp.closest('#tbody, #matrixCards')){
+      _speciesCountry = _paysChoisi();
+      try{ localStorage.setItem('mb-species-country', _speciesCountry); }catch(_){}
+    }
     openSpeciesModal(sp.dataset.sci);
   }
 });
@@ -17383,45 +17415,22 @@ function _majBoutonsFiltres(){
     if(fl){ fl.innerHTML = un ? flagImg(gardes[0]) : ''; fl.style.display = un ? '' : 'none'; } }
   lbl('[data-fm="affichage"] .fm-btn', 'Affichage', state.showMissing || state.showSci);
 }
-// Les filtres que les boutons ne disent pas, en etiquettes sous la rangee de rarete : la rarete
-// resumee en mots, et les deux options d'affichage. Chacune se retire d'un clic, et « Tout
-// effacer » remet tous les filtres, boutons compris, des qu'un seul s'applique.
-function _majFiltresActifs(){
-  const box = $('#filtActifs'); if(!box) return;
-  // Le plus court des deux : ce qu'on garde, ou « sauf » ce qu'on a retire. Retirer un seul
-  // palier sur onze en enumerait dix, sur deux lignes.
-  const resume = (gardes, retires, aucun) => !gardes.length ? aucun
-    : gardes.length <= retires.length ? gardes.join(', ') : 'sauf ' + retires.join(', ');
-  const tags = [];
-  // La rangee de rarete n'existe qu'aux classements par rarete : ailleurs, rien a annoncer.
-  const avecRar = state.boardMode !== 'count';
-  if(avecRar && state.catSel.size){
-    tags.push(['rar', 'Statut : ' + ['X', 'P', 'N'].filter(c => state.catSel.has(c)).map(c => libelleExo(c)).join(', ')]);
-  } else if(avecRar && state.tierExcl.size){
-    // Une tranche de la ligue se dit par ses bornes (« Vue par 5 à 10 membres »), pas par le
-    // nombre de la premiere espece rencontree.
-    const lbl = t => t.legende || t.label;
-    tags.push(['rar', 'Rareté : ' + resume(_matrixTiers.filter(t => !state.tierExcl.has(t.id)).map(lbl),
-      _matrixTiers.filter(t => state.tierExcl.has(t.id)).map(lbl), 'aucune')]);
-  }
-  if(state.showMissing) tags.push(['miss', 'Oiseaux de France non observés']);
-  if(state.showSci) tags.push(['sci', 'Noms scientifiques']);
-  const unFiltre = tags.length || state.playerMain || state.playerCompareSet.size
-    || (state.family && state.family !== 'any') || state.countryExcl.size;
-  box.innerHTML = tags.map(([k, txt]) =>
-      `<button type="button" class="fm-tag" data-retire="${k}" aria-label="Retirer le filtre ${esc(txt)}">${esc(txt)}<span aria-hidden="true">×</span></button>`).join('')
-    + (unFiltre ? '<button type="button" class="fm-tout" data-retire="tout">Tout effacer</button>' : '');
-  box.hidden = !unFiltre;
+// « Tout effacer », a cote d'Affichage, des qu'un filtre s'applique. Les etiquettes qui
+// resumaient chaque filtre actif sous la rangee de rarete sont retirees le 2026-10-23 (Mathis) :
+// les boutons disent deja leur valeur.
+// Le pays que le filtre pays garde seul, sinon la France.
+function _paysChoisi(){
+  if(!state.countryExcl.size) return 'FR';
+  const gardes = _matrixPays.filter(cc => !state.countryExcl.has(cc));
+  return gardes.length === 1 ? gardes[0] : 'FR';
 }
-$('#filtActifs')?.addEventListener('click', e=>{
-  const b = e.target.closest('[data-retire]'); if(!b) return;
-  const k = b.dataset.retire;
-  if(k === 'tout'){ _effacerFiltres(); return; }
-  if(k === 'rar'){ state.tierExcl = new Set(); state.catSel = new Set(); }
-  if(k === 'miss'){ state.showMissing = false; const c = $('#showMissing'); if(c) c.checked = false; }
-  if(k === 'sci'){ state.showSci = false; const c = $('#showSci'); if(c) c.checked = false; }
-  renderResults();
-});
+function _majFiltresActifs(){
+  const b = $('#filtToutEffacer'); if(!b) return;
+  const avecRar = state.boardMode !== 'count';
+  b.hidden = !((avecRar && (state.catSel.size || state.tierExcl.size)) || state.showMissing || state.showSci
+    || state.playerMain || state.playerCompareSet.size || (state.family && state.family !== 'any') || state.countryExcl.size);
+}
+$('#filtToutEffacer')?.addEventListener('click', _effacerFiltres);
 // Famille : la fenetre de choix du Birdydex, avec le nombre d'especes de chaque famille.
 $('#familyBtn')?.addEventListener('click', async ()=>{
   const fams = [..._matrixFams.keys()].sort((a,b) => (FAMILY_ORDER[a] ?? 9999) - (FAMILY_ORDER[b] ?? 9999) || a.localeCompare(b, 'fr'));

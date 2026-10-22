@@ -314,6 +314,12 @@ concerne le doigt vit dans un `@media (pointer: coarse)` en fin de `styles.css` 
 `accessibilite` vérifie les deux à la fois, et refait au passage le tour de ce qu'un lecteur
 d'écran annonce (région vivante, rangées d'onglets, noms des commandes).
 
+**Une capture `fullPage` de Playwright retire l'émulation mobile le temps de la photo** : le banc
+`pastilles` mesurait « au doigt » l'affichage souris sans le dire (2026-10-23). Capturer écran par
+écran, et vérifier `matchMedia('(pointer: coarse)')` dans le banc. Le centrage d'un texte se juge sur
+les PIXELS d'une capture : le calcul par les métriques du canvas disait tout centré quand les chiffres
+étaient 1,5 px trop haut.
+
 **Écrire en boucle sature la file d'écritures de Firestore, même en attendant chacune.** La
 migration du 2026-09-29 a fait remonter `resource-exhausted : Write stream exhausted maximum
 allowed queued writes` après 29 photos, alors que chaque `setDoc` était attendu. Attendre

@@ -124,7 +124,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=443">
+<link rel="modulepreload" href="app.js?v=444">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -632,8 +632,8 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
     <div class="board-modes-row">
       <div class="seg" id="boardModes">
         <button data-mode="count" class="on" aria-describedby="triBulle">Nombre d'espèces</button>
-        <button data-mode="league" aria-describedby="triBulle">Rareté (ligue)</button>
-        <button data-mode="real" aria-describedby="triBulle">Rareté réelle</button>
+        <button data-mode="league" aria-describedby="triBulle">Rareté ligue</button>
+        <button data-mode="real" aria-describedby="triBulle">Rareté terrain</button>
       </div>
       <div class="tri-bulle" id="triBulle" role="tooltip" hidden></div>
     </div>
@@ -684,9 +684,13 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
               <label class="miss-toggle"><input type="checkbox" id="showSci"> Noms scientifiques</label>
             </div>
           </div>
+          <!-- Seul reste de la rangee d'etiquettes des filtres actifs, retiree le 2026-10-23 :
+               visible des qu'un filtre s'applique. -->
+          <button type="button" class="fm-tout" id="filtToutEffacer" hidden>Tout effacer</button>
         </div>
         <div class="rar-rangee" id="tierChips" aria-label="Filtrer par rareté (multi)"></div>
-        <div class="fm-actifs" id="filtActifs" hidden></div>
+        <!-- De quel pays vient la rarete terrain, quand un pays est choisi (2026-10-23). -->
+        <p class="rar-pays-note" id="rarPaysNote" hidden></p>
       </div>
       <div class="tbl-scroll">
         <table>
@@ -724,7 +728,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         <select class="filt-sel" id="mapPlayerSel" aria-label="Filtrer par personne">
           <option value="all">Tout le monde</option>
         </select>
-        <select class="filt-sel" id="mapTierSel" aria-label="Filtrer par rareté réelle">
+        <select class="filt-sel" id="mapTierSel" aria-label="Filtrer par rareté terrain">
           <option value="any">Toutes les raretés</option>
         </select>
         <select class="filt-sel" id="mapCountrySel" aria-label="Filtrer par pays">
@@ -1491,5 +1495,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=443"></script>
+<script type="module" src="app.js?v=444"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>

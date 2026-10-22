@@ -533,7 +533,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   #fbError code { font-family:var(--mono); font-size:12px; }
 
   /* ---------- results ---------- */
-  #results { margin-top:22px; display:none; flex-direction:column; gap:22px; }
+  /* Pas de marge en haut : la rangee des tris, premiere enfant, se colle sous l'entete pendant
+     le defilement. Avec 22 px ici, elle tombait 22 px plus bas en haut de page qu'une fois
+     collee, et la bande vide n'apparaissait qu'en remontant (Mathis, 2026-10-22). Son propre
+     rembourrage de 10 px fait l'ecart avec les onglets, dans les deux cas. */
+  #results { margin-top:0; display:none; flex-direction:column; gap:22px; }
   /* Plus d'apparition en fondu glisse : elle rejouait a chaque ouverture du Classement, seule
      page a le faire. Retiree le 2026-10-05 a la demande de Mathis. */
   #results.show { display:flex; }
@@ -607,9 +611,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      chaque texte passait sur trois lignes. */
   .board-sheet td.c-txt { min-width:120px; max-width:260px; white-space:normal; }
   /* Version « I » du classement, choisie par Mathis le 2026-10-19 (maquettes dans
-     notes-privees/maquettes/classement-3/). Deux blocs nommes en tete, « Le joueur » et
-     « Ses oiseaux », separes par un filet. */
-  .board-sheet tr.board-groupes th { background:var(--surface); color:var(--ink-2); text-align:left; border-bottom:1px solid var(--line); }
+     notes-privees/maquettes/classement-3/). Deux blocs, le joueur et ses oiseaux, separes par
+     un filet. Leur rangee de titres (« Le joueur », « Ses oiseaux ») est retiree le 2026-10-23
+     a la demande de Mathis. */
   .board-sheet .debut-oiseaux { border-left:2px solid var(--line-2); }
   /* Ta ligne : a 7 % d'accent elle etait plus pale que l'alternance des lignes paires (surface-2
      a 45 %), mesure le 2026-10-19 ; 10 % et un trait d'accent en tete la distinguent. */
@@ -641,7 +645,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      Birdydex) puis son nom. Plus d'anneau ni de rond pose sur la photo (Mathis, 2026-10-22). */
   .board-pal { display:flex; align-items:center; gap:6px; margin-top:2px; }
   .board-pal i { display:inline-grid; place-items:center; flex:none; width:20px; height:20px; border-radius:50%;
-    color:#fff; font:800 10px/1 var(--sans); font-style:normal; }
+    color:#fff; font:800 10px/1 var(--sans); font-style:normal; padding-top:1px; }
   .board-badge { position:absolute; right:-5px; bottom:-5px; min-width:20px; height:20px; border-radius:50%; background:var(--pal, var(--accent));
     color:#fff; font:800 11px/20px var(--sans); text-align:center; box-shadow:0 0 0 2px var(--surface); }
   /* Espece de reve : en gris dans un cercle en pointilles tant qu'elle n'est pas vue,
@@ -749,6 +753,21 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .board-sheet th.on-metric, .board-sheet td.on-metric { background:color-mix(in srgb,var(--accent) 12%,var(--surface)) !important; }
   .board-sheet td.on-metric { color:var(--accent-ink); }
   #boardModes { width:fit-content; max-width:100%; }
+  /* Le cadre est porte par chaque bouton et non par .seg. Avec le trait sur .seg, en haut de
+     page, le navigateur arrondissait le trait et le haut des boutons a deux pixels differents et
+     laissait entre eux une rangee de fond, vue comme une ligne blanche sur le bouton vert (lu dans
+     les captures de Mathis, 2026-10-23 : trait 206, fond 240, puis le bouton). Porte par le
+     bouton, le trait colle a son fond quoi qu'il arrive. Il reste gris sur le bouton choisi :
+     vert, il donnait un cadre interrompu. Pas de trait entre deux boutons, comme avant. */
+  /* overflow visible : le decoupage arrondi de .seg, cale un pixel trop bas en haut de page,
+     effacait le trait du haut des trois boutons (capture de Mathis, 2026-10-23 : bas, gauche et
+     droite presents, haut absent). Les coins viennent des boutons eux-memes. */
+  #boardModes { border:0; overflow:visible; }
+  /* background-clip : le trait est semi-transparent ; sans lui, peint sur le vert, il devenait
+     vert fonce et le cadre semblait coupe au-dessus du bouton choisi. */
+  #boardModes button { border:1px solid var(--line-2); border-left-width:0; border-right-width:0; background-clip:padding-box; }
+  #boardModes button:first-child { border-left-width:1px; border-radius:9px 0 0 9px; }
+  #boardModes button:last-child { border-right-width:1px; border-radius:0 9px 9px 0; }
   /* Le rang passe dans la police du texte : Cascadia est reservee aux codes (charte). */
   .c-rank { text-align:center !important; width:46px; font-variant-numeric:tabular-nums; color:var(--ink-3); }
   td.c-rank { font-weight:600; }
@@ -780,6 +799,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* La rangee de rarete : la meme boite que celle du Birdydex (#pkdxTierChips). */
   .rar-rangee { display:flex; flex-wrap:wrap; gap:6px; align-items:center; padding:8px 10px;
     background:var(--surface-2); border-radius:8px; }
+  /* La phrase qui dit de quel pays vient la rarete terrain : texte discret, comme une
+     phrase d'introduction (14 px, --ink-3), le pays en --ink-2. */
+  .rar-pays-note { display:flex; align-items:center; gap:8px; margin:0; font-size:14px; color:var(--ink-3); }
+  .rar-pays-note[hidden] { display:none; }
+  .rar-pays-note b { color:var(--ink-2); font-weight:600; }
   .rar-rangee-titre { font-size:13px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.4px;
     font-weight:700; margin-right:6px; }
   .fm-pop { position:absolute; top:calc(100% + 6px); left:0; z-index:30; width:max-content; max-width:min(440px, 92vw);
@@ -794,7 +818,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .fm-pop, .fm-pop.vers-gauche { left:0; right:0; width:auto; max-width:none; }
   }
   /* display:flex empeche l'attribut [hidden] de fonctionner : il faut le forcer. */
-  .fm-pop[hidden], .fm-actifs[hidden] { display:none; }
+  .fm-pop[hidden] { display:none; }
   /* Fenetre « Personnes » : deux parties, chacune avec sa question et une phrase d'aide. */
   .pers-modal .pers-corps { overflow-y:auto; padding:4px 18px 8px; display:flex; flex-direction:column; gap:18px; }
   .pers-partie h3 { margin:0 0 4px; font-size:16px; font-weight:700; color:var(--ink); }
@@ -803,12 +827,6 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .pers-bas { display:flex; justify-content:flex-end; padding:12px 18px 16px; border-top:1px solid var(--line); }
   .fm-titre { font-size:13px; font-weight:700; color:var(--ink-3); text-transform:uppercase; letter-spacing:.4px; }
   .fm-pop .fm-titre ~ .fm-titre { margin-top:4px; }
-  .fm-actifs { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
-  .fm-tag { display:inline-flex; align-items:center; gap:8px; min-height:30px; padding:0 10px; box-sizing:border-box;
-    border:1px solid var(--accent); border-radius:15px; background:color-mix(in srgb,var(--accent) 12%,var(--surface));
-    color:var(--accent-ink); font:600 14px/1 var(--sans); cursor:pointer; }
-  .fm-tag span { font-size:17px; line-height:1; }
-  .fm-tag:hover { background:color-mix(in srgb,var(--accent) 20%,var(--surface)); }
   .fm-tout { border:0; background:none; padding:0 6px; min-height:30px; color:var(--accent-ink); font:600 14px/1 var(--sans);
     cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
   .fp-section { display:flex; flex-direction:column; gap:6px; }
@@ -981,7 +999,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .cp-item.absent { opacity:.55; }
   .cp-item-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
   /* Pastille de niveau dans le choix de rarete du fil : la meme que sur ses lignes. */
-  .cp-item-chip { width:26px; height:26px; border-radius:50%; flex-shrink:0; display:grid; place-items:center; color:#fff; font:700 13px/1 var(--sans); }
+  .cp-item-chip { width:26px; height:26px; border-radius:50%; flex-shrink:0; display:grid; place-items:center; color:#fff; font:700 13px/1 var(--sans); padding-bottom:1px; }
   /* Hauteur bornée (Mathis, 2026-10-12 : « quand on défile, on ne voit plus les noms ») :
      un conteneur qui défile en largeur défile aussi en hauteur, donc l'en-tête collant
      (top:0) restait collé à un conteneur aussi haut que le tableau, et sortait de l'écran
@@ -2156,7 +2174,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .prof-fav-img { aspect-ratio:1/1; background:var(--surface-2); border-radius:10px; overflow:hidden; margin-bottom:10px; }
   .prof-fav-img img { width:100%; height:100%; object-fit:cover; display:block; }
   .prof-fav-tier { position:absolute; top:16px; right:16px; width:28px; height:28px; border-radius:50%; color:#fff; font:800 14px var(--sans);
-    display:grid; place-items:center; z-index:1; }
+    display:grid; place-items:center; z-index:1; padding-bottom:2px; }
   .prof-fav-nom { font:600 15px var(--sans); color:var(--ink); text-align:center; line-height:1.25; }
   .prof-fav-sci { font-size:14px; font-style:italic; color:var(--ink-3); text-align:center; margin-top:2px; }
   @media (max-width:560px){ .prof-favs { grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px; } }
@@ -2259,7 +2277,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .feed-depuis-fin::before, .feed-depuis-fin::after { background:var(--line-2); opacity:1; }
   .feed-item { display:grid; grid-template-columns:auto 1fr auto; align-items:center; column-gap:12px; padding:9px 2px; border-bottom:1px solid var(--line); }
   /* Chiffre blanc sur toutes les pastilles, comme partout ailleurs (Mathis, 2026-10-14). */
-  .feed-pas { width:26px; height:26px; border-radius:50%; display:grid; place-items:center; font:700 13px/1 var(--sans); color:#fff; }
+  .feed-pas { width:26px; height:26px; border-radius:50%; display:grid; place-items:center; font:700 13px/1 var(--sans); color:#fff; padding-bottom:1px; }
   .feed-body { min-width:0; font-size:15px; color:var(--ink-2); }
   .feed-l1 { color:var(--ink); }
   .feed-sp { font-weight:600; }
@@ -2370,23 +2388,23 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      pas le cas a 22 px, ou les ronds ecrasaient la rangee. Pas de boite doublee ici : le
      truc des marges negatives suppose une largeur fixe, et sur un disque le pixel
      d'arrondi ne se voit pas. */
-  /* padding-top : la boite de ligne est bien centree dans le rond, mais la boite du TEXTE
-     ne l'est pas - une boite de ligne se cale sur l'em, et l'ascendante de system-ui
-     deborde l'em plus que sa descendante ne le fait. Mesure sur un rond de 14 px d'ecran :
-     0,75 px au-dessus du texte contre 1,84 en dessous, soit 1,09 px de trop en haut. Il
-     faut donc rendre de la place EN HAUT ; le rembourrage qu'on avait d'abord mis en bas
-     aggravait la chose, ce que l'oeil avait vu avant la mesure.
-     0,048 em ramene l'ecart a 0,30 px sur le rond de 16 et 0,10 sur celui de 20. En em et
-     non en px : la correction tient a la fonte, pas a la taille du jeton. */
+  /* Le rembourrage de TOUS les ronds chiffres ou lettres vient du banc pastilles, qui mesure
+     les PIXELS a 100, 125, 150 % et au doigt (2026-10-22). Les reglages d'avant venaient des
+     metriques de la fonte lues dans un canvas : 0,145 em en bas laissait les chiffres 0,5 a
+     2,2 px d'appareil trop haut. Le texte se cale sur la grille de pixels : un reglage ne
+     bouge rien sous un certain seuil, puis saute d'un pixel. D'ou des px et non des em, et
+     un pixel EN BAS pour les ronds de palier dessines au double puis reduits de moitie ; rien
+     pour les jetons de statut a la souris, un pixel au doigt (regle pointer:coarse). Ecart restant :
+     0,5 px a 100 %, ou aucun reglage ne fait mieux qu'un demi-pixel. */
   .rar-chip[data-cat], .pkdx-exo { width:32px; min-width:32px; height:32px; margin:-8px;
-    transform:scale(.5); padding:0 0 0.145em; border-radius:50%; font:700 19px/1 var(--sans); }
+    transform:scale(.5); padding:0; border-radius:50%; font:700 19px/1 var(--sans); }
   /* Les paliers 0 a 10 prennent eux aussi le jeton rond des vignettes - .pkdx-tier, 20 px
      et corps 10 - au lieu du carre arrondi. La barre de filtres et la grille qu'elle
      filtre montrent desormais la meme piece. « Tout » et « Vide », qui sont des mots et
      non des paliers, gardent leur bouton rectangulaire. */
   .rar-chip[data-tier], .rar-chip[data-rar], .tier-chip.tier-rond {
     width:40px; min-width:40px; height:40px; margin:-10px;
-    transform:scale(.5); padding:0 0 0.145em; border-radius:50%; font:800 20px/1 var(--sans); }
+    transform:scale(.5); padding:0 0 1px; border-radius:50%; font:800 20px/1 var(--sans); }
   /* Coche : l'ombre portee de la vignette remplace le filet du repos, comme pour X/P/N. */
   .rar-chip[data-tier].on, .rar-chip[data-rar].on { box-shadow:none; }
   /* Ils suivent « Tout » et « Vide » plutot que d'etre rejetes au bout de la rangee : le
@@ -2430,8 +2448,15 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      case figee, cette reduction faisait repeindre la case par morceaux pendant le defilement de
      cote - traits a moitie dessines, cases qui « se cassent et se reconstruisent » (Mathis,
      2026-10-22). Le gain de rondeur au sous-pixel ne se voit pas a cette taille. */
-  #matrix .rar-cell .tier-chip.tier-rond { width:20px; min-width:20px; height:20px; margin:0; transform:none; font-size:10px; min-height:0; }
-  #matrix .rar-cell .pkdx-exo { width:16px; min-width:16px; height:16px; margin:0; transform:none; font-size:9.5px; }
+  /* Sans la boite doublee, le rembourrage BAS de 0,145 em regle pour elle remontait le texte :
+     chiffres 1,3 a 1,5 px d'appareil trop haut en moyenne (jusqu'a 2,9), lettres 0,3 a 0,6,
+     mesure au pixel sur la demo le 2026-10-22 (Mathis : « pas vraiment au centre »). Rembourrage
+     HAUT de 0,1 em pour les chiffres et aucun pour les lettres : moyenne ramenee a 0,1 px (ecran
+     a 125 %) et 0,4 px (100 %). Reste un pixel de jeu d'une ligne a l'autre, la ligne de base
+     se calant sur la grille de pixels : will-change, qui le supprimait, dessinait chaque rond
+     a part et bloquait l'affichage des centaines de lignes. */
+  #matrix .rar-cell .tier-chip.tier-rond { width:20px; min-width:20px; height:20px; margin:0; transform:none; font-size:10px; min-height:0; padding:0.1em 0 0; }
+  #matrix .rar-cell .pkdx-exo { width:16px; min-width:16px; height:16px; margin:0; transform:none; font-size:9.5px; padding:0 0 0.5px; }
   /* Retire les flèches spinner natives sur #mapEbMinTodo (on a nos propres boutons +/-) */
   #mapEbMinTodo::-webkit-outer-spin-button, #mapEbMinTodo::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
   .map-count { margin-left:auto; font-size:12.5px; color:var(--ink-3); font-weight:600; }
@@ -2948,8 +2973,18 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .board-modes-row { position:relative; display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:6px; }
   /* Collee sous l'entete du site tant qu'on est dans le Classement (2026-10-22). Sa hauteur,
      --haut-entete, est mesuree par app.js ; le fond de la page cache ce qui passe dessous. */
-  #results > .board-modes-row { position:sticky; top:var(--haut-entete, 0px); z-index:50; background:var(--bg);
-    margin:0; padding:10px 0; }
+  /* La rangee collee se lit comme le bas de l'entete : le meme espace au-dessus et en dessous des
+     boutons, puis le meme trait fin que sous les onglets (Mathis, 2026-10-23). En defilant, le
+     tableau passe sous ce trait. Essais du 22/10 ecartes : 10 px en haut seulement (« espace
+     blanc »), rien en haut (« colle aux onglets »), bande de 32 px en bas (grise, trop haute).
+     Le fond deborde sur les gouttieres de .wrap (24 px), comme .entete-fixe : sinon l'ombre du
+     tableau depassait de chaque cote de la bande. Le trait, lui, garde la largeur du contenu,
+     comme celui des onglets : c'est un degrade d'un pixel plutot qu'une bordure. */
+  #results > .board-modes-row { position:sticky; top:var(--haut-entete, 0px); z-index:50;
+    background:linear-gradient(var(--line), var(--line)) 24px 100% / calc(100% - 48px) 1px no-repeat, var(--bg);
+    margin:0 -24px; padding:12px 24px 13px; }
+  /* La bulle reste a 18 px sous les boutons, comme avant le trait. */
+  #results > .board-modes-row .tri-bulle { top:calc(100% + 5px); }
   .tri-bulle { position:absolute; top:calc(100% + 8px); z-index:20; width:max-content; max-width:min(440px, calc(100vw - 48px));
     padding:12px 14px; background:var(--surface); border:1px solid var(--line-2); border-radius:12px;
     box-shadow:0 10px 30px rgba(0,0,0,.18); font-size:14px; line-height:1.5; color:var(--ink-2); }
@@ -2960,7 +2995,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .tb-grille { display:grid; grid-template-columns:auto 1fr auto; gap:5px 10px; align-items:center; }
   /* Pastilles rondes chiffrees : les memes que sur les vignettes du Birdydex (.pkdx-tier) */
   .tb-n { width:20px; height:20px; border-radius:50%; display:grid; place-items:center; color:#fff;
-    font:800 10px var(--sans); }
+    font:800 10px var(--sans); padding-bottom:1px; }
   /* Les lettres X et P, a la place de l'ancien palier 0. */
   .tb-lettres { display:inline-flex; gap:3px; }
   .tb-nom { color:var(--ink); }
@@ -3031,7 +3066,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* right:6px et non 8px : la photo commence a 8px (padding de la carte), donc a 8px la
      pastille affleurait le bord droit de l image alors qu elle la depassait de 2px en haut.
      Le debord est maintenant le meme des deux cotes, et le coin se lit comme un coin. */
-  .pkdx-card .pkdx-tier { position:absolute; top:6px; right:6px; width:20px; height:20px; border-radius:50%; color:#fff; font:800 10px var(--sans); display:grid; place-items:center; box-shadow:none; z-index:2; }
+  /* Dessinee au double (40 px, corps 20) puis reduite de moitie, comme les ronds des filtres :
+     a sa taille, le chiffre sautait d'un pixel entier quel que soit le reglage, 1,6 px trop bas
+     et 1,5 px a droite au telephone. top et right -4px : le centre reste celui d'un rond de 20 px
+     pose a 6px. Mesure par le banc pastilles (2026-10-22). */
+  .pkdx-card .pkdx-tier { position:absolute; top:-4px; right:-4px; width:40px; height:40px; transform:scale(.5); border-radius:50%; color:#fff; font:800 20px var(--sans); display:grid; place-items:center; box-shadow:none; z-index:2; padding:0 0 2px; }
   /* Repere des especes nettement saisonnieres : pic mensuel >= 3x la moyenne annuelle. Le
      tier repose sur l annuel et ne le dit pas, alors qu il suffit souvent de viser le bon
      mois. Pose sous le numero, a gauche, pour ne pas concurrencer la pastille de tier. */
@@ -3382,9 +3421,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   }
 
   @media (pointer: coarse) {
-    /* Filtres de « Qui a vu quoi » : boutons des menus, ce qu'ils contiennent, etiquettes. */
+    /* Filtres de « Qui a vu quoi » : boutons des menus, ce qu'ils contiennent, « Tout effacer ». */
     .fm-barre .cp-btn, .fm-pop .person-chip, #tierChips .rar-chip:not([data-rar]):not([data-cat]), .fm-pop .miss-toggle,
-    .fm-tag, .fm-tout { min-height:52px; }
+    .fm-tout { min-height:52px; }
     .fm-pop .miss-toggle { display:flex; align-items:center; }
 
     /* Classement : au doigt, chaque espece est une cible de doigt. */
@@ -3412,11 +3451,20 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
        sur deux rangees au telephone - inevitable : 13 cibles de 44 px demandent 572 px de
        large, un telephone en fait 375. */
     .rar-chip[data-tier], .rar-chip[data-rar], .tier-chip.tier-rond {
-      width:104px; min-width:104px; height:104px; margin:-26px; font-size:52px; }
+      width:104px; min-width:104px; height:104px; margin:-26px; font-size:52px; padding:0 0 7px; }
     /* Meme calcul pour les jetons ronds de statut exotique. */
-    .rar-chip[data-cat], .pkdx-exo { width:104px; min-width:104px; height:104px; margin:-26px; font-size:62px; }
+    /* Rembourrages et corps 64 (et non 62) : au doigt, le texte tombait 4 px d'appareil trop bas,
+       et la lettre ne se centrait qu'a ce corps, le calage sautant d'un cran entier entre deux
+       rembourrages. Mesure par le banc pastilles (2026-10-22). */
+    .rar-chip[data-cat], .pkdx-exo { width:104px; min-width:104px; height:104px; margin:-26px; font-size:64px; padding:0 1.5px 7px 0; }
     #tierChips .rar-chip[data-rar] { font-size:52px; }
-    #tierChips .rar-chip[data-cat] { font-size:62px; }
+    #tierChips .rar-chip[data-cat] { font-size:64px; }
+    /* Sauf sur les vignettes du Birdydex : on n'y touche pas le jeton, on touche la carte. A
+       104 px, il faisait 52 px d'ecran et couvrait la photo (Mathis, 2026-10-22). Il garde la
+       taille souris, et celle des cartes etroites sous 600 px. */
+    .pkdx-card .pkdx-exo { width:32px; min-width:32px; height:32px; margin:-8px; font-size:19px; padding:0; }
+    @media (max-width:600px){
+      .pkdx-card .pkdx-exo { width:28px; min-width:28px; height:28px; margin:-7px; font-size:16px; } }
     /* « Tout » et « Vide » sont des mots, pas des jetons : ils grandissent par leur hauteur. */
     .rar-chip, .tier-chip { min-height:52px; }
     .rar-chips { gap:6px; }
