@@ -978,6 +978,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .cp-item.cp-item-simple .cp-item-name-moi { flex:0 1 auto; }
   .cp-item.cp-item-simple .cp-item-name-moi + .youtag { margin-left:-2px; flex:none; }
   .cp-item.cp-item-simple .cp-item-meta { flex:none; }
+  /* Choix d'une famille : chaque ordre (« Passeriformes »), cliquable, en tete de ses
+     familles, dans la police des titres comme au Birdydex ; les familles en retrait dessous. */
+  .cp-item.cp-item-ordre { margin-top:8px; font:600 15px var(--titre); }
+  .cp-item.cp-item-fam { padding-left:26px; }
   .cp-item:hover { background:var(--surface-2); }
   .cp-item.on { background:var(--surface-2); font-weight:700; }
   .cp-item-flag { display:inline-flex; align-items:center; justify-content:center; }
@@ -2996,6 +3000,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* Pastilles rondes chiffrees : les memes que sur les vignettes du Birdydex (.pkdx-tier) */
   .tb-n { width:20px; height:20px; border-radius:50%; display:grid; place-items:center; color:#fff;
     font:800 10px var(--sans); padding-bottom:1px; }
+  /* Rarete ligue : un palier qui regroupe plusieurs nombres de membres ecrit ses bornes
+     (« 5–7 ») dans une etiquette arrondie, comme sa pastille de « Qui a vu quoi ». */
+  .tb-n.tb-plage { width:auto; min-width:20px; padding:0 6px 1px; border-radius:10px; }
   /* Les lettres X et P, a la place de l'ancien palier 0. */
   .tb-lettres { display:inline-flex; gap:3px; }
   .tb-nom { color:var(--ink); }

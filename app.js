@@ -308,6 +308,32 @@ function familyOf(sci){ const g=(sci||'').trim().split(' ')[0].toLowerCase(); co
 const FAMILY_ORDER = Object.fromEntries(FAMILLES_EBIRD.map((f, i) => [f[0], i]));
 // Intitule -> [intitule, nom savant (Calcariidés), ordre (Passeriformes)]
 const FAMILLE_INFO = Object.fromEntries(FAMILLES_EBIRD.map(f => [f[0], f]));
+// Le filtre « famille » du Birdydex et de « Qui a vu quoi » choisit aussi un ordre entier
+// (Mathis, 2026-10-23 : « Passeriformes »). Sa valeur garde la meme case, prefixee
+// « ordre: », pour qu'un choix enregistre avant reste valable tel quel.
+const ORDRE_PREFIXE = 'ordre:';
+function ordreDeFamille(fam){ return (FAMILLE_INFO[fam] || [])[2] || ''; }
+function passeFamille(fam, choix){
+  if(!choix || choix === 'any') return true;
+  return choix.startsWith(ORDRE_PREFIXE) ? ordreDeFamille(fam) === choix.slice(ORDRE_PREFIXE.length) : fam === choix;
+}
+function libelleFamille(choix){ return choix.startsWith(ORDRE_PREFIXE) ? choix.slice(ORDRE_PREFIXE.length) : choix; }
+// Les options de la fenetre de choix : chaque ordre en tete de ses familles, dans l'ordre
+// eBird, avec la somme de leurs especes. Les familles sans ordre connu finissent la liste.
+function optionsFamillesEtOrdres(compte, total){
+  const fams = [...compte.keys()].sort((a,b) => (FAMILY_ORDER[a] ?? 9999) - (FAMILY_ORDER[b] ?? 9999) || a.localeCompare(b, 'fr'));
+  const parOrdre = new Map();
+  for(const f of fams){ const o = ordreDeFamille(f); parOrdre.set(o, (parOrdre.get(o) || 0) + compte.get(f)); }
+  const opts = [{ value:'', label:'Toutes familles', count:total }];
+  let prec = null;
+  for(const f of fams){
+    const o = ordreDeFamille(f);
+    if(o && o !== prec) opts.push({ value:ORDRE_PREFIXE + o, label:o, count:parOrdre.get(o), cls:'cp-item-ordre' });
+    prec = o;
+    opts.push({ value:f, label:f, count:compte.get(f), cls:o ? 'cp-item-fam' : '' });
+  }
+  return opts;
+}
 const REAL_RARITY = {"dendrocygna viduata":9,"dendrocygna bicolor":9,"anser indicus":7,"anser canagicus":10,"anser caerulescens":10,"anser anser":5,"anser cygnoides":8,"anser albifrons":8,"anser erythropus":10,"anser fabalis":10,"anser serrirostris":9,"anser brachyrhynchus":9,"branta bernicla":6,"branta leucopsis":7,"branta hutchinsii":10,"branta canadensis":4,"branta sandvicensis":10,"branta ruficollis":9,"cygnus olor":2,"cygnus atratus":8,"cygnus melancoryphus":10,"cygnus columbianus":8,"cygnus cygnus":8,"oressochen melanopterus":10,"chloephaga picta":10,"alopochen aegyptiaca":6,"tadorna ferruginea":7,"tadorna cana":10,"tadorna tadorna":3,"cairina moschata":8,"callonetta leucophrys":9,"aix sponsa":8,"aix galericulata":7,"chenonetta jubata":10,"amazonetta brasiliensis":10,"sibirionetta formosa":10,"spatula querquedula":6,"spatula hottentota":10,"spatula versicolor":10,"spatula discors":9,"spatula cyanoptera":10,"spatula clypeata":4,"mareca strepera":4,"mareca penelope":5,"mareca americana":9,"mareca sibilatrix":9,"anas poecilorhyncha":10,"anas zonorhyncha":10,"anas platyrhynchos":1,"anas bahamensis":9,"anas acuta":5,"anas crecca":4,"anas flavirostris":9,"marmaronetta angustirostris":10,"netta rufina":5,"netta peposaca":10,"aythya ferina":4,"aythya collaris":8,"aythya nyroca":8,"aythya fuligula":4,"aythya marila":8,"aythya affinis":8,"somateria spectabilis":9,"somateria mollissima":8,"melanitta perspicillata":9,"melanitta fusca":8,"melanitta nigra":7,"melanitta americana":10,"clangula hyemalis":8,"bucephala albeola":10,"bucephala clangula":7,"mergellus albellus":8,"lophodytes cucullatus":10,"mergus merganser":6,"mergus serrator":7,"oxyura jamaicensis":9,"oxyura leucocephala":10,"numida meleagris":10,"colinus virginianus":10,"callipepla californica":9,"tetrastes bonasia":8,"lagopus muta":8,"tetrao urogallus":9,"lyrurus tetrix":8,"perdix perdix":7,"syrmaticus reevesii":9,"chrysolophus pictus":10,"phasianus colchicus":4,"phasianus versicolor":9,"pavo cristatus":8,"gallus gallus":10,"coturnix coturnix":7,"alectoris rufa":6,"alectoris graeca":8,"columba livia":2,"columba guinea":10,"columba oenas":4,"columba palumbus":1,"streptopelia turtur":4,"streptopelia orientalis":10,"streptopelia decaocto":2,"streptopelia roseogrisea":10,"geopelia cuneata":10,"pterocles alchata":8,"otis tarda":9,"tetrax tetrax":7,"clamator glandarius":8,"cuculus canorus":4,"chordeiles minor":10,"caprimulgus ruficollis":10,"caprimulgus europaeus":7,"tachymarptis melba":6,"apus apus":2,"apus pallidus":7,"apus affinis":10,"apus caffer":9,"rallus aquaticus":4,"crex crex":9,"porzana porzana":8,"paragallinula angulata":10,"gallinula chloropus":2,"fulica atra":2,"porphyrio porphyrio":7,"zapornia parva":9,"zapornia pusilla":9,"balearica regulorum":10,"grus virgo":10,"grus japonensis":10,"grus grus":5,"burhinus oedicnemus":6,"himantopus himantopus":4,"recurvirostra avosetta":4,"haematopus ostralegus":5,"pluvialis squatarola":5,"pluvialis apricaria":6,"pluvialis dominica":9,"pluvialis fulva":9,"eudromias morinellus":8,"charadrius vociferus":10,"charadrius hiaticula":5,"charadrius semipalmatus":10,"thinornis dubius":5,"vanellus vanellus":3,"vanellus spinosus":10,"vanellus gregarius":9,"vanellus leucurus":10,"anarhynchus leschenaultii":10,"anarhynchus alexandrinus":6,"bartramia longicauda":10,"numenius hudsonicus":10,"numenius phaeopus":6,"numenius arquata":4,"limosa lapponica":7,"limosa limosa":5,"limnodromus scolopaceus":10,"lymnocryptes minimus":8,"scolopax rusticola":7,"gallinago media":9,"gallinago gallinago":4,"phalaropus tricolor":10,"phalaropus fulicarius":8,"phalaropus lobatus":8,"xenus cinereus":9,"actitis hypoleucos":4,"actitis macularius":9,"tringa ochropus":4,"tringa brevipes":10,"tringa stagnatilis":8,"tringa glareola":6,"tringa totanus":4,"tringa flavipes":9,"tringa erythropus":6,"tringa nebularia":5,"arenaria interpres":5,"calidris canutus":7,"calidris pugnax":6,"calidris falcinellus":9,"calidris acuminata":10,"calidris ferruginea":7,"calidris himantopus":10,"calidris temminckii":8,"calidris ruficollis":10,"calidris subruficollis":9,"calidris alba":5,"calidris alpina":4,"calidris maritima":7,"calidris bairdii":9,"calidris minuta":6,"calidris fuscicollis":9,"calidris minutilla":9,"calidris melanotos":9,"calidris mauri":10,"calidris pusilla":10,"cursorius cursor":10,"glareola pratincola":8,"glareola nordmanni":10,"stercorarius longicaudus":9,"stercorarius parasiticus":7,"stercorarius pomarinus":8,"stercorarius skua":8,"stercorarius maccormicki":10,"fratercula arctica":8,"cepphus grylle":9,"alca torda":7,"alle alle":9,"uria aalge":7,"hydrocoloeus minutus":7,"rhodostethia rosea":10,"rissa tridactyla":7,"xema sabini":8,"chroicocephalus genei":6,"chroicocephalus philadelphia":9,"chroicocephalus ridibundus":2,"leucophaeus atricilla":10,"leucophaeus pipixcan":9,"ichthyaetus audouinii":8,"ichthyaetus melanocephalus":4,"larus canus":5,"larus delawarensis":9,"larus cachinnans":7,"larus dominicanus":10,"larus smithsonianus":9,"larus argentatus":3,"larus michahellis":2,"larus marinus":4,"larus hyperboreus":9,"larus fuscus":4,"larus glaucoides":9,"onychoprion fuscatus":10,"onychoprion anaethetus":9,"sternula albifrons":6,"gelochelidon nilotica":6,"hydroprogne caspia":7,"chlidonias hybrida":6,"chlidonias niger":7,"chlidonias leucopterus":8,"sterna forsteri":9,"sterna paradisaea":8,"sterna hirundo":4,"sterna dougallii":9,"thalasseus sandvicensis":4,"thalasseus elegans":9,"thalasseus bengalensis":10,"thalasseus albididorsalis":10,"phoenicopterus chilensis":9,"phoenicopterus ruber":10,"phoenicopterus roseus":4,"phoeniconaias minor":8,"tachybaptus ruficollis":3,"podilymbus podiceps":9,"podiceps auritus":8,"podiceps grisegena":8,"podiceps cristatus":3,"podiceps nigricollis":6,"gavia stellata":7,"gavia arctica":8,"gavia pacifica":9,"gavia immer":7,"gavia adamsii":10,"thalassarche melanophris":10,"oceanites oceanicus":9,"hydrobates pelagicus":8,"hydrobates leucorhous":8,"hydrobates castro":10,"fulmarus glacialis":7,"calonectris borealis":8,"calonectris diomedea":7,"ardenna gravis":8,"ardenna grisea":7,"ardenna tenuirostris":10,"puffinus puffinus":7,"puffinus yelkouan":7,"puffinus mauretanicus":7,"puffinus baroli":10,"ciconia nigra":7,"ciconia ciconia":4,"morus bassanus":5,"sula sula":10,"sula leucogaster":9,"microcarbo pygmaeus":8,"phalacrocorax carbo":2,"gulosus aristotelis":5,"eudocimus albus":10,"eudocimus ruber":10,"plegadis falcinellus":5,"threskiornis aethiopicus":7,"geronticus eremita":9,"platalea leucorodia":4,"botaurus stellaris":7,"botaurus minutus":7,"nycticorax nycticorax":5,"egretta garzetta":2,"egretta gularis":9,"ardeola ralloides":7,"ardea ibis":3,"ardea alba":3,"ardea cinerea":2,"ardea purpurea":5,"pelecanus onocrotalus":9,"pelecanus rufescens":9,"pelecanus crispus":10,"cathartes aura":10,"pandion haliaetus":6,"elanus caeruleus":7,"gypaetus barbatus":7,"neophron percnopterus":8,"pernis apivorus":5,"aegypius monachus":8,"gyps rueppelli":10,"gyps fulvus":5,"circaetus gallicus":5,"clanga pomarina":9,"clanga clanga":9,"hieraaetus pennatus":7,"aquila nipalensis":10,"aquila heliaca":9,"aquila chrysaetos":6,"aquila fasciata":8,"accipiter nisus":4,"astur gentilis":7,"circus aeruginosus":4,"circus cyaneus":6,"circus hudsonius":9,"circus macrourus":8,"circus pygargus":7,"milvus milvus":4,"milvus migrans":3,"haliastur indus":10,"haliaeetus albicilla":8,"haliaeetus leucocephalus":10,"parabuteo unicinctus":10,"buteo lagopus":9,"buteo buteo":2,"buteo rufinus":9,"tyto alba":7,"otus scops":7,"bubo bubo":8,"glaucidium passerinum":8,"athene noctua":7,"strix aluco":6,"asio otus":7,"asio flammeus":8,"aegolius funereus":8,"upupa epops":5,"merops persicus":10,"merops apiaster":5,"alcedo atthis":3,"megaceryle alcyon":9,"coracias garrulus":6,"jynx torquilla":7,"picoides tridactylus":9,"dendrocoptes medius":5,"dendrocopos leucotos":9,"dendrocopos major":2,"dryobates minor":5,"picus canus":8,"picus viridis":2,"picus sharpei":7,"dryocopus martius":5,"falco naumanni":7,"falco tinnunculus":2,"falco vespertinus":8,"falco eleonorae":8,"falco columbarius":7,"falco subbuteo":5,"falco cherrug":9,"falco peregrinus":5,"nymphicus hollandicus":9,"eolophus roseicapilla":10,"cacatua alba":10,"cacatua galerita":10,"alisterus scapularis":10,"psittacula eupatria":9,"psittacula krameri":3,"psittacula cyanocephala":10,"platycercus eximius":10,"melopsittacus undulatus":9,"trichoglossus moluccanus":10,"agapornis roseicollis":10,"agapornis fischeri":10,"agapornis personatus":10,"agapornis nigrigenis":10,"psittacus erithacus":9,"poicephalus senegalus":10,"myiopsitta monachus":9,"aratinga solstitialis":10,"ara ararauna":10,"ara militaris":10,"thectocercus acuticaudatus":10,"psittacara mitratus":10,"psittacara erythrogenys":10,"vireo olivaceus":10,"oriolus oriolus":4,"lanius collurio":5,"lanius phoenicuroides":10,"lanius isabellinus":10,"lanius cristatus":10,"lanius meridionalis":7,"lanius excubitor":8,"lanius minor":10,"lanius nubicus":10,"lanius senator":7,"garrulus glandarius":2,"pica pica":1,"nucifraga caryocatactes":7,"pyrrhocorax pyrrhocorax":6,"pyrrhocorax graculus":6,"coloeus monedula":2,"corvus frugilegus":4,"corvus corone":1,"corvus cornix":6,"corvus albicollis":10,"corvus corax":4,"periparus ater":4,"lophophanes cristatus":4,"poecile palustris":4,"poecile montanus":7,"cyanistes caeruleus":1,"cyanistes cyanus":10,"parus major":1,"remiz pendulinus":7,"lullula arborea":4,"alauda leucoptera":10,"alauda arvensis":3,"galerida theklae":8,"galerida cristata":5,"eremophila alpestris":9,"calandrella brachydactyla":8,"melanocorypha calandra":8,"panurus biarmicus":7,"cisticola juncidis":3,"iduna caligata":10,"iduna pallida":10,"iduna opaca":10,"hippolais polyglotta":4,"hippolais icterina":8,"acrocephalus paludicola":9,"acrocephalus melanopogon":7,"acrocephalus schoenobaenus":6,"acrocephalus agricola":10,"acrocephalus dumetorum":9,"acrocephalus palustris":7,"acrocephalus scirpaceus":4,"acrocephalus arundinaceus":6,"locustella luscinioides":7,"locustella naevia":7,"riparia riparia":4,"ptyonoprogne rupestris":5,"hirundo rustica":2,"delichon urbicum":3,"cecropis rufula":8,"phylloscopus sibilatrix":7,"phylloscopus bonelli":5,"phylloscopus orientalis":10,"phylloscopus inornatus":8,"phylloscopus humei":9,"phylloscopus proregulus":9,"phylloscopus schwarzi":10,"phylloscopus fuscatus":9,"phylloscopus trochilus":4,"phylloscopus collybita":1,"phylloscopus ibericus":9,"phylloscopus trochiloides":10,"phylloscopus plumbeitarsus":10,"phylloscopus borealis":10,"cettia cetti":3,"aegithalos caudatus":2,"sylvia atricapilla":1,"sylvia borin":5,"curruca nisoria":10,"curruca curruca":7,"curruca hortensis":7,"curruca ruppeli":10,"curruca melanocephala":3,"curruca subalpina":7,"curruca iberiae":6,"curruca cantillans":9,"curruca communis":4,"curruca conspicillata":7,"curruca sarda":8,"curruca undata":6,"leiothrix lutea":8,"regulus regulus":4,"regulus ignicapilla":3,"tichodroma muraria":8,"sitta whiteheadi":8,"sitta europaea":3,"certhia familiaris":6,"certhia brachydactyla":2,"troglodytes troglodytes":2,"cinclus cinclus":7,"sturnus vulgaris":1,"sturnus unicolor":7,"pastor roseus":9,"acridotheres tristis":10,"zoothera aurea":10,"catharus minimus":10,"catharus ustulatus":10,"turdus viscivorus":3,"turdus philomelos":2,"turdus iliacus":5,"turdus merula":1,"turdus pilaris":5,"turdus torquatus":7,"muscicapa striata":4,"erithacus rubecula":1,"luscinia megarhynchos":3,"luscinia svecica":7,"tarsiger cyanurus":10,"ficedula parva":9,"ficedula hypoleuca":5,"ficedula albicollis":9,"phoenicurus moussieri":9,"phoenicurus phoenicurus":4,"phoenicurus ochruros":2,"monticola saxatilis":8,"monticola solitarius":7,"saxicola rubetra":6,"saxicola rubicola":3,"saxicola maurus":9,"oenanthe oenanthe":5,"oenanthe isabellina":9,"oenanthe deserti":9,"oenanthe hispanica":8,"oenanthe melanoleuca":9,"oenanthe pleschanka":10,"bombycilla garrulus":10,"ploceus melanocephalus":10,"euplectes afer":10,"taeniopygia guttata":9,"euodice malabarica":7,"estrilda melpoda":10,"estrilda astrild":10,"prunella collaris":7,"prunella modularis":3,"passer domesticus":1,"passer italiae":7,"passer hispaniolensis":9,"passer montanus":5,"passer luteus":9,"petronia petronia":7,"montifringilla nivalis":8,"motacilla cinerea":3,"motacilla flava":4,"motacilla tschutschensis":9,"motacilla citreola":9,"motacilla alba":2,"anthus richardi":8,"anthus godlewskii":10,"anthus campestris":6,"anthus pratensis":3,"anthus trivialis":5,"anthus hodgsoni":9,"anthus gustavi":10,"anthus cervinus":8,"anthus spinoletta":5,"anthus petrosus":6,"anthus japonicus":10,"anthus rubescens":9,"fringilla coelebs":1,"fringilla montifringilla":5,"coccothraustes coccothraustes":4,"carpodacus erythrinus":9,"pyrrhula pyrrhula":5,"bucanetes githagineus":9,"chloris chloris":2,"linaria flavirostris":10,"linaria cannabina":3,"acanthis flammea":7,"loxia scotica":10,"loxia curvirostra":6,"carduelis carduelis":2,"carduelis citrinella":7,"carduelis corsicana":7,"serinus serinus":3,"serinus canaria":10,"spinus spinus":4,"calcarius lapponicus":9,"plectrophenax nivalis":8,"emberiza melanocephala":9,"emberiza calandra":4,"emberiza cia":7,"emberiza cirlus":3,"emberiza citrinella":4,"emberiza leucocephalos":10,"emberiza hortulana":8,"emberiza sahari":10,"emberiza schoeniclus":4,"emberiza pusilla":9,"emberiza rustica":10,"emberiza spodocephala":10,"zonotrichia albicollis":9,"icterus galbula":10,"seiurus aurocapilla":10,"mniotilta varia":10,"leiothlypis peregrina":10,"setophaga aestiva":10,"setophaga striata":10,"pheucticus ludovicianus":10,"accipiter gentilis":7,"bubulcus ibis":3,"charadrius alexandrinus":5,"charadrius dubius":6,"dendrocygna autumnalis":9,"falco jugger":9,"phalacrocorax aristotelis":5,"phylloscopus sibillatrix":6,"pycnonotus jocosus":9,"sylvia communis":4,"sylvia curruca":7};
 // Categorie eBird des exotiques FR (estimation basee sur statut public eBird FR).
 // N = Naturalise (population etablie reproductrice, "vrai" sauvage installe)
@@ -1475,8 +1501,8 @@ function _openFilterPicker(currentValue, opts){
         // cp-item-simple : ce selecteur generique ne pose que deux ou trois elements, quand
         // .cp-item dessine depuis la grille a six colonnes du selecteur de pays. Sans lui, le
         // libelle tombait dans la colonne du drapeau, large de 28 px, et « Par famille » se
-        // lisait « P… ».
-        return `<div class="cp-item cp-item-simple${on}" data-value="${esc(String(o.value))}">
+        // lisait « P… ». cls : l'ordre en tete de ses familles, les familles en retrait.
+        return `<div class="cp-item cp-item-simple${o.cls ? ' ' + o.cls : ''}${on}" data-value="${esc(String(o.value))}">
           ${dot}
           <span class="cp-item-name${o.moi ? ' cp-item-name-moi' : ''}">${esc(o.label)}</span>${o.moi ? '<span class="youtag">toi</span>' : ''}
           ${cnt}
@@ -2870,13 +2896,43 @@ function parseDate(s){
 }
 
 
+// Rarete ligue : le bareme en ronds, comme celui de la rarete terrain (Mathis, 2026-10-23).
+// Il se calcule sur le nombre de membres du moment : les paliers sont ceux de tierFor, et
+// une espece vue par k membres rapporte 100 / k points a chacun (build).
+function _bulleLigue(){
+  const N = state.people.length;
+  let html = '<p>Plus l\'espèce est rare <b>dans la ligue</b>, plus elle rapporte : vue par toi seul = 100 points.</p>';
+  if(!N) return html;
+  const pts = k => Math.round(100 / k);
+  const paliers = new Map();   // ord -> { t, lo, hi }
+  for(let k = 1; k <= N; k++){
+    const t = tierFor(k, N), p = paliers.get(t.ord);
+    if(p) p.hi = k; else paliers.set(t.ord, { t, lo:k, hi:k });
+  }
+  const lignes = [...paliers.values()].map(({ t, lo, hi }) => {
+    const rond = lo === hi
+      ? `<span class="tb-n" style="background:${t.color}">${lo}</span>`
+      : `<span class="tb-n tb-plage" style="background:${t.color}">${lo}–${hi}</span>`;
+    const nom = t.ord === 12 && N > 1 ? 'Vue par tous'
+      : lo === hi ? 'Vue par ' + lo + (lo > 1 ? ' membres' : ' membre') : 'Vue par ' + lo + ' à ' + hi + ' membres';
+    // Les arrondis d'un palier peuvent tomber sur le meme nombre (12 ou 13 membres : 8 points).
+    const part = pts(lo) === pts(hi) ? pts(lo) + ' points' : pts(hi) + ' à ' + pts(lo) + ' points';
+    return rond + `<span class="tb-nom">${nom}</span><span class="tb-part">${part}</span>`;
+  }).join('')
+    // Le meme rond gris a tiret que dans « Qui a vu quoi » : une espece cochee seulement a
+    // l'etranger ne compte pas (la competition se joue en France).
+    + '<span class="tb-n" style="background:var(--line-2)">–</span><span class="tb-nom">Vue seulement hors de France</span><span class="tb-part">0 point</span>';
+  return html
+    + `<div class="tb-titre">Membres qui l'ont vue en France, sur ${N}</div>`
+    + '<div class="tb-grille">' + lignes + '</div>';
+}
 // Bulle de chaque tri du Classement, au survol (ou au focus clavier) de son bouton. Elle
 // remplace depuis le 2026-10-05 la phrase sous le titre, le « ? » et le bareme pose sur la
 // page, que Mathis trouvait hors du style du site.
 function _bulleTri(mode){
   // Textes raccourcis le 2026-10-22 (version « tres courtes » choisie par Mathis).
   if(mode==='count') return '<p>Une espèce = <b>1 point</b>.</p>';
-  if(mode==='league') return '<p>Plus l\'espèce est rare <b>dans la ligue</b>, plus elle rapporte : vue par toi seul = 100 points.</p>';
+  if(mode==='league') return _bulleLigue();
   // Bareme semantique par tier : la part des listes eBird du pays qui mentionnent
   // l'espece sur 2019-2026, moyenne des 48 quinzaines ponderee par le nombre de listes
   // de chacune.
@@ -3195,7 +3251,7 @@ function renderMatrix({universe,N}){
   const famKey=fams.join('|');
   if(famKey!==lastFamKey){
     lastFamKey=famKey;
-    if(!fams.includes(state.family)) state.family='any';
+    if(!fams.some(f => passeFamille(f, state.family))) state.family='any';
   }
 
   // Nettoyage des uid disparus (joueurs partis) avant de peupler les chips.
@@ -3225,7 +3281,7 @@ function renderMatrix({universe,N}){
 
   let list=[...uni];
   list=list.filter(passeRar);
-  if(state.family && state.family !== 'any') list=list.filter(u=>familyOf(u.sci) === state.family);
+  if(state.family && state.family !== 'any') list=list.filter(u=>passeFamille(familyOf(u.sci), state.family));
   // Filtre lignes :
   //  - liste principale choisie  → seules les espèces qu'ELLE a vues (peu importe si
   //    les autres à comparer les ont vues ou pas - la référence, c'est la principale).
@@ -17405,7 +17461,7 @@ function _majBoutonsFiltres(){
       ? 'Oiseaux de ' + nomDe(state.playerMain) + (cols ? ' · avec ' + cols : '')
       : cols ? 'Colonnes : ' + cols : 'Personnes : tout le monde',
     state.playerMain || cmp.length);
-  lbl('#familyBtn', state.family && state.family !== 'any' ? state.family : 'Toutes familles', state.family && state.family !== 'any');
+  lbl('#familyBtn', state.family && state.family !== 'any' ? libelleFamille(state.family) : 'Toutes familles', state.family && state.family !== 'any');
   const gardes = _matrixPays.filter(cc => !state.countryExcl.has(cc));
   lbl('#paysBtn', !state.countryExcl.size ? 'Tous les pays'
     : gardes.length === 1 ? countryLabel(gardes[0]) : gardes.length + ' pays', state.countryExcl.size);
@@ -17431,13 +17487,12 @@ function _majFiltresActifs(){
     || state.playerMain || state.playerCompareSet.size || (state.family && state.family !== 'any') || state.countryExcl.size);
 }
 $('#filtToutEffacer')?.addEventListener('click', _effacerFiltres);
-// Famille : la fenetre de choix du Birdydex, avec le nombre d'especes de chaque famille.
+// Famille : la fenetre de choix du Birdydex, avec le nombre d'especes de chaque famille,
+// chaque ordre en tete de ses familles.
 $('#familyBtn')?.addEventListener('click', async ()=>{
-  const fams = [..._matrixFams.keys()].sort((a,b) => (FAMILY_ORDER[a] ?? 9999) - (FAMILY_ORDER[b] ?? 9999) || a.localeCompare(b, 'fr'));
   const v = await _openFilterPicker(state.family === 'any' ? '' : state.family, {
-    title: 'Choisir une famille', searchable: true,
-    options: [{ value:'', label:'Toutes familles', count:_matrixFamsTotal }]
-      .concat(fams.map(f => ({ value:f, label:f, count:_matrixFams.get(f) }))) });
+    title: 'Choisir un ordre ou une famille', searchable: true,
+    options: optionsFamillesEtOrdres(_matrixFams, _matrixFamsTotal) });
   if(v == null) return;
   state.family = v || 'any'; renderResults();
 });
@@ -18365,7 +18420,7 @@ function renderPokedex(){
       const mine = me ? new Set([...me.species.keys()]) : new Set();
       return _pkdxAllSorted.filter(r => {
         if(q && !_mapNorm(r.nm).includes(q) && !r.sci.includes(q)) return false;
-        if(famF && r.fam !== famF) return false;
+        if(famF && !passeFamille(r.fam, famF)) return false;
         const habs = habitatsOf(r.sci) || [];
         if(habF && !habs.includes(habF)) return false;
         if(_pkdxTierExcl && _pkdxTierExcl.has(r.tier)) return false;
@@ -18395,25 +18450,21 @@ function renderPokedex(){
     // Famille : modal picker avec search + count par famille.
     const famBtn = document.getElementById('pkdxFamily');
     if(famBtn){
-      const initLabel = _pkdxFilters.family || 'Toutes familles';
+      const initLabel = _pkdxFilters.family ? libelleFamille(_pkdxFilters.family) : 'Toutes familles';
       _syncPkdxFilterBtn('pkdxFamily', initLabel);
       famBtn.addEventListener('click', async () => {
         const counts = _countPkdxByField('family', r => familyOf(r.sci));
         // Ne montrer QUE les familles avec >= 1 espece dans le pays selectionne (evite
         // les 170+ familles a 0 esp. qui polluent la liste). Le tri suit FAMILY_ORDER
-        // (rang taxonomique), fallback alphabetique pour les inconnues.
-        const famsNonEmpty = Object.keys(counts).filter(k => k !== '__total' && counts[k] > 0);
-        const ordered = famsNonEmpty.sort((a,b) => (FAMILY_ORDER[a] ?? 9999) - (FAMILY_ORDER[b] ?? 9999) || a.localeCompare(b, 'fr'));
-        const opts = [{ value:'', label:'Toutes familles', count: counts.__total }].concat(
-          ordered.map(f => ({ value:f, label:f, count: counts[f] || 0 }))
-        );
+        // (rang taxonomique), fallback alphabetique pour les inconnues ; chaque ordre en tete.
+        const compte = new Map(Object.keys(counts).filter(k => k !== '__total' && counts[k] > 0).map(k => [k, counts[k]]));
         const chosen = await _openFilterPicker(_pkdxFilters.family || '', {
-          title: 'Choisir une famille', options: opts, searchable: true
+          title: 'Choisir un ordre ou une famille', options: optionsFamillesEtOrdres(compte, counts.__total), searchable: true
         });
         if(chosen == null) return;
         _pkdxFilters.family = chosen;
         _pkdxSaveFilters();
-        _syncPkdxFilterBtn('pkdxFamily', chosen || 'Toutes familles');
+        _syncPkdxFilterBtn('pkdxFamily', chosen ? libelleFamille(chosen) : 'Toutes familles');
         _pkdxRender();
       });
     }
@@ -18723,7 +18774,7 @@ function _pkdxRender(){
     // l utilisateur l a bien vue, ce n est pas a nous de l effacer de sa collection.
     if(accidentelle && !mine.has(sci)) continue;
     if(q && !_mapNorm(nm).includes(q) && !sci.includes(q)) continue;
-    if(famF && fam !== famF) continue;
+    if(famF && !passeFamille(fam, famF)) continue;
     const habs = habitatsOf(sci) || [];
     if(habF && !habs.includes(habF)) continue;
     // Mode filtre : si des cats N/P/X sont selectionnees, on affiche UNIQUEMENT les
