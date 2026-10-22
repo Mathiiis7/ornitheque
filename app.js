@@ -12248,7 +12248,6 @@ const PHOTO_OVERRIDE_WIKI = {
   'dendroica striata': { url:'https://upload.wikimedia.org/wikipedia/commons/4/46/Dendroica_striata_MN.jpg' },
   'hippolais caligata': { url:'https://upload.wikimedia.org/wikipedia/commons/c/c9/Bird_Walk_at_Pullzhi%2C_Thrissur_Kole_Wetlands_24.jpg' },
   'passer luteus': { url:'https://upload.wikimedia.org/wikipedia/commons/a/a3/Passer_luteus_262388966.jpg' },
-  'loxia scotica': { url:'https://base-prod.rspb-prod.magnolia-platform.com/.imaging/focalpoint/landscape16to9/1600x900/dam/jcr:e0c1b9db-4b1d-4074-a145-2f0c2c861736/1585855924-Species-Scottish-Crossbill-MALE-In-pine-tree.jpg' },   // RSPB photo male in pine tree (fournie par user)
   'acanthis hornemanni': { url:'https://upload.wikimedia.org/wikipedia/commons/8/8d/Hoary_Redpoll_%285308630118%29.jpg' },
   'acanthis cabaret': { url:'https://upload.wikimedia.org/wikipedia/commons/d/d3/Lesser_Redpoll_%28Acanthis_cabaret%29_%2813667838704%29.jpg' },
   'coccothraustes coccothraustes': { url:'https://upload.wikimedia.org/wikipedia/commons/4/48/Hawfinch_%28Coccothraustes_coccothraustes%29_male_Drenthe.jpg' },
@@ -12793,6 +12792,8 @@ const PHOTO_OVERRIDE_WIKI = {
   'setophaga aestiva': { url:'https://upload.wikimedia.org/wikipedia/commons/a/a3/Dendroica-aestiva-001.jpg?utm_source=fr.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled', thumb:'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a3/Dendroica-aestiva-001.jpg/330px-Dendroica-aestiva-001.jpg?utm_source=fr.wikipedia.org&utm_campaign=api&utm_content=thumbnail', credit:'Wikipédia FR' },
   'setophaga striata': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/196401534/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/196401534/medium.jpeg', credit:'CC0 · iNaturalist' },
   'pheucticus ludovicianus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/72639228/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/72639228/medium.jpeg', credit:'John Murnane · CC BY-NC · iNaturalist' },
+  // Choix de Mathis dans la galerie du 2026-10-22 (notes-privees/choix-photos/) : 512-1.
+  'loxia scotica': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/167798612/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/167798612/medium.jpg', credit:'apout · CC BY-NC · iNaturalist' },
 };
 async function _fetchWikiPhoto(sci){
   const key = sci.toLowerCase();
