@@ -124,7 +124,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=440">
+<link rel="modulepreload" href="app.js?v=441">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -656,44 +656,40 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
             <button data-sort="name">A → Z</button>
           </div>
         </div>
-        <!-- Un menu par filtre, ouvert sous son bouton (2026-10-22, remplace le panneau repliable).
-             Les conteneurs gardent leurs identifiants : renderResults et leurs gestionnaires
-             n'ont pas change. -->
+        <!-- Les filtres reprennent ceux du Birdydex (2026-10-22) : un bouton qui dit sa valeur et
+             ouvre une fenetre au milieu de l'ecran, et la rarete en rangee de pastilles toujours
+             visible. Seuls « Colonnes » (plusieurs personnes a cocher) et « Affichage » (deux
+             cases) gardent un petit menu sous leur bouton : le Birdydex n'a pas d'equivalent. -->
         <div class="fm-barre" id="filtMenus">
+          <button type="button" class="cp-btn" id="playerMainBtn" title="Ne garder que les oiseaux d'une personne">
+            <span class="cp-btn-label">Oiseaux de : tout le monde</span><span class="cp-btn-arrow">▾</span>
+          </button>
           <div class="fm" data-fm="personnes">
-            <button type="button" class="fm-btn" aria-expanded="false" aria-controls="fmPersonnes">Personnes</button>
+            <button type="button" class="cp-btn fm-btn" aria-expanded="false" aria-controls="fmPersonnes">
+              <span class="cp-btn-label">Colonnes : tout le monde</span><span class="cp-btn-arrow">▾</span>
+            </button>
             <div class="fm-pop" id="fmPersonnes" hidden>
               <div class="fm-titre">Qui afficher</div>
               <div class="person-chips" id="playerCompareChips" aria-label="Personnes affichées dans le tableau"></div>
-              <div class="fm-titre">Seulement les oiseaux de</div>
-              <select class="filt-sel" id="playerMainSel" aria-label="Ne garder que les oiseaux d'une personne">
-                <option value="">Tout le monde</option>
-              </select>
             </div>
           </div>
-          <div class="fm" data-fm="rarete">
-            <button type="button" class="fm-btn" aria-expanded="false" aria-controls="fmRarete">Rareté</button>
-            <div class="fm-pop" id="fmRarete" hidden>
-              <div class="person-chips rar-chips-matrix" id="tierChips" aria-label="Filtrer par rareté (multi)"></div>
-            </div>
-          </div>
-          <select class="filt-sel fm-sel" id="familySel" aria-label="Filtrer par famille">
-            <option value="any">Toutes les familles</option>
-          </select>
-          <div class="fm" data-fm="pays">
-            <button type="button" class="fm-btn" aria-expanded="false" aria-controls="fmPays">Pays</button>
-            <div class="fm-pop" id="fmPays" hidden>
-              <div class="person-chips flag-chips" id="countryChips" aria-label="Filtrer par pays (multi)"></div>
-            </div>
-          </div>
+          <button type="button" class="cp-btn" id="familyBtn">
+            <span class="cp-btn-label">Toutes familles</span><span class="cp-btn-arrow">▾</span>
+          </button>
+          <button type="button" class="cp-btn" id="paysBtn" hidden>
+            <span class="cp-btn-label">Tous les pays</span><span class="cp-btn-arrow">▾</span>
+          </button>
           <div class="fm" data-fm="affichage">
-            <button type="button" class="fm-btn" aria-expanded="false" aria-controls="fmAffichage">Affichage</button>
+            <button type="button" class="cp-btn fm-btn" aria-expanded="false" aria-controls="fmAffichage">
+              <span class="cp-btn-label">Affichage</span><span class="cp-btn-arrow">▾</span>
+            </button>
             <div class="fm-pop" id="fmAffichage" hidden>
               <label class="miss-toggle"><input type="checkbox" id="showMissing"> Oiseaux de France non observés</label>
               <label class="miss-toggle"><input type="checkbox" id="showSci"> Noms scientifiques</label>
             </div>
           </div>
         </div>
+        <div class="rar-rangee" id="tierChips" aria-label="Filtrer par rareté (multi)"></div>
         <div class="fm-actifs" id="filtActifs" hidden></div>
       </div>
       <div class="tbl-scroll">
@@ -1496,5 +1492,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=440"></script>
+<script type="module" src="app.js?v=441"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>

@@ -2714,6 +2714,7 @@ function renderResults(){
   requestAnimationFrame(() => { _rrScheduled = false; _renderResultsImpl(); });
 }
 let _lastBuildData = null;
+let _boardHtmlPrec = '';   // dernier tableau du classement ecrit, voir renderBoard
 function _renderResultsImpl(){
   const res=$('#results');
   // Un non-membre ne peut pas lire la liste des membres, donc #results reste masque et la
@@ -2890,7 +2891,7 @@ function renderBoard(){
   const scoreTd=p=>scoreCols.map(c=>`<td class="c-num${c.active?' strong on-metric':''}"><span class="board-score">${c.v(p)}`
     + (tete>0 ? `<span class="board-ecart" title="${esc(String(c.v(p)))} sur ${esc(String(c.v(ranked[0])))}"><i style="width:${Math.round(c.n(p)/tete*100)}%"></i></span>` : '')
     + `</span></td>`).join('');
-  $('#boardList').innerHTML = `<div class="sheet-scroll"><table class="board-sheet">
+  const htmlBoard = `<div class="sheet-scroll"><table class="board-sheet">
     <thead><tr class="board-groupes"><th colspan="3">Le joueur</th><th colspan="4" class="debut-oiseaux">Ses oiseaux</th></tr>
     <tr>
       <th class="c-rank">#</th><th>Joueur</th>
@@ -2907,6 +2908,12 @@ function renderBoard(){
       <td class="c-txt c-esp">${derniere(p)}</td>
       <td class="c-txt c-esp">${reve(p)}</td>
     </tr>`).join('')}</tbody></table></div>`;
+  // Rien n'a change : on ne touche pas au tableau. Le redessiner a chaque clic dans les filtres
+  // de « Qui a vu quoi », juste dessous, le faisait retrecir le temps de remettre ses photos et
+  // la hauteur de ses lignes : toute la page montait puis redescendait (Mathis, 2026-10-22).
+  if(htmlBoard === _boardHtmlPrec && $('#boardList').firstElementChild) return;
+  _boardHtmlPrec = htmlBoard;
+  $('#boardList').innerHTML = htmlBoard;
   _profilPhotosFavs($('#boardList'));   // les photos pas encore en memoire
   // Uniformise la hauteur des lignes du board sur celle du plus grand (contenus texte
   // très inégaux - objectif, dream, dernière obs - sinon effet peigne).
@@ -2923,6 +2930,8 @@ function renderBoard(){
 
 let _matrixUniverse = [];   // exposé pour la dropdown de suggestions de #q
 let _matrixTiers = [];      // raretés présentes, pour les étiquettes des filtres actifs
+let _matrixFams = new Map(), _matrixFamsTotal = 0;   // familles présentes et leur nombre d'espèces
+let _matrixPays = [];       // pays où la ligue a des observations
 // Hash du dernier rendu : skip renderMatrix si le contenu n'a pas change.
 // Firestore live updates (chat, presence, votes) peuvent redeclencher renderMatrix
 // sans que la data matrix ait bouge -> 96ms gaspilles chaque fois. Skip precoce.
@@ -3013,14 +3022,19 @@ function renderMatrix({universe,N}){
   }
   const box=$('#tierChips');
   if(box){
-    // Style unifie avec le filtre rareté carte / Birdydex / Cette semaine (.rar-chip compact).
-    // En mode 'real' : chips avec le tier number (0-10). En mode 'league' : label court (Titan...).
+    // La meme rangee que celle du Birdydex (Mathis, 2026-10-22 : « reprends les filtres du
+    // birdydex ») : l'etiquette RARETÉ, les paliers 1 a 10 en pastilles rondes chiffrees, le
+    // libelle en infobulle, puis Tout / Vide. Ce qui n'est pas un palier chiffre (Étranger,
+    // exotique, paliers de la ligue) garde son libelle en toutes lettres.
     const chipsHtml = tiersPresent.map(t=>{
       const on = !state.tierExcl.has(t.id);
       const bgStyle = on ? `background:${t.color};` : '';
-      return `<button type="button" class="rar-chip${on?' on':''}" data-tier="${esc(t.id)}" style="${bgStyle}">${esc(t.label)}</button>`;
+      const palier = /^r([1-9]|10)$/.test(t.id);
+      return palier
+        ? `<button type="button" class="rar-chip${on?' on':''}" data-tier="${esc(t.id)}" data-rar style="${bgStyle}" title="${esc(t.label)}">${t.ord}</button>`
+        : `<button type="button" class="rar-chip rar-mot${on?' on':''}" data-tier="${esc(t.id)}" style="${bgStyle}">${esc(t.label)}</button>`;
     }).join('');
-    box.innerHTML = chipsHtml
+    box.innerHTML = '<span class="rar-rangee-titre">Rareté</span>' + chipsHtml
       + '<button type="button" class="rar-chip" data-tier-all title="Cocher toutes les raretés">Tout</button>'
       + '<button type="button" class="rar-chip" data-tier-none title="Décocher toutes les raretés">Vide</button>';
   }
@@ -3037,16 +3051,15 @@ function renderMatrix({universe,N}){
   const uniForFam = state.tierExcl?.size
     ? uni.filter(u => !state.tierExcl.has(rarFiltre(u).id))
     : uni;
-  const fams=[...new Set(uniForFam.map(u=>familyOf(u.sci)))].sort((a,b) => (FAMILY_ORDER[a] ?? 9999) - (FAMILY_ORDER[b] ?? 9999) || a.localeCompare(b, 'fr'));
+  // Le nombre d'especes par famille, pour la fenetre de choix (comme au Birdydex).
+  _matrixFams = new Map();
+  for(const u of uniForFam){ const f = familyOf(u.sci); _matrixFams.set(f, (_matrixFams.get(f) || 0) + 1); }
+  _matrixFamsTotal = uniForFam.length;
+  const fams=[..._matrixFams.keys()].sort((a,b) => (FAMILY_ORDER[a] ?? 9999) - (FAMILY_ORDER[b] ?? 9999) || a.localeCompare(b, 'fr'));
   const famKey=fams.join('|');
   if(famKey!==lastFamKey){
     lastFamKey=famKey;
-    const sel=$('#familySel');
-    if(sel){
-      sel.innerHTML='<option value="any">Toutes les familles</option>'+fams.map(f=>`<option value="${esc(f)}">${esc(f)}</option>`).join('');
-      if(!fams.includes(state.family)) state.family='any';
-      sel.value=state.family;
-    }
+    if(!fams.includes(state.family)) state.family='any';
   }
 
   // Nettoyage des uid disparus (joueurs partis) avant de peupler les chips.
@@ -3059,13 +3072,8 @@ function renderMatrix({universe,N}){
   const plKey=state.people.map(p=>p.id+':'+p.name).join('|')+'#'+state.playerMain+'#'+[...state.playerCompareSet].sort().join(',');
   if(plKey!==lastPlayerKey){
     lastPlayerKey=plKey;
-    const selMain=$('#playerMainSel'), boxCmp=$('#playerCompareChips');
+    const boxCmp=$('#playerCompareChips');
     const chipHtml = (p, on) => `<button type="button" class="person-chip${on?' on':''}" data-player="${esc(p.id)}" style="--series:var(--s${p.si})"><span class="dot"></span>${esc(p.name)}${p.isMe?' (toi)':''}</button>`;
-    if(selMain){
-      selMain.innerHTML = '<option value="">Tout le monde</option>'
-        + state.people.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}${p.isMe?' (toi)':''}</option>`).join('');
-      selMain.value = state.playerMain;
-    }
     // « Qui afficher » : « Tout le monde » d'abord, comme partout ailleurs (charte). La
     // personne dont on garde les oiseaux n'y figure pas : sa colonne est toujours la, en tete.
     if(boxCmp){
@@ -3080,23 +3088,16 @@ function renderMatrix({universe,N}){
   for(const u of uni){ for(const v of u.seenBy.values()){ if(v.country) countriesSet.add(v.country); } }
   const countries=[...countriesSet].sort((a,b)=> a==='FR'?-1 : b==='FR'?1 : countryLabel(a).localeCompare(countryLabel(b),'fr'));
   const coKey=countries.join('|');
-  const coBox=$('#countryChips');
-  if(coBox){
-    if(coKey!==lastCountryKey){
-      // Nettoyage : sur changement du set des pays présents (nouvel import, nouveau joueur…),
-      // on retire les codes disparus du filtre pour ne pas laisser un état incohérent.
-      lastCountryKey=coKey;
-      for(const cc of [...state.countryExcl]) if(!countries.includes(cc)) state.countryExcl.delete(cc);
-    }
-    coBox.innerHTML = countries.map(cc=>{
-      const on = !state.countryExcl.has(cc);
-      // Chip = drapeau seul (pas de nom, comme demandé). Tooltip donne le nom.
-      return `<button type="button" class="person-chip flag-chip${on?' on':''}" data-country="${esc(cc)}" title="${esc(countryLabel(cc))}">${flagImg(cc)||('<span class="flag-fallback">'+esc(cc)+'</span>')}</button>`;
-    }).join('');
-    // Masqué tant qu'il n'y a pas au moins un pays étranger : filtrer par "FR seul" n'a aucun intérêt.
-    const wrap = coBox.closest('.fm');
-    if(wrap) wrap.style.display = countries.some(c=>c!=='FR') ? '' : 'none';
+  if(coKey!==lastCountryKey){
+    // Nettoyage : sur changement du set des pays présents (nouvel import, nouveau joueur…),
+    // on retire les codes disparus du filtre pour ne pas laisser un état incohérent.
+    lastCountryKey=coKey;
+    for(const cc of [...state.countryExcl]) if(!countries.includes(cc)) state.countryExcl.delete(cc);
   }
+  _matrixPays = countries;
+  // Masqué tant qu'il n'y a pas au moins un pays étranger : filtrer par "FR seul" n'a aucun intérêt.
+  { const b = $('#paysBtn'); if(b) b.hidden = !countries.some(c=>c!=='FR'); }
+  _majBoutonsFiltres();
   const coBadge=$('#countryBadge'); if(coBadge) coBadge.style.display='none';
   // Apres les nettoyages ci-dessus (rarete remise a zero, pays ou joueurs disparus) : les
   // etiquettes ne doivent annoncer que des filtres qui s'appliquent vraiment.
@@ -15090,9 +15091,14 @@ function _renderSpeciesRarityCard(key){
     // birdydex (.pkdx-exo), pose entre le libelle de rarete et le nom du statut : la meme
     // espece porte ainsi le meme jeton aux deux endroits. C'etait une petite gelule grise
     // a l'ancienne largeur variable.
-    const catMiniPill = (isExo && cat)
-      ? jetonExo(cat, { style: 'flex-shrink:0;', tip: catLbl ? catLbl + ' (' + cat + ')' : cat })
-      : '';
+    // TOUS les statuts du pays, comme la vignette du birdydex : le Cygne noir est N dans 44
+    // departements francais et X dans 18, et la fiche ne disait que « N » quand le birdydex
+    // disait « N X » (Mathis, 2026-10-22). Meme regle, meme infobulle qu'au birdydex.
+    const catsPays = (isExo && cat) ? ((exoticCategoriesInCountry(k, cc) || []).length
+      ? exoticCategoriesInCountry(k, cc) : [cat]) : [];
+    const catMiniPill = catsPays.map(c => jetonExo(c, { style: 'flex-shrink:0;',
+      tip: `${EXOTIC_CATEGORY_LABEL[c] || 'Exotique ' + c} (${c})`
+        + (catsPays.length > 1 ? ' - un des statuts de l’espèce dans le pays, il change selon la région' : '') })).join('');
     // Le « ? » et son depliant sont retires : les trois definitions N / P / X iront ailleurs,
     // en un seul endroit plutot qu'en infobulle accrochee a chaque jeton.
     // Ancien catExplainer (details deroulant) retire 2026-09-22 -> remplace par le tooltip.
@@ -17395,73 +17401,94 @@ function _effacerFiltres(){
   state.countryExcl = new Set();
   state.showMissing = false;
   state.showSci = false;
-  const fs = $('#familySel'); if(fs) fs.value = 'any';
   const sm = $('#showMissing'); if(sm) sm.checked = false;
   const ss = $('#showSci'); if(ss) ss.checked = false;
   lastPlayerKey = '';    // force le re-render des chips personne
   lastCountryKey = '';   // force le re-render des chips pays
   renderResults();
 }
-// Les filtres actifs, en etiquettes sous la barre : chacune se retire d'un clic. Les menus
-// fermes ne disent rien de leur contenu, ce sont elles qui le rappellent. Le bouton de chaque
-// menu se marque aussi quand son filtre s'applique.
+// Les boutons disent leur valeur, comme au Birdydex (« Toutes familles », « Oiseaux de :
+// Claire »), et se marquent quand leur filtre s'applique.
+function _majBoutonsFiltres(){
+  const nomDe = id => { const p = state.people.find(x => x.id === id); return p ? p.name + (p.isMe ? ' (toi)' : '') : ''; };
+  const lbl = (sel, txt, actif) => {
+    const b = $(sel); if(!b) return;
+    const l = b.querySelector('.cp-btn-label'); if(l) l.textContent = txt;
+    b.classList.toggle('actif', !!actif);
+  };
+  lbl('#playerMainBtn', 'Oiseaux de : ' + (state.playerMain ? nomDe(state.playerMain) : 'tout le monde'), state.playerMain);
+  const cmp = [...state.playerCompareSet].map(nomDe).filter(Boolean);
+  lbl('[data-fm="personnes"] .fm-btn', 'Colonnes : ' + (!cmp.length ? 'tout le monde'
+    : cmp.length <= 2 ? cmp.join(', ') : cmp.length + ' personnes'), cmp.length);
+  lbl('#familyBtn', state.family && state.family !== 'any' ? state.family : 'Toutes familles', state.family && state.family !== 'any');
+  const gardes = _matrixPays.filter(cc => !state.countryExcl.has(cc));
+  lbl('#paysBtn', !state.countryExcl.size ? 'Tous les pays'
+    : gardes.length === 1 ? countryLabel(gardes[0]) : gardes.length + ' pays', state.countryExcl.size);
+  lbl('[data-fm="affichage"] .fm-btn', 'Affichage', state.showMissing || state.showSci);
+}
+// Les filtres que les boutons ne disent pas, en etiquettes sous la rangee de rarete : la rarete
+// resumee en mots, et les deux options d'affichage. Chacune se retire d'un clic, et « Tout
+// effacer » remet tous les filtres, boutons compris, des qu'un seul s'applique.
 function _majFiltresActifs(){
   const box = $('#filtActifs'); if(!box) return;
-  const nomDe = id => { const p = state.people.find(x => x.id === id); return p ? p.name + (p.isMe ? ' (toi)' : '') : ''; };
   // Le plus court des deux : ce qu'on garde, ou « sauf » ce qu'on a retire. Retirer un seul
   // palier sur onze en enumerait dix, sur deux lignes.
   const resume = (gardes, retires, aucun) => !gardes.length ? aucun
     : gardes.length <= retires.length ? gardes.join(', ') : 'sauf ' + retires.join(', ');
   const tags = [];
-  if(state.playerMain) tags.push(['main', 'Oiseaux de ' + nomDe(state.playerMain)]);
-  if(state.playerCompareSet.size) tags.push(['cmp', 'Affichés : ' + [...state.playerCompareSet].map(nomDe).filter(Boolean).join(', ')]);
   if(state.tierExcl.size){
     const lbl = t => t.label;
     tags.push(['rar', 'Rareté : ' + resume(_matrixTiers.filter(t => !state.tierExcl.has(t.id)).map(lbl),
       _matrixTiers.filter(t => state.tierExcl.has(t.id)).map(lbl), 'aucune')]);
   }
-  if(state.family && state.family !== 'any') tags.push(['fam', state.family]);
-  if(state.countryExcl.size){
-    const tous = [...document.querySelectorAll('#countryChips [data-country]')].map(b => b.dataset.country);
-    tags.push(['pays', 'Pays : ' + resume(tous.filter(cc => !state.countryExcl.has(cc)).map(countryLabel),
-      tous.filter(cc => state.countryExcl.has(cc)).map(countryLabel), 'aucun')]);
-  }
   if(state.showMissing) tags.push(['miss', 'Oiseaux de France non observés']);
   if(state.showSci) tags.push(['sci', 'Noms scientifiques']);
+  const unFiltre = tags.length || state.playerMain || state.playerCompareSet.size
+    || (state.family && state.family !== 'any') || state.countryExcl.size;
   box.innerHTML = tags.map(([k, txt]) =>
       `<button type="button" class="fm-tag" data-retire="${k}" aria-label="Retirer le filtre ${esc(txt)}">${esc(txt)}<span aria-hidden="true">×</span></button>`).join('')
-    + (tags.length > 1 ? '<button type="button" class="fm-tout" data-retire="tout">Tout effacer</button>' : '');
-  box.hidden = !tags.length;
-  const actif = {
-    personnes: !!state.playerMain || state.playerCompareSet.size > 0,
-    rarete: state.tierExcl.size > 0,
-    pays: state.countryExcl.size > 0,
-    affichage: state.showMissing || state.showSci,
-  };
-  for(const m of document.querySelectorAll('#filtMenus .fm'))
-    m.querySelector('.fm-btn')?.classList.toggle('actif', !!actif[m.dataset.fm]);
-  $('#familySel')?.classList.toggle('actif', state.family !== 'any');
+    + (unFiltre ? '<button type="button" class="fm-tout" data-retire="tout">Tout effacer</button>' : '');
+  box.hidden = !unFiltre;
 }
 $('#filtActifs')?.addEventListener('click', e=>{
   const b = e.target.closest('[data-retire]'); if(!b) return;
   const k = b.dataset.retire;
   if(k === 'tout'){ _effacerFiltres(); return; }
-  if(k === 'main') state.playerMain = '';
-  if(k === 'cmp') state.playerCompareSet = new Set();
   if(k === 'rar') state.tierExcl = new Set();
-  if(k === 'fam'){ state.family = 'any'; const fs = $('#familySel'); if(fs) fs.value = 'any'; }
-  if(k === 'pays') state.countryExcl = new Set();
   if(k === 'miss'){ state.showMissing = false; const c = $('#showMissing'); if(c) c.checked = false; }
   if(k === 'sci'){ state.showSci = false; const c = $('#showSci'); if(c) c.checked = false; }
   renderResults();
 });
-// Dropdown famille : simple onchange, filtre appliqué au re-render.
-$('#familySel')?.addEventListener('change', e=>{ state.family = e.target.value; renderResults(); });
-// « Seulement les oiseaux de » : une personne ou personne. Sa colonne passe en tete, et elle
-// sort des jetons « Qui afficher » ou elle ferait doublon.
-$('#playerMainSel')?.addEventListener('change', e=>{
-  state.playerMain = e.target.value;
+// Famille : la fenetre de choix du Birdydex, avec le nombre d'especes de chaque famille.
+$('#familyBtn')?.addEventListener('click', async ()=>{
+  const fams = [..._matrixFams.keys()].sort((a,b) => (FAMILY_ORDER[a] ?? 9999) - (FAMILY_ORDER[b] ?? 9999) || a.localeCompare(b, 'fr'));
+  const v = await _openFilterPicker(state.family === 'any' ? '' : state.family, {
+    title: 'Choisir une famille', searchable: true,
+    options: [{ value:'', label:'Toutes familles', count:_matrixFamsTotal }]
+      .concat(fams.map(f => ({ value:f, label:f, count:_matrixFams.get(f) }))) });
+  if(v == null) return;
+  state.family = v || 'any'; renderResults();
+});
+// « Seulement les oiseaux de » : une fenetre au milieu de l'ecran, comme « Les observations de
+// qui ? » du fil (Mathis, 2026-10-22 : pas de liste deroulante). La personne choisie passe en
+// tete des colonnes et sort des jetons « Qui afficher », ou elle ferait doublon.
+$('#playerMainBtn')?.addEventListener('click', async ()=>{
+  const opts = [{ value:'', label:'Tout le monde' }].concat(
+    [...state.people].sort((a,b)=>a.name.localeCompare(b.name,'fr')).map(p=>({ value:p.id, label:p.name, moi:p.isMe })));
+  const v = await _openFilterPicker(state.playerMain, { title:'Seulement les oiseaux de…', options:opts, searchable: state.people.length > 8 });
+  if(v == null) return;
+  state.playerMain = v;
   if(state.playerMain) state.playerCompareSet.delete(state.playerMain);
+  renderResults();
+});
+// Pays : un seul pays, ou tous, dans la meme fenetre que les autres choix.
+$('#paysBtn')?.addEventListener('click', async ()=>{
+  const gardes = _matrixPays.filter(cc => !state.countryExcl.has(cc));
+  const actuel = !state.countryExcl.size ? '' : gardes.length === 1 ? gardes[0] : null;
+  const v = await _openFilterPicker(actuel, { title:'Observées dans quel pays ?', searchable: _matrixPays.length > 8,
+    options: [{ value:'', label:'Tous les pays' }].concat(_matrixPays.map(cc => ({ value:cc, label:countryLabel(cc) }))) });
+  if(v == null) return;
+  state.countryExcl = v ? new Set(_matrixPays.filter(cc => cc !== v)) : new Set();
   renderResults();
 });
 // « Qui afficher » : jetons a cocher ; « Tout le monde » vide la selection.
@@ -17473,13 +17500,6 @@ $('#playerCompareChips')?.addEventListener('click', e=>{
   renderResults();
 });
 $('#showSci')?.addEventListener('change', e=>{ state.showSci = e.target.checked; renderResults(); });
-// Chips pays (multi) : toggle du Set state.countryExcl (masqués), re-render.
-$('#countryChips')?.addEventListener('click', e=>{
-  const b = e.target.closest('button[data-country]'); if(!b) return;
-  const cc = b.dataset.country;
-  if(state.countryExcl.has(cc)) state.countryExcl.delete(cc); else state.countryExcl.add(cc);
-  renderResults();
-});
 $('#showMissing').addEventListener('change',e=>{ state.showMissing=e.target.checked; renderResults(); });
 
 // Logo de l'entete. Le choix d'un logo personnel (clic sur la pastille) a ete retire le
@@ -18919,8 +18939,9 @@ function _pkdxRender(){
       c.vus += l.rows.filter(r => r.owned).length; c.total += l.rows.length;
       parOrdre.set(o, c);
     }
-    // A droite, le nom savant de la famille, sauf quand l'intitule l'est deja (« Parulidés ») :
-    // on compare sans les accents, « Icteridés » valant « Ictéridés ».
+    // Juste apres le nom francais, en gris, le nom savant de la famille - sauf quand l'intitule
+    // l'est deja (« Parulidés ») : on compare sans les accents, « Icteridés » valant « Ictéridés ».
+    // Il etait colle au bord droit, loin du nom qu'il traduit (Mathis, 2026-10-22).
     const sansAccent = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
     let ordrePrec = null;
     grid.innerHTML = lots.map(l => {
@@ -18934,9 +18955,9 @@ function _pkdxRender(){
       ordrePrec = o;
       const sci = (FAMILLE_INFO[l.fam] || [])[1];
       const savant = sci && sansAccent(sci) !== sansAccent(l.fam)
-        ? '<span class="pkdx-groupe-sci">' + esc(sci) + '</span>' : '';
-      return titreOrdre + '<div class="pkdx-groupe pkdx-groupe-fam"><span>' + esc(l.fam)
-      + ' <span class="pkdx-groupe-n">· ' + l.rows.filter(r => r.owned).length + ' sur ' + l.rows.length + '</span></span>' + savant + '</div>'
+        ? ' <span class="pkdx-groupe-sci">' + esc(sci) + '</span>' : '';
+      return titreOrdre + '<div class="pkdx-groupe pkdx-groupe-fam"><span>' + esc(l.fam) + savant
+      + ' <span class="pkdx-groupe-n">· ' + l.rows.filter(r => r.owned).length + ' sur ' + l.rows.length + '</span></span></div>'
       + l.rows.map(carte).join('');
     }).join('');
   } else {
