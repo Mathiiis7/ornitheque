@@ -621,24 +621,32 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .board-ecart i { display:block; height:100%; background:var(--accent); }
   /* Une espece : petite photo ronde puis son nom, le tout cliquable (ouvre la fiche). La photo
      seule, sans nom, ne se lisait pas dans un tableau. Photos passees de 38 a 46 px (36 a 44
-     pour les preferees) : dans des lignes de 62 px, elles paraissaient perdues (Mathis, 2026-10-20). */
+     pour les preferees) : dans des lignes de 62 px, elles paraissaient perdues (Mathis, 2026-10-20).
+     Puis ramenees a 34 px partout : les lignes etaient montees a 70 px, « les photos prennent trop
+     de place », et elles n'avaient pas toutes la meme taille - 36, 34 pour les preferees, 32 dans le
+     cadre du reve (Mathis, 2026-10-22). Le reve fait 44 px : 34 de photo, 3 + 2 de cadre par cote. */
   .board-sheet td.c-esp { max-width:none; }
   .board-sp { display:flex; align-items:center; gap:12px; min-width:150px; padding:0; margin:0; border:0; background:none;
     font:inherit; color:inherit; text-align:left; cursor:pointer; }
   .board-sp:hover .board-sp-txt { text-decoration:underline; }
   .board-sp-txt { color:var(--ink); line-height:1.25; }
-  .board-sp-sous { display:block; color:var(--ink-3); }
+  /* Plus pale que --ink-3, le gris le plus clair de la charte (Mathis, 2026-10-22 : « plus en
+     gris »). Melange avec la surface pour suivre le theme sombre aussi. */
+  .board-sp-sous { display:block; color:color-mix(in srgb, var(--ink-3) 75%, var(--surface)); }
   .board-sp:focus-visible, .board-pile .board-rond:focus-visible { outline:3px solid var(--accent); outline-offset:2px; border-radius:8px; }
-  .board-rond { position:relative; flex:none; display:block; width:46px; height:46px; padding:0; border:0; border-radius:50%; background:none; }
+  .board-rond { position:relative; flex:none; display:block; width:34px; height:34px; padding:0; border:0; border-radius:50%; background:none; }
   .board-ph { display:block; width:100%; height:100%; border-radius:50%; overflow:hidden; background:var(--surface-3); }
   .board-ph img { width:100%; height:100%; object-fit:cover; display:block; }
-  /* La plus rare : anneau et chiffre a la couleur de son palier (couleur de donnees). */
-  .board-rond.palier { box-shadow:0 0 0 2px var(--surface), 0 0 0 4px var(--pal); }
+  /* La plus rare : le palier en sous-titre, son rond de 20 px (celui des vignettes du
+     Birdydex) puis son nom. Plus d'anneau ni de rond pose sur la photo (Mathis, 2026-10-22). */
+  .board-pal { display:flex; align-items:center; gap:6px; margin-top:2px; }
+  .board-pal i { display:inline-grid; place-items:center; flex:none; width:20px; height:20px; border-radius:50%;
+    color:#fff; font:800 10px/1 var(--sans); font-style:normal; }
   .board-badge { position:absolute; right:-5px; bottom:-5px; min-width:20px; height:20px; border-radius:50%; background:var(--pal, var(--accent));
     color:#fff; font:800 11px/20px var(--sans); text-align:center; box-shadow:0 0 0 2px var(--surface); }
   /* Espece de reve : en gris dans un cercle en pointilles tant qu'elle n'est pas vue,
      cerclee d'accent et cochee ensuite. */
-  .board-rond.reve { width:52px; height:52px; padding:3px; border:2px dashed var(--line-2); }
+  .board-rond.reve { width:44px; height:44px; padding:3px; border:2px dashed var(--line-2); }
   .board-rond.reve .board-ph { filter:grayscale(1); opacity:.75; }
   .board-rond.exauce { box-shadow:0 0 0 2px var(--surface), 0 0 0 4px var(--accent); }
   /* Ce qui a moins d'une semaine s'allume. */
@@ -647,30 +655,66 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* Preferees cote a cote, sans bord : empilees, et cerclees de blanc pour se detacher les
      unes des autres, elles paraissaient plus petites (Mathis, 2026-10-20). */
   .board-pile { display:flex; align-items:center; gap:6px; }
-  .board-pile .board-rond { width:44px; height:44px; cursor:pointer; }
+  .board-pile .board-rond { width:34px; height:34px; cursor:pointer; }
   .board-pile-txt { margin-left:8px; }
   .board-pile-txt:first-child { margin-left:0; }
   /* Hauteur uniforme des lignes du board : posée en JS après render (--rowh) sur chaque tr. */
   .board-sheet tbody tr { height:var(--rowh); }
-  /* Matrice "Qui a vu quoi" : largeurs des colonnes non-personne bloquées,
-     les colonnes personnes grandissent pour remplir l'espace restant.
-     Évite que Espèce/Rareté s'étirent quand il n'y a qu'une seule personne cochée. */
-  .tbl-scroll table { width:100%; }
+  /* Matrice "Qui a vu quoi" : toutes les colonnes ont une largeur bloquee. Les colonnes des
+     personnes ne grandissent plus pour remplir l'espace (Mathis, 2026-10-22, version A des
+     maquettes) : le tableau prend sa largeur naturelle et peut laisser du vide a droite. */
+  .tbl-scroll table { width:auto; }
   .tbl-scroll thead th:first-child, .tbl-scroll tbody td.sp {
     width:260px; min-width:260px; max-width:260px; }
   #matrix:not(.sans-rarete) .tbl-scroll thead th:nth-child(2), #matrix:not(.sans-rarete) .tbl-scroll tbody tr td:nth-child(2) {
     width:140px; min-width:140px; max-width:140px; }
-  .tbl-scroll thead th:last-child, .tbl-scroll tbody td.cnt {
+  /* Les deux raretes (reelle et ligue) : des ronds de 20 px et au plus trois lettres, pas des mots. 96 px suffisent
+     au plus large (« 9 N X ») ; 140 laissaient un grand vide (Mathis, 2026-10-22). */
+  #matrix.rar-ronds:not(.sans-rarete) .tbl-scroll thead th:nth-child(2), #matrix.rar-ronds:not(.sans-rarete) .tbl-scroll tbody tr td:nth-child(2) {
+    width:96px; min-width:96px; max-width:96px; }
+  .tbl-scroll thead th.cnt, .tbl-scroll tbody td.cnt {
     width:78px; min-width:78px; max-width:78px; }
-  /* La colonne Espèce reste collée à gauche quand on fait défiler les joueurs (Mathis,
-     2026-10-12). Fond opaque, sinon les cases qui passent dessous se lisent à travers ;
-     l'ombre de 1 px remplace la bordure, que border-collapse perd sur une cellule collante. */
-  .tbl-scroll thead th:first-child, .tbl-scroll tbody td.sp { position:sticky; left:0; box-shadow:1px 0 0 var(--line-2); }
-  .tbl-scroll thead th:first-child { z-index:3; }
-  .tbl-scroll tbody td.sp { z-index:1; background:var(--surface); }
-  .tbl-scroll tbody tr:nth-child(even) td.sp { background:color-mix(in srgb,var(--surface-2) 45%,var(--surface)); }
-  .tbl-scroll tbody tr:hover td.sp { background:color-mix(in srgb,var(--accent) 8%,var(--surface)); }
-  /* Colonnes personnes : min 88 px, pas de max → elles absorbent l'espace excédentaire. */
+  /* Personnes : 104 px chacune, quel que soit le nom. Le nom est coupe par « … » dans sa boite
+     de 92 px (104 moins 6 px de marge de chaque cote : a 14 px, « Guillaume » manquait de 2 px
+     et perdait sa fin, Mathis 2026-10-22) ; th porte le nom entier en infobulle. */
+  #matrix .tbl-scroll th.pcol, #matrix .tbl-scroll td.pcol { width:104px; min-width:104px; max-width:104px; }
+  #matrix .tbl-scroll th.pcol { padding-left:6px; padding-right:6px; }
+  #matrix .tbl-scroll th.pcol .cap { display:flex; justify-content:center; width:92px; max-width:92px; }
+  #matrix .tbl-scroll th.pcol .cap-nom { min-width:0; overflow:hidden; text-overflow:ellipsis; }
+  #matrix .tbl-scroll th.pcol .cap > * { flex:none; }
+  #matrix .tbl-scroll th.pcol .cap > .cap-nom { flex:0 1 auto; }
+  /* Les traits du tableau sont portes par CHAQUE CASE, a droite et en bas (border-collapse:
+     separate). En border-collapse, une bordure appartient au tableau et non a la case : une case
+     collante (colonnes figees, en-tete) la perdait en defilant - traits qui disparaissent, fente
+     blanche entre Espece et Rarete, cases qui se « cassent » et se redessinent (Mathis,
+     2026-10-22). Trois rustines avaient precede (ombres de 1 px a la place des bordures, bordure
+     gauche retiree, trait dessine a l'interieur de la case) : ne pas revenir a border-collapse
+     ici. Le cadre de .tbl-scroll fait le tour du tableau. */
+  #matrix .tbl-scroll table { border-collapse:separate; border-spacing:0; }
+  #matrix .tbl-scroll th, #matrix .tbl-scroll td { border:0; border-right:1px solid var(--line-2);
+    border-bottom:1px solid var(--line-2); box-sizing:border-box; }
+  #matrix .tbl-scroll tr > :last-child { border-right:0; }
+  #matrix .tbl-scroll tbody tr:last-child td { border-bottom:0; }
+  /* Colonnes figees quand on fait defiler les personnes : Espece (2026-10-12), de 0 a 260 px -
+     sa largeur, bordure comprise -, puis Rarete (2026-10-22). Fond opaque, sinon les cases qui
+     passent dessous se lisent a travers. */
+  #matrix .tbl-scroll thead th:first-child, #matrix .tbl-scroll tbody td.sp { position:sticky; left:0; }
+  #matrix:not(.sans-rarete) .tbl-scroll thead th:nth-child(2),
+  #matrix:not(.sans-rarete) .tbl-scroll tbody td:nth-child(2) { position:sticky; left:260px; }
+  #matrix .tbl-scroll thead th:first-child, #matrix:not(.sans-rarete) .tbl-scroll thead th:nth-child(2) { z-index:3; }
+  #matrix .tbl-scroll tbody td.sp, #matrix:not(.sans-rarete) .tbl-scroll tbody td:nth-child(2) { z-index:1; background:var(--surface); }
+  #matrix .tbl-scroll tbody tr:nth-child(even) td.sp,
+  #matrix:not(.sans-rarete) .tbl-scroll tbody tr:nth-child(even) td:nth-child(2) { background:color-mix(in srgb,var(--surface-2) 45%,var(--surface)); }
+  #matrix .tbl-scroll tbody tr:hover td.sp,
+  #matrix:not(.sans-rarete) .tbl-scroll tbody tr:hover td:nth-child(2) { background:color-mix(in srgb,var(--accent) 8%,var(--surface)); }
+  /* Le bord des colonnes figees : un trait de 2 px plus fonce que les autres, apres la derniere
+     d'entre elles - Rarete, ou Espece au classement par nombre (version 1 des maquettes
+     notes-privees/maquettes/separation/, Mathis, 2026-10-22). Tire de --ink, il suit le theme sombre. */
+  #matrix { --sep-fige:color-mix(in srgb, var(--ink) 38%, transparent); }
+  #matrix.sans-rarete .tbl-scroll thead th:first-child, #matrix.sans-rarete .tbl-scroll tbody td.sp,
+  #matrix:not(.sans-rarete) .tbl-scroll thead th:nth-child(2),
+  #matrix:not(.sans-rarete) .tbl-scroll tbody td:nth-child(2) { border-right:2px solid var(--sep-fige); }
+  /* Colonnes personnes : min 88 px. Dans « Qui a vu quoi », la regle #matrix plus haut les bloque a 104 px. */
   table th.pcol:not(:last-child), table td.pcol { min-width:88px; box-sizing:border-box; }
   /* Chips personne (filtre multi-sélection dans la matrice). */
   .person-chips { display:inline-flex; gap:4px; flex-wrap:wrap; align-items:center; }
@@ -685,7 +729,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .flag-chip .flag-fallback { font:600 11px/1 var(--sans); color:var(--ink-3); }
   .flag-emoji { display:inline-block; font-size:14px; line-height:1; vertical-align:middle; }
   .flag-chip .flag-emoji { font-size:16px; }
-  .abroad-mark .flag-emoji, .abroad-mark-inline .flag-emoji { font-size:12px; }
+  .abroad-mark-inline .flag-emoji { font-size:12px; }
   /* Chips famille : plus petites, compactes (il y en a beaucoup). */
   .fam-chip { padding:4px 9px; font-size:11.5px; }
   .fam-toggle { margin-left:8px; padding:2px 8px; font:600 11px/1 var(--sans); color:var(--ink-3); background:transparent; border:1px solid var(--line-2); border-radius:9px; cursor:pointer; text-transform:none; letter-spacing:0; }
@@ -751,6 +795,12 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   }
   /* display:flex empeche l'attribut [hidden] de fonctionner : il faut le forcer. */
   .fm-pop[hidden], .fm-actifs[hidden] { display:none; }
+  /* Fenetre « Personnes » : deux parties, chacune avec sa question et une phrase d'aide. */
+  .pers-modal .pers-corps { overflow-y:auto; padding:4px 18px 8px; display:flex; flex-direction:column; gap:18px; }
+  .pers-partie h3 { margin:0 0 4px; font-size:16px; font-weight:700; color:var(--ink); }
+  .pers-aide { margin:0 0 10px; font-size:14px; color:var(--ink-3); line-height:1.4; }
+  .pers-liste { display:flex; flex-wrap:wrap; gap:8px; }
+  .pers-bas { display:flex; justify-content:flex-end; padding:12px 18px 16px; border-top:1px solid var(--line); }
   .fm-titre { font-size:13px; font-weight:700; color:var(--ink-3); text-transform:uppercase; letter-spacing:.4px; }
   .fm-pop .fm-titre ~ .fm-titre { margin-top:4px; }
   .fm-actifs { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
@@ -951,8 +1001,6 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   td.sp .sci { display:block; font-family:var(--sans); font-style:italic; font-weight:400;
     color:var(--ink-3); font-size:12px; }
   td.pcol { text-align:center; padding:0; position:relative; }
-  .abroad-mark { position:absolute; bottom:1px; right:1px; font-size:8px; line-height:1; pointer-events:none; }
-  .abroad-mark .flag { vertical-align:0; }
   .abroad-mark-inline { margin-left:3px; font-size:9px; }
   .abroad-mark-inline .flag { vertical-align:-2px; }
   td.pcol.is-seen { background:color-mix(in srgb,var(--accent) 18%,var(--surface)) !important;
@@ -961,6 +1009,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   td.pcol.is-foreign .chk { font-size:11px; }
   .mc-person.is-foreign { opacity:.7; }
   td.pcol .chk { font-style:normal; font-size:13px; }
+  /* Le drapeau a la place de la coche : 17 px, a 70 % pour se fondre dans la couleur de la
+     case (Mathis, 2026-10-22, d'apres les maquettes ; essaye a 65 puis 75 %). */
+  td.pcol .case-drap { display:inline-flex; vertical-align:middle; line-height:0; }
+  td.pcol .case-drap .flag { width:17px; height:auto; opacity:.7; border-radius:2px; box-shadow:0 0 0 1px rgba(0,0,0,.10); }
   /* Tous les drapeaux ont un aspect-ratio uniforme (4/3) + object-fit cover : plus de
      variation de largeur entre pays (le Nepal ou la Suisse ne rompent plus l'alignement). */
   /* Taille UNIFORME des drapeaux partout dans l'app (fiches, chips, popups, modaux) */
@@ -2359,13 +2411,27 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* Taille et corps viennent de la declaration partagee avec .rar-chip[data-tier], plus
      haut. Ne reste ici que ce qui lui est propre. */
   .tier-chip.tier-rond { border:0; box-shadow:none; }
-  .rar-chip.rar-exo.on { background:#7e8a99; }
   /* Les filtres de rarete de « Qui a vu quoi » portent un MOT (« Tres commun », « Unique »),
      pas un chiffre : le jeton rond de 20 px ci-dessus les ecrasait en 17 px de large, texte
      deborde par-dessus les voisins (vu par Mathis le 2026-10-05). Ils redeviennent des
      etiquettes, a 14 px comme le reste du Classement. */
-  #tierChips .rar-chip:not([data-rar]) { width:auto; min-width:0; height:auto; margin:0;
+  #tierChips .rar-chip:not([data-rar]):not([data-cat]) { width:auto; min-width:0; height:auto; margin:0;
     transform:none; padding:6px 10px; border-radius:6px; font:600 14px/1.2 var(--sans); }
+  /* Les ronds chiffres et X / P / N du Classement : « #viewRanking .rar-chip » (14 px, plus
+     specifique) ecrasait le corps de la boite doublee, ramenee de moitie : 7 px ecrits, a
+     peine lisibles (Mathis, 2026-10-22). On leur rend le corps du Birdydex, dont il veut la
+     meme taille : rond de 20 px et corps 10 pour les paliers, 16 px et 9,5 pour X / P / N. */
+  #tierChips .rar-chip[data-rar] { font-size:20px; }
+  #tierChips .rar-chip[data-cat] { font-size:19px; }
+  /* La colonne Rarete : le rond et les lettres cote a cote. Ils ne se touchent pas au doigt,
+     ils gardent donc leur taille de souris sur ecran tactile, comme la vignette du Birdydex. */
+  .rar-cell { display:inline-flex; align-items:center; gap:4px; vertical-align:middle; }
+  /* Dessines a leur taille, SANS la boite doublee ramenee de moitie (transform:scale) : dans une
+     case figee, cette reduction faisait repeindre la case par morceaux pendant le defilement de
+     cote - traits a moitie dessines, cases qui « se cassent et se reconstruisent » (Mathis,
+     2026-10-22). Le gain de rondeur au sous-pixel ne se voit pas a cette taille. */
+  #matrix .rar-cell .tier-chip.tier-rond { width:20px; min-width:20px; height:20px; margin:0; transform:none; font-size:10px; min-height:0; }
+  #matrix .rar-cell .pkdx-exo { width:16px; min-width:16px; height:16px; margin:0; transform:none; font-size:9.5px; }
   /* Retire les flèches spinner natives sur #mapEbMinTodo (on a nos propres boutons +/-) */
   #mapEbMinTodo::-webkit-outer-spin-button, #mapEbMinTodo::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
   .map-count { margin-left:auto; font-size:12.5px; color:var(--ink-3); font-weight:600; }
@@ -2880,6 +2946,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      (#triBulle, remplie par _bulleTri). Le « ? » et le bareme pose sur la page sont retires
      le 2026-10-05 : Mathis les trouvait hors du style du site. */
   .board-modes-row { position:relative; display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:6px; }
+  /* Collee sous l'entete du site tant qu'on est dans le Classement (2026-10-22). Sa hauteur,
+     --haut-entete, est mesuree par app.js ; le fond de la page cache ce qui passe dessous. */
+  #results > .board-modes-row { position:sticky; top:var(--haut-entete, 0px); z-index:50; background:var(--bg);
+    margin:0; padding:10px 0; }
   .tri-bulle { position:absolute; top:calc(100% + 8px); z-index:20; width:max-content; max-width:min(440px, calc(100vw - 48px));
     padding:12px 14px; background:var(--surface); border:1px solid var(--line-2); border-radius:12px;
     box-shadow:0 10px 30px rgba(0,0,0,.18); font-size:14px; line-height:1.5; color:var(--ink-2); }
@@ -2891,6 +2961,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* Pastilles rondes chiffrees : les memes que sur les vignettes du Birdydex (.pkdx-tier) */
   .tb-n { width:20px; height:20px; border-radius:50%; display:grid; place-items:center; color:#fff;
     font:800 10px var(--sans); }
+  /* Les lettres X et P, a la place de l'ancien palier 0. */
+  .tb-lettres { display:inline-flex; gap:3px; }
   .tb-nom { color:var(--ink); }
   .tb-part { color:var(--ink-3); text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
   .tmodal-note { margin:0 0 4px; font-size:13px; color:var(--ink-2); }
@@ -2915,7 +2987,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      meme taille que le titre (14 px, rien de plus petit ne se lit), plus discret par la
      couleur. Sur un ecran etroit, il passe a la ligne sous le titre. */
   .pkdx-groupe-fam { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:baseline; gap:0 12px; }
-  .pkdx-groupe-sci { font-weight:400; color:var(--ink-3); }
+  /* En italique, la police des noms scientifiques partout ailleurs (td.sp .sci) ; un point le
+     separe du nom francais (Mathis, 2026-10-22). */
+  .pkdx-groupe-sci { font-family:var(--sans); font-style:italic; font-weight:400; color:var(--ink-3); }
   /* Grand titre d'ordre (« Accipitriformes »), au-dessus de ses familles : la taille d'un
      petit titre de bloc (17 px, 600, police des titres), selon la charte. */
   .pkdx-ordre { grid-column:1/-1; margin:30px 0 0; padding:0 2px;
@@ -3309,7 +3383,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
 
   @media (pointer: coarse) {
     /* Filtres de « Qui a vu quoi » : boutons des menus, ce qu'ils contiennent, etiquettes. */
-    .fm-barre .cp-btn, .fm-pop .person-chip, #tierChips .rar-chip:not([data-rar]), .fm-pop .miss-toggle,
+    .fm-barre .cp-btn, .fm-pop .person-chip, #tierChips .rar-chip:not([data-rar]):not([data-cat]), .fm-pop .miss-toggle,
     .fm-tag, .fm-tout { min-height:52px; }
     .fm-pop .miss-toggle { display:flex; align-items:center; }
 
@@ -3341,6 +3415,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
       width:104px; min-width:104px; height:104px; margin:-26px; font-size:52px; }
     /* Meme calcul pour les jetons ronds de statut exotique. */
     .rar-chip[data-cat], .pkdx-exo { width:104px; min-width:104px; height:104px; margin:-26px; font-size:62px; }
+    #tierChips .rar-chip[data-rar] { font-size:52px; }
+    #tierChips .rar-chip[data-cat] { font-size:62px; }
     /* « Tout » et « Vide » sont des mots, pas des jetons : ils grandissent par leur hauteur. */
     .rar-chip, .tier-chip { min-height:52px; }
     .rar-chips { gap:6px; }

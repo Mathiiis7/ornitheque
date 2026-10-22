@@ -34,7 +34,8 @@ const db = initializeFirestore(fbApp, {});
 const SERIES_N = 8;
 const state = { people: [], onlySpecies: true, sort:'rarity',
   tierExcl:new Set(),                          // Set des raretés MASQUÉES (vide = toutes visibles)
-  family:'any',                                // filtre famille : 'any' ou nom de famille
+  catSel:new Set(),                            // statuts exotiques X/P/N retenus (vide = filtre par palier)
+  family:'any',                               // filtre famille : 'any' ou nom de famille
   countryExcl:new Set(),                       // Set des pays MASQUÉS (vide = tous visibles)
   playerMain:'', playerCompareSet:new Set(),   // liste principale (0 ou 1) + liste(s) à comparer (0..N)
   q:'', boardMode:'count', showMissing:false, showSci:false };
@@ -1037,7 +1038,12 @@ function _openCountryPicker(currentCode, opts = {}){
       'Cantons': 'un canton', 'États': 'un état', 'Comtés': 'un comté',
     };
     const availableCodes = opts.availableCodes || Object.keys(COUNTRIES_REG);
-    const allCodes = availableCodes.filter(cc => COUNTRIES_REG[cc]);
+    // opts.compte (filtre pays du Classement) : le nombre a afficher vient de l'appelant, et un
+    // pays visite par la ligue reste listé même sans données de rareté chez nous.
+    // opts.tous : une première ligne « Tous les pays », qui rend ''.
+    const avecCompte = typeof opts.compte === 'function';
+    const allCodes = avecCompte ? availableCodes.slice() : availableCodes.filter(cc => COUNTRIES_REG[cc]);
+    const nomPays = cc => (COUNTRIES_REG[cc] && COUNTRIES_REG[cc].name) || countryLabel(cc);
     // Si opts.sci est passe (appel depuis fiche espece), on trie par abondance pour
     // cette espece et on affiche un indicateur (max weekly S&T ou % pic monthly).
     const focusSci = opts.sci ? opts.sci.toLowerCase() : null;
@@ -1113,7 +1119,7 @@ function _openCountryPicker(currentCode, opts = {}){
       for(const cont in grouped){
         grouped[cont].sort((a, b) =>
           (a.cc === 'FR' ? -1 : b.cc === 'FR' ? 1 : 0)
-          || (COUNTRIES_REG[a.cc].name || a.cc).localeCompare(COUNTRIES_REG[b.cc].name || b.cc, 'fr'));
+          || nomPays(a.cc).localeCompare(nomPays(b.cc), 'fr'));
       }
     }
     return grouped;
@@ -1127,7 +1133,7 @@ function _openCountryPicker(currentCode, opts = {}){
     backdrop.innerHTML = `
       <div class="cp-modal-inner">
         <div class="cp-modal-title">
-          <span>${avecZones ? 'Rareté' + (moisLu == null ? '' : ' · ' + _MOIS_COURTS[moisLu]) : 'Choisir un pays'}</span>
+          <span>${avecZones ? 'Rareté' + (moisLu == null ? '' : ' · ' + _MOIS_COURTS[moisLu]) : esc(opts.titre || 'Choisir un pays')}</span>
           <button type="button" class="cp-modal-close" aria-label="Fermer">×</button>
         </div>
         ${avecZones ? `<div class="cp-tabs">
@@ -1185,16 +1191,27 @@ function _openCountryPicker(currentCode, opts = {}){
       // chart connait. Une barre le rend comparable d'un coup d'oeil, comme sur les lignes
       // de zone qui en ont une depuis toujours. Rapportee au plus fourni des pays listes.
       const nEspecesDe = (c) => {
+        if(avecCompte) return opts.compte(c) || 0;
         const r = COUNTRIES_REG[c];
         if(!r) return 0;
         return Object.keys((r.barTier && r.barTier()) || {}).length;
       };
-      const maxEspeces = focusSci ? 0 : Math.max(1, ...Object.keys(COUNTRIES_REG).map(nEspecesDe));
+      const maxEspeces = focusSci ? 0 : Math.max(1, ...(avecCompte ? allCodes : Object.keys(COUNTRIES_REG)).map(nEspecesDe),
+        (opts.tous && opts.tous.count) || 0);
+      if(opts.tous && !fLC){
+        const n = opts.tous.count || 0;
+        html += `<div class="cp-item sans-palier${ccCourant === '' ? ' on' : ''}" data-cc="">
+          <span class="cp-item-flag"></span>
+          <span class="cp-item-name">${esc(opts.tous.label)}</span>
+          <span class="cp-item-exo"></span><span class="cp-item-meta">${n} esp.</span>
+          <div class="reg-picker-bar"><div style="width:${Math.round(n / maxEspeces * 100)}%; color:var(--accent);"></div></div>
+        </div>`;
+      }
       for(const cont of CONTINENT_ORDER){
         const items = (grouped[cont] || []).filter(x => {
           const cc = x.cc;
           if(!fLC) return true;
-          const name = (COUNTRIES_REG[cc].name || '').toLowerCase();
+          const name = nomPays(cc).toLowerCase();
           return name.includes(fLC) || cc.toLowerCase().includes(fLC);
         });
         if(!items.length) continue;
@@ -1311,7 +1328,7 @@ function _openCountryPicker(currentCode, opts = {}){
             // 694 reelles). Le bar chart partout, c'est comparable.
             const nSp = nEspecesDe(cc);
             meta = '<span class="cp-item-exo"></span>'
-              + (nSp > 0
+              + (nSp > 0 || avecCompte
                   ? `<span class="cp-item-meta">${nSp} esp.</span>`
                     + `<div class="reg-picker-bar"><div style="width:${Math.round(nSp / maxEspeces * 100)}%; color:var(--accent);"></div></div>`
                   : '<span></span><span></span>');
@@ -1322,7 +1339,7 @@ function _openCountryPicker(currentCode, opts = {}){
           const absentCls = focusSci && typeof absent !== 'undefined' && absent ? ' absent' : '';
           html += `<div class="cp-item${focusSci ? '' : ' sans-palier'}${cc === ccCourant ? ' on' : ''}${absentCls}" data-cc="${esc(cc)}"${titreLigne ? ` data-tip="${esc(titreLigne)}"` : ''}>
             <span class="cp-item-flag">${flag}</span>
-            <span class="cp-item-name">${esc(reg.name || cc)}</span>
+            <span class="cp-item-name">${esc(nomPays(cc))}</span>
             ${meta}
           </div>`;
         }
@@ -2284,20 +2301,43 @@ function activeSpecies(person){
   return m;
 }
 
-function rarityColor(k, N){
-  if(N<=1) return 'hsl(190 10% 46%)';
-  const p=(k-1)/(N-1);                 // 0 = le plus rare (k=1), 1 = le plus commun (k=N)
-  const hue=Math.round((350 + p*140) % 360);   // crimson -> orange -> jaune -> vert
-  return `hsl(${hue} 60% 47%)`;
+// Rarete de la ligue : le nombre de membres qui ont vu l'espece en France, dans un rond d'une
+// seule teinte, celle du site, plus foncee quand l'espece est plus rare (Mathis, 2026-10-22).
+// Avant : des mots (« Unique », « Très rare »… « Vu par tous ») qui reprenaient ceux de la
+// rarete reelle pour dire autre chose, sur une echelle rouge -> vert a l'envers de l'autre.
+// Le chiffre est toujours blanc (Mathis, 2026-10-22) : la teinte la plus claire s'arrete donc
+// a 52 % de luminosite, pour qu'il reste lisible dessus (74 % avec un chiffre vert d'abord).
+function leagueColor(k, N){
+  const p = N > 1 ? Math.min(1, Math.max(0, (k-1)/(N-1))) : 0;   // 0 = vue par un seul, 1 = par tous
+  const l = Math.round(22 + p*30);                                  // 22 % -> 52 % de luminosite
+  return { color:`hsl(177 ${Math.round(80 - p*30)}% ${l}%)`, ink:'#fff' };
 }
-const LEAGUE_LABELS=['Unique','Très rare','Rare','Peu commun','Assez commun','Commun','Très commun','Vu par tous'];
+// Jusqu'a 12 membres, un palier par nombre de membres. Au-dela, la legende en compterait
+// autant que de membres : les paliers deviennent 8 tranches de la PART des membres qui ont
+// vu l'espece (choix de Mathis, 2026-10-22, la ligue en comptant 11). Le rond de l'espece
+// garde le nombre exact (count) ; seuls sa couleur et la legende suivent la tranche (ord).
+const LIGUE_PALIERS_MAX = 12;
+const LIGUE_TRANCHES = [0.10, 0.25, 0.40, 0.60, 0.80];   // bornes hautes des tranches 2 a 6
+function _trancheLigue(k, N){
+  if(k <= 1) return 1;
+  if(k >= N) return 8;
+  const i = LIGUE_TRANCHES.findIndex(b => k / N <= b);
+  return i < 0 ? 7 : i + 2;
+}
 function tierFor(k, N){
-  let label;
-  if(N<=1) label='-';
-  else if(k===1) label='Unique';
-  else if(k>=N) label='Vu par tous';
-  else label=LEAGUE_LABELS[Math.round((k-1)/(N-1)*(LEAGUE_LABELS.length-1))];
-  return { id:String(k), count:k, ord:k, label, color:rarityColor(k,N) };
+  const label = k >= N && N > 1 ? 'Vue par tous' : 'Vue par ' + k + (k > 1 ? ' membres' : ' membre');
+  if(N <= LIGUE_PALIERS_MAX){
+    const c = leagueColor(k, N);
+    return { id:String(k), count:k, ord:k, label, color:c.color, ink:c.ink };
+  }
+  const t = _trancheLigue(k, N), c = leagueColor(t, 8);
+  // Les bornes de la tranche en nombre de membres, pour la pastille de la legende (« 5–10 »).
+  let lo = k, hi = k;
+  while(lo > 1 && _trancheLigue(lo - 1, N) === t) lo--;
+  while(hi < N && _trancheLigue(hi + 1, N) === t) hi++;
+  const plage = lo === hi ? String(lo) : lo + '–' + hi;
+  const legende = t === 8 ? 'Vue par tous' : lo === hi ? 'Vue par ' + lo + (lo > 1 ? ' membres' : ' membre') : 'Vue par ' + lo + ' à ' + hi + ' membres';
+  return { id:'t' + t, count:k, ord:t, label, legende, plage, color:c.color, ink:c.ink };
 }
 const REAL_LABELS={0:'Parc semi-libre',1:'Omniprésent',2:'Très commun',3:'Commun',4:'Assez commun',5:'Peu commun',6:'Assez rare',7:'Rare',8:'Très rare',9:'Ultra rare',10:'Exceptionnel'};
 // Pastille de palier. Toutes les vues passent par ici : la liste des zones, la carte, la
@@ -2467,7 +2507,13 @@ function flagImg(cc){
   return `<img class="flag" src="https://flagcdn.com/w20/${cc}.png" srcset="https://flagcdn.com/w40/${cc}.png 2x" alt="" loading="lazy">`;
 }
 const COUNTRY_NAMES={FR:'France',ES:'Espagne',PT:'Portugal',IT:'Italie',DE:'Allemagne',GB:'Royaume-Uni',IE:'Irlande',BE:'Belgique',NL:'Pays-Bas',LU:'Luxembourg',CH:'Suisse',AT:'Autriche',GR:'Grèce',HR:'Croatie',NO:'Norvège',SE:'Suède',FI:'Finlande',DK:'Danemark',IS:'Islande',PL:'Pologne',CZ:'Tchéquie',HU:'Hongrie',RO:'Roumanie',BG:'Bulgarie',TR:'Turquie',MA:'Maroc',TN:'Tunisie',DZ:'Algérie',EG:'Égypte',SN:'Sénégal',ZA:'Afrique du Sud',KE:'Kenya',TZ:'Tanzanie',US:'États-Unis',CA:'Canada',MX:'Mexique',CR:'Costa Rica',BR:'Brésil',PE:'Pérou',EC:'Équateur',AR:'Argentine',CL:'Chili',IN:'Inde',TH:'Thaïlande',JP:'Japon',CN:'Chine',AU:'Australie',NZ:'Nouvelle-Zélande'};
-function countryLabel(cc){ cc=(cc||'').toUpperCase(); return COUNTRY_NAMES[cc]||cc; }   // nom seul (pour <option> et tooltips)
+// Nom seul (pour <option> et tooltips). Hors de la table, le nom francais que le navigateur
+// connait : le Sri Lanka s'affichait « LK » sur le bouton Pays (Mathis, 2026-10-22).
+let _nomsRegions = null;
+function countryLabel(cc){ cc=(cc||'').toUpperCase(); if(COUNTRY_NAMES[cc]) return COUNTRY_NAMES[cc];
+  try{ if(!_nomsRegions) _nomsRegions = new Intl.DisplayNames(['fr'], { type:'region' });
+    const n = /^[A-Z]{2}$/.test(cc) && _nomsRegions.of(cc); if(n && n !== cc) return n; }catch(_){}
+  return cc; }
 
 function build(){
   const N = state.people.length;
@@ -2487,11 +2533,11 @@ function build(){
   for(const u of universe.values()){
     let k=0; for(const v of u.seenBy.values()) if(countsFR(v)) k++;   // détenteurs "France"
     u.counts=k;
-    // Rarete ligue : jamais 'Étranger'. Une espece cochee par 0 personne "France"
-    // (uniquement park-only ou X eBird) s'affiche 'Unique' par convention (2026-09-21).
+    // Rarete ligue : jamais 'Étranger'. Une espece cochee par 0 personne "France" (vue
+    // seulement hors de France) prend le rond gris a tiret (2026-10-22 ; « Unique » avant).
     // Le label 'Étranger'/'Domestique' est reserve a la rarete reelle (via FOREIGN_TIER
     // dans rarOf mode real).
-    u.tier = tierFor(k===0 ? 1 : k, N);
+    u.tier = k===0 ? { id:'0', count:0, ord:0, label:'Vue seulement hors de France', color:'var(--line-2)', ink:'#fff' } : tierFor(k, N);
     if(k>0){ const val = 100 / k;
       for(const [pidk,v] of u.seenBy){ if(!countsFR(v)) continue;
         const p = state.people.find(x=>x.id===pidk);
@@ -2499,6 +2545,20 @@ function build(){
         if(k===1) p.unique++;
       } }
   }
+  // La plus rare DE LA LIGUE, pour le classement « Rareté (ligue) » : l'espece vue en France
+  // par le moins de membres ; a egalite, la plus rare en France, puis l'ordre alphabetique
+  // (Mathis, 2026-10-22 : la colonne montrait la plus rare en France dans tous les modes).
+  state.people.forEach(p=>{
+    let best=null;
+    for(const [key,v] of p._active){
+      if(!countsFR(v)) continue;
+      const u=universe.get(key); if(!u || !u.counts) continue;
+      if(!best || u.counts<best.counts
+        || (u.counts===best.counts && (rarityReal(u.sci)>rarityReal(best.sci)
+          || (rarityReal(u.sci)===rarityReal(best.sci) && u.common.localeCompare(best.common,'fr')<0)))) best=u;
+    }
+    p.rarestLigue = best ? { sci:best.sci, nom:best.common, tier:best.tier } : null;
+  });
   // l'espèce la plus rare (rareté réelle) présente dans la ligue - France seule
   // Exclut les exotiques X/C : un Ara ararauna echappe ne peut pas devenir "la plus rare".
   let maxRW=1;
@@ -2801,8 +2861,9 @@ function parseDate(s){
 // remplace depuis le 2026-10-05 la phrase sous le titre, le « ? » et le bareme pose sur la
 // page, que Mathis trouvait hors du style du site.
 function _bulleTri(mode){
-  if(mode==='count') return '<p>Classement par <b>nombre d\'espèces</b> observées, sans pondération.</p>';
-  if(mode==='league') return '<p>Points = somme de <b>100 ÷ (nombre d\'amis ayant vu l\'espèce)</b>. Vue par toi seul = 100 ; vue par tous = peu.</p>';
+  // Textes raccourcis le 2026-10-22 (version « tres courtes » choisie par Mathis).
+  if(mode==='count') return '<p>Une espèce = <b>1 point</b>.</p>';
+  if(mode==='league') return '<p>Plus l\'espèce est rare <b>dans la ligue</b>, plus elle rapporte : vue par toi seul = 100 points.</p>';
   // Bareme semantique par tier : la part des listes eBird du pays qui mentionnent
   // l'espece sur 2019-2026, moyenne des 48 quinzaines ponderee par le nombre de listes
   // de chacune.
@@ -2825,9 +2886,13 @@ function _bulleTri(mode){
   // Le dernier palier n a pas de borne basse : tout ce qui passe sous le dernier seuil.
   RANGES[10] = '< ' + _pcNum(_ANNUAL_THR[_ANNUAL_THR.length - 1][0]) + ' %';
   const ligne = (n, coul, nom, part) => `<span class="tb-n" style="background:${coul}">${n}</span><span class="tb-nom">${nom}</span><span class="tb-part">${part}</span>`;
+  // Plus de palier 0 : les exotiques X et P se reconnaissent a leurs lettres, et ne rapportent
+  // toujours aucun point (choix de Mathis, 2026-10-22).
   const lignes = [1,2,3,4,5,6,7,8,9,10].map(w => ligne(w, realColor(w), REAL_LABELS[w], RANGES[w])).join('')
-    + ligne(0, '#7e8a99', 'Exotique', 'parcs, échappés');
-  return '<p>Points = <b>rareté réelle en France</b>, d\'après la fréquence des espèces sur les listes eBird : un oiseau vu à chaque sortie vaut 1, un oiseau rarement rencontré bien plus. Indépendant de la ligue.</p>'
+    + `<span class="tb-lettres">${jetonExo('X')}${jetonExo('P')}</span><span class="tb-nom">Échappé, provisoire</span><span class="tb-part">0 point</span>`
+    // Les N ne sont pas un oubli : ils comptent comme des sauvages (Mathis l'a demande, 2026-10-22).
+    + `<span class="tb-lettres">${jetonExo('N')}</span><span class="tb-nom">Introduit établi</span><span class="tb-part">compté à son palier</span>`;
+  return '<p>Plus l\'espèce est rare <b>en France</b>, plus elle rapporte.</p>'
     + '<div class="tb-titre">Part des listes eBird qui mentionnent l\'espèce, 2019-2026</div>'
     + '<div class="tb-grille">' + lignes + '</div>';
 }
@@ -2863,9 +2928,19 @@ function renderBoard(){
     return l.length ? `<span class="board-pile">${l.map(([n,sci])=>sci
       ? `<button type="button" class="board-rond sp-link" data-sci="${esc(sci)}" title="${esc(n)}" aria-label="${esc(n)}">${photoHtml(sci)}</button>`
       : `<span class="board-pile-txt">${esc(n)}</span>`).join('')}</span>` : dash; };
-  const plusRare=p=>{ if(!p.rarestSci) return dash;
+  // La plus rare : la photo reste nette, et le palier passe en sous-titre - son rond puis son
+  // nom, comme la date sous « Derniere acquisition » (version C des maquettes
+  // notes-privees/maquettes/plus-rare/, choisie par Mathis le 2026-10-22).
+  const plusRare=p=>{
+    // Classement de la ligue : sa plus rare a elle, avec le rond du nombre de membres qui l'ont.
+    if(mode==='league'){ const r=p.rarestLigue; if(!r) return dash;
+      const lbl = r.tier.count===1 ? 'Seul à l\'avoir' : r.tier.label;
+      return espece(r.sci, r.nom, {titre:`${r.nom}, ${lbl.toLowerCase()}`,
+        sous:`<span class="board-pal"><i style="background:${r.tier.color};color:${r.tier.ink}">${r.tier.count}</i>${esc(lbl)}</span>`}); }
+    if(!p.rarestSci) return dash;
     const t=realTier(p.rarestSci, false);
-    return t.ord ? espece(p.rarestSci, p.rarestName, {cls:'palier', style:`--pal:${t.color}`, titre:`${p.rarestName}, ${t.label}`, deco:`<span class="board-badge">${t.ord}</span>`})
+    return t.ord ? espece(p.rarestSci, p.rarestName, {titre:`${p.rarestName}, ${t.label}`,
+        sous:`<span class="board-pal"><i style="background:${t.color}">${t.ord}</i>${esc(t.label)}</span>`})
       : espece(p.rarestSci, p.rarestName); };
   const ilYa=t=>{ const n=Math.floor((Date.now()-t)/864e5);
     return n<=0 ? 'aujourd\'hui' : n===1 ? 'hier' : n<30 ? `il y a ${n} jours` : n<60 ? 'il y a 1 mois' : n<365 ? `il y a ${Math.floor(n/30)} mois` : n<730 ? 'il y a 1 an' : `il y a ${Math.floor(n/365)} ans`; };
@@ -2897,7 +2972,7 @@ function renderBoard(){
       <th class="c-rank">#</th><th>Joueur</th>
       ${scoreTh}
       <th class="c-txt debut-oiseaux">Espèces préférées</th>
-      <th class="c-txt">La plus rare en France</th><th class="c-txt">Dernière acquisition</th><th class="c-txt">Espèce de rêve</th>
+      <th class="c-txt">${mode==='league' ? 'La plus rare de la ligue' : 'La plus rare en France'}</th><th class="c-txt">Dernière acquisition</th><th class="c-txt">Espèce de rêve</th>
     </tr></thead>
     <tbody>${ranked.map((p,i)=>`<tr class="${i<3?'podium-'+(i+1):''}${p.isMe?' board-moi':''}">
       <td class="c-rank">${i===0?'★':(i+1)}</td>
@@ -2928,10 +3003,10 @@ function renderBoard(){
   });
 }
 
-let _matrixUniverse = [];   // exposé pour la dropdown de suggestions de #q
 let _matrixTiers = [];      // raretés présentes, pour les étiquettes des filtres actifs
 let _matrixFams = new Map(), _matrixFamsTotal = 0;   // familles présentes et leur nombre d'espèces
 let _matrixPays = [];       // pays où la ligue a des observations
+let _matrixPaysCompte = new Map(), _matrixPaysTotal = 0;   // espèces que chaque pays ferait apparaître
 // Hash du dernier rendu : skip renderMatrix si le contenu n'a pas change.
 // Firestore live updates (chat, presence, votes) peuvent redeclencher renderMatrix
 // sans que la data matrix ait bouge -> 96ms gaspilles chaque fois. Skip precoce.
@@ -2954,13 +3029,11 @@ function renderMatrix({universe,N}){
   // state.countryExcl + state.showSci sinon un clic dans les filtres change le state mais
   // renderMatrix skip et l'utilisateur ne voit rien bouger (ni chips, ni table).
   const cmpFilterKey = state.playerCompareSet ? [...state.playerCompareSet].sort().join(',') : '';
-  const tierFilterKey = state.tierExcl ? [...state.tierExcl].sort().join(',') : '';
+  const tierFilterKey = (state.tierExcl ? [...state.tierExcl].sort().join(',') : '') + '/' + [...state.catSel].sort().join(',');
   const coFilterKey = state.countryExcl ? [...state.countryExcl].sort().join(',') : '';
   const filtersKey = `${state.boardMode||''}|${state.showMissing?1:0}|${state.family||''}|${state.q||''}|${state.sort||''}|${state.playerMain||''}|${cmpFilterKey}|${tierFilterKey}|${coFilterKey}|${state.showSci?1:0}`;
   const hash = _matrixHash(universe, N, filtersKey);
   if(hash === _matrixLastHash){
-    // Skip mais on met quand meme _matrixUniverse a jour (defensif) via un compute leger.
-    // Non necessaire ici car la data source n'a pas change.
     return;
   }
   _matrixLastHash = hash;
@@ -2979,11 +3052,20 @@ function renderMatrix({universe,N}){
     return u.tier;
   };
   const rarOf = u => rarDe(u, rMode);
-  // Le filtre de rarete reste offert au classement « Nombre d'especes » (Mathis, 2026-10-22,
-  // en refaisant les filtres) alors que la colonne n'y est pas. Il y parle de rarete REELLE,
-  // de 1 a 10 : les paliers de la ligue (Titan…) ne se lisent qu'a cote de leur colonne.
-  const rarFiltre = u => rarDe(u, state.boardMode === 'league' ? 'league' : 'real');
-  const rarHead = rMode==='real' ? 'Rareté réelle' : 'Rareté';
+  // « Rareté » tout court : la colonne ne porte plus que des ronds, le mot « réelle » la
+  // faisait plus large qu'eux (Mathis, 2026-10-22). Le bouton du haut dit deja laquelle.
+  const rarHead = 'Rareté';
+  // Le palier AFFICHE dans la colonne : une exotique sans palier au classement prend celui de
+  // son bar chart, comme sa vignette du Birdydex. Le tri le suit, sinon le Paon bleu (8) et le
+  // Faisan versicolore (9) tombaient sous les communs, a 0 (Mathis, meme soir).
+  const rarNum = u => { const t = rarOf(u); return t.id === 'exo' ? rarityForCountry(u.sci, 'FR') : t.id === 'etr' ? 0 : t.ord; };
+  // Les deux raretes s'affichent en ronds : la colonne etroite vaut pour les deux (la ligue
+  // en mots demandait 140 px, Mathis 2026-10-22 : « peut etre moins large »).
+  $('#matrix')?.classList.add('rar-ronds');
+  // Le palier tel qu'affiche, pour les pastilles de filtre : cocher « 9 » garde aussi le
+  // Faisan versicolore, rond 9 dans la colonne.
+  const rarAff = u => { const t = rarOf(u); if(rMode !== 'real' || t.id !== 'exo') return t;
+    const n = rarNum(u); return n > 0 ? { id:'r'+n, ord:n, label:REAL_LABELS[n] || ('niveau '+n), color:realColor(n) } : t; };
   // Classement au nombre d'especes : la rarete n'y compte pour rien, sa colonne et ses
   // pastilles disparaissent (Mathis, 2026-10-05). La classe libere aussi la largeur fixe
   // que styles.css donne a la 2e colonne, sinon elle tomberait sur le premier joueur.
@@ -2993,6 +3075,17 @@ function renderMatrix({universe,N}){
   // ils triaient et filtraient sur ce qu'on ne voyait plus. Ils sont ignores, pas oublies -
   // l'etat revient tel quel au retour sur un tri par rarete.
   { const sg = $('#sortSeg'); if(sg) sg.style.display = avecRar ? '' : 'none'; }
+  // La rangee de rarete aussi, finalement (Mathis, 2026-10-22, le soir) : elle restait offerte
+  // au classement « Nombre d'especes », il la veut seulement avec un classement par rarete.
+  // Masquee, elle ne filtre plus rien ; ses choix reviennent avec elle.
+  { const tc = $('#tierChips'); if(tc) tc.style.display = avecRar ? '' : 'none'; }
+  // Les statuts X / P / N, comme au Birdydex : les cocher ne garde QUE les especes qui portent
+  // l'un d'eux en France, et les paliers sont alors ignores. Sans statut coche, filtre par palier.
+  const catsDe = u => exoticCategoriesInCountry(u.sci, 'FR') || [];
+  const catActif = avecRar && state.catSel.size > 0;
+  const passeRar = u => !avecRar ? true
+    : catActif ? catsDe(u).some(c => state.catSel.has(c))
+    : !state.tierExcl.has(rarAff(u).id);
 
   // option : ajouter tous les oiseaux de France non encore observés par le groupe
   let uni = universe;
@@ -3005,10 +3098,12 @@ function renderMatrix({universe,N}){
       .map(sci=>({ key:'miss:'+sci, common:frName(sci,sci), sci, seenBy:new Map(), missing:true }));
     uni = universe.concat(missing);
   }
-  _matrixUniverse = uni;   // rendu accessible à _updateMatrixSuggest() ci-dessous
 
   // raretés présentes, triées du plus commun au plus rare
-  const tiersPresent=[...new Map(uni.map(u=>{const t=rarFiltre(u); return [t.id,t];})).values()].sort((a,b)=>a.ord-b.ord);
+  // Sans « Échappé isolé » : les exotiques sans palier se filtrent par leur statut X / P / N,
+  // comme au Birdydex (Mathis, 2026-10-22). « Étranger » garde sa pastille en toutes lettres.
+  const tiersPresent=[...new Map(uni.map(u=>{const t=rarAff(u); return [t.id,t];})).values()]
+    .filter(t => t.id !== 'exo').sort((a,b)=>a.ord-b.ord);
   _matrixTiers = tiersPresent;   // les etiquettes des filtres actifs y lisent les libelles
   // Ancienne légende séparée retirée : les chips rareté (dans le panneau filtres)
   // font maintenant office de légende + filtre en même temps.
@@ -3027,30 +3122,45 @@ function renderMatrix({universe,N}){
     // libelle en infobulle, puis Tout / Vide. Ce qui n'est pas un palier chiffre (Étranger,
     // exotique, paliers de la ligue) garde son libelle en toutes lettres.
     const chipsHtml = tiersPresent.map(t=>{
-      const on = !state.tierExcl.has(t.id);
+      const on = !catActif && !state.tierExcl.has(t.id);
       const bgStyle = on ? `background:${t.color};` : '';
       const palier = /^r([1-9]|10)$/.test(t.id);
+      // Étranger, non observé, vu seulement hors de France : le meme rond gris a tiret que dans
+      // la colonne.
+      if(t.id === 'etr' || t.id === 'none' || t.id === '0') return `<button type="button" class="rar-chip${on?' on':''}" data-tier="${esc(t.id)}" data-rar style="${on?'background:var(--line-2);':''}" title="${esc(t.label)}">–</button>`;
+      // Ligue : le rond du nombre de membres, a sa teinte, chiffre fonce sur les teintes claires.
+      // Au-dela de 12 membres, une pastille par tranche, qui ecrit ses bornes (« 5–10 ») : ce n'est
+      // plus un rond mais une etiquette, a la couleur de la tranche.
+      if(rMode !== 'real' && t.plage) return `<button type="button" class="rar-chip rar-mot${on?' on':''}" data-tier="${esc(t.id)}" style="${on?`background:${t.color};color:${t.ink};`:''}" title="${esc(t.legende)}">${esc(t.plage)}</button>`;
+      if(rMode !== 'real') return `<button type="button" class="rar-chip${on?' on':''}" data-tier="${esc(t.id)}" data-rar style="${on?`background:${t.color};color:${t.ink};`:''}" title="${esc(t.label)}">${t.ord}</button>`;
       return palier
         ? `<button type="button" class="rar-chip${on?' on':''}" data-tier="${esc(t.id)}" data-rar style="${bgStyle}" title="${esc(t.label)}">${t.ord}</button>`
         : `<button type="button" class="rar-chip rar-mot${on?' on':''}" data-tier="${esc(t.id)}" style="${bgStyle}">${esc(t.label)}</button>`;
     }).join('');
+    // Les memes pastilles X / P / N que le Birdydex, apres un filet vertical.
+    const catChipsHtml = ['X', 'P', 'N'].map(c => {
+      const on = state.catSel.has(c);
+      return `<button type="button" class="rar-chip${on?' on':''}" data-cat="${c}" style="${on?'background:#7e8a99;color:#fff;':''}" title="${esc(libelleExo(c, true))}">${c}</button>`;
+    }).join('');
     box.innerHTML = '<span class="rar-rangee-titre">Rareté</span>' + chipsHtml
       + '<button type="button" class="rar-chip" data-tier-all title="Cocher toutes les raretés">Tout</button>'
-      + '<button type="button" class="rar-chip" data-tier-none title="Décocher toutes les raretés">Vide</button>';
+      + '<button type="button" class="rar-chip" data-tier-none title="Décocher toutes les raretés">Vide</button>'
+      + '<span class="rar-cats"><span class="rar-sep" aria-hidden="true"></span>' + catChipsHtml + '</span>';
   }
 
   // Ré-écriture différée (après le calcul de displayPeople plus bas), stockée pour évaluation.
+  // Plus de colonne « Vues » (combien de personnes l'ont) : en rarete ligue, le rond de la
+  // colonne Rarete porte ce nombre, et ailleurs il ne servait pas (Mathis, 2026-10-22).
+  // Les colonnes des personnes ont toutes la meme largeur, un nom trop long finit par « … » et s'affiche entier au survol
+  // (version A de notes-privees/maquettes/colonnes/ : un surnom long ne deformera rien).
   const buildHead = (peopleForHead) => `<tr>
     <th>Espèce</th>${avecRar ? `<th>${rarHead}</th>` : ''}
-    ${peopleForHead.map(p=>`<th class="pcol${p.id===state.playerMain?' is-main':''}" style="--series:var(--s${p.si})"><span class="cap"><span class="dot"></span>${esc(p.name)}${p.id===state.playerMain?' <span class="youtag" title="Liste principale">★</span>':''}</span></th>`).join('')}
-    <th class="pcol">Vues</th></tr>`;
+    ${peopleForHead.map(p=>`<th class="pcol${p.id===state.playerMain?' is-main':''}" style="--series:var(--s${p.si})" title="${esc(p.name)}"><span class="cap"><span class="dot"></span><span class="cap-nom">${esc(p.name)}</span>${p.id===state.playerMain?'<span class="youtag" title="Liste principale">★</span>':''}</span></th>`).join('')}</tr>`;
 
   // Familles présentes triées alpha : uniquement celles ayant >= 1 espece qui
   // passe le filtre tier courant (sinon on afficherait des familles vides apres
   // filtrage, ex : filtre 'tier 1-3' + famille 'Pouillots' → 0 obs).
-  const uniForFam = state.tierExcl?.size
-    ? uni.filter(u => !state.tierExcl.has(rarFiltre(u).id))
-    : uni;
+  const uniForFam = uni.filter(passeRar);
   // Le nombre d'especes par famille, pour la fenetre de choix (comme au Birdydex).
   _matrixFams = new Map();
   for(const u of uniForFam){ const f = familyOf(u.sci); _matrixFams.set(f, (_matrixFams.get(f) || 0) + 1); }
@@ -3066,22 +3176,6 @@ function renderMatrix({universe,N}){
   const alive=new Set(state.people.map(p=>p.id));
   if(state.playerMain && !alive.has(state.playerMain)) state.playerMain='';
   for(const uid of [...state.playerCompareSet]) if(!alive.has(uid)) state.playerCompareSet.delete(uid);
-  // Re-génère les chips à chaque changement de composition de la ligue.
-  // La cle porte aussi les choix : « Tout le monde » s'allume ou s'eteint, et la personne
-  // retenue sort des jetons.
-  const plKey=state.people.map(p=>p.id+':'+p.name).join('|')+'#'+state.playerMain+'#'+[...state.playerCompareSet].sort().join(',');
-  if(plKey!==lastPlayerKey){
-    lastPlayerKey=plKey;
-    const boxCmp=$('#playerCompareChips');
-    const chipHtml = (p, on) => `<button type="button" class="person-chip${on?' on':''}" data-player="${esc(p.id)}" style="--series:var(--s${p.si})"><span class="dot"></span>${esc(p.name)}${p.isMe?' (toi)':''}</button>`;
-    // « Qui afficher » : « Tout le monde » d'abord, comme partout ailleurs (charte). La
-    // personne dont on garde les oiseaux n'y figure pas : sa colonne est toujours la, en tete.
-    if(boxCmp){
-      const cmpPeople = state.people.filter(p => p.id !== state.playerMain);
-      boxCmp.innerHTML = `<button type="button" class="person-chip${state.playerCompareSet.size?'':' on'}" data-player-tous>Tout le monde</button>`
-        + cmpPeople.map(p=>chipHtml(p, state.playerCompareSet.has(p.id))).join('');
-    }
-  }
 
   // remplit le menu des pays où des obs ont été faites (France + étranger)
   const countriesSet=new Set();
@@ -3104,17 +3198,21 @@ function renderMatrix({universe,N}){
   if(typeof _majFiltresActifs === 'function') _majFiltresActifs();
 
   let list=[...uni];
-  if(state.tierExcl.size) list=list.filter(u=>!state.tierExcl.has(rarFiltre(u).id));
+  list=list.filter(passeRar);
   if(state.family && state.family !== 'any') list=list.filter(u=>familyOf(u.sci) === state.family);
   // Filtre lignes :
   //  - liste principale choisie  → seules les espèces qu'ELLE a vues (peu importe si
   //    les autres à comparer les ont vues ou pas - la référence, c'est la principale).
   //  - sinon si à-comparer coché → au moins 1 des personnes cochées doit l'avoir vue.
   //  - sinon                    → toutes les espèces du groupe.
+  // « Oiseaux de France non observés » passe au travers des filtres de personnes et de pays
+  // (Mathis, 2026-10-22 : choisir un membre les faisait disparaitre). Avec une personne
+  // choisie, « non observes » devient ceux qu'ELLE n'a pas vus, la ligue les ait ou non.
+  const deFrance = u => hasRarityCalibrationInCountry(u.sci, 'FR') || isExotic(u.sci);
   if(state.playerMain){
-    list = list.filter(u => u.seenBy.has(state.playerMain));
+    list = list.filter(u => u.missing || u.seenBy.has(state.playerMain) || (state.showMissing && deFrance(u)));
   } else if(state.playerCompareSet.size){
-    list = list.filter(u => { for(const uid of state.playerCompareSet) if(u.seenBy.has(uid)) return true; return false; });
+    list = list.filter(u => { if(u.missing) return true; for(const uid of state.playerCompareSet) if(u.seenBy.has(uid)) return true; return false; });
   }
   // Colonnes à afficher : la personne dont on garde les oiseaux en 1ère position (mise en
   // avant), puis celles cochées dans « Qui afficher » - ou tout le monde si rien n'est coché.
@@ -3128,27 +3226,34 @@ function renderMatrix({universe,N}){
         ...autres.filter(p => p.id!==state.playerMain) ]
     : autres;
   const nCols = displayPeople.length;
+  // Meme correspondance qu'au Birdydex : sans accents ni majuscules, nom francais ou latin.
+  if(state.q){ const q=_mapNorm(state.q).trim();
+    if(q) list=list.filter(u=>_mapNorm(u.common).includes(q)||(u.sci||'').toLowerCase().includes(q)); }
   // Filtre pays (multi-exclusion) : garder une espèce s'il existe au moins une obs
-  // (chez une personne affichée) dans un pays NON masqué.
+  // (chez une personne affichée) dans un pays gardé.
+  const passePays = (u, garde) => {
+    for(const [pid,v] of u.seenBy){
+      if(nCols && !displayPeople.some(p=>p.id===pid)) continue;
+      if(garde(v.country || 'FR')) return true;
+      // 1re obs a l'etranger mais vue aussi en France : la France compte si elle est gardee
+      if(v.fr === true && garde('FR')) return true;
+    }
+    return false;
+  };
+  // Ce que chaque pays ferait apparaitre, avec tous les AUTRES filtres en place : la fenetre
+  // des pays l'affiche, comme le Birdydex donne le nombre d'especes de chaque pays (Mathis,
+  // 2026-10-22). D'ou le filtre pays pose en dernier, apres la recherche.
+  _matrixPaysCompte = new Map(_matrixPays.map(cc => [cc, list.filter(u => passePays(u, c => c === cc)).length]));
+  _matrixPaysTotal = list.length;
   if(state.countryExcl && state.countryExcl.size){
-    list=list.filter(u=>{
-      for(const [pid,v] of u.seenBy){
-        if(nCols && !displayPeople.some(p=>p.id===pid)) continue;
-        const cc = v.country || 'FR';
-        if(!state.countryExcl.has(cc)) return true;
-        // 1re obs a l'etranger mais vue aussi en France : la France compte si elle n'est pas masquee
-        if(v.fr === true && !state.countryExcl.has('FR')) return true;
-      }
-      return false;
-    });
+    list=list.filter(u => u.missing || passePays(u, cc => !state.countryExcl.has(cc)));
   }
-  if(state.q){ const q=state.q.toLowerCase();
-    list=list.filter(u=>u.common.toLowerCase().includes(q)||(u.sci||'').toLowerCase().includes(q)); }
   if(avecRar && state.sort==='rarity'){
     // localeCompare avec 'fr' explicit + sensitivity:'base' : tri alphabetique francais
     // stable independant de la locale navigateur (evite les ordres bizarres selon OS).
-    if(rMode==='real') list.sort((a,b)=> rarOf(b).ord-rarOf(a).ord || a.common.localeCompare(b.common, 'fr', {sensitivity:'base'}));
-    else list.sort((a,b)=> (a.missing?1:0)-(b.missing?1:0) || holdersFR(a)-holdersFR(b) || a.common.localeCompare(b.common, 'fr', {sensitivity:'base'}));
+    if(rMode==='real') list.sort((a,b)=> rarNum(b)-rarNum(a) || a.common.localeCompare(b.common, 'fr', {sensitivity:'base'}));
+    // Vue par personne en France (0) : en bas, avec les non observees - elle ne compte pas.
+    else list.sort((a,b)=> (a.missing?1:0)-(b.missing?1:0) || (holdersFR(a)||Infinity)-(holdersFR(b)||Infinity) || a.common.localeCompare(b.common, 'fr', {sensitivity:'base'}));
   }
   else list.sort((a,b)=> a.common.localeCompare(b.common, 'fr', {sensitivity:'base'}));
 
@@ -3156,10 +3261,29 @@ function renderMatrix({universe,N}){
   $('#thead').innerHTML = buildHead(displayPeople);
   const tb=$('#tbody'), cards=$('#matrixCards');
   if(!list.length){
-    tb.innerHTML=`<tr><td colspan="${displayPeople.length+(avecRar?3:2)}" style="text-align:center;color:var(--ink-3);padding:26px;">Aucune espèce ne correspond.</td></tr>`;
+    tb.innerHTML=`<tr><td colspan="${displayPeople.length+1+(avecRar?1:0)}" style="text-align:center;color:var(--ink-3);padding:26px;">Aucune espèce ne correspond.</td></tr>`;
     cards.innerHTML=`<div class="empty-note" style="margin-top:0;">Aucune espèce ne correspond.</div>`;
     return;
   }
+  // La rarete reelle en ronds chiffres, a la taille de ceux du Birdydex, suivis des lettres
+  // X / P / N quand l'oiseau en porte (Mathis, 2026-10-22). Une exotique sans palier au
+  // classement prend celui du bar chart, comme sa vignette. Un oiseau vu seulement a
+  // l'etranger : le rond gris a tiret du selecteur de pays, celui d'une espece absente. Les
+  // paliers de la ligue (Titan…) restent des mots.
+  const pastilleRar = u => {
+    const t = rarOf(u);
+    // Ligue : le nombre de membres qui l'ont vue en France, dans son rond (il remplace la colonne
+    // « Vues », Mathis, 2026-10-22). Personne en France : le rond gris a tiret.
+    // Les lettres X / P / N suivent le rond, comme en rarete reelle.
+    if(rMode !== 'real') return `<span class="rar-cell">${t.ord > 0 && t.id !== 'none'
+      ? `<span class="tier-chip tier-rond" style="background:${t.color};color:${t.ink}" data-tip="${esc(t.label)}" aria-label="${esc(t.label)}">${t.count}</span>`
+      : tierChip('–', 'var(--line-2)', { cls:'tier-rond', title:t.label })}${catsDe(u).map(c => jetonExo(c)).join('')}</span>`;
+    const n = rarNum(u);
+    const rond = n > 0
+      ? tierChip(n, realColor(n), { cls:'tier-rond', title:'palier ' + n + ' - ' + (REAL_LABELS[n] || '') })
+      : tierChip('–', 'var(--line-2)', { cls:'tier-rond', title: t.id === 'etr' ? 'Étranger : vue seulement hors de France' : t.label });
+    return `<span class="rar-cell">${rond}${catsDe(u).map(c => jetonExo(c)).join('')}</span>`;
+  };
   tb.innerHTML = list.map(u=>{
     const k=holdersFR(u), t=rarOf(u);
     const cells = displayPeople.map(p=>{
@@ -3168,15 +3292,17 @@ function renderMatrix({universe,N}){
       if(!v){
         return `<td class="pcol${isMain?' is-main':''}"></td>`;
       }
-      const foreign=foreignTick(v); const cc=v.country; const abroad=cc&&cc!=='FR';
-      const ttl = abroad ? `Vu en ${countryLabel(cc)}${foreign?' - hors compétition':''}` : (foreign?"Vu à l'étranger - hors compétition":'');
-      return `<td class="pcol is-seen${foreign?' is-foreign':''}${isMain?' is-main':''}"${ttl?` title="${esc(ttl)}"`:''}><i class="chk">✓</i>${abroad?'<span class="abroad-mark">'+(flagImg(cc)||'🌍')+'</span>':''}</td>`;
+      // Le drapeau du pays de la 1re observation prend la place de la coche, France comprise :
+      // la couleur de la case dit « vu », le drapeau dit ou (version C des maquettes
+      // notes-privees/maquettes/drapeaux/, 17 px a 65 % d'opacite, Mathis, 2026-10-22).
+      const foreign=foreignTick(v); const cc=v.country||'FR';
+      const ttl = `Vu en ${countryLabel(cc)}${foreign?' - hors compétition':''}`;
+      return `<td class="pcol is-seen${foreign?' is-foreign':''}${isMain?' is-main':''}" title="${esc(ttl)}">${flagImg(cc)?`<span class="case-drap">${flagImg(cc)}</span>`:'<i class="chk">✓</i>'}<span class="visually-hidden">${esc(ttl)}</span></td>`;
     }).join('');
     return `<tr class="${u.missing?'missing':''}">
       <td class="sp"><span class="sp-link" data-sci="${esc(u.sci||u.common)}">${esc(u.common)}</span>${state.showSci && u.sci?`<span class="sci">${esc(u.sci)}</span>`:''}</td>
-      ${avecRar ? `<td><span class="chip" style="--tc:${t.color}">${t.label}</span></td>` : ''}
-      ${cells}
-      <td class="cnt">${k}/${N}</td></tr>`;
+      ${avecRar ? `<td>${pastilleRar(u)}</td>` : ''}
+      ${cells}</tr>`;
   }).join('');
 
   cards.innerHTML = list.map(u=>{
@@ -3189,10 +3315,9 @@ function renderMatrix({universe,N}){
     return `<div class="mcard ${u.missing?'missing':''}"${avecRar ? ` style="border-left-color:${t.color}"` : ''}>
       <div class="mc-head">
         <div class="mc-sp"><span class="sp-link" data-sci="${esc(u.sci||u.common)}">${esc(u.common)}</span>${state.showSci && u.sci?`<span class="mc-sci">${esc(u.sci)}</span>`:''}</div>
-        <span class="mc-count">${k}/${N}</span>
       </div>
       <div class="mc-row">
-        ${avecRar ? `<span class="chip" style="--tc:${t.color}">${t.label}</span>` : ''}
+        ${avecRar ? pastilleRar(u) : ''}
         <div class="mc-people">${seers}</div>
       </div>
     </div>`;
@@ -6486,7 +6611,7 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape' && _fichePhoto
 // ---- Fil des observations ----
 let feedMode = 'new';       // 'new' = tri par addedAt (par défaut), 'chrono' = tri par date d'obs
 let feedPerson = 'any';     // uid ou 'any'
-let feedTier = 'any';       // 1..9, 'exo', ou 'any'
+let feedTier = 'any';       // 1..10, 'X' / 'P' / 'N', ou 'any'
 let _feedPeopleKey = '';
 const _feedCmtOuverts = new Set();   // cibles dont les commentaires sont ouverts dans le fil
 // Trophees "competitifs" : rangement classement (5 Ecologues) et prix unique (Mike Horn, Marco Polo).
@@ -6651,14 +6776,12 @@ function renderFeed(){
       } else {
         if(!pd) continue;
       }
-      // Filtre rareté : 1..9 (rareté réelle) ou 'exo' (exotiques/échappés).
+      // Filtre rareté : un palier 1..10, ou un statut X / P / N comme au Birdydex (le palier 0
+      // « exotique » est parti le 2026-10-22). Une exotique se range a son palier du pays.
       const sci = (v.sci||'').toLowerCase();
       if(feedTier !== 'any'){
-        // Chip 'exo' = P/X/C (provisoires, echappes, domestiques). Seules les N (naturalisees)
-        // sont exposees sous leur vrai tier via rarityForFilter.
-        const cat = isExotic(sci) ? _exoticCategory(sci) : '';
-        if(feedTier === 'exo'){ if(!_isUnestablishedExotic(cat)) continue; }
-        else { if(_isUnestablishedExotic(cat) || rarityForFilter(sci) !== +feedTier) continue; }
+        if(/^[XPN]$/.test(feedTier)){ if(!(exoticCategoriesInCountry(sci, 'FR') || []).includes(feedTier)) continue; }
+        else if(rarityForCountry(sci, 'FR') !== +feedTier) continue;
       }
       items.push({
         kind:'obs',
@@ -6735,7 +6858,7 @@ function _feedMajBoutons(){
   const p = realPeople.find(x => x.id === feedPerson);
   const lp = $('#feedPersonBtn .cp-btn-label'); if(lp) lp.textContent = p ? p.name : 'Tout le monde';
   const lt = $('#feedTierBtn .cp-btn-label');
-  if(lt) lt.textContent = feedTier === 'any' ? 'Toutes les raretés' : feedTier === 'exo' ? 'Exotique ou échappé' : feedTier + ' · ' + REAL_LABELS[feedTier];
+  if(lt) lt.textContent = feedTier === 'any' ? 'Toutes les raretés' : /^[XPN]$/.test(feedTier) ? libelleExo(feedTier, true) : feedTier + ' · ' + REAL_LABELS[feedTier];
 }
 // ---- Fiche perso / stats ----
 // ---- Requêtes / suggestions ----
@@ -6780,8 +6903,9 @@ let _loaded = { missing:'', hotspots:'' };   // clé de cache (région+jours)
 // Filtres propres au mode "mine"
 let mapFilter = { player:'all', tier:'any', country:'any', showAllObs:false };
 // Filtres propres aux modes eBird
-// `rarities` = Set des niveaux sélectionnés (nombres 1-9 ou chaîne 'exo'). Vide = pas de filtre.
-let ebFilter = { country:(typeof _globalCountry !== 'undefined' ? _globalCountry : 'FR'), region:(typeof _globalCountry !== 'undefined' ? _globalCountry : 'FR'), days:14, rarities:new Set([1,2,3,4,5,6,7,8,9,10,'exo']), month:0, dept:'', minTodo:0, source:'ebird', yearMin:2024, yearMax:2025, polygon:null, showObserved:false };
+// `rarities` = Set des paliers sélectionnés (1-10). `cats` = statuts X / P / N cochés : non vide,
+// il prime sur les paliers, comme au Birdydex (voir _passeRarCarte).
+let ebFilter = { country:(typeof _globalCountry !== 'undefined' ? _globalCountry : 'FR'), region:(typeof _globalCountry !== 'undefined' ? _globalCountry : 'FR'), days:14, rarities:new Set([1,2,3,4,5,6,7,8,9,10]), cats:new Set(), month:0, dept:'', minTodo:0, source:'ebird', yearMin:2024, yearMax:2025, polygon:null, showObserved:false };
 // Cache pays -> [{code, name}] pour ne pas re-fetcher a chaque changement de pays.
 const _ebRegionsCache = new Map();  // countryCode -> [{code, name}, ...]
 const _ebSubregionsCache = new Map();   // regionCode -> [{code, name}, ...]
@@ -7182,12 +7306,12 @@ $('#mapSearchSuggest')?.addEventListener('mousedown', e=>{
     const s = $('#mapSearch'); s.value = m.name; mapSearch = m.name;
     // Auto-check la rareté de cette espèce si elle est décochée, sinon elle ne s'affichera pas
     // quand l'utilisateur reviendra à la vue régionale.
-    // N/P exotiques exposes sous leur tier reel via rarityForCountry (chip 'exo' = X/C seulement).
-    // Utilise le pays courant pour cocher le bon chip rarete (pas force FR).
-    const cat = isExotic(m.sci) ? _exoticCategory(m.sci) : '';
+    // Utilise le pays courant pour cocher le bon chip rarete (pas force FR). Un statut X / P / N
+    // coche qui l'ecarterait est leve : on revient au filtre par palier.
     const cc0 = ebFilter.country || 'FR';
-    const rarKey = _isUnestablishedExotic(cat) ? 'exo' : rarityForCountry(m.sci, cc0);
-    if(!ebFilter.rarities.has(rarKey)){
+    if(ebFilter.cats.size && !_passeRarCarte(m.sci, cc0)){ ebFilter.cats = new Set(); _refreshRarChips(); _loaded.missing = ''; }
+    const rarKey = rarityForCountry(m.sci, cc0);
+    if(!ebFilter.cats.size && rarKey && !ebFilter.rarities.has(rarKey)){
       ebFilter.rarities.add(rarKey);
       _refreshRarChips();
       _loaded.missing = '';
@@ -7713,7 +7837,7 @@ async function _renderModeMissing(){
   // Zone effectivement interrogée : département > région > national.
   const zone = ebFilter.dept || region;
   const isDept = /^FR-[A-Z]+-[0-9A-Z]+$/.test(zone);
-  const hasRar = rars.size>0;
+  const hasRar = rars.size>0 || ebFilter.cats.size>0;
   // Fan-out (toutes les obs) déclenché par : département sélectionné OU (région + rareté).
   const heavy = (zone!=='FR') || hasRar;
   // _lyrDetail (obs d'une espèce sélectionnée via clic dropdown) est délibérément conservé
@@ -7738,7 +7862,7 @@ async function _renderModeMissing(){
     return;
   }
   // Toutes les raretés décochées → l'utilisateur ne veut rien voir. Carte vide + hint.
-  if(rars.size === 0){
+  if(rars.size === 0 && !ebFilter.cats.size){
     if(_lyrMissing){ _lyrMissing.clearLayers(); }
     if(cnt) cnt.textContent = 'Aucune rareté cochée - coche au moins un niveau pour voir les obs';
     setTimeout(()=>{ try{ _map.invalidateSize(); }catch(_){} }, 60);
@@ -8407,18 +8531,32 @@ document.addEventListener('input', e=>{
     _loaded.hotspots=''; renderMap();
   }
 });
-// Applique le fond couleur d'un chip selon son état actif (rareté 1-9 → hue map, exo → gris via CSS).
+// Filtre de rarete de la carte, en un seul endroit. Un statut X / P / N coche prime, comme au
+// Birdydex : seuls les oiseaux qui le portent dans ce pays passent. Sinon le palier, exotiques
+// comprises a leur palier du pays (le palier 0 « exotique » n'existe plus dans les filtres,
+// Mathis, 2026-10-22). Une espece sans palier connu dans ce pays passe.
+function _passeRarCarte(sci, cc){
+  if(ebFilter.cats.size) return (exoticCategoriesInCountry(sci, cc) || []).some(c => ebFilter.cats.has(c));
+  const w = rarityForCountry(sci, cc);
+  return !w || ebFilter.rarities.has(w);
+}
+// Applique le fond couleur d'un chip selon son état actif (palier → sa couleur ; éteint si un
+// statut X / P / N est coché, comme au Birdydex).
 function _paintRarChip(el, val, on){
   if(!on){ el.style.background=''; el.classList.remove('on'); return; }
   el.classList.add('on');
-  if(val==='exo') el.style.background='';   // .rar-exo.on géré par CSS
-  else el.style.background = realColor(val);
+  el.style.background = realColor(val);
 }
 // Synchronise l'affichage de tous les chips avec ebFilter.rarities (utile pour init + Tout/Aucun).
 function _refreshRarChips(){
   document.querySelectorAll('#mapEbRarityChips .rar-chip[data-rar]').forEach(el=>{
-    const raw = el.dataset.rar; const val = raw==='exo' ? 'exo' : +raw;
-    _paintRarChip(el, val, ebFilter.rarities.has(val));
+    const val = +el.dataset.rar;
+    _paintRarChip(el, val, !ebFilter.cats.size && ebFilter.rarities.has(val));
+  });
+  document.querySelectorAll('#mapEbRarityChips .rar-chip[data-cat]').forEach(el=>{
+    const on = ebFilter.cats.has(el.dataset.cat);
+    el.classList.toggle('on', on);
+    el.style.background = on ? '#7e8a99' : ''; el.style.color = on ? '#fff' : '';
   });
 }
 // Init au chargement pour que les chips reflètent l'état par défaut (tous cochés)
@@ -8428,15 +8566,24 @@ else _refreshRarChips();
 document.addEventListener('click', e=>{
   // Boutons Tout / - (aucun)
   if(e.target.matches('[data-rar-all]')){
-    ebFilter.rarities = new Set([1,2,3,4,5,6,7,8,9,10,'exo']);
+    ebFilter.rarities = new Set([1,2,3,4,5,6,7,8,9,10]); ebFilter.cats = new Set();
     _refreshRarChips(); _loaded.missing=''; renderMap(); return;
   }
   if(e.target.matches('[data-rar-none]')){
-    ebFilter.rarities = new Set();
+    ebFilter.rarities = new Set(); ebFilter.cats = new Set();
     _refreshRarChips(); _loaded.missing=''; renderMap(); return;
   }
-  const c = e.target.closest('.rar-chip[data-rar]'); if(!c) return;
-  const raw = c.dataset.rar; const val = raw==='exo' ? 'exo' : +raw;
+  // Statut X / P / N : cumulable ; tant qu'un est coche, les paliers sont ignores.
+  const cb = e.target.closest('#mapEbRarityChips .rar-chip[data-cat]');
+  if(cb){
+    const cat = cb.dataset.cat;
+    if(ebFilter.cats.has(cat)) ebFilter.cats.delete(cat); else ebFilter.cats.add(cat);
+    _refreshRarChips(); _loaded.missing=''; renderMap(); return;
+  }
+  const c = e.target.closest('#mapEbRarityChips .rar-chip[data-rar]'); if(!c) return;
+  // Toucher un palier sort du mode statut, comme au Birdydex.
+  if(ebFilter.cats.size){ ebFilter.cats = new Set(); _refreshRarChips(); }
+  const val = +c.dataset.rar;
   const set = ebFilter.rarities;
   if(set.has(val)){ set.delete(val); }
   else { set.add(val); }
@@ -8602,30 +8749,20 @@ document.addEventListener('click', e=>{
 // ---- Couches eBird "live" sur la carte ----
 async function _loadMissingLayer(zone, days=14, rarities=new Set(), onProgress){
   if(!_lyrMissing) return;
-  // `rarities` = Set (nombres 1-9 et/ou string 'exo'). Vide = pas de filtre.
+  // `rarities` = Set des paliers 1-10 ; les statuts cochés vivent dans ebFilter.cats.
   // Fan-out (toutes les obs de chaque espèce) déclenché par :
   //  - département sélectionné (FR-xx-yy) : toujours, même sans filtre (petite zone → OK)
   //  - région (FR-xx) + rareté active : filtre les cibles rares
   //  - FR national : jamais (trop d'espèces, trop d'appels API)
   const isDept = /^FR-[A-Z]+-[0-9A-Z]+$/.test(zone);
-  const hasRar = rarities.size > 0;
+  const hasRar = rarities.size > 0 || ebFilter.cats.size > 0;
   const heavy = (zone !== 'FR') || hasRar;
-  const rarKey = hasRar ? [...rarities].sort().join(',') : 'all';
+  const rarKey = hasRar ? [...rarities].sort().join(',') + '/' + [...ebFilter.cats].sort().join(',') : 'all';
   const key = zone+':'+days+':'+(heavy?rarKey:'light');
   // Helper : espèce passe le filtre rareté ? Country-aware (utilise rarityForCountry).
   // Si espece non calibree pour ce pays (rarityForCountry retourne 0) -> passe (rarite
   // inconnue mais on la garde plutot que la cacher silencieusement).
-  const passRar = sp => {
-    if(!hasRar) return true;
-    if(isExotic(sp.sciName)){
-      const cat = _exoticCategory(sp.sciName);
-      if(_isUnestablishedExotic(cat)) return rarities.has('exo');
-      // N/P : tier reel via rarityForCountry (qui dispatch vers _exoticTier).
-    }
-    const w = rarityForCountry(sp.sciName, ebFilter.country || 'FR');
-    if(!w) return true;
-    return rarities.has(w);
-  };
+  const passRar = sp => !hasRar || _passeRarCarte(sp.sciName, ebFilter.country || 'FR');
   if(_loaded.missing===key && _lyrMissing.getLayers().length) return;
   _lyrMissing.clearLayers();
   try{
@@ -8647,7 +8784,7 @@ async function _loadMissingLayer(zone, days=14, rarities=new Set(), onProgress){
     let allObs;
     if(!heavy){
       // Mode léger : 1 marqueur par espèce (l'obs déjà retournée par l'endpoint /recent).
-      // Filtre rareté (Set 1-9 + 'exo' opt) appliqué côté client - pas de fan-out.
+      // Filtre rareté (paliers, ou statuts X / P / N) appliqué côté client - pas de fan-out.
       allObs = missingSp
         .filter(passRar)
         .map(sp => ({ ...sp.first, sciName:sp.sciName, comName:sp.comName, speciesCode:sp.speciesCode }))
@@ -8793,7 +8930,7 @@ async function _loadMissingLayerGbifBbox(bbox, month, yearMin, yearMax, onProgre
       const me = realPeople.find(p => p.id === myUid);
       const mine = new Set(me ? [...me.species.keys()] : []);
       const rars = ebFilter.rarities;
-      const hasRar = rars && rars.size > 0;
+      const hasRar = (rars && rars.size > 0) || ebFilter.cats.size > 0;
       const sciByKeyLocal = new Map();
       // On reconstruit rapidement sci<->taxonKey depuis _gbifKeyBySci (deja resolu).
       for(const [sci, k] of _gbifKeyBySci.entries()){ if(k) sciByKeyLocal.set(k, sci); }
@@ -8805,11 +8942,7 @@ async function _loadMissingLayerGbifBbox(bbox, month, yearMin, yearMax, onProgre
         const sci = sciByKeyLocal.get(s.tk);
         if(!sci) continue;
         if(_mineHas(mine, sci)) continue;
-        if(hasRar){
-          const cat = isExotic(sci) ? _exoticCategory(sci) : '';
-          const rk = _isUnestablishedExotic(cat) ? 'exo' : rarityForCountry(sci, ccF);
-          if(!rars.has(rk)) continue;
-        }
+        if(hasRar && !_passeRarCarte(sci, ccF)) continue;
         // Dedup safety net (au cas ou le cache aurait ete ecrit avec une version anterieure
         // sans dedup semantique, ou aurait subi une ecriture concurrente).
         const idc = `${s.tk}_${(s.lat||0).toFixed(4)}_${(s.lon||0).toFixed(4)}_${(s.ed||'').slice(0,10)}`;
@@ -8824,26 +8957,16 @@ async function _loadMissingLayerGbifBbox(bbox, month, yearMin, yearMax, onProgre
   // Lazy-load la taxonomie eBird pour permettre le clic sur un marqueur → fiche detail eBird.
   if(!_taxMap){ try{ await _loadTaxonomy(); }catch(_){} }
   // 1) Compute missing sci list from FR_NAMES minus user's life list, filtre par rarete
-  // (mêmes chips que le mode eBird : Set de niveaux 1-9 + 'exo', vide = pas de filtre).
+  // (mêmes chips que le mode eBird : paliers 1-10 et statuts X / P / N, voir _passeRarCarte).
   const me = realPeople.find(p => p.id === myUid);
   const mine = new Set(me ? [...me.species.keys()] : []);
   const rars = ebFilter.rarities;
-  const hasRar = rars && rars.size > 0;
+  const hasRar = (rars && rars.size > 0) || ebFilter.cats.size > 0;
   // Filtre rareté country-aware. Espece non calibree pour ce pays -> passe.
   const country = ebFilter.country || 'FR';
   const passRar = sci => {
     if(!hasRar) return true;
-    if(isExotic(sci)){
-      const cat = _exoticCategory(sci);
-      if(_isUnestablishedExotic(cat)) return rars.has('exo');
-      // N / P : traites comme les wild birds au tier reel.
-      const w = rarityForCountry(sci, country);
-      if(!w) return true;
-      return rars.has(w);
-    }
-    const w = rarityForCountry(sci, country);
-    if(!w) return true;
-    return rars.has(w);
+    return _passeRarCarte(sci, country);
   };
   const _mapCty = (ebFilter && ebFilter.country) || 'FR';
   const missingSci = Object.keys(FR_NAMES).filter(sci => !_mineHas(mine, sci) && passRar(sci) && !_isSciAliasSource(sci) && hasRarityCalibrationInCountry(sci, _mapCty));
@@ -8865,7 +8988,7 @@ async function _loadMissingLayerGbifBbox(bbox, month, yearMin, yearMax, onProgre
   // local (REAL_RARITY_ME_EBIRD pour ME), resoudre leurs taxonKeys, et fetcher precisement.
   // Sinon le fast path aveugle rate les tier 8-9 (GBIF trie par date desc, on chope les
   // obs recentes des especes communes).
-  const restrictiveRar = hasRar && rars.size < 5;
+  const restrictiveRar = hasRar && !ebFilter.cats.size && rars.size < 5;
   if(isForeign && restrictiveRar && bbox){
     const localTable = ebFilter.country === 'ME' ? REAL_RARITY_ME_EBIRD : null;
     if(localTable){
@@ -10934,6 +11057,12 @@ $('#profAvatarReset')?.addEventListener('click', async () => {
 });
 $('#boardModes').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return;
   state.boardMode=b.dataset.mode; renderResults(); });
+// Les trois tris restent colles juste sous l'entete du site (styles.css, --haut-entete). Sa
+// hauteur change avec la largeur (les onglets passent sur deux lignes) : on la suit.
+{ const ent = document.querySelector('.entete-fixe');
+  const majHaut = () => document.documentElement.style.setProperty('--haut-entete', (ent ? ent.offsetHeight : 0) + 'px');
+  majHaut();
+  if(ent && typeof ResizeObserver === 'function') new ResizeObserver(majHaut).observe(ent); }
 
 $('#removeMineBtn').addEventListener('click',async()=>{
   if(!iAmInLeague) return;
@@ -12227,7 +12356,13 @@ async function _loadFrozenPhotos(){
 const PHOTO_OVERRIDE_WIKI = {
   // Batch changement photos utilisateur (2026-09-10) : remplace les photos wiki par defaut
   // (contrepoint, mauvais angle, etc.) par des photos iNat actuelles de qualite.
+  'sturnus vulgaris': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/32152001/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/32152001/medium.jpg', credit:'iNaturalist' },
+  'sylvia atricapilla': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/187041112/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/187041112/medium.jpg', credit:'iNaturalist' },
+  'certhia brachydactyla': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/6260571/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/6260571/medium.jpg', credit:'iNaturalist' },
+  'pica pica': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/103446096/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/103446096/medium.jpg', credit:'iNaturalist' },
   'hirundo rustica': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/122469139/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/122469139/medium.jpg', credit:'iNaturalist' },
+  'delichon urbicum': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/370662370/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/370662370/medium.jpg', credit:'iNaturalist' },
+  'parus major': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/340613122/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/340613122/medium.jpg', credit:'iNaturalist' },
   // Autruche d'Afrique : l'article francais renvoyait sa carte de repartition (2026-10-19).
   // Photo de l'article anglais « Common ostrich ».
   'struthio camelus': { url:'https://upload.wikimedia.org/wikipedia/commons/9/9d/Struthio_camelus_-_Etosha_2014_%283%29.jpg', thumb:'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Struthio_camelus_-_Etosha_2014_%283%29.jpg/330px-Struthio_camelus_-_Etosha_2014_%283%29.jpg' },
@@ -12254,8 +12389,10 @@ const PHOTO_OVERRIDE_WIKI = {
   'garrulus glandarius': { url:'https://upload.wikimedia.org/wikipedia/commons/6/6d/Garrulus_glandarius_1_Luc_Viatour.jpg' },
   'oriolus oriolus': { url:'https://upload.wikimedia.org/wikipedia/commons/6/69/Rigogolo-%28Oriolus_oriolus%29_Lazio%2C_isola_di_Ventotene_%28LT%29_19.4.2024_%28cropped%29.png' },
   'gyps fulvus': { url:'https://upload.wikimedia.org/wikipedia/commons/7/70/Griffon_Vulture_1.jpg' },
+  'corvus frugilegus': { url:'https://upload.wikimedia.org/wikipedia/commons/0/0b/Corvus_frugilegus_perched_Muirton.jpg' },
   'tachymarptis melba': { url:'https://upload.wikimedia.org/wikipedia/commons/8/84/Alpine_Swift_%284781590209%29.jpg' },
   'apus melba': { url:'https://upload.wikimedia.org/wikipedia/commons/8/84/Alpine_Swift_%284781590209%29.jpg' },
+  'curruca melanocephala': { url:'https://upload.wikimedia.org/wikipedia/commons/e/e1/Sardinian_Warbler.jpg' },
   'aquila chrysaetos': { url:'https://upload.wikimedia.org/wikipedia/commons/c/c2/Maakotka_%28Aquila_chrysaetos%29_by_Jarkko_J%C3%A4rvinen.jpg' },
   'dendrocoptes minor': { url:'https://upload.wikimedia.org/wikipedia/commons/f/fc/Male_lesser_spotted_woodpecker_%28Dryobates_minor%29.png' },
   'dendrocopos minor': { url:'https://upload.wikimedia.org/wikipedia/commons/f/fc/Male_lesser_spotted_woodpecker_%28Dryobates_minor%29.png' },
@@ -12263,8 +12400,15 @@ const PHOTO_OVERRIDE_WIKI = {
   'dendrocoptes medius': { url:'https://upload.wikimedia.org/wikipedia/commons/5/5f/%D0%A1%D1%80%D0%B5%D0%B4%D0%BD%D0%B8%D0%B9_%D0%BF%D1%91%D1%81%D1%82%D1%80%D1%8B%D0%B9_%D0%B4%D1%8F%D1%82%D0%B5%D0%BB_%28Dendrocoptes_medius%29%2C_%D0%91%D0%B8%D1%82%D1%86%D0%B5%D0%B2%D1%81%D0%BA%D0%B8%D0%B9_%D0%BB%D0%B5%D1%81.jpg' },
   'pyrrhocorax graculus': { url:'https://upload.wikimedia.org/wikipedia/commons/4/49/Chocard_%C3%A0_bec_jaune.jpg' },
   'alopochen aegyptiacus': { url:'https://upload.wikimedia.org/wikipedia/commons/6/60/Nile_Goose_%2851171596345%29.jpg' },
+  'nucifraga caryocatactes': { url:'https://upload.wikimedia.org/wikipedia/commons/5/54/Nucifraga_caryocatactes_Davos_2.jpg' },
+  'remiz pendulinus': { url:'https://upload.wikimedia.org/wikipedia/commons/6/66/Chapim-de-faces-pretas_%28Remiz_pendulinus%29_%2852712339112%29.jpg' },
+  'acrocephalus palustris': { url:'https://upload.wikimedia.org/wikipedia/commons/a/af/Acrocephalus_palustris._Lazaritskaya_Luka.jpg' },
+  'acrocephalus arundinaceus': { url:'https://upload.wikimedia.org/wikipedia/commons/4/47/Carricero_tordal_Acrocephalus_arundinaceus.jpg' },
   // Choisie par Mathis le 2026-10-18 (notes-privees/choix-photos/, G1) : Leonid, CC BY-NC.
+  'certhia familiaris': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/353776251/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/353776251/medium.jpg', credit:'iNaturalist' },
   // Choisie par Mathis le 2026-10-18 (P1) : Jonny Andrews, CC BY-NC.
+  'fringilla coelebs': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/151143058/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/151143058/medium.jpg', credit:'iNaturalist' },
+  'loxia curvirostra': { url:'https://upload.wikimedia.org/wikipedia/commons/e/e6/Cruza-bico_comum%2C_f%C3%AAmea%2C_Red_Crossbill%2C_female_%2851692602998%29.jpg' },
   'apus caffer': { url:'https://upload.wikimedia.org/wikipedia/commons/6/6a/White-rumped_swift%2C_Apus_caffer%2C_at_Suikerbosrand_Nature_Reserve%2C_Gauteng%2C_South_Africa_%2830511369955%29.jpg' },
   'grus virgo': { url:'https://upload.wikimedia.org/wikipedia/commons/6/69/Demoiselle_Crane_%28Grus_virgo%29_%2849049108046%29.jpg' },
   'anthropoides virgo': { url:'https://upload.wikimedia.org/wikipedia/commons/6/69/Demoiselle_Crane_%28Grus_virgo%29_%2849049108046%29.jpg' },
@@ -12276,11 +12420,20 @@ const PHOTO_OVERRIDE_WIKI = {
   'pterodroma feae': { url:'https://upload.wikimedia.org/wikipedia/commons/1/1c/Pterodroma_feae_deserta_92954523.jpg' },
   'aquila adalberti': { url:'https://upload.wikimedia.org/wikipedia/commons/e/e4/Aguila_Imperial_Entrando_Al_Posadero_%28125891767%29.jpeg' },
   'locustella fluviatilis': { url:'https://upload.wikimedia.org/wikipedia/commons/a/ae/Locustella_fluviatilis_123791068.jpg' },
+  'catharus minimus': { url:'https://upload.wikimedia.org/wikipedia/commons/a/a6/Catharus_minimus%2C_Boston%2C_Massachusetts_3.jpg' },
   'alaudala rufescens': { url:'https://upload.wikimedia.org/wikipedia/commons/d/d8/Terrera_Marisme%C3%B1a%2C_Calandrella_rufescens_%285825387078%29.jpg' },
   'calandrella rufescens': { url:'https://upload.wikimedia.org/wikipedia/commons/d/d8/Terrera_Marisme%C3%B1a%2C_Calandrella_rufescens_%285825387078%29.jpg' },
+  'setophaga striata': { url:'https://upload.wikimedia.org/wikipedia/commons/4/46/Dendroica_striata_MN.jpg' },
   'dendroica striata': { url:'https://upload.wikimedia.org/wikipedia/commons/4/46/Dendroica_striata_MN.jpg' },
+  'lanius phoenicuroides': { url:'https://upload.wikimedia.org/wikipedia/commons/8/8a/Lanius_phoenicuroides_221320163.jpg' },
+  'iduna caligata': { url:'https://upload.wikimedia.org/wikipedia/commons/c/c9/Bird_Walk_at_Pullzhi%2C_Thrissur_Kole_Wetlands_24.jpg' },
   'hippolais caligata': { url:'https://upload.wikimedia.org/wikipedia/commons/c/c9/Bird_Walk_at_Pullzhi%2C_Thrissur_Kole_Wetlands_24.jpg' },
+  'acrocephalus dumetorum': { url:'https://upload.wikimedia.org/wikipedia/commons/0/0e/Blyth%27s_reed_warbler_%2855433%29.jpg' },
+  'locustella naevia': { url:'https://upload.wikimedia.org/wikipedia/commons/d/d0/Grasshopper_Warbler_%28Locustella_naevia%29_%2834231783040%29.jpg' },
   'passer luteus': { url:'https://upload.wikimedia.org/wikipedia/commons/a/a3/Passer_luteus_262388966.jpg' },
+  'loxia scotica': { url:'https://base-prod.rspb-prod.magnolia-platform.com/.imaging/focalpoint/landscape16to9/1600x900/dam/jcr:e0c1b9db-4b1d-4074-a145-2f0c2c861736/1585855924-Species-Scottish-Crossbill-MALE-In-pine-tree.jpg' },   // RSPB photo male in pine tree (fournie par user)
+  'emberiza rustica': { url:'https://upload.wikimedia.org/wikipedia/commons/5/52/%E3%82%AB%E3%82%B7%E3%83%A9%E3%83%80%E3%82%AB_%28%E9%A0%AD%E9%AB%98%29_%28Rustic_Bunting%29_%28Emberiza_rustica%29_%2823264222832%29.jpg' },
+  'acanthis flammea': { url:'https://upload.wikimedia.org/wikipedia/commons/6/62/Birkenzeisige_%28Acanthis_flammea%29_auf_Juist_-_Nationalpark_Nieders%C3%A4chsisches_Wattenmeer.jpg' },
   'acanthis hornemanni': { url:'https://upload.wikimedia.org/wikipedia/commons/8/8d/Hoary_Redpoll_%285308630118%29.jpg' },
   'acanthis cabaret': { url:'https://upload.wikimedia.org/wikipedia/commons/d/d3/Lesser_Redpoll_%28Acanthis_cabaret%29_%2813667838704%29.jpg' },
   'coccothraustes coccothraustes': { url:'https://upload.wikimedia.org/wikipedia/commons/4/48/Hawfinch_%28Coccothraustes_coccothraustes%29_male_Drenthe.jpg' },
@@ -12288,6 +12441,7 @@ const PHOTO_OVERRIDE_WIKI = {
   // Le Balbuzard garde sa photo de frozen-photos.json, recopiee ici pour qu'elle ne bouge plus.
   'cecropis rufula': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/378200046/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/378200046/medium.jpeg', credit:'iNaturalist' },
   'aythya nyroca': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/6567248/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/6567248/medium.jpg', credit:'iNaturalist' },
+  'calcarius lapponicus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/45894540/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/45894540/medium.jpg', credit:'iNaturalist' },
   // Choix de Mathis dans la galerie du 2026-10-20 (notes-privees/choix-photos/) : 1-3, 2-1, 3-1, 4-1, 5-1, 6-1, 7-4, 8-1, 9-6, 10-7, 11-0, 12-11, 13-8, 14-4, 15-4, 16-10, 17-12, 18-3, 19-4, 20-1.
   'dendrocygna viduata': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/98672709/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/98672709/medium.jpeg', credit:'Elio Giacone · CC BY-NC · iNaturalist' },
   'dendrocygna bicolor': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/91528685/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/91528685/medium.jpg', credit:'Tom Benson · CC BY-NC-ND · iNaturalist' },
@@ -12634,200 +12788,6 @@ const PHOTO_OVERRIDE_WIKI = {
   'falco subbuteo': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/173320152/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/173320152/medium.jpg', credit:'dssh · CC BY-NC · iNaturalist' },
   'falco cherrug': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/69598157/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/69598157/medium.jpg', credit:'Rino Di Noto · CC BY-NC · iNaturalist' },
   'falco peregrinus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/226608554/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/226608554/medium.jpg', credit:'Nicolás Villaseca Merino · CC BY-SA · iNaturalist' },
-  // Choix de Mathis dans la galerie du 2026-10-22 (notes-privees/choix-photos/) : 343-1, 344-0, 345-7, 346-2, 347-2, 348-1, 349-1, 350-5, 351-1, 352-12, 353-9, 354-0, 355-1, 356-3, 357-1, 358-0, 359-3, 360-3, 361-0, 362-3, 363-2, 364-8, 365-1, 368-1, 369-1, 370-8, 371-1, 372-3, 373-4, 374-2, 375-9, 376-10, 377-11, 378-3, 379-11, 380-1, 381-4, 382-11, 383-1, 384-1, 385-2, 386-2, 387-3, 388-6, 389-2, 390-3, 391-2, 392-2, 393-9, 394-3, 395-12, 397-1, 399-2, 400-0.
-  'vireo olivaceus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/272009912/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/272009912/medium.jpg', credit:'domaine public · iNaturalist' },
-  'lanius collurio': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/76841589/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/76841589/medium.jpeg', credit:'Filip Vyskočil · CC BY-NC · iNaturalist' },
-  'lanius phoenicuroides': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/35112635/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/35112635/medium.jpeg', credit:'Jacky Judas · CC BY · iNaturalist' },
-  'lanius isabellinus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/331658154/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/331658154/medium.jpg', credit:'egorbirder · CC BY · iNaturalist' },
-  'lanius cristatus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/472286950/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/472286950/medium.jpg', credit:'Илья Уколов · CC BY-NC · iNaturalist' },
-  'lanius meridionalis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/63102844/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/63102844/medium.jpg', credit:'Ximo Galarza · CC BY-NC-SA · iNaturalist' },
-  'lanius excubitor': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/113590285/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/113590285/medium.jpeg', credit:'xulescu_g · CC BY-SA · iNaturalist' },
-  'lanius minor': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/1916826/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/1916826/medium.jpg', credit:'Paul Cools · CC BY-NC · iNaturalist' },
-  'lanius nubicus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/363798395/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/363798395/medium.jpeg', credit:'Martin Geiger · CC BY-NC · iNaturalist' },
-  'lanius senator': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/280221146/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/280221146/medium.jpg', credit:'Илья Сухов · CC BY-NC · iNaturalist' },
-  'pica pica': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/103446096/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/103446096/medium.jpg', credit:'Agustín Povedano · CC BY-NC-SA · iNaturalist' },
-  'nucifraga caryocatactes': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/1629072/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/1629072/medium.jpg', credit:'Vitalii Khustochka · CC BY-NC · iNaturalist' },
-  'pyrrhocorax pyrrhocorax': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/167222978/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/167222978/medium.jpeg', credit:'Pavel Shukov · CC BY-NC · iNaturalist' },
-  'coloeus monedula': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/106125742/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/106125742/medium.jpg', credit:'hedera.baltica · CC BY-SA · iNaturalist' },
-  'corvus frugilegus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/62108561/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/62108561/medium.jpg', credit:'hedera.baltica · CC BY-SA · iNaturalist' },
-  'corvus cornix': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/114176981/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/114176981/medium.jpg', credit:'hedera.baltica · CC BY-SA · iNaturalist' },
-  'corvus corax': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/651411222/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/651411222/medium.jpg', credit:'Tim Healy · CC BY-NC · iNaturalist' },
-  'periparus ater': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/151143636/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/151143636/medium.jpg', credit:'Jonny Andrews · CC BY-NC · iNaturalist' },
-  'lophophanes cristatus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/323017422/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/323017422/medium.jpg', credit:'Erik Eckstein · CC BY-NC · iNaturalist' },
-  'cyanistes caeruleus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/41677354/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/41677354/medium.jpeg', credit:'rorygardner79 · CC BY-NC · iNaturalist' },
-  'parus major': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/340613122/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/340613122/medium.jpg', credit:'Oscar Valencoso - Salomé Planas · CC BY-NC · iNaturalist' },
-  'remiz pendulinus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/187539867/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/187539867/medium.jpg', credit:'Геннадий · CC BY-NC · iNaturalist' },
-  'lullula arborea': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/2421482/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/2421482/medium.jpg', credit:'Paul Cools · CC BY-NC · iNaturalist' },
-  'alauda leucoptera': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/135225324/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/135225324/medium.jpg', credit:'Андреенков Олег Владимирович · CC BY-NC · iNaturalist' },
-  'alauda arvensis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/2691494/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/2691494/medium.jpg', credit:'Kim, Hyun-tae · CC BY · iNaturalist' },
-  'galerida theklae': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/179580652/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/179580652/medium.jpg', credit:'Thijs Valkenburg · CC BY-NC · iNaturalist' },
-  'galerida cristata': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/252416604/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/252416604/medium.jpeg', credit:'Светлана Медведева · CC BY-NC · iNaturalist' },
-  'eremophila alpestris': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/187977096/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/187977096/medium.jpg', credit:'Sean Werle · CC BY-NC · iNaturalist' },
-  'calandrella brachydactyla': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/322707797/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/322707797/medium.jpg', credit:'Javisa Hun · CC BY-NC · iNaturalist' },
-  'melanocorypha calandra': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/235499993/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/235499993/medium.jpeg', credit:'Татьяна Меньшикова · CC BY-NC · iNaturalist' },
-  'panurus biarmicus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/105257022/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/105257022/medium.jpg', credit:'Денис Воронов · CC BY-NC · iNaturalist' },
-  'cisticola juncidis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/180576291/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/180576291/medium.jpg', credit:'Ximo Galarza · CC BY-NC-SA · iNaturalist' },
-  'iduna caligata': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/136726517/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/136726517/medium.jpg', credit:'Константин Самодуров · CC BY-NC · iNaturalist' },
-  'iduna pallida': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/6263779/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/6263779/medium.jpg', credit:'Paul Cools · CC BY-NC · iNaturalist' },
-  'iduna opaca': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/182708916/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/182708916/medium.jpg', credit:'Nik Borrow · CC BY-NC · iNaturalist' },
-  'hippolais polyglotta': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/31707568/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/31707568/medium.jpg', credit:'naturpel · CC BY-NC · iNaturalist' },
-  'hippolais icterina': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/1966660/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/1966660/medium.jpg', credit:'Michael Sveikutis · CC BY-ND · iNaturalist' },
-  'acrocephalus paludicola': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/385265429/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/385265429/medium.jpeg', credit:'Юрий Янкевич · CC BY-NC · iNaturalist' },
-  'acrocephalus melanopogon': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/128451381/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/128451381/medium.jpg', credit:'Анна Голубева · CC BY-NC-ND · iNaturalist' },
-  'acrocephalus schoenobaenus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/189813840/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/189813840/medium.jpg', credit:'Ad Konings · CC BY-NC · iNaturalist' },
-  'acrocephalus agricola': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/107361129/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/107361129/medium.jpg', credit:'Dmitry Shtol · CC BY-NC · iNaturalist' },
-  'acrocephalus dumetorum': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/80799894/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/80799894/medium.jpeg', credit:'Михаил Соколов · CC BY-NC · iNaturalist' },
-  'acrocephalus palustris': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/65352/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/65352/medium.jpg', credit:'Luciano Giussani · CC BY-NC-SA · iNaturalist' },
-  'acrocephalus scirpaceus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/355963136/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/355963136/medium.jpg', credit:'Alan Shearman · CC BY · iNaturalist' },
-  'acrocephalus arundinaceus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/38495175/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/38495175/medium.jpeg', credit:'Steven Schulting · CC BY-NC · iNaturalist' },
-  'locustella luscinioides': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/1992110/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/1992110/medium.jpg', credit:'Paul Cools · CC BY-NC · iNaturalist' },
-  'locustella naevia': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/659780226/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/659780226/medium.jpg', credit:'Erik Eckstein · CC BY-NC · iNaturalist' },
-  'ptyonoprogne rupestris': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/501784601/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/501784601/medium.jpg', credit:'Manuel Raab · CC BY-NC · iNaturalist' },
-  'delichon urbicum': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/323621902/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/323621902/medium.jpg', credit:'Erik Eckstein · CC BY-NC · iNaturalist' },
-  // Choix de Mathis dans la galerie du 2026-10-22 (notes-privees/choix-photos/) : 367-0, 396-0.
-  'poecile montanus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/458622888/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/458622888/medium.jpg', credit:'iNaturalist' },
-  'riparia riparia': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/165349740/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/165349740/medium.jpg', credit:'iNaturalist' },
-  // Choix de Mathis dans la galerie du 2026-10-22 (notes-privees/choix-photos/) : 401-1, 402-5, 403-1, 404-2, 405-3, 406-1, 407-2, 408-6, 409-1, 410-2, 411-11, 412-11, 413-1, 414-3, 415-4, 416-2, 417-8, 418-12, 419-1, 420-8, 421-4, 422-1, 423-2, 424-12, 425-2, 426-0, 427-1, 428-9, 429-0, 430-4, 431-9, 432-1, 433-1, 434-0, 435-1, 436-1, 437-1, 438-4, 439-7, 440-6, 441-5, 442-1, 443-2, 444-11, 445-10, 446-1, 447-1, 448-1, 449-7, 450-1, 451-7, 452-2, 453-1, 454-1, 455-1, 456-7, 457-6, 458-1, 459-5, 460-2, 461-12, 462-6, 463-4, 464-3, 465-1, 466-3, 467-3, 468-1, 469-7, 470-2, 471-6, 472-1, 473-1, 474-1, 475-5, 476-6, 477-1, 478-4, 479-1, 480-3, 481-2, 482-4, 483-2, 484-1, 485-5, 486-4, 487-1, 488-4, 489-4, 490-1, 491-1, 492-2, 493-1, 494-8, 495-9, 496-5, 497-1, 498-1, 499-2, 500-8, 501-8, 502-1, 503-5, 504-0, 505-2, 506-8, 507-4, 508-4, 509-6, 510-1, 511-5, 513-10, 514-4, 515-3, 516-2, 517-10, 518-0, 519-1, 520-1, 521-1, 522-6, 523-1, 524-2, 525-10, 526-3, 527-11, 528-0, 529-1, 530-4, 531-12, 532-1, 533-5, 534-10, 535-0, 536-10, 537-7, 538-0, 539-11, 540-6.
-  'phylloscopus sibilatrix': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/231450677/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/231450677/medium.jpg', credit:'Steve Garvie · CC BY-SA · iNaturalist' },
-  'phylloscopus bonelli': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/61555857/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/61555857/medium.jpg', credit:'Daniel König · CC BY-NC · iNaturalist' },
-  'phylloscopus orientalis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/138544214/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/138544214/medium.jpeg', credit:'Johanna Beam · CC BY-NC · iNaturalist' },
-  'phylloscopus inornatus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/193939306/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/193939306/medium.jpg', credit:'Анна Голубева · CC BY-NC-ND · iNaturalist' },
-  'phylloscopus humei': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/1852220/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/1852220/medium.jpg', credit:'Paul Cools · CC BY-NC · iNaturalist' },
-  'phylloscopus proregulus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/598094178/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/598094178/medium.jpg', credit:'Vyacheslav Luzanov · CC BY-NC · iNaturalist' },
-  'phylloscopus schwarzi': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/138499372/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/138499372/medium.jpg', credit:'egorbirder · CC BY · iNaturalist' },
-  'phylloscopus fuscatus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/153695084/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/153695084/medium.jpg', credit:'Александр Кочетков · CC BY-NC · iNaturalist' },
-  'phylloscopus trochilus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/165631422/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/165631422/medium.jpeg', credit:'Valia Pavlou · CC BY-NC · iNaturalist' },
-  'phylloscopus collybita': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/238171964/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/238171964/medium.jpeg', credit:'Rails and roadtrips · CC BY-NC · iNaturalist' },
-  'phylloscopus ibericus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/1843510/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/1843510/medium.jpg', credit:'Paul Cools · CC BY-NC · iNaturalist' },
-  'phylloscopus trochiloides': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/167392264/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/167392264/medium.jpg', credit:'rupperrt78 · CC BY-NC · iNaturalist' },
-  'phylloscopus plumbeitarsus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/213560301/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/213560301/medium.jpg', credit:'Dmitry Dubikovskiy · CC BY-NC · iNaturalist' },
-  'phylloscopus borealis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/462275295/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/462275295/medium.jpg', credit:'Dmitry Dubikovskiy · CC BY-NC · iNaturalist' },
-  'cettia cetti': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/1852340/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/1852340/medium.jpg', credit:'Paul Cools · CC BY-NC · iNaturalist' },
-  'aegithalos caudatus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/347777793/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/347777793/medium.jpg', credit:'Donna Pomeroy · CC BY-NC · iNaturalist' },
-  'sylvia atricapilla': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/168292224/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/168292224/medium.jpg', credit:'Nik Borrow · CC BY-NC · iNaturalist' },
-  'sylvia borin': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/415849718/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/415849718/medium.jpeg', credit:'Евгений Маринкин · CC BY · iNaturalist' },
-  'curruca nisoria': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/211458488/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/211458488/medium.jpeg', credit:'sooloovey · CC BY-NC · iNaturalist' },
-  'curruca curruca': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/374104083/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/374104083/medium.jpeg', credit:'Helen Bovill · CC BY · iNaturalist' },
-  'curruca hortensis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/40721765/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/40721765/medium.jpg', credit:'ronpon · CC BY-NC · iNaturalist' },
-  'curruca ruppeli': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/1852352/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/1852352/medium.jpg', credit:'Paul Cools · CC BY-NC · iNaturalist' },
-  // Choix de Mathis dans la galerie du 2026-10-22 (notes-privees/choix-photos/) : 423-23, remplace 423-2.
-  'curruca melanocephala': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/346240324/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/346240324/medium.jpeg', credit:'Maksymilian Wojtkiewicz · CC BY-NC · iNaturalist' },
-  'curruca subalpina': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/65423240/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/65423240/medium.jpg', credit:'Roberto Ghiglia · CC BY-NC · iNaturalist' },
-  'curruca iberiae': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/176601124/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/176601124/medium.jpeg', credit:'Mourad Harzallah · CC BY · iNaturalist' },
-  'curruca cantillans': { url:'https://upload.wikimedia.org/wikipedia/commons/a/a9/%CE%9A%CE%BF%CE%BA%CE%BA%CE%B9%CE%BD%CE%BF%CF%84%CF%83%CE%B9%CF%81%CE%BF%CE%B2%CE%AC%CE%BA%CE%BF%CF%82.jpg?utm_source=fr.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled', thumb:'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a9/%CE%9A%CE%BF%CE%BA%CE%BA%CE%B9%CE%BD%CE%BF%CF%84%CF%83%CE%B9%CF%81%CE%BF%CE%B2%CE%AC%CE%BA%CE%BF%CF%82.jpg/330px-%CE%9A%CE%BF%CE%BA%CE%BA%CE%B9%CE%BD%CE%BF%CF%84%CF%83%CE%B9%CF%81%CE%BF%CE%B2%CE%AC%CE%BA%CE%BF%CF%82.jpg?utm_source=fr.wikipedia.org&utm_campaign=api&utm_content=thumbnail', credit:'Wikipédia FR' },
-  'curruca communis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/391168486/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/391168486/medium.jpg', credit:'Oscar Valencoso - Salomé Planas · CC BY-NC · iNaturalist' },
-  'curruca conspicillata': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/461026284/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/461026284/medium.jpg', credit:'Codrin Bucur · CC BY · iNaturalist' },
-  'curruca undata': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/31734545/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/31734545/medium.jpg', credit:'naturpel · CC BY-NC · iNaturalist' },
-  'leiothrix lutea': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/412177095/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/412177095/medium.jpeg', credit:'peterchristiaen · CC BY-NC · iNaturalist' },
-  'regulus regulus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/339460974/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/339460974/medium.jpg', credit:'Dave Curtis · CC BY-NC-ND · iNaturalist' },
-  'regulus ignicapilla': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/173469227/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/173469227/medium.jpg', credit:'Ad Konings · CC BY-NC · iNaturalist' },
-  'tichodroma muraria': { url:'https://upload.wikimedia.org/wikipedia/commons/f/fd/Wallcreeper_%28Tichodroma_muraria%29_%2851181111456%29.jpg?utm_source=fr.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled', thumb:'https://thumb.wikimedia.org/wikipedia/commons/thumb/f/fd/Wallcreeper_%28Tichodroma_muraria%29_%2851181111456%29.jpg/330px-Wallcreeper_%28Tichodroma_muraria%29_%2851181111456%29.jpg?utm_source=fr.wikipedia.org&utm_campaign=api&utm_content=thumbnail', credit:'Wikipédia FR' },
-  'sitta whiteheadi': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/92960397/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/92960397/medium.jpeg', credit:'Christoph Moning · CC BY · iNaturalist' },
-  'sitta europaea': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/98789726/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/98789726/medium.jpg', credit:'Frank Vassen · CC BY · iNaturalist' },
-  'certhia familiaris': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/353776251/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/353776251/medium.jpg', credit:'Leonid · CC BY-NC · iNaturalist' },
-  'certhia brachydactyla': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/31520897/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/31520897/medium.jpeg', credit:'naturpel · CC BY-NC · iNaturalist' },
-  'troglodytes troglodytes': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/150980755/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/150980755/medium.jpg', credit:'Анна Голубева · CC BY-NC-ND · iNaturalist' },
-  'cinclus cinclus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/109761356/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/109761356/medium.jpg', credit:'Dina Nesterkova · CC BY-NC · iNaturalist' },
-  'sturnus vulgaris': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/262503685/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/262503685/medium.jpg', credit:'ildikorab · CC BY-NC · iNaturalist' },
-  'sturnus unicolor': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/202494131/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/202494131/medium.jpg', credit:'Luca Ghiraldi · CC BY-NC · iNaturalist' },
-  'pastor roseus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/266963/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/266963/medium.jpg', credit:'Sergey Yeliseev · CC BY-NC-ND · iNaturalist' },
-  'zoothera aurea': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/567677008/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/567677008/medium.jpg', credit:'Rimma Gerasimenko · CC BY-NC · iNaturalist' },
-  'catharus minimus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/275482070/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/275482070/medium.jpg', credit:'Matt and Kaysea Bruce · CC BY-NC · iNaturalist' },
-  'catharus ustulatus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/194570525/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/194570525/medium.jpg', credit:'Jing-Yi Lu · CC BY-NC · iNaturalist' },
-  'turdus viscivorus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/203268068/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/203268068/medium.jpg', credit:'Luca Ghiraldi · CC BY-NC · iNaturalist' },
-  'turdus philomelos': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/61267397/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/61267397/medium.jpg', credit:'Ximo Galarza · CC BY-NC-SA · iNaturalist' },
-  'turdus iliacus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/605213920/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/605213920/medium.jpg', credit:'Мария Белялова · CC BY-NC · iNaturalist' },
-  'turdus merula': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/356885346/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/356885346/medium.jpg', credit:'Luiz Lapa · CC BY · iNaturalist' },
-  'turdus pilaris': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/171598648/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/171598648/medium.jpg', credit:'Михаил Голомысов · CC BY · iNaturalist' },
-  'turdus torquatus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/535379344/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/535379344/medium.jpg', credit:'Tomasz Wilk · CC BY-NC · iNaturalist' },
-  'muscicapa striata': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/110517229/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/110517229/medium.jpg', credit:'Ximo Galarza · CC BY-NC-SA · iNaturalist' },
-  'erithacus rubecula': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/104940884/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/104940884/medium.jpeg', credit:'naturpel · CC BY-NC · iNaturalist' },
-  'luscinia megarhynchos': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/389920621/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/389920621/medium.jpg', credit:'Erik Eckstein · CC BY-NC · iNaturalist' },
-  'luscinia svecica': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/200343330/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/200343330/medium.jpg', credit:'Martha de Jong-Lantink · CC BY-NC-ND · iNaturalist' },
-  'tarsiger cyanurus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/274965811/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/274965811/medium.jpg', credit:'Chuangzao · CC BY-NC · iNaturalist' },
-  'ficedula parva': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/1853510/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/1853510/medium.jpg', credit:'Paul Cools · CC BY-NC · iNaturalist' },
-  'ficedula hypoleuca': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/123372897/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/123372897/medium.jpg', credit:'caroline legg · CC BY · iNaturalist' },
-  'ficedula albicollis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/225951/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/225951/medium.jpg', credit:'Photo Nature · CC BY-NC-SA · iNaturalist' },
-  'phoenicurus moussieri': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/465991461/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/465991461/medium.jpeg', credit:'Julien Renoult · CC BY · iNaturalist' },
-  'phoenicurus phoenicurus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/196487806/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/196487806/medium.jpg', credit:'Олег Юмашев · CC BY · iNaturalist' },
-  'phoenicurus ochruros': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/3322601/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/3322601/medium.jpg', credit:'Paul Cools · CC BY-NC · iNaturalist' },
-  'monticola saxatilis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/1645738/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/1645738/medium.jpg', credit:'Sergey Pisarevskiy · CC BY-NC-SA · iNaturalist' },
-  'monticola solitarius': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/247607732/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/247607732/medium.jpg', credit:'Pavel Shukov · CC BY-NC · iNaturalist' },
-  'saxicola rubetra': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/426242765/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/426242765/medium.jpg', credit:'flavioziretti · CC BY-NC · iNaturalist' },
-  'saxicola rubicola': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/121108858/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/121108858/medium.jpg', credit:'Paul Lewis · CC BY · iNaturalist' },
-  'saxicola maurus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/57800736/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/57800736/medium.jpg', credit:'Константин Селивёрстов · CC BY · iNaturalist' },
-  'oenanthe oenanthe': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/114037305/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/114037305/medium.jpg', credit:'Cameron Eckert · CC BY-NC · iNaturalist' },
-  'oenanthe isabellina': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/461654167/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/461654167/medium.jpeg', credit:'Daniel Eugenio Pérez Garrido · CC BY-NC · iNaturalist' },
-  'oenanthe deserti': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/21802/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/21802/medium.jpg', credit:'Tarique Sani · CC BY-NC-SA · iNaturalist' },
-  'oenanthe melanoleuca': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/1867257/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/1867257/medium.jpg', credit:'Paul Cools · CC BY-NC · iNaturalist' },
-  'oenanthe pleschanka': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/128419488/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/128419488/medium.jpg', credit:'Анна Голубева · CC BY-NC-ND · iNaturalist' },
-  'bombycilla garrulus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/59611753/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/59611753/medium.jpeg', credit:'Илья Сухов · CC BY-NC · iNaturalist' },
-  'euodice malabarica': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/685933286/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/685933286/medium.jpg', credit:'Bernard Noguès · CC BY-NC · iNaturalist' },
-  'estrilda astrild': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/26314571/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/26314571/medium.jpeg', credit:'guyincognito · CC BY-NC · iNaturalist' },
-  'prunella collaris': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/59007262/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/59007262/medium.jpg', credit:'Alessandro · CC BY-NC · iNaturalist' },
-  'prunella modularis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/409496240/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/409496240/medium.jpg', credit:'Ben Ackerley · CC BY-NC · iNaturalist' },
-  'passer domesticus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/4608133/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/4608133/medium.jpg', credit:'Ximo Galarza · CC BY-NC-SA · iNaturalist' },
-  'passer italiae': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/253656227/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/253656227/medium.jpg', credit:'Flavio Valcanover · CC BY-NC · iNaturalist' },
-  'passer hispaniolensis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/98727834/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/98727834/medium.jpeg', credit:'Christoph Moning · CC BY · iNaturalist' },
-  'passer montanus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/64439787/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/64439787/medium.jpg', credit:'Dina Nesterkova · CC BY-NC · iNaturalist' },
-  'petronia petronia': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/6974448/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/6974448/medium.jpg', credit:'Paul Cools · CC BY-NC · iNaturalist' },
-  'montifringilla nivalis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/27975599/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/27975599/medium.jpg', credit:'Jessica Peruzzo · CC BY-NC-ND · iNaturalist' },
-  'motacilla cinerea': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/55744842/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/55744842/medium.jpg', credit:'alexdersu · CC BY-NC · iNaturalist' },
-  'motacilla flava': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/340816063/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/340816063/medium.jpg', credit:'saschaj · CC BY-NC · iNaturalist' },
-  'motacilla tschutschensis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/30334980/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/30334980/medium.jpg', credit:'Игорь Двуреков · CC BY-NC · iNaturalist' },
-  'motacilla citreola': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/146530/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/146530/medium.jpg', credit:'Sergey Pisarevskiy · CC BY-NC-SA · iNaturalist' },
-  'motacilla alba': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/3330790/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/3330790/medium.jpg', credit:'Dr Caesar Sengupta · CC BY-NC · iNaturalist' },
-  'anthus richardi': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/211789264/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/211789264/medium.jpg', credit:'Анна Голубева · CC BY-NC-ND · iNaturalist' },
-  'anthus godlewskii': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/207468/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/207468/medium.jpg', credit:'Andreas Trepte · CC BY-NC-SA · iNaturalist' },
-  'anthus campestris': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/337997303/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/337997303/medium.jpg', credit:'cog2022 · CC BY-NC · iNaturalist' },
-  'anthus pratensis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/187679983/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/187679983/medium.jpg', credit:'Valia Pavlou · CC BY-NC · iNaturalist' },
-  'anthus trivialis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/316840930/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/316840930/medium.jpeg', credit:'Абакумов Николай Викторович · CC BY-NC · iNaturalist' },
-  'anthus hodgsoni': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/333978217/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/333978217/medium.jpg', credit:'Thorsten Stegmann · CC BY-NC-ND · iNaturalist' },
-  'anthus gustavi': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/469525266/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/469525266/medium.jpg', credit:'Илья Уколов · CC BY-NC · iNaturalist' },
-  'anthus cervinus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/96825051/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/96825051/medium.jpg', credit:'Анна Голубева · CC BY-NC-ND · iNaturalist' },
-  'anthus spinoletta': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/3225661/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/3225661/medium.jpg', credit:'Paul Cools · CC BY-NC · iNaturalist' },
-  'anthus petrosus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/450424667/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/450424667/medium.jpg', credit:'thegreatdodo · CC BY-NC · iNaturalist' },
-  'anthus japonicus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/752956188/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/752956188/medium.jpg', credit:'Alexander Naumov · CC BY-NC · iNaturalist' },
-  'anthus rubescens': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/5418705/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/5418705/medium.jpg', credit:'Gordon Karre · CC BY-NC · iNaturalist' },
-  'fringilla coelebs': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/151143058/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/151143058/medium.jpg', credit:'Jonny Andrews · CC BY-NC · iNaturalist' },
-  'fringilla montifringilla': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/51234776/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/51234776/medium.jpg', credit:'Dina Nesterkova · CC BY-NC · iNaturalist' },
-  'carpodacus erythrinus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/96223946/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/96223946/medium.jpg', credit:'Анна Голубева · CC BY-NC-ND · iNaturalist' },
-  'pyrrhula pyrrhula': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/175253474/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/175253474/medium.jpg', credit:'Дмитрий Осипов · CC BY-NC · iNaturalist' },
-  'bucanetes githagineus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/169497809/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/169497809/medium.jpg', credit:'dssh · CC BY-NC · iNaturalist' },
-  'chloris chloris': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/24802794/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/24802794/medium.jpeg', credit:'Aissa Djamel Filali · CC BY-SA · iNaturalist' },
-  'linaria flavirostris': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/591223228/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/591223228/medium.jpg', credit:'lina_golovneva · CC BY-NC · iNaturalist' },
-  'linaria cannabina': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/447125732/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/447125732/medium.jpg', credit:'Samuel Beyertt · CC BY-NC · iNaturalist' },
-  'acanthis flammea': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/113336980/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/113336980/medium.jpeg', credit:'Tom Murray · CC BY-NC · iNaturalist' },
-  'loxia curvirostra': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/171039539/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/171039539/medium.jpg', credit:'jmarcinik · CC BY-NC · iNaturalist' },
-  'carduelis carduelis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/361935156/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/361935156/medium.jpeg', credit:'Росица Делчева ППМГ Сливен · CC BY-NC · iNaturalist' },
-  'carduelis citrinella': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/77036834/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/77036834/medium.jpg', credit:'Luca Boscain · CC BY-NC · iNaturalist' },
-  'carduelis corsicana': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/218493924/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/218493924/medium.jpeg', credit:'Christoph Moning · CC BY · iNaturalist' },
-  'serinus serinus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/532616068/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/532616068/medium.jpg', credit:'Михаил Голомысов · CC BY · iNaturalist' },
-  'spinus spinus': { url:'https://upload.wikimedia.org/wikipedia/commons/0/00/Gr%C3%B6nsiska-1763_-_Flickr_-_Ragnhild_%26_Neil_Crawford.jpg?utm_source=fr.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled', thumb:'https://thumb.wikimedia.org/wikipedia/commons/thumb/0/00/Gr%C3%B6nsiska-1763_-_Flickr_-_Ragnhild_%26_Neil_Crawford.jpg/330px-Gr%C3%B6nsiska-1763_-_Flickr_-_Ragnhild_%26_Neil_Crawford.jpg?utm_source=fr.wikipedia.org&utm_campaign=api&utm_content=thumbnail', credit:'Wikipédia FR' },
-  'calcarius lapponicus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/96675637/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/96675637/medium.jpg', credit:'Анна Голубева · CC BY-NC-ND · iNaturalist' },
-  'plectrophenax nivalis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/113763306/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/113763306/medium.jpeg', credit:'Pavel Shukov · CC BY-NC · iNaturalist' },
-  'emberiza melanocephala': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/3777512/original.JPG', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/3777512/medium.JPG', credit:'Ani Sarkisyan · CC BY · iNaturalist' },
-  'emberiza calandra': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/28746665/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/28746665/medium.jpg', credit:'Aleksey Levashkin · CC BY-NC · iNaturalist' },
-  'emberiza cia': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/118077956/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/118077956/medium.jpg', credit:'Анна Голубева · CC BY-NC-ND · iNaturalist' },
-  'emberiza cirlus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/6974442/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/6974442/medium.jpg', credit:'Paul Cools · CC BY-NC · iNaturalist' },
-  'emberiza citrinella': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/343294660/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/343294660/medium.jpeg', credit:'yury-redkin · CC BY-NC · iNaturalist' },
-  'emberiza leucocephalos': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/136903095/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/136903095/medium.jpg', credit:'egorbirder · CC BY · iNaturalist' },
-  'emberiza hortulana': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/204069050/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/204069050/medium.jpg', credit:'egorbirder · CC BY · iNaturalist' },
-  'emberiza sahari': { url:'https://upload.wikimedia.org/wikipedia/commons/c/ca/Bruant_du_Sahara_%28South_of_Tunisia%29.jpg?utm_source=fr.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled', thumb:'https://thumb.wikimedia.org/wikipedia/commons/thumb/c/ca/Bruant_du_Sahara_%28South_of_Tunisia%29.jpg/330px-Bruant_du_Sahara_%28South_of_Tunisia%29.jpg?utm_source=fr.wikipedia.org&utm_campaign=api&utm_content=thumbnail', credit:'Wikipédia FR' },
-  'emberiza schoeniclus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/6119774/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/6119774/medium.jpg', credit:'raz1940 et Charlotte · CC BY-NC · iNaturalist' },
-  'emberiza pusilla': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/2619243/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/2619243/medium.jpg', credit:'Kim, Hyun-tae · CC BY · iNaturalist' },
-  'emberiza rustica': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/263023473/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/263023473/medium.jpg', credit:'Людмила Алимова · CC BY · iNaturalist' },
-  'emberiza spodocephala': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/202678941/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/202678941/medium.jpg', credit:'Анна Голубева · CC BY-NC-ND · iNaturalist' },
-  'zonotrichia albicollis': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/58705042/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/58705042/medium.jpeg', credit:'Craig K. Hunt · CC BY-NC · iNaturalist' },
-  'icterus galbula': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/407826581/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/407826581/medium.jpg', credit:'CC BY-SA · iNaturalist' },
-  'seiurus aurocapilla': { url:'https://upload.wikimedia.org/wikipedia/commons/0/08/Ovenbird_%2890483%29.jpg?utm_source=fr.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled', thumb:'https://thumb.wikimedia.org/wikipedia/commons/thumb/0/08/Ovenbird_%2890483%29.jpg/330px-Ovenbird_%2890483%29.jpg?utm_source=fr.wikipedia.org&utm_campaign=api&utm_content=thumbnail', credit:'Wikipédia FR' },
-  'mniotilta varia': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/190709984/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/190709984/medium.jpeg', credit:'CC0 · iNaturalist' },
-  'leiothlypis peregrina': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/2478155/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/2478155/medium.jpg', credit:'Robin Gwen Agarwal · CC BY-NC · iNaturalist' },
-  'setophaga aestiva': { url:'https://upload.wikimedia.org/wikipedia/commons/a/a3/Dendroica-aestiva-001.jpg?utm_source=fr.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled', thumb:'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a3/Dendroica-aestiva-001.jpg/330px-Dendroica-aestiva-001.jpg?utm_source=fr.wikipedia.org&utm_campaign=api&utm_content=thumbnail', credit:'Wikipédia FR' },
-  'setophaga striata': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/196401534/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/196401534/medium.jpeg', credit:'CC0 · iNaturalist' },
-  'pheucticus ludovicianus': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/72639228/original.jpeg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/72639228/medium.jpeg', credit:'John Murnane · CC BY-NC · iNaturalist' },
-  // Choix de Mathis dans la galerie du 2026-10-22 (notes-privees/choix-photos/) : 512-1.
-  'loxia scotica': { url:'https://inaturalist-open-data.s3.amazonaws.com/photos/167798612/original.jpg', thumb:'https://inaturalist-open-data.s3.amazonaws.com/photos/167798612/medium.jpg', credit:'apout · CC BY-NC · iNaturalist' },
 };
 async function _fetchWikiPhoto(sci){
   const key = sci.toLowerCase();
@@ -17277,52 +17237,12 @@ function _closeTrophyModal(){
 $('#tmodalX').addEventListener('click', _closeTrophyModal);
 $('#trophyModal').addEventListener('click', e => { if(e.target.id==='trophyModal') _closeTrophyModal(); });
 
-// ---- Dropdown de suggestions pour la recherche #q dans "Qui a vu quoi" ----
-// Alimenté par _matrixUniverse (posé dans renderMatrix). Le contenu suit l'option
-// "Afficher les espèces non observées" : décochée = espèces vues par au moins un joueur.
-let _matrixSuggestItems = [];
-function _updateMatrixSuggest(){
-  const box = $('#matrixSearchSuggest'); if(!box) return;
-  const q = (state.q||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
-  const seen = new Set();
-  const items = [];
-  for(const u of (_matrixUniverse||[])){
-    const sci = (u.sci||'').toLowerCase();
-    if(!sci || seen.has(sci)) continue;
-    const fr = u.common || sci;
-    const frNorm = fr.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
-    if(q && !frNorm.includes(q) && !sci.includes(q)) continue;
-    seen.add(sci);
-    items.push({ sci, name: fr });
-  }
-  items.sort((a,b)=> a.name.localeCompare(b.name,'fr'));
-  _matrixSuggestItems = items;
-  if(!items.length){ box.classList.remove('open'); box.innerHTML=''; return; }
-  // En mode rareté réelle, on préfixe une pastille colorée du niveau de rareté de l'espèce.
-  const showRealDot = state.boardMode === 'real';
-  box.innerHTML = items.map((it,i)=>{
-    const dot = showRealDot ? `<span class="ss-dot" style="background:${sciColor(it.sci)}"></span>` : '';
-    return `<div class="map-search-suggest-item" data-idx="${i}">${dot}`
-      +`<span>${esc(it.name)}</span>`
-      +(state.showSci?`<span class="ss-sci">${esc(it.sci)}</span>`:'')
-      +`</div>`;
-  }).join('');
-  box.classList.add('open');
-}
-$('#q').addEventListener('input',e=>{ state.q=e.target.value; renderResults(); _updateMatrixSuggest(); });
-$('#q').addEventListener('focus', ()=> _updateMatrixSuggest());
-// Clic sur une suggestion : remplit la barre + filtre le tableau à cette espèce, ferme la dropdown.
-$('#matrixSearchSuggest')?.addEventListener('mousedown', e=>{
-  const it = e.target.closest('.map-search-suggest-item'); if(!it) return;
-  e.preventDefault();   // évite le blur avant clic
-  const m = _matrixSuggestItems[+it.dataset.idx]; if(!m) return;
-  const inp = $('#q'); inp.value = m.name; state.q = m.name;
-  const box = $('#matrixSearchSuggest'); box.classList.remove('open'); box.innerHTML='';
-  renderResults();
-});
-// Ferme la dropdown quand on clique ailleurs.
-document.addEventListener('click', e=>{
-  if(!e.target.closest('.matrix-search')){ const box=$('#matrixSearchSuggest'); if(box) box.classList.remove('open'); }
+// Recherche de « Qui a vu quoi » : la barre du Birdydex a l'identique (Mathis, 2026-10-22) -
+// sans liste de suggestions, le tableau se filtre en tapant, apres le meme quart de seconde.
+let _qMinuteur;
+$('#q').addEventListener('input', e => {
+  clearTimeout(_qMinuteur);
+  _qMinuteur = setTimeout(() => { state.q = e.target.value; renderResults(); }, 250);
 });
 $('#sortSeg').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b)return;
   $('#sortSeg').querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
@@ -17343,7 +17263,7 @@ $('#feedPersonBtn')?.addEventListener('click', async ()=>{
 $('#feedTierBtn')?.addEventListener('click', async ()=>{
   const opts = [{ value:'any', label:'Toutes les raretés' }]
     .concat([1,2,3,4,5,6,7,8,9,10].map(t=>({ value:String(t), label:REAL_LABELS[t], color:realColor(t), chip:t })))
-    .concat([{ value:'exo', label:'Exotique ou échappé', color:'#7e8a99' }]);
+    .concat(['X', 'P', 'N'].map(c => ({ value:c, label:libelleExo(c), color:'#7e8a99', chip:c })));
   const v = await _openFilterPicker(String(feedTier), { title:'Quelle rareté ?', options:opts, searchable:false });
   if(v == null) return;
   feedTier = v; renderFeed();
@@ -17360,18 +17280,29 @@ document.addEventListener('click', e=>{
   if(d.open) d.querySelector('.cmt-input')?.focus();
 });
 // Chips rareté (multi) : toggle du Set state.tierExcl (masquées), re-render.
+// Statuts X / P / N : la meme mecanique que le Birdydex - en cocher un eteint les paliers,
+// decocher le dernier les rallume, et toucher un palier sort du mode statut.
 $('#tierChips')?.addEventListener('click', e=>{
+  // Les exotiques sans palier (« exo ») n'ont plus de pastille : « Vide » les retire aussi.
+  const idsPaliers = () => [...e.currentTarget.querySelectorAll('button[data-tier]')].map(b => b.dataset.tier).concat('exo');
   if(e.target.matches('[data-tier-all]')){
-    state.tierExcl = new Set();
+    state.tierExcl = new Set(); state.catSel = new Set();
     renderResults(); return;
   }
   if(e.target.matches('[data-tier-none]')){
-    // Recupere les ids de tiers presentement affiches et les exclut tous
-    const btns = e.currentTarget.querySelectorAll('button[data-tier]');
-    state.tierExcl = new Set([...btns].map(b => b.dataset.tier));
+    state.tierExcl = new Set(idsPaliers()); state.catSel = new Set();
+    renderResults(); return;
+  }
+  const cb = e.target.closest('button[data-cat]');
+  if(cb){
+    const c = cb.dataset.cat, etaitVide = !state.catSel.size;
+    if(state.catSel.has(c)) state.catSel.delete(c); else state.catSel.add(c);
+    if(etaitVide && state.catSel.size) state.tierExcl = new Set(idsPaliers());
+    else if(!etaitVide && !state.catSel.size) state.tierExcl = new Set();
     renderResults(); return;
   }
   const b = e.target.closest('button[data-tier]'); if(!b) return;
+  if(state.catSel.size){ state.catSel = new Set(); state.tierExcl = new Set(); }
   const id = b.dataset.tier;
   if(state.tierExcl.has(id)) state.tierExcl.delete(id); else state.tierExcl.add(id);
   renderResults();
@@ -17414,6 +17345,7 @@ document.addEventListener('keydown', e=>{
 // Remet TOUS les filtres à l'état initial (tout visible), sans toucher au tri ni à la recherche.
 function _effacerFiltres(){
   state.tierExcl = new Set();
+  state.catSel = new Set();
   state.family = 'any';
   state.playerMain = '';
   state.playerCompareSet = new Set();
@@ -17422,7 +17354,6 @@ function _effacerFiltres(){
   state.showSci = false;
   const sm = $('#showMissing'); if(sm) sm.checked = false;
   const ss = $('#showSci'); if(ss) ss.checked = false;
-  lastPlayerKey = '';    // force le re-render des chips personne
   lastCountryKey = '';   // force le re-render des chips pays
   renderResults();
 }
@@ -17435,14 +17366,21 @@ function _majBoutonsFiltres(){
     const l = b.querySelector('.cp-btn-label'); if(l) l.textContent = txt;
     b.classList.toggle('actif', !!actif);
   };
-  lbl('#playerMainBtn', 'Oiseaux de : ' + (state.playerMain ? nomDe(state.playerMain) : 'tout le monde'), state.playerMain);
+  // Un seul bouton pour les deux reglages de personnes ; il dit les deux quand les deux servent.
   const cmp = [...state.playerCompareSet].map(nomDe).filter(Boolean);
-  lbl('[data-fm="personnes"] .fm-btn', 'Colonnes : ' + (!cmp.length ? 'tout le monde'
-    : cmp.length <= 2 ? cmp.join(', ') : cmp.length + ' personnes'), cmp.length);
+  const cols = !cmp.length ? '' : cmp.length <= 2 ? cmp.join(', ') : cmp.length + ' personnes';
+  lbl('#personnesBtn', state.playerMain
+      ? 'Oiseaux de ' + nomDe(state.playerMain) + (cols ? ' · avec ' + cols : '')
+      : cols ? 'Colonnes : ' + cols : 'Personnes : tout le monde',
+    state.playerMain || cmp.length);
   lbl('#familyBtn', state.family && state.family !== 'any' ? state.family : 'Toutes familles', state.family && state.family !== 'any');
   const gardes = _matrixPays.filter(cc => !state.countryExcl.has(cc));
   lbl('#paysBtn', !state.countryExcl.size ? 'Tous les pays'
     : gardes.length === 1 ? countryLabel(gardes[0]) : gardes.length + ' pays', state.countryExcl.size);
+  // Un seul pays retenu : son drapeau devant son nom, comme le bouton pays du Birdydex.
+  { const fl = $('#paysBtn .cp-btn-flag'); const un = state.countryExcl.size && gardes.length === 1;
+    // style.display et non hidden : .cp-btn-flag pose display:inline-flex, qui l'emporte.
+    if(fl){ fl.innerHTML = un ? flagImg(gardes[0]) : ''; fl.style.display = un ? '' : 'none'; } }
   lbl('[data-fm="affichage"] .fm-btn', 'Affichage', state.showMissing || state.showSci);
 }
 // Les filtres que les boutons ne disent pas, en etiquettes sous la rangee de rarete : la rarete
@@ -17455,8 +17393,14 @@ function _majFiltresActifs(){
   const resume = (gardes, retires, aucun) => !gardes.length ? aucun
     : gardes.length <= retires.length ? gardes.join(', ') : 'sauf ' + retires.join(', ');
   const tags = [];
-  if(state.tierExcl.size){
-    const lbl = t => t.label;
+  // La rangee de rarete n'existe qu'aux classements par rarete : ailleurs, rien a annoncer.
+  const avecRar = state.boardMode !== 'count';
+  if(avecRar && state.catSel.size){
+    tags.push(['rar', 'Statut : ' + ['X', 'P', 'N'].filter(c => state.catSel.has(c)).map(c => libelleExo(c)).join(', ')]);
+  } else if(avecRar && state.tierExcl.size){
+    // Une tranche de la ligue se dit par ses bornes (« Vue par 5 à 10 membres »), pas par le
+    // nombre de la premiere espece rencontree.
+    const lbl = t => t.legende || t.label;
     tags.push(['rar', 'Rareté : ' + resume(_matrixTiers.filter(t => !state.tierExcl.has(t.id)).map(lbl),
       _matrixTiers.filter(t => state.tierExcl.has(t.id)).map(lbl), 'aucune')]);
   }
@@ -17473,7 +17417,7 @@ $('#filtActifs')?.addEventListener('click', e=>{
   const b = e.target.closest('[data-retire]'); if(!b) return;
   const k = b.dataset.retire;
   if(k === 'tout'){ _effacerFiltres(); return; }
-  if(k === 'rar') state.tierExcl = new Set();
+  if(k === 'rar'){ state.tierExcl = new Set(); state.catSel = new Set(); }
   if(k === 'miss'){ state.showMissing = false; const c = $('#showMissing'); if(c) c.checked = false; }
   if(k === 'sci'){ state.showSci = false; const c = $('#showSci'); if(c) c.checked = false; }
   renderResults();
@@ -17488,34 +17432,79 @@ $('#familyBtn')?.addEventListener('click', async ()=>{
   if(v == null) return;
   state.family = v || 'any'; renderResults();
 });
-// « Seulement les oiseaux de » : une fenetre au milieu de l'ecran, comme « Les observations de
-// qui ? » du fil (Mathis, 2026-10-22 : pas de liste deroulante). La personne choisie passe en
-// tete des colonnes et sort des jetons « Qui afficher », ou elle ferait doublon.
-$('#playerMainBtn')?.addEventListener('click', async ()=>{
-  const opts = [{ value:'', label:'Tout le monde' }].concat(
-    [...state.people].sort((a,b)=>a.name.localeCompare(b.name,'fr')).map(p=>({ value:p.id, label:p.name, moi:p.isMe })));
-  const v = await _openFilterPicker(state.playerMain, { title:'Seulement les oiseaux de…', options:opts, searchable: state.people.length > 8 });
-  if(v == null) return;
-  state.playerMain = v;
-  if(state.playerMain) state.playerCompareSet.delete(state.playerMain);
-  renderResults();
-});
-// Pays : un seul pays, ou tous, dans la meme fenetre que les autres choix.
+// « Personnes » : les deux reglages de personnes dans une seule fenetre au milieu de l'ecran
+// (Mathis, 2026-10-22 : « Oiseaux de » et « Colonnes », deux boutons, « c'est flou »). Chaque
+// partie dit ce qu'elle fait, et un choix s'applique tout de suite : le tableau bouge derriere.
+function _ouvrirPersonnes(){
+  const backdrop = document.createElement('div');
+  backdrop.className = 'cp-modal-backdrop';
+  backdrop.innerHTML = `
+    <div class="cp-modal-inner pers-modal" role="dialog" aria-label="Personnes">
+      <div class="cp-modal-title"><span>Personnes</span>
+        <button type="button" class="cp-modal-close" aria-label="Fermer">×</button></div>
+      <div class="pers-corps"></div>
+      <div class="pers-bas"><button type="button" class="btn pers-ok">Voir le tableau</button></div>
+    </div>`;
+  const corps = backdrop.querySelector('.pers-corps');
+  const gens = [...state.people].sort((a,b) => a.name.localeCompare(b.name, 'fr'));
+  const nom = p => esc(p.name) + (p.isMe ? ' (toi)' : '');
+  const jeton = (attrs, on, p, txt) => `<button type="button" class="person-chip${on ? ' on' : ''}" ${attrs}`
+    + (p ? ` style="--series:var(--s${p.si})"><span class="dot"></span>` : '>') + txt + '</button>';
+  const dessiner = () => {
+    const main = gens.find(p => p.id === state.playerMain);
+    const tousCol = !state.playerCompareSet.size;
+    corps.innerHTML = `
+      <section class="pers-partie">
+        <h3>Quelles espèces&nbsp;?</h3>
+        <p class="pers-aide">Toutes celles de la ligue, ou seulement celles qu'une personne a vues.</p>
+        <div class="pers-liste" role="radiogroup" aria-label="Quelles espèces">
+          ${jeton(`data-main="" role="radio" aria-checked="${!main}"`, !main, null, 'Toutes les espèces')}
+          ${gens.map(p => jeton(`data-main="${esc(p.id)}" role="radio" aria-checked="${p === main}"`, p === main, p, 'Celles de ' + nom(p))).join('')}
+        </div>
+      </section>
+      <section class="pers-partie">
+        <h3>Quelles colonnes&nbsp;?</h3>
+        <p class="pers-aide">Les personnes dont on voit les coches, côte à côte.${main ? ` ${nom(main)} reste toujours en première colonne.` : ''}</p>
+        <div class="pers-liste">
+          ${jeton(`data-col="" aria-pressed="${tousCol}"`, tousCol, null, 'Tout le monde')}
+          ${gens.filter(p => p !== main).map(p => { const on = state.playerCompareSet.has(p.id);
+            return jeton(`data-col="${esc(p.id)}" aria-pressed="${on}"`, on, p, nom(p)); }).join('')}
+        </div>
+      </section>`;
+  };
+  dessiner();
+  corps.addEventListener('click', e => {
+    const m = e.target.closest('[data-main]'), c = e.target.closest('[data-col]');
+    if(m){
+      state.playerMain = m.dataset.main;
+      // Sa colonne est deja en tete : elle sortirait en double des colonnes cochees.
+      if(state.playerMain) state.playerCompareSet.delete(state.playerMain);
+    } else if(c){
+      const uid = c.dataset.col;
+      if(!uid) state.playerCompareSet = new Set();
+      else if(state.playerCompareSet.has(uid)) state.playerCompareSet.delete(uid);
+      else state.playerCompareSet.add(uid);
+    } else return;
+    renderResults(); dessiner();
+  });
+  const fermer = () => { backdrop.remove(); document.removeEventListener('keydown', surEchap); };
+  const surEchap = e => { if(e.key === 'Escape') fermer(); };
+  document.addEventListener('keydown', surEchap);
+  backdrop.addEventListener('click', e => { if(e.target === backdrop) fermer(); });
+  backdrop.querySelector('.cp-modal-close').addEventListener('click', fermer);
+  backdrop.querySelector('.pers-ok').addEventListener('click', fermer);
+  document.body.appendChild(backdrop);
+}
+$('#personnesBtn')?.addEventListener('click', _ouvrirPersonnes);
+// Pays : le selecteur du Birdydex - drapeaux, continents - avec, au bout de chaque ligne, le
+// nombre d'especes que ce pays ferait apparaitre dans le tableau (Mathis, 2026-10-22).
 $('#paysBtn')?.addEventListener('click', async ()=>{
   const gardes = _matrixPays.filter(cc => !state.countryExcl.has(cc));
   const actuel = !state.countryExcl.size ? '' : gardes.length === 1 ? gardes[0] : null;
-  const v = await _openFilterPicker(actuel, { title:'Observées dans quel pays ?', searchable: _matrixPays.length > 8,
-    options: [{ value:'', label:'Tous les pays' }].concat(_matrixPays.map(cc => ({ value:cc, label:countryLabel(cc) }))) });
+  const v = await _openCountryPicker(actuel, { availableCodes: _matrixPays, titre: 'Observées dans quel pays ?',
+    compte: cc => _matrixPaysCompte.get(cc) || 0, tous: { label: 'Tous les pays', count: _matrixPaysTotal } });
   if(v == null) return;
   state.countryExcl = v ? new Set(_matrixPays.filter(cc => cc !== v)) : new Set();
-  renderResults();
-});
-// « Qui afficher » : jetons a cocher ; « Tout le monde » vide la selection.
-$('#playerCompareChips')?.addEventListener('click', e=>{
-  if(e.target.closest('[data-player-tous]')){ state.playerCompareSet = new Set(); renderResults(); return; }
-  const b = e.target.closest('button[data-player]'); if(!b) return;
-  const uid = b.dataset.player;
-  if(state.playerCompareSet.has(uid)) state.playerCompareSet.delete(uid); else state.playerCompareSet.add(uid);
   renderResults();
 });
 $('#showSci')?.addEventListener('change', e=>{ state.showSci = e.target.checked; renderResults(); });
@@ -18974,7 +18963,7 @@ function _pkdxRender(){
       ordrePrec = o;
       const sci = (FAMILLE_INFO[l.fam] || [])[1];
       const savant = sci && sansAccent(sci) !== sansAccent(l.fam)
-        ? ' <span class="pkdx-groupe-sci">' + esc(sci) + '</span>' : '';
+        ? ' <span class="pkdx-groupe-n">·</span> <span class="pkdx-groupe-sci">' + esc(sci) + '</span>' : '';
       return titreOrdre + '<div class="pkdx-groupe pkdx-groupe-fam"><span>' + esc(l.fam) + savant
       + ' <span class="pkdx-groupe-n">· ' + l.rows.filter(r => r.owned).length + ' sur ' + l.rows.length + '</span></span></div>'
       + l.rows.map(carte).join('');

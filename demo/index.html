@@ -124,7 +124,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=442">
+<link rel="modulepreload" href="app.js?v=443">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -623,20 +623,23 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
        _renderResultsImpl() quand state.people est vide. -->
   <p class="help" id="rankingEmpty" hidden style="text-align:center;margin:32px 16px;">Dépose ta liste eBird dans l'onglet « Ma liste » pour rejoindre la ligue et voir le classement.</p>
   <section id="results">
+    <!-- L'explication de chaque tri (et le bareme de la rarete reelle) s'affiche dans une bulle
+         au survol de son bouton : decide par Mathis le 2026-10-05, a la place de la phrase sous
+         le titre, du « ? » et du bareme pose sur la page. Remplie par _bulleTri() dans app.js.
+         Hors du cadre de « Qui mene la Ligue ? » depuis le 2026-10-22 : elle reste collee sous
+         l'entete pendant tout le defilement de la page (« pour changer faut remonter »), et une
+         rangee collante ne peut pas sortir du cadre qui la contient. -->
+    <div class="board-modes-row">
+      <div class="seg" id="boardModes">
+        <button data-mode="count" class="on" aria-describedby="triBulle">Nombre d'espèces</button>
+        <button data-mode="league" aria-describedby="triBulle">Rareté (ligue)</button>
+        <button data-mode="real" aria-describedby="triBulle">Rareté réelle</button>
+      </div>
+      <div class="tri-bulle" id="triBulle" role="tooltip" hidden></div>
+    </div>
     <div class="panel" id="board">
       <div class="section-head">
         <div><h2 class="page-title">Qui mène la Ligue ?</h2></div>
-      </div>
-      <!-- L'explication de chaque tri (et le bareme de la rarete reelle) s'affiche dans une bulle
-           au survol de son bouton : decide par Mathis le 2026-10-05, a la place de la phrase sous
-           le titre, du « ? » et du bareme pose sur la page. Remplie par _bulleTri() dans app.js. -->
-      <div class="board-modes-row">
-        <div class="seg" id="boardModes">
-          <button data-mode="count" class="on" aria-describedby="triBulle">Nombre d'espèces</button>
-          <button data-mode="league" aria-describedby="triBulle">Rareté (ligue)</button>
-          <button data-mode="real" aria-describedby="triBulle">Rareté réelle</button>
-        </div>
-        <div class="tri-bulle" id="triBulle" role="tooltip" hidden></div>
       </div>
       <div class="board-list" id="boardList"></div>
     </div>
@@ -650,34 +653,27 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
       <div class="controls">
         <!-- Barre principale : ce qu'on utilise le plus (recherche + tri) toujours visible. -->
         <div class="ctrl-main">
-          <div class="search matrix-search" style="position:relative;"><input type="text" id="q" aria-label="Filtrer les espèces du tableau" placeholder="Filtrer une espèce…" autocomplete="off"><div class="map-search-suggest" id="matrixSearchSuggest"></div></div>
+          <!-- La barre du Birdydex, a l'identique, sans suggestions (2026-10-22). -->
+          <input type="search" id="q" aria-label="Rechercher dans le tableau" placeholder="Rechercher (nom fr ou sci)…" style="flex:1; min-width:180px; padding:9px 12px; border:1px solid var(--line-2); border-radius:8px; background:var(--surface-2); color:var(--ink); font:14px system-ui;">
           <div class="seg" id="sortSeg">
             <button data-sort="rarity" class="on">Par rareté</button>
             <button data-sort="name">A → Z</button>
           </div>
         </div>
         <!-- Les filtres reprennent ceux du Birdydex (2026-10-22) : un bouton qui dit sa valeur et
-             ouvre une fenetre au milieu de l'ecran, et la rarete en rangee de pastilles toujours
-             visible. Seuls « Colonnes » (plusieurs personnes a cocher) et « Affichage » (deux
-             cases) gardent un petit menu sous leur bouton : le Birdydex n'a pas d'equivalent. -->
+             ouvre une fenetre au milieu de l'ecran, et la rarete en rangee de pastilles, visible
+             aux classements par rarete. Seul « Affichage » (deux cases) garde un petit menu sous
+             son bouton : le Birdydex n'a pas d'equivalent. -->
         <div class="fm-barre" id="filtMenus">
-          <button type="button" class="cp-btn" id="playerMainBtn" title="Ne garder que les oiseaux d'une personne">
-            <span class="cp-btn-label">Oiseaux de : tout le monde</span><span class="cp-btn-arrow">▾</span>
+          <!-- « Oiseaux de » et « Colonnes » reunis dans une seule fenetre (2026-10-22). -->
+          <button type="button" class="cp-btn" id="personnesBtn" aria-haspopup="dialog">
+            <span class="cp-btn-label">Personnes : tout le monde</span><span class="cp-btn-arrow">▾</span>
           </button>
-          <div class="fm" data-fm="personnes">
-            <button type="button" class="cp-btn fm-btn" aria-expanded="false" aria-controls="fmPersonnes">
-              <span class="cp-btn-label">Colonnes : tout le monde</span><span class="cp-btn-arrow">▾</span>
-            </button>
-            <div class="fm-pop" id="fmPersonnes" hidden>
-              <div class="fm-titre">Qui afficher</div>
-              <div class="person-chips" id="playerCompareChips" aria-label="Personnes affichées dans le tableau"></div>
-            </div>
-          </div>
           <button type="button" class="cp-btn" id="familyBtn">
             <span class="cp-btn-label">Toutes familles</span><span class="cp-btn-arrow">▾</span>
           </button>
           <button type="button" class="cp-btn" id="paysBtn" hidden>
-            <span class="cp-btn-label">Tous les pays</span><span class="cp-btn-arrow">▾</span>
+            <span class="cp-btn-flag" style="display:none;"></span><span class="cp-btn-label">Tous les pays</span><span class="cp-btn-arrow">▾</span>
           </button>
           <div class="fm" data-fm="affichage">
             <button type="button" class="cp-btn fm-btn" aria-expanded="false" aria-controls="fmAffichage">
@@ -822,7 +818,6 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
              avec role="group", pas un label, qui n'habillerait que le premier bouton. -->
         <span class="explorer-lbl" id="mapEbRarityLbl" style="display:none;" title="Clique un ou plusieurs niveaux - sinon toutes les raretés">Rareté
         <div id="mapEbRarityChips" class="rar-chips" role="group" aria-label="Filtrer par rareté" style="display:none;">
-          <button type="button" class="rar-chip rar-exo on" data-rar="exo" title="Parc semi-libre / échappé (tier 0)">0</button>
           <button type="button" class="rar-chip on" data-rar="1" title="Omniprésent">1</button>
           <button type="button" class="rar-chip on" data-rar="2" title="Très commun">2</button>
           <button type="button" class="rar-chip on" data-rar="3" title="Commun">3</button>
@@ -835,6 +830,8 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
           <button type="button" class="rar-chip on" data-rar="10" title="Exceptionnel (vagrant accidentel)">10</button>
           <button type="button" class="rar-chip" data-rar-all title="Cocher toutes les raretés">Tout</button>
           <button type="button" class="rar-chip" data-rar-none title="Décocher toutes les raretés">Vide</button>
+          <!-- Les statuts du Birdydex, a la place du palier 0 « exotique » (2026-10-22). -->
+          <span class="rar-cats"><span class="rar-sep" aria-hidden="true"></span><button type="button" class="rar-chip" data-cat="X" title="Échappé isolé (X)">X</button><button type="button" class="rar-chip" data-cat="P" title="Provisoire (P)">P</button><button type="button" class="rar-chip" data-cat="N" title="Introduit établi (N)">N</button></span>
         </div>
         </span>
         <span class="explorer-lbl" id="mapEbMinTodoLbl" style="display:none;" title="N'affiche que les hotspots où il te manque au moins N espèces">Cacher hotspots avec moins de
@@ -1494,5 +1491,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=442"></script>
+<script type="module" src="app.js?v=443"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>

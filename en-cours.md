@@ -1,3 +1,13 @@
+# COMMITÉ, PAS POUSSÉ (2026-10-22, nuit) : refonte de la page Classement (v869 / app.js?v=443)
+- Qui a vu quoi : filtres repris du Birdydex (pays avec drapeaux et nombre d'espèces, fenêtre « Personnes » qui réunit « Oiseaux de » et « Colonnes », recherche identique sans suggestions), rangée de rareté seulement aux classements par rareté, X/P/N à la place de « Échappé isolé », Étranger en rond gris à tiret ; colonne Rareté en ronds (palier ou nombre de membres) + lettres X/N/P, triée et filtrée sur le chiffre affiché, 96 px, figée avec Espèce ; colonnes des personnes à 104 px (nom coupé par « … ») ; drapeau du pays à la place de la coche (17 px, 70 %) ; « Vues » supprimée ; non observés visibles quels que soient les filtres ; bordures en border-collapse:separate (voir CLAUDE.md, pièges).
+- Classement du haut : trois boutons collés sous l'entête, bulles raccourcies, photos toutes à 34 px, « La plus rare » en sous-titre (rond + nom du palier), date plus pâle.
+- Rareté ligue : rond du nombre de membres, une teinte (vert du site), chiffre blanc ; au-delà de 12 membres, 8 tranches de la part des membres ; « La plus rare de la ligue » en mode ligue.
+- Palier 0 retiré partout : barème (lignes X P « 0 point » et N « compté à son palier »), filtre de la carte et du fil en X/P/N. Les X/P rapportent toujours 0 point (choix de Mathis).
+- Birdydex : « · Anatidés » en italique. countryLabel : nom français du navigateur hors table (plus de « LK »).
+- Non vérifié : le filtre X/P/N de la carte sur de vraies observations eBird (la démo ne les charge pas).
+- Maquettes gardées : notes-privees/maquettes/{drapeaux,plus-rare,colonnes,separation}/.
+- docs/modele-repartition.md est modifié par une autre session : pas dans ce commit.
+- Mettre en ligne : il pousse quand il a regardé en local.
 # POUSSÉ et vérifié en ligne (2026-10-22, 21 h 40) : cartes toutes bases GBIF, garde-fou affiné, aires iNat réparées par les tuiles (fusion 88fa77b2, v868 / 442 ; ornitheque-data 72fbd9c4 poussé juste avant)
 - Fait depuis un dossier à part (fusion de mes commits avec origin/main, conflits seulement sur les versions, démo régénérée, 11 bancs CONFORME), puis main local remis sur origin/main SANS toucher aux fichiers : le travail en cours d'une autre session (filtre par pays du Classement, opts.compte / « Tous les pays » dans app.js, plus styles.css, index.html, demo/index.html) reste non commité ici, il N'EST PAS en ligne. Son index.html local dit encore app.js?v=433 : à son commit, prendre v869 / 443 ou plus.
 - En ligne : app.js?v=442 servi, teinte de la Pie servie, fiches Pie / Corneille / Hirondelle ouvertes dans la démo en ligne (ordinateur, téléphone), aucune erreur.

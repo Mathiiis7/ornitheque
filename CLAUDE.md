@@ -192,6 +192,13 @@ boîte pose le texte trop bas - visiblement.
 de fermer est refermé par le navigateur à la fin du parent : tout ce qui suit devient
 incliquable sans une erreur. C'est arrivé à la Petite couronne.
 
+**Une case collante (`position:sticky`) dans un tableau `border-collapse:collapse` perd ses
+bordures** : elles appartiennent au tableau, pas à la case, et défilent sans elle. Trois rustines
+(ombres de 1 px, bordure retirée, trait intérieur) n'ont pas suffi dans « Qui a vu quoi » : fente
+blanche, cases repeintes par morceaux. Le remède est `border-collapse:separate; border-spacing:0`
+avec des bordures droite et basse sur chaque case (2026-10-22). Et une fenêtre de test réduite
+par `resize_window` peut montrer des traits fantômes : juger le rendu à taille réelle.
+
 **`:where()` ne compte pour rien dans la spécificité.** Deux règles à spécificité égale : la
 dernière écrite gagne. Un `cursor:help` écrit à la main plus bas dans le fichier annulait la
 règle générale du curseur dessiné.
