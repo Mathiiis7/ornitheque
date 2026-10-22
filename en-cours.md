@@ -3,6 +3,9 @@
 - Bulle de « Rareté ligue » : le barème en ronds comme la rareté terrain, calculé sur le nombre de membres (points 100/k par palier).
 - v872 / app.js?v=446 : les comptes des fenêtres du Birdydex (famille, milieu, vues) passent par le même filtre que la grille (_pkdxLignes + _pkdxGardeZone). Ils comptaient les accidentelles cachées et ignoraient X/P/N et la zone (Rapaces : 28 pour 26). Vérifié en démo : 104 choix sans filtre, avec X, avec « Vues seulement », en Vendée, zéro écart.
 - Remarqué, pas touché : le « filtré : N » du compteur du Birdydex se calcule avant le filtre par zone.
+- v873 / app.js?v=447 : bulle ligue sans la ligne « Vue seulement hors de France · 0 point » (fausse : foreignTick renvoie false depuis le 21/09, l'étranger compte comme le reste) et sans « en France » dans son titre. Bulle terrain : colonne des points (palier n = n points), ligne « – Espèce absente de France · 1 point » (règle inchangée, choix de Mathis). Jetons X/P/N de la bulle à taille souris au doigt (la bulle débordait au téléphone).
+- « Qui a vu quoi » : avec un filtre pays qui écarte le pays de la 1re obs et garde la France, la case montre le drapeau français si l'espèce y a été vue (v.fr), bulle « Vu en France (1re observation au Monténégro) ». Sans filtre, inchangé. Testé en démo en passant la Fuligule nyroca de Claire au Monténégro (fichier remis par genere-demo).
+- Remarqué, pas touché : le filtre pays ne connaît que le pays de la 1re obs et la France ; une espèce vue d'abord en Espagne puis au Portugal n'apparaît pas sous le filtre Portugal (allObs aurait l'info).
 
 # COMMITÉ, PAS POUSSÉ (2026-10-23) : Classement, suite (v870 / app.js?v=444), au-dessus du v869 ci-dessous, pas poussé non plus
 - Rareté ligue : une seule échelle de 12 paliers en part des membres (< 5 %, 5, 10, 20… 90 %, tous), légende sans paliers vides, bornes « 5–7 » quand un palier regroupe plusieurs nombres.

@@ -2918,12 +2918,12 @@ function _bulleLigue(){
     // Les arrondis d'un palier peuvent tomber sur le meme nombre (12 ou 13 membres : 8 points).
     const part = pts(lo) === pts(hi) ? pts(lo) + ' points' : pts(hi) + ' à ' + pts(lo) + ' points';
     return rond + `<span class="tb-nom">${nom}</span><span class="tb-part">${part}</span>`;
-  }).join('')
-    // Le meme rond gris a tiret que dans « Qui a vu quoi » : une espece cochee seulement a
-    // l'etranger ne compte pas (la competition se joue en France).
-    + '<span class="tb-n" style="background:var(--line-2)">–</span><span class="tb-nom">Vue seulement hors de France</span><span class="tb-part">0 point</span>';
+  // Pas de ligne pour les especes vues a l'etranger : depuis le 2026-09-21 elles comptent comme
+  // les autres (foreignTick), leurs 100 points se partagent pareil. La ligne « 0 point » posee
+  // le matin du 2026-10-23 etait fausse.
+  }).join('');
   return html
-    + `<div class="tb-titre">Membres qui l'ont vue en France, sur ${N}</div>`
+    + `<div class="tb-titre">Membres qui l'ont vue, sur ${N}</div>`
     + '<div class="tb-grille">' + lignes + '</div>';
 }
 // Bulle de chaque tri du Classement, au survol (ou au focus clavier) de son bouton. Elle
@@ -2954,16 +2954,23 @@ function _bulleTri(mode){
   });
   // Le dernier palier n a pas de borne basse : tout ce qui passe sous le dernier seuil.
   RANGES[10] = '< ' + _pcNum(_ANNUAL_THR[_ANNUAL_THR.length - 1][0]) + ' %';
-  const ligne = (n, coul, nom, part) => `<span class="tb-n" style="background:${coul}">${n}</span><span class="tb-nom">${nom}</span><span class="tb-part">${part}</span>`;
+  // Quatrieme colonne, les points (Mathis, 2026-10-23 : « les points sont pas ecrits ») : une
+  // espece rapporte le numero de son palier, rarityReal lisant la meme table REAL_RARITY.
+  const pts = n => n + (n > 1 ? ' points' : ' point');
+  const ligne = (n, coul, nom, part) => `<span class="tb-n" style="background:${coul}">${n}</span><span class="tb-nom">${nom}</span><span class="tb-part">${part}</span><span class="tb-pts">${pts(n)}</span>`;
   // Plus de palier 0 : les exotiques X et P se reconnaissent a leurs lettres, et ne rapportent
   // toujours aucun point (choix de Mathis, 2026-10-22).
   const lignes = [1,2,3,4,5,6,7,8,9,10].map(w => ligne(w, realColor(w), REAL_LABELS[w], RANGES[w])).join('')
-    + `<span class="tb-lettres">${jetonExo('X')}${jetonExo('P')}</span><span class="tb-nom">Échappé, provisoire</span><span class="tb-part">0 point</span>`
+    + `<span class="tb-lettres">${jetonExo('X')}${jetonExo('P')}</span><span class="tb-nom tb-nom-large">Échappé, provisoire</span><span class="tb-pts">0 point</span>`
     // Les N ne sont pas un oubli : ils comptent comme des sauvages (Mathis l'a demande, 2026-10-22).
-    + `<span class="tb-lettres">${jetonExo('N')}</span><span class="tb-nom">Introduit établi</span><span class="tb-part">compté à son palier</span>`;
+    + `<span class="tb-lettres">${jetonExo('N')}</span><span class="tb-nom tb-nom-large">Introduit établi</span><span class="tb-pts">ceux de son palier</span>`
+    // Une espece qui n'existe pas en France (un toucan au Bresil) : le rond gris a tiret de
+    // « Qui a vu quoi », et 1 point, rarityReal valant 1 hors de la table (regle inchangee,
+    // ecrite a la demande de Mathis le 2026-10-23).
+    + `<span class="tb-n" style="background:var(--line-2)">–</span><span class="tb-nom tb-nom-large">Espèce absente de France</span><span class="tb-pts">${pts(1)}</span>`;
   return '<p>Plus l\'espèce est rare <b>en France</b>, plus elle rapporte.</p>'
     + '<div class="tb-titre">Part des listes eBird qui mentionnent l\'espèce, 2019-2026</div>'
-    + '<div class="tb-grille">' + lignes + '</div>';
+    + '<div class="tb-grille tb-avec-pts">' + lignes + '</div>';
 }
 // Joueurs dans l'ordre du classement affiché (selon le tri choisi) : sert au tableau des
 // joueurs et, sans filtre, à l'ordre des colonnes de « Qui a vu quoi » (le 1er à gauche).
@@ -3330,6 +3337,18 @@ function renderMatrix({universe,N}){
   if(state.countryExcl && state.countryExcl.size){
     list=list.filter(u => u.missing || passePays(u, cc => !state.countryExcl.has(cc)));
   }
+  // Le pays que montre la case : celui de la 1re observation, sauf quand le filtre pays l'ecarte
+  // et garde la France, ou l'espece a aussi ete vue - la case dit alors pourquoi elle est la
+  // (Mathis, 2026-10-23 : Fuligule nyroca vue au Montenegro puis en France, drapeau du
+  // Montenegro sous le filtre France). Meme regle que passePays. Sans filtre, rien ne change :
+  // la 1re observation reste la 1re (2026-10-05).
+  const paysCase = v => {
+    const cc = v.country || 'FR';
+    return state.countryExcl.has(cc) && v.fr === true && !state.countryExcl.has('FR') ? 'FR' : cc;
+  };
+  const enPays = cc => `${_PREP_PAYS[cc] || 'en'} ${countryLabel(cc)}`;
+  const titreCase = v => { const cc = paysCase(v), premier = v.country || 'FR';
+    return 'Vu ' + enPays(cc) + (cc !== premier ? ` (1re observation ${enPays(premier)})` : ''); };
   if(avecRar && state.sort==='rarity'){
     // localeCompare avec 'fr' explicit + sensitivity:'base' : tri alphabetique francais
     // stable independant de la locale navigateur (evite les ordres bizarres selon OS).
@@ -3377,8 +3396,8 @@ function renderMatrix({universe,N}){
       // Le drapeau du pays de la 1re observation prend la place de la coche, France comprise :
       // la couleur de la case dit « vu », le drapeau dit ou (version C des maquettes
       // notes-privees/maquettes/drapeaux/, 17 px a 65 % d'opacite, Mathis, 2026-10-22).
-      const foreign=foreignTick(v); const cc=v.country||'FR';
-      const ttl = `Vu en ${countryLabel(cc)}${foreign?' - hors compétition':''}`;
+      const foreign=foreignTick(v); const cc=paysCase(v);
+      const ttl = `${titreCase(v)}${foreign?' - hors compétition':''}`;
       return `<td class="pcol is-seen${foreign?' is-foreign':''}${isMain?' is-main':''}" title="${esc(ttl)}">${flagImg(cc)?`<span class="case-drap">${flagImg(cc)}</span>`:'<i class="chk">✓</i>'}<span class="visually-hidden">${esc(ttl)}</span></td>`;
     }).join('');
     return `<tr class="${u.missing?'missing':''}">
@@ -3391,8 +3410,8 @@ function renderMatrix({universe,N}){
     const k=holdersFR(u), t=rarOf(u);
     // Cartes : n'affiche que les cochons de displayPeople (cohérent avec la table).
     const seers = displayPeople.filter(p=>u.seenBy.has(p.id))
-      .map(p=>{ const v=u.seenBy.get(p.id); const foreign=foreignTick(v); const cc=v.country; const abroad=cc&&cc!=='FR';
-        const ttl = abroad?`Vu en ${countryLabel(cc)}${foreign?' - hors compétition':''}`:'';
+      .map(p=>{ const v=u.seenBy.get(p.id); const foreign=foreignTick(v); const cc=v.country && paysCase(v); const abroad=cc&&cc!=='FR';
+        const ttl = abroad?`${titreCase(v)}${foreign?' - hors compétition':''}`:'';
         return `<span class="mc-person${foreign?' is-foreign':''}" style="--series:var(--s${p.si})"${ttl?` title="${esc(ttl)}"`:''}><span class="dot"></span>${esc(p.name)}${abroad?'<span class="abroad-mark-inline">'+(flagImg(cc)||'🌍')+'</span>':''}</span>`; }).join('');
     return `<div class="mcard ${u.missing?'missing':''}"${avecRar ? ` style="border-left-color:${t.color}"` : ''}>
       <div class="mc-head">

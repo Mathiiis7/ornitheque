@@ -3007,6 +3007,12 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .tb-lettres { display:inline-flex; gap:3px; }
   .tb-nom { color:var(--ink); }
   .tb-part { color:var(--ink-3); text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  /* Rarete terrain : les points en quatrieme colonne, apres la part des listes (2026-10-23). */
+  .tb-grille.tb-avec-pts { grid-template-columns:auto 1fr auto auto; }
+  /* Sans part des listes (exotiques, especes absentes de France), le nom prend aussi sa colonne :
+     sinon « Espèce absente de France » passait sur deux lignes. */
+  .tb-nom.tb-nom-large { grid-column:span 2; }
+  .tb-pts { color:var(--ink); text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
   .tmodal-note { margin:0 0 4px; font-size:13px; color:var(--ink-2); }
   .tmodal-h { margin:14px 0 6px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-2); }
   .tmodal-h span { color:var(--ink-3); font-weight:400; }
@@ -3472,6 +3478,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .pkdx-card .pkdx-exo { width:32px; min-width:32px; height:32px; margin:-8px; font-size:19px; padding:0; }
     @media (max-width:600px){
       .pkdx-card .pkdx-exo { width:28px; min-width:28px; height:28px; margin:-7px; font-size:16px; } }
+    /* Ni dans la bulle des tris du Classement : on n'y touche rien, la legende se lit. A 52 px les
+       jetons X, P, N elargissaient sa premiere colonne et la bulle debordait a droite au
+       telephone (2026-10-23). Ils y gardent la taille souris, celle des ronds de palier voisins. */
+    .tri-bulle .pkdx-exo { width:32px; min-width:32px; height:32px; margin:-8px; font-size:19px; padding:0; }
     /* « Tout » et « Vide » sont des mots, pas des jetons : ils grandissent par leur hauteur. */
     .rar-chip, .tier-chip { min-height:52px; }
     .rar-chips { gap:6px; }
