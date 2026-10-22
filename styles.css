@@ -589,7 +589,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     display:inline-flex; align-items:center; justify-content:center; margin-left:8px; vertical-align:middle; }
   #viewRanking .fp-hint, #viewRanking .miss-toggle { font-size:14px; font-weight:400; text-transform:none; letter-spacing:0; color:var(--ink-3); }
   #viewRanking .miss-toggle { color:var(--ink-2); }
-  #viewRanking .person-chip, #viewRanking .fp-reset, #viewRanking .filters-toggle, #viewRanking .rar-chip,
+  #viewRanking .person-chip, #viewRanking .fp-reset, #viewRanking .rar-chip,
   #viewRanking .filt-sel { font-family:var(--sans); font-size:14px; }
   #viewRanking .mc-sp, #viewRanking .mc-person { font-size:14px; }
   #viewRanking .mc-count { font-family:var(--sans); font-size:14px; }
@@ -725,14 +725,42 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   #matrix { padding:20px; }
   .controls { display:flex; flex-direction:column; gap:10px; margin:14px 0 6px; }
   .ctrl-main { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-  .filters-toggle { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; background:var(--surface-2); border:1px solid var(--line-2); border-radius:9px; font:600 14px/1 var(--sans); color:var(--ink-2); cursor:pointer; white-space:nowrap; }
-  .filters-toggle:hover { background:color-mix(in srgb,var(--accent) 8%,var(--surface-2)); color:var(--ink); }
-  .filters-toggle[aria-expanded="true"] { background:color-mix(in srgb,var(--accent) 14%,var(--surface)); border-color:var(--accent); color:var(--accent-ink); }
-  .filters-count { display:inline-flex; align-items:center; justify-content:center; min-width:20px; height:20px; padding:0 6px; border-radius:10px; background:var(--accent); color:#fff; font:700 11px/1 var(--sans); }
-  .filters-panel { border:1px solid var(--line); background:var(--surface-2); border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; gap:12px; }
-  /* Bug classique : display:flex empêche l'attribut [hidden] de fonctionner → il faut le forcer. */
-  .filters-panel[hidden] { display:none; }
-  .filters-count[hidden] { display:none; }
+  /* Filtres de « Qui a vu quoi » : les boutons du Birdydex (.cp-btn, qui disent leur valeur et
+     ouvrent une fenetre au milieu de l'ecran) et sa rangee de rarete (2026-10-22). Deux d'entre
+     eux, « Colonnes » et « Affichage », ouvrent un petit menu sous eux. */
+  .fm-barre { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .fm-barre .cp-btn[hidden] { display:none; }
+  .fm { position:relative; }
+  .fm-barre .cp-btn.actif { border-color:var(--accent); color:var(--accent-ink);
+    background:color-mix(in srgb,var(--accent) 12%,var(--surface)); }
+  /* La rangee de rarete : la meme boite que celle du Birdydex (#pkdxTierChips). */
+  .rar-rangee { display:flex; flex-wrap:wrap; gap:6px; align-items:center; padding:8px 10px;
+    background:var(--surface-2); border-radius:8px; }
+  .rar-rangee-titre { font-size:13px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.4px;
+    font-weight:700; margin-right:6px; }
+  .fm-pop { position:absolute; top:calc(100% + 6px); left:0; z-index:30; width:max-content; max-width:min(440px, 92vw);
+    box-sizing:border-box; display:flex; flex-direction:column; align-items:flex-start; gap:10px; padding:14px;
+    background:var(--surface); border:1px solid var(--line-2); border-radius:12px; box-shadow:var(--shadow); }
+  .fm-pop.vers-gauche { left:auto; right:0; }
+  /* Sur telephone, un menu ancre a son bouton sortait de l'ecran d'un cote ou de l'autre
+     (Rarete : 89 px a gauche, mesure en 375 px de large) : il s'ouvre sous toute la barre. */
+  @media (max-width:640px){
+    .fm-barre { position:relative; }
+    .fm { position:static; }
+    .fm-pop, .fm-pop.vers-gauche { left:0; right:0; width:auto; max-width:none; }
+  }
+  /* display:flex empeche l'attribut [hidden] de fonctionner : il faut le forcer. */
+  .fm-pop[hidden], .fm-actifs[hidden] { display:none; }
+  .fm-titre { font-size:13px; font-weight:700; color:var(--ink-3); text-transform:uppercase; letter-spacing:.4px; }
+  .fm-pop .fm-titre ~ .fm-titre { margin-top:4px; }
+  .fm-actifs { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .fm-tag { display:inline-flex; align-items:center; gap:8px; min-height:30px; padding:0 10px; box-sizing:border-box;
+    border:1px solid var(--accent); border-radius:15px; background:color-mix(in srgb,var(--accent) 12%,var(--surface));
+    color:var(--accent-ink); font:600 14px/1 var(--sans); cursor:pointer; }
+  .fm-tag span { font-size:17px; line-height:1; }
+  .fm-tag:hover { background:color-mix(in srgb,var(--accent) 20%,var(--surface)); }
+  .fm-tout { border:0; background:none; padding:0 6px; min-height:30px; color:var(--accent-ink); font:600 14px/1 var(--sans);
+    cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
   .fp-section { display:flex; flex-direction:column; gap:6px; }
   .fp-section.fp-row { flex-direction:row; flex-wrap:wrap; align-items:center; gap:14px; }
   .fp-title { font-size:13px; font-weight:700; color:var(--ink-3); text-transform:uppercase; letter-spacing:.4px; }
@@ -2009,6 +2037,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* Nom d'oiseau cliquable : soulignement discret au hover */
   .sp-link { cursor:pointer; text-decoration:none; color:inherit; border-bottom:1px dashed transparent; }
   .sp-link:hover { border-bottom-color:currentColor; }
+  /* Pas dans le classement : le pointille soulignait toute la case (photo comprise) et dessinait
+     un arc sous les ronds des especes preferees (Mathis, 2026-10-22). La bordure reste
+     transparente plutot que retiree, pour que la hauteur des lignes ne bouge pas. */
+  .board-sheet .sp-link:hover { border-bottom-color:transparent; }
   .tab { position:relative; }
   /* Compteur "N nouveaux" positionne en haut a droite de l'onglet. Pour >99, affiche "99+". */
   .tab-count { position:absolute; top:2px; right:2px; min-width:18px; height:18px; padding:0 5px; border-radius:9px; background:#e74c3c; color:#fff; font:700 11px/18px var(--sans); text-align:center; box-sizing:border-box; font-variant-numeric:tabular-nums; }
@@ -2332,7 +2364,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      pas un chiffre : le jeton rond de 20 px ci-dessus les ecrasait en 17 px de large, texte
      deborde par-dessus les voisins (vu par Mathis le 2026-10-05). Ils redeviennent des
      etiquettes, a 14 px comme le reste du Classement. */
-  #tierChips .rar-chip, #tierChips .rar-chip[data-tier] { width:auto; min-width:0; height:auto; margin:0;
+  #tierChips .rar-chip:not([data-rar]) { width:auto; min-width:0; height:auto; margin:0;
     transform:none; padding:6px 10px; border-radius:6px; font:600 14px/1.2 var(--sans); }
   /* Retire les flèches spinner natives sur #mapEbMinTodo (on a nos propres boutons +/-) */
   #mapEbMinTodo::-webkit-outer-spin-button, #mapEbMinTodo::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
@@ -3200,7 +3232,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   code, kbd { font-family:var(--mono); }
   .seg button { padding:5px 11px; }
   /* Les contrôles de filtre ont tous la même hauteur : 34 px écrits (de 27 à 34 avant). */
-  .seg, .filt-sel, .cp-btn, .whochip, .person-chip, .qz-mode, .filters-toggle {
+  .seg, .filt-sel, .cp-btn, .whochip, .person-chip, .qz-mode {
     min-height:34px; box-sizing:border-box; }
   /* Un bloc qui ouvre une page tombe à 12 px sous le titre, comme partout. */
   .section-head + .profile, #profilEmpty[style*="none"] + .profile { margin-top:12px; padding-top:0; border-top:0; }
@@ -3276,6 +3308,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   }
 
   @media (pointer: coarse) {
+    /* Filtres de « Qui a vu quoi » : boutons des menus, ce qu'ils contiennent, etiquettes. */
+    .fm-barre .cp-btn, .fm-pop .person-chip, #tierChips .rar-chip:not([data-rar]), .fm-pop .miss-toggle,
+    .fm-tag, .fm-tout { min-height:52px; }
+    .fm-pop .miss-toggle { display:flex; align-items:center; }
+
     /* Classement : au doigt, chaque espece est une cible de doigt. */
     .board-pile .board-rond { width:52px; height:52px; }
     .board-sp { min-height:52px; }
