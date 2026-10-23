@@ -2564,6 +2564,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      l'entête collant de l'appli (.entete-fixe, 60) en faisant défiler. */
   .ct-carte { position:relative; isolation:isolate; height:640px; border-radius:12px; overflow:hidden; border:1px solid var(--line-2); background:var(--surface-2); }
   .ct-carte .map-el { position:absolute; inset:0; height:auto; min-height:0; border:0; border-radius:0; }
+  /* Le navigateur entourait d'un cadre noir la forme qu'on venait de cliquer (son anneau de focus) :
+     sur un département, un grand rectangle (remarque de Mathis, 2026-10-23). Ces formes ne se
+     choisissent qu'à la souris ou au doigt ; au clavier, la zone se choisit par les menus du Récent. */
+  .ct-carte path.leaflet-interactive { outline:none; }
   /* En sombre, le plan OpenStreetMap est inversé, sinon il éblouit au milieu de la page (choix de
      Mathis sur la maquette). La vue satellite, elle, garde ses couleurs. */
   :root[data-theme="dark"] .ct-carte .ct-fond-plan { filter:invert(1) hue-rotate(180deg) grayscale(.55) brightness(.82) contrast(.9); }

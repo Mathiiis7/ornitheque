@@ -9000,10 +9000,17 @@ const _ctStyleRepos = () => ({ color:_ctCss('--ink-3'), weight:.8, opacity:.55, 
 function _ctSurligne(){
   if(!_lyrDeps) return;
   _lyrDeps.eachLayer(l => {
-    if(_ctDansZone(l)){
+    const dedans = _ctDansZone(l);
+    if(dedans){
       l.setStyle({ color:_ctCss('--accent'), weight:ebFilter.dept ? 3 : 2, opacity:1, fillColor:_ctCss('--accent'), fillOpacity:.06 });
       l.bringToFront();
     } else l.setStyle(_ctStyleRepos());
+    // Le département choisi ne prend plus les clics : les points sont petits, et un clic qui les
+    // manquait de peu rechargeait le département (remarque de Mathis, 2026-10-23). Dans une région,
+    // ses départements restent cliquables, pour en choisir un.
+    const muet = dedans && !!ebFilter.dept;
+    if(l._path) l._path.style.pointerEvents = muet ? 'none' : '';
+    if(muet) l.closeTooltip();
   });
 }
 // Les 96 départements, chargés à la première ouverture de la Carte (95 Ko gzippés, mesuré le
