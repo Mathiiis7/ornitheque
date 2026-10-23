@@ -7507,6 +7507,9 @@ $('#mapSearchSuggest')?.addEventListener('mousedown', e=>{
     _showSpeciesDetail(m._sciName, m._speciesCode);
   } else if(m._sciName && mapMode==='mine' && _mapLayer){
     // Mode mine : on filtre sur cette espèce et on fitBounds sur toutes ses obs
+    // La carte s'ouvre sans couche (2026-10-23) : choisir une espèce de la ligue allume la Ligue, sinon
+    // rien ne s'affiche et la recherche a l'air cassée.
+    if(!carteCouches.has('ligue')){ _ctAllume('ligue'); _ctAppliqueCouches(); }
     const target = (m._sciName||'').toLowerCase();
     const latlngs = [];
     if(_ctEnGrappes(_mapLayer) && _mapLayer._ctTous){
