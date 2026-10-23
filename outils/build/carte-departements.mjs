@@ -53,3 +53,36 @@ if (sans.length) throw new Error('départements sans code eBird : ' + sans.join(
 const texte = JSON.stringify(sortie);
 fs.writeFileSync('data/carte-departements.json', texte);
 console.log(`${sortie.features.length} départements, ${(texte.length / 1024).toFixed(0)} Ko (tolérance ${TOLERANCE}°, ${DECIMALES} décimales)`);
+
+// Les 13 régions : data/carte-regions.json, même simplification. Sur la carte de France, on clique
+// d'abord une région, puis ses départements (choix de Mathis, 2026-10-23). Source :
+// outils/config/regions-fr.geojson, codes INSEE. Le code eBird (FR-PDL) se lit sur les départements
+// qui tombent dedans, plutôt que d'une table écrite à la main : un écart ferait échouer le script.
+const dansAnneau = ([x, y], r) => {
+  let dedans = false;
+  for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
+    const [xi, yi] = r[i], [xj, yj] = r[j];
+    if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) dedans = !dedans;
+  }
+  return dedans;
+};
+const dansGeom = (p, g) => (g.type === 'Polygon' ? [g.coordinates] : g.coordinates).some(poly => dansAnneau(p, poly[0]));
+// Un point sûrement à l'intérieur d'un département : le milieu de ses sommets, ou à défaut un sommet.
+const temoin = g => {
+  const r = (g.type === 'Polygon' ? g.coordinates : g.coordinates.reduce((a, b) => (b[0].length > a[0].length ? b : a)))[0];
+  const c = [r.reduce((s, p) => s + p[0], 0) / r.length, r.reduce((s, p) => s + p[1], 0) / r.length];
+  return dansAnneau(c, r) ? c : r[0];
+};
+const regions = JSON.parse(fs.readFileSync('outils/config/regions-fr.geojson', 'utf8'));
+const sortieR = {
+  type: 'FeatureCollection',
+  features: regions.features.map(f => {
+    const prefixes = new Set(deps.features.filter(d => dansGeom(temoin(d.geometry), f.geometry))
+      .map(d => (ebirdDe[d.properties.code] || '').split('-').slice(0, 2).join('-')));
+    if (prefixes.size !== 1) throw new Error(`région ${f.properties.nom} : codes eBird ${[...prefixes].join(', ') || 'aucun'}`);
+    return { type: 'Feature', properties: { code: f.properties.code, nom: f.properties.nom, ebird: [...prefixes][0] }, geometry: simplGeom(f.geometry) };
+  }),
+};
+const texteR = JSON.stringify(sortieR);
+fs.writeFileSync('data/carte-regions.json', texteR);
+console.log(`${sortieR.features.length} régions, ${(texteR.length / 1024).toFixed(0)} Ko : ${sortieR.features.map(f => f.properties.ebird).join(' ')}`);
