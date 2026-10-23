@@ -8923,8 +8923,14 @@ function _ctOuvreSurvol(m){
   }
 }
 function _ctBrancheSurvol(g){
-  // Toucher ou cliquer un point montre son infobulle : au doigt, c'est le seul moyen de la voir.
-  g.on('click', e => { const m = e.layer; if(m && m.bindTooltip && (m._rec || m._ligue)) _ctOuvreSurvol(m); });
+  // Cliquer un point ouvre la fiche de son espèce (Mathis, 2026-10-23) ; le survol dit déjà le reste.
+  // Au doigt, qui ne survole pas, le premier toucher montre l'infobulle, le second ouvre la fiche.
+  g.on('click', e => {
+    const m = e.layer; if(!(m && m.bindTooltip && (m._rec || m._ligue))) return;
+    const sci = m._sciName || (m._rec && m._rec.sci);
+    if(sci && (!_ctAuDoigt.matches || (_ctSurvolOuvert === m && m.isTooltipOpen()))){ m.closeTooltip(); openSpeciesModal(sci); return; }
+    _ctOuvreSurvol(m);
+  });
   if(_ctAuDoigt.matches) return g;
   g.on('mouseover', e => { const m = e.layer; if(m && m.bindTooltip && (m._rec || m._ligue)) _ctOuvreSurvol(m); });
   // Les grappes : refaites à chaque zoom, l'infobulle se pose au survol et part avec la souris.
