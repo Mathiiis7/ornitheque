@@ -1,3 +1,10 @@
+# EN COURS (2026-10-24, nuit) : retouches de la Carte, 6 commits PAS POUSSÉS (v882 à v887 / app.js?v=456 à 461)
+- Faits et vérifiés (Playwright sur la démo, bancs CONFORMES) : carte vide à l'ouverture et après Retour France ; la spirale d'une grappe reste ouverte au zoom (refermée par un clic sur la carte) ; clic sur un point = fiche espèce (au doigt : 1er toucher la bulle, 2e la fiche) ; pastilles de la liste du Récent = jeton du site (choix B de Mathis), X N P alignés sur le nom, nombres des grappes recentrés ; choisir une espèce de la ligue dans la recherche allume la Ligue ; le Récent cache les espèces des listes de plus de 48 h qu'eBird ne publie pas dans /recent (Accenteur à gorge noire, liste privée S399693190 du 49).
+- Pour pousser : versions au-dessus de v887 / app.js?v=461. Il veut voir en local d'abord.
+- Centrage : les initiales des points sont au meilleur réglage possible en CSS (le texte saute d'un pixel entier entre 0,9 et 1 px de rembourrage) ; reste ±1 px selon la place du point. Un dessin en SVG réduirait ce jeu de moitié environ (mesuré), pas fait : toutes les pastilles du site seraient à refaire.
+- Le banc pastilles mesure en plus le palier de la liste du Récent et le nombre des grappes. Les mesures sur la vraie page sont dans le scratchpad de la session (centrage-points.mjs, centrage-vrai.mjs).
+- Prochain sujet inchangé : étape 3, les Hotspots (ci-dessous).
+
 # EN COURS (2026-10-23, nuit) : refonte de la page Carte, ÉTAPES 1 ET 2 EN LIGNE (v881 / app.js?v=455, 16e0b0f0)
 ## POUR LA PROCHAINE CONVERSATION : ÉTAPE 3, les Hotspots (carrés, à cocher, mois, dans le budget eBird : 200 appels à l'échelle de la France aujourd'hui, à revoir)
 - carte-refonte est fusionnée dans main et poussée, vérifiée sur le site en ligne (Carte, 109 contours, aucune erreur console). Continuer dans le dossier principal, ou recréer un dossier à part depuis main pour l'étape 3 (../ornitheque-carte existe encore, branche carte-refonte à jour de main sauf le commit de versions).
