@@ -1,3 +1,9 @@
+# POUSSÉ (2026-10-23, après-midi) : colonnes égales (v876), photos restaurées (v878 / app.js?v=452), compte rendu du modèle
+- « Qui a vu quoi » : colonnes des personnes égales, qui remplissent jusqu'au bord, 104 px minimum puis défilement (styles.css, contain:inline-size sur .cap).
+- v869 avait effacé 185 photos choisies (table PHOTO_OVERRIDE_WIKI réécrite d'avant la fusion) : table remise telle qu'en 88fa77b2, 568 entrées, 0 écart. Leçon dans CLAUDE.md (« Deux sessions »).
+- docs/modele-repartition.md commité et poussé (modèle arrêté, teinte iNaturalist gardée). Plus rien en attente dans le dossier.
+- Une autre session a pris v877 (crédits LPO) : prochain numéro v879 / app.js?v=453.
+
 # POUSSÉ (2026-10-23) : ordres, bulles du Classement, comptes du Birdydex, filtre pays, ordres en italique (v871 à v875 / app.js?v=445 à 449)
 - Filtre famille (Birdydex et « Qui a vu quoi ») : chaque ordre (Passeriformes…) se choisit aussi, en tête de ses familles. Valeur « ordre:Passeriformes ».
 - Bulle de « Rareté ligue » : le barème en ronds comme la rareté terrain, calculé sur le nombre de membres (points 100/k par palier).
