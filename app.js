@@ -7167,11 +7167,14 @@ function _updateLegend(){
   const parts = [];
   const ligue = carteCouches.has('ligue'), recent = carteCouches.has('recent');
   if(ligue || recent){
-    const formes = [ligue ? `<span class="ml-row">${_ctSymbole('ligue')}<span class="ml-txt">La ligue</span></span>` : '',
-      recent ? `<span class="ml-row">${_ctSymbole('recent')}<span class="ml-txt">Vu récemment</span></span>` : ''].join('');
+    // Ce que dit chaque pastille, et la grappe (son anneau additionne les raretés de ses points).
+    const anneau = `<span class="ct-gr ct-gr-sym" style="background:conic-gradient(${realColor(2)} 0deg 200deg, ${realColor(6)} 200deg 300deg, ${realColor(9)} 300deg 360deg)" aria-hidden="true"><span>5</span></span>`;
+    const formes = '<div class="ct-leg-formes">' + [ligue ? `<span class="ml-row">${_ctSymbole('ligue')}<span class="ml-txt">La ligue : l'initiale de l'ami</span></span>` : '',
+      recent ? `<span class="ml-row">${_ctSymbole('recent')}<span class="ml-txt">Vu récemment</span></span>` : '',
+      L.markerClusterGroup ? `<span class="ml-row">${anneau}<span class="ml-txt">Plusieurs points : ${_ctAuDoigt.matches ? 'touche' : 'clique'} pour ouvrir</span></span>` : ''].join('') + '</div>';
     const tiers=[1,2,3,4,5,6,7,8,9,10];
     // Les dix paliers sur deux colonnes : en une seule, la légende montait jusqu'au crayon.
-    parts.push('<div class="ml-title">Rareté</div>' + (ligue && recent ? formes : '') + '<div class="ct-leg-paliers">' + tiers.map(w=>
+    parts.push(formes + '<div class="ml-title">Rareté</div><div class="ct-leg-paliers">' + tiers.map(w=>
       `<div class="ml-row"><span class="ml-dot" style="background:${realColor(w)}"></span><span class="ml-txt"><b>${w}</b> ${esc(REAL_LABELS[w]||'')}</span></div>`).join('') + '</div>');
   }
   if(carteCouches.has('hot')){
@@ -7195,6 +7198,21 @@ function _mapApplyFilter(){
   const dansZone = _ctTesteZone();
   let visible=0, total=0;
   for(const lyr of layers){
+    // En grappes, un point caché compterait encore dans sa grappe : on retire les points et on remet
+    // les visibles, seulement quand la recherche ou la zone ont changé (1 349 points dans la démo).
+    if(_ctEnGrappes(lyr)){
+      if(!lyr._ctTous) continue;
+      const sig = q + '|' + (dansZone && lyr === _mapLayer ? JSON.stringify([ebFilter.dept, ebFilter.region, ebFilter.polygon]) : '');
+      if(lyr._ctFiltre === sig) continue;
+      lyr._ctFiltre = sig;
+      const garder = lyr._ctTous.filter(m => {
+        let match = !q || (m._q && m._q.includes(q));
+        if(match && dansZone && lyr === _mapLayer){ const ll = m.getLatLng(); match = dansZone(ll.lat, ll.lng); }
+        return match;
+      });
+      lyr.clearLayers(); lyr.addLayers(garder);
+      continue;
+    }
     lyr.eachLayer(m => {
       const el = m._path || m._icon; if(!el) return;
       total++;
@@ -7466,7 +7484,12 @@ $('#mapSearchSuggest')?.addEventListener('mousedown', e=>{
     // Mode mine : on filtre sur cette espèce et on fitBounds sur toutes ses obs
     const target = (m._sciName||'').toLowerCase();
     const latlngs = [];
-    _mapLayer.eachLayer(x => {
+    if(_ctEnGrappes(_mapLayer) && _mapLayer._ctTous){
+      // En grappes : on ne garde que les points de l'espèce (la prochaine recherche remet les autres).
+      const siens = _mapLayer._ctTous.filter(x => (x._sciName||'').toLowerCase() === target);
+      _mapLayer.clearLayers(); _mapLayer.addLayers(siens); _mapLayer._ctFiltre = 'espece:' + target;
+      for(const x of siens){ const ll = x.getLatLng(); latlngs.push([ll.lat, ll.lng]); }
+    } else _mapLayer.eachLayer(x => {
       const sameSp = (x._sciName||'').toLowerCase() === target;
       const el = x._path || x._icon;
       if(el) el.style.display = sameSp ? '' : 'none';
@@ -7549,6 +7572,7 @@ function _mapCollectPoints(){
 const SPREAD_MAX = 12;
 function _mainMapSpreadGbifMarkers(){
   if(!_map || !_lyrMissing) return;
+  if(_ctEnGrappes(_lyrMissing)) return;   // en grappes, l'éventail fait ce travail
   // Ne fait rien si la couche n'est pas actuellement affichee (evite de perturber
   // les recherches _showSpeciesDetail qui removent _lyrMissing sans clearer).
   if(!_map.hasLayer(_lyrMissing)) return;
@@ -7612,7 +7636,7 @@ function _mapMarker(pt, groupSize){
   // Utilise la rarete DU PAYS d'observation (pt.cc), pas la rarete FR par defaut.
   // Un oiseau vu en ES a la couleur de son tier ES, pas de son tier FR.
   const color = sciColorForCountry(pt.sci, pt.cc);
-  const m = L.circleMarker([pt.dispLat, pt.dispLon], { radius:6, weight:1.5, color:'#fff', fillColor:color, fillOpacity:.85, opacity:1 });
+  const m = _ctPastille([pt.dispLat, pt.dispLon], color, pt.w, _ctInitiale(pt.who));
   const date = pt.date ? ` · ${esc(pt.date)}` : '';
   const cc = pt.cc ? ` · ${esc(countryLabel(pt.cc))}` : '';
   const loc = pt.loc ? esc(pt.loc) : '';
@@ -7870,7 +7894,7 @@ function _ensureMapInit(el){
   const satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
     attribution:'Tiles © Esri - Source: Esri, Maxar, Earthstar Geographics', maxZoom:19 });
   planLayer.addTo(_map);
-  _lyrMissing = L.layerGroup();
+  _lyrMissing = _ctGrappes();
   _lyrHotspots = L.layerGroup();
   // Re-spread des marqueurs GBIF a chaque fin de zoom : points colles ecartes, points
   // solitaires reviennent a leur position exacte. Ne touche pas les marqueurs eBird
@@ -7938,10 +7962,15 @@ function _renderModeMine(el){
   });
   const groups = new Map();
   for(const p of pts){ const k = p.lat.toFixed(5)+','+p.lon.toFixed(5); if(!groups.has(k)) groups.set(k,[]); groups.get(k).push(p); }
-  for(const g of groups.values()) _spreadGroup(g);
+  // En grappes, les points d'un même endroit restent à leur place : la grappe les ouvre en éventail.
+  const grappes = !!L.markerClusterGroup;
+  for(const g of groups.values()){ if(grappes) for(const p of g){ p.dispLat = p.lat; p.dispLon = p.lon; } else _spreadGroup(g); }
   const ordered = [...pts].sort((a,b)=> a.w - b.w);
   const markers = ordered.map(p=>_mapMarker(p, groups.get(p.lat.toFixed(5)+','+p.lon.toFixed(5)).length));
-  _mapLayer = L.layerGroup(markers).addTo(_map);
+  _mapLayer = _ctGrappes();
+  _mapLayer._ctTous = markers;   // tous les points ; _mapApplyFilter n'en remet que les visibles
+  if(_mapLayer.addLayers) _mapLayer.addLayers(markers); else markers.forEach(m => _mapLayer.addLayer(m));
+  _mapLayer.addTo(_map);
   const stats=$('#mapStats');
   if(stats){
     const uniqPersons=new Set(pts.map(p=>p.uid)).size, uniqCountries=new Set(pts.map(p=>p.cc).filter(Boolean)).size;
@@ -8444,7 +8473,7 @@ async function _showSpeciesDetailGbif(sciName){
       const gm = `<a href="https://www.google.com/maps?q=${avgLat},${avgLon}" target="_blank" rel="noopener" class="p-link">🗺️ Google Maps</a>`;
       const gbifLink = first.gbifID ? `<a href="https://www.gbif.org/occurrence/${esc(first.gbifID)}" target="_blank" rel="noopener" class="p-link">🌍 GBIF</a> · ` : '';
       const radius = nGroup > 1 ? Math.min(12, 7 + Math.log2(nGroup) * 1.2) : 7;
-      const dot = _triangleCarte([avgLat, avgLon], { radius, weight:2, color:'#fff', fillColor:color, fillOpacity:.9, opacity:1 });
+      const dot = _ctPastille([avgLat, avgLon], color, w, CT_OEIL);
       dot.bindPopup(`<b class="sp-link" data-sci="${esc(sciName)}" style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted;">${esc(nm)}</b>${countBadge} <span class="p-sci">${esc(sciName)}</span>`+
         `<span class="p-meta">📍 ${esc(loc)}</span>`+
         dateLine +
@@ -8533,7 +8562,7 @@ async function _showSpeciesDetail(sciName, speciesCode){
         : `<span class="p-meta">${nGroup} obs · derniere ${esc(dates[0]||'?')}${dates.length > 1 ? ` (${dates.length} dates distinctes)` : ''}</span>`;
       const countBadge = nGroup > 1 ? ` <span style="display:inline-block;background:#0b7c77;color:#fff;padding:1px 7px;border-radius:5px;font-weight:700;font-size:11px;vertical-align:middle;margin-left:4px;">×${nGroup}</span>` : '';
       const radius = nGroup > 1 ? Math.min(12, 7 + Math.log2(nGroup) * 1.2) : 7;
-      const dot = _triangleCarte([avgLat, avgLon], { radius, weight:2, color:'#fff', fillColor:color, fillOpacity:.9, opacity:1 });
+      const dot = _ctPastille([avgLat, avgLon], color, w, CT_OEIL);
       const gm = group.every(o => o.locationPrivate) ? '' : `<span class="p-meta"><a href="https://www.google.com/maps?q=${avgLat},${avgLon}" target="_blank" rel="noopener" class="p-link">🗺️ Google Maps</a></span>`;
       dot.bindPopup(`<b class="sp-link" data-sci="${esc(sciName||'')}" style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted;">${esc(nm)}</b>${countBadge} <span class="p-sci">${esc(sciName||'')}</span>`+
         `<span class="p-meta">📍 ${esc(first.locName||'?')}</span>`+
@@ -8800,26 +8829,46 @@ let _lyrDeps = null, _ctDepsPromesse = null;
 const _ctTel = window.matchMedia('(max-width:900px)');
 const _ctAuDoigt = window.matchMedia('(hover: none)');
 
-// Les points « vu récemment » sont des triangles, ceux de la ligue des ronds : les deux couches
-// partagent la couleur de la rareté et s'affichent désormais ensemble. Un CircleMarker dont seul
-// le dessin change garde tout le reste (survol, bulle, setLatLng de l'éparpillement).
-let _TriangleCarte = null;
-function _triangleCarte(latlng, opts){
-  if(!_TriangleCarte){
-    _TriangleCarte = L.CircleMarker.extend({
-      _updatePath(){
-        const r = this._renderer, p = this._point;
-        if(!r || !r._setPath || !p) return L.CircleMarker.prototype._updatePath.call(this);
-        const s = this._radius * 1.3;
-        r._setPath(this, `M${p.x},${p.y - s * 1.1}L${p.x + s},${p.y + s * .75}L${p.x - s},${p.y + s * .75}z`);
-      }
-    });
-  }
-  return new _TriangleCarte(latlng, opts);
+// Les points de la ligue et du récent (choix de Mathis, 2026-10-23, sur la planche
+// notes-privees/maquettes/carte/symboles.html) : des pastilles rondes à la couleur de la rareté, qui
+// portent l'initiale de l'ami (la ligue) ou un œil (vu récemment). Les triangles et les ronds d'avant
+// ne lui plaisaient pas. Les points proches se rangent en grappes cerclées d'un anneau des raretés ;
+// les points au même endroit, une grappe les ouvre en éventail (Leaflet.markercluster, index.html).
+const CT_OEIL = '<svg viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8 12.1 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="1.9" fill="#fff" stroke="none"/></svg>';
+// options.w : le palier, que l'anneau de la grappe additionne.
+function _ctPastille(latlng, couleur, w, dedans){
+  return L.marker(latlng, { w:w || 0, riseOnHover:true,
+    icon:L.divIcon({ html:`<span class="ct-pt" style="background:${couleur}">${dedans}</span>`, className:'ct-pt-ico', iconSize:[22, 22] }) });
+}
+const _ctPastilleRecent = (latlng, sci, cc) => _ctPastille(latlng, sciColorForCountry(sci, cc), rarityForCountry(sci, cc), CT_OEIL);
+const _ctInitiale = nom => esc(((nom || '').trim().charAt(0) || '?').toUpperCase());
+// L'anneau : chaque palier y prend sa part, du plus commun au plus rare ; le nombre au centre.
+function _ctAnneau(grappe){
+  const ms = grappe.getAllChildMarkers(), n = ms.length, taille = n < 10 ? 34 : n < 100 ? 40 : 46;
+  const parts = new Map(); for(const m of ms){ const w = m.options.w || 0; parts.set(w, (parts.get(w) || 0) + 1); }
+  let a = 0;
+  const arcs = [...parts.keys()].sort((x, y) => x - y).map(w => { const d = a; a += parts.get(w) / n * 360; return `${realColor(w)} ${d.toFixed(1)}deg ${a.toFixed(1)}deg`; });
+  return L.divIcon({ html:`<div class="ct-gr" style="width:${taille}px;height:${taille}px;background:conic-gradient(${arcs.join(',')})"><span>${n}</span></div>`,
+    className:'ct-gr-ico', iconSize:[taille, taille] });
+}
+// Une couche en grappes ; sans la bibliothèque (bloquée, hors ligne), une couche ordinaire.
+function _ctGrappes(){
+  if(!L.markerClusterGroup) return L.layerGroup();
+  return L.markerClusterGroup({ iconCreateFunction:_ctAnneau, showCoverageOnHover:false, maxClusterRadius:45,
+    // Pas de chargement par paquets (chunkedLoading) : renderMap retire la couche de la carte entre
+    // deux paquets, et la bibliothèque plantait (« reading 'getMinZoom' », vu le 2026-10-23).
+    spiderfyDistanceMultiplier:1.4, spiderLegPolylineOptions:{ weight:1.5, color:_ctCss('--ink-2'), opacity:.6 } });
+}
+const _ctEnGrappes = l => !!(l && l.zoomToShowLayer);
+// Ouvre la bulle d'un point, même rangé dans une grappe (la carte zoome ou ouvre l'éventail d'abord).
+function _ctOuvreBulle(couche, m){
+  if(_ctEnGrappes(couche) && couche.hasLayer(m)) couche.zoomToShowLayer(m, () => m.openPopup());
+  else m.openPopup();
 }
 function _ctSymbole(k){
-  if(k === 'ligue') return `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="5" cy="9" r="3.6" fill="${realColor(2)}" stroke="#fff" stroke-width="1.2"/><circle cx="11" cy="6" r="3.6" fill="${realColor(8)}" stroke="#fff" stroke-width="1.2"/></svg>`;
-  if(k === 'recent') return `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5l6.5 12h-13z" fill="${realColor(7)}" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/></svg>`;
+  const pastille = (w, dedans) => `<span class="ct-pt ct-pt-sym" style="background:${realColor(w)}" aria-hidden="true">${dedans}</span>`;
+  if(k === 'ligue') return pastille(7, 'S');
+  if(k === 'recent') return pastille(7, CT_OEIL);
   return `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="#1e6091" stroke="#fff" stroke-width="1.2"/></svg>`;
 }
 function _ctDessineCouches(){
@@ -9335,7 +9384,8 @@ function _ctPoseRecent(liste, cc){
   });
   const groupes = new Map();
   for(const p of pts){ const k = p.lat.toFixed(5) + ',' + p.lon.toFixed(5); if(!groupes.has(k)) groupes.set(k, []); groupes.get(k).push(p); }
-  for(const g of groupes.values()) _spreadGroup(g);
+  // En grappes, un même endroit garde ses points en place : la grappe les ouvre en éventail.
+  for(const g of groupes.values()){ if(_ctEnGrappes(_lyrMissing)) for(const p of g){ p.dispLat = p.lat; p.dispLon = p.lon; } else _spreadGroup(g); }
   // Les plus rares ajoutés en dernier, donc dessinés par-dessus.
   pts.sort((a, b) => (rarityForCountry(a.o.sciName, cc) || 0) - (rarityForCountry(b.o.sciName, cc) || 0));
   for(const p of pts){
@@ -9343,7 +9393,7 @@ function _ctPoseRecent(liste, cc){
     const w = rarityForCountry(o.sciName, cc);
     const nm = FR_NAMES[sci] || o.comName || o.sciName;
     const nv = o.obsValid === false;
-    const m = _triangleCarte([p.dispLat, p.dispLon], { radius:7, weight:1.5, color:'#fff', fillColor:sciColorForCountry(o.sciName, cc), fillOpacity:.9, opacity:1 });
+    const m = _ctPastilleRecent([p.dispLat, p.dispLon], o.sciName, cc);
     const gm = p.prive ? '' : `<span class="p-meta"><a href="https://www.google.com/maps?q=${o.lat},${o.lng}" target="_blank" rel="noopener" class="p-link">🗺️ Google Maps</a></span>`;
     m.bindPopup(`<b class="sp-link" data-sci="${esc(o.sciName || '')}" style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted;">${esc(nm)}</b> <span class="p-sci">${esc(o.sciName || '')}</span>` +
       `<span class="p-meta">Vu le ${esc(_ctDateLongue(o.obsDt))} à ${esc(p.prive ? 'un lieu privé' : (o.locName || '?'))}${o.howMany ? _ctOiseauxComptes(o.howMany) : ''}</span>` +
@@ -9500,7 +9550,7 @@ async function _ctMontreEspece(sci){
   const pts = ms.map(m => m.getLatLng());
   if(pts.length === 1) _map.setView(pts[0], Math.max(_map.getZoom(), 11));
   else _map.fitBounds(L.latLngBounds(pts), { ..._ctMarges(), maxZoom:12 });
-  ms.reduce((a, b) => (b._rec.date > a._rec.date ? b : a)).openPopup();
+  _ctOuvreBulle(_lyrMissing, ms.reduce((a, b) => (b._rec.date > a._rec.date ? b : a)));
 }
 // Le volet Récent : une ligne par espèce (maquette finale.html, contenuRecent), tirée des triangles
 // de la carte, donc toujours d'accord avec eux.
@@ -10016,7 +10066,7 @@ function _gbifRenderAllObs(allObs, sciByKey, stillMine){
     const time = o.eventTime || '';
     const behavior = o.behavior || '';
     const cnt = (typeof o.individualCount === 'number' && o.individualCount > 0) ? o.individualCount : null;
-    const m = _triangleCarte([o.dispLat, o.dispLon], { radius:6, weight:1.5, color:'#fff', fillColor:sciColorForCountry(sci, country), fillOpacity:.9, opacity:1 });
+    const m = _ctPastilleRecent([o.dispLat, o.dispLon], sci, country);
     m._baseLat = o.decimalLatitude; m._baseLon = o.decimalLongitude;
     m._rec = { sci, nom:nm, date:(o.eventDate || '').slice(0, 10), lieu:loc, nv:false };
     const gm = `<a href="https://www.google.com/maps?q=${o.decimalLatitude},${o.decimalLongitude}" target="_blank" rel="noopener" class="p-link">🗺️ Google Maps</a>`;

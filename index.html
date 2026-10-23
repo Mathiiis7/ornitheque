@@ -71,6 +71,9 @@
 <!-- Leaflet JS : defer -> ne bloque plus le parsing HTML. Le module principal (aussi defer par nature)
      tourne apres, donc L. est defini avant. -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
+<!-- Les grappes de la Carte (choix de Mathis, 2026-10-23) : 34 Ko, après Leaflet dont elles ont besoin.
+     Leur petite feuille de style (les animations) est réécrite dans styles.css, sans requête de plus. -->
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" integrity="sha256-Hk4dIpcqOSb0hZjgyvFOP+cEmDXUKKNE/tT542ZbNQg=" crossorigin="" defer></script>
 <link rel="stylesheet" href="styles.css">
 
 <!-- Etat d'auth : au chargement, on ne sait pas encore si l'utilisateur est connecte.

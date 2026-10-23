@@ -2557,7 +2557,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-couche { height:34px; display:inline-flex; align-items:center; gap:7px; padding:0 14px 0 11px; border-radius:17px; border:1px solid var(--line-2); background:var(--surface); color:var(--ink-2); font:600 14px var(--sans); cursor:pointer; white-space:nowrap; }
   .ct-couche svg { width:16px; height:16px; flex:none; }
   .ct-couche[aria-pressed="true"] { border-color:var(--accent); color:var(--accent-ink); box-shadow:inset 0 0 0 1px var(--accent); background:color-mix(in srgb, var(--accent) 7%, var(--surface)); }
-  .ct-couche[aria-pressed="false"] svg { opacity:.45; }
+  .ct-couche[aria-pressed="false"] svg, .ct-couche[aria-pressed="false"] .ct-pt { opacity:.45; }
+  .ct-couche .ct-pt svg { opacity:1; }
   .ct-corps { display:grid; grid-template-columns:minmax(0,1fr) 410px; gap:14px; margin-top:12px; align-items:start; }
   .ct-carte-bloc { min-width:0; }
   /* isolation : Leaflet empile ses calques de 400 à 1 000 ; sans ce cadre, la carte passait par-dessus
@@ -2568,6 +2569,28 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      sur un département, un grand rectangle (remarque de Mathis, 2026-10-23). Ces formes ne se
      choisissent qu'à la souris ou au doigt ; au clavier, la zone se choisit par les menus du Récent. */
   .ct-carte path.leaflet-interactive { outline:none; }
+  /* Les points de la ligue et du récent (planche symboles.html, choix de Mathis, 2026-10-23) : une
+     pastille à la couleur de la rareté, l'initiale de l'ami ou un œil dedans ; et les grappes,
+     cerclées de l'anneau des raretés de leurs points. Les chiffres et lettres des pastilles rondes
+     gardent le 800 de la charte. */
+  .ct-pt { width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box;
+    color:#fff; font:800 12px/1 var(--sans); border:2px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,.35); }
+  .ct-pt svg { width:13px; height:13px; }
+  .ct-pt-ico, .ct-gr-ico { background:none; border:0; }
+  .ct-pt-ico:focus:not(:focus-visible), .ct-gr-ico:focus:not(:focus-visible) { outline:none; }
+  .ct-gr { display:flex; align-items:center; justify-content:center; border-radius:50%; padding:5px; box-sizing:border-box; box-shadow:0 1px 4px rgba(0,0,0,.35); cursor:pointer; }
+  .ct-gr span { width:100%; height:100%; border-radius:50%; background:var(--surface); color:var(--ink); display:flex; align-items:center; justify-content:center; font:800 13px/1 var(--sans); }
+  .ct-pt.ct-pt-sym { width:18px; height:18px; font-size:10px; border-width:1.5px; flex:none; }
+  .ct-pt.ct-pt-sym svg { width:11px; height:11px; }
+  .ct-gr.ct-gr-sym { width:20px; height:20px; padding:3px; flex:none; cursor:default; }
+  .ct-gr.ct-gr-sym span { font-size:9px; }
+  .ct-carte .ct-legende .ct-leg-formes { display:flex; flex-direction:column; gap:3px; margin-bottom:8px; }
+  .ct-carte .ct-legende .ct-leg-formes .ml-row { display:flex; align-items:center; gap:7px; }
+  /* Les animations des grappes (réécrites d'après MarkerCluster.css, sans charger la feuille). */
+  .leaflet-cluster-anim .leaflet-marker-icon, .leaflet-cluster-anim .leaflet-marker-shadow { transition:transform .3s ease-out, opacity .3s ease-in; }
+  .leaflet-cluster-spider-leg { transition:stroke-dashoffset .3s ease-out, stroke-opacity .3s ease-in; }
+  @media (prefers-reduced-motion: reduce) {
+    .leaflet-cluster-anim .leaflet-marker-icon, .leaflet-cluster-anim .leaflet-marker-shadow, .leaflet-cluster-spider-leg { transition:none; } }
   /* En sombre, le plan OpenStreetMap est inversé, sinon il éblouit au milieu de la page (choix de
      Mathis sur la maquette). La vue satellite, elle, garde ses couleurs. */
   :root[data-theme="dark"] .ct-carte .ct-fond-plan { filter:invert(1) hue-rotate(180deg) grayscale(.55) brightness(.82) contrast(.9); }
