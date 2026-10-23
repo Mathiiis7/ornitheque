@@ -8478,10 +8478,11 @@ async function _showSpeciesDetail(sciName, speciesCode){
   // Ne pas clearLayers ici : on garde les vieux markers visibles pendant le fetch
   // (swap en fin de fonction quand les nouvelles obs sont pretes, cf. _showSpeciesDetailGbif).
   _lyrDetail.addTo(_map);
-  // On requete TOUJOURS au niveau pays et on filtre client-side par region/dept si
-  // demande. Ancienne cascade dept -> region -> pays cassait la monotonie : passer de
-  // 14j a 30j pouvait afficher MOINS d'obs car une zone plus restrictive se remplissait
-  // et prenait la priorite. Country-first + filtre local = 30j inclut toujours 14j.
+  // On interroge la zone choisie elle-même (département, région ou pays), sans cascade : une
+  // ancienne cascade dept -> region -> pays cassait la monotonie (30 j pouvait montrer moins que
+  // 14 j). On interrogeait ensuite le pays en filtrant sur subnational2Code, mais eBird ne rend pas
+  // ce champ ici (mesuré le 2026-10-23) : dès qu'une zone était choisie, la recherche ne trouvait
+  // jamais rien. Ta zone dessinée se filtre point par point.
   const cty = ebFilter.country || 'FR';
   const ctyName = { FR:'la France', ME:'le Monténégro', ES:"l'Espagne", PT:'le Portugal', IT:"l'Italie", GR:'la Grèce', HR:'la Croatie', AL:"l'Albanie", MA:'le Maroc', CH:'la Suisse', BE:'la Belgique', DE:"l'Allemagne", GB:'le Royaume-Uni', TR:'la Turquie', IS:"l'Islande", AU:"l'Australie", NZ:'la Nouvelle-Zélande', NA:'la Namibie', NO:'la Norvège', LK:'le Sri Lanka', US:'les États-Unis', CA:'le Canada' }[cty] || cty;
   const deptLbl = ebFilter.dept ? (DEPT_NAMES[ebFilter.dept]||ebFilter.dept) : '';
@@ -8492,35 +8493,37 @@ async function _showSpeciesDetail(sciName, speciesCode){
     const country = ebFilter.country || 'FR';
     const w = rarityForCountry(sciName, country);
     const color = sciColorForCountry(sciName, country);
-    const url = `https://api.ebird.org/v2/data/obs/${cty}/recent/${speciesCode}?back=${days}&maxResults=10000&locale=fr`;
+    const url = `https://api.ebird.org/v2/data/obs/${deptCode || regionCode || cty}/recent/${speciesCode}?back=${days}&maxResults=10000&locale=fr`;
     const raw = await _ebFetch(url);
     let data = Array.isArray(raw) ? raw : [];
-    // Filtre client-side sur dept/region (le plus specifique gagne). Les codes eBird :
-    // subnational1Code = 'FR-XX' (region), subnational2Code = 'FR-XX-YY' (dept).
-    if(deptCode) data = data.filter(o => o?.subnational2Code === deptCode);
-    else if(regionCode) data = data.filter(o => o?.subnational1Code === regionCode);
+    if(ebFilter.polygon) data = data.filter(o => typeof o.lat === 'number' && _pointInPolygon(o.lat, o.lng, ebFilter.polygon));
     let used = data.length ? { lbl: deptCode ? deptLbl : (regionCode ? 'la région' : 'tout ' + ctyName) } : null;
     if(!stillMine()) return 0;
     if(!used){
       _lyrDetail.clearLayers();   // nettoie les vieux markers avant d'afficher le message
       const cnt = _ebCompteur();
-      if(cnt) cnt.textContent = `Aucune obs récente de ${esc(nm)} dans ${ctyName} (${days} j eBird)`;
+      // « ici » : la zone est écrite en tête du panneau (et « dans la France » sonnait faux).
+      if(cnt) cnt.textContent = `Aucune obs récente de ${nm} ${ebFilter.polygon ? 'dans ta zone' : 'ici'} ces ${days} jours (eBird).`;
       return 0;
     }
     if(_lyrMissing && _map.hasLayer(_lyrMissing)) _map.removeLayer(_lyrMissing);
     // Swap : construit les nouveaux markers puis remplace en un coup (evite le flash "vide").
     const newMarkers = [];
     // Dedup par hotspot (coord ~110m). Groupe les obs eBird du meme hotspot pour eviter
-    // 5-10 markers stackes au meme endroit.
+    // 5-10 markers stackes au meme endroit. Un lieu privé (souvent une adresse) se range à sa
+    // position arrondie à 0,02°, sans son nom ni lien Google Maps, comme dans _ctPoseRecent :
+    // la Fauvette épervière de Mieres en avait 22, nommés « 16 Calle ... » (2026-10-23).
     const dedupEB = new Map();
+    const arrondi = v => Math.round(v / .02) * .02;
     for(const o of data){
       if(typeof o.lat!=='number'||typeof o.lng!=='number') continue;
-      const k = o.lat.toFixed(3) + ',' + o.lng.toFixed(3);
+      const pos = o.locationPrivate ? [arrondi(o.lat), arrondi(o.lng)] : [o.lat, o.lng];
+      const k = pos[0].toFixed(3) + ',' + pos[1].toFixed(3);
       if(!dedupEB.has(k)) dedupEB.set(k, []);
-      dedupEB.get(k).push(o);
+      dedupEB.get(k).push({ ...o, lat:pos[0], lng:pos[1] });
     }
     for(const group of dedupEB.values()){
-      const first = group[0];
+      const first = group.find(o => !o.locationPrivate) || { ...group[0], locName:'un lieu privé' };
       const nGroup = group.length;
       const avgLat = group.reduce((s,o)=>s+o.lat,0)/nGroup;
       const avgLon = group.reduce((s,o)=>s+o.lng,0)/nGroup;
@@ -8531,12 +8534,12 @@ async function _showSpeciesDetail(sciName, speciesCode){
       const countBadge = nGroup > 1 ? ` <span style="display:inline-block;background:#0b7c77;color:#fff;padding:1px 7px;border-radius:5px;font-weight:700;font-size:11px;vertical-align:middle;margin-left:4px;">×${nGroup}</span>` : '';
       const radius = nGroup > 1 ? Math.min(12, 7 + Math.log2(nGroup) * 1.2) : 7;
       const dot = _triangleCarte([avgLat, avgLon], { radius, weight:2, color:'#fff', fillColor:color, fillOpacity:.9, opacity:1 });
-      const gm = `<a href="https://www.google.com/maps?q=${avgLat},${avgLon}" target="_blank" rel="noopener" class="p-link">🗺️ Google Maps</a>`;
+      const gm = group.every(o => o.locationPrivate) ? '' : `<span class="p-meta"><a href="https://www.google.com/maps?q=${avgLat},${avgLon}" target="_blank" rel="noopener" class="p-link">🗺️ Google Maps</a></span>`;
       dot.bindPopup(`<b class="sp-link" data-sci="${esc(sciName||'')}" style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted;">${esc(nm)}</b>${countBadge} <span class="p-sci">${esc(sciName||'')}</span>`+
         `<span class="p-meta">📍 ${esc(first.locName||'?')}</span>`+
         dateLine +
-        `<span class="p-meta">${_rarityBadge(w, (ebFilter && ebFilter.country) || "FR", sciName)}</span><span class="p-meta">${gm}</span>`);
-      dot._q = _mapNorm(nm+' '+(sciName||'')+' '+(first.locName||''));
+        `<span class="p-meta">${_rarityBadge(w, (ebFilter && ebFilter.country) || "FR", sciName)}</span>${gm}`);
+      dot._q = _mapNorm(nm+' '+(sciName||'')+' '+(first.locationPrivate ? '' : (first.locName||'')));
       dot._sciName = sciName; dot._speciesCode = speciesCode;
       newMarkers.push(dot);
     }
