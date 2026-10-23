@@ -7188,12 +7188,16 @@ function _mapApplyFilter(){
   const cnt = $('#mapSearchCount');
   const q = _mapNorm(mapSearch).trim();
   const layers = [_mapLayer, _lyrMissing, _lyrHotspots, _lyrDetail].filter(Boolean);
+  // Une zone choisie cache les points de la ligue qui sont dehors, pour n'afficher qu'elle (choix
+  // de Mathis, 2026-10-23). Le récent et les hotspots ne sont déjà chargés que pour la zone.
+  const dansZone = _ctTesteZone();
   let visible=0, total=0;
   for(const lyr of layers){
     lyr.eachLayer(m => {
       const el = m._path || m._icon; if(!el) return;
       total++;
-      const match = !q || (m._q && m._q.includes(q));
+      let match = !q || (m._q && m._q.includes(q));
+      if(match && dansZone && lyr === _mapLayer && m.getLatLng){ const ll = m.getLatLng(); match = dansZone(ll.lat, ll.lng); }
       el.style.display = match ? '' : 'none';
       if(match) visible++;
     });
@@ -8931,6 +8935,7 @@ function _ctAppliqueCouches(){
     if(_ctFrance() && !_map.hasLayer(_lyrDeps)) _lyrDeps.addTo(_map);
     if(!_ctFrance() && _map.hasLayer(_lyrDeps)) _map.removeLayer(_lyrDeps);
   }
+  _ctMajVoile();
   _mapApplyFilter();
   _updateLegend();
   _ctDessineCouches();
@@ -8970,6 +8975,27 @@ function _ctDansZone(l){
   return false;
 }
 const _ctCss = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+// Le voile : un grand rectangle percé de la zone choisie, qui pâlit tout le reste de la carte.
+// Sous les contours des départements (on peut encore cliquer un voisin) et sous les points.
+let _lyrVoile = null;
+function _ctMajVoile(){
+  if(!_map) return;
+  if(_lyrVoile){ _map.removeLayer(_lyrVoile); _lyrVoile = null; }
+  if(!_ctFrance()) return;
+  const trous = [];
+  if(ebFilter.polygon) trous.push(ebFilter.polygon);
+  else if(_lyrDeps && _ctZoneChoisie()){
+    _lyrDeps.eachLayer(l => {
+      if(!_ctDansZone(l)) return;
+      const g = l.feature.geometry;
+      for(const p of (g.type === 'Polygon' ? [g.coordinates] : g.coordinates)) trous.push(p[0].map(([x, y]) => [y, x]));
+    });
+  }
+  if(!trous.length) return;
+  if(!_map.getPane('ctVoile')) _map.createPane('ctVoile').style.zIndex = 340;
+  const monde = [[-85, -540], [-85, 540], [85, 540], [85, -540]];   // ±540 : couvre les copies du monde
+  _lyrVoile = L.polygon([monde, ...trous], { pane:'ctVoile', interactive:false, stroke:false, fillColor:_ctCss('--surface'), fillOpacity:.6 }).addTo(_map);
+}
 const _ctStyleRepos = () => ({ color:_ctCss('--ink-3'), weight:.8, opacity:.55, fillColor:_ctCss('--accent'), fillOpacity:0 });
 function _ctSurligne(){
   if(!_lyrDeps) return;
