@@ -9241,6 +9241,9 @@ function _ctRetourFrance(){
   _ctCadreFait = false;
   if(mapMode !== 'mine') _ctModeBouton('mine')?.click();
   else renderMap();
+  // La carte revient comme à l'ouverture, sans couche (Mathis, 2026-10-24) : le bouton de mode vient
+  // de rallumer la Ligue (ouvrir un onglet allume sa couche), on l'éteint.
+  carteCouches.delete('ligue'); _ctAppliqueCouches();
 }
 // Au téléphone, le panneau vit DANS la carte (le tiroir) ; sur ordinateur, à sa droite.
 function _ctPlacePanneau(){
@@ -9679,6 +9682,15 @@ async function _ctLireListes(tour, zones, days, cc, recents, especes){
   const me = realPeople.find(p => p.id === myUid);
   const mine = new Set(me ? [...me.species.keys()] : []);
   const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+  // Une liste lue en entier montre tout ce que l'observateur a noté, y compris ce qu'eBird met de côté
+  // (en attente de vérification ou refusé) et ne publie pas dans /recent, même avec includeProvisional.
+  // Ces espèces-là ne s'affichent pas (Mathis, 2026-10-24) : 2 « Accenteurs à gorge noire » d'une liste
+  // privée du Maine-et-Loire, une première nationale qu'eBird ne publiait pas. Si /recent n'a rien
+  // rendu (panne), on ne filtre pas : tout cacher serait pire. Les listes de moins de 48 h non plus :
+  // /recent publie en retard (le 2026-10-23, sa dernière donnée datait de 18h13 quand une liste de 18h25
+  // portait un vrai Bruant des neiges, que le filtre aurait caché).
+  const publiees = new Set(); for(const o of recents){ if(o.speciesCode) publiees.add(o.speciesCode); if(o.sciName) publiees.add(o.sciName.toLowerCase()); }
+  const fraiche = l => Date.now() - Date.parse((l.d || '').replace(' ', 'T')) < 48 * 3600e3;
   const obs = [];
   // Une liste du relais : { s:subId, d:date, n:lieu, la, lo, h:hotspot, o:[[code, nombre noté ou 0]] }.
   for(const l of lues){
@@ -9686,6 +9698,7 @@ async function _ctLireListes(tour, zones, days, cc, recents, especes){
     for(const [c, nb] of l.o || []){
       const code = _taxMap && _taxMap[c] ? c : parents[c];
       const sci = code && _taxMap[code]; if(!sci) continue;   // hybrides, « sp. » : pas d'espèce
+      if(publiees.size && !publiees.has(code) && !publiees.has(sci) && !fraiche(l)) continue;
       if(dejaVues.has(code)) continue; dejaVues.add(code);
       const dep = (l.z || '').split('-').length === 3 ? l.z : '';   // le relais dit le département de chaque liste
       if(_mineHas(mine, sci) || !_passeRarCarte(sci, cc) || estEchappeDansPays(sci, cc, dep)) continue;
