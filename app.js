@@ -2113,6 +2113,16 @@ function sciColorForCountry(sci, country){
   if(table[k]) return realColor(table[k]);
   return '#94a3b8';
 }
+// Un oiseau échappé de captivité, domestique ou de parc : une exotique sans population établie dans
+// ce pays (X, P, C), celles que la carte peignait en gris. La Carte ne les montre plus du tout, ni la
+// ligue ni le récent (Mathis, 2026-10-23, devant un Diamant mandarin : « je veux pas les voir du tout »).
+// Les exotiques établies (N : Ibis sacré, Perruche à collier...) restent.
+function estEchappeDansPays(sci, country){
+  const c = country || 'FR';
+  if(!isExoticInCountry(sci, c)) return false;
+  let k = (sci || '').trim().toLowerCase(); if(SCI_ALIAS[k]) k = SCI_ALIAS[k];
+  return isParkOnlyExotic(sci) || !_isEstablishedExotic(exoticCategoryInCountry(sci, c) || _exoticCategory(k));
+}
 // Drapeau du pays pour afficher dans les popups "Rareté 🇲🇪 : X · Label" (montre que la
 // calibration est celle du pays courant). Retourne '' pour FR (defaut, pas de drapeau).
 // Alias vers CC_FLAGS (source unique de verite pour tous les drapeaux emoji)
@@ -7548,6 +7558,7 @@ function _mapCollectPoints(){
       for(const o of obsList){
         if(typeof o.lat!=='number' || typeof o.lon!=='number') continue;
         if(o.lat<-90||o.lat>90||o.lon<-180||o.lon>180) continue;
+        if(estEchappeDansPays(v.sci, o.cc || 'FR')) continue;   // jamais sur la Carte
         const pd = parseDate(o.date||''); const ord = pd?pd.ord:null;
         pts.push({ uid:p.id, who:p.name, si:p.si, sci:v.sci, common,
           lat:o.lat, lon:o.lon, loc:o.loc||'', date:o.date||'', dateOrd:ord, cc:o.cc||null,
@@ -9418,7 +9429,7 @@ function _ctEspecesRecent(obs, cc){
   for(const o of obs){
     const k = (o.sciName || '').toLowerCase();
     if(!k || !o.speciesCode || typeof o.lat !== 'number' || typeof o.lng !== 'number') continue;
-    if(isNonSpecies(o.comName || '', o.sciName || '')) continue;
+    if(isNonSpecies(o.comName || '', o.sciName || '') || estEchappeDansPays(o.sciName, cc)) continue;
     if(_mineHas(mine, k) || !_passeRarCarte(o.sciName, cc)) continue;   // _mineHas suit « Seulement ce qui me manque »
     if(ebFilter.polygon && !_pointInPolygon(o.lat, o.lng, ebFilter.polygon)) continue;
     const d = parSp.get(k);
@@ -9551,7 +9562,7 @@ async function _ctLireListes(tour, zones, days, cc, recents, especes){
       const code = _taxMap && _taxMap[c] ? c : parents[c];
       const sci = code && _taxMap[code]; if(!sci) continue;   // hybrides, « sp. » : pas d'espèce
       if(dejaVues.has(code)) continue; dejaVues.add(code);
-      if(_mineHas(mine, sci) || !_passeRarCarte(sci, cc)) continue;
+      if(_mineHas(mine, sci) || !_passeRarCarte(sci, cc) || estEchappeDansPays(sci, cc)) continue;
       obs.push({ speciesCode:code, sciName:cap(sci), comName:FR_NAMES[sci] || cap(sci),
         lat:l.la, lng:l.lo, locName:l.n, locationPrivate:!l.h,
         obsDt:l.d, subId:l.s, obsValid:!nv.has(l.s + ':' + code), howMany:nb || null });
@@ -10129,7 +10140,7 @@ function _gbifRenderAllObs(allObs, sciByKey, stillMine){
   for(const o of allObs){
     if((++renderCount % 50) === 0 && stillMine && !stillMine()){ _lyrMissing.clearLayers(); return { total:0, points:0, aborted:true }; }
     const sci = sciByKey.get(o.taxonKey) || sciByKey.get(o.speciesKey) || (o.species || '').toLowerCase();
-    if(!sci) continue;
+    if(!sci || estEchappeDansPays(sci, country)) continue;   // échappés : jamais sur la Carte
     speciesSeen.add(sci);
     const nm = FR_NAMES[sci] || o.vernacularName || sci;
     const w = rarityForCountry(sci, country);
