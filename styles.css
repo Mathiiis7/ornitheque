@@ -2588,11 +2588,14 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      ce qui se lit ne descend pas en dessous. */
   .leaflet-tooltip.ct-sv { background:var(--surface); color:var(--ink); border:1px solid var(--line); border-radius:8px;
     box-shadow:var(--shadow); padding:7px 10px; font:400 14px/1.35 var(--sans); white-space:normal; width:max-content; max-width:280px; }
-  .leaflet-tooltip.ct-sv::before { border-top-color:var(--surface); }
+  .leaflet-tooltip-top.ct-sv::before { border-top-color:var(--surface); }
+  .leaflet-tooltip-bottom.ct-sv::before { border-bottom-color:var(--surface); }
   .ct-sv .ct-sv-t { display:block; color:var(--ink-3); margin-bottom:4px; }
   .ct-sv .ct-sv-l { display:flex; align-items:center; gap:7px; }
+  .ct-sv .ct-sv-l + .ct-sv-l { margin-top:3px; }
   .ct-sv .ct-sv-l b { font-weight:600; color:var(--ink); }
-  .ct-sv .ct-sv-pt { width:10px; height:10px; border-radius:50%; flex:none; }
+  /* La pastille de rareté des listes du Récent (.ct-pastille), son numéro dedans. */
+  .ct-sv .ct-sv-pas { flex:none; margin-top:0; }
   .ct-sv .ct-sv-n { color:var(--ink-3); margin-left:auto; padding-left:8px; }
   .ct-sv .ct-sv-d { display:block; color:var(--ink-3); margin-top:2px; }
   .ct-carte .ct-legende .ct-leg-formes { display:flex; flex-direction:column; gap:3px; margin-bottom:8px; }

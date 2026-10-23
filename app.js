@@ -7636,24 +7636,11 @@ function _mapMarker(pt, groupSize){
   // Utilise la rarete DU PAYS d'observation (pt.cc), pas la rarete FR par defaut.
   // Un oiseau vu en ES a la couleur de son tier ES, pas de son tier FR.
   const color = sciColorForCountry(pt.sci, pt.cc);
+  // Plus de bulle au clic : le survol dit l'oiseau, l'ami, la date et le lieu (Mathis, 2026-10-23).
   const m = _ctPastille([pt.dispLat, pt.dispLon], color, pt.w, _ctInitiale(pt.who));
-  const date = pt.date ? ` · ${esc(pt.date)}` : '';
-  const cc = pt.cc ? ` · ${esc(countryLabel(pt.cc))}` : '';
-  const loc = pt.loc ? esc(pt.loc) : '';
-  const groupNote = groupSize>1 ? `<span class="p-meta">Vu ici avec ${groupSize-1} autre${groupSize-1>1?'s':''} espèce${groupSize-1>1?'s':''}</span>` : '';
-  // Lien Google Maps : toujours fiable (basé sur lat/lon) - remplace le lien eBird qui échoue pour les lieux perso.
-  const gmLink = `<span class="p-meta"><a href="https://www.google.com/maps?q=${pt.lat},${pt.lon}" target="_blank" rel="noopener" class="p-link">🗺️ Voir sur Google Maps</a></span>`;
-  // Badge multi-obs : "xN" si l'user a coche l'espece dans plus d'un checklist eBird.
-  const multi = pt.obs > 1 ? ` <span class="chip" style="background:var(--surface-2); font-size:11px; padding:1px 6px; margin-left:3px;">×${pt.obs}</span>` : '';
-  m.bindPopup(
-    `<b class="sp-link" data-sci="${esc(pt.sci)}" style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted;">${esc(pt.common)}</b> <span class="p-sci">${esc(pt.sci)}</span>`+
-    `<span class="p-meta">Vu par <b>${esc(pt.who)}</b>${multi}${loc?' à '+loc:''}${cc}${date}</span>`+
-    `<span class="p-meta">${_rarityBadge(pt.w, (ebFilter && ebFilter.country) || "FR", pt.sci)}</span>`+
-    groupNote + gmLink
-  );
   m._q = _mapNorm(pt.common+' '+pt.sci+' '+(pt.loc||'')+' '+(pt.who||''));
   m._sciName = pt.sci; m._common = pt.common;   // pour l'autocomplétion (nom espèce dans le dropdown)
-  m._ligue = { who:pt.who, date:pt.date };      // pour le survol
+  m._ligue = { who:pt.who, date:pt.date, loc:pt.loc || '' };   // pour le survol
   return m;
 }
 // Lazy-load des grosses donnees eBird, splitees par usage pour minimiser le boot :
@@ -8852,15 +8839,19 @@ function _ctAnneau(grappe){
   return L.divIcon({ html:`<div class="ct-gr" style="width:${taille}px;height:${taille}px;background:conic-gradient(${arcs.join(',')})"><span>${n}</span></div>`,
     className:'ct-gr-ico', iconSize:[taille, taille] });
 }
-// Le survol, à la souris seulement : un point dit son oiseau, une grappe dit ce qu'elle contient,
-// sans avoir à cliquer sur chaque point (demande de Mathis, 2026-10-23). Au doigt, rien ne change.
-const _ctLigneSurvol = (coul, nom, fin) =>
-  `<span class="ct-sv-l"><span class="ct-sv-pt" style="background:${coul}"></span><b>${esc(nom)}</b>${fin || ''}</span>`;
+// Le survol : un point dit son oiseau, une grappe dit ce qu'elle contient, sans cliquer sur chaque
+// point (demande de Mathis, 2026-10-23). Les points n'ouvrent plus de bulle au clic (même jour : « il
+// faut garder juste le survol ») ; au doigt, qui ne survole pas, toucher un point montre la même chose.
+// La pastille de rareté porte son numéro, comme dans les listes.
+const _ctLigneSurvol = (coul, w, nom, fin) =>
+  `<span class="ct-sv-l"><span class="ct-pastille ct-sv-pas" style="background:${coul}">${w || '?'}</span><b>${esc(nom)}</b>${fin || ''}</span>`;
 function _ctSurvolPoint(m){
-  const r = m._rec, l = m._ligue;
+  const r = m._rec, l = m._ligue, s = n => n > 1 ? 's' : '';
   const nom = r ? r.nom : (m._common || m._sciName || '');
-  const detail = r ? [_ctIlYa(r.date), r.lieu].filter(Boolean).join(' · ') : l ? [l.who, l.date].filter(Boolean).join(' · ') : '';
-  return _ctLigneSurvol(m.options.coul, nom) + (detail ? `<span class="ct-sv-d">${esc(detail)}</span>` : '');
+  const lignes = r ? [[r.gbif ? _ctDateCourte(r.date) : _ctIlYa(r.date), r.lieu].filter(Boolean).join(' · ')] : l ? [[l.who, l.date].filter(Boolean).join(' · '), l.loc] : [];
+  if(r && r.nb) lignes.push(`${r.nb} oiseau${r.nb > 1 ? 'x' : ''} compté${s(r.nb)}`);
+  if(r && r.nv) lignes.push('non validée : pas encore vérifiée par eBird');
+  return _ctLigneSurvol(m.options.coul, m.options.w, nom) + lignes.filter(Boolean).map(t => `<span class="ct-sv-d">${esc(t)}</span>`).join('');
 }
 // Une ligne par espèce, les plus rares d'abord ; « ×3 » quand elle a plusieurs points dans la grappe.
 const CT_SURVOL_MAX = 10;
@@ -8875,23 +8866,42 @@ function _ctSurvolGrappe(ms){
   const vus = tri.length - CT_SURVOL_MAX > 1 ? tri.slice(0, CT_SURVOL_MAX) : tri;   // jamais « et 1 autre »
   const reste = tri.length - vus.length, s = n => n > 1 ? 's' : '';
   return `<span class="ct-sv-t">${tri.length} espèce${s(tri.length)}, ${ms.length} point${s(ms.length)}</span>` +
-    vus.map(e => _ctLigneSurvol(e.coul, e.nom, e.n > 1 ? `<span class="ct-sv-n">×${e.n}</span>` : '')).join('') +
-    (reste ? `<span class="ct-sv-d">et ${reste} autre${s(reste)} : clique pour ouvrir</span>` : '');
+    vus.map(e => _ctLigneSurvol(e.coul, e.w, e.nom, e.n > 1 ? `<span class="ct-sv-n">×${e.n}</span>` : '')).join('') +
+    (reste ? `<span class="ct-sv-d">et ${reste} autre${s(reste)} : ${_ctAuDoigt.matches ? 'touche' : 'clique'} pour ouvrir</span>` : '');
 }
 const CT_SURVOL_OPTS = { direction:'top', className:'ct-sv', opacity:1 };
+// Une grappe dit jusqu'à 10 espèces : dans la moitié haute de la carte, sa bulle vers le haut sortait
+// du cadre (vu le 2026-10-23). Elle s'ouvre alors vers le bas. demi : la moitié de la hauteur du symbole.
+function _ctSensSurvol(latlng, demi){
+  const haut = _map && _map.latLngToContainerPoint(latlng).y < _map.getSize().y / 2;
+  return haut ? { ...CT_SURVOL_OPTS, direction:'bottom', offset:[0, demi + 2] } : { ...CT_SURVOL_OPTS, offset:[0, -demi - 2] };
+}
+// L'infobulle d'un point se crée à la première demande, pas pour les milliers de points posés.
+let _ctSurvolOuvert = null;
+function _ctOuvreSurvol(m){
+  // Le sens se choisit à chaque ouverture : la carte a pu bouger depuis.
+  if(m.getTooltip()) m.unbindTooltip();
+  m.bindTooltip(() => _ctSurvolPoint(m), _ctSensSurvol(m.getLatLng(), 11));
+  if(_ctSurvolOuvert && _ctSurvolOuvert !== m) _ctSurvolOuvert.closeTooltip();
+  _ctSurvolOuvert = m;
+  m.openTooltip();
+  // Ouverte au doigt ou depuis la liste, la souris n'en sort jamais : un clic sur la carte la ferme.
+  if(_map && !_map._ctFermeSurvol){
+    _map._ctFermeSurvol = true;
+    _map.on('click', () => { if(_ctSurvolOuvert){ _ctSurvolOuvert.closeTooltip(); _ctSurvolOuvert = null; } });
+  }
+}
 function _ctBrancheSurvol(g){
+  // Toucher ou cliquer un point montre son infobulle : au doigt, c'est le seul moyen de la voir.
+  g.on('click', e => { const m = e.layer; if(m && m.bindTooltip && (m._rec || m._ligue)) _ctOuvreSurvol(m); });
   if(_ctAuDoigt.matches) return g;
-  // Les points : l'infobulle se crée au premier survol, pas pour les centaines de points posés.
-  g.on('mouseover', e => {
-    const m = e.layer; if(!m || !m.bindTooltip || m.getTooltip()) return;
-    m.bindTooltip(() => _ctSurvolPoint(m), { ...CT_SURVOL_OPTS, offset:[0, -12] }).openTooltip();
-  });
+  g.on('mouseover', e => { const m = e.layer; if(m && m.bindTooltip && (m._rec || m._ligue)) _ctOuvreSurvol(m); });
   // Les grappes : refaites à chaque zoom, l'infobulle se pose au survol et part avec la souris.
   // Une grappe ouverte en éventail se tait : sa bulle cacherait les points qu'elle vient d'étaler.
   g.on('clustermouseover', e => {
     const c = e.layer, h = c._icon ? c._icon.offsetHeight : 34;
     if(g._spiderfied === c) return;
-    c.bindTooltip(_ctSurvolGrappe(c.getAllChildMarkers()), { ...CT_SURVOL_OPTS, offset:[0, -h / 2 - 2] }).openTooltip();
+    c.bindTooltip(_ctSurvolGrappe(c.getAllChildMarkers()), _ctSensSurvol(c.getLatLng(), h / 2)).openTooltip();
   });
   g.on('clustermouseout clusterclick', e => e.layer.unbindTooltip());
   g.on('spiderfied', e => e.cluster.unbindTooltip());
@@ -8907,10 +8917,10 @@ function _ctGrappes(){
     spiderfyDistanceMultiplier:1.4, spiderLegPolylineOptions:{ weight:1.5, color:_ctCss('--ink-2'), opacity:.6 } }));
 }
 const _ctEnGrappes = l => !!(l && l.zoomToShowLayer);
-// Ouvre la bulle d'un point, même rangé dans une grappe (la carte zoome ou ouvre l'éventail d'abord).
+// Montre l'infobulle d'un point, même rangé dans une grappe (la carte zoome ou ouvre l'éventail d'abord).
 function _ctOuvreBulle(couche, m){
-  if(_ctEnGrappes(couche) && couche.hasLayer(m)) couche.zoomToShowLayer(m, () => m.openPopup());
-  else m.openPopup();
+  if(_ctEnGrappes(couche) && couche.hasLayer(m)) couche.zoomToShowLayer(m, () => _ctOuvreSurvol(m));
+  else _ctOuvreSurvol(m);
 }
 function _ctSymbole(k){
   const pastille = (w, dedans) => `<span class="ct-pt ct-pt-sym" style="background:${realColor(w)}" aria-hidden="true">${dedans}</span>`;
@@ -9441,22 +9451,19 @@ function _ctPoseRecent(liste, cc){
   for(const g of groupes.values()){ if(_ctEnGrappes(_lyrMissing)) for(const p of g){ p.dispLat = p.lat; p.dispLon = p.lon; } else _spreadGroup(g); }
   // Les plus rares ajoutés en dernier, donc dessinés par-dessus.
   pts.sort((a, b) => (rarityForCountry(a.o.sciName, cc) || 0) - (rarityForCountry(b.o.sciName, cc) || 0));
-  for(const p of pts){
+  // Plus de bulle au clic : le survol dit l'oiseau, quand, où et combien (Mathis, 2026-10-23).
+  const marqueurs = pts.map(p => {
     const o = p.o, sci = (o.sciName || '').toLowerCase();
-    const w = rarityForCountry(o.sciName, cc);
     const nm = FR_NAMES[sci] || o.comName || o.sciName;
-    const nv = o.obsValid === false;
     const m = _ctPastilleRecent([p.dispLat, p.dispLon], o.sciName, cc);
-    const gm = p.prive ? '' : `<span class="p-meta"><a href="https://www.google.com/maps?q=${o.lat},${o.lng}" target="_blank" rel="noopener" class="p-link">🗺️ Google Maps</a></span>`;
-    m.bindPopup(`<b class="sp-link" data-sci="${esc(o.sciName || '')}" style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted;">${esc(nm)}</b> <span class="p-sci">${esc(o.sciName || '')}</span>` +
-      `<span class="p-meta">Vu le ${esc(_ctDateLongue(o.obsDt))} à ${esc(p.prive ? 'un lieu privé' : (o.locName || '?'))}${o.howMany ? _ctOiseauxComptes(o.howMany) : ''}</span>` +
-      (nv ? '<span class="p-meta"><span class="ct-tag nv">non validée</span> pas encore vérifiée par eBird</span>' : '') +
-      `<span class="p-meta">${_rarityBadge(w, cc, o.sciName)}</span>${gm}`);
     m._q = _mapNorm(nm + ' ' + (o.sciName || '') + ' ' + (p.prive ? '' : (o.locName || '')));
     m._speciesCode = o.speciesCode; m._sciName = o.sciName;
-    m._rec = { sci, nom:nm, date:(o.obsDt || '').slice(0, 10), lieu:p.prive ? 'Lieu privé' : (o.locName || ''), nv, o, subId:o.subId };
-    _lyrMissing.addLayer(m);
-  }
+    m._rec = { sci, nom:nm, date:(o.obsDt || '').slice(0, 10), lieu:p.prive ? 'Lieu privé' : (o.locName || ''), nv:o.obsValid === false,
+      nb:o.howMany || 0, o, subId:o.subId };
+    return m;
+  });
+  // D'un bloc : une région pose plusieurs milliers de points, un par un la grappe se recalcule à chaque fois.
+  if(_lyrMissing.addLayers) _lyrMissing.addLayers(marqueurs); else marqueurs.forEach(m => _lyrMissing.addLayer(m));
 }
 // Rend 'ok', 'erreur' (eBird n'a pas répondu) ou 'remplace' (un chargement plus récent a pris la main).
 async function _loadMissingLayer(zones, days){
@@ -9598,9 +9605,21 @@ async function _ctMontreEspece(sci){
   if(ebFilter.source !== 'gbif' && !_ctRecListes && !_ctRecLieux.has(sci)){ await _ctDetailEspece(ms[0]._rec.o, _ctRecTour); ms = siens(); if(!ms.length) return; }
   if(!_map.hasLayer(_lyrMissing)){ carteCouches.add('recent'); _ctAppliqueCouches(); }
   const pts = ms.map(m => m.getLatLng());
-  if(pts.length === 1) _map.setView(pts[0], Math.max(_map.getZoom(), 11));
-  else _map.fitBounds(L.latLngBounds(pts), { ..._ctMarges(), maxZoom:12 });
-  _ctOuvreBulle(_lyrMissing, ms.reduce((a, b) => (b._rec.date > a._rec.date ? b : a)));
+  const dernier = ms.reduce((a, b) => (b._rec.date > a._rec.date ? b : a));
+  if(pts.length === 1) _map.setView(pts[0], Math.max(_map.getZoom(), 11), { animate:false });
+  else _map.fitBounds(L.latLngBounds(pts), { ..._ctMarges(), maxZoom:12, animate:false });
+  // L'infobulle s'ouvre une fois les grappes refaites (leur animation dure 0,3 s) : ouverte avant, la
+  // grappe refaite l'emportait (Ibis falcinelle dans les 303 points de Genusson, 2026-10-23). Si le
+  // point est encore rangé dans une grappe, c'est l'infobulle de la grappe qui s'ouvre, sans zoomer plus.
+  setTimeout(() => {
+    const parent = _ctEnGrappes(_lyrMissing) && _lyrMissing.getVisibleParent ? _lyrMissing.getVisibleParent(dernier) : dernier;
+    if(!parent || parent === dernier) return _ctOuvreSurvol(dernier);
+    if(parent.getAllChildMarkers){
+      const h = parent._icon ? parent._icon.offsetHeight : 34;
+      parent.bindTooltip(_ctSurvolGrappe(parent.getAllChildMarkers()), _ctSensSurvol(parent.getLatLng(), h / 2)).openTooltip();
+      _ctSurvolOuvert = parent;
+    }
+  }, 450);
 }
 // Le volet Récent : une ligne par espèce (maquette finale.html, contenuRecent), tirée des triangles
 // de la carte, donc toujours d'accord avec eux.
@@ -10112,24 +10131,12 @@ function _gbifRenderAllObs(allObs, sciByKey, stillMine){
     const localityRaw = (o.locality || '').trim();
     const localityClean = (localityRaw && localityRaw.length >= 3 && !/-?\d+\.\d+\s*,\s*-?\d+\.\d+/.test(localityRaw) && !/^\d{4,5}$/.test(localityRaw)) ? localityRaw : '';
     const loc = localityClean || commune || dept || 'lieu';
-    // Le nom de l'observateur ne s'affiche plus (docs/carte-donnees.md, « À l'affichage »).
-    const time = o.eventTime || '';
-    const behavior = o.behavior || '';
-    const cnt = (typeof o.individualCount === 'number' && o.individualCount > 0) ? o.individualCount : null;
+    // Le nom de l'observateur ne s'affiche plus (docs/carte-donnees.md, « À l'affichage »). Plus de
+    // bulle au clic : le survol dit l'oiseau, la date, le lieu et combien (Mathis, 2026-10-23).
+    const cnt = (typeof o.individualCount === 'number' && o.individualCount > 0) ? o.individualCount : 0;
     const m = _ctPastilleRecent([o.dispLat, o.dispLon], sci, country);
     m._baseLat = o.decimalLatitude; m._baseLon = o.decimalLongitude;
-    m._rec = { sci, nom:nm, date:(o.eventDate || '').slice(0, 10), lieu:loc, nv:false };
-    const gm = `<a href="https://www.google.com/maps?q=${o.decimalLatitude},${o.decimalLongitude}" target="_blank" rel="noopener" class="p-link">🗺️ Google Maps</a>`;
-    const parts = [];
-    if(time) parts.push(`🕐 ${esc(time)}`);
-    if(behavior) parts.push(`🎯 ${esc(behavior)}`);
-    const metaExtra = parts.length ? `<span class="p-meta">${parts.join(' · ')}</span>` : '';
-    const links = [];
-    if(o.references) links.push(`<a href="${esc(o.references)}" target="_blank" rel="noopener" class="p-link">🔗 source</a>`);
-    if(o.gbifID || o.key) links.push(`<a href="https://www.gbif.org/occurrence/${esc(o.gbifID||o.key)}" target="_blank" rel="noopener" class="p-link">🌍 GBIF</a>`);
-    const linksHtml = links.length ? `<span class="p-meta">${links.join(' · ')}</span>` : '';
-    m.bindPopup(`<b class="sp-link" data-sci="${esc(sci)}" style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted;">${esc(nm)}</b> <span class="p-sci">${esc(sci)}</span>`+`<span class="p-meta">Vu le ${esc((o.eventDate||'').slice(0,10))} · ${esc(loc)}${cnt ? _ctOiseauxComptes(cnt) : ''}</span>${metaExtra}`+
-      `<span class="p-meta">${_rarityBadge(w, (ebFilter && ebFilter.country) || "FR", sci)}</span>${linksHtml}<span class="p-meta">${gm}</span>`);
+    m._rec = { sci, nom:nm, date:(o.eventDate || '').slice(0, 10), lieu:loc, nv:false, nb:cnt, gbif:true };
     m._q = _mapNorm(nm+' '+sci+' '+loc);
     m._sciName = sci;
     // Resout le code eBird pour permettre le clic marqueur -> fiche detail eBird
