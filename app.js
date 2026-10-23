@@ -9422,8 +9422,7 @@ async function _loadTaxonomy(){
     if(ls){ _taxMap=JSON.parse(ls); return _taxMap; }
   }catch(_){ }
   try{
-    const r = await fetch(`https://api.ebird.org/v2/ref/taxonomy/ebird?fmt=json&locale=en&cat=species`,
-      { headers:{ 'X-eBirdApiToken':EBIRD_KEY } });
+    const r = await fetch(_ebRelais(`https://api.ebird.org/v2/ref/taxonomy/ebird?fmt=json&locale=en&cat=species`));
     if(!r.ok) throw new Error('taxonomy '+r.status);
     const arr = await r.json();
     const m={}; for(const t of arr){ if(t.speciesCode && t.sciName) m[t.speciesCode]=t.sciName.toLowerCase(); }
@@ -9668,8 +9667,12 @@ async function _loadHotspotsLayer(region){
 }
 
 // ---- Explorer (données eBird en direct) ----
-// Clé publique du compte Mathis. Visible dans le source (JS client), donc régénérable si abus.
-const EBIRD_KEY = 'dbflh4atmsom';
+// Les conditions de l'API eBird (2.5) interdisent de partager la clé : elle vit sur un relais Vercel
+// (dépôt ornitheque-relais), qui l'ajoute et garde les réponses de 10 min à 7 jours. On lui envoie la
+// même adresse, seul le début change ; l'adresse eBird reste la clé des caches ci-dessous, pour que
+// ceux déjà remplis servent encore. Sans en-tête ajouté : l'appel reste simple, sans pré-vol CORS.
+const EBIRD_RELAIS = 'https://ornitheque-relais.vercel.app';
+const _ebRelais = url => url.replace('https://api.ebird.org', EBIRD_RELAIS);
 const _ebCache = new Map();                        // niveau 1 : mémoire (5 min)
 const EBIRD_TTL_MS = 6*60*60*1000;                 // 6h : localStorage + Firestore partagé
 const _ebDocId = url => url.replace(/[^A-Za-z0-9]/g,'_').slice(0,200);
@@ -9700,7 +9703,7 @@ async function _ebFetch(url){
     }
   }catch(_){ }
   // 4) L'appel eBird réel
-  const r = await fetch(url, { headers:{ 'X-eBirdApiToken':EBIRD_KEY, 'Accept-Language':'fr' } });
+  const r = await fetch(_ebRelais(url));
   if(!r.ok) throw new Error('eBird API '+r.status);
   const data = await r.json();
   const stamp = Date.now();
