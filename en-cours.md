@@ -1,14 +1,14 @@
-# COMMITÉ, PAS POUSSÉ (2026-10-23) : ordres et bulle de la rareté ligue (v871 / app.js?v=445), au-dessus du v870
+# POUSSÉ (2026-10-23) : ordres, bulles du Classement, comptes du Birdydex, filtre pays, ordres en italique (v871 à v875 / app.js?v=445 à 449)
 - Filtre famille (Birdydex et « Qui a vu quoi ») : chaque ordre (Passeriformes…) se choisit aussi, en tête de ses familles. Valeur « ordre:Passeriformes ».
 - Bulle de « Rareté ligue » : le barème en ronds comme la rareté terrain, calculé sur le nombre de membres (points 100/k par palier).
 - v872 / app.js?v=446 : les comptes des fenêtres du Birdydex (famille, milieu, vues) passent par le même filtre que la grille (_pkdxLignes + _pkdxGardeZone). Ils comptaient les accidentelles cachées et ignoraient X/P/N et la zone (Rapaces : 28 pour 26). Vérifié en démo : 104 choix sans filtre, avec X, avec « Vues seulement », en Vendée, zéro écart.
-- Remarqué, pas touché : le « filtré : N » du compteur du Birdydex se calcule avant le filtre par zone.
+- Le « filtré : N » du compteur du Birdydex calculé avant le filtre par zone : corrigé en v874.
 - v873 / app.js?v=447 : bulle ligue sans la ligne « Vue seulement hors de France · 0 point » (fausse : foreignTick renvoie false depuis le 21/09, l'étranger compte comme le reste) et sans « en France » dans son titre. Bulle terrain : colonne des points (palier n = n points), ligne « – Espèce absente de France · 1 point » (règle inchangée, choix de Mathis). Jetons X/P/N de la bulle à taille souris au doigt (la bulle débordait au téléphone).
 - « Qui a vu quoi » : avec un filtre pays qui écarte le pays de la 1re obs et garde la France, la case montre le drapeau français si l'espèce y a été vue (v.fr), bulle « Vu en France (1re observation au Monténégro) ». Sans filtre, inchangé. Testé en démo en passant la Fuligule nyroca de Claire au Monténégro (fichier remis par genere-demo).
 - v875 / app.js?v=449 : titres d'ordre en italique Segoe UI 600 (17 px au Birdydex, 15 px dans la fenêtre), modèle C de notes-privees/maquettes/ordres/.
 - v874 / app.js?v=448 : le filtre pays de « Qui a vu quoi » connaît tous les pays vus (paysVus : 1re obs, v.fr, allObs - 20 obs au plus par espèce, dans l'ordre du fichier). Sous un filtre, la case prend le drapeau du plus ancien pays gardé. Le compteur du Birdydex (« filtré : N ») se calcule après le filtre par département. Testé en démo (nyroca ES puis PT, Vendée), fichier de démo remis.
 
-# COMMITÉ, PAS POUSSÉ (2026-10-23) : Classement, suite (v870 / app.js?v=444), au-dessus du v869 ci-dessous, pas poussé non plus
+# POUSSÉ (2026-10-23) : Classement, suite (v870 / app.js?v=444)
 - Rareté ligue : une seule échelle de 12 paliers en part des membres (< 5 %, 5, 10, 20… 90 %, tous), légende sans paliers vides, bornes « 5–7 » quand un palier regroupe plusieurs nombres.
 - Noms : « Rareté ligue » / « Rareté terrain » (ex « Rareté réelle »). Avec un pays choisi dans « Qui a vu quoi », en rareté terrain : ronds, X/P/N et tri suivent ce pays (realTierPays), phrase « Rareté terrain au Portugal… » sous les filtres (maquette C, notes-privees/maquettes/rarete-pays/) ; la rareté ligue et les points restent sur la France. La fiche espèce ouverte depuis le tableau s'ouvre sur ce pays. _PREP_PAYS : NL, DK, LU, XK ajoutés.
 - Ronds centrés partout, réglés au pixel : le banc pastilles mesure désormais les PIXELS (13 sortes, 100/125/150 % et au doigt) ; jetons X/P/N des vignettes du Birdydex petits au téléphone.
@@ -16,8 +16,7 @@
 - Plus de saut de page en changeant de classement (hauteur des lignes égalisée avant la peinture).
 - Ouvert : fiche ouverte avec « Tous les pays » = garde le dernier pays de la fiche (à confirmer avec Mathis). Pas vérifié sur de vraies observations étrangères (la démo n'en a pas : tests faits en passant un tiers des observations en ES/PT).
 - docs/modele-repartition.md est modifié par une autre session : pas dans ce commit.
-- Mettre en ligne : il pousse quand il a regardé en local.
-# COMMITÉ, PAS POUSSÉ (2026-10-22, nuit) : refonte de la page Classement (v869 / app.js?v=443)
+# POUSSÉ le 2026-10-23 (fait le 2026-10-22, nuit) : refonte de la page Classement (v869 / app.js?v=443)
 - Qui a vu quoi : filtres repris du Birdydex (pays avec drapeaux et nombre d'espèces, fenêtre « Personnes » qui réunit « Oiseaux de » et « Colonnes », recherche identique sans suggestions), rangée de rareté seulement aux classements par rareté, X/P/N à la place de « Échappé isolé », Étranger en rond gris à tiret ; colonne Rareté en ronds (palier ou nombre de membres) + lettres X/N/P, triée et filtrée sur le chiffre affiché, 96 px, figée avec Espèce ; colonnes des personnes à 104 px (nom coupé par « … ») ; drapeau du pays à la place de la coche (17 px, 70 %) ; « Vues » supprimée ; non observés visibles quels que soient les filtres ; bordures en border-collapse:separate (voir CLAUDE.md, pièges).
 - Classement du haut : trois boutons collés sous l'entête, bulles raccourcies, photos toutes à 34 px, « La plus rare » en sous-titre (rond + nom du palier), date plus pâle.
 - Rareté ligue : rond du nombre de membres, une teinte (vert du site), chiffre blanc ; au-delà de 12 membres, 8 tranches de la part des membres ; « La plus rare de la ligue » en mode ligue.
@@ -26,7 +25,6 @@
 - Non vérifié : le filtre X/P/N de la carte sur de vraies observations eBird (la démo ne les charge pas).
 - Maquettes gardées : notes-privees/maquettes/{drapeaux,plus-rare,colonnes,separation}/.
 - docs/modele-repartition.md est modifié par une autre session : pas dans ce commit.
-- Mettre en ligne : il pousse quand il a regardé en local.
 # POUSSÉ et vérifié en ligne (2026-10-22, 21 h 40) : cartes toutes bases GBIF, garde-fou affiné, aires iNat réparées par les tuiles (fusion 88fa77b2, v868 / 442 ; ornitheque-data 72fbd9c4 poussé juste avant)
 - Fait depuis un dossier à part (fusion de mes commits avec origin/main, conflits seulement sur les versions, démo régénérée, 11 bancs CONFORME), puis main local remis sur origin/main SANS toucher aux fichiers : le travail en cours d'une autre session (filtre par pays du Classement, opts.compte / « Tous les pays » dans app.js, plus styles.css, index.html, demo/index.html) reste non commité ici, il N'EST PAS en ligne. Son index.html local dit encore app.js?v=433 : à son commit, prendre v869 / 443 ou plus.
 - En ligne : app.js?v=442 servi, teinte de la Pie servie, fiches Pie / Corneille / Hirondelle ouvertes dans la démo en ligne (ordinateur, téléphone), aucune erreur.
