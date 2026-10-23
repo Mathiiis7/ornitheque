@@ -64,6 +64,12 @@ const SORTES = [
   // Le survol des points et la liste du Récent : palier et statut exotique dans leur vrai parent.
   { nom: 'Carte, survol, palier', textes: CHIFFRES, html: (t, c) => `<div class="leaflet-tooltip ct-sv" style="position:static"><span class="ct-sv-l"><span class="tier-chip tier-rond" style="background:${c}">${t}</span></span></div>` },
   { nom: 'Carte, survol, statut', textes: ['N', 'X'], html: t => `<div class="leaflet-tooltip ct-sv" style="position:static"><span class="ct-sv-l"><span class="pkdx-exo">${t}</span></span></div>` },
+  // Le palier de la liste du Récent : le jeton rond du site depuis le 2026-10-23 (il avait son rond à part).
+  { nom: 'Carte, liste du Récent, palier', textes: CHIFFRES, html: (t, c) => `<div class="ct-rang ct-rang-rec"><span class="tier-chip tier-rond" style="background:${c}">${t}</span></div>` },
+  // Le nombre au cœur d'une grappe : encre sombre sur disque clair, que la mesure ne sait pas lire ; on
+  // inverse les couleurs du disque intérieur, ce qui ne déplace rien. Sur la carte, Leaflet la pose dans un
+  // calque déplacé en translate3d, qui cale le texte autrement : on l'y met aussi.
+  { nom: 'Carte, grappe', textes: ['3', '8', '14', '157'], html: (t, c) => `<div style="transform:translate3d(0,0,0)"><div class="ct-gr" style="width:${t.length < 2 ? 34 : t.length < 3 ? 40 : 46}px;height:${t.length < 2 ? 34 : t.length < 3 ? 40 : 46}px;background:${c};box-shadow:none"><span style="background:#333;color:#fff">${t}</span></div></div>` },
   { nom: 'Carte, liste du Récent, statut', textes: ['N', 'X'], html: t => `<div class="ct-rang"><span class="col"><span class="nom">Ibis</span> <span class="pkdx-exo">${t}</span></span></div>` },
   // Le symbole œil est un seul dessin (app.js, _ctSymbole) : recopié ici, son bord blanc retiré.
   { nom: 'Carte, symbole récent (œil)', textes: ['oeil'], html: (_, c) => `<svg class="ct-sym-oeil" style="filter:none" width="18" height="18" viewBox="0 0 18 18"><circle cx="9" cy="9" r="8.25" fill="${c}"/><g transform="translate(3.5 3.5) scale(.6875)" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"><path d="M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8 12.1 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="1.9" fill="#fff" stroke="none"/></g></svg>` },
@@ -95,7 +101,7 @@ async function analyse(b64){
   const dpr = window.devicePixelRatio;
   const res = [];
   for(const cas of document.querySelectorAll('.case:not([data-fait])')){
-    const el = cas.querySelector('.tier-chip, .rar-chip, .pkdx-exo, .pkdx-tier, .board-pal i, .cp-item-chip, .feed-pas, .prof-fav-tier, .tb-n, .ct-pt, .ct-sym-oeil');
+    const el = cas.querySelector('.tier-chip, .rar-chip, .pkdx-exo, .pkdx-tier, .board-pal i, .cp-item-chip, .feed-pas, .prof-fav-tier, .tb-n, .ct-pt, .ct-sym-oeil, .ct-gr > span');
     const b = el.getBoundingClientRect();
     if(b.top < 4 || b.bottom > innerHeight - 4) continue;
     cas.dataset.fait = '1';

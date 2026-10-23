@@ -9808,10 +9808,11 @@ function _ctListeRecent(){
   const tete = manque ? `<b>${n} espèce${s(n)} te manque${n > 1 ? 'nt' : ''}</b>, vue${s(n)} ${quand}` : `<b>${n} espèce${s(n)}</b> vue${s(n)} ${quand}`;
   // Lu dans les listes : le vrai « nombre de listes » de la maquette. Sinon, les lieux lus en détail.
   const parListes = !gbif && !!_ctRecListes;
+  // Le palier : le jeton rond de tout le site (tierChip), plus un rond à part de 24 px (Mathis, 2026-10-23).
   const rang = e => {
     const r = e.r, lieux = gbif ? e.n : parListes ? e.listes.size : _ctRecLieux.get(r.sci);
     const compte = !lieux ? '' : gbif ? ` · ${lieux} obs` : parListes ? ` · ${lieux} liste${s(lieux)}` : ` · ${lieux} lieu${lieux > 1 ? 'x' : ''}`;
-    return `<button type="button" class="ct-rang ct-rang-rec" data-sci="${esc(r.sci)}"><span class="ct-pastille" style="background:${sciColorForCountry(r.sci, cc)}">${e.w || '?'}</span>` +
+    return `<button type="button" class="ct-rang ct-rang-rec" data-sci="${esc(r.sci)}">${tierChip(e.w || '?', sciColorForCountry(r.sci, cc), { cls:'tier-rond' })}` +
       `<span class="col"><span class="nom">${esc(r.nom)}</span>${r.statut ? ' ' + jetonExo(r.statut) : ''}${r.nv ? '<span class="ct-tag nv">non validée</span>' : ''}<br><span class="lat">${esc(r.sci.charAt(0).toUpperCase() + r.sci.slice(1))}</span><br><span class="sous">${esc(r.lieu || 'lieu inconnu')}${compte}</span></span>` +
       `<span class="droite">${esc(gbif ? _ctDateCourte(r.date) : _ctIlYa(r.date))}</span></button>`;
   };
