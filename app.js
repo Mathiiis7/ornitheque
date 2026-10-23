@@ -9205,15 +9205,18 @@ document.addEventListener('click', e=>{
 // 2026-10-23, docs/carte-donnees.md). L'ancien chargement lançait un appel par espèce dès qu'une
 // rareté était cochée, c'est-à-dire toujours : 204 pour l'Espagne, 346 pour ta zone dessinée hors
 // département (toute la France). Désormais un clic coûte un appel par zone, le plus souvent un seul,
-// qui rend la dernière observation de chaque espèce ; puis au plus CT_DETAILS_PAR_CLIC appels pour
-// les lieux des espèces les plus rares, et un de plus par rang qu'on ouvre dans la liste.
+// qui rend la dernière observation de chaque espèce ; puis un appel par espèce pour tous ses lieux,
+// les plus rares d'abord : 40 espèces au plus dans un département ou ta zone (un seul point par
+// espèce, « c'est nul », Mathis, 2026-10-23), 8 dans une région ou un pays ; et un de plus par
+// rang qu'on ouvre dans la liste.
 // Ce que rend eBird, mesuré le même jour : l'appel par espèce donne UNE ligne par lieu (Canard
 // colvert à Londres sur 14 jours : 155 lignes, 155 lieux, 155 listes), d'où « N lieux » et non
 // « N listes » comme sur la maquette. Sans includeProvisional, les observations pas encore
 // vérifiées n'arrivent jamais (France, 14 jours : 0 sans, 29 avec).
 const CT_ZONES_MAX = 3;          // départements lus pour ta zone ; au-delà, ses régions
 const CT_REGIONS_MAX = 2;        // au-delà, on demande une zone plus petite
-const CT_DETAILS_PAR_CLIC = 8;   // la maquette montrait « les 8 plus rares »
+const CT_DETAILS_PETITE_ZONE = 40;   // département ou ta zone : choix de Mathis, 2026-10-23
+const CT_DETAILS_GRANDE_ZONE = 8;    // région ou pays : la maquette montrait « les 8 plus rares »
 const CT_RANGS_MAX = 60;
 let _ctRecTour = 0;              // jeton : un chargement plus récent fait taire les anciens
 let _ctRecZones = [];
@@ -9361,7 +9364,9 @@ async function _loadMissingLayer(zones, days){
   _ctPoseRecent(especes, cc);
   _loaded.missing = key;
   // Les lieux des plus rares, en tâche de fond : la liste et la carte se complètent à mesure.
-  const n = Math.max(1, Math.floor(CT_DETAILS_PAR_CLIC / zones.length));
+  // Un département est un code à trois morceaux (FR-PDL-85, ES-AN-SE) ; ta zone se lit par départements.
+  const petite = !!ebFilter.polygon || zones.every(z => z.split('-').length === 3);
+  const n = Math.max(1, Math.floor((petite ? CT_DETAILS_PETITE_ZONE : CT_DETAILS_GRANDE_ZONE) / zones.length));
   (async () => { for(const o of especes.slice(0, n)){ if(tour !== _ctRecTour) return; await _ctDetailEspece(o, tour); } })();
   return 'ok';
 }
