@@ -680,9 +680,55 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
               </div>
               <div class="ct-contenu" id="ctContenu">
                 <div class="ct-volet" id="ctVoletRecent" role="tabpanel" aria-labelledby="ctOngletRecent" data-volet="recent" hidden>
-                  <div class="ct-ici-eb" data-ici-eb="recent"></div>
-                  <div id="mapDrawResults" style="display:none; margin-top:10px; max-height:360px; overflow:auto; border:1px solid var(--line); border-radius:8px; padding:8px 12px; background:var(--surface-2);"></div>
-                  <p class="ct-mention">Données <a href="https://ebird.org" target="_blank" rel="noopener">eBird.org</a>, lues en direct pour la zone choisie.</p>
+                  <!-- Les réglages du Récent en menus (étape 2, maquette finale.html), comme dans « Qui a vu
+                       quoi ». Région et département viennent du bloc des Hotspots : app.js les y déplace. -->
+                  <div class="fm-barre ct-filtres" id="ctFiltresRecent">
+                    <span class="ct-ici-zone" data-ici-zone="recent"></span>
+                    <select class="filt-sel" id="mapEbDays" aria-label="Période">
+                      <option value="7">7 derniers jours</option>
+                      <option value="14" selected>14 derniers jours</option>
+                      <option value="30">30 derniers jours</option>
+                    </select>
+                    <!-- La rareté garde ses pastilles (plusieurs paliers à la fois), rangées sous un menu
+                         (choix de Mathis, 2026-10-23). Le menu s'ouvre sous la rangée, pas dedans : au
+                         téléphone la rangée défile de côté et l'aurait coupé. -->
+                    <div class="fm" id="mapEbRarityLbl">
+                      <button type="button" class="cp-btn fm-btn" id="ctRarBtn" aria-expanded="false" aria-controls="ctRarPop"><span class="cp-btn-label">Rareté : toutes</span><span class="cp-btn-arrow">▾</span></button>
+                    </div>
+                    <select class="filt-sel" id="mapEbSource" aria-label="Source des données">
+                      <option value="ebird" selected>Source : eBird, en direct</option>
+                      <option value="gbif">Source : les années passées, ce mois-ci</option>
+                    </select>
+                    <label class="explorer-lbl" id="mapEbYearMinLbl" style="display:none;">De
+                    <input type="number" id="mapEbYearMin" style="width:64px; font-size:14px; padding:5px 6px; border:1px solid var(--line-2); border-radius:8px;" min="1970" max="2026" value="2024">
+                    </label>
+                    <label class="explorer-lbl" id="mapEbYearMaxLbl" style="display:none;">à
+                    <input type="number" id="mapEbYearMax" style="width:64px; font-size:14px; padding:5px 6px; border:1px solid var(--line-2); border-radius:8px;" min="1970" max="2026" value="2025">
+                    </label>
+                    <label class="miss-toggle ct-case" id="ctRecManqueLbl"><input type="checkbox" id="ctRecManque" checked> Seulement ce qui me manque</label>
+                  </div>
+                  <div class="fm-pop ct-rar-pop" id="ctRarPop" hidden>
+                    <p class="fm-titre">Rareté</p>
+                    <div id="mapEbRarityChips" class="rar-chips" role="group" aria-label="Filtrer par rareté">
+                      <button type="button" class="rar-chip on" data-rar="1" title="Omniprésent">1</button>
+                      <button type="button" class="rar-chip on" data-rar="2" title="Très commun">2</button>
+                      <button type="button" class="rar-chip on" data-rar="3" title="Commun">3</button>
+                      <button type="button" class="rar-chip on" data-rar="4" title="Assez commun">4</button>
+                      <button type="button" class="rar-chip on" data-rar="5" title="Peu commun">5</button>
+                      <button type="button" class="rar-chip on" data-rar="6" title="Assez rare">6</button>
+                      <button type="button" class="rar-chip on" data-rar="7" title="Rare">7</button>
+                      <button type="button" class="rar-chip on" data-rar="8" title="Très rare">8</button>
+                      <button type="button" class="rar-chip on" data-rar="9" title="Ultra rare">9</button>
+                      <button type="button" class="rar-chip on" data-rar="10" title="Exceptionnel (vagrant accidentel)">10</button>
+                      <button type="button" class="rar-chip" data-rar-all title="Cocher toutes les raretés">Tout</button>
+                      <button type="button" class="rar-chip" data-rar-none title="Décocher toutes les raretés">Vide</button>
+                      <!-- Les statuts du Birdydex, a la place du palier 0 « exotique » (2026-10-22). -->
+                      <span class="rar-cats"><span class="rar-sep" aria-hidden="true"></span><button type="button" class="rar-chip" data-cat="X" title="Échappé isolé (X)">X</button><button type="button" class="rar-chip" data-cat="P" title="Provisoire (P)">P</button><button type="button" class="rar-chip" data-cat="N" title="Introduit établi (N)">N</button></span>
+                    </div>
+                  </div>
+                  <p class="ct-compte ct-etat" id="ctRecEtat" role="status"></p>
+                  <div class="ct-liste" id="ctListeRecent"></div>
+                  <p class="ct-mention" id="ctMentionRecent"></p>
                 </div>
                 <div class="ct-volet" id="ctVoletHot" role="tabpanel" aria-labelledby="ctOngletHot" data-volet="hot" hidden>
                   <div class="ct-ici-eb" data-ici-eb="hot"></div>
@@ -737,6 +783,8 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
               </select>
               <!-- Le menu vit DANS son etiquette : ils ne peuvent plus se separer au passage a
                    la ligne, et cliquer sur le mot deroule le menu sans avoir besoin d'un for. -->
+              <!-- Région et département servent au Récent ET aux Hotspots : ils suivent le volet ouvert. -->
+              <span class="ct-menus-zone" id="ctMenusZone">
               <label class="explorer-lbl">Région
               <select class="filt-sel" id="mapEbRegion">
                 <option value="FR" selected>Toutes les régions</option>
@@ -760,25 +808,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
                 <option value="" selected>Tous les départements</option>
               </select>
               </label>
-              <span class="explorer-lbl" id="mapEbSourceLbl" style="display:none;">Source
-              <div class="seg" id="mapEbSource" role="group" aria-label="Source des données" style="display:none; margin-right:8px;">
-                <button type="button" data-source="ebird" class="on">eBird 30 j</button>
-                <button type="button" data-source="gbif">GBIF (mois)</button>
-              </div>
               </span>
-              <label class="explorer-lbl" id="mapEbDaysLbl">Derniers
-              <select class="filt-sel" id="mapEbDays">
-                <option value="7">7 jours</option>
-                <option value="14" selected>14 jours</option>
-                <option value="30">30 jours</option>
-              </select>
-              </label>
-              <label class="explorer-lbl" id="mapEbYearMinLbl" style="display:none;">De
-              <input type="number" id="mapEbYearMin" style="width:60px; font-size:12px; padding:3px 6px; border:1px solid var(--line-2); border-radius:6px;" min="1970" max="2026" value="2024">
-              </label>
-              <label class="explorer-lbl" id="mapEbYearMaxLbl" style="display:none;">à
-              <input type="number" id="mapEbYearMax" style="width:60px; font-size:12px; padding:3px 6px; border:1px solid var(--line-2); border-radius:6px;" min="1970" max="2026" value="2025">
-              </label>
               <label class="explorer-lbl" id="mapEbSortLbl" style="display:none;">Trier par
               <select class="filt-sel" id="mapEbSort" style="display:none;">
                 <option value="todo" selected>Espèces à cocher pour moi</option>
@@ -796,26 +826,6 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
                 <option value="11">novembre</option><option value="12">décembre</option>
               </select>
               </label>
-              <!-- Ici le mot habille un GROUPE de boutons, pas un seul reglage : c'est un span
-                   avec role="group", pas un label, qui n'habillerait que le premier bouton. -->
-              <span class="explorer-lbl" id="mapEbRarityLbl" style="display:none;" title="Clique un ou plusieurs niveaux - sinon toutes les raretés">Rareté
-              <div id="mapEbRarityChips" class="rar-chips" role="group" aria-label="Filtrer par rareté" style="display:none;">
-                <button type="button" class="rar-chip on" data-rar="1" title="Omniprésent">1</button>
-                <button type="button" class="rar-chip on" data-rar="2" title="Très commun">2</button>
-                <button type="button" class="rar-chip on" data-rar="3" title="Commun">3</button>
-                <button type="button" class="rar-chip on" data-rar="4" title="Assez commun">4</button>
-                <button type="button" class="rar-chip on" data-rar="5" title="Peu commun">5</button>
-                <button type="button" class="rar-chip on" data-rar="6" title="Assez rare">6</button>
-                <button type="button" class="rar-chip on" data-rar="7" title="Rare">7</button>
-                <button type="button" class="rar-chip on" data-rar="8" title="Très rare">8</button>
-                <button type="button" class="rar-chip on" data-rar="9" title="Ultra rare">9</button>
-                <button type="button" class="rar-chip on" data-rar="10" title="Exceptionnel (vagrant accidentel)">10</button>
-                <button type="button" class="rar-chip" data-rar-all title="Cocher toutes les raretés">Tout</button>
-                <button type="button" class="rar-chip" data-rar-none title="Décocher toutes les raretés">Vide</button>
-                <!-- Les statuts du Birdydex, a la place du palier 0 « exotique » (2026-10-22). -->
-                <span class="rar-cats"><span class="rar-sep" aria-hidden="true"></span><button type="button" class="rar-chip" data-cat="X" title="Échappé isolé (X)">X</button><button type="button" class="rar-chip" data-cat="P" title="Provisoire (P)">P</button><button type="button" class="rar-chip" data-cat="N" title="Introduit établi (N)">N</button></span>
-              </div>
-              </span>
               <span class="explorer-lbl" id="mapEbMinTodoLbl" style="display:none;" title="N'affiche que les hotspots où il te manque au moins N espèces">Cacher hotspots avec moins de
               <div id="mapEbMinTodoBox" role="group" aria-label="Nombre minimum d'espèces à cocher" style="display:none; align-items:center; gap:0;">
                 <button type="button" class="btn tiny" id="mapEbMinTodoDec" style="padding:2px 8px; font-size:15px; border-radius:6px 0 0 6px;" title="−1">−</button>

@@ -2608,7 +2608,22 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-volet .map-controls { margin:12px 0 8px; }
   .ct-volet .map-count { margin-left:0; flex-basis:100%; font-size:14px; }
   .ct-volet .map-stats { display:block; margin-top:4px; }
-  .ct-volet #mapDrawResults { max-height:none !important; }
+  /* Le Récent (étape 2) : ses menus, et sa liste à pastilles de rareté (maquette finale.html). */
+  .ct-filtres { margin:12px 0 8px; }
+  /* Le menu Rareté s'ouvre sous toute la rangée, dans le fil du volet : ancré à son bouton, il sortait
+     du panneau, et la rangée qui défile de côté au téléphone l'aurait coupé. */
+  .fm-pop.ct-rar-pop { position:static; width:auto; max-width:none; margin:0 0 8px; box-shadow:none; }
+  .ct-menus-zone, .ct-ici-zone { display:contents; }
+  .ct-filtres .explorer-lbl { display:inline-flex; align-items:center; gap:6px; font-size:14px; color:var(--ink-2); }
+  .ct-filtres .ct-case { font-size:14px; min-height:34px; }
+  .ct-etat:empty { display:none; }
+  .ct-rang.ct-rang-rec { grid-template-columns:auto 1fr auto; }
+  .ct-rang .col { min-width:0; }
+  .ct-pastille { width:24px; height:24px; border-radius:50%; color:#fff; font-size:13px; font-weight:800; display:inline-flex; align-items:center; justify-content:center; margin-top:1px; }
+  .ct-tag { display:inline-block; font-size:14px; font-weight:700; padding:0 7px; border-radius:6px; margin-left:6px; background:var(--surface-2); color:var(--ink-2); }
+  .ct-tag.nv { background:color-mix(in srgb, var(--accent-2) 16%, var(--surface)); color:color-mix(in srgb, var(--accent-2) 75%, var(--ink)); }
+  .ct-plus { display:block; width:100%; margin:10px 0 0; padding:7px 12px; min-height:34px; border:1px solid var(--line-2); border-radius:9px; background:var(--surface); color:var(--accent-ink); font:600 14px var(--sans); cursor:pointer; }
+  .ct-plus:hover { border-color:var(--accent); }
   .ct-mention { font-size:14px; color:var(--ink-3); border-top:1px solid var(--line); padding-top:9px; margin:14px 0 0; line-height:1.45; }
   .ct-mention a { color:var(--accent-ink); }
   .ct-vide { border:1px dashed var(--line-2); border-radius:12px; padding:18px 16px; text-align:center; font-size:14px; color:var(--ink-3); margin-top:14px; }
@@ -2645,6 +2660,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .ct-poignee { display:block; width:100%; height:22px; border:0; background:none; cursor:pointer; padding:0; flex:none; }
     .ct-poignee::before { content:""; display:block; width:46px; height:5px; border-radius:3px; background:var(--surface-3); margin:6px auto 0; }
     .ct-zone-nom { font-size:19px; }
+    /* Les menus du Récent sur une rangée qui défile de côté (maquette) : sur trois lignes, ils
+       remplissaient le tiroir à mi-hauteur et cachaient la liste. */
+    .ct-filtres { flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; margin:10px -14px 6px; padding:0 14px 2px; }
+    .ct-filtres > *, .ct-menus-zone > * { flex:none; }
     .ct-carte .ct-legende { min-width:0; }
     /* Les coins bas de Leaflet (légende, crédits) montent au-dessus du tiroir replié, et
        disparaissent quand il s'ouvre : il les couvrirait à moitié. */
@@ -3645,6 +3664,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .ct-ariane button { min-height:52px; }
     .ct-poignee { height:52px; margin:-6px 0 -10px; }
     .ct-page .map-search input { height:52px; }
+    /* Les menus du Récent, sa case et « Voir les autres ». */
+    .ct-filtres .filt-sel, .ct-filtres .cp-btn, .ct-filtres .ct-case, .ct-plus { min-height:52px; }
   }
 
   /* Une seule police pour TOUS les noms latins, partout : celle du texte, en italique (--sans).
