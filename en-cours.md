@@ -2,7 +2,8 @@
 - Demande de Mathis : page Carte « à refaire totalement ». Garder le principe de la carte des observations des amis (à refaire), ajouter hotspots et observations récentes, contours de pays et de régions cliquables qui affichent les données de la zone.
 - Recherche faite (4 agents, France + Europe) : synthèse dans docs/carte-donnees.md, rapports complets dans notes-privees/recherche-carte/. En bref : récent = eBird partout (seule source ouverte en France ; Faune-France fermé : pas de CORS, CGU), plus Artportalen (Suède) et Artskart (Norvège) ; hotspots = eBird par département en direct, ZPS Natura 2000 avec leurs oiseaux (CC BY, 103 Ko FR), réserves / Conservatoire du littoral / Ramsar (Licence Ouverte) ; en option Birdingplaces (CC BY-NC-ND) et affûts OSM (ODbL, fichier séparé).
 - À lire par Mathis : conditions de l'API eBird (attribution, droit de garder les hotspots en fichier). Inconnu : plafond eBird de 500/h par clé ou par IP.
-- SUITE : il choisit les couches, puis maquettes de plusieurs directions (fil de fer) AVANT de toucher au site. Charte : docs/charte-graphique.md. Contours déjà dans data/ (countries/, regions-*-simplified.json, departements-fr-simplified.json).
+- CHOIX de Mathis (23/10) : hotspots = les quatre couches (eBird + ZPS Natura 2000, réserves / Conservatoire du littoral / Ramsar, fiches Birdingplaces, affûts OSM). Suède et Norvège : plus tard, eBird partout pour la refonte. Conditions eBird : il doit les lire (pas encore fait).
+- SUITE : maquettes de plusieurs directions (fil de fer) AVANT de toucher au site. Charte : docs/charte-graphique.md. Contours déjà dans data/ (countries/, regions-*-simplified.json, departements-fr-simplified.json).
 
 # POUSSÉ (2026-10-23, après-midi) : colonnes égales (v876), photos restaurées (v878 / app.js?v=452), compte rendu du modèle
 - « Qui a vu quoi » : colonnes des personnes égales, qui remplissent jusqu'au bord, 104 px minimum puis défilement (styles.css, contain:inline-size sur .cap).
