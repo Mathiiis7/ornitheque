@@ -17477,9 +17477,8 @@ async function _smFetchGbif(sci, month, yearMin, yearMax, bbox, cc, onProgress){
       const name = localityClean || commune || dept || 'lieu';
       // Ligne meta secondaire : commune (+ dept) si on a deja affiche locality en titre.
       const subloc = localityClean && commune ? (dept ? `${commune}, ${dept}` : commune) : (localityClean ? '' : dept);
-      // Observer : anonyme "obsrXXXXX" (eBird) -> masque ; sinon on affiche.
-      const rawObs = o.recordedBy || '';
-      const observer = /^obsr\d+$/i.test(rawObs) ? '' : rawObs;
+      // Le nom de l'observateur (recordedBy) n'est plus repris, comme sur la Carte
+      // (docs/carte-donnees.md, « À l'affichage » ; Mathis, 2026-10-23).
       return {
         lat:o.decimalLatitude, lon:o.decimalLongitude,
         name, loc: subloc,
@@ -17487,7 +17486,6 @@ async function _smFetchGbif(sci, month, yearMin, yearMax, bbox, cc, onProgress){
         date: (o.eventDate||'').slice(0,10),
         time: o.eventTime || '',
         count: (typeof o.individualCount==='number' && o.individualCount>0) ? o.individualCount : null,
-        observer,
         behavior: o.behavior || '',
         lifeStage: o.lifeStage || '',
         sex: o.sex || '',
@@ -17651,7 +17649,7 @@ async function _renderSpeciesMap(key){
     if(p.uid) m._uid = p.uid;   // pour lier click friend list -> pan marker
     const gm = `<a href="https://www.google.com/maps?q=${p.lat},${p.lon}" target="_blank" rel="noopener">🗺️ Google Maps</a>`;
     const cntTxt = p.count ? ` · ${p.count} individu${p.count>1?'s':''}` : '';
-    // Popup enrichi pour GBIF : heure, comportement, observateur, stage / sexe, source lien.
+    // Popup enrichi pour GBIF : heure, comportement, stage / sexe, source lien.
     let extra = '';
     if(p.isGbif){
       const parts = [];
@@ -17659,7 +17657,6 @@ async function _renderSpeciesMap(key){
       if(p.behavior) parts.push(`🎯 ${esc(p.behavior)}`);
       const stageSex = [p.lifeStage, p.sex].filter(Boolean).join(' · ');
       if(stageSex) parts.push(`🐣 ${esc(stageSex)}`);
-      if(p.observer) parts.push(`👤 ${esc(p.observer)}`);
       if(parts.length) extra += `<br><span style="font-size:11.5px;color:var(--ink-3)">${parts.join(' · ')}</span>`;
       const links = [];
       if(p.sourceUrl) links.push(`<a href="${esc(p.sourceUrl)}" target="_blank" rel="noopener">🔗 source</a>`);
