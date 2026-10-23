@@ -979,8 +979,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .cp-item.cp-item-simple .cp-item-name-moi + .youtag { margin-left:-2px; flex:none; }
   .cp-item.cp-item-simple .cp-item-meta { flex:none; }
   /* Choix d'une famille : chaque ordre (« Passeriformes »), cliquable, en tete de ses
-     familles, dans la police des titres comme au Birdydex ; les familles en retrait dessous. */
-  .cp-item.cp-item-ordre { margin-top:8px; font:600 15px var(--titre); }
+     familles, en italique comme au Birdydex ; les familles en retrait dessous. */
+  .cp-item.cp-item-ordre { margin-top:8px; font:italic 600 15px var(--sans); }
   .cp-item.cp-item-fam { padding-left:26px; }
   .cp-item:hover { background:var(--surface-2); }
   .cp-item.on { background:var(--surface-2); font-weight:700; }
@@ -3039,9 +3039,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      separe du nom francais (Mathis, 2026-10-22). */
   .pkdx-groupe-sci { font-family:var(--sans); font-style:italic; font-weight:400; color:var(--ink-3); }
   /* Grand titre d'ordre (« Accipitriformes »), au-dessus de ses familles : la taille d'un
-     petit titre de bloc (17 px, 600, police des titres), selon la charte. */
+     petit titre de bloc (17 px, 600). En italique de la police du texte, comme tout nom latin
+     de l'appli : version C de notes-privees/maquettes/ordres/, choisie par Mathis le
+     2026-10-23 parmi cinq (la police des titres ne lui plaisait pas). */
   .pkdx-ordre { grid-column:1/-1; margin:30px 0 0; padding:0 2px;
-    font:600 17px var(--titre); color:var(--ink); }
+    font:italic 600 17px var(--sans); color:var(--ink); }
   .pkdx-ordre:first-child { margin-top:0; }
   .pkdx-ordre + .pkdx-groupe { margin-top:4px; }
   /* Compteur du Birdydex : le nombre d'especes vues en grand, dans la police des titres.
