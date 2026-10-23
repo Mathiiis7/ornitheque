@@ -9040,6 +9040,10 @@ function _ctRetourFrance(){
   carteTiroir = 'bas';
   _ctSurligne();
   if(_map && cc === 'FR') _map.fitBounds(CARTE_FRANCE, _ctMarges());
+  // Le rendu de la Ligue qui suit recadrait sur TOUS ses points : le monde entier pour qui a vu
+  // des oiseaux à l'étranger (trouvé en traçant les cadrages, 2026-10-23). Il refait le cadrage
+  // de la première ouverture, la France.
+  _ctCadreFait = false;
   if(mapMode !== 'mine') _ctModeBouton('mine')?.click();
   else renderMap();
 }
@@ -9162,6 +9166,8 @@ document.addEventListener('click', e => {
   if(e.target.closest('#ctBtnLegende')){ _ctLegendeOuverte = !_ctLegendeOuverte; _ctDessineLegendeOuverte(); return; }
   // Le crayon dessine dans le Récent : c'est lui qui sait lire ta zone.
   if(e.target.closest('#mapDrawStart') && mapMode !== 'missing'){ _ctModeBouton('missing')?.click(); return; }
+  // Effacer ta zone ne redessine la carte que dans le Récent : le panneau, lui, doit toujours suivre.
+  if(e.target.closest('#mapDrawClear')){ _ctSurligne(); _ctAppliqueCouches(); return; }
   const r = e.target.closest('#ctListeLigue .ct-rang[data-sci]');
   if(r && r.dataset.sci) openSpeciesModal(r.dataset.sci);
 });
@@ -9781,7 +9787,7 @@ async function _loadTaxonomy(){
     if(ls){ _taxMap=JSON.parse(ls); return _taxMap; }
   }catch(_){ }
   try{
-    const r = await fetch(_ebRelais(`https://api.ebird.org/v2/ref/taxonomy/ebird?fmt=json&locale=en&cat=species`));
+    const r = await _ebAppel(`https://api.ebird.org/v2/ref/taxonomy/ebird?fmt=json&locale=en&cat=species`);
     if(!r.ok) throw new Error('taxonomy '+r.status);
     const arr = await r.json();
     const m={}; for(const t of arr){ if(t.speciesCode && t.sciName) m[t.speciesCode]=t.sciName.toLowerCase(); }
@@ -10032,6 +10038,29 @@ async function _loadHotspotsLayer(region){
 // ceux déjà remplis servent encore. Sans en-tête ajouté : l'appel reste simple, sans pré-vol CORS.
 const EBIRD_RELAIS = 'https://ornitheque-relais.vercel.app';
 const _ebRelais = url => url.replace('https://api.ebird.org', EBIRD_RELAIS);
+// File d'attente des appels eBird. eBird coupe au-delà de 25 appels par 5 secondes, compté par CLÉ,
+// donc pour tous les visiteurs ensemble (mesuré le 2026-10-23, docs/carte-donnees.md) : les rafales
+// de la Carte (un appel par espèce, par 8 à la fois) se faisaient refuser en silence au-delà du 25e.
+// Un tour toutes les 220 ms, soit 22 appels par 5 s ; un refus (429) fait attendre la fenêtre
+// suivante, puis l'appel est rejoué une fois.
+const EB_INTERVALLE_MS = 220;
+let _ebProchainTour = 0;
+async function _ebTour(){
+  const maintenant = Date.now();
+  const tour = Math.max(maintenant, _ebProchainTour);
+  _ebProchainTour = tour + EB_INTERVALLE_MS;
+  if(tour > maintenant) await new Promise(r => setTimeout(r, tour - maintenant));
+}
+async function _ebAppel(url){
+  let r = null;
+  for(let essai = 0; essai < 2; essai++){
+    await _ebTour();
+    r = await fetch(_ebRelais(url));
+    if(r.status !== 429) return r;
+    _ebProchainTour = Math.max(_ebProchainTour, Date.now() + 5000);
+  }
+  return r;
+}
 const _ebCache = new Map();                        // niveau 1 : mémoire (5 min)
 const EBIRD_TTL_MS = 6*60*60*1000;                 // 6h : localStorage + Firestore partagé
 const _ebDocId = url => url.replace(/[^A-Za-z0-9]/g,'_').slice(0,200);
@@ -10061,8 +10090,8 @@ async function _ebFetch(url){
       }
     }
   }catch(_){ }
-  // 4) L'appel eBird réel
-  const r = await fetch(_ebRelais(url));
+  // 4) L'appel eBird réel, à son tour dans la file
+  const r = await _ebAppel(url);
   if(!r.ok) throw new Error('eBird API '+r.status);
   const data = await r.json();
   const stamp = Date.now();
