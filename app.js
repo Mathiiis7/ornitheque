@@ -7043,7 +7043,8 @@ let _map=null, _mapLayer=null, _allBounds=null;
 // Depuis la refonte du 2026-10-23, c'est l'onglet ouvert du panneau (Ligue, Récent, Hotspots).
 let mapMode = 'mine';
 // Couches allumées par les boutons au-dessus de la carte (refonte, voir « Carte : la page refaite »)
-const carteCouches = new Set(['ligue']);
+// Aucune à l'ouverture : la carte arrive vide, on allume ce qu'on veut voir (Mathis, 2026-10-23).
+const carteCouches = new Set();
 // Couches eBird "live" (une par mode)
 let _lyrMissing=null, _lyrHotspots=null;
 let _loaded = { missing:'', hotspots:'' };   // clé de cache (région+jours)
