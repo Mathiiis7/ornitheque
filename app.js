@@ -8936,7 +8936,29 @@ function _ctBrancheSurvol(g){
   });
   g.on('clustermouseout clusterclick', e => e.layer.unbindTooltip());
   g.on('spiderfied', e => e.cluster.unbindTooltip());
+  _ctGardeSpirale(g);
   return g;
+}
+// Une spirale ouverte reste ouverte quand on zoome (Mathis, 2026-10-23) : markercluster la referme
+// exprès au début de chaque zoom. On retient un de ses points et le nombre de points ; le zoom fini,
+// la grappe qui le contient se rouvre si elle a gardé les mêmes points. Fondue dans une plus grosse
+// au dézoom, elle reste fermée : la bibliothèque n'étale qu'une grappe entière.
+// Fermée par un clic sur la carte, elle ne revient pas : seul un zoom la fait retenir.
+function _ctGardeSpirale(g){
+  if(!g.getVisibleParent) return;
+  g.on('spiderfied', e => { g._ctSpirale = { m:e.markers[0], n:e.cluster.getChildCount() }; });
+  const rouvre = () => {
+    if(g._inZoomAnimation){ setTimeout(rouvre, 50); return; }
+    const r = g._ctRouvrir; g._ctRouvrir = null;
+    if(!r || !g._map || !g.hasLayer(r.m)) return;
+    const c = g.getVisibleParent(r.m);
+    if(c && c !== r.m && c.spiderfy && c.getChildCount() === r.n && g._spiderfied !== c) c.spiderfy();
+  };
+  const zoomDebut = () => { if(g._spiderfied && g._ctSpirale) g._ctRouvrir = g._ctSpirale; };
+  const zoomFin = () => { if(g._ctRouvrir) setTimeout(rouvre, 0); };
+  g.on('add', () => { g._map.on('zoomstart', zoomDebut); g._map.on('zoomend', zoomFin); });
+  // Leaflet lance « remove » avant d'oublier la carte : g._map est encore là.
+  g.on('remove', () => { g._map?.off('zoomstart', zoomDebut).off('zoomend', zoomFin); g._ctRouvrir = null; });
 }
 // Une couche en grappes ; sans la bibliothèque (bloquée, hors ligne), une couche ordinaire (featureGroup,
 // pour que le survol des points marche quand même).
