@@ -173,6 +173,11 @@ cherche l'un ou l'autre échoue - c'est déjà arrivé deux fois. L'ancre fiable
 `\.` dans une expression régulière perd son antislash. Pour tout ce qui contient des
 échappements, passer par les outils Write / Edit, jamais par `cat <<'FIN'`.
 
+**En PowerShell, `Set-Location` ne déplace pas `[IO.File]`.** Les méthodes .NET lisent et écrivent
+depuis le dossier de départ du processus, pas depuis celui de `Set-Location`. Le 2026-10-23, un
+remplacement « dans le dossier à part » (`ornitheque-carte`) a écrit dans l'`app.js` du dossier
+principal, vu à la relecture du diff. Donner des chemins absolus, ou passer par un script Node.
+
 **Un accent grave dans un littéral de gabarit le referme** - y compris dans un commentaire à
 l'intérieur. Les générateurs de `outils/verif/` en sont pleins : y écrire « la variable ok »
 et non « la variable \`ok\` ». Ça m'a coûté deux erreurs de syntaxe le même jour.
