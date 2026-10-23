@@ -8959,8 +8959,15 @@ function _ctRangeReglages(){
 }
 // Ouvrir un onglet allume sa couche, une fois : l'éteindre ensuite tient jusqu'au prochain onglet,
 // un réglage changé ne la rallume pas.
+// La ligue et le récent ne s'affichent jamais ensemble : « ça brouille tout » (Mathis, 2026-10-23).
+// Allumer l'une éteint l'autre ; les hotspots, eux, se superposent à l'une ou l'autre.
+const CT_EXCLUSIVES = { ligue:'recent', recent:'ligue' };
+function _ctAllume(k){
+  carteCouches.add(k);
+  if(CT_EXCLUSIVES[k]) carteCouches.delete(CT_EXCLUSIVES[k]);
+}
 function _ctSuitMode(){
-  carteCouches.add(CARTE_MODE_ONGLET[mapMode] || 'ligue');
+  _ctAllume(CARTE_MODE_ONGLET[mapMode] || 'ligue');
   _ctRangeReglages();
   _ctDessinePanneau();
 }
@@ -9228,7 +9235,7 @@ document.addEventListener('click', e => {
   if(c){
     const k = c.dataset.couche;
     if(carteCouches.has(k)){ carteCouches.delete(k); _ctAppliqueCouches(); return; }
-    carteCouches.add(k);
+    _ctAllume(k);
     const l = { ligue:_mapLayer, recent:_lyrMissing, hot:_lyrHotspots }[k];
     // Une couche jamais chargée se charge en ouvrant son onglet (c'est lui qui porte ses réglages).
     if(!l || !l.getLayers().length) _ctModeBouton(CARTE_ONGLET_MODE[k])?.click();
@@ -9603,7 +9610,7 @@ async function _ctMontreEspece(sci){
   const siens = () => { const out = []; _lyrMissing.eachLayer(m => { if(m._rec && m._rec.sci === sci) out.push(m); }); return out; };
   let ms = siens(); if(!ms.length) return;
   if(ebFilter.source !== 'gbif' && !_ctRecListes && !_ctRecLieux.has(sci)){ await _ctDetailEspece(ms[0]._rec.o, _ctRecTour); ms = siens(); if(!ms.length) return; }
-  if(!_map.hasLayer(_lyrMissing)){ carteCouches.add('recent'); _ctAppliqueCouches(); }
+  if(!_map.hasLayer(_lyrMissing)){ _ctAllume('recent'); _ctAppliqueCouches(); }
   const pts = ms.map(m => m.getLatLng());
   const dernier = ms.reduce((a, b) => (b._rec.date > a._rec.date ? b : a));
   if(pts.length === 1) _map.setView(pts[0], Math.max(_map.getZoom(), 11), { animate:false });
