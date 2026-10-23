@@ -664,9 +664,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .board-pile-txt:first-child { margin-left:0; }
   /* Hauteur uniforme des lignes du board : posée en JS après render (--rowh) sur chaque tr. */
   .board-sheet tbody tr { height:var(--rowh); }
-  /* Matrice "Qui a vu quoi" : toutes les colonnes ont une largeur bloquee. Les colonnes des
-     personnes ne grandissent plus pour remplir l'espace (Mathis, 2026-10-22, version A des
-     maquettes) : le tableau prend sa largeur naturelle et peut laisser du vide a droite. */
+  /* Matrice "Qui a vu quoi" : Espece, Rarete et les comptes ont une largeur bloquee ; les
+     personnes, voir plus bas. */
   .tbl-scroll table { width:auto; }
   .tbl-scroll thead th:first-child, .tbl-scroll tbody td.sp {
     width:260px; min-width:260px; max-width:260px; }
@@ -678,12 +677,17 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     width:96px; min-width:96px; max-width:96px; }
   .tbl-scroll thead th.cnt, .tbl-scroll tbody td.cnt {
     width:78px; min-width:78px; max-width:78px; }
-  /* Personnes : 104 px chacune, quel que soit le nom. Le nom est coupe par « … » dans sa boite
-     de 92 px (104 moins 6 px de marge de chaque cote : a 14 px, « Guillaume » manquait de 2 px
-     et perdait sa fin, Mathis 2026-10-22) ; th porte le nom entier en infobulle. */
-  #matrix .tbl-scroll th.pcol, #matrix .tbl-scroll td.pcol { width:104px; min-width:104px; max-width:104px; }
+  /* Personnes : toutes de la meme largeur, 104 px au moins. Peu nombreuses, elles se partagent
+     a parts egales la place laissee par les colonnes bloquees, jusqu'au bord (Mathis, 2026-10-23) ;
+     nombreuses, elles restent a 104 px et le tableau defile. Le partage se fait au prorata de la
+     largeur naturelle de chaque colonne : le nom ne doit donc pas en avoir, d'ou contain:inline-size
+     sur .cap - sans lui, la derniere colonne (sans trait a droite) sortait 2 px plus etroite. Le
+     nom est coupe par « … » s'il depasse sa colonne, moins 6 px de marge de chaque cote ; th porte
+     le nom entier en infobulle. */
+  #matrix .tbl-scroll table { width:100%; }
+  #matrix .tbl-scroll th.pcol, #matrix .tbl-scroll td.pcol { width:auto; min-width:104px; }
   #matrix .tbl-scroll th.pcol { padding-left:6px; padding-right:6px; }
-  #matrix .tbl-scroll th.pcol .cap { display:flex; justify-content:center; width:92px; max-width:92px; }
+  #matrix .tbl-scroll th.pcol .cap { display:flex; justify-content:center; contain:inline-size; }
   #matrix .tbl-scroll th.pcol .cap-nom { min-width:0; overflow:hidden; text-overflow:ellipsis; }
   #matrix .tbl-scroll th.pcol .cap > * { flex:none; }
   #matrix .tbl-scroll th.pcol .cap > .cap-nom { flex:0 1 auto; }
