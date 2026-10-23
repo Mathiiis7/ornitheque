@@ -22195,9 +22195,9 @@ function _pcQuestion(){
     _pcNoterEntendus(q.recs.map(r => r?.id));
     const lettres = ['A', 'B', 'C'];
     corps = `
-      <div class="pc-oiseau">
+      <div class="pc-q-oiseau">
         <div class="pc-photo" id="pcPhoto"></div>
-        <div class="pc-oiseau-nom">${esc(_pcNomFr(q.cible))}</div>
+        <div class="pc-q-oiseau-nom">${esc(_pcNomFr(q.cible))}</div>
       </div>
       <p class="qz-prompt">Lequel de ces chants est le sien ?</p>
       <div class="pc-chants" id="pcChoix">

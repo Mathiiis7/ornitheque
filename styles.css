@@ -1844,10 +1844,12 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* Hauteur fixe (2026-10-18) : avec max-height, elle suivait la longueur de l'enregistrement,
      l'image de xeno-canto faisant 475 px de haut quelle que soit sa largeur. */
   .pc-verdict-sono { display:block; width:100%; height:90px; object-fit:cover; object-position:left center; margin-top:10px; border-radius:8px; opacity:.85; }
-  .pc-oiseau { text-align:center; margin-bottom:14px; }
+  /* Classe à part (2026-10-23) : sous le nom .pc-oiseau, elle prenait le flex des cases de la
+     liste des oiseaux, écrites plus bas, et le nom partait à droite de la photo. */
+  .pc-q-oiseau { text-align:center; margin-bottom:14px; }
   .pc-photo { width:100%; max-width:320px; height:200px; margin:0 auto 10px; border-radius:12px; background:var(--surface-2); overflow:hidden; }
   .pc-photo img { width:100%; height:100%; object-fit:cover; display:block; }
-  .pc-oiseau-nom { font-size:18px; font-weight:700; }
+  .pc-q-oiseau-nom { font-size:18px; font-weight:700; }
   .pc-question .qz-prompt { text-align:center; font-size:15px; color:var(--ink-2); margin:0 0 16px; font-weight:600; }
   .pc-chants { display:grid; gap:8px; max-width:560px; margin:0 auto; }
   .pc-chant { display:flex; align-items:center; gap:12px; padding:10px 12px; border:2px solid var(--line-2); border-radius:12px; background:var(--surface); }
