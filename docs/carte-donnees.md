@@ -86,7 +86,10 @@ croisant chaque site avec nos contours.
      personnel (2.3), et il est interdit de faire un miroir des sites de l'API (5.1). Les hotspots eBird se
      lisent donc **en direct**, jamais depuis `data/`.
    - **« You will not share your API key(s) with any third party »** (2.5). Le jeton public d'`app.js`
-     (décision du 2026-09-28, voir CLAUDE.md) va contre cette phrase. À trancher par Mathis.
+     (décision du 2026-09-28, voir CLAUDE.md) va contre cette phrase. **Tranché le 2026-10-23 : un petit
+     relais** (Cloudflare Worker ou fonction Vercel, gratuit) garde la clé en secret, appelle eBird à la place
+     du visiteur et met les réponses en cache quelques minutes. Le site reste sur GitHub Pages. À faire au
+     moment de construire la Carte.
    - ne pas nuire à la stabilité des serveurs (2.2) : compter et mettre en cache les appels.
    - toutes les données de l'API relèvent en plus des « eBird Data Access Terms of Use », **non lues**.
    - les conditions générales du Cornell Lab (23/10/2024, collées par Mathis le même jour) le confirment :
