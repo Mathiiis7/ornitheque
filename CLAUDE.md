@@ -352,6 +352,9 @@ le ranger ailleurs ne le cacherait qu'à nous. Le masquer vraiment demanderait d
 tous les appels par un serveur à nous, donc de quitter GitHub Pages. Décision prise le
 2026-09-28 : on ne change rien, le jeton ne lit que des données eBird publiques, pas le
 compte ni les listes. Le cookie, lui, reste hors dépôt - c'est lui le vrai secret.
+**Mais les conditions de l'API, lues le 2026-10-23, disent « You will not share your API key(s) with any
+third party » (2.5)**, et interdisent de garder leurs données en fichier publié (2.3, 5.1) : détail et
+décision en attente dans `docs/carte-donnees.md`.
 
 Récolte et vérification des données (bar charts, fréquences, injecteur, zones, mur anti-robot) :
 skill `donnees-ebird`. Le piège qui a déjà fait conclure à tort : eBird refuse le mode invisible,

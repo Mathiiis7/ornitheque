@@ -79,8 +79,19 @@ croisant chaque site avec nos contours.
 ## Ce qui a résisté (à lire par Mathis dans son navigateur)
 
 1. **Les conditions de l'API eBird** (`birds.cornell.edu/home/ebird-api-terms-of-use/`), bloquées pour la
-   troisième fois. Deux questions décident : l'attribution à afficher, et le droit de **garder en fichier** une
-   liste de hotspots.
+   troisième fois, **lues par Mathis et collées le 2026-10-23** (version du 19/10/2021) :
+   - usage permis : non commercial, « websites, web-based platforms » cités nommément (2.1). Notre cas.
+   - attribution (3) : citer « eBird.org » partout où les données s'affichent, avec un lien vers eBird.org.
+   - **pas de copie en fichier** : on ne peut télécharger qu'une seule copie sur un seul appareil, pour usage
+     personnel (2.3), et il est interdit de faire un miroir des sites de l'API (5.1). Les hotspots eBird se
+     lisent donc **en direct**, jamais depuis `data/`.
+   - **« You will not share your API key(s) with any third party »** (2.5). Le jeton public d'`app.js`
+     (décision du 2026-09-28, voir CLAUDE.md) va contre cette phrase. À trancher par Mathis.
+   - ne pas nuire à la stabilité des serveurs (2.2) : compter et mettre en cache les appels.
+   - toutes les données de l'API relèvent en plus des « eBird Data Access Terms of Use », **non lues**.
+   - les conditions générales du Cornell Lab (23/10/2024, collées par Mathis le même jour) le confirment :
+     ne pas reproduire, distribuer ni « re-post on another site » leur contenu sans accord écrit (II.2), pas
+     de miroir, mais faire des liens vers leurs services (II.4).
 2. **Le plafond eBird** : 500 requêtes par heure et 25 par 5 secondes, lu dans les en-têtes. Compté par clé ou
    par adresse IP, **non tranché**. Par clé, la clé du site étant publique et commune, ce serait 500 par heure
    pour tous les visiteurs ensemble ; il faudrait alors économiser chaque appel (cache, fichiers).
