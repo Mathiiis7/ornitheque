@@ -95,9 +95,11 @@ croisant chaque site avec nos contours.
    - les conditions générales du Cornell Lab (23/10/2024, collées par Mathis le même jour) le confirment :
      ne pas reproduire, distribuer ni « re-post on another site » leur contenu sans accord écrit (II.2), pas
      de miroir, mais faire des liens vers leurs services (II.4).
-2. **Le plafond eBird** : 500 requêtes par heure et 25 par 5 secondes, lu dans les en-têtes. Compté par clé ou
-   par adresse IP, **non tranché**. Par clé, la clé du site étant publique et commune, ce serait 500 par heure
-   pour tous les visiteurs ensemble ; il faudrait alors économiser chaque appel (cache, fichiers).
+2. **Le plafond eBird** : 500 requêtes par heure et 25 par 5 secondes, lu dans les en-têtes. **Compté par
+   CLÉ** (mesuré le 2026-10-23 : 25 appels par le relais et 25 en direct au même instant, sur 50 hotspots jamais
+   demandés, donnent 26 réussites en tout, pas 50). C'est donc 500 par heure pour tous les visiteurs ensemble,
+   avant comme après le relais : la nouvelle Carte doit étaler ses appels (file d'attente dans `_ebFetch`,
+   reprise après un 429) et ne rien charger en rafale. L'ancienne « Top hotspots » en lance 200 d'un clic.
 3. Conditions d'iNaturalist, de GBIF et d'Observation.org (pages anti-robot). Les licences d'iNaturalist et de
    GBIF ont été lues par leurs API, fiche par fiche.
 4. Non lus : conditions d'ornitho.it, .at, .lu, .cat, .eus ; quotas de l'API Artportalen avec clé ; fiches IBA
