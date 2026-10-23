@@ -8435,7 +8435,7 @@ async function _showSpeciesDetailGbif(sciName){
       const nGroup = group.length;
       const dates = [...new Set(group.map(o => (o.eventDate||'').slice(0,10)).filter(Boolean))].sort().reverse();
       const dateLine = nGroup === 1
-        ? `<span class="p-meta">${esc(dates[0]||'')}${((typeof first.individualCount === 'number' && first.individualCount > 0)?' · '+first.individualCount+' individus':'')}</span>`
+        ? `<span class="p-meta">${esc(dates[0]||'')}${((typeof first.individualCount === 'number' && first.individualCount > 0) ? _ctOiseauxComptes(first.individualCount) : '')}</span>`
         : `<span class="p-meta">${nGroup} obs · derniere ${esc(dates[0]||'?')}${dates.length > 1 ? ` (${dates.length} dates distinctes)` : ''}</span>`;
       const countBadge = nGroup > 1 ? ` <span style="display:inline-block;background:#0b7c77;color:#fff;padding:1px 7px;border-radius:5px;font-weight:700;font-size:11px;vertical-align:middle;margin-left:4px;">×${nGroup}</span>` : '';
       // Coord d'affichage : moyenne pour placer le point au centre du cluster reel.
@@ -8529,7 +8529,7 @@ async function _showSpeciesDetail(sciName, speciesCode){
       const avgLon = group.reduce((s,o)=>s+o.lng,0)/nGroup;
       const dates = [...new Set(group.map(o => (o.obsDt||'').slice(0,10)).filter(Boolean))].sort().reverse();
       const dateLine = nGroup === 1
-        ? `<span class="p-meta">${esc((first.obsDt||'').slice(0,10))}${first.howMany?' · '+first.howMany+' individus':''}</span>`
+        ? `<span class="p-meta">${esc((first.obsDt||'').slice(0,10))}${first.howMany ? _ctOiseauxComptes(first.howMany) : ''}</span>`
         : `<span class="p-meta">${nGroup} obs · derniere ${esc(dates[0]||'?')}${dates.length > 1 ? ` (${dates.length} dates distinctes)` : ''}</span>`;
       const countBadge = nGroup > 1 ? ` <span style="display:inline-block;background:#0b7c77;color:#fff;padding:1px 7px;border-radius:5px;font-weight:700;font-size:11px;vertical-align:middle;margin-left:4px;">×${nGroup}</span>` : '';
       const radius = nGroup > 1 ? Math.min(12, 7 + Math.log2(nGroup) * 1.2) : 7;
@@ -9292,6 +9292,8 @@ function _ctDateCourte(ymd){
   const d = new Date((ymd || '').slice(0, 10) + 'T12:00:00'); if(isNaN(d)) return '';
   return d.toLocaleDateString('fr-FR', { day:'numeric', month:'short', year:'numeric' });
 }
+// Le nombre noté par l'observateur sur sa liste : « 35 individus » se lisait mal (Mathis, 2026-10-23).
+const _ctOiseauxComptes = n => ` · ${n} oiseau${n > 1 ? 'x' : ''} compté${n > 1 ? 's' : ''}`;
 function _ctIlYa(ymd){
   const d = new Date((ymd || '').slice(0, 10) + 'T12:00:00'); if(isNaN(d)) return '';
   const auj = new Date(); auj.setHours(12, 0, 0, 0);
@@ -9320,7 +9322,7 @@ function _ctPoseRecent(liste, cc){
     const m = _triangleCarte([p.dispLat, p.dispLon], { radius:7, weight:1.5, color:'#fff', fillColor:sciColorForCountry(o.sciName, cc), fillOpacity:.9, opacity:1 });
     const gm = p.prive ? '' : `<span class="p-meta"><a href="https://www.google.com/maps?q=${o.lat},${o.lng}" target="_blank" rel="noopener" class="p-link">🗺️ Google Maps</a></span>`;
     m.bindPopup(`<b class="sp-link" data-sci="${esc(o.sciName || '')}" style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted;">${esc(nm)}</b> <span class="p-sci">${esc(o.sciName || '')}</span>` +
-      `<span class="p-meta">Vu le ${esc(_ctDateLongue(o.obsDt))} à ${esc(p.prive ? 'un lieu privé' : (o.locName || '?'))}${o.howMany ? ` · ${o.howMany} individu${o.howMany > 1 ? 's' : ''}` : ''}</span>` +
+      `<span class="p-meta">Vu le ${esc(_ctDateLongue(o.obsDt))} à ${esc(p.prive ? 'un lieu privé' : (o.locName || '?'))}${o.howMany ? _ctOiseauxComptes(o.howMany) : ''}</span>` +
       (nv ? '<span class="p-meta"><span class="ct-tag nv">non validée</span> pas encore vérifiée par eBird</span>' : '') +
       `<span class="p-meta">${_rarityBadge(w, cc, o.sciName)}</span>${gm}`);
     m._q = _mapNorm(nm + ' ' + (o.sciName || '') + ' ' + (p.prive ? '' : (o.locName || '')));
@@ -9929,7 +9931,7 @@ function _gbifRenderAllObs(allObs, sciByKey, stillMine){
     if(o.references) links.push(`<a href="${esc(o.references)}" target="_blank" rel="noopener" class="p-link">🔗 source</a>`);
     if(o.gbifID || o.key) links.push(`<a href="https://www.gbif.org/occurrence/${esc(o.gbifID||o.key)}" target="_blank" rel="noopener" class="p-link">🌍 GBIF</a>`);
     const linksHtml = links.length ? `<span class="p-meta">${links.join(' · ')}</span>` : '';
-    m.bindPopup(`<b class="sp-link" data-sci="${esc(sci)}" style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted;">${esc(nm)}</b> <span class="p-sci">${esc(sci)}</span>`+`<span class="p-meta">Vu le ${esc((o.eventDate||'').slice(0,10))} · ${esc(loc)}${cnt?' · '+cnt:''}</span>${metaExtra}`+
+    m.bindPopup(`<b class="sp-link" data-sci="${esc(sci)}" style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted;">${esc(nm)}</b> <span class="p-sci">${esc(sci)}</span>`+`<span class="p-meta">Vu le ${esc((o.eventDate||'').slice(0,10))} · ${esc(loc)}${cnt ? _ctOiseauxComptes(cnt) : ''}</span>${metaExtra}`+
       `<span class="p-meta">${_rarityBadge(w, (ebFilter && ebFilter.country) || "FR", sci)}</span>${linksHtml}<span class="p-meta">${gm}</span>`);
     m._q = _mapNorm(nm+' '+sci+' '+loc);
     m._sciName = sci;
