@@ -33,6 +33,9 @@ export const quoi = 'l encre des chiffres et des lettres, mesuree au pixel, part
 const SEUIL_V = 0.65, SEUIL_H = 0.6;
 
 const GRIS = '#7e8a99', TEAL = 'hsl(177 72% 30%)';
+const SANS_BORD = 'border-color:transparent;box-shadow:none;background-clip:padding-box';
+// L'œil des points du récent, recopié de CT_OEIL dans app.js.
+const OEIL = '<svg viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8 12.1 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="1.9" fill="#fff" stroke="none"/></svg>';
 const CHIFFRES = ['1', '4', '5', '8', '10'], LETTRES = ['N', 'P', 'X', 'C'];
 
 // Chaque rond dans son VRAI contexte : les regles qui le reglent dependent souvent de son parent
@@ -51,6 +54,19 @@ const SORTES = [
   { nom: 'fil, ligne', textes: CHIFFRES, html: (t, c) => `<span class="feed-pas" style="background:${c}">${t}</span>` },
   { nom: 'favori du profil', textes: CHIFFRES, html: (t, c) => `<div style="position:relative;width:52px;height:52px"><span class="prof-fav-tier" style="background:${c};top:4px;right:4px">${t}</span></div>` },
   { nom: 'bulle du tri', textes: CHIFFRES, html: (t, c) => `<span class="tb-n" style="background:${c}">${t}</span>` },
+  // La Carte : les points (initiale de l'ami ou œil) et leur symbole des boutons de couche et de la
+  // légende. L'œil « n'est pas au centre de son cercle » (Mathis, 2026-10-23, bouton Vu récemment).
+  // Leur bord blanc, sur la case blanche, se confondait avec l'encre et faussait la mesure : on le
+  // rend transparent (il garde sa place), et l'ombre, qui déborde vers le bas, part.
+  { nom: 'Carte, point de la ligue', textes: ['S', 'A', 'M'], html: (t, c) => `<span class="ct-pt ct-pt-lettre" style="background:${c};${SANS_BORD}">${t}</span>` },
+  { nom: 'Carte, point du récent (œil)', textes: ['oeil'], html: (_, c) => `<span class="ct-pt" style="background:${c};${SANS_BORD}">${OEIL}</span>` },
+  { nom: 'Carte, symbole ligue', textes: ['S', 'A'], html: (t, c) => `<span class="ct-pt ct-pt-lettre ct-pt-sym" style="background:${c};${SANS_BORD}">${t}</span>` },
+  // Le survol des points et la liste du Récent : palier et statut exotique dans leur vrai parent.
+  { nom: 'Carte, survol, palier', textes: CHIFFRES, html: (t, c) => `<div class="leaflet-tooltip ct-sv" style="position:static"><span class="ct-sv-l"><span class="tier-chip tier-rond" style="background:${c}">${t}</span></span></div>` },
+  { nom: 'Carte, survol, statut', textes: ['N', 'X'], html: t => `<div class="leaflet-tooltip ct-sv" style="position:static"><span class="ct-sv-l"><span class="pkdx-exo">${t}</span></span></div>` },
+  { nom: 'Carte, liste du Récent, statut', textes: ['N', 'X'], html: t => `<div class="ct-rang"><span class="col"><span class="nom">Ibis</span> <span class="pkdx-exo">${t}</span></span></div>` },
+  // Le symbole œil est un seul dessin (app.js, _ctSymbole) : recopié ici, son bord blanc retiré.
+  { nom: 'Carte, symbole récent (œil)', textes: ['oeil'], html: (_, c) => `<svg class="ct-sym-oeil" style="filter:none" width="18" height="18" viewBox="0 0 18 18"><circle cx="9" cy="9" r="8.25" fill="${c}"/><g transform="translate(3.5 3.5) scale(.6875)" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"><path d="M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8 12.1 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="1.9" fill="#fff" stroke="none"/></g></svg>` },
 ];
 // px CSS, pour voir le jeu sur la grille de pixels. Huit et non quatre : a quatre, la moyenne
 // des ronds non transformes variait de 0,3 px d'un passage a l'autre.
@@ -79,7 +95,7 @@ async function analyse(b64){
   const dpr = window.devicePixelRatio;
   const res = [];
   for(const cas of document.querySelectorAll('.case:not([data-fait])')){
-    const el = cas.querySelector('.tier-chip, .rar-chip, .pkdx-exo, .pkdx-tier, .board-pal i, .cp-item-chip, .feed-pas, .prof-fav-tier, .tb-n');
+    const el = cas.querySelector('.tier-chip, .rar-chip, .pkdx-exo, .pkdx-tier, .board-pal i, .cp-item-chip, .feed-pas, .prof-fav-tier, .tb-n, .ct-pt, .ct-sym-oeil');
     const b = el.getBoundingClientRect();
     if(b.top < 4 || b.bottom > innerHeight - 4) continue;
     cas.dataset.fait = '1';
