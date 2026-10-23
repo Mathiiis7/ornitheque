@@ -68,6 +68,12 @@ croisant chaque site avec nos contours.
 - **Observation.org** (46 % des oiseaux de France sur GBIF en 2025) : pas de CORS, API réservée aux
   « applications approuvées ». Demanderait un serveur et un accord.
 - **GBIF pour le récent** : 2 semaines à 2 mois de retard, et aucune donnée eBird depuis 2025.
+  Mesuré le 2026-10-23 (oiseaux de France) : 0 observation sur les 7 derniers jours, 13 098 sur deux mois
+  (83 % iNaturalist). La LPO y arrive par gros lots, des années après : Faune-France 2020 (22 % de 2020),
+  Faune-Occitanie 2022, rien de Faune-France après 2020. Et le lot Faune-France 2020 (clé
+  e357cdec-295a-4b91-ac7d-abf5fbbc43bb, CC BY 4.0) n'est qu'un TIRAGE : une observation par espèce et par
+  commune, placée à la commune (1,6 à 5 km d'incertitude, aucun nom de lieu), espèces sensibles floutées au
+  carré de 10 km ou au département. Bon pour « quelles espèces dans quelle commune », pas pour des points.
 - **Oiseaux de France (LPO), atlas GeoNature régionaux** : pas de CORS, droits réservés ; les atlas ont un à
   deux ans de retard.
 - **Trektellen** : « not open data », Cloudflare. **Rare Bird Alert, BirdGuides** : payants.
