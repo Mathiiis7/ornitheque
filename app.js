@@ -7016,7 +7016,10 @@ function renderRequests(){
 // ---- Carte des observations ----
 let _map=null, _mapLayer=null, _allBounds=null;
 // Mode carte : 'mine' (mes obs) | 'missing' (à cocher) | 'hotspots'
+// Depuis la refonte du 2026-10-23, c'est l'onglet ouvert du panneau (Ligue, Récent, Hotspots).
 let mapMode = 'mine';
+// Couches allumées par les boutons au-dessus de la carte (refonte, voir « Carte : la page refaite »)
+const carteCouches = new Set(['ligue']);
 // Couches eBird "live" (une par mode)
 let _lyrMissing=null, _lyrHotspots=null;
 let _loaded = { missing:'', hotspots:'' };   // clé de cache (région+jours)
@@ -7155,21 +7158,30 @@ let mapSearch = '';          // recherche par nom (espèce/lieu) - filtre client
 let _lyrDetail = null;        // couche "détails d'une espèce" (obs sur toute la période)
 let _legendDiv = null;        // <div> de la légende Leaflet (bottomright) - contenu adapté au mode
 // Légende adaptative : rareté (couleur) pour mine/missing, taille (nb d'espèces) pour hotspots.
+// Depuis la refonte (2026-10-23), plusieurs couches s'affichent ensemble : la légende montre
+// chacune de celles qui sont allumées, et seulement elles.
 function _updateLegend(){
   if(!_legendDiv) return;
-  if(mapMode==='hotspots'){
+  const parts = [];
+  const ligue = carteCouches.has('ligue'), recent = carteCouches.has('recent');
+  if(ligue || recent){
+    const formes = [ligue ? `<span class="ml-row">${_ctSymbole('ligue')}<span class="ml-txt">La ligue</span></span>` : '',
+      recent ? `<span class="ml-row">${_ctSymbole('recent')}<span class="ml-txt">Vu récemment</span></span>` : ''].join('');
+    const tiers=[1,2,3,4,5,6,7,8,9,10];
+    // Les dix paliers sur deux colonnes : en une seule, la légende montait jusqu'au crayon.
+    parts.push('<div class="ml-title">Rareté</div>' + (ligue && recent ? formes : '') + '<div class="ct-leg-paliers">' + tiers.map(w=>
+      `<div class="ml-row"><span class="ml-dot" style="background:${realColor(w)}"></span><span class="ml-txt"><b>${w}</b> ${esc(REAL_LABELS[w]||'')}</span></div>`).join('') + '</div>');
+  }
+  if(carteCouches.has('hot')){
     const isTotal = hotspotSort==='total';
     // Mêmes formules que le rendu (fonction sqrt continue) pour que la légende reflète les vraies tailles.
     const size = v => Math.max(4, Math.min(18, 3 + Math.sqrt(v) * (isTotal ? 0.7 : 1.5)));
     const samples = isTotal ? [[500,'≥ 500 espèces (all-time)'],[300,'≥ 300'],[200,'≥ 200'],[100,'≥ 100'],[50,'≥ 50'],[20,'≥ 20']]
                             : [[100,'≥ 100 espèces à cocher'],[50,'≥ 50'],[20,'≥ 20'],[10,'≥ 10'],[5,'≥ 5'],[1,'1']];
-    _legendDiv.innerHTML = `<div class="ml-title">Taille = ${isTotal?'total d\'espèces':'espèces à cocher'}</div>`+
-      samples.map(([v,lbl])=>{ const r = size(v); return `<div class="ml-row"><span class="ml-dot ml-hs" style="width:${(r*2).toFixed(0)}px;height:${(r*2).toFixed(0)}px"></span><span class="ml-txt">${esc(lbl)}</span></div>`; }).join('');
-  } else {
-    const tiers=[1,2,3,4,5,6,7,8,9,10];
-    _legendDiv.innerHTML = '<div class="ml-title">Rareté</div>' + tiers.map(w=>
-      `<div class="ml-row"><span class="ml-dot" style="background:${realColor(w)}"></span><span class="ml-txt"><b>${w}</b> ${esc(REAL_LABELS[w]||'')}</span></div>`).join('');
+    parts.push(`<div class="ml-title">Hotspots : ${isTotal?'total d\'espèces':'espèces à cocher'}</div><div class="ct-leg-tailles">`+
+      samples.map(([v,lbl])=>{ const r = size(v); return `<div class="ml-row"><span class="ml-dot ml-hs" style="width:${(r*2).toFixed(0)}px;height:${(r*2).toFixed(0)}px"></span><span class="ml-txt">${esc(lbl)}</span></div>`; }).join('') + '</div>');
   }
+  _legendDiv.innerHTML = parts.join('') || '<div class="ml-row"><span class="ml-txt">Aucune couche allumée</span></div>';
 }
 function _mapNorm(s){ return (s||'').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
 function _mapApplyFilter(){
@@ -7836,16 +7848,22 @@ async function renderMap(){
   if(_lyrMissing){ _lyrMissing.remove(); }
   if(_lyrHotspots){ _lyrHotspots.remove(); }
   if(_lyrDetail && modeChanged){ _lyrDetail.remove(); _lyrDetail.clearLayers(); }
-  // Dispatch
-  if(mine) return _renderModeMine(el);
-  if(mapMode==='missing') return _renderModeMissing();
-  if(mapMode==='hotspots') return _renderModeHotspots();
+  // Dispatch. Depuis la refonte (2026-10-23), le mode est l'onglet ouvert du panneau, et les
+  // couches allumées des autres modes restent sur la carte : _ctAppliqueCouches les remet.
+  _ctAvantRendu();
+  if(mine) _renderModeMine(el);
+  else if(mapMode==='missing') await _renderModeMissing();
+  else if(mapMode==='hotspots') await _renderModeHotspots();
+  _ctAppliqueCouches();
 }
 function _ensureMapInit(el){
   if(_map) return;
-  _map = L.map(el, { zoomControl:true, minZoom:2, worldCopyJump:true }).setView([46.6, 2.5], 5);
+  // zoomSnap 0,25 : cadrer la France ou un département au plus juste. Au pas de 1, la France
+  // tombait au cran du dessous et ne remplissait qu'un tiers de la carte au téléphone.
+  _map = L.map(el, { zoomControl:true, minZoom:2, worldCopyJump:true, zoomSnap:0.25 }).setView([46.6, 2.5], 5);
+  // ct-fond-plan : en sombre, seul le plan est inversé (styles.css), pas la vue satellite.
   const planLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution:'© <a href="https://openstreetmap.org/copyright">OpenStreetMap</a>', maxZoom:19 });
+    attribution:'© <a href="https://openstreetmap.org/copyright">OpenStreetMap</a>', maxZoom:19, className:'ct-fond-plan' });
   const satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
     attribution:'Tiles © Esri - Source: Esri, Maxar, Earthstar Geographics', maxZoom:19 });
   planLayer.addTo(_map);
@@ -7856,15 +7874,17 @@ function _ensureMapInit(el){
   // (qui n'ont pas _baseLat).
   _map.on('zoomend', _mainMapSpreadGbifMarkers);
   L.control.layers({ 'Plan':planLayer, 'Satellite':satLayer }, {}, { position:'topright', collapsed:false }).addTo(_map);
-  const legend = L.control({ position:'bottomright' });
-  legend.onAdd = () => {
-    const div = L.DomUtil.create('div', 'map-legend');
-    _legendDiv = div;
-    _updateLegend();
-    L.DomEvent.disableClickPropagation(div);
-    return div;
+  // La légende et les outils (dessiner ta zone, revenir à la France) sont écrits dans index.html :
+  // on les pose dans les coins de Leaflet, qui les range sous ses propres boutons.
+  const posePanneau = (id, position) => {
+    const div = document.getElementById(id); if(!div) return;
+    const c = L.control({ position });
+    c.onAdd = () => { L.DomEvent.disableClickPropagation(div); L.DomEvent.disableScrollPropagation(div); return div; };
+    c.addTo(_map);
   };
-  legend.addTo(_map);
+  _legendDiv = document.getElementById('ctLegende');
+  _updateLegend();
+  posePanneau('ctBas', 'bottomleft');
   const fitBtn = L.control({ position:'topleft' });
   fitBtn.onAdd = () => {
     const div = L.DomUtil.create('div', 'leaflet-bar map-custom-btn');
@@ -7873,6 +7893,8 @@ function _ensureMapInit(el){
     return div;
   };
   fitBtn.addTo(_map);
+  posePanneau('ctOutils', 'topleft');
+  _ctInitCarte();
 }
 // ---- Mode "Mes observations" ----
 function _renderModeMine(el){
@@ -7924,7 +7946,7 @@ function _renderModeMine(el){
   }
   if(pts.length){
     _allBounds = L.latLngBounds(allPts.map(p=>[p.lat,p.lon]));
-    if(!_tlSkipFit){ _map.fitBounds(L.latLngBounds(pts.map(p=>[p.lat,p.lon])), { padding:[30,30], maxZoom:14 }); }
+    if(!_tlSkipFit){ _ctCadre(L.latLngBounds(pts.map(p=>[p.lat,p.lon])), { padding:[30,30], maxZoom:14 }); }
   }
   _tlSkipFit=false;
   _mapApplyFilter();
@@ -8492,7 +8514,7 @@ async function _showSpeciesDetailGbif(sciName){
       const gm = `<a href="https://www.google.com/maps?q=${avgLat},${avgLon}" target="_blank" rel="noopener" class="p-link">🗺️ Google Maps</a>`;
       const gbifLink = first.gbifID ? `<a href="https://www.gbif.org/occurrence/${esc(first.gbifID)}" target="_blank" rel="noopener" class="p-link">🌍 GBIF</a> · ` : '';
       const radius = nGroup > 1 ? Math.min(12, 7 + Math.log2(nGroup) * 1.2) : 7;
-      const dot = L.circleMarker([avgLat, avgLon], { radius, weight:2, color:'#fff', fillColor:color, fillOpacity:.9, opacity:1 });
+      const dot = _triangleCarte([avgLat, avgLon], { radius, weight:2, color:'#fff', fillColor:color, fillOpacity:.9, opacity:1 });
       dot.bindPopup(`<b class="sp-link" data-sci="${esc(sciName)}" style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted;">${esc(nm)}</b>${countBadge} <span class="p-sci">${esc(sciName)}</span>`+
         `<span class="p-meta">📍 ${esc(loc)}</span>`+
         dateLine +
@@ -8578,7 +8600,7 @@ async function _showSpeciesDetail(sciName, speciesCode){
         : `<span class="p-meta">${nGroup} obs · derniere ${esc(dates[0]||'?')}${dates.length > 1 ? ` (${dates.length} dates distinctes)` : ''}</span>`;
       const countBadge = nGroup > 1 ? ` <span style="display:inline-block;background:#0b7c77;color:#fff;padding:1px 7px;border-radius:5px;font-weight:700;font-size:11px;vertical-align:middle;margin-left:4px;">×${nGroup}</span>` : '';
       const radius = nGroup > 1 ? Math.min(12, 7 + Math.log2(nGroup) * 1.2) : 7;
-      const dot = L.circleMarker([avgLat, avgLon], { radius, weight:2, color:'#fff', fillColor:color, fillOpacity:.9, opacity:1 });
+      const dot = _triangleCarte([avgLat, avgLon], { radius, weight:2, color:'#fff', fillColor:color, fillOpacity:.9, opacity:1 });
       const gm = `<a href="https://www.google.com/maps?q=${avgLat},${avgLon}" target="_blank" rel="noopener" class="p-link">🗺️ Google Maps</a>`;
       dot.bindPopup(`<b class="sp-link" data-sci="${esc(sciName||'')}" style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted;">${esc(nm)}</b>${countBadge} <span class="p-sci">${esc(sciName||'')}</span>`+
         `<span class="p-meta">📍 ${esc(first.locName||'?')}</span>`+
@@ -8605,7 +8627,7 @@ function _fitLayer(lyr){
   const latlngs = []; lyr.eachLayer(l=>{ const ll=l.getLatLng?l.getLatLng():null; if(ll) latlngs.push([ll.lat, ll.lng]); });
   if(!latlngs.length) return;
   _allBounds = L.latLngBounds(latlngs);
-  _map.fitBounds(_allBounds, { padding:[30,30], maxZoom:12 });
+  _ctCadre(_allBounds, { padding:[30,30], maxZoom:12 });
 }
 document.addEventListener('change', e=>{
   if(e.target.id==='mapPlayerSel'){ mapFilter.player=e.target.value; renderMap(); }
@@ -8773,6 +8795,7 @@ document.addEventListener('click', e=>{
   if(!b) return;
   mapMode = b.dataset.mode;
   document.querySelectorAll('#mapModes button').forEach(x=>x.classList.toggle('on', x===b));
+  _ctSuitMode();   // l'onglet du panneau suit le mode, d'où qu'on l'ait choisi
   // Cache le sélecteur "Derniers" en mode hotspots (endpoint sans param days)
   // Affiche le sélecteur "Trier par" uniquement en mode hotspots
   // Affiche le sélecteur "Rareté min." uniquement en mode missing
@@ -8821,6 +8844,342 @@ document.addEventListener('click', e=>{
   // Refetch de l'espece si une recherche est active (utile au switch source eBird->GBIF :
   // renderMap seul est skip par le guard _hasSpeciesSearch, il faut donc reflancer la fiche).
   _reloadSpeciesForZone();
+});
+// ---- Carte : la page refaite (direction A, 2026-10-23) ----
+// Maquette choisie par Mathis : notes-privees/maquettes/carte/finale.html. Une carte à couches, un
+// panneau de zone à onglets à droite, un tiroir posé sur la carte au téléphone. Le moteur d'avant
+// reste : ses trois modes sont devenus les onglets, et leurs couches peuvent s'afficher ensemble.
+// Règles : ouvrir un onglet allume sa couche ; allumer une couche jamais chargée ouvre son onglet ;
+// une zone choisie (département, région, ta zone) garde la carte cadrée sur elle.
+// Les sites protégés arrivent à l'étape 4 de la refonte, les hotspots en carrés à l'étape 3.
+const CARTE_ONGLET_MODE = { recent:'missing', hot:'hotspots', ligue:'mine' };
+const CARTE_MODE_ONGLET = { missing:'recent', hotspots:'hot', mine:'ligue' };
+const CARTE_COUCHES = [['ligue', 'La ligue'], ['recent', 'Vu récemment'], ['hot', 'Hotspots']];
+const CARTE_FRANCE = [[41.3, -5.2], [51.2, 9.7]];
+let carteTiroir = 'bas';            // téléphone : bas, mi, haut
+let _ctCadreFait = false;        // la première ouverture se cadre sur la France
+let _ctLegendeOuverte = null;    // ouverte sur ordinateur, fermée au téléphone (elle y cache la carte)
+let _lyrDeps = null, _ctDepsPromesse = null;
+const _ctTel = window.matchMedia('(max-width:900px)');
+const _ctAuDoigt = window.matchMedia('(hover: none)');
+
+// Les points « vu récemment » sont des triangles, ceux de la ligue des ronds : les deux couches
+// partagent la couleur de la rareté et s'affichent désormais ensemble. Un CircleMarker dont seul
+// le dessin change garde tout le reste (survol, bulle, setLatLng de l'éparpillement).
+let _TriangleCarte = null;
+function _triangleCarte(latlng, opts){
+  if(!_TriangleCarte){
+    _TriangleCarte = L.CircleMarker.extend({
+      _updatePath(){
+        const r = this._renderer, p = this._point;
+        if(!r || !r._setPath || !p) return L.CircleMarker.prototype._updatePath.call(this);
+        const s = this._radius * 1.3;
+        r._setPath(this, `M${p.x},${p.y - s * 1.1}L${p.x + s},${p.y + s * .75}L${p.x - s},${p.y + s * .75}z`);
+      }
+    });
+  }
+  return new _TriangleCarte(latlng, opts);
+}
+function _ctSymbole(k){
+  if(k === 'ligue') return `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="5" cy="9" r="3.6" fill="${realColor(2)}" stroke="#fff" stroke-width="1.2"/><circle cx="11" cy="6" r="3.6" fill="${realColor(8)}" stroke="#fff" stroke-width="1.2"/></svg>`;
+  if(k === 'recent') return `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5l6.5 12h-13z" fill="${realColor(7)}" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/></svg>`;
+  return `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="#1e6091" stroke="#fff" stroke-width="1.2"/></svg>`;
+}
+function _ctDessineCouches(){
+  const box = document.getElementById('ctCouches'); if(!box) return;
+  box.innerHTML = CARTE_COUCHES.map(([k, nom]) =>
+    `<button type="button" class="ct-couche" data-couche="${k}" aria-pressed="${carteCouches.has(k)}">${_ctSymbole(k)}${esc(nom)}</button>`).join('');
+}
+const _ctFrance = () => (ebFilter.country || 'FR') === 'FR';
+const _ctModeBouton = mode => document.querySelector(`#mapModes button[data-mode="${mode}"]`);
+// Appelé par renderMap avant de dessiner le mode : l'onglet ouvert allume sa couche, les réglages
+// eBird suivent l'onglet, le crayon reste toujours là (il ouvre le Récent s'il le faut).
+function _ctAvantRendu(){
+  const d = document.getElementById('mapDrawStart'); if(d) d.style.display = '';
+  _ctRangeReglages();
+  _ctDessineCouches();
+}
+// Le bloc des réglages eBird (région, jours, rareté, source, tri…) sert à Récent ET à Hotspots :
+// il vit dans le volet ouvert. Ses commandes gardent leurs id, donc leurs gestionnaires.
+function _ctRangeReglages(){
+  const eb = document.getElementById('mapCtrlsEbird'); if(!eb) return;
+  const ici = document.querySelector(`[data-ici-eb="${CARTE_MODE_ONGLET[mapMode]}"]`);
+  if(ici && eb.parentElement !== ici) ici.appendChild(eb);
+  const hint = document.getElementById('mapCountryHint');
+  if(ici && hint && hint.parentElement !== ici) ici.appendChild(hint);
+}
+// Ouvrir un onglet allume sa couche, une fois : l'éteindre ensuite tient jusqu'au prochain onglet,
+// un réglage changé ne la rallume pas.
+function _ctSuitMode(){
+  carteCouches.add(CARTE_MODE_ONGLET[mapMode] || 'ligue');
+  _ctRangeReglages();
+  _ctDessinePanneau();
+}
+// Les couches allumées restent sur la carte, éteintes elles en sortent. Une espèce cherchée dans
+// la barre cache la couche Récent (comportement d'avant) : on ne la remet pas par-dessus.
+function _ctAppliqueCouches(){
+  if(!_map) return;
+  const detail = _hasSpeciesSearch() || (_lyrDetail && _lyrDetail.getLayers().length > 0);
+  const couches = { ligue:_mapLayer, recent:_lyrMissing, hot:_lyrHotspots };
+  for(const [k, l] of Object.entries(couches)){
+    if(!l) continue;
+    const on = carteCouches.has(k) && !(k === 'recent' && detail);
+    if(on && !_map.hasLayer(l) && l.getLayers().length) l.addTo(_map);
+    if(!on && _map.hasLayer(l)) _map.removeLayer(l);
+  }
+  if(_lyrDeps){
+    if(_ctFrance() && !_map.hasLayer(_lyrDeps)) _lyrDeps.addTo(_map);
+    if(!_ctFrance() && _map.hasLayer(_lyrDeps)) _map.removeLayer(_lyrDeps);
+  }
+  _mapApplyFilter();
+  _updateLegend();
+  _ctDessineCouches();
+  _ctDessinePanneau();
+}
+// Une zone choisie garde la carte cadrée sur elle ; sinon on cadre comme avant, sur les points.
+// La toute première ouverture, en France, montre la France entière (maquette).
+function _ctZoneChoisie(){
+  return _ctFrance() && !!(ebFilter.dept || ebFilter.polygon || (ebFilter.region && ebFilter.region !== 'FR'));
+}
+function _ctMarges(){
+  // Au téléphone, le tiroir à mi-hauteur couvre le bas : la zone se cadre dans le haut.
+  if(!_ctTel.matches) return { paddingTopLeft:[30, 30], paddingBottomRight:[30, 30] };
+  const h = document.getElementById('mapEl')?.clientHeight || 500;
+  return { paddingTopLeft:[12, 70], paddingBottomRight:[12, Math.round(h * (carteTiroir === 'bas' ? .25 : .58)) + 10] };
+}
+function _ctCadre(bounds, opts){
+  if(!_map) return;
+  if(_ctZoneChoisie()) return;
+  if(!_ctCadreFait){
+    _ctCadreFait = true;
+    if(_ctFrance()){ _map.fitBounds(CARTE_FRANCE, _ctMarges()); return; }
+  }
+  _map.fitBounds(bounds, opts);
+}
+function _ctCadreZone(){
+  if(!_map || !_lyrDeps || !_ctFrance()) return;
+  let b = null;
+  _lyrDeps.eachLayer(l => { if(_ctDansZone(l)){ b = b ? b.extend(l.getBounds()) : L.latLngBounds(l.getBounds().getSouthWest(), l.getBounds().getNorthEast()); } });
+  if(b) _map.fitBounds(b, _ctMarges());
+}
+// Un département fait partie de la zone choisie : lui-même, ou sa région entière.
+function _ctDansZone(l){
+  const code = l.feature?.properties?.ebird || '';
+  if(ebFilter.dept) return code === ebFilter.dept;
+  if(ebFilter.region && ebFilter.region !== 'FR') return code.startsWith(ebFilter.region + '-');
+  return false;
+}
+const _ctCss = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const _ctStyleRepos = () => ({ color:_ctCss('--ink-3'), weight:.8, opacity:.55, fillColor:_ctCss('--accent'), fillOpacity:0 });
+function _ctSurligne(){
+  if(!_lyrDeps) return;
+  _lyrDeps.eachLayer(l => {
+    if(_ctDansZone(l)){
+      l.setStyle({ color:_ctCss('--accent'), weight:ebFilter.dept ? 3 : 2, opacity:1, fillColor:_ctCss('--accent'), fillOpacity:.06 });
+      l.bringToFront();
+    } else l.setStyle(_ctStyleRepos());
+  });
+}
+// Les 96 départements, chargés à la première ouverture de la Carte (95 Ko gzippés, mesuré le
+// 2026-10-23) : jamais au démarrage de l'appli. Dans un calque sous les points, sinon leurs
+// formes intercepteraient les clics des marqueurs.
+async function _ctChargeDeps(){
+  if(!_ctDepsPromesse) _ctDepsPromesse = fetch('data/carte-departements.json?v=20261023').then(r => r.ok ? r.json() : null).catch(() => null);
+  const geo = await _ctDepsPromesse;
+  if(!geo || !_map || _lyrDeps) return;
+  if(!_map.getPane('ctDeps')){ _map.createPane('ctDeps').style.zIndex = 350; }
+  _lyrDeps = L.geoJSON(geo, {
+    pane:'ctDeps',
+    style:_ctStyleRepos,
+    onEachFeature:(f, l) => {
+      l.on('mouseover', () => { if(!_ctDansZone(l)) l.setStyle({ fillOpacity:.08, weight:1.6, opacity:.9, color:_ctCss('--accent') }); });
+      l.on('mouseout', () => { if(!_ctDansZone(l)) l.setStyle(_ctStyleRepos()); });
+      // En dessinant ta zone, un clic pose un sommet : il ne doit pas choisir le département.
+      l.on('click', () => { if(!_drawState.active) _ctChoisirDep(f.properties.ebird); });
+      if(!_ctAuDoigt.matches) l.bindTooltip(f.properties.nom, { sticky:true, direction:'top', offset:[0, -8] });
+    },
+  });
+  _ctSurligne();
+  _ctAppliqueCouches();
+}
+function _ctChoisirDep(code){
+  if(!code || !_ctFrance()) return;
+  if(ebFilter.polygon) _drawClear();
+  ebFilter.region = code.split('-').slice(0, 2).join('-'); ebFilter.dept = code;
+  _loaded.missing = ''; _loaded.hotspots = '';
+  const rs = document.getElementById('mapEbRegion'); if(rs) rs.value = ebFilter.region;
+  _refreshDeptSel();
+  const ds = document.getElementById('mapEbDept'); if(ds) ds.value = code;
+  if(_ctTel.matches && carteTiroir === 'bas') carteTiroir = 'mi';
+  _ctSurligne(); _ctCadreZone();
+  // Choisir un département ouvre ce qui y a été vu récemment (maquette). Les hotspots attendent
+  // leur onglet : les charger coûte jusqu'à 200 appels eBird, 40 % du plafond horaire de la clé,
+  // partagé par tous les visiteurs (mesuré le 2026-10-23, docs/carte-donnees.md).
+  if(mapMode !== 'missing') _ctModeBouton('missing')?.click();
+  else { if(!_hasSpeciesSearch()) renderMap(); _reloadSpeciesForZone(); }
+}
+function _ctChoisirRegion(region){
+  if(!region || !_ctFrance()) return;
+  if(ebFilter.polygon) _drawClear();
+  ebFilter.region = region; ebFilter.dept = '';
+  _loaded.missing = ''; _loaded.hotspots = '';
+  const rs = document.getElementById('mapEbRegion'); if(rs) rs.value = region;
+  _refreshDeptSel();
+  _ctSurligne(); _ctCadreZone();
+  if(!_hasSpeciesSearch()) renderMap();
+  _reloadSpeciesForZone();
+}
+function _ctRetourFrance(){
+  if(ebFilter.polygon) _drawClear();
+  const cc = ebFilter.country || 'FR';
+  ebFilter.region = cc; ebFilter.dept = '';
+  _loaded.missing = ''; _loaded.hotspots = '';
+  const rs = document.getElementById('mapEbRegion'); if(rs) rs.value = cc;
+  if(cc === 'FR') _refreshDeptSel(); else _repopulateEbDeptsForRegion(cc);
+  carteCouches.delete('recent'); carteCouches.delete('hot');
+  carteTiroir = 'bas';
+  _ctSurligne();
+  if(_map && cc === 'FR') _map.fitBounds(CARTE_FRANCE, _ctMarges());
+  if(mapMode !== 'mine') _ctModeBouton('mine')?.click();
+  else renderMap();
+}
+// Au téléphone, le panneau vit DANS la carte (le tiroir) ; sur ordinateur, à sa droite.
+function _ctPlacePanneau(){
+  const zone = document.getElementById('ctZone'); if(!zone) return;
+  const cible = _ctTel.matches ? document.getElementById('ctCarte') : document.getElementById('ctPlacePanneau');
+  if(cible && zone.parentElement !== cible) cible.appendChild(zone);
+  if(_ctLegendeOuverte === null) _ctLegendeOuverte = !_ctTel.matches;
+  _ctDessineLegendeOuverte();
+}
+function _ctDessineLegendeOuverte(){
+  const leg = document.getElementById('ctLegende'), b = document.getElementById('ctBtnLegende');
+  if(leg) leg.hidden = !_ctLegendeOuverte;
+  if(b) b.setAttribute('aria-expanded', String(!!_ctLegendeOuverte));
+}
+function _ctInitCarte(){
+  _ctDessineCouches();
+  _ctPlacePanneau();
+  _ctTel.addEventListener('change', () => { _ctPlacePanneau(); _ctDessinePanneau(); setTimeout(() => { try{ _map.invalidateSize(); }catch(_){} }, 60); });
+  _ctChargeDeps();
+}
+// Ce que la ligue a vu dans la zone choisie : une ligne par espèce, ses membres, la dernière date.
+// Les points sont ceux de la couche Ligue (première observation de chaque personne), filtres compris.
+function _ctTesteZone(){
+  if(!_ctFrance()) return null;
+  if(ebFilter.polygon){ const p = ebFilter.polygon; return (la, lo) => _pointInPolygon(la, lo, p); }
+  if(!_lyrDeps || !_ctZoneChoisie()) return null;
+  const formes = [];
+  _lyrDeps.eachLayer(l => { if(_ctDansZone(l)) formes.push({ b:l.getBounds(), g:l.feature.geometry }); });
+  if(!formes.length) return null;
+  // GeoJSON : [lon, lat] ; un point est dedans s'il est dans l'anneau extérieur et hors des trous.
+  const dansPoly = (la, lo, anneaux) => {
+    const dedans = r => _pointInPolygon(la, lo, r.map(([x, y]) => [y, x]));
+    return dedans(anneaux[0]) && !anneaux.slice(1).some(dedans);
+  };
+  return (la, lo) => formes.some(({ b, g }) => b.contains([la, lo]) &&
+    (g.type === 'Polygon' ? dansPoly(la, lo, g.coordinates) : g.coordinates.some(p => dansPoly(la, lo, p))));
+}
+function _ctListeLigue(){
+  const box = document.getElementById('ctListeLigue'); if(!box) return { especes:0 };
+  const f = mapFilter;
+  const pts = _mapCollectPoints().filter(p => (f.player === 'all' || p.uid === f.player) && (f.tier === 'any' || String(p.w) === f.tier) && (f.country === 'any' || p.cc === f.country));
+  const teste = _ctTesteZone();
+  if(!teste){ box.innerHTML = ''; return { especes:new Set(pts.map(p => (p.sci || '').toLowerCase())).size }; }
+  const parSp = new Map();
+  for(const p of pts){
+    if(!teste(p.lat, p.lon)) continue;
+    const k = (p.sci || '').toLowerCase();
+    if(!parSp.has(k)) parSp.set(k, { sci:p.sci, nom:p.common, w:p.w || 0, qui:new Set(), ord:0, date:'' });
+    const e = parSp.get(k); e.qui.add(p.who);
+    if(p.dateOrd != null && p.dateOrd > e.ord){ e.ord = p.dateOrd; e.date = p.date; }
+  }
+  const rangs = [...parSp.values()].sort((a, b) => (b.w - a.w) || a.nom.localeCompare(b.nom, 'fr'));
+  const membres = new Set(); for(const r of rangs) for(const q of r.qui) membres.add(q);
+  if(!rangs.length){ box.innerHTML = '<div class="ct-vide"><b>Rien encore ici</b>Personne de la ligue n\'a d\'observation placée dans cette zone.</div>'; return { especes:0 }; }
+  const s = n => n > 1 ? 's' : '';
+  box.innerHTML = `<p class="ct-compte"><b>${rangs.length} espèce${s(rangs.length)}</b> vue${s(rangs.length)} ici par la ligue · ${membres.size} membre${s(membres.size)}</p>` +
+    `<p class="ct-petit">Les plus rares d'abord</p>` +
+    rangs.map(r => `<button type="button" class="ct-rang sp-link" data-sci="${esc(r.sci)}"><span><span class="nom">${esc(r.nom)}</span><br><span class="lat">${esc(r.sci.charAt(0).toUpperCase() + r.sci.slice(1))}</span><br><span class="sous">${esc([...r.qui].sort((a, b) => a.localeCompare(b, 'fr')).join(', '))}${r.date ? ' · ' + esc(_fmtOrd(r.ord)) : ''}</span></span><span class="droite">${r.qui.size} membre${s(r.qui.size)}</span></button>`).join('');
+  return { especes:rangs.length };
+}
+function _ctNomZone(){
+  const cc = ebFilter.country || 'FR';
+  const optTxt = id => { const sel = document.getElementById(id); return sel && sel.selectedIndex >= 0 ? (sel.options[sel.selectedIndex].textContent || '').replace(/\s*\([0-9A-Z]+\)$/, '') : ''; };
+  if(ebFilter.polygon) return { nom:'Ta zone', meta:'Dessinée sur la carte', ariane:'pays' };
+  if(ebFilter.dept) return { nom:DEPT_NAMES[ebFilter.dept] || optTxt('mapEbDept') || ebFilter.dept, meta:cc === 'FR' ? 'Département' : '', ariane:'region' };
+  if(ebFilter.region && ebFilter.region !== cc) return { nom:REGION_NAMES[ebFilter.region] || optTxt('mapEbRegion') || ebFilter.region, meta:cc === 'FR' ? 'Région' : '', ariane:'pays' };
+  return { nom:countryLabel(cc), meta:cc === 'FR' ? `${_ctAuDoigt.matches ? 'Touche' : 'Clique'} un département pour ce qui y a été vu récemment.` : '', ariane:'' };
+}
+function _ctDessinePanneau(){
+  const zone = document.getElementById('ctZone'); if(!zone) return;
+  const onglet = CARTE_MODE_ONGLET[mapMode] || 'ligue';
+  document.querySelectorAll('#ctOnglets [data-onglet]').forEach(b => {
+    const on = b.dataset.onglet === onglet;
+    b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1;
+  });
+  document.querySelectorAll('#ctContenu [data-volet]').forEach(v => { v.hidden = v.dataset.volet !== onglet; });
+  const cc = ebFilter.country || 'FR';
+  const z = _ctNomZone();
+  const ariane = document.getElementById('ctAriane');
+  if(ariane){
+    const pays = `<button type="button" data-carte="pays">${esc(countryLabel(cc))}</button><span aria-hidden="true">›</span>`;
+    const region = ebFilter.region && ebFilter.region !== cc
+      ? `<button type="button" data-carte="region">${esc(REGION_NAMES[ebFilter.region] || ebFilter.region)}</button><span aria-hidden="true">›</span>` : '';
+    ariane.innerHTML = z.ariane === 'region' ? pays + region : z.ariane === 'pays' ? pays : '';
+  }
+  const nom = document.getElementById('ctZoneNom'); if(nom) nom.textContent = z.nom;
+  const meta = document.getElementById('ctZoneMeta'); if(meta) meta.textContent = z.meta;
+  const ligue = _ctListeLigue();
+  const especesRecent = new Set(); if(_lyrMissing) _lyrMissing.eachLayer(m => { if(m._sciName) especesRecent.add(m._sciName.toLowerCase()); });
+  const nb = { ligue:ligue.especes || '', recent:especesRecent.size || '', hot:(_lyrHotspots && _lyrHotspots.getLayers().length) || '' };
+  document.querySelectorAll('#ctOnglets [data-nb]').forEach(s => { s.textContent = nb[s.dataset.nb] ? String(nb[s.dataset.nb]) : ''; });
+  zone.dataset.tiroir = carteTiroir;
+  const bulle = document.getElementById('ctBulle'); if(bulle) bulle.hidden = !(cc === 'FR' && !_ctZoneChoisie());
+  const fr = document.getElementById('ctFrance'); if(fr) fr.hidden = !(_ctZoneChoisie() || (ebFilter.region && ebFilter.region !== cc));
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('#ctOnglets [data-onglet]');
+  if(t){
+    if(_ctTel.matches && carteTiroir === 'bas') carteTiroir = 'mi';
+    const mode = CARTE_ONGLET_MODE[t.dataset.onglet];
+    if(mode === mapMode) _ctDessinePanneau(); else _ctModeBouton(mode)?.click();
+    return;
+  }
+  const c = e.target.closest('#ctCouches [data-couche]');
+  if(c){
+    const k = c.dataset.couche;
+    if(carteCouches.has(k)){ carteCouches.delete(k); _ctAppliqueCouches(); return; }
+    carteCouches.add(k);
+    const l = { ligue:_mapLayer, recent:_lyrMissing, hot:_lyrHotspots }[k];
+    // Une couche jamais chargée se charge en ouvrant son onglet (c'est lui qui porte ses réglages).
+    if(!l || !l.getLayers().length) _ctModeBouton(CARTE_ONGLET_MODE[k])?.click();
+    else _ctAppliqueCouches();
+    return;
+  }
+  if(e.target.closest('#ctPoignee')){ carteTiroir = { bas:'mi', mi:'haut', haut:'bas' }[carteTiroir] || 'mi'; _ctDessinePanneau(); return; }
+  if(e.target.closest('#ctFrance') || e.target.closest('#ctAriane [data-carte="pays"]')){ _ctRetourFrance(); return; }
+  if(e.target.closest('#ctAriane [data-carte="region"]')){ _ctChoisirRegion(ebFilter.region); return; }
+  if(e.target.closest('#ctBtnLegende')){ _ctLegendeOuverte = !_ctLegendeOuverte; _ctDessineLegendeOuverte(); return; }
+  // Le crayon dessine dans le Récent : c'est lui qui sait lire ta zone.
+  if(e.target.closest('#mapDrawStart') && mapMode !== 'missing'){ _ctModeBouton('missing')?.click(); return; }
+  const r = e.target.closest('#ctListeLigue .ct-rang[data-sci]');
+  if(r && r.dataset.sci) openSpeciesModal(r.dataset.sci);
+});
+// Flèches gauche et droite entre les onglets du panneau, comme une vraie rangée d'onglets.
+document.addEventListener('keydown', e => {
+  const t = e.target.closest && e.target.closest('#ctOnglets [data-onglet]');
+  if(!t || (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight')) return;
+  const tous = [...document.querySelectorAll('#ctOnglets [data-onglet]')];
+  const i = (tous.indexOf(t) + (e.key === 'ArrowRight' ? 1 : -1) + tous.length) % tous.length;
+  e.preventDefault(); tous[i].focus(); tous[i].click();
+});
+// La région ou le département choisis dans les menus du Récent suivent sur la carte.
+document.addEventListener('change', e => {
+  if(e.target.id !== 'mapEbRegion' && e.target.id !== 'mapEbDept') return;
+  _ctSurligne();
+  if(_ctZoneChoisie()) _ctCadreZone();
+  else if(_map && _ctFrance() && ebFilter.region === 'FR') _map.fitBounds(CARTE_FRANCE, _ctMarges());
+  _ctDessinePanneau();
 });
 document.addEventListener('change', e=>{
   if(e.target.id==='mapEbSort'){
@@ -8951,7 +9310,7 @@ async function _loadMissingLayer(zone, days=14, rarities=new Set(), onProgress){
     for(const o of allObs){
       const w = rarityForCountry(o.sciName, country);
       const nm = FR_NAMES[(o.sciName||'').toLowerCase()] || o.comName || o.sciName;
-      const m = L.circleMarker([o.dispLat, o.dispLon], { radius:R, weight:1.5, color:'#fff', fillColor:sciColorForCountry(o.sciName, country), fillOpacity:.9, opacity:1 });
+      const m = _triangleCarte([o.dispLat, o.dispLon], { radius:R, weight:1.5, color:'#fff', fillColor:sciColorForCountry(o.sciName, country), fillOpacity:.9, opacity:1 });
       const gm = `<a href="https://www.google.com/maps?q=${o.lat},${o.lon}" target="_blank" rel="noopener" class="p-link">🗺️ Google Maps</a>`;
       m.bindPopup(`<b class="sp-link" data-sci="${esc(o.sciName||'')}" style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted;">${esc(nm)}</b> <span class="p-sci">${esc(o.sciName||'')}</span>`+`<span class="p-meta">Vu le ${esc((o.obsDt||'').slice(0,10))} à ${esc(o.locName||'?')}${o.howMany?' · '+o.howMany:''}</span>`+
         `<span class="p-meta">${_rarityBadge(w, (ebFilter && ebFilter.country) || "FR", o.sciName)}</span><span class="p-meta">${gm}</span>`);
@@ -9391,7 +9750,7 @@ function _gbifRenderAllObs(allObs, sciByKey, stillMine){
     const time = o.eventTime || '';
     const behavior = o.behavior || '';
     const cnt = (typeof o.individualCount === 'number' && o.individualCount > 0) ? o.individualCount : null;
-    const m = L.circleMarker([o.dispLat, o.dispLon], { radius:6, weight:1.5, color:'#fff', fillColor:sciColorForCountry(sci, country), fillOpacity:.9, opacity:1 });
+    const m = _triangleCarte([o.dispLat, o.dispLon], { radius:6, weight:1.5, color:'#fff', fillColor:sciColorForCountry(sci, country), fillOpacity:.9, opacity:1 });
     m._baseLat = o.decimalLatitude; m._baseLon = o.decimalLongitude;
     const gm = `<a href="https://www.google.com/maps?q=${o.decimalLatitude},${o.decimalLongitude}" target="_blank" rel="noopener" class="p-link">🗺️ Google Maps</a>`;
     const parts = [];

@@ -2543,6 +2543,112 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      La regle est limitee a .map-controls : .explorer-lbl sert AUSSI aux reglages du quiz,
      ou .qz-settings lui donne une colonne. */
   .map-controls .explorer-lbl { display:inline-flex; align-items:center; gap:6px; }
+
+  /* ---- Carte, refonte « direction A » (2026-10-23) ----
+     Maquette choisie par Mathis : notes-privees/maquettes/carte/finale.html. Une grande carte à
+     couches, un panneau de zone à onglets à droite, qui devient un tiroir posé sur la carte au
+     téléphone. Les commandes d'avant sont rangées dans les onglets, sans changer leur style. */
+  .ct-phrase { font-size:14px; color:var(--ink-3); margin:2px 0 0; }
+  .ct-page .map-search { margin:12px 0 0; }
+  .ct-page .map-search input { height:34px; padding:0 12px 0 34px; font-size:14px;
+    background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%238b9c97' stroke-width='1.8'%3E%3Ccircle cx='7' cy='7' r='5'/%3E%3Cpath d='M11 11l3.5 3.5'/%3E%3C/svg%3E") no-repeat 11px 50%; }
+  .ct-page .map-search-count:empty { display:none; }
+  .ct-couches { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+  .ct-couche { height:34px; display:inline-flex; align-items:center; gap:7px; padding:0 14px 0 11px; border-radius:17px; border:1px solid var(--line-2); background:var(--surface); color:var(--ink-2); font:600 14px var(--sans); cursor:pointer; white-space:nowrap; }
+  .ct-couche svg { width:16px; height:16px; flex:none; }
+  .ct-couche[aria-pressed="true"] { border-color:var(--accent); color:var(--accent-ink); box-shadow:inset 0 0 0 1px var(--accent); background:color-mix(in srgb, var(--accent) 7%, var(--surface)); }
+  .ct-couche[aria-pressed="false"] svg { opacity:.45; }
+  .ct-corps { display:grid; grid-template-columns:minmax(0,1fr) 410px; gap:14px; margin-top:12px; align-items:start; }
+  .ct-carte-bloc { min-width:0; }
+  /* isolation : Leaflet empile ses calques de 400 à 1 000 ; sans ce cadre, la carte passait par-dessus
+     l'entête collant de l'appli (.entete-fixe, 60) en faisant défiler. */
+  .ct-carte { position:relative; isolation:isolate; height:640px; border-radius:12px; overflow:hidden; border:1px solid var(--line-2); background:var(--surface-2); }
+  .ct-carte .map-el { position:absolute; inset:0; height:auto; min-height:0; border:0; border-radius:0; }
+  /* En sombre, le plan OpenStreetMap est inversé, sinon il éblouit au milieu de la page (choix de
+     Mathis sur la maquette). La vue satellite, elle, garde ses couleurs. */
+  :root[data-theme="dark"] .ct-carte .ct-fond-plan { filter:invert(1) hue-rotate(180deg) grayscale(.55) brightness(.82) contrast(.9); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ct-carte .ct-fond-plan { filter:invert(1) hue-rotate(180deg) grayscale(.55) brightness(.82) contrast(.9); } }
+  .ct-rond { width:34px; height:34px; border-radius:9px; border:1px solid var(--line-2); background:var(--surface); color:var(--ink-2); display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,.08); padding:0; }
+  .ct-rond:hover, .ct-puce:hover { color:var(--accent-ink); border-color:var(--accent); }
+  .ct-rond.on { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .ct-puce { height:34px; display:inline-flex; align-items:center; gap:7px; padding:0 13px; border-radius:17px; border:1px solid var(--line-2); background:var(--surface); color:var(--ink-2); font:600 14px var(--sans); box-shadow:0 1px 3px rgba(0,0,0,.08); cursor:pointer; white-space:nowrap; }
+  .ct-outils { display:flex; flex-direction:column; gap:6px; align-items:flex-start; }
+  .ct-bas { display:flex; flex-direction:column; gap:6px; align-items:flex-start; }
+  .ct-carte .ct-legende { background:var(--surface); color:var(--ink-2); border:1px solid var(--line-2); border-radius:12px; padding:10px 14px 12px; box-shadow:var(--shadow); min-width:200px; max-height:none; }
+  .ct-carte .ct-legende .ml-title { color:var(--ink-3); }
+  .ct-carte .ct-legende .ct-leg-paliers { display:grid; grid-template-columns:auto auto; grid-auto-flow:column; grid-template-rows:repeat(5, auto); column-gap:14px; }
+  .ct-carte .ct-legende > .ml-row { display:inline-flex; margin-right:12px; }
+  .ct-carte .ct-legende .ct-leg-tailles { display:grid; grid-template-columns:auto auto; column-gap:14px; align-items:center; }
+  .ct-carte .ct-legende .ml-title:not(:first-child) { margin-top:10px; }
+  .ct-carte .ct-legende[hidden] { display:none; }
+  .ct-bulle { position:absolute; z-index:500; top:10px; left:54px; right:130px; display:flex; justify-content:center; pointer-events:none; }
+  .ct-bulle span { background:var(--surface); border:1px solid var(--line-2); border-radius:17px; padding:6px 14px; font-size:14px; color:var(--ink-2); box-shadow:0 2px 8px rgba(0,0,0,.08); }
+  .ct-bulle[hidden] { display:none; }
+  /* Le panneau de zone */
+  .ct-zone { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:14px 16px 16px; height:640px; display:flex; flex-direction:column; min-height:0; }
+  .ct-poignee { display:none; }
+  .ct-ariane { font-size:14px; color:var(--ink-3); display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+  .ct-ariane:empty { display:none; }
+  .ct-ariane button { background:none; border:0; padding:0; font:inherit; color:var(--accent-ink); text-decoration:underline; text-underline-offset:2px; cursor:pointer; }
+  .ct-zone-nom { font-family:var(--titre); font-size:21px; font-weight:600; margin:2px 0 0; line-height:1.25; color:var(--ink); }
+  .ct-zone-meta { font-size:14px; color:var(--ink-3); margin:2px 0 0; }
+  .ct-zone-meta:empty { display:none; }
+  .ct-onglets { display:flex; gap:20px; border-bottom:1px solid var(--line); margin:10px 0 0; }
+  .ct-onglets button { background:none; border:0; padding:7px 0 9px; font:400 15px var(--sans); color:var(--ink-2); cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
+  .ct-onglets button[aria-selected="true"] { color:var(--accent-ink); font-weight:600; box-shadow:inset 0 -2px 0 var(--accent); }
+  .ct-nb { font-size:12px; font-weight:700; background:var(--surface-2); color:var(--ink-2); border-radius:9px; padding:0 6px; line-height:18px; }
+  .ct-nb:empty { display:none; }
+  .ct-onglets button[aria-selected="true"] .ct-nb { background:color-mix(in srgb, var(--accent) 14%, var(--surface)); color:var(--accent-ink); }
+  .ct-contenu { flex:1; overflow:auto; min-height:0; margin:0 -16px; padding:0 16px; overscroll-behavior:contain; }
+  .ct-volet[hidden] { display:none; }
+  .ct-volet .map-controls { margin:12px 0 8px; }
+  .ct-volet .map-count { margin-left:0; flex-basis:100%; font-size:14px; }
+  .ct-volet .map-stats { display:block; margin-top:4px; }
+  .ct-volet #mapDrawResults { max-height:none !important; }
+  .ct-mention { font-size:14px; color:var(--ink-3); border-top:1px solid var(--line); padding-top:9px; margin:14px 0 0; line-height:1.45; }
+  .ct-mention a { color:var(--accent-ink); }
+  .ct-vide { border:1px dashed var(--line-2); border-radius:12px; padding:18px 16px; text-align:center; font-size:14px; color:var(--ink-3); margin-top:14px; }
+  .ct-vide b { display:block; color:var(--ink); font-size:15px; margin-bottom:4px; }
+  .ct-petit { font-size:13px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:var(--ink-3); margin:14px 0 2px; }
+  .ct-compte { font-size:14px; color:var(--ink-3); margin:8px 0 2px; }
+  .ct-compte b { color:var(--ink); }
+  .ct-rang { display:grid; grid-template-columns:1fr auto; gap:1px 10px; padding:10px 0; border-bottom:1px solid var(--line); font-size:14px; align-items:start; cursor:pointer; background:none; border-left:0; border-right:0; border-top:0; width:100%; text-align:left; font-family:inherit; color:inherit; }
+  .ct-rang:last-child { border-bottom:0; }
+  .ct-rang:hover .nom { text-decoration:underline; }
+  .ct-rang .nom { font-weight:600; color:var(--ink); }
+  .ct-rang .lat { font-style:italic; color:var(--ink-2); }
+  .ct-rang .sous { color:var(--ink-3); }
+  .ct-rang .droite { color:var(--ink-2); text-align:right; white-space:nowrap; }
+  .ct-volet .import-guide { margin:14px 0 0; font-size:14px; color:var(--ink-2); background:var(--surface-2); border-radius:10px; padding:9px 12px; }
+  .ct-volet .import-guide summary { cursor:pointer; font-weight:600; }
+  /* Téléphone et petite tablette : la carte prend la largeur, le panneau devient un tiroir */
+  @media (max-width:900px) {
+    .ct-corps { display:block; margin-top:8px; }
+    .ct-place-panneau { display:none; }
+    .ct-couches { flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; margin:0 -12px; padding:8px 12px 2px; }
+    .ct-couche { flex:none; }
+    /* La carte prend presque tout l'écran : 100dvh se lit avant le zoom 0,85 du corps, d'où la
+       division ; il reste la rangée des couches au-dessus quand on fait défiler jusqu'à elle. */
+    .ct-carte { height:calc(100dvh / 0.85 - 130px); min-height:420px; }
+    .ct-bulle { display:none; }
+    .ct-zone { position:absolute; left:0; right:0; bottom:0; z-index:800; height:118px; max-height:100%; border-radius:16px 16px 0 0; border:0; border-top:1px solid var(--line-2); box-shadow:0 -8px 24px rgba(0,0,0,.14); padding:6px 14px 10px; }
+    .ct-zone[data-tiroir="mi"] { height:58%; }
+    .ct-zone[data-tiroir="haut"] { height:calc(100% - 8px); }
+    .ct-zone[data-tiroir="bas"] .ct-onglets, .ct-zone[data-tiroir="bas"] .ct-contenu { display:none; }
+    /* Replié, le tiroir ne garde que la poignée et le nom : le fil d'Ariane et la ligne du dessous
+       reviennent en le tirant. */
+    .ct-zone[data-tiroir="bas"] .ct-ariane, .ct-zone[data-tiroir="bas"] .ct-zone-meta { display:none; }
+    .ct-poignee { display:block; width:100%; height:22px; border:0; background:none; cursor:pointer; padding:0; flex:none; }
+    .ct-poignee::before { content:""; display:block; width:46px; height:5px; border-radius:3px; background:var(--surface-3); margin:6px auto 0; }
+    .ct-zone-nom { font-size:19px; }
+    .ct-carte .ct-legende { min-width:0; }
+    /* Les coins bas de Leaflet (légende, crédits) montent au-dessus du tiroir replié, et
+       disparaissent quand il s'ouvre : il les couvrirait à moitié. */
+    .ct-carte .leaflet-bottom { bottom:118px; }
+    .ct-carte:has(.ct-zone[data-tiroir="mi"]) .leaflet-bottom,
+    .ct-carte:has(.ct-zone[data-tiroir="haut"]) .leaflet-bottom { display:none; }
+  }
+  @media (max-width:560px) { .ct-phrase { display:none; } }
   .ex-empty { padding:12px; color:var(--ink-3); font-size:13px; text-align:center; }
   .ex-error { padding:12px; color:#c33; font-size:13px; }
   .map-el .leaflet-container { font:inherit; }
@@ -3528,6 +3634,13 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .prof-fav-chip { padding:0 0 0 14px; }
     .prof-fav-chip button { width:52px; height:52px; font-size:22px; }
     .prof-id-act .btn { min-height:52px; }
+    /* Carte (refonte du 2026-10-23) : couches, boutons posés sur la carte, onglets du panneau. */
+    .ct-couche, .ct-puce { height:52px; border-radius:26px; padding:0 16px 0 13px; }
+    .ct-rond { width:52px; height:52px; border-radius:12px; }
+    .ct-onglets button { min-height:52px; padding:0; font-size:16px; }
+    .ct-ariane button { min-height:52px; }
+    .ct-poignee { height:52px; margin:-6px 0 -10px; }
+    .ct-page .map-search input { height:52px; }
   }
 
   /* Une seule police pour TOUS les noms latins, partout : celle du texte, en italique (--sans).
