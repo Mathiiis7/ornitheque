@@ -7653,6 +7653,7 @@ function _mapMarker(pt, groupSize){
   );
   m._q = _mapNorm(pt.common+' '+pt.sci+' '+(pt.loc||'')+' '+(pt.who||''));
   m._sciName = pt.sci; m._common = pt.common;   // pour l'autocomplétion (nom espèce dans le dropdown)
+  m._ligue = { who:pt.who, date:pt.date };      // pour le survol
   return m;
 }
 // Lazy-load des grosses donnees eBird, splitees par usage pour minimiser le boot :
@@ -8837,7 +8838,7 @@ const _ctAuDoigt = window.matchMedia('(hover: none)');
 const CT_OEIL = '<svg viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8 12.1 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="1.9" fill="#fff" stroke="none"/></svg>';
 // options.w : le palier, que l'anneau de la grappe additionne.
 function _ctPastille(latlng, couleur, w, dedans){
-  return L.marker(latlng, { w:w || 0, riseOnHover:true,
+  return L.marker(latlng, { w:w || 0, coul:couleur, riseOnHover:true,
     icon:L.divIcon({ html:`<span class="ct-pt" style="background:${couleur}">${dedans}</span>`, className:'ct-pt-ico', iconSize:[22, 22] }) });
 }
 const _ctPastilleRecent = (latlng, sci, cc) => _ctPastille(latlng, sciColorForCountry(sci, cc), rarityForCountry(sci, cc), CT_OEIL);
@@ -8851,13 +8852,59 @@ function _ctAnneau(grappe){
   return L.divIcon({ html:`<div class="ct-gr" style="width:${taille}px;height:${taille}px;background:conic-gradient(${arcs.join(',')})"><span>${n}</span></div>`,
     className:'ct-gr-ico', iconSize:[taille, taille] });
 }
-// Une couche en grappes ; sans la bibliothèque (bloquée, hors ligne), une couche ordinaire.
+// Le survol, à la souris seulement : un point dit son oiseau, une grappe dit ce qu'elle contient,
+// sans avoir à cliquer sur chaque point (demande de Mathis, 2026-10-23). Au doigt, rien ne change.
+const _ctLigneSurvol = (coul, nom, fin) =>
+  `<span class="ct-sv-l"><span class="ct-sv-pt" style="background:${coul}"></span><b>${esc(nom)}</b>${fin || ''}</span>`;
+function _ctSurvolPoint(m){
+  const r = m._rec, l = m._ligue;
+  const nom = r ? r.nom : (m._common || m._sciName || '');
+  const detail = r ? [_ctIlYa(r.date), r.lieu].filter(Boolean).join(' · ') : l ? [l.who, l.date].filter(Boolean).join(' · ') : '';
+  return _ctLigneSurvol(m.options.coul, nom) + (detail ? `<span class="ct-sv-d">${esc(detail)}</span>` : '');
+}
+// Une ligne par espèce, les plus rares d'abord ; « ×3 » quand elle a plusieurs points dans la grappe.
+const CT_SURVOL_MAX = 10;
+function _ctSurvolGrappe(ms){
+  const parSp = new Map();
+  for(const m of ms){
+    const nom = m._rec ? m._rec.nom : (m._common || m._sciName || '?');
+    const d = parSp.get(nom);
+    if(d) d.n++; else parSp.set(nom, { nom, w:m.options.w || 0, coul:m.options.coul, n:1 });
+  }
+  const tri = [...parSp.values()].sort((a, b) => (b.w - a.w) || (b.n - a.n) || a.nom.localeCompare(b.nom, 'fr'));
+  const vus = tri.length - CT_SURVOL_MAX > 1 ? tri.slice(0, CT_SURVOL_MAX) : tri;   // jamais « et 1 autre »
+  const reste = tri.length - vus.length, s = n => n > 1 ? 's' : '';
+  return `<span class="ct-sv-t">${tri.length} espèce${s(tri.length)}, ${ms.length} point${s(ms.length)}</span>` +
+    vus.map(e => _ctLigneSurvol(e.coul, e.nom, e.n > 1 ? `<span class="ct-sv-n">×${e.n}</span>` : '')).join('') +
+    (reste ? `<span class="ct-sv-d">et ${reste} autre${s(reste)} : clique pour ouvrir</span>` : '');
+}
+const CT_SURVOL_OPTS = { direction:'top', className:'ct-sv', opacity:1 };
+function _ctBrancheSurvol(g){
+  if(_ctAuDoigt.matches) return g;
+  // Les points : l'infobulle se crée au premier survol, pas pour les centaines de points posés.
+  g.on('mouseover', e => {
+    const m = e.layer; if(!m || !m.bindTooltip || m.getTooltip()) return;
+    m.bindTooltip(() => _ctSurvolPoint(m), { ...CT_SURVOL_OPTS, offset:[0, -12] }).openTooltip();
+  });
+  // Les grappes : refaites à chaque zoom, l'infobulle se pose au survol et part avec la souris.
+  // Une grappe ouverte en éventail se tait : sa bulle cacherait les points qu'elle vient d'étaler.
+  g.on('clustermouseover', e => {
+    const c = e.layer, h = c._icon ? c._icon.offsetHeight : 34;
+    if(g._spiderfied === c) return;
+    c.bindTooltip(_ctSurvolGrappe(c.getAllChildMarkers()), { ...CT_SURVOL_OPTS, offset:[0, -h / 2 - 2] }).openTooltip();
+  });
+  g.on('clustermouseout clusterclick', e => e.layer.unbindTooltip());
+  g.on('spiderfied', e => e.cluster.unbindTooltip());
+  return g;
+}
+// Une couche en grappes ; sans la bibliothèque (bloquée, hors ligne), une couche ordinaire (featureGroup,
+// pour que le survol des points marche quand même).
 function _ctGrappes(){
-  if(!L.markerClusterGroup) return L.layerGroup();
-  return L.markerClusterGroup({ iconCreateFunction:_ctAnneau, showCoverageOnHover:false, maxClusterRadius:45,
+  if(!L.markerClusterGroup) return _ctBrancheSurvol(L.featureGroup());
+  return _ctBrancheSurvol(L.markerClusterGroup({ iconCreateFunction:_ctAnneau, showCoverageOnHover:false, maxClusterRadius:45,
     // Pas de chargement par paquets (chunkedLoading) : renderMap retire la couche de la carte entre
     // deux paquets, et la bibliothèque plantait (« reading 'getMinZoom' », vu le 2026-10-23).
-    spiderfyDistanceMultiplier:1.4, spiderLegPolylineOptions:{ weight:1.5, color:_ctCss('--ink-2'), opacity:.6 } });
+    spiderfyDistanceMultiplier:1.4, spiderLegPolylineOptions:{ weight:1.5, color:_ctCss('--ink-2'), opacity:.6 } }));
 }
 const _ctEnGrappes = l => !!(l && l.zoomToShowLayer);
 // Ouvre la bulle d'un point, même rangé dans une grappe (la carte zoome ou ouvre l'éventail d'abord).
@@ -9471,6 +9518,7 @@ async function _ctLireListes(tour, zones, days, cc, recents, especes){
     .sort((a, b) => quand(b) - quand(a));
   const lues = dansPeriode.slice(0, CT_LISTES_MAX);
   if(!_taxMap || !Object.keys(_taxMap).length){ try{ await _loadTaxonomy(); }catch(_){} }
+  const parents = await _loadTaxParents();
   if(tour !== _ctRecTour) return true;
   // « Non validée » : seul /recent le dit, pour la dernière observation de chaque espèce.
   const nv = new Set(recents.filter(o => o.obsValid === false).map(o => o.subId + ':' + o.speciesCode));
@@ -9484,12 +9532,15 @@ async function _ctLireListes(tour, zones, days, cc, recents, especes){
     try{ v = await _ctLireListe(l.subId); }catch(_){}
     if(tour !== _ctRecTour) return true;
     n++; if(etat) etat.textContent = `… lecture des listes : ${n} sur ${lues.length}`;
+    const dejaVues = new Set();   // l'espèce et une de ses sous-espèces sur la même liste : un seul point
     for(const x of (v && Array.isArray(v.obs) ? v.obs : [])){
-      const sci = _taxMap && _taxMap[x.speciesCode]; if(!sci) continue;   // hybrides, « sp. » : pas d'espèce
+      const code = _taxMap && _taxMap[x.speciesCode] ? x.speciesCode : parents[x.speciesCode];
+      const sci = code && _taxMap[code]; if(!sci) continue;   // hybrides, « sp. » : pas d'espèce
+      if(dejaVues.has(code)) continue; dejaVues.add(code);
       if(_mineHas(mine, sci) || !_passeRarCarte(sci, cc)) continue;
-      obs.push({ speciesCode:x.speciesCode, sciName:cap(sci), comName:FR_NAMES[sci] || cap(sci),
+      obs.push({ speciesCode:code, sciName:cap(sci), comName:FR_NAMES[sci] || cap(sci),
         lat:l.loc.lat, lng:l.loc.lng, locId:l.locId, locName:l.loc.name, locationPrivate:!l.loc.isHotspot,
-        obsDt:l.isoObsDate, subId:l.subId, obsValid:!nv.has(l.subId + ':' + x.speciesCode),
+        obsDt:l.isoObsDate, subId:l.subId, obsValid:!nv.has(l.subId + ':' + code),
         howMany:(!x.present && x.howManyAtleast > 0) ? x.howManyAtleast : null });
     }
   }
@@ -10105,6 +10156,23 @@ async function _loadTaxonomy(){
     try{ localStorage.setItem('ebird-tax-v1', JSON.stringify(m)); }catch(_){ }
     return m;
   }catch(_){ _taxMap={}; return _taxMap; }
+}
+// Une sous-espèce notée sur une liste (« Egretta garzetta garzetta ») a son propre code, absent de
+// _taxMap : le Récent la jetait, 61 observations sur 602 en Vendée (14 jours, mesuré le 2026-10-23).
+// Table à part, code de sous-espèce -> code de l'espèce (reportAs d'eBird) : la mettre dans _taxMap
+// fausserait _sciToCode, qui pourrait rendre un code de sous-espèce pour une espèce.
+let _taxParent = null;
+async function _loadTaxParents(){
+  if(_taxParent) return _taxParent;
+  try{ const ls = localStorage.getItem('ebird-tax-parents-v1'); if(ls){ _taxParent = JSON.parse(ls); return _taxParent; } }catch(_){ }
+  try{
+    const r = await _ebAppel(`https://api.ebird.org/v2/ref/taxonomy/ebird?fmt=json&locale=en&cat=issf,form`);
+    if(!r.ok) throw new Error('taxonomy '+r.status);
+    const m = {}; for(const t of await r.json()){ if(t.speciesCode && t.reportAs) m[t.speciesCode] = t.reportAs; }
+    _taxParent = m;
+    try{ localStorage.setItem('ebird-tax-parents-v1', JSON.stringify(m)); }catch(_){ }
+    return m;
+  }catch(_){ return {}; }   // pas gardé : on réessaiera au prochain chargement
 }
 // Reverse : sciName lowercase -> speciesCode. Utile pour appeler /data/obs/{locId}/recent/{speciesCode}.
 function _sciToCode(sci){
