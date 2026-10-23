@@ -9213,6 +9213,13 @@ document.addEventListener('click', e=>{
 // colvert à Londres sur 14 jours : 155 lignes, 155 lieux, 155 listes), d'où « N lieux » et non
 // « N listes » comme sur la maquette. Sans includeProvisional, les observations pas encore
 // vérifiées n'arrivent jamais (France, 14 jours : 0 sans, 29 avec).
+// Dans un département ou ta zone, on lit maintenant les LISTES en entier (choix de Mathis, même jour :
+// un point par espèce et par lieu cachait la liste de Donges, 28 espèces). Une liste coûte un appel,
+// et il y en a beaucoup (14 jours, mesuré le 2026-10-23 : Vendée 32, Loire-Atlantique 76, Paris 194,
+// Finistère plus de 200 en 5 jours) : les CT_LISTES_MAX plus récentes, gardées 7 jours par le relais,
+// donc payées une fois pour tous. Une liste ne dit pas si une observation est validée : l'appel
+// /recent le dit pour la dernière observation de chaque espèce, on le garde pour ça.
+const CT_LISTES_MAX = 60;
 const CT_ZONES_MAX = 3;          // départements lus pour ta zone ; au-delà, ses régions
 const CT_REGIONS_MAX = 2;        // au-delà, on demande une zone plus petite
 const CT_DETAILS_PETITE_ZONE = 40;   // département ou ta zone : choix de Mathis, 2026-10-23
@@ -9224,8 +9231,22 @@ let _ctRecCharge = false;        // la liste attend sa réponse
 let _ctRecErreur = false;        // eBird n'a pas répondu : l'état le dit, la liste se tait
 let _ctRecTout = false;          // « Voir les N autres » déplié
 const _ctRecLieux = new Map();   // sci -> nombre de lieux, une fois l'espèce lue en détail
+let _ctRecListes = null;         // { lues, total, incomplet, depuis } quand la carte vient des listes
 const _ctUrlRecent = (z, days) => `https://api.ebird.org/v2/data/obs/${z}/recent?back=${days}&maxResults=10000&includeProvisional=true`;
 const _ctUrlEspece = (z, code, days) => `https://api.ebird.org/v2/data/obs/${z}/recent/${code}?back=${days}&includeProvisional=true`;
+const _ctUrlListes = z => `https://api.ebird.org/v2/product/lists/${z}?maxResults=200`;
+// Une liste lue en entier se garde en mémoire seulement : 60 listes d'un département pèsent 200 Ko, et
+// _ebFetch les mettrait dans localStorage (5 Mo pour tout le site) et dans Firestore. Le relais, lui,
+// les garde 7 jours pour tous les visiteurs.
+const _ctListesLues = new Map();
+async function _ctLireListe(subId){
+  if(_ctListesLues.has(subId)) return _ctListesLues.get(subId);
+  const r = await _ebAppel(`https://api.ebird.org/v2/product/checklist/view/${subId}`);
+  if(!r.ok) throw new Error('eBird ' + r.status);
+  const v = await r.json();
+  _ctListesLues.set(subId, v);
+  return v;
+}
 const _ctMoisGbif = () => new Date().getMonth() + 1;
 // Les messages des recherches d'espèce vont dans le volet ouvert : le Récent a sa ligne d'état,
 // les Hotspots gardent le compteur de leurs réglages.
@@ -9330,7 +9351,7 @@ function _ctPoseRecent(liste, cc){
       `<span class="p-meta">${_rarityBadge(w, cc, o.sciName)}</span>${gm}`);
     m._q = _mapNorm(nm + ' ' + (o.sciName || '') + ' ' + (p.prive ? '' : (o.locName || '')));
     m._speciesCode = o.speciesCode; m._sciName = o.sciName;
-    m._rec = { sci, nom:nm, date:(o.obsDt || '').slice(0, 10), lieu:p.prive ? 'Lieu privé' : (o.locName || ''), nv, o };
+    m._rec = { sci, nom:nm, date:(o.obsDt || '').slice(0, 10), lieu:p.prive ? 'Lieu privé' : (o.locName || ''), nv, o, subId:o.subId };
     _lyrMissing.addLayer(m);
   }
 }
@@ -9344,7 +9365,7 @@ async function _loadMissingLayer(zones, days){
   if(_loaded.missing === key) return 'ok';
   const tour = ++_ctRecTour;
   _gbifRunSeq++;   // un chargement GBIF encore en route ne doit plus écrire dans la couche
-  _lyrMissing.clearLayers(); _ctRecLieux.clear();
+  _lyrMissing.clearLayers(); _ctRecLieux.clear(); _ctRecListes = null;
   _ctRecZones = zones; _ctRecTout = false; _ctRecErreur = false; _ctRecCharge = true;
   const etat = document.getElementById('ctRecEtat'); if(etat) etat.textContent = '… chargement';
   _ctDessinePanneau();
@@ -9363,12 +9384,75 @@ async function _loadMissingLayer(zones, days){
   const especes = _ctEspecesRecent(reponses.flat(), cc);
   _ctPoseRecent(especes, cc);
   _loaded.missing = key;
-  // Les lieux des plus rares, en tâche de fond : la liste et la carte se complètent à mesure.
+  // Puis, en tâche de fond : dans un département ou ta zone, les listes lues en entier ; ailleurs, ou
+  // si les listes ne répondent pas, tous les lieux des espèces les plus rares.
   // Un département est un code à trois morceaux (FR-PDL-85, ES-AN-SE) ; ta zone se lit par départements.
-  const petite = !!ebFilter.polygon || zones.every(z => z.split('-').length === 3);
-  const n = Math.max(1, Math.floor((petite ? CT_DETAILS_PETITE_ZONE : CT_DETAILS_GRANDE_ZONE) / zones.length));
-  (async () => { for(const o of especes.slice(0, n)){ if(tour !== _ctRecTour) return; await _ctDetailEspece(o, tour); } })();
+  const petite = zones.every(z => z.split('-').length === 3);
+  const details = async () => {
+    const n = Math.max(1, Math.floor((petite || ebFilter.polygon ? CT_DETAILS_PETITE_ZONE : CT_DETAILS_GRANDE_ZONE) / zones.length));
+    for(const o of especes.slice(0, n)){ if(tour !== _ctRecTour) return; await _ctDetailEspece(o, tour); }
+  };
+  (async () => {
+    if(petite && await _ctLireListes(tour, zones, days, cc, reponses.flat(), especes)) return;
+    if(tour === _ctRecTour) await details();
+  })();
   return 'ok';
+}
+// Les listes de la zone lues en entier : un point par espèce et par liste. Rend false si eBird ne
+// donne pas les listes (le chargement par espèces prend alors le relais).
+async function _ctLireListes(tour, zones, days, cc, recents, especes){
+  const etat = document.getElementById('ctRecEtat');
+  const toutes = [];
+  let incomplet = false;
+  const depuis = Date.now() - days * 864e5;
+  const quand = l => new Date(String(l.isoObsDate || '').replace(' ', 'T')).getTime();
+  try{
+    for(const z of zones){
+      const ls = await _ebFetch(_ctUrlListes(z));
+      if(tour !== _ctRecTour) return true;
+      if(!Array.isArray(ls)) return false;
+      // eBird en rend 200 au plus : si la 200e est encore dans la période, il en manque.
+      if(ls.length >= 200 && quand(ls[ls.length - 1]) >= depuis) incomplet = true;
+      toutes.push(...ls);
+    }
+  }catch(_){ return false; }
+  const dansPeriode = toutes.filter(l => l && l.subId && l.loc && typeof l.loc.lat === 'number' && typeof l.loc.lng === 'number' &&
+    quand(l) >= depuis && (!ebFilter.polygon || _pointInPolygon(l.loc.lat, l.loc.lng, ebFilter.polygon)))
+    .sort((a, b) => quand(b) - quand(a));
+  const lues = dansPeriode.slice(0, CT_LISTES_MAX);
+  if(!_taxMap || !Object.keys(_taxMap).length){ try{ await _loadTaxonomy(); }catch(_){} }
+  if(tour !== _ctRecTour) return true;
+  // « Non validée » : seul /recent le dit, pour la dernière observation de chaque espèce.
+  const nv = new Set(recents.filter(o => o.obsValid === false).map(o => o.subId + ':' + o.speciesCode));
+  const me = realPeople.find(p => p.id === myUid);
+  const mine = new Set(me ? [...me.species.keys()] : []);
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+  const obs = [];
+  let n = 0;
+  for(const l of lues){
+    let v = null;
+    try{ v = await _ctLireListe(l.subId); }catch(_){}
+    if(tour !== _ctRecTour) return true;
+    n++; if(etat) etat.textContent = `… lecture des listes : ${n} sur ${lues.length}`;
+    for(const x of (v && Array.isArray(v.obs) ? v.obs : [])){
+      const sci = _taxMap && _taxMap[x.speciesCode]; if(!sci) continue;   // hybrides, « sp. » : pas d'espèce
+      if(_mineHas(mine, sci) || !_passeRarCarte(sci, cc)) continue;
+      obs.push({ speciesCode:x.speciesCode, sciName:cap(sci), comName:FR_NAMES[sci] || cap(sci),
+        lat:l.loc.lat, lng:l.loc.lng, locId:l.locId, locName:l.loc.name, locationPrivate:!l.loc.isHotspot,
+        obsDt:l.isoObsDate, subId:l.subId, obsValid:!nv.has(l.subId + ':' + x.speciesCode),
+        howMany:(!x.present && x.howManyAtleast > 0) ? x.howManyAtleast : null });
+    }
+  }
+  if(etat) etat.textContent = '';
+  // Une espèce vue dans la période mais absente des listes lues (plus anciennes que la 60e) garde
+  // son point de /recent.
+  const vues = new Set(obs.map(o => o.sciName.toLowerCase()));
+  _lyrMissing.clearLayers();
+  _ctPoseRecent([...obs, ...especes.filter(o => !vues.has((o.sciName || '').toLowerCase()))], cc);
+  _ctRecListes = lues.length ? { lues:lues.length, total:dansPeriode.length, incomplet, depuis:lues[lues.length - 1].isoObsDate } : null;
+  _mapApplyFilter();
+  _ctDessinePanneau();
+  return true;
 }
 // Tous les lieux d'une espèce dans la zone : remplace son triangle unique par un par lieu.
 async function _ctDetailEspece(o0, tour){
@@ -9411,7 +9495,7 @@ async function _ctMontreEspece(sci){
   if(!_map || !_lyrMissing) return;
   const siens = () => { const out = []; _lyrMissing.eachLayer(m => { if(m._rec && m._rec.sci === sci) out.push(m); }); return out; };
   let ms = siens(); if(!ms.length) return;
-  if(ebFilter.source !== 'gbif' && !_ctRecLieux.has(sci)){ await _ctDetailEspece(ms[0]._rec.o, _ctRecTour); ms = siens(); if(!ms.length) return; }
+  if(ebFilter.source !== 'gbif' && !_ctRecListes && !_ctRecLieux.has(sci)){ await _ctDetailEspece(ms[0]._rec.o, _ctRecTour); ms = siens(); if(!ms.length) return; }
   if(!_map.hasLayer(_lyrMissing)){ carteCouches.add('recent'); _ctAppliqueCouches(); }
   const pts = ms.map(m => m.getLatLng());
   if(pts.length === 1) _map.setView(pts[0], Math.max(_map.getZoom(), 11));
@@ -9437,9 +9521,10 @@ function _ctListeRecent(){
   const parSp = new Map();
   if(_lyrMissing) _lyrMissing.eachLayer(m => {
     const r = m._rec; if(!r) return;
-    const e = parSp.get(r.sci);
-    if(!e) parSp.set(r.sci, { r, n:1 });
-    else { e.n++; if(r.date > e.r.date) e.r = r; }
+    const e = parSp.get(r.sci) || { r, n:0, listes:new Set() };
+    if(!parSp.has(r.sci)) parSp.set(r.sci, e);
+    e.n++; if(r.subId) e.listes.add(r.subId);
+    if(r.date > e.r.date) e.r = r;
   });
   const rangs = [...parSp.values()].map(e => ({ ...e, w:rarityForCountry(e.r.sci, cc) || 0 }))
     .sort((a, b) => (b.w - a.w) || b.r.date.localeCompare(a.r.date) || a.r.nom.localeCompare(b.r.nom, 'fr'));
@@ -9456,15 +9541,22 @@ function _ctListeRecent(){
   }
   const n = rangs.length;
   const tete = manque ? `<b>${n} espèce${s(n)} te manque${n > 1 ? 'nt' : ''}</b>, vue${s(n)} ${quand}` : `<b>${n} espèce${s(n)}</b> vue${s(n)} ${quand}`;
+  // Lu dans les listes : le vrai « nombre de listes » de la maquette. Sinon, les lieux lus en détail.
+  const parListes = !gbif && !!_ctRecListes;
   const rang = e => {
-    const r = e.r, lieux = gbif ? e.n : _ctRecLieux.get(r.sci);
-    const compte = lieux ? (gbif ? ` · ${lieux} obs` : ` · ${lieux} lieu${lieux > 1 ? 'x' : ''}`) : '';
+    const r = e.r, lieux = gbif ? e.n : parListes ? e.listes.size : _ctRecLieux.get(r.sci);
+    const compte = !lieux ? '' : gbif ? ` · ${lieux} obs` : parListes ? ` · ${lieux} liste${s(lieux)}` : ` · ${lieux} lieu${lieux > 1 ? 'x' : ''}`;
     return `<button type="button" class="ct-rang ct-rang-rec" data-sci="${esc(r.sci)}"><span class="ct-pastille" style="background:${sciColorForCountry(r.sci, cc)}">${e.w || '?'}</span>` +
       `<span class="col"><span class="nom">${esc(r.nom)}</span>${r.nv ? '<span class="ct-tag nv">non validée</span>' : ''}<br><span class="lat">${esc(r.sci.charAt(0).toUpperCase() + r.sci.slice(1))}</span><br><span class="sous">${esc(r.lieu || 'lieu inconnu')}${compte}</span></span>` +
       `<span class="droite">${esc(gbif ? _ctDateCourte(r.date) : _ctIlYa(r.date))}</span></button>`;
   };
   const vus = _ctRecTout ? rangs : rangs.slice(0, CT_RANGS_MAX);
-  box.innerHTML = `<p class="ct-compte">${tete}</p><p class="ct-petit">Les plus rares d'abord</p>${vus.map(rang).join('')}` +
+  // D'où viennent les points : toutes les listes de la période, ou les plus récentes seulement.
+  const L_ = _ctRecListes;
+  const source = !parListes ? '' : (L_.incomplet || L_.total > L_.lues)
+    ? `<p class="ct-compte">Lu dans les ${L_.lues} listes les plus récentes, depuis le ${esc(_ctDateLongue(L_.depuis))} : les plus anciennes de la période n'y sont pas.</p>`
+    : `<p class="ct-compte">Lu dans ${L_.lues === 1 ? 'la seule liste déposée' : `les ${L_.lues} listes déposées`} ici ${quand}.</p>`;
+  box.innerHTML = `<p class="ct-compte">${tete}</p>${source}<p class="ct-petit">Les plus rares d'abord</p>${vus.map(rang).join('')}` +
     (n > vus.length ? `<button type="button" class="ct-plus" id="ctRecPlus">Voir les ${n - vus.length} autres</button>` : '');
 }
 // Le libellé du menu Rareté dit ce qui est coché ; il prend l'accent dès qu'il filtre.
