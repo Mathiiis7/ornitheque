@@ -1845,7 +1845,8 @@ function _estReguliere(sci, cc){
 
 // « en France » mais « au Royaume-Uni » et « aux États-Unis » : le genre et le nombre du nom
 // de pays commandent la preposition, on ne peut pas la coller mecaniquement.
-const _PREP_PAYS = { ME:'au', GB:'au', PT:'au', CA:'au', LK:'au', US:'aux', NL:'aux', DK:'au', LU:'au', XK:'au' };
+// Les îles sans article prennent « à » (Malte, Chypre) ; « en Îles Féroé » se lisait le 2026-10-24.
+const _PREP_PAYS = { ME:'au', GB:'au', PT:'au', CA:'au', LK:'au', US:'aux', NL:'aux', DK:'au', LU:'au', XK:'au', FO:'aux', MT:'à', CY:'à' };
 function _auPays(cc){
   const nom = (COUNTRIES_REG[cc] && COUNTRIES_REG[cc].name) || cc;
   return `${_PREP_PAYS[cc] || 'en'} ${nom}`;
@@ -7603,7 +7604,7 @@ function _mapCollectPoints(){
 const SPREAD_MAX = 12;
 function _mainMapSpreadGbifMarkers(){
   if(!_map || !_lyrMissing) return;
-  if(_ctEnGrappes(_lyrMissing)) return;   // en grappes, l'éventail fait ce travail
+  if(_ctEnGrappes(_lyrMissing)) return;   // en grappes, la liste de la grappe fait ce travail
   // Ne fait rien si la couche n'est pas actuellement affichee (evite de perturber
   // les recherches _showSpeciesDetail qui removent _lyrMissing sans clearer).
   if(!_map.hasLayer(_lyrMissing)) return;
@@ -7993,7 +7994,7 @@ function _renderModeMine(el){
   });
   const groups = new Map();
   for(const p of pts){ const k = p.lat.toFixed(5)+','+p.lon.toFixed(5); if(!groups.has(k)) groups.set(k,[]); groups.get(k).push(p); }
-  // En grappes, les points d'un même endroit restent à leur place : la grappe les ouvre en éventail.
+  // En grappes, les points d'un même endroit restent à leur place : la grappe les liste au clic.
   const grappes = !!L.markerClusterGroup;
   for(const g of groups.values()){ if(grappes) for(const p of g){ p.dispLat = p.lat; p.dispLon = p.lon; } else _spreadGroup(g); }
   const ordered = [...pts].sort((a,b)=> a.w - b.w);
@@ -8274,6 +8275,7 @@ function _drawStart(){
   };
   _drawState.onKeyDown = (e) => {
     if(e.key === 'Escape'){ _drawClear(); }
+    if(e.key === 'Enter'){ e.preventDefault(); _drawTermine(); }   // Entrée ferme la zone (Mathis, 2026-10-24)
   };
   _map.on('click', _drawState.onMapClick);
   _map.on('mousemove', _drawState.onMapMove);
@@ -8345,9 +8347,22 @@ function _drawClear(){
   _loaded.missing = '';
   if(hadPoly && mapMode === 'missing') renderMap();
 }
-// Delegation click : boutons Dessiner, Fermer, Effacer.
+// Fermer la zone : avec 3 sommets ou plus elle se ferme, avec moins le dessin s'arrête.
+function _drawTermine(){
+  if(!_drawState.active) return;
+  if(_drawState.vertices.length >= 3) _drawFinish(); else _drawClear();
+}
+// En dessinant, un clic sur un autre outil ou hors de la carte arrête le dessin : on ne pouvait plus
+// en sortir (Mathis, 2026-10-24). Les boutons du dessin et la carte elle-même gardent la main.
+document.addEventListener('pointerdown', e => {
+  if(!_drawState.active || !e.target.isConnected) return;
+  if(e.target.closest('#mapDrawStart, #mapDrawFinish, #mapDrawClear')) return;
+  if(e.target.closest('#mapEl') && !e.target.closest('.leaflet-control')) return;
+  _drawClear();
+}, true);
+// Delegation click : boutons Dessiner (un second clic ferme la zone), Fermer, Effacer.
 document.addEventListener('click', (e) => {
-  if(e.target.closest('#mapDrawStart')){ _drawStart(); return; }
+  if(e.target.closest('#mapDrawStart')){ if(_drawState.active) _drawTermine(); else _drawStart(); return; }
   if(e.target.closest('#mapDrawFinish')){ _drawFinish(); return; }
   if(e.target.closest('#mapDrawClear')){ _drawClear(); return; }
 });
@@ -8867,9 +8882,10 @@ let _ctPaysOuvert = '';          // '' à l'arrivée : les seules frontières
 let _lyrPays = null, _lyrPaysMuets = null, _ctPaysPromesse = null;
 let _lyrZones = null, _ctZonesCc = '';   // les régions du pays étranger ouvert
 const _ctZonesPromesses = {};
-// Pays connus du site sans régions sur la Carte : Natural Earth n'a pas le découpage d'eBird du
-// Danemark, et les Féroé, Malte et le Kosovo n'en ont pas chez lui. Un clic y ouvre le Récent du pays.
-const CT_PAYS_SANS_ZONES = new Set(['DK', 'FO', 'MT', 'XK']);
+// Pays connus du site sans régions sur la Carte : eBird ne découpe ni les Féroé, ni Malte, ni le
+// Kosovo. Un clic y ouvre le Récent du pays. (Le Danemark a ses 13 zones depuis le 2026-10-24, tirées
+// des communes de geoBoundaries.)
+const CT_PAYS_SANS_ZONES = new Set(['FO', 'MT', 'XK']);
 const _ctPaysCliquable = cc => !!(cc && COUNTRIES_REG[cc]);
 const _ctFranceOuverte = () => _ctPaysOuvert === 'FR';
 // Les formes où se lit la zone choisie : les départements en France, les régions ailleurs.
@@ -8881,7 +8897,7 @@ const _ctAuDoigt = window.matchMedia('(hover: none)');
 // notes-privees/maquettes/carte/symboles.html) : des pastilles rondes à la couleur de la rareté, qui
 // portent l'initiale de l'ami (la ligue) ou un œil (vu récemment). Les triangles et les ronds d'avant
 // ne lui plaisaient pas. Les points proches se rangent en grappes cerclées d'un anneau des raretés ;
-// les points au même endroit, une grappe les ouvre en éventail (Leaflet.markercluster, index.html).
+// les points au même endroit, une grappe les liste au clic (Leaflet.markercluster, index.html).
 const CT_OEIL = '<svg viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8 12.1 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="1.9" fill="#fff" stroke="none"/></svg>';
 // options.w : le palier, que l'anneau de la grappe additionne.
 // ct-pt-lettre : une initiale, que la CSS recentre sur son encre (banc pastilles).
@@ -8974,41 +8990,49 @@ function _ctBrancheSurvol(g){
     if(sci && (!_ctAuDoigt.matches || (_ctSurvolOuvert === m && m.isTooltipOpen()))){ m.closeTooltip(); openSpeciesModal(sci); return; }
     _ctOuvreSurvol(m);
   });
+  // Une grappe cliquée (ou touchée) ouvre la liste de ses espèces, à côté d'elle.
+  g.on('clusterclick', e => { e.layer.unbindTooltip(); _ctListeGrappe(e.layer); });
   if(_ctAuDoigt.matches) return g;
   g.on('mouseover', e => { const m = e.layer; if(m && m.bindTooltip && (m._rec || m._ligue)) _ctOuvreSurvol(m); });
-  // Les grappes : refaites à chaque zoom, l'infobulle se pose au survol et part avec la souris.
-  // Une grappe ouverte en éventail se tait : sa bulle cacherait les points qu'elle vient d'étaler.
+  // Les grappes : refaites à chaque zoom, l'infobulle se pose au survol et part avec la souris. Sa liste
+  // ouverte, elle se tait : la bulle la recouvrirait.
   g.on('clustermouseover', e => {
     const c = e.layer, h = c._icon ? c._icon.offsetHeight : 34;
-    if(g._spiderfied === c) return;
+    if(_ctGrappeOuverte === c && _map && _map.hasLayer(_ctPopGrappe)) return;
     c.bindTooltip(_ctSurvolGrappe(c.getAllChildMarkers()), _ctSensSurvol(c.getLatLng(), h / 2)).openTooltip();
   });
-  g.on('clustermouseout clusterclick', e => e.layer.unbindTooltip());
-  g.on('spiderfied', e => e.cluster.unbindTooltip());
-  _ctGardeSpirale(g);
+  g.on('clustermouseout', e => e.layer.unbindTooltip());
   return g;
 }
-// Une spirale ouverte reste ouverte quand on zoome (Mathis, 2026-10-23) : markercluster la referme
-// exprès au début de chaque zoom. On retient un de ses points et le nombre de points ; le zoom fini,
-// la grappe qui le contient se rouvre si elle a gardé les mêmes points. Fondue dans une plus grosse
-// au dézoom, elle reste fermée : la bibliothèque n'étale qu'une grappe entière.
-// Fermée par un clic sur la carte, elle ne revient pas : seul un zoom la fait retenir.
-function _ctGardeSpirale(g){
-  if(!g.getVisibleParent) return;
-  g.on('spiderfied', e => { g._ctSpirale = { m:e.markers[0], n:e.cluster.getChildCount() }; });
-  const rouvre = () => {
-    if(g._inZoomAnimation){ setTimeout(rouvre, 50); return; }
-    const r = g._ctRouvrir; g._ctRouvrir = null;
-    if(!r || !g._map || !g.hasLayer(r.m)) return;
-    const c = g.getVisibleParent(r.m);
-    if(c && c !== r.m && c.spiderfy && c.getChildCount() === r.n && g._spiderfied !== c) c.spiderfy();
-  };
-  const zoomDebut = () => { if(g._spiderfied && g._ctSpirale) g._ctRouvrir = g._ctSpirale; };
-  const zoomFin = () => { if(g._ctRouvrir) setTimeout(rouvre, 0); };
-  g.on('add', () => { g._map.on('zoomstart', zoomDebut); g._map.on('zoomend', zoomFin); });
-  // Leaflet lance « remove » avant d'oublier la carte : g._map est encore là.
-  g.on('remove', () => { g._map?.off('zoomstart', zoomDebut).off('zoomend', zoomFin); g._ctRouvrir = null; });
+// La liste d'une grappe : une ligne par espèce, les plus rares d'abord, avec son palier, son statut et
+// « ×N » quand elle a plusieurs observations ; une ligne cliquée ouvre la fiche de l'espèce.
+let _ctPopGrappe = null, _ctGrappeOuverte = null;
+function _ctListeGrappe(c){
+  if(!_map) return;
+  const parSp = new Map();
+  for(const m of c.getAllChildMarkers()){
+    const nom = m._rec ? m._rec.nom : (m._common || m._sciName || '?');
+    const k = (m._rec && m._rec.toutes) ? m._rec.toutes.length : 1;
+    const d = parSp.get(nom);
+    if(d) d.n += k;
+    else parSp.set(nom, { nom, sci:m._sciName || (m._rec && m._rec.sci) || '', w:m.options.w || 0, coul:m.options.coul, n:k, statut:_ctStatutPoint(m) });
+  }
+  const tri = [...parSp.values()].sort((a, b) => (b.w - a.w) || (b.n - a.n) || a.nom.localeCompare(b.nom, 'fr'));
+  const obs = tri.reduce((t, e) => t + e.n, 0), s = n => n > 1 ? 's' : '';
+  const html = `<p class="ct-gl-t">${tri.length} espèce${s(tri.length)} ici · ${obs} observation${s(obs)}</p>` +
+    `<div class="ct-gl-liste">${tri.map(e => `<button type="button" class="ct-gl-l"${e.sci ? ` data-sci="${esc(e.sci)}"` : ''}>` +
+      `${tierChip(e.w || '?', e.coul, { cls:'tier-rond' })}${e.statut ? jetonExo(e.statut) : ''}<span class="ct-gl-nom">${esc(e.nom)}</span>` +
+      `${e.n > 1 ? `<span class="ct-gl-n">×${e.n}</span>` : ''}</button>`).join('')}</div>`;
+  if(!_ctPopGrappe) _ctPopGrappe = L.popup({ className:'ct-gl', maxWidth:300, minWidth:220, autoPanPadding:[24, 24], closeButton:true });
+  _ctGrappeOuverte = c;
+  _ctPopGrappe.setLatLng(c.getLatLng()).setContent(html).openOn(_map);
 }
+document.addEventListener('click', e => {
+  const l = e.target.closest('.ct-gl-l[data-sci]');
+  if(!l) return;
+  if(_map && _ctPopGrappe) _map.closePopup(_ctPopGrappe);
+  openSpeciesModal(l.dataset.sci);
+});
 // Une couche en grappes ; sans la bibliothèque (bloquée, hors ligne), une couche ordinaire (featureGroup,
 // pour que le survol des points marche quand même).
 function _ctGrappes(){
@@ -9016,14 +9040,12 @@ function _ctGrappes(){
   return _ctBrancheSurvol(L.markerClusterGroup({ iconCreateFunction:_ctAnneau, showCoverageOnHover:false, maxClusterRadius:45,
     // Pas de chargement par paquets (chunkedLoading) : renderMap retire la couche de la carte entre
     // deux paquets, et la bibliothèque plantait (« reading 'getMinZoom' », vu le 2026-10-23).
-    spiderfyDistanceMultiplier:1.4, spiderLegPolylineOptions:{ weight:1.5, color:_ctCss('--ink-2'), opacity:.6 } }));
+    // Une grappe cliquée ne zoome plus et ne s'éparpille plus en spirale : elle ouvre la liste de ses
+    // espèces (direction 4 de notes-privees/maquettes/spirale/, choisie par Mathis le 2026-10-24 :
+    // on voit toutes les espèces d'un point, même dézoomé, par exemple toute une région).
+    zoomToBoundsOnClick:false, spiderfyOnMaxZoom:false }));
 }
 const _ctEnGrappes = l => !!(l && l.zoomToShowLayer);
-// Montre l'infobulle d'un point, même rangé dans une grappe (la carte zoome ou ouvre l'éventail d'abord).
-function _ctOuvreBulle(couche, m){
-  if(_ctEnGrappes(couche) && couche.hasLayer(m)) couche.zoomToShowLayer(m, () => _ctOuvreSurvol(m));
-  else _ctOuvreSurvol(m);
-}
 function _ctSymbole(k){
   const pastille = (w, dedans) => `<span class="${_ctClassePt(dedans)} ct-pt-sym" style="background:${realColor(w)}" aria-hidden="true">${dedans}</span>`;
   if(k === 'ligue') return pastille(7, 'S');
@@ -9673,9 +9695,9 @@ const _ctUrlRecent = (z, days) => `https://api.ebird.org/v2/data/obs/${z}/recent
 const _ctUrlEspece = (z, code, days) => `https://api.ebird.org/v2/data/obs/${z}/recent/${code}?back=${days}&includeProvisional=true`;
 // Toutes les listes d'un département ou d'une région, en une réponse du relais (pas une route d'eBird :
 // _ebRelais la fait passer chez lui comme les autres). Gardées en mémoire seulement, comme avant :
-// _ebFetch les mettrait dans localStorage et Firestore. Le relais ne va pas chercher plus de 60 listes
-// nouvelles par réponse et dit combien il en reste : on le rappelle, celles déjà lues sont alors
-// gardées. La Bretagne à froid demande 8 ou 9 rappels.
+// _ebFetch les mettrait dans localStorage et Firestore. Le relais ne va pas chercher plus de 20 listes
+// nouvelles par réponse (60 avant le 2026-10-24) et dit combien il en reste : on le rappelle, celles
+// déjà lues sont alors gardées. La Bretagne à froid demande une vingtaine de rappels.
 // On s'arrête dès qu'un autre chargement prend la main (tour) : sinon un clic sur la Bretagne regretté
 // au bout de 10 s continuait à coûter ses 500 appels eBird ; et dès que le reste ne baisse plus.
 const _ctListesZones = new Map();
@@ -9794,7 +9816,7 @@ function _ctPoseRecent(liste, cc){
   const pts = [...parLieu.values()];
   const groupes = new Map();
   for(const p of pts){ const k = p.lat.toFixed(5) + ',' + p.lon.toFixed(5); if(!groupes.has(k)) groupes.set(k, []); groupes.get(k).push(p); }
-  // En grappes, un même endroit garde ses points en place : la grappe les ouvre en éventail.
+  // En grappes, un même endroit garde ses points en place : la grappe les liste au clic.
   for(const g of groupes.values()){ if(_ctEnGrappes(_lyrMissing)) for(const p of g){ p.dispLat = p.lat; p.dispLon = p.lon; } else _spreadGroup(g); }
   // Les plus rares ajoutés en dernier, donc dessinés par-dessus.
   pts.sort((a, b) => (rarityForCountry(a.o.sciName, cc) || 0) - (rarityForCountry(b.o.sciName, cc) || 0));
@@ -9855,7 +9877,11 @@ async function _loadMissingLayer(zones, days){
   // Une région française choisie (clic ou menu) se lit aussi en entier (Mathis, 2026-10-23). Pas les
   // régions où « ta zone » se replie quand elle touche plus de 3 départements : à cheval sur la
   // Bretagne et les Pays de la Loire, ce serait 600 listes à froid pour en garder une poignée.
-  const regionFr = !ebFilter.polygon && zones.length === 1 && /^FR-[A-Z]{3}$/.test(zones[0]);
+  // Depuis le 2026-10-24, toute région choisie, étrangère aussi (Mathis : avec le seul résumé d'eBird,
+  // « on manque des points ») ; et les petits pays qu'eBird ne découpe pas. Le relais plafonne une région
+  // étrangère à 600 listes.
+  const regionFr = !ebFilter.polygon && zones.length === 1 &&
+    (/^[A-Z]{2}-[A-Z0-9]{1,3}$/.test(zones[0]) || CT_PAYS_SANS_ZONES.has(zones[0]) || zones[0] === 'SJ');
   const details = async () => {
     const n = Math.max(1, Math.floor((petite || ebFilter.polygon ? CT_DETAILS_PETITE_ZONE : CT_DETAILS_GRANDE_ZONE) / zones.length));
     for(const o of especes.slice(0, n)){ if(tour !== _ctRecTour) return; await _ctDetailEspece(o, tour); }
@@ -9876,7 +9902,7 @@ async function _ctLireListes(tour, zones, days, cc, recents, especes){
   const etat = document.getElementById('ctRecEtat');
   if(etat) etat.textContent = '… lecture des listes';
   const lues = [], coupes = [];
-  let reste = 0, total = 0;
+  let reste = 0, total = 0, plafond = null;
   const dansZone = l => typeof l.la === 'number' && typeof l.lo === 'number' && (!ebFilter.polygon || _pointInPolygon(l.la, l.lo, ebFilter.polygon));
   // Une région à froid se lit en plusieurs réponses (60 listes nouvelles chacune) : le volet dit où on en est.
   const avance = v => { if(etat && tour === _ctRecTour && v.total) etat.textContent = `… lecture des listes : ${v.listes.length} sur ${v.total}`; };
@@ -9888,6 +9914,7 @@ async function _ctLireListes(tour, zones, days, cc, recents, especes){
       // Un département à plus de 200 listes dans la période (eBird n'en rend pas plus), ou des
       // listes que le relais n'a pas pu lire.
       coupes.push(...(v.coupes || []));
+      if(v.plafond) plafond = v.plafond;
       reste += v.reste || 0;
       lues.push(...v.listes.filter(dansZone));
       total += ebFilter.polygon ? v.listes.filter(dansZone).length : v.total;
@@ -9933,7 +9960,7 @@ async function _ctLireListes(tour, zones, days, cc, recents, especes){
   const vues = new Set(obs.map(o => o.sciName.toLowerCase()));
   _lyrMissing.clearLayers();
   _ctPoseRecent([...obs, ...especes.filter(o => !vues.has((o.sciName || '').toLowerCase()))], cc);
-  _ctRecListes = lues.length ? { lues:lues.length, total, reste, coupes } : null;
+  _ctRecListes = lues.length ? { lues:lues.length, total, reste, coupes, plafond } : null;
   _ctRecListesEtat = 'ok';
   _mapApplyFilter();
   _ctDessinePanneau();
@@ -10062,7 +10089,10 @@ function _ctListeRecent(){
   const L_ = _ctRecListes;
   // Ce qui manque est dit pour le département qui en manque : seul le Finistère dépasse les 200 listes
   // qu'eBird rend, la date d'une région entière aurait dit « depuis 14 jours » et « il en manque ».
-  const coupes = !parListes ? [] : (L_.coupes || []).map(c => `${esc(c.nom || DEPT_NAMES[c.z] || c.z)} : seulement depuis le ${esc(_ctDateLongue(c.depuis))}, eBird n'en donne pas plus de 200`);
+  // Une grande région étrangère se lit d'un coup : la coupe porte alors son code, pas un nom.
+  const nomCoupe = c => c.nom || DEPT_NAMES[c.z] || (c.z === (ebFilter.dept || ebFilter.region) ? _ctNomZone().nom : c.z);
+  const coupes = !parListes ? [] : (L_.coupes || []).map(c => `${esc(nomCoupe(c))} : seulement depuis le ${esc(_ctDateLongue(c.depuis))}, eBird n'en donne pas plus de 200`);
+  if(parListes && L_.plafond) coupes.push(`les ${L_.plafond.max} plus récentes sur ${L_.plafond.total}, depuis le ${esc(_ctDateLongue(L_.plafond.depuis))} : au-delà, une seule région épuiserait la limite horaire d'eBird, partagée par tous`);
   const source = parListes
     ? `<p class="ct-compte">Lu dans ${L_.lues === 1 ? 'la seule liste déposée' : `les ${L_.lues} listes déposées`} ici ${quand}` +
       (L_.reste ? `, ${L_.reste} pas encore lue${s(L_.reste)}` : '') + '.' + (coupes.length ? ' ' + coupes.join(' ; ') + '.' : '') + '</p>'
@@ -16177,7 +16207,9 @@ async function _renderRarityMap(sci, cc){
   // decoupage. On leur dessine le pays d'une seule piece, colore par sa valeur NATIONALE :
   // la carte n'apprend rien de plus que la ligne RARETE juste au-dessus, mais elle porte le
   // selecteur de mois, qui est ce qu'on vient y chercher.
-  if(!byZone && _paysSansDecoupage(cc)){
+  // Leur fichier de fréquences par zone existe mais est vide ({}) : sans ce test, ce faux découpage
+  // passait devant le repli et la carte restait vide (vu le 2026-10-24, Étourneau aux Féroé).
+  if((!byZone || !Object.keys(byZone).length) && _paysSansDecoupage(cc)){
     const reg = COUNTRIES_REG[cc];
     const nat = (reg && typeof reg.monthly === 'function') ? reg.monthly() : null;
     if(nat && Object.keys(nat).length) byZone = { [cc]: nat };
@@ -16341,6 +16373,12 @@ async function _renderRarityMap(sci, cc){
 function _renderSpeciesRarityCard(key){
   const box = $('#smRarityCard'); if(!box) return;
   const k = (key||'').toLowerCase().trim();
+  // Les paliers et fréquences des pays étrangers arrivent en tâche de fond : dessinée avant eux, la
+  // fiche disait « Jamais notée aux Îles Féroé » au-dessus d'un bar chart à 30 %, et s'arrêtait là,
+  // sans la carte ni la colonne des mois (vu le 2026-10-24). Elle se redessine à leur arrivée.
+  if(!_donneesPaysPretes()) _chargerDonneesPays().then(() => {
+    if(_donneesPaysPretes() && (_smCurrentKey || '').toLowerCase().trim() === k) _renderSpeciesRarityCard(key);
+  }).catch(() => {});
   // Liste des pays dispo, derivee dynamiquement de COUNTRIES_REG. Chaque entree a
   // { code, name, flag } comme avant. flagImg peut renvoyer '' pour un code inconnu.
   const COUNTRIES = Object.keys(COUNTRIES_REG).map(cc => ({

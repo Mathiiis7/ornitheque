@@ -909,8 +909,28 @@ for(const cc of COUNTRIES){
   // Le second test rattrape les regions que Natural Earth range sous un autre pays que
   // celui qui les code : la Crimee et Sebastopol y sont sous adm0_a3 = RUS alors qu'eBird
   // les appelle UA-43 et UA-40.
-  const feats = raw.features.filter(f => f.properties.adm0_a3 === a3
+  let feats = raw.features.filter(f => f.properties.adm0_a3 === a3
     || (f.properties.iso_3166_2 || '').startsWith(cc + '-'));
+  // Danemark en --carte : Natural Earth n'a que ses 5 régions, eBird en compte 13. On prend les 98
+  // communes de geoBoundaries (domaine public, notes-privees/contours-monde/), rattachées par leur nom
+  // aux communes d'eBird, dont le code nomme la zone parente (DK-07-01 -> DK-07). Le dissolve efface
+  // ensuite les limites entre communes d'une même zone.
+  if(CARTE && cc === 'DK'){
+    const src = join(__dir, '..', '..', 'notes-privees', 'contours-monde', 'geoBoundaries-DNK-ADM2_simplified.geojson');
+    if(existsSync(src)){
+      const parNom = new Map((ZONES_EBIRD._communesDK || []).map(([code, nom]) => [normNom(nom), code.split('-').slice(0, 2).join('-')]));
+      // Trois noms s'écrivent autrement chez geoBoundaries (vérifié le 2026-10-24).
+      for(const [gbNom, ebNom] of [['Copenhagen', 'København'], ['Aarhus', 'Århus'], ['Nordfyn', 'Nordfyns']]) parNom.set(normNom(gbNom), parNom.get(normNom(ebNom)));
+      const gb = JSON.parse(readFileSync(src, 'utf8')).features;
+      const orphelines = [];
+      feats = gb.map(f => {
+        const zone = parNom.get(normNom(f.properties.shapeName));
+        if(!zone) orphelines.push(f.properties.shapeName);
+        return { geometry:f.geometry, properties:{ iso_3166_2:zone || '', name:f.properties.shapeName } };
+      });
+      if(orphelines.length) console.warn(`  DK : ${orphelines.length} commune(s) sans zone eBird : ${orphelines.join(', ')}`);
+    }
+  }
   const res = buildCountry(feats, cc);
   if(!res){ console.warn(`${cc} : aucune region resolue sur ${feats.length} features.`); continue; }
   if(CARTE){

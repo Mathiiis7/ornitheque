@@ -2579,6 +2579,22 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     color:#fff; font:800 12px/1 var(--sans); border:2px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,.35); }
   .ct-pt svg { width:13px; height:13px; }
   .ct-pt-ico, .ct-gr-ico { background:none; border:0; }
+  /* La liste d'une grappe cliquée (direction 4 de la maquette spirale, 2026-10-24) : une ligne par
+     espèce, la plus rare en haut, qui ouvre la fiche. */
+  .ct-gl .leaflet-popup-content-wrapper { background:var(--surface); color:var(--ink); border-radius:10px; padding:0; }
+  .ct-gl .leaflet-popup-tip { background:var(--surface); }
+  .ct-gl .leaflet-popup-content { margin:10px 0 8px; font:14px/1.35 var(--sans); }
+  .ct-gl .leaflet-popup-close-button { top:4px; right:4px; }
+  /* .ct-gl devant : la règle « .leaflet-popup-content p » de Leaflet l'emportait sur la marge. */
+  .ct-gl .ct-gl-t { margin:0 28px 6px 12px; color:var(--ink-3); font-size:14px; }
+  .ct-gl-liste { max-height:270px; overflow:auto; overscroll-behavior:contain; }
+  .ct-gl-l { display:flex; align-items:center; gap:8px; width:100%; padding:5px 12px; border:0; background:none;
+    font:inherit; color:var(--ink); text-align:left; cursor:pointer; }
+  .ct-gl-l:hover, .ct-gl-l:focus-visible { background:var(--surface-2); }
+  .ct-gl-l .tier-chip, .ct-gl-l .pkdx-exo { flex:none; }
+  .ct-gl-l .pkdx-exo { width:16px; min-width:16px; height:16px; margin:0; transform:none; font-size:9.5px; padding:0 0 0.5px; }
+  .ct-gl-nom { min-width:0; }
+  .ct-gl-n { margin-left:auto; padding-left:8px; color:var(--ink-3); }
   /* Plusieurs observations de l'espèce au même endroit : leur nombre en bas à droite du point (2026-10-24). */
   .ct-pt-ico .ct-pt { position:relative; }
   .ct-pt-nb { position:absolute; right:-7px; bottom:-6px; min-width:14px; height:14px; padding:0 3px; box-sizing:border-box;
@@ -3735,6 +3751,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .ct-page .map-search input { height:52px; }
     /* Les menus du Récent, sa case et « Voir les autres ». */
     .ct-filtres .filt-sel, .ct-filtres .cp-btn, .ct-filtres .ct-case, .ct-plus, .ct-source button, .ct-volet > .ct-case { min-height:52px; }
+    .ct-gl-l { min-height:52px; }
+    /* Dans la liste d'une grappe, on touche la ligne, pas la pastille : elle garde la taille souris
+       (à 52 px, six lignes ne tenaient plus dans la bulle, vu le 2026-10-24). */
+    .ct-gl-l .tier-chip.tier-rond { width:40px; min-width:40px; height:40px; margin:-10px; font-size:20px; padding:0 0 1px; min-height:0; }
     /* Le curseur garde sa barre fine, mais le doigt l'attrape sur 52 px de haut. */
     .ct-jours input[type=range] { height:52px; margin:0; }
   }

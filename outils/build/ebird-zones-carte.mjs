@@ -31,5 +31,9 @@ for(const cc of PAYS){
   out[cc] = (await lire(`ref/region/list/${niveau}/${cc}`)).map(z => z.code);
   console.log(cc, niveau, out[cc].length);
 }
+// Le Danemark : ses 13 zones se dessinent avec les 98 communes de geoBoundaries, qu'on rattache par
+// leur nom aux communes d'eBird, dont le code nomme la zone parente (DK-07-01 dépend de DK-07).
+out._communesDK = (await lire('ref/region/list/subnational2/DK')).map(z => [z.code, z.name]);
+console.log('DK communes eBird', out._communesDK.length);
 writeFileSync(SORTIE, JSON.stringify(out));
 console.log('->', SORTIE);
