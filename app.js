@@ -9328,7 +9328,7 @@ function _ctDessinePanneau(){
   const nom = document.getElementById('ctZoneNom'); if(nom) nom.textContent = z.nom;
   const meta = document.getElementById('ctZoneMeta'); if(meta) meta.textContent = z.meta;
   const ligue = _ctListeLigue();
-  _ctListeRecent(); _ctLibelleRarete();
+  _ctListeRecent(); _ctSyncFiltres();
   const especesRecent = new Set(); if(_lyrMissing) _lyrMissing.eachLayer(m => { if(m._sciName) especesRecent.add(m._sciName.toLowerCase()); });
   const nb = { ligue:ligue.especes || '', recent:especesRecent.size || '', hot:(_lyrHotspots && _lyrHotspots.getLayers().length) || '' };
   document.querySelectorAll('#ctOnglets [data-nb]').forEach(s => { s.textContent = nb[s.dataset.nb] ? String(nb[s.dataset.nb]) : ''; });
@@ -9848,34 +9848,68 @@ function _ctListeRecent(){
   box.innerHTML = `<p class="ct-compte">${tete}</p>${source}<p class="ct-petit">Les plus rares d'abord</p>${vus.map(rang).join('')}` +
     (n > vus.length ? `<button type="button" class="ct-plus" id="ctRecPlus">Voir les ${n - vus.length} autres</button>` : '');
 }
-// Le libellé du menu Rareté dit ce qui est coché ; il prend l'accent dès qu'il filtre.
-function _ctLibelleRarete(){
-  const b = document.querySelector('#ctRarBtn .cp-btn-label'); if(!b) return;
-  let t;
-  if(ebFilter.cats.size) t = [...ebFilter.cats].join(', ');
-  else {
-    const p = [...ebFilter.rarities].sort((x, y) => x - y);
-    t = p.length === 10 ? 'toutes' : !p.length ? 'aucune' : p.length === 1 ? String(p[0])
-      : (p[p.length - 1] - p[0] === p.length - 1) ? `${p[0]} à ${p[p.length - 1]}` : p.join(', ');
-  }
-  b.textContent = 'Rareté : ' + t;
-  document.getElementById('ctRarBtn').classList.toggle('actif', t !== 'toutes');
+// Les commandes visibles du Récent (Mathis, 2026-10-24) recopient les <select> cachés, que le code
+// règle aussi tout seul (clic sur un département, retour à la France, fiche espèce) : on les
+// repeint à chaque dessin du panneau plutôt que de suivre chaque endroit qui touche un menu.
+const _CT_JOURS = [7, 14, 30];
+function _ctSyncFiltres(){
+  document.querySelectorAll('[data-ct-choix]').forEach(b => {
+    const sel = document.getElementById(b.dataset.ctChoix); if(!sel) return;
+    const o = sel.options[sel.selectedIndex];
+    b.querySelector('.cp-btn-label').textContent = o ? o.textContent : '';
+    // Un choix autre que « Toutes / Tous » prend l'accent, comme les filtres du Birdydex.
+    b.classList.toggle('actif', sel.selectedIndex > 0);
+  });
+  const src = document.getElementById('mapEbSource')?.value || 'ebird';
+  document.querySelectorAll('[data-ct-source]').forEach(b => {
+    const on = b.dataset.ctSource === src;
+    b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on));
+  });
+  const j = +(document.getElementById('mapEbDays')?.value) || 14;
+  const curseur = document.getElementById('ctJours');
+  if(curseur && document.activeElement !== curseur) curseur.value = String(Math.max(0, _CT_JOURS.indexOf(j)));
+  _ctJoursTexte(j);
 }
-document.addEventListener('click', e => {
-  const pop = document.getElementById('ctRarPop'), btn = document.getElementById('ctRarBtn');
-  if(pop && btn){
-    if(e.target.closest('#ctRarBtn')){ const ouvrir = pop.hidden; pop.hidden = !ouvrir; btn.setAttribute('aria-expanded', String(ouvrir)); return; }
-    // Les pastilles sont repeintes pendant leur propre clic : on ne referme que sur un vrai dehors.
-    if(!pop.hidden && e.target.isConnected && !e.target.closest('#ctRarPop')){ pop.hidden = true; btn.setAttribute('aria-expanded', 'false'); }
+function _ctJoursTexte(j){
+  const t = `${j} derniers jours`;
+  const v = document.getElementById('ctJoursVal'); if(v) v.textContent = t;
+  document.getElementById('ctJours')?.setAttribute('aria-valuetext', t);
+}
+// Règle un <select> caché et prévient ceux qui l'écoutent, comme l'aurait fait un vrai choix.
+function _ctRegleMenu(id, valeur){
+  const sel = document.getElementById(id); if(!sel || sel.value === valeur) return;
+  sel.value = valeur;
+  sel.dispatchEvent(new Event('change', { bubbles:true }));
+  _ctSyncFiltres();
+}
+document.addEventListener('click', async e => {
+  const choix = e.target.closest('[data-ct-choix]');
+  if(choix){
+    const sel = document.getElementById(choix.dataset.ctChoix); if(!sel) return;
+    const options = [...sel.options].filter(o => !o.disabled).map(o => ({ value:o.value, label:o.textContent }));
+    const v = await _openFilterPicker(sel.value, {
+      title: choix.dataset.ctChoix === 'mapEbDept' ? 'Département' : 'Région',
+      options, searchable: options.length > 8 });
+    if(v != null) _ctRegleMenu(sel.id, v);
+    choix.focus();
+    return;
   }
+  const src = e.target.closest('[data-ct-source]');
+  if(src){ _ctRegleMenu('mapEbSource', src.dataset.ctSource); return; }
   const r = e.target.closest('#ctListeRecent .ct-rang[data-sci]');
   if(r){ _ctMontreEspece(r.dataset.sci); return; }
   if(e.target.closest('#ctRecPlus')){ _ctRecTout = true; _ctListeRecent(); }
 });
+// Le curseur dit la période en glissant, mais ne relit eBird qu'une fois lâché.
+document.addEventListener('input', e => { if(e.target.id === 'ctJours') _ctJoursTexte(_CT_JOURS[+e.target.value] || 14); });
+document.addEventListener('change', e => { if(e.target.id === 'ctJours') _ctRegleMenu('mapEbDays', String(_CT_JOURS[+e.target.value] || 14)); });
+// Flèches gauche / droite entre les deux sources, comme une vraie paire de boutons radio.
 document.addEventListener('keydown', e => {
-  if(e.key !== 'Escape') return;
-  const pop = document.getElementById('ctRarPop');
-  if(pop && !pop.hidden){ pop.hidden = true; const b = document.getElementById('ctRarBtn'); b?.setAttribute('aria-expanded', 'false'); b?.focus(); }
+  const b = e.target.closest && e.target.closest('[data-ct-source]');
+  if(!b || (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight')) return;
+  e.preventDefault();
+  const autre = b.parentElement.querySelector(`[data-ct-source]:not([data-ct-source="${b.dataset.ctSource}"])`);
+  autre.focus(); autre.click();
 });
 // Charge la couche "A cocher" via GBIF (historique) : cherche dans la region/dept, mois et annees
 // donnes, les obs des especes que l'utilisateur n'a PAS dans sa life list. Colore par espece.

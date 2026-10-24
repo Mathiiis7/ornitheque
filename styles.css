@@ -2665,9 +2665,20 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-volet .map-stats { display:block; margin-top:4px; }
   /* Le Récent (étape 2) : ses menus, et sa liste à pastilles de rareté (maquette finale.html). */
   .ct-filtres { margin:12px 0 8px; }
-  /* Le menu Rareté s'ouvre sous toute la rangée, dans le fil du volet : ancré à son bouton, il sortait
-     du panneau, et la rangée qui défile de côté au téléphone l'aurait coupé. */
-  .fm-pop.ct-rar-pop { position:static; width:auto; max-width:none; margin:0 0 8px; box-shadow:none; }
+  /* Réglages du Récent comme au Birdydex (2026-10-24) : les <select> d'origine restent pour le code,
+     cachés ; on voit la source en deux boutons collés, la période en curseur, la rareté en rangée. */
+  .ct-cache { display:none !important; }
+  .ct-choix { display:inline-flex; }
+  .ct-source { margin:12px 0 0; width:max-content; max-width:100%; }
+  .ct-source button { flex:1 1 auto; }
+  .ct-jours { display:flex; flex-direction:column; gap:0; width:min(100%, 260px); margin:0 0 6px; }
+  .ct-volet > .ct-case { display:flex; align-items:center; gap:6px; font-size:14px; min-height:34px; margin:0 0 8px; }
+  .ct-jours-tete { font-size:14px; color:var(--ink-3); }
+  .ct-jours-tete b { color:var(--ink); font-weight:600; }
+  .ct-jours input[type=range] { width:100%; margin:4px 0 0; accent-color:var(--accent); cursor:pointer; }
+  /* Les repères sous les trois crans : le premier et le dernier calés aux bouts, comme le curseur. */
+  .ct-jours-reperes { display:flex; justify-content:space-between; font-size:14px; color:var(--ink-3); }
+  .ct-rarete { margin:0 0 8px; }
   .ct-menus-zone, .ct-ici-zone { display:contents; }
   .ct-filtres .explorer-lbl { display:inline-flex; align-items:center; gap:6px; font-size:14px; color:var(--ink-2); }
   .ct-filtres .ct-case { font-size:14px; min-height:34px; }
@@ -3719,7 +3730,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .ct-poignee { height:52px; margin:-6px 0 -10px; }
     .ct-page .map-search input { height:52px; }
     /* Les menus du Récent, sa case et « Voir les autres ». */
-    .ct-filtres .filt-sel, .ct-filtres .cp-btn, .ct-filtres .ct-case, .ct-plus { min-height:52px; }
+    .ct-filtres .filt-sel, .ct-filtres .cp-btn, .ct-filtres .ct-case, .ct-plus, .ct-source button, .ct-volet > .ct-case { min-height:52px; }
+    /* Le curseur garde sa barre fine, mais le doigt l'attrape sur 52 px de haut. */
+    .ct-jours input[type=range] { height:52px; margin:0; }
   }
 
   /* Une seule police pour TOUS les noms latins, partout : celle du texte, en italique (--sans).

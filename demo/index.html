@@ -124,7 +124,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=461">
+<link rel="modulepreload" href="app.js?v=462">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -754,24 +754,25 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
               </div>
               <div class="ct-contenu" id="ctContenu">
                 <div class="ct-volet" id="ctVoletRecent" role="tabpanel" aria-labelledby="ctOngletRecent" data-volet="recent" hidden>
-                  <!-- Les réglages du Récent en menus (étape 2, maquette finale.html), comme dans « Qui a vu
-                       quoi ». Région et département viennent du bloc des Hotspots : app.js les y déplace. -->
+                  <!-- Les réglages du Récent comme au Birdydex (Mathis, 2026-10-24) : région et département
+                       s'ouvrent au milieu de l'écran, la source et la rareté se voient sans menu, la période
+                       est un curseur. Les <select> restent, cachés : tout le code les lit et les écoute, les
+                       commandes visibles ne font que les régler (_ctSyncFiltres). Région et département
+                       viennent du bloc des Hotspots : app.js les y déplace. -->
+                  <div class="seg ct-source" id="mapEbSourceLbl" role="radiogroup" aria-label="Source des données">
+                    <button type="button" role="radio" data-ct-source="ebird">eBird, en direct</button>
+                    <button type="button" role="radio" data-ct-source="gbif">Les années passées, ce mois-ci</button>
+                  </div>
+                  <select class="ct-cache" id="mapEbSource" aria-hidden="true" tabindex="-1">
+                    <option value="ebird" selected>Source : eBird, en direct</option>
+                    <option value="gbif">Source : les années passées, ce mois-ci</option>
+                  </select>
                   <div class="fm-barre ct-filtres" id="ctFiltresRecent">
                     <span class="ct-ici-zone" data-ici-zone="recent"></span>
-                    <select class="filt-sel" id="mapEbDays" aria-label="Période">
+                    <select class="ct-cache" id="mapEbDays" aria-hidden="true" tabindex="-1">
                       <option value="7">7 derniers jours</option>
                       <option value="14" selected>14 derniers jours</option>
                       <option value="30">30 derniers jours</option>
-                    </select>
-                    <!-- La rareté garde ses pastilles (plusieurs paliers à la fois), rangées sous un menu
-                         (choix de Mathis, 2026-10-23). Le menu s'ouvre sous la rangée, pas dedans : au
-                         téléphone la rangée défile de côté et l'aurait coupé. -->
-                    <div class="fm" id="mapEbRarityLbl">
-                      <button type="button" class="cp-btn fm-btn" id="ctRarBtn" aria-expanded="false" aria-controls="ctRarPop"><span class="cp-btn-label">Rareté : toutes</span><span class="cp-btn-arrow">▾</span></button>
-                    </div>
-                    <select class="filt-sel" id="mapEbSource" aria-label="Source des données">
-                      <option value="ebird" selected>Source : eBird, en direct</option>
-                      <option value="gbif">Source : les années passées, ce mois-ci</option>
                     </select>
                     <label class="explorer-lbl" id="mapEbYearMinLbl" style="display:none;">De
                     <input type="number" id="mapEbYearMin" style="width:64px; font-size:14px; padding:5px 6px; border:1px solid var(--line-2); border-radius:8px;" min="1970" max="2026" value="2024">
@@ -779,10 +780,16 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
                     <label class="explorer-lbl" id="mapEbYearMaxLbl" style="display:none;">à
                     <input type="number" id="mapEbYearMax" style="width:64px; font-size:14px; padding:5px 6px; border:1px solid var(--line-2); border-radius:8px;" min="1970" max="2026" value="2025">
                     </label>
-                    <label class="miss-toggle ct-case" id="ctRecManqueLbl"><input type="checkbox" id="ctRecManque" checked> Seulement ce qui me manque</label>
                   </div>
-                  <div class="fm-pop ct-rar-pop" id="ctRarPop" hidden>
-                    <p class="fm-titre">Rareté</p>
+                  <!-- Hors de la rangée des menus, qui défile de côté au téléphone : le curseur y était coupé. -->
+                  <div class="ct-jours" id="mapEbDaysLbl">
+                    <label class="ct-jours-tete" for="ctJours">Période <b id="ctJoursVal">14 derniers jours</b></label>
+                    <input type="range" id="ctJours" min="0" max="2" step="1" value="1" aria-valuetext="14 derniers jours">
+                    <div class="ct-jours-reperes" aria-hidden="true"><span>7 j</span><span>14 j</span><span>30 j</span></div>
+                  </div>
+                  <label class="miss-toggle ct-case" id="ctRecManqueLbl"><input type="checkbox" id="ctRecManque" checked> Seulement ce qui me manque</label>
+                  <div class="rar-rangee ct-rarete" id="mapEbRarityLbl">
+                    <span class="rar-rangee-titre">Rareté</span>
                     <div id="mapEbRarityChips" class="rar-chips" role="group" aria-label="Filtrer par rareté">
                       <button type="button" class="rar-chip on" data-rar="1" title="Omniprésent">1</button>
                       <button type="button" class="rar-chip on" data-rar="2" title="Très commun">2</button>
@@ -860,8 +867,9 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
                    la ligne, et cliquer sur le mot deroule le menu sans avoir besoin d'un for. -->
               <!-- Région et département servent au Récent ET aux Hotspots : ils suivent le volet ouvert. -->
               <span class="ct-menus-zone" id="ctMenusZone">
-              <label class="explorer-lbl">Région
-              <select class="filt-sel" id="mapEbRegion">
+              <span class="ct-choix">
+              <button type="button" class="cp-btn" data-ct-choix="mapEbRegion" title="Région"><span class="cp-btn-label">Toutes les régions</span><span class="cp-btn-arrow">▾</span></button>
+              <select class="ct-cache" id="mapEbRegion" aria-hidden="true" tabindex="-1">
                 <option value="FR" selected>Toutes les régions</option>
                 <option value="FR-ARA">Auvergne-Rhône-Alpes</option>
                 <option value="FR-BFC">Bourgogne-Franche-Comté</option>
@@ -877,12 +885,13 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
                 <option value="FR-PAC">Provence-Alpes-Côte d'Azur</option>
                 <option value="FR-GES">Grand Est</option>
               </select>
-              </label>
-              <label class="explorer-lbl" id="mapEbDeptLbl" style="display:none;">Département
-              <select class="filt-sel" id="mapEbDept" style="display:none;">
+              </span>
+              <span class="ct-choix" id="mapEbDeptLbl" style="display:none;">
+              <button type="button" class="cp-btn" data-ct-choix="mapEbDept" title="Département"><span class="cp-btn-label">Tous les départements</span><span class="cp-btn-arrow">▾</span></button>
+              <select class="ct-cache" id="mapEbDept" aria-hidden="true" tabindex="-1" style="display:none;">
                 <option value="" selected>Tous les départements</option>
               </select>
-              </label>
+              </span>
               </span>
               <label class="explorer-lbl" id="mapEbSortLbl" style="display:none;">Trier par
               <select class="filt-sel" id="mapEbSort" style="display:none;">
@@ -1555,5 +1564,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=461"></script>
+<script type="module" src="app.js?v=462"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>
