@@ -8867,11 +8867,13 @@ const CT_OEIL = '<svg viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width
 // options.w : le palier, que l'anneau de la grappe additionne.
 // ct-pt-lettre : une initiale, que la CSS recentre sur son encre (banc pastilles).
 const _ctClassePt = dedans => 'ct-pt' + (String(dedans).startsWith('<svg') ? '' : ' ct-pt-lettre');
-function _ctPastille(latlng, couleur, w, dedans){
+// nb : plus d'une observation de l'espèce à cet endroit, dite par un petit chiffre en bas à droite.
+function _ctPastille(latlng, couleur, w, dedans, nb){
+  const marque = nb > 1 ? `<span class="ct-pt-nb">${nb}</span>` : '';
   return L.marker(latlng, { w:w || 0, coul:couleur, riseOnHover:true,
-    icon:L.divIcon({ html:`<span class="${_ctClassePt(dedans)}" style="background:${couleur}">${dedans}</span>`, className:'ct-pt-ico', iconSize:[22, 22] }) });
+    icon:L.divIcon({ html:`<span class="${_ctClassePt(dedans)}" style="background:${couleur}">${dedans}${marque}</span>`, className:'ct-pt-ico', iconSize:[22, 22] }) });
 }
-const _ctPastilleRecent = (latlng, sci, cc) => _ctPastille(latlng, sciColorForCountry(sci, cc), rarityForCountry(sci, cc), CT_OEIL);
+const _ctPastilleRecent = (latlng, sci, cc, nb) => _ctPastille(latlng, sciColorForCountry(sci, cc), rarityForCountry(sci, cc), CT_OEIL, nb);
 const _ctInitiale = nom => esc(((nom || '').trim().charAt(0) || '?').toUpperCase());
 // L'anneau : chaque palier y prend sa part, du plus commun au plus rare ; le nombre au centre.
 function _ctAnneau(grappe){
@@ -8893,9 +8895,17 @@ const _ctStatutPoint = m => (m._rec && m._rec.statut) || (m._ligue && m._ligue.s
 function _ctSurvolPoint(m){
   const r = m._rec, l = m._ligue, s = n => n > 1 ? 's' : '';
   const nom = r ? r.nom : (m._common || m._sciName || '');
-  const lignes = r ? [[r.gbif ? _ctDateCourte(r.date) : _ctIlYa(r.date), r.lieu].filter(Boolean).join(' · ')] : l ? [[l.who, l.date].filter(Boolean).join(' · '), l.loc] : [];
-  if(r && r.nb) lignes.push(`${r.nb} oiseau${r.nb > 1 ? 'x' : ''} compté${s(r.nb)}`);
-  if(r && r.nv) lignes.push('non validée : pas encore vérifiée par eBird');
+  const compte = nb => `${nb} oiseau${nb > 1 ? 'x' : ''} compté${s(nb)}`;
+  let lignes;
+  if(r && r.toutes){
+    // Plusieurs observations au même lieu : le lieu, puis chacune avec son nombre d'oiseaux.
+    lignes = [`${r.toutes.length} observations · ${r.lieu}`,
+      ...r.toutes.map(t => [_ctIlYa(t.date), t.nb ? compte(t.nb) : '', t.nv ? 'non validée' : ''].filter(Boolean).join(' · '))];
+  } else {
+    lignes = r ? [[r.gbif ? _ctDateCourte(r.date) : _ctIlYa(r.date), r.lieu].filter(Boolean).join(' · ')] : l ? [[l.who, l.date].filter(Boolean).join(' · '), l.loc] : [];
+    if(r && r.nb) lignes.push(compte(r.nb));
+    if(r && r.nv) lignes.push('non validée : pas encore vérifiée par eBird');
+  }
   return _ctLigneSurvol(m.options.coul, m.options.w, nom, '', _ctStatutPoint(m)) + lignes.filter(Boolean).map(t => `<span class="ct-sv-d">${esc(t)}</span>`).join('');
 }
 // Une ligne par espèce, les plus rares d'abord ; « ×3 » quand elle a plusieurs points dans la grappe.
@@ -8904,8 +8914,8 @@ function _ctSurvolGrappe(ms){
   const parSp = new Map();
   for(const m of ms){
     const nom = m._rec ? m._rec.nom : (m._common || m._sciName || '?');
-    const d = parSp.get(nom);
-    if(d) d.n++; else parSp.set(nom, { nom, w:m.options.w || 0, coul:m.options.coul, n:1, statut:_ctStatutPoint(m) });
+    const d = parSp.get(nom), k = (m._rec && m._rec.toutes) ? m._rec.toutes.length : 1;   // « ×N » compte les observations
+    if(d) d.n += k; else parSp.set(nom, { nom, w:m.options.w || 0, coul:m.options.coul, n:k, statut:_ctStatutPoint(m) });
   }
   const tri = [...parSp.values()].sort((a, b) => (b.w - a.w) || (b.n - a.n) || a.nom.localeCompare(b.nom, 'fr'));
   const vus = tri.length - CT_SURVOL_MAX > 1 ? tri.slice(0, CT_SURVOL_MAX) : tri;   // jamais « et 1 autre »
@@ -9583,10 +9593,19 @@ function _ctIlYa(ymd){
 // l'observateur (docs/carte-donnees.md, « À l'affichage »).
 function _ctPoseRecent(liste, cc){
   const arrondi = v => Math.round(v / .02) * .02;
-  const pts = liste.map(o => {
+  // Une espèce notée sur plusieurs listes du même lieu n'a qu'un point, qui porte toutes ses observations
+  // (Mathis, 2026-10-24 : deux Sarcelles d'hiver à la Cité des Oiseaux dépliaient deux points identiques).
+  // Le point garde la plus récente ; le survol les dit toutes.
+  const parLieu = new Map();
+  for(const o of liste){
     const prive = !!o.locationPrivate;
-    return { o, prive, lat:prive ? arrondi(o.lat) : o.lat, lon:prive ? arrondi(o.lng) : o.lng };
-  });
+    const lat = prive ? arrondi(o.lat) : o.lat, lon = prive ? arrondi(o.lng) : o.lng;
+    const k = (o.sciName || '').toLowerCase() + '|' + lat.toFixed(5) + ',' + lon.toFixed(5);
+    const p = parLieu.get(k);
+    if(!p) parLieu.set(k, { o, prive, lat, lon, toutes:[o] });
+    else { p.toutes.push(o); if((o.obsDt || '') > (p.o.obsDt || '')) p.o = o; }
+  }
+  const pts = [...parLieu.values()];
   const groupes = new Map();
   for(const p of pts){ const k = p.lat.toFixed(5) + ',' + p.lon.toFixed(5); if(!groupes.has(k)) groupes.set(k, []); groupes.get(k).push(p); }
   // En grappes, un même endroit garde ses points en place : la grappe les ouvre en éventail.
@@ -9600,11 +9619,15 @@ function _ctPoseRecent(liste, cc){
     // Le statut là où l'oiseau a été vu : établi (N) dans ce département, il prend la couleur de sa
     // rareté même si le pays le dit échappé (Cygne noir dans l'Ain).
     const statut = statutAuLieu(o.sciName, cc, o.dep || ebFilter.dept), w = rarityForCountry(o.sciName, cc);
-    const m = statut === 'N' && w ? _ctPastille([p.dispLat, p.dispLon], realColor(w), w, CT_OEIL) : _ctPastilleRecent([p.dispLat, p.dispLon], o.sciName, cc);
+    const n = p.toutes.length;
+    const m = statut === 'N' && w ? _ctPastille([p.dispLat, p.dispLon], realColor(w), w, CT_OEIL, n) : _ctPastilleRecent([p.dispLat, p.dispLon], o.sciName, cc, n);
     m._q = _mapNorm(nm + ' ' + (o.sciName || '') + ' ' + (p.prive ? '' : (o.locName || '')));
     m._speciesCode = o.speciesCode; m._sciName = o.sciName;
     m._rec = { sci, nom:nm, date:(o.obsDt || '').slice(0, 10), lieu:p.prive ? 'Lieu privé' : (o.locName || ''), nv:o.obsValid === false,
-      nb:o.howMany || 0, statut, o, subId:o.subId };
+      nb:o.howMany || 0, statut, o, subId:o.subId,
+      // Les observations du même lieu, de la plus récente à la plus ancienne, pour le survol.
+      toutes:n > 1 ? p.toutes.slice().sort((a, b) => (b.obsDt || '').localeCompare(a.obsDt || ''))
+        .map(t => ({ date:(t.obsDt || '').slice(0, 10), nb:t.howMany || 0, nv:t.obsValid === false })) : null };
     return m;
   });
   // D'un bloc : une région pose plusieurs milliers de points, un par un la grappe se recalcule à chaque fois.

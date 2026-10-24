@@ -2579,6 +2579,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     color:#fff; font:800 12px/1 var(--sans); border:2px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,.35); }
   .ct-pt svg { width:13px; height:13px; }
   .ct-pt-ico, .ct-gr-ico { background:none; border:0; }
+  /* Plusieurs observations de l'espèce au même endroit : leur nombre en bas à droite du point (2026-10-24). */
+  .ct-pt-ico .ct-pt { position:relative; }
+  .ct-pt-nb { position:absolute; right:-7px; bottom:-6px; min-width:14px; height:14px; padding:0 3px; box-sizing:border-box;
+    border-radius:7px; background:var(--ink); color:var(--surface); font:700 10px/14px var(--sans); text-align:center; pointer-events:none; }
   .ct-pt-ico:focus:not(:focus-visible), .ct-gr-ico:focus:not(:focus-visible) { outline:none; }
   .ct-gr { display:flex; align-items:center; justify-content:center; border-radius:50%; padding:5px; box-sizing:border-box; box-shadow:0 1px 4px rgba(0,0,0,.35); cursor:pointer; }
   /* Le nombre se recentre sur son encre : sans rembourrage il tombait 0,6 à 2 px d'appareil trop bas
