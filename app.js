@@ -9408,8 +9408,17 @@ function _ctChoisirRegion(region, ouvrir){
 // le nom du pays dans le fil d'Ariane revient seulement au pays entier.
 function _ctRetourPays(monde){
   if(ebFilter.polygon) _drawClear();
+  if(monde){
+    _ctPaysOuvert = '';
+    // Comme à l'arrivée, la Carte reprend le pays du site : restée sur l'Autriche, l'onglet Récent
+    // chargeait toute l'Autriche, et une zone dessinée en Vendée se lisait en Autriche, donc vide.
+    if((ebFilter.country || 'FR') !== _globalCountry){
+      ebFilter.country = _globalCountry;
+      _updateCountryHint();
+      _repopulateEbRegionsForCountry(_globalCountry).catch(() => {}).finally(() => _ctSyncFiltres());
+    }
+  }
   const cc = ebFilter.country || 'FR';
-  if(monde) _ctPaysOuvert = '';
   ebFilter.region = cc; ebFilter.dept = '';
   _loaded.missing = ''; _loaded.hotspots = '';
   const rs = document.getElementById('mapEbRegion'); if(rs) rs.value = cc;
@@ -9728,7 +9737,9 @@ function _ctZonesRecent(){
     return { zones:[], trop:deps.length };
   }
   const z = ebFilter.dept || ebFilter.region || cc;
-  return { zones:z === 'FR' ? [] : [z] };
+  // Un pays entier ne se charge que s'il est ouvert sur la carte (ceux sans régions, comme le Danemark) ;
+  // la France entière, jamais.
+  return { zones:z === 'FR' || (z === cc && !_ctPaysOuvert) ? [] : [z] };
 }
 // Une ligne par espèce, sa dernière observation dans la zone, les plus rares d'abord.
 function _ctEspecesRecent(obs, cc){
@@ -10002,6 +10013,11 @@ function _ctListeRecent(){
   if(sansZone){
     // Sur la France, on choisit d'abord une région (2026-10-23) ; GBIF, lui, attend un de ses départements.
     const clic = _ctAuDoigt.matches ? 'touche' : 'clique', region = _ctRegionChoisie();
+    // À l'arrivée, la carte ne montre que les pays (2026-10-24) : on commence par en choisir un.
+    if(!_ctPaysOuvert && !region){
+      box.innerHTML = `<div class="ct-vide"><b>Choisis un pays</b>${gbif ? 'Les années passées se lisent' : 'Ce qui a été vu récemment se charge'} zone par zone : ${clic} un pays sur la carte, puis une de ses régions, ou dessine ta zone.</div>`;
+      return;
+    }
     box.innerHTML = region
       ? `<div class="ct-vide"><b>Choisis un département</b>Les années passées se lisent département par département : ${clic} un département de la région sur la carte, ou dessine ta zone.</div>`
       : `<div class="ct-vide"><b>Choisis une région</b>${gbif ? 'Les années passées se lisent' : 'Ce qui a été vu récemment se charge'} zone par zone : ${clic} une région sur la carte, puis${gbif ? '' : ' si tu veux'} un de ses départements, ou dessine ta zone.</div>`;
