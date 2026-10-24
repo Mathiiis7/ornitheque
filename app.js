@@ -7163,6 +7163,9 @@ function _zoneLabel(){
 // (Re)peuple le sélecteur département en fonction de la région choisie.
 function _refreshDeptSel(){
   const sel = $('#mapEbDept'), lbl = $('#mapEbDeptLbl'); if(!sel) return;
+  // Les départements d'un pays étranger viennent d'eBird (_repopulateEbDeptsForRegion) : cette table
+  // française n'en connaît aucun, et cachait leur menu à chaque changement d'onglet (vu le 2026-10-24).
+  if((ebFilter.country || 'FR') !== 'FR') return;
   const list = REGION_TO_DEPTS[ebFilter.region];
   // Département dispo en mode "hotspots" ET "À cocher" (missing). Cache en "mine" ou sans région.
   const showDept = (mapMode==='hotspots' || mapMode==='missing') && list;
@@ -8855,6 +8858,22 @@ let _ctCadreFait = false;        // la première ouverture se cadre sur la Franc
 let _ctLegendeOuverte = null;    // ouverte sur ordinateur, fermée au téléphone (elle y cache la carte)
 let _lyrDeps = null, _ctDepsPromesse = null;
 let _lyrRegs = null, _ctRegsPromesse = null;   // les 13 régions, cliquées avant leurs départements
+// Tous les pays du monde ont leur frontière dès l'arrivée ; un pays cliqué montre ses régions, et seuls
+// les pays dont le site connaît la rareté se cliquent (Mathis, 2026-10-24 ; la France comme les autres).
+// data/carte-pays.json (outils/build/carte-pays.mjs, 197 Ko gzippés) ; les régions d'un pays étranger
+// se lisent au clic dans data/carte-zones/<cc>.json (simplify-regions-multi.mjs --carte), en vrais
+// codes eBird : cantons suisses, comtés anglais, communes slovènes.
+let _ctPaysOuvert = '';          // '' à l'arrivée : les seules frontières
+let _lyrPays = null, _lyrPaysMuets = null, _ctPaysPromesse = null;
+let _lyrZones = null, _ctZonesCc = '';   // les régions du pays étranger ouvert
+const _ctZonesPromesses = {};
+// Pays connus du site sans régions sur la Carte : Natural Earth n'a pas le découpage d'eBird du
+// Danemark, et les Féroé, Malte et le Kosovo n'en ont pas chez lui. Un clic y ouvre le Récent du pays.
+const CT_PAYS_SANS_ZONES = new Set(['DK', 'FO', 'MT', 'XK']);
+const _ctPaysCliquable = cc => !!(cc && COUNTRIES_REG[cc]);
+const _ctFranceOuverte = () => _ctPaysOuvert === 'FR';
+// Les formes où se lit la zone choisie : les départements en France, les régions ailleurs.
+const _ctCalqueZones = () => _ctFranceOuverte() ? _lyrDeps : (_ctPaysOuvert && _ctZonesCc === _ctPaysOuvert ? _lyrZones : null);
 const _ctTel = window.matchMedia('(max-width:900px)');
 const _ctAuDoigt = window.matchMedia('(hover: none)');
 
@@ -9072,11 +9091,14 @@ function _ctAppliqueCouches(){
     if(!on && _map.hasLayer(l)) _map.removeLayer(l);
   }
   // Les contours : un calque ajouté n'a ses formes qu'à ce moment-là, le surlignage les règle ensuite.
+  // Le pays du site a pu changer ailleurs (Birdydex) : le pays ouvert sur la Carte ne vaut plus.
+  if(_ctPaysOuvert && _ctPaysOuvert !== (ebFilter.country || 'FR')) _ctPaysOuvert = '';
   let ajoute = false;
-  for(const l of [_lyrDeps, _lyrRegs]){
+  for(const [l, on] of [[_lyrPaysMuets, true], [_lyrPays, true], [_lyrRegs, _ctFranceOuverte()], [_lyrDeps, _ctFranceOuverte()],
+    [_lyrZones, !!_ctPaysOuvert && _ctZonesCc === _ctPaysOuvert]]){
     if(!l) continue;
-    if(_ctFrance() && !_map.hasLayer(l)){ l.addTo(_map); ajoute = true; }
-    if(!_ctFrance() && _map.hasLayer(l)) _map.removeLayer(l);
+    if(on && !_map.hasLayer(l)){ l.addTo(_map); ajoute = true; }
+    if(!on && _map.hasLayer(l)) _map.removeLayer(l);
   }
   if(ajoute) _ctSurligne();
   _ctMajVoile();
@@ -9088,7 +9110,7 @@ function _ctAppliqueCouches(){
 // Une zone choisie garde la carte cadrée sur elle ; sinon on cadre comme avant, sur les points.
 // La toute première ouverture, en France, montre la France entière (maquette).
 function _ctZoneChoisie(){
-  return _ctFrance() && !!(ebFilter.dept || ebFilter.polygon || (ebFilter.region && ebFilter.region !== 'FR'));
+  return !!(ebFilter.dept || ebFilter.polygon || (ebFilter.region && ebFilter.region !== (ebFilter.country || 'FR')));
 }
 function _ctMarges(){
   // Au téléphone, le tiroir à mi-hauteur couvre le bas : la zone se cadre dans le haut.
@@ -9098,7 +9120,10 @@ function _ctMarges(){
 }
 function _ctCadre(bounds, opts){
   if(!_map) return;
-  if(_ctZoneChoisie()) return;
+  // Un pays ouvert, ou une zone qui a ses formes sur la carte, garde son cadrage ; sinon on cadre sur
+  // les points. Sans la première condition, le dessin de la ligue qui suit l'ouverture du Royaume-Uni
+  // ramenait la carte sur la France, où sont ses points (2026-10-24).
+  if(_ctPaysOuvert || (_ctZoneChoisie() && (ebFilter.polygon || _ctCalqueZones()))) return;
   if(!_ctCadreFait){
     _ctCadreFait = true;
     if(_ctFrance()){ _map.fitBounds(CARTE_FRANCE, _ctMarges()); return; }
@@ -9106,16 +9131,18 @@ function _ctCadre(bounds, opts){
   _map.fitBounds(bounds, opts);
 }
 function _ctCadreZone(){
-  if(!_map || !_lyrDeps || !_ctFrance()) return;
+  const calque = _ctCalqueZones();
+  if(!_map || !calque) return;
   let b = null;
-  _lyrDeps.eachLayer(l => { if(_ctDansZone(l)){ b = b ? b.extend(l.getBounds()) : L.latLngBounds(l.getBounds().getSouthWest(), l.getBounds().getNorthEast()); } });
+  calque.eachLayer(l => { if(_ctDansZone(l)){ b = b ? b.extend(l.getBounds()) : L.latLngBounds(l.getBounds().getSouthWest(), l.getBounds().getNorthEast()); } });
   if(b) _map.fitBounds(b, _ctMarges());
 }
-// Un département fait partie de la zone choisie : lui-même, ou sa région entière.
+// Une forme fait partie de la zone choisie : elle-même (un département, une région étrangère), ou sa
+// région entière (les départements d'une région française, les comtés d'une nation britannique).
 function _ctDansZone(l){
   const code = l.feature?.properties?.ebird || '';
   if(ebFilter.dept) return code === ebFilter.dept;
-  if(ebFilter.region && ebFilter.region !== 'FR') return code.startsWith(ebFilter.region + '-');
+  if(ebFilter.region && ebFilter.region !== (ebFilter.country || 'FR')) return code === ebFilter.region || code.startsWith(ebFilter.region + '-');
   return false;
 }
 const _ctCss = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
@@ -9125,11 +9152,10 @@ let _lyrVoile = null;
 function _ctMajVoile(){
   if(!_map) return;
   if(_lyrVoile){ _map.removeLayer(_lyrVoile); _lyrVoile = null; }
-  if(!_ctFrance()) return;
-  const trous = [];
+  const trous = [], calque = _ctCalqueZones();
   if(ebFilter.polygon) trous.push(ebFilter.polygon);
-  else if(_lyrDeps && _ctZoneChoisie()){
-    _lyrDeps.eachLayer(l => {
+  else if(calque && _ctZoneChoisie()){
+    calque.eachLayer(l => {
       if(!_ctDansZone(l)) return;
       const g = l.feature.geometry;
       for(const p of (g.type === 'Polygon' ? [g.coordinates] : g.coordinates)) trous.push(p[0].map(([x, y]) => [y, x]));
@@ -9143,6 +9169,15 @@ function _ctMajVoile(){
 const _ctStyleRepos = () => ({ color:_ctCss('--ink-3'), weight:.8, opacity:.55, fillColor:_ctCss('--accent'), fillOpacity:0 });
 const _ctStyleRegion = () => ({ color:_ctCss('--ink-3'), weight:1.2, opacity:.7, fillColor:_ctCss('--accent'), fillOpacity:0 });
 const _ctStyleCache = { opacity:0, fillOpacity:0 };
+// Les frontières : à l'accent pour un pays qui se clique, pâles pour les autres (pas encore couverts).
+// En gris, elles se perdaient dans celles que le fond OpenStreetMap dessine déjà (vu le 2026-10-24).
+const _ctStylePays = () => ({ color:_ctCss('--accent'), weight:1.6, opacity:.6, fillColor:_ctCss('--accent'), fillOpacity:0 });
+const _ctStylePaysMuet = () => ({ color:_ctCss('--ink-3'), weight:.7, opacity:.3, fill:false });
+// Le survol éclaire une forme qui n'est pas la zone choisie ; une forme cachée ne le reçoit pas.
+function _ctEclaire(l, repos, dedans){
+  l.on('mouseover', () => { if(!dedans()) l.setStyle({ fillOpacity:.08, weight:1.6, opacity:.9, color:_ctCss('--accent') }); });
+  l.on('mouseout', () => { if(!dedans()) l.setStyle(repos()); });
+}
 // Une forme cachée ne prend ni clic ni survol : sinon son infobulle sortait encore.
 function _ctMuet(l, muet){
   if(l._path) l._path.style.pointerEvents = muet ? 'none' : '';
@@ -9152,6 +9187,20 @@ const _ctRegionChoisie = () => !!(ebFilter.region && ebFilter.region !== 'FR');
 // Sur la France, seules les régions se cliquent ; une région choisie montre ses départements, et les
 // autres régions restent là pour passer à une voisine (choix de Mathis, 2026-10-23).
 function _ctSurligne(){
+  // Le pays ouvert s'efface derrière ses régions et ne prend plus les clics, qui vont à elles. Sans
+  // régions (Danemark...), il reste là et se reclique pour rouvrir son Récent.
+  if(_lyrPays) _lyrPays.eachLayer(l => {
+    const cc = l.feature.properties.cc, lui = cc === _ctPaysOuvert;
+    if(lui && CT_PAYS_SANS_ZONES.has(cc)){ l.setStyle({ color:_ctCss('--accent'), weight:2, opacity:1, fillOpacity:0 }); _ctMuet(l, false); return; }
+    l.setStyle(lui ? _ctStyleCache : _ctStylePays());
+    _ctMuet(l, lui);
+  });
+  if(_lyrZones) _lyrZones.eachLayer(l => {
+    const dedans = _ctDansZone(l);
+    if(dedans){ l.setStyle({ color:_ctCss('--accent'), weight:2.5, opacity:1, fillColor:_ctCss('--accent'), fillOpacity:.06 }); l.bringToFront(); }
+    else l.setStyle(_ctStyleRegion());
+    _ctMuet(l, dedans);   // comme un département : un clic qui manque un point ne recharge pas la zone
+  });
   const region = _ctRegionChoisie() ? ebFilter.region : '';
   if(_lyrRegs) _lyrRegs.eachLayer(l => {
     const elle = !!region && l.feature.properties.ebird === region;
@@ -9184,11 +9233,7 @@ async function _ctChargeDeps(){
   const [geo, geoR] = await Promise.all([_ctDepsPromesse, _ctRegsPromesse]);
   if(!geo || !_map || _lyrDeps) return;
   if(!_map.getPane('ctDeps')){ _map.createPane('ctDeps').style.zIndex = 350; }
-  // Le survol éclaire une forme qui n'est pas la zone choisie ; une forme cachée ne le reçoit pas.
-  const eclaire = (l, repos, dedans) => {
-    l.on('mouseover', () => { if(!dedans()) l.setStyle({ fillOpacity:.08, weight:1.6, opacity:.9, color:_ctCss('--accent') }); });
-    l.on('mouseout', () => { if(!dedans()) l.setStyle(repos()); });
-  };
+  const eclaire = _ctEclaire;
   _lyrDeps = L.geoJSON(geo, {
     pane:'ctDeps',
     style:_ctStyleRepos,
@@ -9210,6 +9255,120 @@ async function _ctChargeDeps(){
   });
   _ctAppliqueCouches();
   _ctSurligne();
+}
+// Les frontières de tous les pays, sous les régions et les départements (calque ctPays, 345).
+async function _ctChargePays(){
+  if(!_ctPaysPromesse) _ctPaysPromesse = fetch('data/carte-pays.json?v=20261024').then(r => r.ok ? r.json() : null).catch(() => null);
+  const geo = await _ctPaysPromesse;
+  if(!geo || !_map || _lyrPays) return;
+  if(!_map.getPane('ctPays')) _map.createPane('ctPays').style.zIndex = 345;
+  // Un pays sans rareté connue n'est qu'un trait : interactive:false, ni curseur ni survol.
+  _lyrPaysMuets = L.geoJSON(geo, { pane:'ctPays', interactive:false, style:_ctStylePaysMuet,
+    filter:f => !_ctPaysCliquable(f.properties.cc) });
+  _lyrPays = L.geoJSON(geo, { pane:'ctPays', style:_ctStylePays,
+    filter:f => _ctPaysCliquable(f.properties.cc),
+    onEachFeature:(f, l) => {
+      const cc = f.properties.cc;
+      _ctEclaire(l, _ctStylePays, () => cc === _ctPaysOuvert);
+      l.on('click', () => { if(!_drawState.active) _ctOuvrePays(cc); });
+      if(!_ctAuDoigt.matches) l.bindTooltip(countryLabel(cc) || f.properties.nom, { sticky:true, direction:'top', offset:[0, -8] });
+    } });
+  _ctAppliqueCouches();
+  _ctSurligne();
+}
+// Les régions d'un pays étranger, lues à son premier clic.
+function _ctChargeZones(cc){
+  if(cc === 'FR' || CT_PAYS_SANS_ZONES.has(cc)) return Promise.resolve(null);
+  if(!(cc in _ctZonesPromesses)) _ctZonesPromesses[cc] = fetch(`data/carte-zones/${cc.toLowerCase()}.json?v=20261024`).then(r => r.ok ? r.json() : null).catch(() => null);
+  return _ctZonesPromesses[cc];
+}
+// Cadre un pays sur son plus grand morceau : son cadre entier irait de la Guyane aux Canaries, de
+// l'Alaska à Hawaï. La France garde le cadre de toujours.
+function _ctCadrePays(cc){
+  if(!_map) return;
+  if(cc === 'FR'){ _map.fitBounds(CARTE_FRANCE, _ctMarges()); return; }
+  let b = null, aire = 0;
+  if(_lyrPays) _lyrPays.eachLayer(l => {
+    if(l.feature.properties.cc !== cc) return;
+    for(const poly of l.feature.geometry.coordinates){
+      const pb = L.latLngBounds(poly[0].map(([x, y]) => [y, x]));
+      const a = (pb.getEast() - pb.getWest()) * (pb.getNorth() - pb.getSouth());
+      if(a > aire){ aire = a; b = pb; }
+    }
+  });
+  if(b) _map.fitBounds(b, _ctMarges());
+}
+// Un clic sur un pays : il devient le pays de la Carte (pas celui du site : le Birdydex et le Classement
+// ne bougent pas), ses régions s'affichent, et rien ne se charge encore sur eBird.
+async function _ctOuvrePays(cc){
+  if(!_ctPaysCliquable(cc)) return;
+  if(ebFilter.polygon) _drawClear();
+  const change = cc !== (ebFilter.country || 'FR');
+  _ctPaysOuvert = cc;
+  ebFilter.country = cc; ebFilter.region = cc; ebFilter.dept = '';
+  _loaded.missing = ''; _loaded.hotspots = '';
+  carteCouches.delete('recent'); carteCouches.delete('hot');
+  _updateCountryHint();
+  if(change) _repopulateEbRegionsForCountry(cc).catch(() => {}).finally(() => _ctSyncFiltres());
+  else {
+    const rs = document.getElementById('mapEbRegion'); if(rs) rs.value = cc;
+    if(cc === 'FR') _refreshDeptSel(); else _repopulateEbDeptsForRegion(cc);
+  }
+  if(_ctTel.matches && carteTiroir === 'bas') carteTiroir = 'mi';
+  _ctCadrePays(cc);
+  _ctCadreFait = true;
+  // Sans régions sur la carte, le pays entier s'ouvre tout de suite dans le Récent.
+  if(CT_PAYS_SANS_ZONES.has(cc)){
+    _ctSurligne();
+    if(mapMode !== 'missing') _ctModeBouton('missing')?.click(); else { renderMap(); _reloadSpeciesForZone(); }
+    return;
+  }
+  if(mapMode !== 'mine') _ctModeBouton('mine')?.click(); else renderMap();
+  const geo = await _ctChargeZones(cc);
+  if(geo && _ctPaysOuvert === cc) _ctPoseZones(cc, geo);
+}
+function _ctPoseZones(cc, geo){
+  if(!_map) return;
+  if(_ctZonesCc !== cc){
+    if(_lyrZones && _map.hasLayer(_lyrZones)) _map.removeLayer(_lyrZones);
+    _lyrZones = L.geoJSON(geo, { pane:'ctDeps', style:_ctStyleRegion,
+      onEachFeature:(f, l) => {
+        _ctEclaire(l, _ctStyleRegion, () => _ctDansZone(l));
+        l.on('click', () => { if(!_drawState.active) _ctChoisirZone(f.properties.ebird); });
+        if(!_ctAuDoigt.matches) l.bindTooltip(f.properties.nom, { sticky:true, direction:'top', offset:[0, -8] });
+      } });
+    _ctZonesCc = cc;
+  }
+  _ctAppliqueCouches();
+  _ctSurligne();
+}
+// Une région d'un pays étranger : elle s'ouvre dans le Récent, comme une région française. Un code à
+// trois morceaux (un comté anglais) est un « département » d'eBird : sa nation devient la région.
+function _ctChoisirZone(code){
+  const cc = _ctPaysOuvert;
+  if(!code || !cc || cc === 'FR') return;
+  if(ebFilter.polygon) _drawClear();
+  const morceaux = code.split('-');
+  ebFilter.region = morceaux.length === 3 ? morceaux.slice(0, 2).join('-') : code;
+  ebFilter.dept = morceaux.length === 3 ? code : '';
+  _loaded.missing = ''; _loaded.hotspots = '';
+  const rs = document.getElementById('mapEbRegion'); if(rs) rs.value = ebFilter.region;
+  _repopulateEbDeptsForRegion(ebFilter.region).then(() => {
+    const ds = document.getElementById('mapEbDept'); if(ds && ebFilter.dept) ds.value = ebFilter.dept;
+    _ctSyncFiltres();
+  });
+  if(_ctTel.matches && carteTiroir === 'bas') carteTiroir = 'mi';
+  _ctSurligne(); _ctCadreZone();
+  if(mapMode !== 'missing') _ctModeBouton('missing')?.click();
+  else { if(!_hasSpeciesSearch()) renderMap(); _reloadSpeciesForZone(); }
+}
+// Une zone choisie dans les menus ouvre son pays sur la carte, si ce n'est pas déjà fait.
+function _ctAssurePaysOuvert(){
+  const cc = ebFilter.country || 'FR';
+  if(_ctPaysOuvert === cc || !_ctPaysCliquable(cc)) return;
+  _ctPaysOuvert = cc;
+  _ctChargeZones(cc).then(geo => { if(geo && _ctPaysOuvert === cc){ _ctPoseZones(cc, geo); _ctCadreZone(); _ctMajVoile(); } });
+  _ctAppliqueCouches(); _ctSurligne();
 }
 function _ctChoisirDep(code){
   if(!code || !_ctFrance()) return;
@@ -9245,9 +9404,12 @@ function _ctChoisirRegion(region, ouvrir){
   if(!_hasSpeciesSearch()) renderMap();
   _reloadSpeciesForZone();
 }
-function _ctRetourFrance(){
+// monde : le bouton ↺ et « Tous les pays » du fil d'Ariane ferment aussi le pays, comme à l'arrivée ;
+// le nom du pays dans le fil d'Ariane revient seulement au pays entier.
+function _ctRetourPays(monde){
   if(ebFilter.polygon) _drawClear();
   const cc = ebFilter.country || 'FR';
+  if(monde) _ctPaysOuvert = '';
   ebFilter.region = cc; ebFilter.dept = '';
   _loaded.missing = ''; _loaded.hotspots = '';
   const rs = document.getElementById('mapEbRegion'); if(rs) rs.value = cc;
@@ -9255,7 +9417,7 @@ function _ctRetourFrance(){
   carteCouches.delete('recent'); carteCouches.delete('hot');
   carteTiroir = 'bas';
   _ctSurligne();
-  if(_map && cc === 'FR') _map.fitBounds(CARTE_FRANCE, _ctMarges());
+  if(_map) monde || cc === 'FR' ? _map.fitBounds(CARTE_FRANCE, _ctMarges()) : _ctCadrePays(cc);
   // Le rendu de la Ligue qui suit recadrait sur TOUS ses points : le monde entier pour qui a vu
   // des oiseaux à l'étranger (trouvé en traçant les cadrages, 2026-10-23). Il refait le cadrage
   // de la première ouverture, la France.
@@ -9284,17 +9446,18 @@ function _ctInitCarte(){
   _ctPlacePanneau();
   _ctTel.addEventListener('change', () => { _ctPlacePanneau(); _ctDessinePanneau(); setTimeout(() => { try{ _map.invalidateSize(); }catch(_){} }, 60); });
   _ctChargeDeps();
+  _ctChargePays();
   const cc = ebFilter.country || 'FR';
   if(cc !== 'FR') _repopulateEbRegionsForCountry(cc).catch(() => {}).finally(() => renderMap());
 }
 // Ce que la ligue a vu dans la zone choisie : une ligne par espèce, ses membres, la dernière date.
 // Les points sont ceux de la couche Ligue (première observation de chaque personne), filtres compris.
 function _ctTesteZone(){
-  if(!_ctFrance()) return null;
   if(ebFilter.polygon){ const p = ebFilter.polygon; return (la, lo) => _pointInPolygon(la, lo, p); }
-  if(!_lyrDeps || !_ctZoneChoisie()) return null;
+  const calque = _ctCalqueZones();
+  if(!calque || !_ctZoneChoisie()) return null;
   const formes = [];
-  _lyrDeps.eachLayer(l => { if(_ctDansZone(l)) formes.push({ b:l.getBounds(), g:l.feature.geometry }); });
+  calque.eachLayer(l => { if(_ctDansZone(l)) formes.push({ b:l.getBounds(), g:l.feature.geometry }); });
   if(!formes.length) return null;
   return (la, lo) => formes.some(({ b, g }) => b.contains([la, lo]) && _ctDansForme(la, lo, g));
 }
@@ -9327,7 +9490,9 @@ function _ctNomZone(){
   if(ebFilter.polygon) return { nom:'Ta zone', meta:'Dessinée sur la carte', ariane:'pays' };
   if(ebFilter.dept) return { nom:DEPT_NAMES[ebFilter.dept] || optTxt('mapEbDept') || ebFilter.dept, meta:cc === 'FR' ? 'Département' : '', ariane:'region' };
   if(ebFilter.region && ebFilter.region !== cc) return { nom:REGION_NAMES[ebFilter.region] || optTxt('mapEbRegion') || ebFilter.region, meta:cc === 'FR' ? 'Région' : '', ariane:'pays' };
-  return { nom:countryLabel(cc), meta:cc === 'FR' ? `${_ctAuDoigt.matches ? 'Touche' : 'Clique'} une région pour ce qui y a été vu récemment.` : '', ariane:'' };
+  const verbe = _ctAuDoigt.matches ? 'Touche' : 'Clique';
+  if(!_ctPaysOuvert) return { nom:'Tous les pays', meta:`${verbe} un pays pour voir ses régions. Les frontières pâles : pays pas encore couverts.`, ariane:'' };
+  return { nom:countryLabel(cc), meta:CT_PAYS_SANS_ZONES.has(cc) ? '' : `${verbe} une région pour ce qui y a été vu récemment.`, ariane:'monde' };
 }
 function _ctDessinePanneau(){
   const zone = document.getElementById('ctZone'); if(!zone) return;
@@ -9341,10 +9506,13 @@ function _ctDessinePanneau(){
   const z = _ctNomZone();
   const ariane = document.getElementById('ctAriane');
   if(ariane){
+    // « Tous les pays » en tête dès qu'un pays est ouvert : c'est le retour à l'arrivée.
+    const monde = _ctPaysOuvert ? '<button type="button" data-carte="monde">Tous les pays</button><span aria-hidden="true">›</span>' : '';
     const pays = `<button type="button" data-carte="pays">${esc(countryLabel(cc))}</button><span aria-hidden="true">›</span>`;
+    const optRegion = (() => { const s = document.getElementById('mapEbRegion'); const o = s && [...s.options].find(x => x.value === ebFilter.region); return o ? o.textContent : ''; })();
     const region = ebFilter.region && ebFilter.region !== cc
-      ? `<button type="button" data-carte="region">${esc(REGION_NAMES[ebFilter.region] || ebFilter.region)}</button><span aria-hidden="true">›</span>` : '';
-    ariane.innerHTML = z.ariane === 'region' ? pays + region : z.ariane === 'pays' ? pays : '';
+      ? `<button type="button" data-carte="region">${esc(REGION_NAMES[ebFilter.region] || optRegion || ebFilter.region)}</button><span aria-hidden="true">›</span>` : '';
+    ariane.innerHTML = z.ariane === 'region' ? monde + pays + region : z.ariane === 'pays' ? monde + pays : z.ariane === 'monde' ? monde : '';
   }
   const nom = document.getElementById('ctZoneNom'); if(nom) nom.textContent = z.nom;
   const meta = document.getElementById('ctZoneMeta'); if(meta) meta.textContent = z.meta;
@@ -9354,8 +9522,13 @@ function _ctDessinePanneau(){
   const nb = { ligue:ligue.especes || '', recent:especesRecent.size || '', hot:(_lyrHotspots && _lyrHotspots.getLayers().length) || '' };
   document.querySelectorAll('#ctOnglets [data-nb]').forEach(s => { s.textContent = nb[s.dataset.nb] ? String(nb[s.dataset.nb]) : ''; });
   zone.dataset.tiroir = carteTiroir;
-  const bulle = document.getElementById('ctBulle'); if(bulle) bulle.hidden = !(cc === 'FR' && !_ctZoneChoisie());
-  const fr = document.getElementById('ctFrance'); if(fr) fr.hidden = !(_ctZoneChoisie() || (ebFilter.region && ebFilter.region !== cc));
+  const bulle = document.getElementById('ctBulle');
+  if(bulle){
+    bulle.hidden = _ctZoneChoisie() || CT_PAYS_SANS_ZONES.has(_ctPaysOuvert);
+    const t = bulle.querySelector('span'), verbe = _ctAuDoigt.matches ? 'Touche' : 'Clique';
+    if(t) t.textContent = _ctPaysOuvert ? `${verbe} une région : ce qui y a été vu récemment s'ouvre ${_ctTel.matches ? 'en bas' : 'à droite'}.` : `${verbe} un pays : ses régions s'affichent.`;
+  }
+  const fr = document.getElementById('ctFrance'); if(fr) fr.hidden = !(_ctPaysOuvert || _ctZoneChoisie());
 }
 document.addEventListener('click', e => {
   const t = e.target.closest('#ctOnglets [data-onglet]');
@@ -9377,7 +9550,8 @@ document.addEventListener('click', e => {
     return;
   }
   if(e.target.closest('#ctPoignee')){ carteTiroir = { bas:'mi', mi:'haut', haut:'bas' }[carteTiroir] || 'mi'; _ctDessinePanneau(); return; }
-  if(e.target.closest('#ctFrance') || e.target.closest('#ctAriane [data-carte="pays"]')){ _ctRetourFrance(); return; }
+  if(e.target.closest('#ctFrance') || e.target.closest('#ctAriane [data-carte="monde"]')){ _ctRetourPays(true); return; }
+  if(e.target.closest('#ctAriane [data-carte="pays"]')){ _ctRetourPays(false); return; }
   if(e.target.closest('#ctAriane [data-carte="region"]')){ _ctChoisirRegion(ebFilter.region); return; }
   if(e.target.closest('#ctBtnLegende')){ _ctLegendeOuverte = !_ctLegendeOuverte; _ctDessineLegendeOuverte(); return; }
   // Le crayon dessine dans le Récent : c'est lui qui sait lire ta zone.
@@ -9398,9 +9572,10 @@ document.addEventListener('keydown', e => {
 // La région ou le département choisis dans les menus du Récent suivent sur la carte.
 document.addEventListener('change', e => {
   if(e.target.id !== 'mapEbRegion' && e.target.id !== 'mapEbDept') return;
+  _ctAssurePaysOuvert();
   _ctSurligne();
   if(_ctZoneChoisie()) _ctCadreZone();
-  else if(_map && _ctFrance() && ebFilter.region === 'FR') _map.fitBounds(CARTE_FRANCE, _ctMarges());
+  else if(_map && ebFilter.region === (ebFilter.country || 'FR')) _ctCadrePays(ebFilter.country || 'FR');
   _ctDessinePanneau();
 });
 document.addEventListener('change', e=>{

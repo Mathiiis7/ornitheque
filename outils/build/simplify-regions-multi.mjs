@@ -15,7 +15,7 @@
     node outils/build/simplify-regions-multi.mjs ne_admin1.geojson          # tous
     node outils/build/simplify-regions-multi.mjs ne_admin1.geojson US,CA    # subset
 */
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -167,6 +167,10 @@ const AGREGE = (() => {
 })();
 
 function resolveCode(cc, props){
+  // La Carte appelle eBird zone par zone : elle a besoin des vrais codes d'eBird (cantons suisses,
+  // comtés anglais, communes slovènes), pas des regroupements faits pour les fréquences, qu'eBird
+  // ne connaît pas (vérifié le 2026-10-24 contre ref/region/list/subnational1).
+  if(CARTE) return resolveCodeBrut(cc, props);
   if(AGREGE[cc]){
     const base = resolveCodeBrut(cc, props);
     return base ? (AGREGE[cc][base] || null) : null;
@@ -650,6 +654,10 @@ const W = 1000, H = 900;
 function buildCountry(features, cc){
   // 1. Regroupe les features par code eBird (ES/IT/GB agregent plusieurs provinces).
   const allowed = new Set(EBIRD_REGIONS[cc] || []);
+  // En --carte, seuls les codes qu'eBird connaît (outils/config/ebird-zones-carte.json, lu par
+  // ebird-zones-carte.mjs) : la liste stricte EBIRD_REGIONS porte les regroupements, et le préfixe du
+  // pays seul laissait passer Porto Rico, les îles australiennes « AU-X03~ »...
+  if(CARTE) allowed.has = c => !!ZONES_EBIRD[cc]?.includes(c) || (c === 'SJ' && cc === 'NO');
   const byCode = {};
   const neNames = {};
   let skipped = 0;
@@ -747,6 +755,11 @@ function buildCountry(features, cc){
     }
   }
 
+  // Les zones en vraies coordonnees, avant tout decalage d'antimeridien et toute projection :
+  // la sortie --carte (la Carte du site, sur Leaflet) les prend telles quelles.
+  const geo = {};
+  for(const c of Object.keys(byCode)) geo[c] = byCode[c];
+
   // 2. Separe les encarts du corps principal.
   const mainCodes = codes.filter(c => !insetCfg[c]);
   const insetCodes = codes.filter(c => insetCfg[c]);
@@ -829,7 +842,7 @@ function buildCountry(features, cc){
     if(out[base]) out[base].path += ' ' + paths.join(' ');
     else out[base] = { name: NAMES[base] || neNames[base] || base, path: paths.join(' ') };
   }
-  return { out, encarts, skipped, tol, rattaches, missing, dissolved, dissolveFailed, clipped, deDoublonnes,
+  return { out, encarts, geo, skipped, tol, rattaches, missing, dissolved, dissolveFailed, clipped, deDoublonnes,
            nRings: codes.reduce((a,c) => a + byCode[c].length, 0) };
 }
 
@@ -849,8 +862,41 @@ const ADM0 = {
   DK:'DNK', SE:'SWE', FI:'FIN', EE:'EST', LT:'LTU', LV:'LVA', BY:'BLR',
   UA:'UKR', RU:'RUS', IE:'IRL', CY:'CYP', LV:'LVA', ME:'MNE', MK:'MKD', LU:'LUX', MD:'MDA',
 };
-const filter = process.argv[3];
+// --carte : au lieu des tracés projetés de la fiche espèce, les régions de chaque pays en GeoJSON
+// (lon/lat) pour la Carte du site, une fois un pays cliqué : data/carte-zones/<cc>.json (2026-10-24).
+const CARTE = process.argv.includes('--carte');
+const ZONES_EBIRD = CARTE ? JSON.parse(readFileSync(join(__dir, '..', 'config', 'ebird-zones-carte.json'), 'utf8')) : {};
+const filter = process.argv.slice(3).find(a => !a.startsWith('--'));
 const COUNTRIES = filter ? filter.split(',').map(s => s.trim().toUpperCase()) : Object.keys(ADM0);
+// Une région en GeoJSON : chaque anneau devient un polygone. Les trous de Natural Earth (Berlin dans le
+// Brandebourg) deviennent donc des polygones pleins, sans effet sur le dessin (aucun remplissage) ; les
+// petites zones sont posées en dernier, donc au-dessus, pour garder leur clic.
+function zonesCarte(geo, noms){
+  const parBase = {};
+  for(const [code, rings] of Object.entries(geo)) (parBase[code.split('#')[0]] = parBase[code.split('#')[0]] || []).push(...rings);
+  const b = bboxOf(Object.values(parBase));
+  const span = Math.max(b.maxLon - b.minLon, b.maxLat - b.minLat);
+  // Plafond à 0,04° : les pays qui traversent la ligne de changement de date (États-Unis, Russie,
+  // Nouvelle-Zélande) ont une étendue de 360°, et sans plafond une tolérance de 0,25° (~25 km).
+  const tol = Math.min(0.04, Math.max(0.004, span * 0.0007));
+  const aire = r => { let a = 0; for(let i = 0, j = r.length - 1; i < r.length; j = i++) a += (r[j][0] + r[i][0]) * (r[j][1] - r[i][1]); return Math.abs(a / 2); };
+  const features = [];
+  for(const [code, rings] of Object.entries(parBase)){
+    const polys = [];
+    let surface = 0;
+    for(const ring of rings){
+      const s = douglasPeucker(ring, tol);
+      if(s.length < 4) continue;
+      surface += aire(s);
+      polys.push([s.map(([x, y]) => [+x.toFixed(3), +y.toFixed(3)])]);
+    }
+    if(!polys.length) continue;
+    features.push({ surface, f:{ type:'Feature', properties:{ ebird:code, nom:noms[code] || NAMES[code] || code },
+      geometry:{ type:'MultiPolygon', coordinates:polys } } });
+  }
+  features.sort((x, y) => y.surface - x.surface);
+  return { fc:{ type:'FeatureCollection', features:features.map(x => x.f) }, tol };
+}
 
 console.log(`Lecture ${srcPath} ...`);
 const raw = JSON.parse(readFileSync(srcPath, 'utf8'));
@@ -867,6 +913,17 @@ for(const cc of COUNTRIES){
     || (f.properties.iso_3166_2 || '').startsWith(cc + '-'));
   const res = buildCountry(feats, cc);
   if(!res){ console.warn(`${cc} : aucune region resolue sur ${feats.length} features.`); continue; }
+  if(CARTE){
+    const noms = Object.fromEntries(Object.entries(res.out).map(([c, v]) => [c, v.name]));
+    const { fc, tol } = zonesCarte(res.geo, noms);
+    const json = JSON.stringify(fc);
+    mkdirSync(join(OUT_DIR, 'carte-zones'), { recursive:true });
+    writeFileSync(join(OUT_DIR, 'carte-zones', `${cc.toLowerCase()}.json`), json);
+    totalKB += json.length / 1024;
+    console.log(`${cc}: ${fc.features.length}/${EBIRD_REGIONS[cc].length} zones, tol=${tol.toFixed(4)}deg -> ${(json.length / 1024).toFixed(1)} KB` +
+      (res.missing.length ? `  ⚠ MANQUE : ${res.missing.join(',')}` : ''));
+    continue;
+  }
   const payload = { viewBox: `0 0 ${W} ${H}`, regions: res.out };
   if(res.encarts && res.encarts.length) payload.encarts = res.encarts;
   const json = JSON.stringify(payload);
