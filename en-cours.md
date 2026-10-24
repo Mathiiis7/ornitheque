@@ -1,4 +1,4 @@
-# EN LOCAL, PAS POUSSÉ (2026-10-24, nuit) : v893 / app.js?v=467 (802b5c5e) ; prochain numéro v894 / 468. Relais 54e522a POUSSÉ (déployé).
+# POUSSÉ (2026-10-25) : v893 / app.js?v=467 (802b5c5e), vérifié en ligne (Tyrol 124 listes, Danemark 13 zones, dessin, 0 erreur) ; prochain numéro v894 / 468. Relais 54e522a POUSSÉ (déployé).
 - Grappe cliquée = liste de ses espèces (_ctListeGrappe, popup .ct-gl), spirale et _ctGardeSpirale retirées ; erreur « _source » disparue (testé : reclic sans erreur).
 - Listes lues pour toute région choisie (regionFr élargi) ; relais : région étrangère acceptée, 600 listes au plus (plafond dit dans le volet), d'un coup au-delà de 20 sous-zones (200 listes), FO/MT/XK/SJ acceptés. Tyrol : 124 listes.
 - Danemark : data/carte-zones/dk.json depuis notes-privees/contours-monde/geoBoundaries-DNK-ADM2_simplified.geojson (simplify-regions-multi.mjs --carte, communes rattachées par nom aux communes eBird de outils/config/ebird-zones-carte.json, 3 alias de nom).
