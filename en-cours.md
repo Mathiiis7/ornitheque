@@ -1,10 +1,12 @@
-# EN LOCAL, PAS POUSSÉ (2026-10-24, soir) : v890 et v891 / app.js?v=464, 465 ; prochain numéro v892 / 466
+# EN LOCAL, PAS POUSSÉ (2026-10-24, soir) : v890 à v892 / app.js?v=464 à 466 ; prochain numéro v893 / 467
 ## A. Frontières de tous les pays : FAIT (0e730565, v891)
 - Arrivée : 234 frontières (data/carte-pays.json, 197 Ko gzippés, outils/build/carte-pays.mjs), 49 pays cliquables (COUNTRIES_REG) à l'accent, les autres en trait pâle non interactif. Pas de régions à l'arrivée, France comprise (choix de Mathis : « comme les autres »).
 - Clic sur un pays : _ctOuvrePays (le pays de la CARTE seulement, pas celui du site), ses régions lues dans data/carte-zones/<cc>.json (simplify-regions-multi.mjs --carte, 44 pays, en VRAIS codes eBird : cantons CH, comtés GB en subnational2, communes SI/LV/MK..., filtrés par outils/config/ebird-zones-carte.json que fait ebird-zones-carte.mjs). Les regroupements des fréquences (zones-agregees.json) ne valent pas chez eBird : vérifié contre ref/region/list.
 - DK, FO, MT, XK sans régions (CT_PAYS_SANS_ZONES) : leur clic ouvre le Récent du pays. Sans forme chez Natural Earth : ES-ML, FI-01, CY-06, GR-69, quelques communes LV/SI/MK, JE/GG/IM.
 - Clic sur une région étrangère : _ctChoisirZone ; un code à 3 morceaux (comté GB) = département eBird, lu en listes par le relais comme un département français ; un code à 2 morceaux passe par data/obs/<zone>/recent (le relais refuse toujours les listes d'une région étrangère, à lui de décider).
-- Fil d'Ariane : Tous les pays › pays › région ; ↺ = retour à l'arrivée (_ctRetourPays(true)).
+- Fil d'Ariane : Tous les pays › pays › région ; ↺ = retour à l'arrivée (_ctRetourPays(true)), qui rend aussi le pays du site (v892 : sinon le Récent chargeait tout le dernier pays ouvert).
+- Pastille du nombre d'observations (.ct-pt-nb) en 10 px : provisoire, à juger par Mathis avec la spirale (sa règle : 14 px pour ce qui se lit).
+- Les 109 comtés britanniques se lisent en listes comme un département français, même coût à froid (200 listes au plus par comté).
 - Testé (Playwright, démo, ordinateur et 375 px) : Autriche > Tyrol, Suisse > Berne, Maroc sans effet, retour, France > Bretagne, Royaume-Uni > Norfolk et Perthshire, relais en 200 partout, 0 erreur, 11 bancs CONFORME, 96,4 Mo publiés. Le test clique par coordonnées (carte attrapée par L.Map.addInitHook) en tenant compte du zoom 0,85 : scratchpad test-pays-geo.mjs.
 - Corrigés au passage : un pays ouvert garde son cadre (la ligue recadrait sur la France) ; _refreshDeptSel cachait le menu Département de tout pays étranger à chaque changement d'onglet.
 ## B. Une espèce au même endroit = un point : FAIT (9482823c, v890) ; spirale : MAQUETTE À CHOISIR
