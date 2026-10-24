@@ -7563,7 +7563,6 @@ function _mapCollectPoints(){
   for(const p of state.people){
     const active = p._active || p.species; if(!active) continue;
     for(const v of active.values()){
-      const w = rarityReal(v.sci);
       const common = frName(v.sci, v.common);
       // showAll = false (defaut) : 1 marker par espece par personne (l'obs canonique).
       // showAll = true : 1 marker PAR obs (utilise allObs, jusqu'a 20 par espece).
@@ -7580,7 +7579,7 @@ function _mapCollectPoints(){
         const pd = parseDate(o.date||''); const ord = pd?pd.ord:null;
         pts.push({ uid:p.id, who:p.name, si:p.si, sci:v.sci, common,
           lat:o.lat, lon:o.lon, loc:o.loc||'', date:o.date||'', dateOrd:ord, cc:o.cc||null,
-          locId:o.locId||null, w, obs:v.obs||1, totalObs:v.obs||1 });
+          locId:o.locId||null, w:_paliersLigue(v.sci, o.cc), obs:v.obs||1, totalObs:v.obs||1 });
       }
     }
   }
@@ -7661,10 +7660,17 @@ function _spreadGroup(group){
     group[i].dispLon = group[i].lon + dLon;
   }
 }
+// Le palier d'une observation de la ligue se lit dans SON pays (Mathis, 2026-10-24) : le chiffre
+// disait la France et la couleur le pays, et un Faisan de Colchide vu en Autriche portait le 4
+// français dans un rond gris. Les 47 pays mesurés ont leurs paliers dans data/rarity_pays.json ;
+// un pays hors de ce registre garde ceux de la France.
+function _paliersLigue(sci, cc){
+  const c = cc || 'FR';
+  return (c !== 'FR' && _countryEntry(c)) ? rarityForCountry(sci, c) : rarityReal(sci);
+}
 function _mapMarker(pt, groupSize){
-  // Utilise la rarete DU PAYS d'observation (pt.cc), pas la rarete FR par defaut.
-  // Un oiseau vu en ES a la couleur de son tier ES, pas de son tier FR.
-  const color = sciColorForCountry(pt.sci, pt.cc);
+  // La couleur dit le palier écrit dans la bulle (pt.w), le gris seulement quand il n'y en a pas.
+  const color = pt.w ? realColor(pt.w) : sciColorForCountry(pt.sci, pt.cc);
   // Plus de bulle au clic : le survol dit l'oiseau, l'ami, la date et le lieu (Mathis, 2026-10-23).
   const m = _ctPastille([pt.dispLat, pt.dispLon], color, pt.w, _ctInitiale(pt.who));
   m._q = _mapNorm(pt.common+' '+pt.sci+' '+(pt.loc||'')+' '+(pt.who||''));
@@ -7944,6 +7950,11 @@ function _ensureMapInit(el){
 function _renderModeMine(el){
   const note = $('#mapNote');
   const allPts = _mapCollectPoints();
+  // Les paliers étrangers arrivent en tâche de fond : sans eux, tout point hors de France vaut 0.
+  // La ligue se redessine à leur arrivée.
+  if(!_donneesPaysPretes() && allPts.some(p => p.cc && p.cc !== 'FR')){
+    _chargerDonneesPays().then(() => { if(_donneesPaysPretes() && mapMode === 'mine') renderMap(); }).catch(() => {});
+  }
   _fillMapSelects(allPts);
   const withoutCoords = state.people.reduce((n,p)=>{
     const a=p._active||p.species; if(!a) return n;
