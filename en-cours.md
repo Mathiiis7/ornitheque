@@ -1,3 +1,10 @@
+# EN LOCAL, PAS POUSSÉ (2026-10-24, nuit) : v893 / app.js?v=467 (802b5c5e) ; prochain numéro v894 / 468. Relais 54e522a POUSSÉ (déployé).
+- Grappe cliquée = liste de ses espèces (_ctListeGrappe, popup .ct-gl), spirale et _ctGardeSpirale retirées ; erreur « _source » disparue (testé : reclic sans erreur).
+- Listes lues pour toute région choisie (regionFr élargi) ; relais : région étrangère acceptée, 600 listes au plus (plafond dit dans le volet), d'un coup au-delà de 20 sous-zones (200 listes), FO/MT/XK/SJ acceptés. Tyrol : 124 listes.
+- Danemark : data/carte-zones/dk.json depuis notes-privees/contours-monde/geoBoundaries-DNK-ADM2_simplified.geojson (simplify-regions-multi.mjs --carte, communes rattachées par nom aux communes eBird de outils/config/ebird-zones-carte.json, 3 alias de nom).
+- Dessin : reclic crayon / Entrée = fermer (_drawTermine), pointerdown hors carte ou sur un autre outil = arrêter.
+- Fiche espèce : redessinée quand rarity_pays/freq_monthly_pays arrivent ; FO/MT/XK : fichier freq_by_region vide ({}) traité comme absent -> pays d'un tenant + colonne des mois ; _PREP_PAYS : FO aux, MT à, CY à.
+- Testé (Playwright, démo locale) : liste de grappe ordinateur et 375 px, Tyrol en listes, Danemark > Bornholm, trois gestes du dessin, fiches FO/MT/XK ; 11 bancs CONFORME. Pastille .ct-pt-nb toujours 10 px, à faire juger.
 # POUSSÉ (2026-10-24, soir) : v890 à v892 / app.js?v=464 à 466, vérifié sur la démo en ligne (Tyrol, Berne, Bretagne, Norfolk, 0 erreur). Prochain numéro v893 / 467.
 ## À FAIRE ENSUITE (demandes de Mathis du 24/10 au soir)
 1. SPIRALE : il choisit la direction 4 de notes-privees/maquettes/spirale/ (« une liste au lieu des points » : cliquer une grappe ouvre une liste des espèces avec palier et ×N, clic sur une ligne = fiche). Sa raison : voir toutes les espèces d'une grappe même dézoomé, ex. toute une région. À coder ; corriger au passage l'erreur « _source » au reclic d'une grappe dépliée.
