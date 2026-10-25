@@ -8912,19 +8912,23 @@ const _ctPastilleRecent = (latlng, sci, cc, nb) => _ctPastille(latlng, sciColorF
 const _ctInitiale = nom => esc(((nom || '').trim().charAt(0) || '?').toUpperCase());
 // L'anneau : chaque palier y prend sa part, du plus commun au plus rare ; le nombre au centre.
 function _ctAnneau(grappe){
-  // Le nombre au centre compte les observations, comme la bulle et la liste : un point du Récent porte
-  // toutes celles de son lieu (2026-10-25).
+  // Le nombre au centre compte les ESPÈCES : « 7 » pour une Oie à tête barrée vue six fois et un
+  // Épervier se lisait comme sept oiseaux différents (Mathis, 2026-10-25). La bulle dit les deux, et la
+  // grappe d'une seule espèce, dessinée en point, porte son nombre d'observations.
   const ms = grappe.getAllChildMarkers(), obsDe = m => (m._rec && m._rec.toutes) ? m._rec.toutes.length : 1;
-  const n = ms.reduce((t, m) => t + obsDe(m), 0), taille = n < 10 ? 34 : n < 100 ? 40 : 46;
+  const parEspece = new Map(); for(const m of ms){ const k = (m._sciName || m._common || '').toLowerCase(); if(!parEspece.has(k)) parEspece.set(k, m.options.w || 0); }
+  const n = parEspece.size, taille = n < 10 ? 34 : n < 100 ? 40 : 46;
   // Une grappe d'une seule espèce (trois Pluviers dorés à deux pas les uns des autres) prend le point
   // de l'espèce, avec le nombre d'observations en bas à droite (Mathis, 2026-10-25). Le dedans (œil,
   // initiale de l'ami) n'est gardé que s'il est le même pour tous.
   if(_ctEspeceUnique(ms)){
     const d = ms.every(m => m.options.dedans === ms[0].options.dedans) ? (ms[0].options.dedans || '') : '';
-    return L.divIcon({ html:`<span class="${_ctClassePt(d)}" style="background:${ms[0].options.coul}">${d}<span class="ct-pt-nb">${n}</span></span>`,
+    const obs = ms.reduce((t, m) => t + obsDe(m), 0);
+    return L.divIcon({ html:`<span class="${_ctClassePt(d)}" style="background:${ms[0].options.coul}">${d}<span class="ct-pt-nb">${obs}</span></span>`,
       className:'ct-pt-ico', iconSize:[22, 22] });
   }
-  const parts = new Map(); for(const m of ms){ const w = m.options.w || 0; parts.set(w, (parts.get(w) || 0) + obsDe(m)); }
+  // L'anneau se partage entre les espèces, chacune à son palier, comme le nombre du centre.
+  const parts = new Map(); for(const w of parEspece.values()) parts.set(w, (parts.get(w) || 0) + 1);
   let a = 0;
   const arcs = [...parts.keys()].sort((x, y) => x - y).map(w => { const d = a; a += parts.get(w) / n * 360; return `${realColor(w)} ${d.toFixed(1)}deg ${a.toFixed(1)}deg`; });
   return L.divIcon({ html:`<div class="ct-gr" style="width:${taille}px;height:${taille}px;background:conic-gradient(${arcs.join(',')})"><span>${n}</span></div>`,
@@ -9048,25 +9052,57 @@ const _ctEspeceUnique = ms => ms.length > 0 && !!ms[0]._sciName && ms.every(m =>
 let _ctPopGrappe = null, _ctGrappeOuverte = null;
 function _ctListeGrappe(c){
   if(!_map) return;
-  const parSp = new Map();
+  const parSp = new Map(), s = n => n > 1 ? 's' : '';
+  // Chaque observation du point, pour le détail : date, lieu, nombre d'oiseaux (Récent) ; qui, quand,
+  // où (ligue). Le nom de l'observateur eBird n'est jamais repris (docs/carte-donnees.md).
+  const detailDe = m => {
+    if(m._ligue) return [{ quand:m._ligue.date || '', tri:m._ligue.date || '', lieu:m._ligue.loc || '', qui:m._ligue.who || '' }];
+    const r = m._rec; if(!r) return [];
+    const quand = d => r.gbif ? _ctDateCourte(d) : _ctIlYa(d);
+    return (r.toutes || [{ date:r.date, nb:r.nb, nv:r.nv }]).map(t => ({ quand:quand(t.date), tri:t.date || '', lieu:r.lieu || '', nb:t.nb || 0, nv:!!t.nv }));
+  };
   for(const m of c.getAllChildMarkers()){
     const nom = m._rec ? m._rec.nom : (m._common || m._sciName || '?');
-    const k = (m._rec && m._rec.toutes) ? m._rec.toutes.length : 1;
+    const obsPt = detailDe(m), k = obsPt.length || 1;
     const d = parSp.get(nom);
-    if(d) d.n += k;
-    else parSp.set(nom, { nom, sci:m._sciName || (m._rec && m._rec.sci) || '', cc:(m._ligue && m._ligue.cc) || '', w:m.options.w || 0, coul:m.options.coul, n:k, statut:_ctStatutPoint(m) });
+    if(d){ d.n += k; d.obs.push(...obsPt); }
+    else parSp.set(nom, { nom, sci:m._sciName || (m._rec && m._rec.sci) || '', cc:(m._ligue && m._ligue.cc) || '', w:m.options.w || 0, coul:m.options.coul, n:k, obs:obsPt, statut:_ctStatutPoint(m) });
   }
   const tri = [...parSp.values()].sort((a, b) => (b.w - a.w) || (b.n - a.n) || a.nom.localeCompare(b.nom, 'fr'));
-  const obs = tri.reduce((t, e) => t + e.n, 0), s = n => n > 1 ? 's' : '';
+  const obs = tri.reduce((t, e) => t + e.n, 0);
+  // Une ligne d'observation : « il y a 3 j · Lac de Grand-Lieu · 12 oiseaux comptés ».
+  // Toutes au même lieu (cinq listes à la Cité des Oiseaux) : le lieu s'écrit une fois, en tête.
+  const ligneObs = (o, sansLieu) => [o.qui, o.quand, sansLieu ? '' : o.lieu, o.nb ? `${o.nb} oiseau${o.nb > 1 ? 'x' : ''} compté${s(o.nb)}` : '', o.nv ? 'non validée' : '']
+    .filter(Boolean).map(esc).join(' · ');
+  const detailHtml = e => {
+    const unLieu = e.obs.length > 1 && e.obs.every(o => o.lieu === e.obs[0].lieu) ? e.obs[0].lieu : '';
+    const lignes = e.obs.slice().sort((a, b) => (b.tri || '').localeCompare(a.tri || '')).map(o => `<li>${ligneObs(o, !!unLieu)}</li>`).join('');
+    return `<ul class="ct-gl-obs" hidden>${unLieu ? `<li class="ct-gl-lieu">${esc(unLieu)}</li>` : ''}${lignes}</ul>`;
+  };
+  // Le nom ouvre la fiche ; le « ×N » déplie les N observations (Mathis, 2026-10-25 : six Oies à tête
+  // barrée, sans pouvoir voir combien chaque liste en comptait).
   const html = `<p class="ct-gl-t">${tri.length} espèce${s(tri.length)} ici · ${obs} observation${s(obs)}</p>` +
-    `<div class="ct-gl-liste">${tri.map(e => `<button type="button" class="ct-gl-l"${e.sci ? ` data-sci="${esc(e.sci)}"` : ''}${e.cc ? ` data-cc="${esc(e.cc)}"` : ''}>` +
-      `${tierChip(e.w || '?', e.coul, { cls:'tier-rond' })}${e.statut ? jetonExo(e.statut) : ''}<span class="ct-gl-nom">${esc(e.nom)}</span>` +
-      `${e.n > 1 ? `<span class="ct-gl-n">×${e.n}</span>` : ''}</button>`).join('')}</div>`;
+    `<div class="ct-gl-liste">${tri.map(e => `<div class="ct-gl-e"><button type="button" class="ct-gl-l"${e.sci ? ` data-sci="${esc(e.sci)}"` : ''}${e.cc ? ` data-cc="${esc(e.cc)}"` : ''}>` +
+      `${tierChip(e.w || '?', e.coul, { cls:'tier-rond' })}${e.statut ? jetonExo(e.statut) : ''}<span class="ct-gl-nom">${esc(e.nom)}</span></button>` +
+      `${e.n > 1 ? `<button type="button" class="ct-gl-n" aria-expanded="false" title="Voir les ${e.n} observations">×${e.n} <span aria-hidden="true">▾</span></button>` : ''}</div>` +
+      (e.n > 1 ? detailHtml(e) : '')).join('')}</div>`;
   if(!_ctPopGrappe) _ctPopGrappe = L.popup({ className:'ct-gl', maxWidth:300, minWidth:220, autoPanPadding:[24, 24], closeButton:true });
   _ctGrappeOuverte = c;
-  _ctPopGrappe.setLatLng(c.getLatLng()).setContent(html).openOn(_map);
+  // Un élément, pas du texte : update() (après un dépliage) le garde tel quel, dépliages compris ;
+  // à partir d'un texte, Leaflet le réécrivait et la liste se refermait.
+  const contenu = document.createElement('div'); contenu.innerHTML = html;
+  _ctPopGrappe.setLatLng(c.getLatLng()).setContent(contenu).openOn(_map);
 }
 document.addEventListener('click', e => {
+  const t = e.target.closest('.ct-gl-n');
+  if(t){
+    const liste = t.parentElement.nextElementSibling, ouvrir = !!(liste && liste.hidden);
+    if(liste) liste.hidden = !ouvrir;
+    t.setAttribute('aria-expanded', String(ouvrir));
+    // La bulle a grandi : Leaflet la recale et déplace la carte pour qu'elle tienne dedans.
+    if(_ctPopGrappe && _map && _map.hasLayer(_ctPopGrappe)) _ctPopGrappe.update();
+    return;
+  }
   const l = e.target.closest('.ct-gl-l[data-sci]');
   if(!l) return;
   if(_map && _ctPopGrappe) _map.closePopup(_ctPopGrappe);

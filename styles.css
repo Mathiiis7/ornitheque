@@ -2594,7 +2594,16 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-gl-l .tier-chip, .ct-gl-l .pkdx-exo { flex:none; }
   .ct-gl-l .pkdx-exo { width:16px; min-width:16px; height:16px; margin:0; transform:none; font-size:9.5px; padding:0 0 0.5px; }
   .ct-gl-nom { min-width:0; }
-  .ct-gl-n { margin-left:auto; padding-left:8px; color:var(--ink-3); }
+  /* Une ligne : le nom (ouvre la fiche) et, à droite, « ×N ▾ » qui déplie les observations. */
+  .ct-gl-e { display:flex; align-items:stretch; }
+  .ct-gl-e .ct-gl-l { flex:1; min-width:0; }
+  .ct-gl-n { flex:none; border:0; background:none; font:inherit; color:var(--ink-3); padding:5px 12px 5px 8px; cursor:pointer; white-space:nowrap; }
+  .ct-gl-n:hover, .ct-gl-n:focus-visible { background:var(--surface-2); color:var(--ink); }
+  .ct-gl-n[aria-expanded="true"] span { display:inline-block; transform:rotate(180deg); }
+  .ct-gl-obs { list-style:none; margin:0 0 4px; padding:0 12px 0 38px; color:var(--ink-2); font-size:14px; }
+  .ct-gl-obs li { padding:3px 0; border-top:1px solid var(--line); }
+  .ct-gl-obs .ct-gl-lieu { color:var(--ink-3); border-top:0; }
+  .ct-gl-obs[hidden] { display:none; }
   /* Plusieurs observations de l'espèce au même endroit : leur nombre en bas à droite du point (2026-10-24). */
   .ct-pt-ico .ct-pt { position:relative; }
   .ct-pt-nb { position:absolute; right:-7px; bottom:-6px; min-width:14px; height:14px; padding:0 3px; box-sizing:border-box;
@@ -3751,7 +3760,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .ct-page .map-search input { height:52px; }
     /* Les menus du Récent, sa case et « Voir les autres ». */
     .ct-filtres .filt-sel, .ct-filtres .cp-btn, .ct-filtres .ct-case, .ct-plus, .ct-source button, .ct-volet > .ct-case { min-height:52px; }
-    .ct-gl-l { min-height:52px; }
+    .ct-gl-l, .ct-gl-n { min-height:52px; }
     /* Dans la liste d'une grappe, on touche la ligne, pas la pastille : elle garde la taille souris
        (à 52 px, six lignes ne tenaient plus dans la bulle, vu le 2026-10-24). */
     .ct-gl-l .tier-chip.tier-rond { width:40px; min-width:40px; height:40px; margin:-10px; font-size:20px; padding:0 0 1px; min-height:0; }
