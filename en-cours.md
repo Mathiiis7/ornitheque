@@ -1,3 +1,6 @@
+# EN LOCAL, PAS POUSSÉ (2026-10-25) : v896 / app.js?v=470 (aca18285) ; prochain numéro v897 / 471
+- Centre d'une grappe = nombre d'ESPÈCES (anneau partagé par espèce) ; grappe d'une seule espèce = point + nombre d'observations (vérifié par Mathis sur ses Pluviers dorés).
+- Liste d'une grappe : « ×N ▾ » déplie les observations (date, lieu une fois si commun, oiseaux comptés ; ligue : ami, date, lieu). Contenu passé en élément DOM pour que popup.update() garde le dépliage.
 # POUSSÉ (2026-10-25) : v894, v895 / app.js?v=468, 469, vérifié en ligne (Lombardie : fiche sur l'Italie, bulle en observations, 0 erreur) ; prochain numéro v896 / 470
 - v894 (4c65e3b0) : fiche ouverte depuis la Carte sur le pays de la carte (_ctOuvreFiche ; un point de la ligue : le pays de l'obs ; zone si la fiche la connaît) ; bulle, liste et nombre d'une grappe en OBSERVATIONS ; note sous le graphique de la fiche : « La carte et la colonne donnent le mois entier, les barres chaque semaine… » (Mathis a choisi d'expliquer plutôt que recolorer ; variante 1 posée par moi faute de réponse, deux autres proposées : « Colonne : le mois entier. Barres : semaine par semaine. » et l'exemple de mai).
 - v895 (b16b22cc) : grappe d'une seule espèce = point de l'espèce + chiffre, clic = fiche. Testé par la fonction (_ctAnneau exposé par le test) : la démo n'a pas ce cas.
