@@ -9406,7 +9406,7 @@ function _ctCadrePays(cc){
   if(b) _map.fitBounds(b, _ctMarges());
 }
 // Un clic sur un pays : il devient le pays de la Carte (pas celui du site : le Birdydex et le Classement
-// ne bougent pas), ses régions s'affichent, et rien ne se charge encore sur eBird.
+// ne bougent pas), ses régions s'affichent ; dans le Récent, le résumé du pays se charge (une requête).
 async function _ctOuvrePays(cc){
   if(!_ctPaysCliquable(cc)) return;
   if(ebFilter.polygon) _drawClear();
@@ -9414,7 +9414,11 @@ async function _ctOuvrePays(cc){
   _ctPaysOuvert = cc;
   ebFilter.country = cc; ebFilter.region = cc; ebFilter.dept = '';
   _loaded.missing = ''; _loaded.hotspots = '';
-  carteCouches.delete('recent'); carteCouches.delete('hot');
+  // Le Récent reste ouvert : passé de la Namibie à la France, on retombait sur la Ligue sans l'avoir
+  // demandé (Mathis, 2026-10-26). Il ne coûte qu'une requête pour un pays, rien pour la France entière.
+  const resteRecent = mapMode === 'missing';
+  if(!resteRecent) carteCouches.delete('recent');
+  carteCouches.delete('hot');
   _updateCountryHint();
   if(change) _repopulateEbRegionsForCountry(cc).catch(() => {}).finally(() => _ctSyncFiltres());
   else {
@@ -9430,7 +9434,8 @@ async function _ctOuvrePays(cc){
     if(mapMode !== 'missing') _ctModeBouton('missing')?.click(); else { renderMap(); _reloadSpeciesForZone(); }
     return;
   }
-  if(mapMode !== 'mine') _ctModeBouton('mine')?.click(); else renderMap();
+  if(resteRecent){ renderMap(); _reloadSpeciesForZone(); }
+  else if(mapMode !== 'mine') _ctModeBouton('mine')?.click(); else renderMap();
   const geo = await _ctChargeZones(cc);
   if(geo && _ctPaysOuvert === cc) _ctPoseZones(cc, geo);
 }
@@ -9530,7 +9535,17 @@ function _ctRetourPays(monde){
   _loaded.missing = ''; _loaded.hotspots = '';
   const rs = document.getElementById('mapEbRegion'); if(rs) rs.value = cc;
   if(cc === 'FR') _refreshDeptSel(); else _repopulateEbDeptsForRegion(cc);
-  carteCouches.delete('recent'); carteCouches.delete('hot');
+  // Revenir au pays entier par son nom garde le Récent ouvert, comme ouvrir un pays (2026-10-26) ;
+  // le bouton ↺ et « Tous les pays » remettent la carte comme à l'arrivée.
+  const resteRecent = !monde && mapMode === 'missing';
+  if(!resteRecent) carteCouches.delete('recent');
+  carteCouches.delete('hot');
+  if(resteRecent){
+    _ctSurligne();
+    if(_map) cc === 'FR' ? _map.fitBounds(CARTE_FRANCE, _ctMarges()) : _ctCadrePays(cc);
+    renderMap(); _reloadSpeciesForZone();
+    return;
+  }
   carteTiroir = 'bas';
   _ctSurligne();
   if(_map) monde || cc === 'FR' ? _map.fitBounds(CARTE_FRANCE, _ctMarges()) : _ctCadrePays(cc);
@@ -9926,6 +9941,9 @@ function _ctPoseRecent(liste, cc){
   // D'un bloc : une région pose plusieurs milliers de points, un par un la grappe se recalcule à chaque fois.
   if(_lyrMissing.addLayers) _lyrMissing.addLayers(marqueurs); else marqueurs.forEach(m => _lyrMissing.addLayer(m));
 }
+// Un pays entier, que ses régions découpent (pas Malte ni les Féroé, lus en entier comme une région).
+const _ctPaysEntier = zones => !ebFilter.polygon && zones.length === 1 && /^[A-Z]{2}$/.test(zones[0]) &&
+  !CT_PAYS_SANS_ZONES.has(zones[0]) && zones[0] !== 'SJ';
 // Rend 'ok', 'erreur' (eBird n'a pas répondu) ou 'remplace' (un chargement plus récent a pris la main).
 async function _loadMissingLayer(zones, days){
   if(!_lyrMissing) return 'remplace';
@@ -9967,7 +9985,10 @@ async function _loadMissingLayer(zones, days){
   // étrangère à 600 listes.
   const regionFr = !ebFilter.polygon && zones.length === 1 &&
     (/^[A-Z]{2}-[A-Z0-9]{1,3}$/.test(zones[0]) || CT_PAYS_SANS_ZONES.has(zones[0]) || zones[0] === 'SJ');
+  // Un pays entier s'en tient au résumé d'eBird, une requête : les lieux des 8 plus rares en coûtaient
+  // 8 de plus pour peu (Mathis, 2026-10-26). Cliquer une région lit tous ses points.
   const details = async () => {
+    if(_ctPaysEntier(zones)) return;
     const n = Math.max(1, Math.floor((petite || ebFilter.polygon ? CT_DETAILS_PETITE_ZONE : CT_DETAILS_GRANDE_ZONE) / zones.length));
     for(const o of especes.slice(0, n)){ if(tour !== _ctRecTour) return; await _ctDetailEspece(o, tour); }
   };
@@ -10184,6 +10205,7 @@ function _ctListeRecent(){
     : gbif ? ''
     : _ctRecListesEtat === 'lecture' ? '<p class="ct-compte">Lecture de toutes les listes de la zone… En attendant : la dernière observation de chaque espèce.</p>'
     : _ctRecListesEtat === 'echec' ? '<p class="ct-compte">Les listes n\'ont pas répondu : la dernière observation de chaque espèce seulement, et tous les lieux des plus rares.</p>'
+    : _ctPaysEntier(_ctRecZones) ? '<p class="ct-compte">Le résumé d\'eBird : la dernière observation de chaque espèce. Clique une région pour voir tous les points.</p>'
     : '<p class="ct-compte">La dernière observation de chaque espèce, et tous les lieux des plus rares.</p>';
   box.innerHTML = `<p class="ct-compte">${tete}</p>${source}<p class="ct-petit">Les plus rares d'abord</p>${vus.map(rang).join('')}` +
     (n > vus.length ? `<button type="button" class="ct-plus" id="ctRecPlus">Voir les ${n - vus.length} autres</button>` : '');
