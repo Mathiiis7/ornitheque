@@ -8078,7 +8078,12 @@ async function _renderModeMissing(){
   const r = await _loadMissingLayer(zones, days);
   if(r === 'remplace') return;     // un chargement plus récent a pris la main
   _lyrMissing.addTo(_map);
-  if(cnt) cnt.textContent = r === 'erreur' ? 'eBird ne répond pas pour l\'instant (trop de demandes en même temps). Réessaie dans quelques minutes.' : '';
+  // Servie de la dernière lecture, eBird ayant refusé : on le dit, et la prochaine ouverture redemande.
+  const lueLe = Math.min(...zones.map(z => _ebPerimes.get(_ctUrlRecent(z, days)) || Infinity));
+  if(lueLe < Infinity) _loaded.missing = '';
+  if(cnt) cnt.textContent = r === 'erreur' ? 'eBird ne répond pas pour l\'instant (trop de demandes en même temps). Réessaie dans quelques minutes.'
+    : lueLe < Infinity ? `eBird ne répond pas pour l'instant : voici ce qu'il disait le ${new Date(lueLe).toLocaleString('fr-FR', { day:'numeric', month:'long', hour:'2-digit', minute:'2-digit' })}. Réessaie dans quelques minutes pour la suite.`
+    : '';
   _fitLayer(_lyrMissing);
   _mapApplyFilter();
   setTimeout(()=>{ try{ _map.invalidateSize(); }catch(_){} }, 60);
@@ -9088,13 +9093,15 @@ function _ctListeGrappe(c){
     const lignes = e.obs.slice().sort((a, b) => (b.tri || '').localeCompare(a.tri || '')).map(o => `<li>${ligneObs(o, !!unLieu)}</li>`).join('');
     return `<ul class="ct-gl-obs" hidden>${unLieu ? `<li class="ct-gl-lieu">${esc(unLieu)}</li>` : ''}${lignes}</ul>`;
   };
-  // Le nom ouvre la fiche ; le « ×N » déplie les N observations (Mathis, 2026-10-25 : six Oies à tête
+  // Le nom ouvre la fiche ; le « ×N ▾ » déplie les N observations (Mathis, 2026-10-25 : six Oies à tête
   // barrée, sans pouvoir voir combien chaque liste en comptait).
   const html = `<p class="ct-gl-t">${tri.length} espèce${s(tri.length)} ici · ${obs} observation${s(obs)}</p>` +
     `<div class="ct-gl-liste">${tri.map(e => `<div class="ct-gl-e"><button type="button" class="ct-gl-l"${e.sci ? ` data-sci="${esc(e.sci)}"` : ''}${e.cc ? ` data-cc="${esc(e.cc)}"` : ''}>` +
       `${tierChip(e.w || '?', e.coul, { cls:'tier-rond' })}${e.statut ? jetonExo(e.statut) : ''}<span class="ct-gl-nom">${esc(e.nom)}</span>${e.qui.size ? `<span class="ct-gl-qui">${_ctQui(e.qui)}</span>` : ''}</button>` +
-      `${e.n > 1 ? `<button type="button" class="ct-gl-n" aria-expanded="false" title="Voir les ${e.n} observations">×${e.n} <span aria-hidden="true">▾</span></button>` : ''}</div>` +
-      (e.n > 1 ? detailHtml(e) : '')).join('')}</div>`;
+      // Une seule observation se déplie aussi, par la flèche seule : sa date et son lieu ne se voyaient
+      // nulle part (Mathis, 2026-10-26).
+      `${e.obs.length ? `<button type="button" class="ct-gl-n" aria-expanded="false" title="${e.n > 1 ? `Voir les ${e.n} observations` : 'Voir l\'observation'}">${e.n > 1 ? `×${e.n} ` : ''}<span aria-hidden="true">▾</span></button>` : ''}</div>` +
+      (e.obs.length ? detailHtml(e) : '')).join('')}</div>`;
   if(!_ctPopGrappe) _ctPopGrappe = L.popup({ className:'ct-gl', maxWidth:300, minWidth:220, autoPanPadding:[24, 24], closeButton:true });
   _ctGrappeOuverte = c;
   // Un élément, pas du texte : update() (après un dépliage) le garde tel quel, dépliages compris ;
@@ -11023,15 +11030,21 @@ async function _ebAppel(url){
 const _ebCache = new Map();                        // niveau 1 : mémoire (5 min)
 const EBIRD_TTL_MS = 6*60*60*1000;                 // 6h : localStorage + Firestore partagé
 const _ebDocId = url => url.replace(/[^A-Za-z0-9]/g,'_').slice(0,200);
+// Une réponse périmée sert quand eBird refuse : la Loire-Atlantique lue la veille restait vide sur
+// « eBird ne répond pas » (Mathis, 2026-10-26). url -> date de la réponse servie à sa place ; la Carte
+// le dit, pour ne pas faire passer la veille pour aujourd'hui.
+const _ebPerimes = new Map();
 async function _ebFetch(url){
   // 1) Mémoire (5 min)
   const memHit = _ebCache.get(url);
   if(memHit && (Date.now()-memHit.ts) < 5*60*1000) return memHit.data;
+  let perime = memHit || null;
   // 2) localStorage (6h - évite les refetch en cas de reload)
   try{
     const ls = localStorage.getItem('ebc:'+url);
     if(ls){ const {ts,data}=JSON.parse(ls);
       if(Date.now()-ts < EBIRD_TTL_MS){ _ebCache.set(url,{ts,data}); return data; }
+      if(!perime || ts > perime.ts) perime = { ts, data };
     }
   }catch(_){ }
   // 3) Firestore partagé (6h - le 1er ami qui charge remplit pour les autres)
@@ -11046,12 +11059,19 @@ async function _ebFetch(url){
           try{ localStorage.setItem('ebc:'+url, JSON.stringify({ts:Date.now(),data})); }catch(_){ }
           return data;
         }
+        if(d.json && (!perime || ts > perime.ts)) perime = { ts, lire:() => JSON.parse(d.json) };
       }
     }
   }catch(_){ }
   // 4) L'appel eBird réel, à son tour dans la file
-  const r = await _ebAppel(url);
-  if(!r.ok) throw new Error('eBird API '+r.status);
+  let r = null;
+  try{ r = await _ebAppel(url); }catch(e){ if(!perime) throw e; }
+  if(!r || !r.ok){
+    if(!perime) throw new Error('eBird API '+(r ? r.status : 'réseau'));
+    _ebPerimes.set(url, perime.ts);
+    return perime.lire ? perime.lire() : perime.data;
+  }
+  _ebPerimes.delete(url);
   const data = await r.json();
   const stamp = Date.now();
   _ebCache.set(url, { ts:stamp, data });

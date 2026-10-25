@@ -2583,8 +2583,12 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      espèce, la plus rare en haut, qui ouvre la fiche. */
   .ct-gl .leaflet-popup-content-wrapper { background:var(--surface); color:var(--ink); border-radius:10px; padding:0; }
   .ct-gl .leaflet-popup-tip { background:var(--surface); }
-  .ct-gl .leaflet-popup-content { margin:10px 0 8px; font:14px/1.35 var(--sans); }
-  .ct-gl .leaflet-popup-close-button { top:4px; right:4px; }
+  /* Un rembourrage, pas une marge : sans rembourrage au cadre, la marge du haut le traversait, le cadre
+     commençait 10 px plus bas, le titre touchait son bord et la croix en sortait (2026-10-26). */
+  .ct-gl .leaflet-popup-content { margin:0; padding:10px 0 8px; font:14px/1.35 var(--sans); }
+  /* « .leaflet-container a.leaflet-popup-close-button » de Leaflet passait devant : la croix
+     dépassait du cadre de 8 px (Mathis, 2026-10-26). */
+  .leaflet-container .ct-gl a.leaflet-popup-close-button { top:4px; right:4px; }
   /* .ct-gl devant : la règle « .leaflet-popup-content p » de Leaflet l'emportait sur la marge. */
   .ct-gl .ct-gl-t { margin:0 28px 6px 12px; color:var(--ink-3); font-size:14px; }
   .ct-gl-liste { max-height:270px; overflow:auto; overscroll-behavior:contain; }

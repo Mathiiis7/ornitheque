@@ -58,7 +58,9 @@ const SORTES = [
   // légende. L'œil « n'est pas au centre de son cercle » (Mathis, 2026-10-23, bouton Vu récemment).
   // Leur bord blanc, sur la case blanche, se confondait avec l'encre et faussait la mesure : on le
   // rend transparent (il garde sa place), et l'ombre, qui déborde vers le bas, part.
-  { nom: 'Carte, point de la ligue', textes: ['S', 'A', 'M', 'C'], html: (t, c) => `<span class="ct-pt ct-pt-lettre" style="background:${c};${SANS_BORD}">${t}</span>` },
+  // Le point de la ligue, dans le calque translate3d de Leaflet comme la grappe : mesuré hors de lui,
+  // le « C » passait pour centré quand la carte le montrait 1,1 px trop bas (Mathis, 2026-10-26).
+  { nom: 'Carte, point de la ligue', textes: ['S', 'A', 'M', 'C'], html: (t, c) => `<div style="transform:translate3d(0,0,0)"><span class="ct-pt ct-pt-lettre" style="background:${c};${SANS_BORD}">${t}</span></div>` },
   { nom: 'Carte, point du récent (œil)', textes: ['oeil'], html: (_, c) => `<span class="ct-pt" style="background:${c};${SANS_BORD}">${OEIL}</span>` },
   { nom: 'Carte, symbole ligue', textes: ['S', 'A'], html: (t, c) => `<span class="ct-pt ct-pt-lettre ct-pt-sym" style="background:${c};${SANS_BORD}">${t}</span>` },
   // Le survol des points et la liste du Récent : palier et statut exotique dans leur vrai parent.
