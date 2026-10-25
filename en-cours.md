@@ -1,4 +1,4 @@
-# EN LOCAL, PAS POUSSÉ (2026-10-25) : v896 / app.js?v=470 (aca18285) ; prochain numéro v897 / 471
+# POUSSÉ (2026-10-25) : v896 / app.js?v=470 (aca18285), vérifié en ligne (grappe de la Cité des Oiseaux, ×5 déplié, 0 erreur). Prochain sujet : étape 3, les Hotspots ; prochain numéro v897 / 471
 - Centre d'une grappe = nombre d'ESPÈCES (anneau partagé par espèce) ; grappe d'une seule espèce = point + nombre d'observations (vérifié par Mathis sur ses Pluviers dorés).
 - Liste d'une grappe : « ×N ▾ » déplie les observations (date, lieu une fois si commun, oiseaux comptés ; ligue : ami, date, lieu). Contenu passé en élément DOM pour que popup.update() garde le dépliage.
 # POUSSÉ (2026-10-25) : v894, v895 / app.js?v=468, 469, vérifié en ligne (Lombardie : fiche sur l'Italie, bulle en observations, 0 erreur) ; prochain numéro v896 / 470
