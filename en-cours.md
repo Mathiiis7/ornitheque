@@ -1,3 +1,13 @@
+# POUSSÉ (2026-10-26) : v897 à v900 / app.js?v=471 à 474 (dernier : Carte, croix, dépliage, réponse périmée). Prochain numéro v901 / 475
+- v897 : pointe de la bulle d'une grappe au-dessus de l'anneau (offset) ; déplier « ×N » garde la position de défilement (popup.update() réinsère le contenu).
+- v898 : pays entier dans le Récent = résumé eBird seul, 1 requête (_ctPaysEntier : plus les 8 plus rares en détail ; une espèce cherchée garde ses lieux) ; ouvrir un pays (_ctOuvrePays) ou revenir au pays par son nom garde l'onglet Récent (↺ et « Tous les pays » remettent toujours à l'arrivée).
+- v899 : la ligue dit qui a vu chaque espèce (_ctQui, survol et liste) ; statutAuLieu passe accidentelles=true à isExoticInCountry (Ara bleu FR, palier 10, était affiché en sauvage).
+- v900 : croix de la liste dans le cadre (marge du contenu remplacée par un rembourrage + règle plus forte que Leaflet) ; flèche ▾ pour déplier aussi une espèce vue une fois ; _ebFetch rend la dernière réponse connue quand eBird refuse (_ebPerimes), message « voici ce qu'il disait le … ». Testé en démo en simulant des 429.
+## À FAIRE DEMAIN
+1. Rareté de la ZONE (choix de Mathis : interrupteur Pays / Zone dans le Récent ; les pastilles 1-10 et le filtre de rareté se recalculent avec la fréquence de l'espèce dans la région ou le département). Données : REAL_FREQ_MONTHLY_BY_REGION_MULTI (freq_by_region.json par pays). Chercher comment barTier est tiré de la fréquence pour refaire le même barème par zone. Rien de codé.
+2. Le « C » des points de la ligue : Mathis le voit mal centré sur un point seul. Banc pastilles (calque translate3d ajouté, « C » ajouté) : centré à 0,2 px. Vraie carte (notes-privees/essai-lettre-carte.mjs, démo) : +1,1 px trop bas à 100 % mais sur 2 points seulement. Arrêté après deux essais ; reprendre avec plus de points ou une capture agrandie de Mathis.
+3. Vu, pas corrigé : la date des observations de la ligue s'affiche brute (« 2020-06-11 ») dans le dépliage.
+
 # POUSSÉ (2026-10-25) : v896 / app.js?v=470 (aca18285), vérifié en ligne (grappe de la Cité des Oiseaux, ×5 déplié, 0 erreur). Prochain sujet : étape 3, les Hotspots ; prochain numéro v897 / 471
 - Centre d'une grappe = nombre d'ESPÈCES (anneau partagé par espèce) ; grappe d'une seule espèce = point + nombre d'observations (vérifié par Mathis sur ses Pluviers dorés).
 - Liste d'une grappe : « ×N ▾ » déplie les observations (date, lieu une fois si commun, oiseaux comptés ; ligue : ami, date, lieu). Contenu passé en élément DOM pour que popup.update() garde le dépliage.
