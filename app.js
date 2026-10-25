@@ -1678,13 +1678,15 @@ function _isNativeInCountry(k, cc){
   if(EXOTIQUES_EBIRD_PAR_PAYS[cc] && EXOTIQUES_EBIRD_PAR_PAYS[cc][k]) return false;
   return true;
 }
-function isExoticInCountry(sci, country){
+// accidentelles : la Carte veut le statut même d'une espèce accidentelle (l'Ara bleu, palier 10 en
+// France, s'y affichait en oiseau sauvage, Mathis, 2026-10-26).
+function isExoticInCountry(sci, country, accidentelles){
   const k = (sci||'').trim().toLowerCase();
   const cc = country || 'FR';
   // Une espece accidentelle n est pas une cible : elle sort des listes « a trouver ».
   // Les trois appelants de cette fonction ne listent que des especes NON vues, donc une
   // observation deja cochee n est jamais concernee.
-  if(!_estReguliere(k, cc)) return false;
+  if(!accidentelles && !_estReguliere(k, cc)) return false;
   if(EXOTIQUES_EBIRD_PAR_PAYS[cc] && EXOTIQUES_EBIRD_PAR_PAYS[cc][k]){
     // Override X et P : native forte dans une region -> pas exotique au niveau pays.
     // Aligne avec exoticCategoryInCountry (Oie empereur US = native Alaska, Bruant
@@ -2131,7 +2133,7 @@ function statutAuLieu(sci, country, dept){
   let k = (sci || '').trim().toLowerCase(); if(SCI_ALIAS[k]) k = SCI_ALIAS[k];
   const parDep = dept && c === 'FR' && typeof EXOTIC_STATUS_BY_DEP_FR === 'object' && EXOTIC_STATUS_BY_DEP_FR[dept];
   if(parDep && parDep[k]) return parDep[k];
-  if(!isExoticInCountry(sci, c)) return '';
+  if(!isExoticInCountry(sci, c, true)) return '';
   if(isParkOnlyExotic(sci)) return 'X';
   // Exotique sans lettre connue : traitée en échappée, comme sciColorForCountry la peignait en gris.
   return exoticCategoryInCountry(sci, c) || _exoticCategory(k) || 'X';
@@ -8960,12 +8962,16 @@ function _ctSurvolPoint(m){
 }
 // Une ligne par espèce, les plus rares d'abord ; « ×3 » quand elle a plusieurs points dans la grappe.
 const CT_SURVOL_MAX = 10;
+// Les amis qui ont vu l'espèce dans la grappe : « Lina, Samir », « Lina et 3 autres » au-delà de deux.
+const _ctQui = qui => { const t = [...(qui || [])].sort((a, b) => a.localeCompare(b, 'fr'));
+  return esc(t.length > 2 ? `${t[0]} et ${t.length - 1} autres` : t.join(', ')); };
 function _ctSurvolGrappe(ms){
   const parSp = new Map();
   for(const m of ms){
     const nom = m._rec ? m._rec.nom : (m._common || m._sciName || '?');
     const d = parSp.get(nom), k = (m._rec && m._rec.toutes) ? m._rec.toutes.length : 1;   // « ×N » compte les observations
-    if(d) d.n += k; else parSp.set(nom, { nom, w:m.options.w || 0, coul:m.options.coul, n:k, statut:_ctStatutPoint(m) });
+    if(d) d.n += k; else parSp.set(nom, { nom, w:m.options.w || 0, coul:m.options.coul, n:k, statut:_ctStatutPoint(m), qui:new Set() });
+    if(m._ligue && m._ligue.who) parSp.get(nom).qui.add(m._ligue.who);
   }
   const tri = [...parSp.values()].sort((a, b) => (b.w - a.w) || (b.n - a.n) || a.nom.localeCompare(b.nom, 'fr'));
   const vus = tri.length - CT_SURVOL_MAX > 1 ? tri.slice(0, CT_SURVOL_MAX) : tri;   // jamais « et 1 autre »
@@ -8974,7 +8980,9 @@ function _ctSurvolGrappe(ms){
   // « ×2 » se lisait faux (Mathis, 2026-10-25), un point portant toutes les observations de son lieu.
   const obs = tri.reduce((t, e) => t + e.n, 0);
   return `<span class="ct-sv-t">${tri.length} espèce${s(tri.length)}, ${obs} observation${s(obs)}</span>` +
-    vus.map(e => _ctLigneSurvol(e.coul, e.w, e.nom, e.n > 1 ? `<span class="ct-sv-n">×${e.n}</span>` : '', e.statut)).join('') +
+    // La ligue dit qui a vu chaque espèce (Mathis, 2026-10-26) ; le Récent, jamais (docs/carte-donnees.md).
+    vus.map(e => { const fin = [_ctQui(e.qui), e.n > 1 ? `×${e.n}` : ''].filter(Boolean).join(' ');
+      return _ctLigneSurvol(e.coul, e.w, e.nom, fin ? `<span class="ct-sv-n">${fin}</span>` : '', e.statut); }).join('') +
     (reste ? `<span class="ct-sv-d">et ${reste} autre${s(reste)} : ${_ctAuDoigt.matches ? 'touche' : 'clique'} pour ouvrir</span>` : '');
 }
 const CT_SURVOL_OPTS = { direction:'top', className:'ct-sv', opacity:1 };
@@ -9066,7 +9074,8 @@ function _ctListeGrappe(c){
     const obsPt = detailDe(m), k = obsPt.length || 1;
     const d = parSp.get(nom);
     if(d){ d.n += k; d.obs.push(...obsPt); }
-    else parSp.set(nom, { nom, sci:m._sciName || (m._rec && m._rec.sci) || '', cc:(m._ligue && m._ligue.cc) || '', w:m.options.w || 0, coul:m.options.coul, n:k, obs:obsPt, statut:_ctStatutPoint(m) });
+    else parSp.set(nom, { nom, sci:m._sciName || (m._rec && m._rec.sci) || '', cc:(m._ligue && m._ligue.cc) || '', w:m.options.w || 0, coul:m.options.coul, n:k, obs:obsPt, statut:_ctStatutPoint(m), qui:new Set() });
+    if(m._ligue && m._ligue.who) parSp.get(nom).qui.add(m._ligue.who);
   }
   const tri = [...parSp.values()].sort((a, b) => (b.w - a.w) || (b.n - a.n) || a.nom.localeCompare(b.nom, 'fr'));
   const obs = tri.reduce((t, e) => t + e.n, 0);
@@ -9083,7 +9092,7 @@ function _ctListeGrappe(c){
   // barrée, sans pouvoir voir combien chaque liste en comptait).
   const html = `<p class="ct-gl-t">${tri.length} espèce${s(tri.length)} ici · ${obs} observation${s(obs)}</p>` +
     `<div class="ct-gl-liste">${tri.map(e => `<div class="ct-gl-e"><button type="button" class="ct-gl-l"${e.sci ? ` data-sci="${esc(e.sci)}"` : ''}${e.cc ? ` data-cc="${esc(e.cc)}"` : ''}>` +
-      `${tierChip(e.w || '?', e.coul, { cls:'tier-rond' })}${e.statut ? jetonExo(e.statut) : ''}<span class="ct-gl-nom">${esc(e.nom)}</span></button>` +
+      `${tierChip(e.w || '?', e.coul, { cls:'tier-rond' })}${e.statut ? jetonExo(e.statut) : ''}<span class="ct-gl-nom">${esc(e.nom)}</span>${e.qui.size ? `<span class="ct-gl-qui">${_ctQui(e.qui)}</span>` : ''}</button>` +
       `${e.n > 1 ? `<button type="button" class="ct-gl-n" aria-expanded="false" title="Voir les ${e.n} observations">×${e.n} <span aria-hidden="true">▾</span></button>` : ''}</div>` +
       (e.n > 1 ? detailHtml(e) : '')).join('')}</div>`;
   if(!_ctPopGrappe) _ctPopGrappe = L.popup({ className:'ct-gl', maxWidth:300, minWidth:220, autoPanPadding:[24, 24], closeButton:true });

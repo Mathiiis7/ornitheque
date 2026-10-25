@@ -58,7 +58,7 @@ const SORTES = [
   // légende. L'œil « n'est pas au centre de son cercle » (Mathis, 2026-10-23, bouton Vu récemment).
   // Leur bord blanc, sur la case blanche, se confondait avec l'encre et faussait la mesure : on le
   // rend transparent (il garde sa place), et l'ombre, qui déborde vers le bas, part.
-  { nom: 'Carte, point de la ligue', textes: ['S', 'A', 'M'], html: (t, c) => `<span class="ct-pt ct-pt-lettre" style="background:${c};${SANS_BORD}">${t}</span>` },
+  { nom: 'Carte, point de la ligue', textes: ['S', 'A', 'M', 'C'], html: (t, c) => `<span class="ct-pt ct-pt-lettre" style="background:${c};${SANS_BORD}">${t}</span>` },
   { nom: 'Carte, point du récent (œil)', textes: ['oeil'], html: (_, c) => `<span class="ct-pt" style="background:${c};${SANS_BORD}">${OEIL}</span>` },
   { nom: 'Carte, symbole ligue', textes: ['S', 'A'], html: (t, c) => `<span class="ct-pt ct-pt-lettre ct-pt-sym" style="background:${c};${SANS_BORD}">${t}</span>` },
   // Le survol des points et la liste du Récent : palier et statut exotique dans leur vrai parent.
