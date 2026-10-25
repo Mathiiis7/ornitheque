@@ -8905,7 +8905,7 @@ const _ctClassePt = dedans => 'ct-pt' + (String(dedans).startsWith('<svg') ? '' 
 // nb : plus d'une observation de l'espèce à cet endroit, dite par un petit chiffre en bas à droite.
 function _ctPastille(latlng, couleur, w, dedans, nb){
   const marque = nb > 1 ? `<span class="ct-pt-nb">${nb}</span>` : '';
-  return L.marker(latlng, { w:w || 0, coul:couleur, riseOnHover:true,
+  return L.marker(latlng, { w:w || 0, coul:couleur, dedans, riseOnHover:true,
     icon:L.divIcon({ html:`<span class="${_ctClassePt(dedans)}" style="background:${couleur}">${dedans}${marque}</span>`, className:'ct-pt-ico', iconSize:[22, 22] }) });
 }
 const _ctPastilleRecent = (latlng, sci, cc, nb) => _ctPastille(latlng, sciColorForCountry(sci, cc), rarityForCountry(sci, cc), CT_OEIL, nb);
@@ -8916,6 +8916,14 @@ function _ctAnneau(grappe){
   // toutes celles de son lieu (2026-10-25).
   const ms = grappe.getAllChildMarkers(), obsDe = m => (m._rec && m._rec.toutes) ? m._rec.toutes.length : 1;
   const n = ms.reduce((t, m) => t + obsDe(m), 0), taille = n < 10 ? 34 : n < 100 ? 40 : 46;
+  // Une grappe d'une seule espèce (trois Pluviers dorés à deux pas les uns des autres) prend le point
+  // de l'espèce, avec le nombre d'observations en bas à droite (Mathis, 2026-10-25). Le dedans (œil,
+  // initiale de l'ami) n'est gardé que s'il est le même pour tous.
+  if(_ctEspeceUnique(ms)){
+    const d = ms.every(m => m.options.dedans === ms[0].options.dedans) ? (ms[0].options.dedans || '') : '';
+    return L.divIcon({ html:`<span class="${_ctClassePt(d)}" style="background:${ms[0].options.coul}">${d}<span class="ct-pt-nb">${n}</span></span>`,
+      className:'ct-pt-ico', iconSize:[22, 22] });
+  }
   const parts = new Map(); for(const m of ms){ const w = m.options.w || 0; parts.set(w, (parts.get(w) || 0) + obsDe(m)); }
   let a = 0;
   const arcs = [...parts.keys()].sort((x, y) => x - y).map(w => { const d = a; a += parts.get(w) / n * 360; return `${realColor(w)} ${d.toFixed(1)}deg ${a.toFixed(1)}deg`; });
@@ -8996,8 +9004,14 @@ function _ctBrancheSurvol(g){
     if(sci && (!_ctAuDoigt.matches || (_ctSurvolOuvert === m && m.isTooltipOpen()))){ m.closeTooltip(); _ctOuvreFiche(sci, m._ligue && m._ligue.cc); return; }
     _ctOuvreSurvol(m);
   });
-  // Une grappe cliquée (ou touchée) ouvre la liste de ses espèces, à côté d'elle.
-  g.on('clusterclick', e => { e.layer.unbindTooltip(); _ctListeGrappe(e.layer); });
+  // Une grappe cliquée (ou touchée) ouvre la liste de ses espèces, à côté d'elle ; celle d'une seule
+  // espèce, dessinée comme son point, ouvre sa fiche comme un point.
+  g.on('clusterclick', e => {
+    e.layer.unbindTooltip();
+    const ms = e.layer.getAllChildMarkers();
+    if(_ctEspeceUnique(ms)){ const m = ms[0]; _ctOuvreFiche(m._sciName || (m._rec && m._rec.sci), m._ligue && m._ligue.cc); return; }
+    _ctListeGrappe(e.layer);
+  });
   if(_ctAuDoigt.matches) return g;
   g.on('mouseover', e => { const m = e.layer; if(m && m.bindTooltip && (m._rec || m._ligue)) _ctOuvreSurvol(m); });
   // Les grappes : refaites à chaque zoom, l'infobulle se pose au survol et part avec la souris. Sa liste
@@ -9028,6 +9042,7 @@ function _ctOuvreFiche(sci, cc){
   }
   openSpeciesModal(sci);
 }
+const _ctEspeceUnique = ms => ms.length > 0 && !!ms[0]._sciName && ms.every(m => (m._sciName || '').toLowerCase() === ms[0]._sciName.toLowerCase());
 // La liste d'une grappe : une ligne par espèce, les plus rares d'abord, avec son palier, son statut et
 // « ×N » quand elle a plusieurs observations ; une ligne cliquée ouvre la fiche de l'espèce.
 let _ctPopGrappe = null, _ctGrappeOuverte = null;
