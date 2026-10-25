@@ -7679,7 +7679,7 @@ function _mapMarker(pt, groupSize){
   const m = _ctPastille([pt.dispLat, pt.dispLon], color, pt.w, _ctInitiale(pt.who));
   m._q = _mapNorm(pt.common+' '+pt.sci+' '+(pt.loc||'')+' '+(pt.who||''));
   m._sciName = pt.sci; m._common = pt.common;   // pour l'autocomplétion (nom espèce dans le dropdown)
-  m._ligue = { who:pt.who, date:pt.date, loc:pt.loc || '', statut:statutAuLieu(pt.sci, pt.cc || 'FR') };   // pour le survol
+  m._ligue = { who:pt.who, date:pt.date, loc:pt.loc || '', cc:pt.cc || '', statut:statutAuLieu(pt.sci, pt.cc || 'FR') };   // pour le survol et la fiche
   return m;
 }
 // Lazy-load des grosses donnees eBird, splitees par usage pour minimiser le boot :
@@ -8912,8 +8912,11 @@ const _ctPastilleRecent = (latlng, sci, cc, nb) => _ctPastille(latlng, sciColorF
 const _ctInitiale = nom => esc(((nom || '').trim().charAt(0) || '?').toUpperCase());
 // L'anneau : chaque palier y prend sa part, du plus commun au plus rare ; le nombre au centre.
 function _ctAnneau(grappe){
-  const ms = grappe.getAllChildMarkers(), n = ms.length, taille = n < 10 ? 34 : n < 100 ? 40 : 46;
-  const parts = new Map(); for(const m of ms){ const w = m.options.w || 0; parts.set(w, (parts.get(w) || 0) + 1); }
+  // Le nombre au centre compte les observations, comme la bulle et la liste : un point du Récent porte
+  // toutes celles de son lieu (2026-10-25).
+  const ms = grappe.getAllChildMarkers(), obsDe = m => (m._rec && m._rec.toutes) ? m._rec.toutes.length : 1;
+  const n = ms.reduce((t, m) => t + obsDe(m), 0), taille = n < 10 ? 34 : n < 100 ? 40 : 46;
+  const parts = new Map(); for(const m of ms){ const w = m.options.w || 0; parts.set(w, (parts.get(w) || 0) + obsDe(m)); }
   let a = 0;
   const arcs = [...parts.keys()].sort((x, y) => x - y).map(w => { const d = a; a += parts.get(w) / n * 360; return `${realColor(w)} ${d.toFixed(1)}deg ${a.toFixed(1)}deg`; });
   return L.divIcon({ html:`<div class="ct-gr" style="width:${taille}px;height:${taille}px;background:conic-gradient(${arcs.join(',')})"><span>${n}</span></div>`,
@@ -8955,7 +8958,10 @@ function _ctSurvolGrappe(ms){
   const tri = [...parSp.values()].sort((a, b) => (b.w - a.w) || (b.n - a.n) || a.nom.localeCompare(b.nom, 'fr'));
   const vus = tri.length - CT_SURVOL_MAX > 1 ? tri.slice(0, CT_SURVOL_MAX) : tri;   // jamais « et 1 autre »
   const reste = tri.length - vus.length, s = n => n > 1 ? 's' : '';
-  return `<span class="ct-sv-t">${tri.length} espèce${s(tri.length)}, ${ms.length} point${s(ms.length)}</span>` +
+  // Le titre compte les observations, comme les « ×2 » de chaque ligne : « 6 points » au-dessus de six
+  // « ×2 » se lisait faux (Mathis, 2026-10-25), un point portant toutes les observations de son lieu.
+  const obs = tri.reduce((t, e) => t + e.n, 0);
+  return `<span class="ct-sv-t">${tri.length} espèce${s(tri.length)}, ${obs} observation${s(obs)}</span>` +
     vus.map(e => _ctLigneSurvol(e.coul, e.w, e.nom, e.n > 1 ? `<span class="ct-sv-n">×${e.n}</span>` : '', e.statut)).join('') +
     (reste ? `<span class="ct-sv-d">et ${reste} autre${s(reste)} : ${_ctAuDoigt.matches ? 'touche' : 'clique'} pour ouvrir</span>` : '');
 }
@@ -8987,7 +8993,7 @@ function _ctBrancheSurvol(g){
   g.on('click', e => {
     const m = e.layer; if(!(m && m.bindTooltip && (m._rec || m._ligue))) return;
     const sci = m._sciName || (m._rec && m._rec.sci);
-    if(sci && (!_ctAuDoigt.matches || (_ctSurvolOuvert === m && m.isTooltipOpen()))){ m.closeTooltip(); openSpeciesModal(sci); return; }
+    if(sci && (!_ctAuDoigt.matches || (_ctSurvolOuvert === m && m.isTooltipOpen()))){ m.closeTooltip(); _ctOuvreFiche(sci, m._ligue && m._ligue.cc); return; }
     _ctOuvreSurvol(m);
   });
   // Une grappe cliquée (ou touchée) ouvre la liste de ses espèces, à côté d'elle.
@@ -9004,6 +9010,24 @@ function _ctBrancheSurvol(g){
   g.on('clustermouseout', e => e.layer.unbindTooltip());
   return g;
 }
+// Une fiche ouverte depuis la Carte s'ouvre sur le pays de la carte, et sur la zone choisie quand la
+// fiche la connaît : en Italie sur l'Italie, comme le Birdydex impose le sien (Mathis, 2026-10-25).
+// cc : le pays d'un point de la ligue, plus juste que celui de la carte.
+function _ctOuvreFiche(sci, cc){
+  if(!sci) return;
+  const pays = cc || ebFilter.country || 'FR';
+  if(COUNTRIES_REG[pays]){
+    _speciesCountry = pays;
+    try{ localStorage.setItem('mb-species-country', pays); }catch(_){}
+    const voulue = pays === (ebFilter.country || 'FR') ? (ebFilter.dept || (ebFilter.region !== pays ? ebFilter.region : '')) : '';
+    const z = voulue && zonesFichePourPays(pays).some(r => r.code === voulue) ? voulue : '';
+    if(z !== _speciesRegion){
+      _speciesRegion = z;
+      try{ localStorage.setItem('mb-species-region', z); }catch(_){}
+    }
+  }
+  openSpeciesModal(sci);
+}
 // La liste d'une grappe : une ligne par espèce, les plus rares d'abord, avec son palier, son statut et
 // « ×N » quand elle a plusieurs observations ; une ligne cliquée ouvre la fiche de l'espèce.
 let _ctPopGrappe = null, _ctGrappeOuverte = null;
@@ -9015,12 +9039,12 @@ function _ctListeGrappe(c){
     const k = (m._rec && m._rec.toutes) ? m._rec.toutes.length : 1;
     const d = parSp.get(nom);
     if(d) d.n += k;
-    else parSp.set(nom, { nom, sci:m._sciName || (m._rec && m._rec.sci) || '', w:m.options.w || 0, coul:m.options.coul, n:k, statut:_ctStatutPoint(m) });
+    else parSp.set(nom, { nom, sci:m._sciName || (m._rec && m._rec.sci) || '', cc:(m._ligue && m._ligue.cc) || '', w:m.options.w || 0, coul:m.options.coul, n:k, statut:_ctStatutPoint(m) });
   }
   const tri = [...parSp.values()].sort((a, b) => (b.w - a.w) || (b.n - a.n) || a.nom.localeCompare(b.nom, 'fr'));
   const obs = tri.reduce((t, e) => t + e.n, 0), s = n => n > 1 ? 's' : '';
   const html = `<p class="ct-gl-t">${tri.length} espèce${s(tri.length)} ici · ${obs} observation${s(obs)}</p>` +
-    `<div class="ct-gl-liste">${tri.map(e => `<button type="button" class="ct-gl-l"${e.sci ? ` data-sci="${esc(e.sci)}"` : ''}>` +
+    `<div class="ct-gl-liste">${tri.map(e => `<button type="button" class="ct-gl-l"${e.sci ? ` data-sci="${esc(e.sci)}"` : ''}${e.cc ? ` data-cc="${esc(e.cc)}"` : ''}>` +
       `${tierChip(e.w || '?', e.coul, { cls:'tier-rond' })}${e.statut ? jetonExo(e.statut) : ''}<span class="ct-gl-nom">${esc(e.nom)}</span>` +
       `${e.n > 1 ? `<span class="ct-gl-n">×${e.n}</span>` : ''}</button>`).join('')}</div>`;
   if(!_ctPopGrappe) _ctPopGrappe = L.popup({ className:'ct-gl', maxWidth:300, minWidth:220, autoPanPadding:[24, 24], closeButton:true });
@@ -9031,7 +9055,7 @@ document.addEventListener('click', e => {
   const l = e.target.closest('.ct-gl-l[data-sci]');
   if(!l) return;
   if(_map && _ctPopGrappe) _map.closePopup(_ctPopGrappe);
-  openSpeciesModal(l.dataset.sci);
+  _ctOuvreFiche(l.dataset.sci, l.dataset.cc);
 });
 // Une couche en grappes ; sans la bibliothèque (bloquée, hors ligne), une couche ordinaire (featureGroup,
 // pour que le survol des points marche quand même).
@@ -9590,7 +9614,7 @@ document.addEventListener('click', e => {
   // Effacer ta zone ne redessine la carte que dans le Récent : le panneau, lui, doit toujours suivre.
   if(e.target.closest('#mapDrawClear')){ _ctSurligne(); _ctAppliqueCouches(); return; }
   const r = e.target.closest('#ctListeLigue .ct-rang[data-sci]');
-  if(r && r.dataset.sci) openSpeciesModal(r.dataset.sci);
+  if(r && r.dataset.sci) _ctOuvreFiche(r.dataset.sci);
 });
 // Flèches gauche et droite entre les onglets du panneau, comme une vraie rangée d'onglets.
 document.addEventListener('keydown', e => {
@@ -16168,11 +16192,13 @@ function _legendeOuQuand(aCarte, aGraph, vueExo){
   // carte d'une piece prend la valeur nationale du mois choisi.
   const surCarte = p.sansDecoupage ? 'Le pays entier sur la carte' : `Par ${p.zoneWord || 'région'} sur la carte`;
   const aCliquer = p.sansDecoupage ? 'un mois ou une barre' : 'une zone, un mois ou une barre';
-  // La note dit ce que seule elle peut dire - que les deux vues sont une meme mesure, et
-  // qu'un clic les bouge ensemble. La DEFINITION de cette mesure, elle, est juste en
-  // dessous dans « Details du calcul » : la redire ici la faisait lire deux fois.
+  // La note dit ce que seule elle peut dire - que la carte et la colonne donnent le mois entier
+  // et les barres chaque semaine, et qu'un clic les bouge ensemble. « La même mesure des deux
+  // côtés » laissait croire à une erreur : au Kosovo, une semaine de mai à 2,1 % (palier 5) sous
+  // un mois de mai au palier 7 (Mathis, 2026-10-25, qui a choisi de l'expliquer plutôt que de
+  // changer les couleurs). La DEFINITION de la mesure est dans « Details du calcul ».
   const phrase = aCarte && aGraph
-    ? `La même mesure des deux côtés. ${surCarte}, au fil de l'année sur les barres. Cliquer ${aCliquer} change les deux.`
+    ? `La carte et la colonne donnent le mois entier, les barres chaque semaine : une bonne semaine peut être plus verte que son mois. Cliquer ${aCliquer} change les deux.`
     : aCarte
     ? `${surCarte}, mois par mois dans la colonne de gauche.`
     : `La fréquence au fil de l'année.`;
