@@ -1,3 +1,7 @@
+# EN LOCAL, PAS POUSSÉ (2026-10-25) : v894, v895 / app.js?v=468, 469 ; prochain numéro v896 / 470
+- v894 (4c65e3b0) : fiche ouverte depuis la Carte sur le pays de la carte (_ctOuvreFiche ; un point de la ligue : le pays de l'obs ; zone si la fiche la connaît) ; bulle, liste et nombre d'une grappe en OBSERVATIONS ; note sous le graphique de la fiche : « La carte et la colonne donnent le mois entier, les barres chaque semaine… » (Mathis a choisi d'expliquer plutôt que recolorer ; variante 1 posée par moi faute de réponse, deux autres proposées : « Colonne : le mois entier. Barres : semaine par semaine. » et l'exemple de mai).
+- v895 (b16b22cc) : grappe d'une seule espèce = point de l'espèce + chiffre, clic = fiche. Testé par la fonction (_ctAnneau exposé par le test) : la démo n'a pas ce cas.
+- Pastille .ct-pt-nb à 10 px : validée par Mathis (« c'est bon »).
 # POUSSÉ (2026-10-25) : v893 / app.js?v=467 (802b5c5e), vérifié en ligne (Tyrol 124 listes, Danemark 13 zones, dessin, 0 erreur) ; prochain numéro v894 / 468. Relais 54e522a POUSSÉ (déployé).
 - Grappe cliquée = liste de ses espèces (_ctListeGrappe, popup .ct-gl), spirale et _ctGardeSpirale retirées ; erreur « _source » disparue (testé : reclic sans erreur).
 - Listes lues pour toute région choisie (regionFr élargi) ; relais : région étrangère acceptée, 600 listes au plus (plafond dit dans le volet), d'un coup au-delà de 20 sous-zones (200 listes), FO/MT/XK/SJ acceptés. Tyrol : 124 listes.
