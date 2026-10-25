@@ -9091,6 +9091,10 @@ function _ctListeGrappe(c){
   // Un élément, pas du texte : update() (après un dépliage) le garde tel quel, dépliages compris ;
   // à partir d'un texte, Leaflet le réécrivait et la liste se refermait.
   const contenu = document.createElement('div'); contenu.innerHTML = html;
+  // La pointe de la bulle s'arrête au bord de l'anneau : posée sur le centre, elle mordait le haut de
+  // l'anneau d'un triangle blanc (Mathis, 2026-10-26). 7 : le décalage par défaut de Leaflet.
+  const h = c._icon ? c._icon.offsetHeight : 34;
+  _ctPopGrappe.options.offset = L.point(0, 7 - h / 2 - 2);
   _ctPopGrappe.setLatLng(c.getLatLng()).setContent(contenu).openOn(_map);
 }
 document.addEventListener('click', e => {
@@ -9099,8 +9103,14 @@ document.addEventListener('click', e => {
     const liste = t.parentElement.nextElementSibling, ouvrir = !!(liste && liste.hidden);
     if(liste) liste.hidden = !ouvrir;
     t.setAttribute('aria-expanded', String(ouvrir));
-    // La bulle a grandi : Leaflet la recale et déplace la carte pour qu'elle tienne dedans.
-    if(_ctPopGrappe && _map && _map.hasLayer(_ctPopGrappe)) _ctPopGrappe.update();
+    // La bulle a grandi : Leaflet la recale et déplace la carte pour qu'elle tienne dedans. update()
+    // retire puis remet le contenu, ce qui ramenait la liste en haut (Mathis, 2026-10-26) : on garde
+    // sa position de défilement.
+    if(_ctPopGrappe && _map && _map.hasLayer(_ctPopGrappe)){
+      const defile = t.closest('.ct-gl-liste'), y = defile ? defile.scrollTop : 0;
+      _ctPopGrappe.update();
+      if(defile) defile.scrollTop = y;
+    }
     return;
   }
   const l = e.target.closest('.ct-gl-l[data-sci]');
