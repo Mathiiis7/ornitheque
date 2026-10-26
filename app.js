@@ -7920,17 +7920,21 @@ async function renderMap(){
   // de mode - sinon un simple toggle chip rareté effacerait l'obs qu'on vient de consulter.
   const modeChanged = renderMap._prev !== mapMode;
   renderMap._prev = mapMode;
-  if(_mapLayer){ _mapLayer.remove(); }
-  if(_lyrMissing){ _lyrMissing.remove(); }
-  if(_lyrHotspots){ _lyrHotspots.remove(); }
+  // Seule la couche du mode se redessine ; les autres couches allumées restent sur la carte pendant
+  // qu'elle charge (Mathis, 2026-10-26 : les Hotspots ajoutés au Récent effaçaient ses points tout le
+  // temps de leurs ~100 appels, et pour de bon si le chargement échouait). _ctAppliqueCouches retire
+  // ensuite les couches éteintes.
+  const propre = { mine:_mapLayer, missing:_lyrMissing, hotspots:_lyrHotspots }[mapMode];
+  if(propre) propre.remove();
   if(_lyrDetail && modeChanged){ _lyrDetail.remove(); _lyrDetail.clearLayers(); }
   // Dispatch. Depuis la refonte (2026-10-23), le mode est l'onglet ouvert du panneau, et les
   // couches allumées des autres modes restent sur la carte : _ctAppliqueCouches les remet.
   _ctAvantRendu();
-  if(mine) _renderModeMine(el);
-  else if(mapMode==='missing') await _renderModeMissing();
-  else if(mapMode==='hotspots') await _renderModeHotspots();
-  _ctAppliqueCouches();
+  try{
+    if(mine) _renderModeMine(el);
+    else if(mapMode==='missing') await _renderModeMissing();
+    else if(mapMode==='hotspots') await _renderModeHotspots();
+  } finally { _ctAppliqueCouches(); }
 }
 function _ensureMapInit(el){
   if(_map) return;
