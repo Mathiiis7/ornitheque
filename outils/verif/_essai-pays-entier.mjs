@@ -12,7 +12,7 @@ await ctx.addInitScript(() => {
 const p = await ctx.newPage();
 const erreurs = []; p.on('pageerror', e => erreurs.push(e.message)); p.on('console', m => { if(m.type() === 'error') erreurs.push(m.text()); });
 const relais = []; p.on('request', r => { if(/ornitheque-relais|ebird\.org/.test(r.url())) relais.push(r.url().replace(/^https?:\/\/[^/]+/, '')); });
-await p.goto('http://localhost:8765/demo/', { waitUntil:'load' });
+await p.goto(process.env.BASE || 'http://localhost:8765/demo/', { waitUntil:'load' });
 await p.waitForTimeout(1500);
 await p.keyboard.press('Escape'); await p.keyboard.press('Escape');
 await p.evaluate(() => document.querySelector('.tab[data-view="map"]').click());
@@ -28,7 +28,8 @@ const etat = () => p.evaluate(() => ({
   ligneMax:document.querySelector('#ctListeRecent')?.innerText.slice(-200),
 }));
 console.log('Récent, à l\'arrivée :', JSON.stringify(await etat()));
-for(const cc of ['FR', 'ES']){
+await p.waitForTimeout(+(process.env.ATTENTE || 0));
+for(const cc of (process.env.PAYS || 'FR,ES').split(',')){
   relais.length = 0;
   // Le clic sur le pays, comme un vrai clic sur sa forme.
   const ok = await p.evaluate(cc => { let f = null; window.__carte.eachLayer(l => { const pr = l.feature && l.feature.properties; if(pr && (pr.cc === cc || pr.code === cc || pr.iso === cc || pr.ISO_A2 === cc) && l.fire && !f) f = l; }); if(f) f.fire('click', { latlng:f.getBounds().getCenter() }); return !!f; }, cc);
