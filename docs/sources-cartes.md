@@ -190,6 +190,29 @@ passent en **CC BY-NC 4.0** (licence d'ensemble du téléchargement : pas d'usag
 - **Oiseaux de cage** : comme avant, des cases isolées loin de l'aire (Coq bankiva, Paon bleu,
   Perruche ondulée) ; le garde-fou ne leur retire rien.
 
+## L'animation passe à la semaine (2026-10-27)
+
+Choix de Mathis le 2026-10-26 (maquettes `notes-privees/maquettes/migration-semaine/` et
+`migration-ebp/`) : 52 semaines au lieu de 12 mois, 16 niveaux au lieu de 32, et là où une case a
+moins de 300 observations, la moitié des deux semaines voisines s'y ajoute.
+
+- **Source** : GBIF.org (26 octobre 2026), DOI 10.15468/dl.wa632u, 162 millions de lignes, même
+  filtre que vnrtqk plus une date au jour (`FLOOR((startDayOfYear - 1) / 7)`, la semaine 52 fondue
+  dans la 51).
+- **Génération** : `outils/build/cartes-gbif.mjs` avec `ENTREE=gbif-tout-semaine.zip NIV=16`,
+  9 317 s, pic 939 Mo, 10 935 cartes. Rangées à part : `<code>-s.png` dans
+  `ornitheque-data/cartes` (218 Mo), manifeste `data/cartes-semaine-index.json` (cadres différents
+  de ceux de l'année pour 1 051 espèces). Les 236 cartes de présence d'avant n'ont que 12 mois :
+  l'animation montre le mois de la semaine.
+- **La carte de l'année ne change pas** : elle garde vnrtqk, ses 32 niveaux et les observations sans
+  date au jour, que le téléchargement par semaine écarte.
+- **Gris où l'oiseau manque** : `outils/build/effort-semaine.mjs` écrit `effort-s.png`, commun à
+  toutes les espèces, quatre semaines par octet (13,5 millions de pixels ; Safari sur iPhone refuse
+  un canvas de plus de 16,7 millions). Le navigateur lit aussi les piles par tranches : la plus
+  haute, le Labbe à longue queue, fait 44,7 millions de pixels.
+- **Courbe iNaturalist de la zone affichée** : PAS BRANCHÉE. Les conditions d'utilisation
+  d'iNaturalist sont derrière une vérification anti-robot que je n'ai pas pu lire ; à lire avant.
+
 Contrôles et mesures (hors dépôt) : `notes-privees/essai-cartes/tout/verif/` - `comparer23.mjs`
 (générateur contre la page validée), `avant-apres.mjs` (cases par espèce), `noms-sous-especes.mjs`
 (noms qui changent d'espèce), `fabrique-mesure.mjs` (part des isolées sans les listes),

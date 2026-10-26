@@ -3,7 +3,7 @@
 //   puis rafraichit en background. Prochain reload = nouvelle version.
 // - Requetes cross-origin (Firestore, iNaturalist, xeno-canto, Wikipedia, etc.) : reseau seul.
 // - Bump CACHE_VERSION quand on veut invalider volontairement.
-const CACHE_VERSION = 'v911-2026-10-26-couche-perimee';
+const CACHE_VERSION = 'v912-2026-10-27-migration-semaine';
 const CACHE_NAME = 'lmb-' + CACHE_VERSION;
 
 // Cache des fichiers de donnees, volontairement SANS CACHE_VERSION dans son nom.
@@ -77,7 +77,7 @@ self.addEventListener('fetch', (event) => {
   // reload de retard). Cout minimal grace au HTTP cache navigateur.
   if (url.pathname.endsWith('/app.js') || url.pathname.endsWith('/index.html') || url.pathname.endsWith('/styles.css') || url.pathname === '/ornitheque/') return;
   // Ni le manifeste des cartes (evolue avec les especes generees), ni celui des teintes.
-  if (url.pathname.endsWith('/data/cartes-index.json') || url.pathname.endsWith('/data/cartes-teintes.json')) return;
+  if (url.pathname.endsWith('/data/cartes-index.json') || url.pathname.endsWith('/data/cartes-teintes.json') || url.pathname.endsWith('/data/cartes-semaine-index.json')) return;
   // Ni la demo du portfolio. Elle ne s enregistre pas elle-meme (son index.html neutralise
   // register), mais ce SW-ci est installe pour TOUTE l origine des qu on a visite le vrai
   // site : sans cette ligne il servirait une demo en cache, et un visiteur qui revient

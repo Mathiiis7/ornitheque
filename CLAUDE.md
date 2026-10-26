@@ -108,6 +108,9 @@ GBIF toutes bases (DOI 10.15468/dl.vnrtqk, CC BY-NC 4.0), 106 Mo, générées en
 mise en ligne quand on régénère les cartes : pousser `ornitheque-data`, puis ce dépôt JUSTE APRÈS** :
 les nouvelles images remplacent les anciennes, et entre les deux poussées le site les place avec
 les anciens cadres de `data/cartes-index.json`.
+**L'animation de migration a ses propres cartes** (2026-10-27) : `<code>-s.png`, 52 semaines en 16 niveaux,
+manifeste `data/cartes-semaine-index.json`, gris tiré de `effort-s.png` (`outils/build/effort-semaine.mjs`),
+téléchargement GBIF wa632u. La carte de l'année n'en dépend pas. Même ordre de mise en ligne.
 
 **Les autres bases GBIF nomment les oiseaux à l'ancienne.** Trinômes (« Corvus corone cornix ») et
 espèces regroupées (« Phoenicopterus ruber » pour le Flamant rose de l'atlas sud-africain) : sans

@@ -15322,9 +15322,9 @@ async function _renderSpeciesTraitsCard(key){
   const HD  = { 1:'🌲 Milieu dense', 2:'🌾 Semi-ouvert', 3:'🏞️ Très ouvert' };
   // Section Écologie
   const ecoLines = [];
-  // Check async si l'espece a des cartes mensuelles dispo -> bouton anim plein ecran
+  // Check async si l'espece a des cartes par semaine -> bouton anim plein ecran
   let hasMonthly = false;
-  try{ hasMonthly = !!_carteEntry(await _loadRangeIndex(), k); }catch(_){}
+  try{ hasMonthly = !!_carteEntry(await _loadSemIndex(), k); }catch(_){}
   const animBtn = hasMonthly ? ` <button type="button" class="mig-fs-btn" data-sci="${esc(k)}" title="Animation migration en plein écran" style="margin-left:8px; padding:2px 8px; font-size:11px; border:none; background:var(--accent); color:white; border-radius:4px; cursor:pointer; font-weight:600;">🎞️ Animation</button>` : '';
   if(t.mi && MIG[t.mi])   ecoLines.push({ k:'Migration',      v: MIG[t.mi] + animBtn });
   if(t.tl && TL[t.tl]){
@@ -15451,10 +15451,18 @@ function _carteLireGris(url){
     const img = new Image();
     img.crossOrigin = 'anonymous';   // sans ca, le canvas serait « souille » et getImageData refuserait
     img.onload = () => {
-      const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
-      const g = c.getContext('2d', { willReadFrequently:true }); g.drawImage(img, 0, 0);
-      const d = g.getImageData(0, 0, c.width, c.height).data, o = new Uint8Array(c.width * c.height);
-      for(let k = 0; k < o.length; k++) o[k] = d[k * 4];
+      // Lue par tranches de ~4 millions de pixels : les piles par semaine montent a 44,7 millions (Labbe a
+      // longue queue, 1436 x 31 096) et Safari sur iPhone refuse un canvas de plus de 16,7 millions.
+      const W = img.width, H = img.height, o = new Uint8Array(W * H);
+      const T = Math.max(1, Math.min(H, Math.floor(4e6 / W)));
+      const c = document.createElement('canvas'); c.width = W; c.height = T;
+      const g = c.getContext('2d', { willReadFrequently:true });
+      for(let y0 = 0; y0 < H; y0 += T){
+        const t = Math.min(T, H - y0);
+        g.clearRect(0, 0, W, T); g.drawImage(img, 0, y0, W, t, 0, 0, W, t);
+        const d = g.getImageData(0, 0, W, t).data, base = y0 * W;
+        for(let k = 0; k < W * t; k++) o[base + k] = d[k * 4];
+      }
       ok(o);
     };
     img.onerror = () => ko(new Error(url));
@@ -15479,7 +15487,15 @@ function _carteImage(e, m){
     if(!m && !mem.an) mem.an = _carteLireGris(`${CARTES_BASE}/${e.code}-a.png?v=${CARTES_VERSION}`);
     const grille = await (m ? mem.mois : mem.an);
     const W = e.w, H = e.h;
-    const src = m ? grille.subarray((m - 1) * W * H, m * W * H) : grille;
+    return _carteColorier(e, m ? grille.subarray((m - 1) * W * H, m * W * H) : grille, CARTES_NIV);
+  })();
+  mem.rendus.set(m, p);
+  return p;
+}
+// Colorie une grille de rangs 1..nivMax (cadre e) et la reechantillonne en Mercator : rend {url}.
+async function _carteColorier(e, src, nivMax){
+  {
+    const W = e.w, H = e.h;
     const cadre = _carteCadre(e), sud = cadre[0][0], nord = cadre[1][0];
     const mercY = phi => Math.log(Math.tan(Math.PI / 4 + (phi * Math.PI / 180) / 2));
     const mN = mercY(nord), mS = mercY(sud);
@@ -15488,7 +15504,7 @@ function _carteImage(e, m){
     const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
     const ctx = cv.getContext('2d'), out = ctx.createImageData(cw, ch), d = out.data;
     const niv = new Float32Array(256);
-    for(let g = 1; g <= CARTES_NIV; g++) niv[g] = (g - 0.5) / CARTES_NIV;
+    for(let g = 1; g <= nivMax; g++) niv[g] = (g - 0.5) / nivMax;
     // Palette precalculee en 1024 teintes (interpolation lineaire entre les 5 couleurs)
     const pal = Array.from({ length:1024 }, (_, k) => {
       const q = Math.min(0.9999, k / 1024) * 4, i = Math.floor(q), f = q - i;
@@ -15517,9 +15533,7 @@ function _carteImage(e, m){
     ctx.putImageData(out, 0, 0);
     const blob = await new Promise(r => cv.toBlob(r, 'image/png'));
     return { url:URL.createObjectURL(blob) };
-  })();
-  mem.rendus.set(m, p);
-  return p;
+  }
 }
 // Teinte de l'aire estimee (t : son cadre), meme reprojection que _carteImage. Elle est posee SOUS la carte
 // et seulement hors des cases colorees de l'annee : au bord commun, son opacite suit sa part des poids,
@@ -15574,8 +15588,9 @@ function _carteTeinte(e, t){
 // especes sans liste complete, carte de presence tiree des autres sources GBIF ('p', DOI rb9sut) ou du
 // telechargement toutes bases ('o'). Seul le DOI est obligatoire (contrat d'utilisation GBIF) : sa page
 // liste les 10 367 jeux d'origine.
-function _carteSourceHtml(e){
-  const doi = e.src === 'p' ? '10.15468/dl.rb9sut' : '10.15468/dl.vnrtqk';
+// doiSemaine : celui du telechargement par semaine, pour l'animation (les cartes 'p' gardent le leur).
+function _carteSourceHtml(e, doiSemaine){
+  const doi = doiSemaine || (e.src === 'p' ? '10.15468/dl.rb9sut' : '10.15468/dl.vnrtqk');
   return e.src !== 'e'
     ? `Observations GBIF, toutes sources (CC BY-NC 4.0) : <b>présence seulement</b>, sans correction de l'effort d'observation. <a href="https://doi.org/${doi}" target="_blank" rel="noopener">GBIF.org, DOI ${doi}</a>`
     : `Observations d'oiseaux publiées sur GBIF, toutes bases (eBird, atlas, iNaturalist...), CC BY-NC 4.0, cases de 28 km. <a href="https://doi.org/${doi}" target="_blank" rel="noopener">GBIF.org, DOI ${doi}</a>`;
@@ -15666,12 +15681,105 @@ async function _renderSpeciesRangeCard(sci){
     }catch(_){}
   });
 }
-// Migration animee, en plein ecran : 12 images (une par mois) lues dans <code>-m.png, timeline + lecture.
-// La carte en fiche a ete remplacee par le bouton « Animation » de la section Ecologie.
+// Migration animee, en plein ecran, SEMAINE PAR SEMAINE depuis le 2026-10-27 (choix de Mathis le 2026-10-26,
+// maquettes notes-privees/maquettes/migration-semaine/ et migration-ebp/). Fichiers a part de la carte de
+// l'annee : <code>-s.png (52 semaines empilees, 16 niveaux) et leur manifeste data/cartes-semaine-index.json,
+// dont les cadres different de ceux de l'annee pour 1 051 especes. Telechargement GBIF par semaine
+// (DOI 10.15468/dl.wa632u, date au jour exigee) : la carte de l'annee garde le sien, plus complet.
+// Les 236 cartes de presence tirees des autres sources n'ont que 12 mois : la semaine y montre son mois.
+// Gris ou l'oiseau manque : effort-s.png, commun a toutes les especes (outils/build/effort-semaine.mjs).
+const CARTES_SEM_VERSION = '20261026', CARTES_SEM_NIV = 16, CARTES_SEM_DOI = '10.15468/dl.wa632u';
+const MIG_GRIS = [90, 100, 98];   // teinte de la maquette, hors de la rampe des frequences
 const CARTES_MOIS = ['janv','fév','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'];
+let _semIndexCache = null;
+async function _loadSemIndex(){
+  if(_semIndexCache) return _semIndexCache;
+  try{
+    const res = await fetch('data/cartes-semaine-index.json?v=' + CARTES_SEM_VERSION);
+    if(!res.ok) return (_semIndexCache = {});
+    const raw = await res.json();
+    _semIndexCache = {};
+    for(const [k, v] of Object.entries(raw)) _semIndexCache[k.toLowerCase()] = { code:v[0], i0:v[1], j0:v[2], w:v[3], h:v[4], src:v[5] };
+  }catch(_){ _semIndexCache = {}; }
+  return _semIndexCache;
+}
+// Semaine s (0..51) = jours 7s+1 a 7s+7 de l'annee ; la 51 va jusqu'au 31 dec. (8 ou 9 jours, voir le generateur).
+// Dates d'une annee non bissextile.
+function _semJours(s){
+  const d = new Date(2027, 0, 7 * s + 1), f = s === 51 ? new Date(2027, 11, 31) : new Date(2027, 0, 7 * s + 7);
+  return { d, f };
+}
+function _semLibelle(s){
+  const { d, f } = _semJours(s);
+  return d.getMonth() === f.getMonth()
+    ? `${d.getDate()}-${f.getDate()} ${CARTES_MOIS[f.getMonth()]}`
+    : `${d.getDate()} ${CARTES_MOIS[d.getMonth()]} - ${f.getDate()} ${CARTES_MOIS[f.getMonth()]}`;
+}
+// Effort par semaine, 4 semaines par octet (2 bits chacune) : lu une fois, garde pour toutes les especes.
+let _effortSem = null;
+function _effortSemaine(){
+  if(!_effortSem) _effortSem = _carteLireGris(`${CARTES_BASE}/effort-s.png?v=${CARTES_SEM_VERSION}`).catch(() => { _effortSem = null; return null; });
+  return _effortSem;
+}
+// Une espece a la fois : la pile lue, le nombre de periodes, les images coloriees (frequence 'f', gris 'g').
+let _semMem = { code:null, pile:null, rendus:new Map() };
+function _semOuvrir(e){
+  if(_semMem.code !== e.code){
+    for(const p of _semMem.rendus.values()) p.then(r => r && URL.revokeObjectURL(r.url)).catch(() => {});
+    _semMem = { code:e.code, pile:_carteLireGris(`${CARTES_BASE}/${e.code}-s.png?v=${CARTES_SEM_VERSION}`), rendus:new Map() };
+  }
+  return _semMem;
+}
+// Periode de la pile pour la semaine s : elle-meme, ou son mois pour une pile de 12 (milieu de la semaine).
+const _semPeriode = (P, s) => P === 12 ? new Date(2027, 0, 7 * s + 4).getMonth() : s;
+async function _semGrille(e, s){
+  const pile = await _semOuvrir(e).pile, T = e.w * e.h, P = Math.round(pile.length / T);
+  const q = _semPeriode(P, s);
+  return pile.subarray(q * T, (q + 1) * T);
+}
+function _semImage(e, s){
+  const mem = _semOuvrir(e), cle = 'f' + s;
+  if(!mem.rendus.has(cle)) mem.rendus.set(cle, _semGrille(e, s).then(g => _carteColorier(e, g, CARTES_SEM_NIV)));
+  return mem.rendus.get(cle);
+}
+// Gris ou l'oiseau manque : case prospectee (effort 2) ou peu prospectee (1) sans rang pour l'espece. Case la
+// plus proche, sans lissage (comme la maquette retenue) ; rend null si l'effort n'a pas pu etre lu.
+function _semGris(e, s){
+  const mem = _semOuvrir(e), cle = 'g' + s;
+  if(!mem.rendus.has(cle)) mem.rendus.set(cle, (async () => {
+    const [g, eff] = await Promise.all([_semGrille(e, s), _effortSemaine()]);
+    if(!eff) return null;
+    const NI = 1440, N = NI * 720, bloc = (s >> 2) * N, dec = (s & 3) * 2;
+    const W = e.w, H = e.h, cadre = _carteCadre(e), sud = cadre[0][0], nord = cadre[1][0];
+    const mercY = phi => Math.log(Math.tan(Math.PI / 4 + (phi * Math.PI / 180) / 2));
+    const mN = mercY(nord), mS = mercY(sud);
+    const PX = W > 900 ? 2 : 3;
+    const cw = W * PX, ch = Math.round(cw * (mN - mS) / (W * CARTES_CASE * Math.PI / 180));
+    const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+    const ctx = cv.getContext('2d'), out = ctx.createImageData(cw, ch), d = out.data;
+    const alpha = [0, 50, 120];
+    for(let y = 0; y < ch; y++){
+      const lat = (2 * Math.atan(Math.exp(mN - (y + 0.5) / ch * (mN - mS))) - Math.PI / 2) * 180 / Math.PI;
+      const jj = Math.min(H - 1, Math.floor((nord - lat) / CARTES_CASE));
+      const ligne = bloc + (e.j0 + jj) * NI + e.i0;
+      for(let x = 0; x < cw; x++){
+        const ii = Math.floor(x / PX);
+        if(g[jj * W + ii]) continue;
+        const a = alpha[(eff[ligne + ii] >> dec) & 3];
+        if(!a) continue;
+        const o = (y * cw + x) * 4;
+        d[o] = MIG_GRIS[0]; d[o + 1] = MIG_GRIS[1]; d[o + 2] = MIG_GRIS[2]; d[o + 3] = a;
+      }
+    }
+    ctx.putImageData(out, 0, 0);
+    const blob = await new Promise(r => cv.toBlob(r, 'image/png'));
+    return { url:URL.createObjectURL(blob) };
+  })());
+  return mem.rendus.get(cle);
+}
 let _migFsMap = null, _migFsPlay = null;
 async function _openMigrationFullscreen(sci){
-  const idx = await _loadRangeIndex();
+  const idx = await _loadSemIndex();
   const entry = _carteEntry(idx, sci);
   if(!entry) return;
   const spName = frName(sci.toLowerCase(), '') || sci;
@@ -15679,6 +15787,8 @@ async function _openMigrationFullscreen(sci){
   const prev = document.getElementById('migFsModal'); if(prev) prev.remove();
   if(_migFsPlay){ clearInterval(_migFsPlay); _migFsPlay = null; }
   if(_migFsMap){ try{ _migFsMap.remove(); }catch(_){} _migFsMap = null; }
+  const presence = entry.src !== 'e';
+  const source = _carteSourceHtml(entry, entry.src === 'p' ? null : CARTES_SEM_DOI);
   // Cree le modal overlay
   const modal = document.createElement('div');
   modal.id = 'migFsModal';
@@ -15687,7 +15797,7 @@ async function _openMigrationFullscreen(sci){
     <div id="migFsContent" style="position:fixed; inset:5vh 5vw; z-index:2147483501; background:var(--surface); border-radius:12px; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.6);">
       <div style="padding:14px 20px; display:flex; align-items:center; justify-content:space-between; gap:12px; border-bottom:1px solid var(--line);">
         <div>
-          <div style="font-size:11px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.5px; font-weight:700;">🎞️ Migration mois par mois</div>
+          <div style="font-size:11px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.5px; font-weight:700;">🎞️ Migration semaine par semaine</div>
           <div style="font-size:18px; font-weight:600; color:var(--ink); margin-top:2px;">${esc(spName)} <span class="latin" style="font-weight:400; color:var(--ink-3); font-size:13px;">${esc(sci)}</span></div>
         </div>
         <button type="button" id="migFsClose" title="Fermer (Échap)" style="border:none; background:var(--surface-2); font-size:20px; width:36px; height:36px; border-radius:50%; cursor:pointer;">✕</button>
@@ -15695,16 +15805,22 @@ async function _openMigrationFullscreen(sci){
       <div id="migFsMapEl" style="flex:1; background:var(--surface-3);"></div>
       <div style="padding:12px 20px; display:flex; align-items:center; gap:12px; border-top:1px solid var(--line);">
         <button type="button" id="migFsPlayBtn" class="pc-lecture pc-lecture-mini" aria-label="Lire l'animation" title="Lire l'animation">${PC_LECTURE_SVG}</button>
-        <input type="range" id="migFsSlider" min="0" max="11" value="0" step="1" style="flex:1; cursor:pointer;">
-        <span id="migFsLabel" style="font-size:13px; color:var(--ink); min-width:60px; text-align:right;">${CARTES_MOIS[0]}</span>
+        <input type="range" id="migFsSlider" min="0" max="51" value="0" step="1" aria-label="Semaine" style="flex:1; min-width:0; cursor:pointer;">
+        <span id="migFsLabel" style="font-size:14px; color:var(--ink); min-width:9.5em; text-align:right; white-space:nowrap;">${_semLibelle(0)}</span>
       </div>
-      <div style="padding:8px 20px 4px; display:flex; align-items:center; gap:10px; font-size:11px; color:var(--ink-2);">
-        <span>Rare</span>
-        <div style="flex:1; height:12px; border-radius:3px; background:linear-gradient(to right, #3ea86b, #a8d155, #f5c518, #f0733a, #a11408);"></div>
-        <span>${entry.src !== 'e' ? 'Beaucoup d\'observations' : 'Fréquent'}</span>
-        <button type="button" data-map-render-toggle style="margin-left:12px; font-size:11px; padding:3px 10px; border:1px solid var(--line); background:var(--surface-2); border-radius:4px; cursor:pointer;">${document.body.dataset.mapRender === 'sharp' ? '🌊 Rendu flou' : '🔲 Rendu net'}</button>
+      <div style="padding:8px 20px 4px; display:flex; flex-wrap:wrap; align-items:center; gap:6px 16px; font-size:14px; color:var(--ink-2);">
+        <span style="flex:1 1 260px; display:flex; align-items:center; gap:10px;">
+          <span>Rare</span>
+          <div style="flex:1; height:12px; border-radius:3px; background:linear-gradient(to right, #3ea86b, #a8d155, #f5c518, #f0733a, #a11408);"></div>
+          <span>${presence ? 'Beaucoup d\'observations' : 'Fréquent'}</span>
+        </span>
+        <span id="migFsGrisLeg" style="display:inline-flex; flex-wrap:wrap; gap:6px 16px;">
+          <span style="display:inline-flex; align-items:center; gap:6px;"><b style="display:inline-block; width:24px; height:12px; border-radius:3px; border:1px solid var(--line-2); background:rgba(${MIG_GRIS}, ${(120 / 255).toFixed(2)});"></b>Prospecté, oiseau pas noté</span>
+          <span style="display:inline-flex; align-items:center; gap:6px;"><b style="display:inline-block; width:24px; height:12px; border-radius:3px; border:1px solid var(--line-2); background:rgba(${MIG_GRIS}, ${(50 / 255).toFixed(2)});"></b>Peu prospecté</span>
+        </span>
+        <button type="button" data-map-render-toggle style="font-size:11px; padding:3px 10px; border:1px solid var(--line); background:var(--surface-2); border-radius:4px; cursor:pointer;">${document.body.dataset.mapRender === 'sharp' ? '🌊 Rendu flou' : '🔲 Rendu net'}</button>
       </div>
-      <div style="padding:0 20px 12px; font-size:10.5px; color:var(--ink-3);">Les couleurs se comparent d'un lieu à l'autre au sein d'un même mois : elles disent où l'espèce est la plus fréquente ce mois-là, pas combien elle est nombreuse. Une zone qui se vide ou se remplit d'un mois à l'autre se lit à la carte. ${_carteSourceHtml(entry)}</div>
+      <div style="padding:0 20px 12px; font-size:10.5px; color:var(--ink-3);">Les couleurs se comparent d'un lieu à l'autre au sein d'une même semaine : elles disent où l'espèce est la plus fréquente cette semaine-là, pas combien elle est nombreuse. ${entry.src === 'p' ? 'Cette espèce n\'a de données que mois par mois : chaque semaine montre son mois.' : 'Là où il y a peu d\'observations, chaque semaine est mêlée à moitié avec ses deux voisines.'} ${source}</div>
     </div>`;
   document.body.appendChild(modal);
   const closeModal = () => {
@@ -15753,31 +15869,36 @@ async function _openMigrationFullscreen(sci){
       window._migFsResizeObs = new ResizeObserver(() => recalcMinZoom());
       window._migFsResizeObs.observe(mapEl);
     }catch(_){}
-    // Les 12 images se colorient l'une apres l'autre (une centaine de ms chacune) ; l'image affichee
-    // est celle du mois demandé au moment ou elle est prete, jamais une image en retard.
-    let overlay = null, demande = 0;
+    // Chaque semaine se colorie a la demande (une centaine de ms) et l'on prepare les trois suivantes :
+    // colorier les 52 a l'ouverture prendrait plusieurs secondes, bien plus au telephone. L'image affichee est
+    // celle de la semaine demandee au moment ou elle est prete, jamais une image en retard.
+    let overlay = null, gris = null, demande = 0;
+    const cadre = _carteCadre(entry);
     const setFrame = async i => {
       demande = i;
-      label.textContent = CARTES_MOIS[i];
+      label.textContent = _semLibelle(i);
       try{
-        const r = await _carteImage(entry, i + 1);
+        const [r, rg] = await Promise.all([_semImage(entry, i), _semGris(entry, i).catch(() => null)]);
         if(_migFsMap !== carte || demande !== i) return;
-        if(overlay && overlay.setUrl){ overlay.setUrl(r.url); }
-        else { if(overlay) carte.removeLayer(overlay); overlay = L.imageOverlay(r.url, _carteCadre(entry), { opacity:0.78, interactive:false, className:'sharp-overlay' }).addTo(carte); }
+        if(rg){ if(gris) gris.setUrl(rg.url); else gris = L.imageOverlay(rg.url, cadre, { interactive:false, className:'sharp-overlay', zIndex:1 }).addTo(carte); }
+        else { if(gris){ carte.removeLayer(gris); gris = null; } modal.querySelector('#migFsGrisLeg').hidden = true; }
+        if(overlay) overlay.setUrl(r.url);
+        else overlay = L.imageOverlay(r.url, cadre, { opacity:0.78, interactive:false, className:'sharp-overlay', zIndex:2 }).addTo(carte);
       }catch(_){}
+      for(let k = 1; k <= 3; k++){ const s = (i + k) % 52; _semImage(entry, s).catch(() => {}); _semGris(entry, s).catch(() => {}); }
     };
-    setFrame(0).then(() => { for(let m = 2; m <= 12; m++) _carteImage(entry, m).catch(() => {}); });
+    setFrame(0);
     slider.addEventListener('input', () => setFrame(+slider.value));
     playBtn.addEventListener('click', () => {
       if(_migFsPlay){ clearInterval(_migFsPlay); _migFsPlay = null; playBtn.classList.remove('playing'); }
       else {
         playBtn.classList.add('playing');
         _migFsPlay = setInterval(() => {
-          let v = (+slider.value + 1) % 12;
+          let v = (+slider.value + 1) % 52;
           slider.value = String(v);
           setFrame(v);
-          _anneauLecture(playBtn, (v + 1) / 12);   // l'anneau fait le tour de l'annee
-        }, 900);   // 12 images x 900 ms = ~11 s par cycle
+          _anneauLecture(playBtn, (v + 1) / 52);   // l'anneau fait le tour de l'annee
+        }, 300);   // 52 images x 300 ms = ~16 s par tour (900 ms par mois avant : 11 s)
       }
     });
   });
