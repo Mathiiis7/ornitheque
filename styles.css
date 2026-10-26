@@ -2714,6 +2714,12 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* Les repères sous les trois crans : le premier et le dernier calés aux bouts, comme le curseur. */
   .ct-jours-reperes { display:flex; justify-content:space-between; font-size:14px; color:var(--ink-3); }
   .ct-rarete { margin:0 0 8px; }
+  /* Pays / Zone : sur sa propre ligne, sous les pastilles de la rangée. */
+  .ct-portee { flex:1 0 100%; display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; margin-top:4px; }
+  .ct-portee-titre { font-size:14px; color:var(--ink-3); }
+  .ct-portee .seg button[aria-disabled="true"] { opacity:.45; cursor:not-allowed; }
+  .ct-portee-note { flex:1 0 100%; font-size:14px; color:var(--ink-3); }
+  .ct-portee-note:empty { display:none; }
   .ct-menus-zone, .ct-ici-zone { display:contents; }
   .ct-filtres .explorer-lbl { display:inline-flex; align-items:center; gap:6px; font-size:14px; color:var(--ink-2); }
   .ct-filtres .ct-case { font-size:14px; min-height:34px; }
@@ -3765,7 +3771,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .ct-poignee { height:52px; margin:-6px 0 -10px; }
     .ct-page .map-search input { height:52px; }
     /* Les menus du Récent, sa case et « Voir les autres ». */
-    .ct-filtres .filt-sel, .ct-filtres .cp-btn, .ct-filtres .ct-case, .ct-plus, .ct-source button, .ct-volet > .ct-case { min-height:52px; }
+    .ct-filtres .filt-sel, .ct-filtres .cp-btn, .ct-filtres .ct-case, .ct-plus, .ct-source button, .ct-portee .seg button, .ct-volet > .ct-case { min-height:52px; }
     .ct-gl-l, .ct-gl-n { min-height:52px; }
     /* Dans la liste d'une grappe, on touche la ligne, pas la pastille : elle garde la taille souris
        (à 52 px, six lignes ne tenaient plus dans la bulle, vu le 2026-10-24). */

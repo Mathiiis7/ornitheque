@@ -124,7 +124,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=474">
+<link rel="modulepreload" href="app.js?v=475">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -806,6 +806,15 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
                       <!-- Les statuts du Birdydex, a la place du palier 0 « exotique » (2026-10-22). X et P retirés
                            le 2026-10-23 : la Carte ne montre plus les échappés, ils ne trouveraient rien. -->
                       <span class="rar-cats"><span class="rar-sep" aria-hidden="true"></span><button type="button" class="rar-chip" data-cat="N" title="Introduit établi (N)">N</button></span>
+                    </div>
+                    <!-- La rareté mesurée sur le pays ou sur la zone choisie (Mathis, 2026-10-26) : _ctRarete. -->
+                    <div class="ct-portee" id="ctPortee">
+                      <span class="ct-portee-titre" id="ctPorteeTitre">Mesurée sur</span>
+                      <div class="seg" role="radiogroup" aria-labelledby="ctPorteeTitre">
+                        <button type="button" role="radio" data-ct-portee="pays">Pays</button>
+                        <button type="button" role="radio" data-ct-portee="zone">Zone</button>
+                      </div>
+                      <span class="ct-portee-note" id="ctPorteeNote"></span>
                     </div>
                   </div>
                   <p class="ct-compte ct-etat" id="ctRecEtat" role="status"></p>
@@ -1564,5 +1573,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=474"></script>
+<script type="module" src="app.js?v=475"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>
