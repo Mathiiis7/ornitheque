@@ -2626,6 +2626,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      déplace le centre de sa moitié. */
   .ct-pt.ct-pt-lettre { padding-bottom:.6px; }
   .ct-pt.ct-pt-lettre.ct-pt-sym { padding-bottom:0; padding-top:1px; }
+  /* L'initiale dessinée en SVG (app.js, _ctLettreDessinee) : placée au calcul, sans rembourrage. */
+  .ct-pt.ct-pt-dessine { padding:0; }
+  .ct-pt svg.ct-pt-dessin { width:18px; height:18px; flex:none; }
+  .ct-pt-dessin text { font:800 12px var(--sans); fill:#fff; }
   /* Le symbole œil, dessiné d'un bloc (app.js, _ctSymbole) : l'ombre de la pastille en filtre. */
   .ct-sym-oeil { flex:none; filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.3)); }
   .ct-gr.ct-gr-sym { width:20px; height:20px; padding:3px; flex:none; cursor:default; }
