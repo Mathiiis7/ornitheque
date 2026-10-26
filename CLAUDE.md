@@ -311,7 +311,10 @@ Après toute retouche de l'entête du panneau, des sélecteurs, des pastilles ou
 tout seul** : `.claude/hooks/verif-avant-fin.mjs`, branché sur l'événement `Stop`, rejoue tous les
 bancs et refuse de laisser une réponse finir tant qu'un banc est en défaut, dès qu'`app.js`,
 `index.html` ou `styles.css` sont modifiés et pas encore commités. Après une retouche
-d'`index.html` : `node outils/build/genere-demo.mjs`. Le reste (bancs demo, trophees, firestore,
+d'`index.html` : `node outils/build/genere-demo.mjs`.
+**Un script d'essai posé dans `outils/verif/` s'appelle `_quelquechose.mjs`** : `tous.mjs` importe,
+donc EXÉCUTE, tout autre `.mjs` du dossier. Le 2026-10-26, un essai y a tourné à chaque lancement des
+bancs (requêtes eBird comprises) et son `process.exit` a coupé le lanceur. Le reste (bancs demo, trophees, firestore,
 photos, en écrire un) : skill `bancs-de-mesure`.
 
 **Une cible tactile s'écrit 52 px pour en faire 44.** `body` porte `zoom:0.85`, donc le seuil
