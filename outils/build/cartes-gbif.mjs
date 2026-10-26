@@ -64,13 +64,24 @@
 //   2026-10-21, elles donnaient des oiseaux de cage vus partout (Ara canindé sur 870 cases de large, Lori noira).
 //   Espèces choisies (ESPECES=...) : cartes de présence comprises, pour refaire seulement celles-là.
 //
-// La mémoire disponible est courte (8 Go dont ~0,8 libre) : le zip est lu UNE fois, ses lignes rangées sur
+// PAR SEMAINE (choix de Mathis le 2026-10-26, maquette notes-privees/maquettes/migration-semaine/) : avec
+// ENTREE=gbif-tout-semaine.zip (DOI à venir, demande 0005866-261023074918325 : colonne « semaine » =
+// FLOOR((startDayOfYear - 1) / 7) au lieu de « month », date au jour exigée), les périodes passent de 12 à 52.
+// La semaine 52 (jours 365 et 366) est fondue dans la 51, qui compte donc 8 ou 9 jours. Les mois voisins
+// deviennent les semaines voisines, même règle (moitié des deux d'à côté là où l'effort est sous 300). Mesuré
+// sur 20 espèces (notes-privees/essai-cartes/semaine/mesure.mjs) : 3,2 fois le poids du mois en 32 niveaux,
+// 2,6 fois en 16 (NIV=16, choisi par Mathis). Le navigateur déduit le nombre de périodes de la hauteur de
+// l'image : les cartes de présence tirées de gbif-autres.zip, qui n'a que le mois, gardent 12 périodes.
+//
+// La mémoire disponible est courte (8 Go dont ~0,7 libre) : le zip est lu UNE fois, ses lignes rangées sur
 // le disque en PARTS morceaux par espèce (12 octets par ligne, ~0,9 Go en tout, effacés à la fin), puis
-// chaque morceau est traité à part. Lecture du zip : ~130 s.
+// chaque morceau est traité à part. Lecture du zip : ~130 s. Les efforts ne sont gardés que sur les cases
+// qui en ont (168 084 sur 1 036 800, mesuré le 2026-10-26), lissés sur ces cases élargies de RAYON (451 606) :
+// en grilles mondiales pleines, 52 semaines auraient demandé ~1,5 Go.
 //
 // Usage : node outils/build/cartes-gbif.mjs                       (tout)
 //         ESPECES="Hirundo rustica,Apus apus" node ...             (quelques espèces, un seul morceau)
-//         SORTIE=chemin  PARTS=12  node ...
+//         SORTIE=chemin  PARTS=12  ENTREE=gbif-tout-semaine.zip  NIV=16  BILAN=fichier.json  node ...
 import { spawn } from 'node:child_process';
 import readline from 'node:readline';
 import fs from 'node:fs';
@@ -84,6 +95,7 @@ const SORTIE = process.env.SORTIE || path.join(RACINE, '..', 'ornitheque-data', 
 const SEUL = process.env.ESPECES ? process.env.ESPECES.split(',').map(s => s.trim()) : null;
 const PARTS = SEUL ? 1 : +(process.env.PARTS || 12);
 const MORCEAUX = path.join(SOURCES, 'tout', SEUL ? 'morceaux-essai' : 'morceaux');
+const ENTREE = path.join(SOURCES, process.env.ENTREE || 'gbif-tout.zip');
 
 const CASE = 0.25, NI = 1440, NJ = 720, N = NI * NJ;
 const OBS_MIN = 2, EFFORT_MIN = 30, RETENUE = 300;
@@ -193,15 +205,49 @@ function lisser(src, W, H) {
 }
 
 // ---------- Lecture du zip, une seule fois ----------
-// Effort brut par classe et par mois (eBird, SABAP2, isolées : grilles 12 x 1440 x 720 ; Kenya et Nigeria, petits,
-// en paires mois x case -> n). Les lignes des espèces de l'appli partent sur le disque, une ligne = 12 octets.
+// Effort brut par classe et par période : eBird et isolées en grilles compactes (seulement les cases vues, une
+// ligne de P valeurs par case) ; SABAP2, Kenya et Nigeria, petits, en paires période x case -> n. Les lignes des
+// espèces de l'appli partent sur le disque, une ligne = 12 octets.
 const t0 = Date.now();
 const secondes = () => Math.round((Date.now() - t0) / 1000) + ' s';
+let picMemoire = 0;
+const memoire = () => { picMemoire = Math.max(picMemoire, process.memoryUsage().rss); return Math.round(process.memoryUsage().rss / 1e6) + ' Mo'; };
 const selection = SEUL ? new Set(SEUL.map(n => indexEspece.get(n)).filter(i => i !== undefined)) : null;
 if (SEUL) console.log('espèces choisies :', selection.size, 'sur', SEUL.length);
 
-const effortBrut = [EBIRD, SABAP2, ISOLEES].map(() => new Float32Array(12 * N));
-const effortAtlas = { [NIG_A]: new Map(), [NIG_B]: new Map(), [KENYA]: new Map() };
+// nombre de périodes, lu dans l'en-tête du zip : « month » = 12 mois, « semaine » = 52 semaines
+const P = await new Promise((ok, ko) => {
+  const pr = spawn('unzip', ['-p', ENTREE]);
+  let s = '';
+  pr.stdout.setEncoding('utf8');
+  pr.stdout.on('data', d => {
+    s += d; const fin = s.indexOf('\n'); if (fin < 0) return;
+    const cols = s.slice(0, fin).replace('\r', '').toLowerCase().split('\t');
+    pr.kill();
+    if (cols.includes('semaine')) ok(52); else if (cols.includes('month')) ok(12); else ko(new Error('ni month ni semaine : ' + cols));
+  });
+  pr.on('error', ko);
+});
+console.log(path.basename(ENTREE), ':', P, 'périodes,', NIV, 'niveaux');
+const ModP = (m, d) => (m + d + P) % P;
+
+// Grille compacte : la case k (grille mondiale) a le numéro c, ses P valeurs sont en [c * P, c * P + P[.
+// Une case jamais vue vaut 0 partout.
+const numCase = new Int32Array(N).fill(-1);
+let nbCases = 0, caseDe = new Int32Array(1 << 18);
+function numeroter(k) {
+  let c = numCase[k];
+  if (c >= 0) return c;
+  c = numCase[k] = nbCases++;
+  if (c >= caseDe.length) { const t = new Int32Array(caseDe.length * 2); t.set(caseDe); caseDe = t; }
+  caseDe[c] = k;
+  return c;
+}
+const grilleCompacte = () => ({ v: new Float32Array(P << 18), agrandir(c) { while ((c + 1) * P > this.v.length) { const t = new Float32Array(this.v.length * 2); t.set(this.v); this.v = t; } } });
+const effortBrut = { [EBIRD]: grilleCompacte(), [ISOLEES]: grilleCompacte() };
+const effortAtlas = { [NIG_A]: new Map(), [NIG_B]: new Map(), [KENYA]: new Map(), [SABAP2]: new Map() };
+// valeur brute d'une grille compacte, période m, case mondiale k (0 si la case n'a jamais été vue)
+const brutDe = (G, m, k) => { const c = numCase[k]; return c < 0 ? 0 : G[c * P + m]; };
 const LIGNE = 12, TAMPON = 1 << 20;
 const fichierMorceau = p => path.join(MORCEAUX, `morceau-${p}.bin`);
 const morceaux = Array.from({ length: PARTS }, (_, p) => ({ fd: fs.openSync(fichierMorceau(p), 'w'), buf: Buffer.alloc(TAMPON), o: 0, lignes: 0 }));
@@ -221,10 +267,11 @@ function traiter(l) {
   let cl = classeDe.get(c[col.jeu]);
   if (cl === undefined) cl = ISOLEES;              // jeu absent de la table : observation isolée
   if (cl < 0) return;                              // baguage, Batumi, Faune-France par commune
-  const mois = +c[col.month] - 1, k = indexCase(c[col.cellcode]), n = +c[col.n];
-  if (k < 0 || !(mois >= 0 && mois < 12)) return;
-  if (cl <= ISOLEES) effortBrut[cl][mois * N + k] += n;
-  else { const g = effortAtlas[cl], q = mois * N + k; g.set(q, (g.get(q) || 0) + n); }
+  // « mois » est la période : mois 0..11, ou semaine 0..51 (la 52 fondue dans la 51, voir l'en-tête)
+  const mois = P === 12 ? +c[col.month] - 1 : Math.min(51, +c[col.semaine]), k = indexCase(c[col.cellcode]), n = +c[col.n];
+  if (k < 0 || !(mois >= 0 && mois < P)) return;
+  if (cl === EBIRD || cl === ISOLEES) { const G = effortBrut[cl], cc = numeroter(k); effortBrut[EBIRD].agrandir(cc); effortBrut[ISOLEES].agrandir(cc); G.v[cc * P + mois] += n; }
+  else { numeroter(k); const g = effortAtlas[cl], q = mois * N + k; g.set(q, (g.get(q) || 0) + n); }
   let e = especeDe(c[col.v_scientificname]);
   if (e < 0) e = especeDe(c[col.species]);
   if (e < 0 || (selection && !selection.has(e))) return;
@@ -235,7 +282,7 @@ function traiter(l) {
 // readline, lui, empile les lignes plus vite qu'on ne les traite : mémoire saturée sur les 6,7 Go du fichier
 // (plantage du 2026-10-21).
 {
-  const entree = spawn('unzip', ['-p', path.join(SOURCES, 'gbif-tout.zip')]).stdout;
+  const entree = spawn('unzip', ['-p', ENTREE]).stdout;
   entree.setEncoding('utf8');
   await new Promise((ok, ko) => {
     let reste = '';
@@ -249,7 +296,7 @@ function traiter(l) {
   });
   for (const s of morceaux) { if (s.o) fs.writeSync(s.fd, s.buf, 0, s.o); fs.closeSync(s.fd); s.buf = null; }
   cacheNom.clear(); cacheCase.clear();
-  console.log(`zip lu : ${lignes} lignes, ${rangees} rangées en ${PARTS} morceaux, ${secondes()}`);
+  console.log(`zip lu : ${lignes} lignes, ${rangees} rangées en ${PARTS} morceaux, ${nbCases} cases vues, ${secondes()}, ${memoire()}`);
 }
 
 // ---------- Efforts communs à toutes les espèces ----------
@@ -259,39 +306,48 @@ function traiter(l) {
 // Les comptes sont entiers et sous 16,7 millions par case et par mois : exacts en Float32.
 const maxMaps = (a, b) => { const m = new Map(a); for (const [q, n] of b) m.set(q, Math.max(m.get(q) || 0, n)); return m; };
 effortAtlas[NIG_AB] = maxMaps(effortAtlas[NIG_A], effortAtlas[NIG_B]);
-// SABAP2 ne couvre que l'Afrique australe : gardé en paires une fois la base faite
-effortAtlas[SABAP2] = new Map();
-for (let q = 0; q < 12 * N; q++) if (effortBrut[SABAP2][q]) effortAtlas[SABAP2].set(q, effortBrut[SABAP2][q]);
-const annuel = g12 => { const o = new Float64Array(N); for (let m = 0; m < 12; m++) for (let k = 0; k < N; k++) o[k] += g12[m * N + k]; return o; };
+effortBrut[EBIRD].agrandir(nbCases - 1); effortBrut[ISOLEES].agrandir(nbCases - 1);
+// somme des périodes, en grille mondiale, dans l'ordre des périodes (le même ordre d'additions qu'avant)
+const annuel = G => { const o = new Float64Array(N); for (let c = 0; c < nbCases; c++) for (let m = 0; m < P; m++) o[caseDe[c]] += G[c * P + m]; return o; };
 const annuelPaires = mp => { const o = new Float64Array(N); for (const [q, n] of mp) o[q % N] += n; return o; };
-const AN = { [EBIRD]: annuel(effortBrut[EBIRD]) };
+const AN = { [EBIRD]: annuel(effortBrut[EBIRD].v) };
 for (const cl of [...ATLAS, NIG_AB]) AN[cl] = annuelPaires(effortAtlas[cl]);
-// avec mois voisins : la case emprunte la moitié des deux mois d'à côté si l'effort du mois y est sous 300
-function avecVoisins(E) {
-  const o = new Float32Array(12 * N);
-  for (let m = 0; m < 12; m++) {
-    const a = m * N, p = ((m + 11) % 12) * N, s = ((m + 1) % 12) * N;
-    for (let k = 0; k < N; k++) o[a + k] = E[a + k] + (E[a + k] < EMPRUNT_SOUS ? POIDS_VOISINS : 0) * (E[p + k] + E[s + k]);
+// avec périodes voisines : la case emprunte la moitié des deux périodes d'à côté si l'effort y est sous 300.
+// Arrondi en Float32 comme quand ce calcul était rangé dans une grille Float32 : sans ça, des rangs à égalité
+// basculent. Une case jamais vue vaut 0, donc « faible ».
+const voisinDe = (G, m, k) => { const c = numCase[k]; if (c < 0) return 0; const e = G[c * P + m]; return Math.fround(e + (e < EMPRUNT_SOUS ? POIDS_VOISINS : 0) * (G[c * P + ModP(m, -1)] + G[c * P + ModP(m, 1)])); };
+// Lissage d'une grille compacte avec voisines, période par période, gardé sur les cases vues élargies de RAYON
+// (au-delà, un lissage de zéros vaut zéro exactement). lisser() ne fait pas le tour du monde : l'élargissement non plus.
+const numLisse = new Int32Array(N).fill(-1);
+let nbLisses = 0;
+for (let c = 0; c < nbCases; c++) {
+  const k = caseDe[c], i = k % NI, j = (k - i) / NI;
+  for (let dj = -RAYON; dj <= RAYON; dj++) { const jj = j + dj; if (jj < 0 || jj >= NJ) continue;
+    for (let di = -RAYON; di <= RAYON; di++) { const ii = i + di; if (ii < 0 || ii >= NI) continue; const kk = jj * NI + ii; if (numLisse[kk] < 0) numLisse[kk] = nbLisses++; } }
+}
+const caseLissee = new Int32Array(nbLisses);
+for (let k = 0; k < N; k++) if (numLisse[k] >= 0) caseLissee[numLisse[k]] = k;
+function lisserVoisins(G) {
+  const o = new Float32Array(nbLisses * P), plein = new Float32Array(N);
+  for (let m = 0; m < P; m++) {
+    plein.fill(0);
+    for (let c = 0; c < nbCases; c++) plein[caseDe[c]] = voisinDe(G, m, caseDe[c]);
+    const l = lisser(plein, NI, NJ);
+    for (let s = 0; s < nbLisses; s++) o[s * P + m] = l[caseLissee[s]];
   }
   return o;
 }
-function lisserMois(E) {
-  const o = new Float32Array(12 * N);
-  for (let m = 0; m < 12; m++) o.set(lisser(E.subarray(m * N, (m + 1) * N), NI, NJ), m * N);
-  return o;
-}
-const B = effortBrut[EBIRD];                       // devient la base « tous atlas gardés », sur place
-for (const cl of [SABAP2, KENYA, NIG_AB]) for (const [q, n] of effortAtlas[cl]) B[q] += n;
-effortBrut[EBIRD] = effortBrut[SABAP2] = null;
+const lisseDe = (L, m, k) => { const s = numLisse[k]; return s < 0 ? 0 : L[s * P + m]; };
+const B = effortBrut[EBIRD].v;                     // devient la base « tous atlas gardés », sur place
+for (const cl of [SABAP2, KENYA, NIG_AB]) for (const [q, n] of effortAtlas[cl]) { const m = Math.floor(q / N); B[numCase[q - m * N] * P + m] += n; }
+effortBrut[EBIRD] = null;
 const B_AN = annuel(B), LB_AN = lisser(B_AN, NI, NJ);
-const BV = avecVoisins(B), LBV = lisserMois(BV);
-const I = effortBrut[ISOLEES];
+const LBV = lisserVoisins(B);
+const I = effortBrut[ISOLEES].v;
 const I_AN = annuel(I), LI_AN = lisser(I_AN, NI, NJ);
-const IV = avecVoisins(I), LIV = lisserMois(IV);
-const I_FAIBLE = new Uint8Array(12 * N);
-for (let q = 0; q < 12 * N; q++) I_FAIBLE[q] = I[q] < EMPRUNT_SOUS ? 1 : 0;
+const LIV = lisserVoisins(I);
 effortBrut[ISOLEES] = null;
-console.log('efforts prêts', secondes());
+console.log(`efforts prêts (${nbCases} cases vues, ${nbLisses} lissées), ${secondes()}, ${memoire()}`);
 
 // ---------- Une image d'une espèce : fréquences sur la fenêtre ----------
 // obs : comptages bruts ; eff / effLis : effort brut et lissé, sur la même fenêtre, ou null pour une carte de présence.
@@ -387,30 +443,32 @@ function fenetre(cartes) {
   const W = Math.min(NI - 1, i1 + P) - iw + 1, H = Math.min(NJ - 1, j1 + P) - jw + 1;
   const loc = k => { const i = k % NI; return (((k - i) / NI) - jw) * W + i - iw; };
   const glob = l => { const x = l % W; return (jw + (l - x) / W) * NI + iw + x; };
-  // découpe d'une grille mondiale (décalée de off : un mois dans une grille 12 x N)
+  // découpe d'une grille mondiale pleine (l'année)
   const decoupe = (G, off = 0, Type = Float32Array) => { const o = new Type(W * H); for (let y = 0; y < H; y++) { const a = off + (jw + y) * NI + iw; for (let x = 0; x < W; x++) o[y * W + x] = G[a + x]; } return o; };
+  // découpe d'une grille compacte, lue case par case : lire(k) rend la valeur de la case mondiale k
+  const extraire = (lire, Type = Float32Array) => { const o = new Type(W * H); for (let y = 0; y < H; y++) { const a = (jw + y) * NI + iw; for (let x = 0; x < W; x++) o[y * W + x] = lire(a + x); } return o; };
   const dense = (...gs) => { const o = new Float64Array(W * H); for (const g of gs) for (const [k, v] of g) o[loc(k)] += v; return o; };
-  return { iw, jw, W, H, loc, glob, decoupe, dense };
+  return { iw, jw, W, H, loc, glob, decoupe, extraire, dense };
 }
-// observations d'un mois, plus la moitié de celles des deux mois d'à côté là où l'effort du mois est faible
+// observations d'une période, plus la moitié de celles des deux d'à côté là où l'effort de la période est faible
 function obsVoisins(f, cartes, m, faible) {
   const o = new Float64Array(f.W * f.H);
   for (const [k, v] of cartes[m]) o[f.loc(k)] += v;
-  for (const mm of [(m + 11) % 12, (m + 1) % 12]) for (const [k, v] of cartes[mm]) { const l = f.loc(k); if (faible(l)) o[l] += POIDS_VOISINS * v; }
+  for (const mm of [ModP(m, -1), ModP(m, 1)]) for (const [k, v] of cartes[mm]) { const l = f.loc(k); if (faible(l)) o[l] += POIDS_VOISINS * v; }
   return o;
 }
 
 // Effort de la base pour une espèce dont un atlas est écarté : base mondiale moins ce qui est écarté, dans la fenêtre.
 function effortsBase(f, garde, nig) {
   const { W, H } = f, WH = W * H;
-  const brut = Array.from({ length: 12 }, (_, m) => f.decoupe(B, m * N));
+  const brut = Array.from({ length: P }, (_, m) => f.extraire(k => brutDe(B, m, k)));
   const retirer = (cl, signe) => { for (const [q, n] of effortAtlas[cl]) { const m = Math.floor(q / N), k = q % N, i = k % NI, j = (k - i) / NI; if (i >= f.iw && i < f.iw + W && j >= f.jw && j < f.jw + H) brut[m][f.loc(k)] += signe * n; } };
   if (!garde[SABAP2]) retirer(SABAP2, -1);
   if (!garde[KENYA]) retirer(KENYA, -1);
   if (nig !== NIG_AB) { retirer(NIG_AB, -1); if (nig >= 0) retirer(nig, 1); }
   const an = new Float64Array(WH);
   for (const e of brut) for (let l = 0; l < WH; l++) an[l] += e[l];
-  const voisins = brut.map((e, m) => { const p = brut[(m + 11) % 12], s = brut[(m + 1) % 12], o = new Float32Array(WH); for (let l = 0; l < WH; l++) o[l] = e[l] + (e[l] < EMPRUNT_SOUS ? POIDS_VOISINS : 0) * (p[l] + s[l]); return o; });
+  const voisins = brut.map((e, m) => { const p = brut[ModP(m, -1)], s = brut[ModP(m, 1)], o = new Float32Array(WH); for (let l = 0; l < WH; l++) o[l] = e[l] + (e[l] < EMPRUNT_SOUS ? POIDS_VOISINS : 0) * (p[l] + s[l]); return o; });
   return {
     an, anLisse: lisser(an, W, H),
     faible: m => l => brut[m][l] < EMPRUNT_SOUS,
@@ -418,7 +476,7 @@ function effortsBase(f, garde, nig) {
   };
 }
 
-// ---------- Écriture : cadre commun aux 13 images, puis deux PNG ----------
+// ---------- Écriture : cadre commun à l'année et aux périodes, puis deux PNG ----------
 const stat = { octets: 0, vides: 0 };
 function ecrireEspece(code, f, images) {
   const { W } = f;
@@ -430,10 +488,11 @@ function ecrireEspece(code, f, images) {
   if (a1 < 0) return null;
   const w = a1 - a0 + 1, h = b1 - b0 + 1;
   const rogner = im => { const o = new Uint8Array(w * h); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) o[y * w + x] = im[(y + b0) * W + x + a0]; return o; };
-  const pile = new Uint8Array(w * h * 12);
+  // 12 ou 52 périodes empilées (une carte de présence tirée de gbif-autres.zip en a toujours 12)
+  const nb = images.length - 1, pile = new Uint8Array(w * h * nb);
   images.slice(1).forEach((im, m) => pile.set(rogner(im), m * w * h));
   stat.octets += ecrireGris(path.join(SORTIE, code + '-a.png'), w, h, rogner(images[0]));
-  stat.octets += ecrireGris(path.join(SORTIE, code + '-m.png'), w, 12 * h, pile);
+  stat.octets += ecrireGris(path.join(SORTIE, code + '-m.png'), w, nb * h, pile);
   return [f.iw + a0, f.jw + b0, w, h];
 }
 const compte = im => { let c = 0; for (const v of im) if (v) c++; return c; };
@@ -521,8 +580,8 @@ function carteRegle(e, obs, { atlas, garde, nig, defaut }, oB) {
   const { W, H } = f, WH = W * H;
   const base = defaut ? {
     an: f.decoupe(B_AN, 0, Float64Array), anLisse: f.decoupe(LB_AN, 0, Float64Array),
-    faible: m => l => B[m * N + f.glob(l)] < EMPRUNT_SOUS,
-    voisins: m => f.decoupe(BV, m * N), voisinsLisse: m => f.decoupe(LBV, m * N),
+    faible: m => l => brutDe(B, m, f.glob(l)) < EMPRUNT_SOUS,
+    voisins: m => f.extraire(k => voisinDe(B, m, k)), voisinsLisse: m => f.extraire(k => lisseDe(LBV, m, k)),
   } : effortsBase(f, garde, nig);
 
   // ----- l'année : base, isolées, rapport d'échelle -----
@@ -553,7 +612,7 @@ function carteRegle(e, obs, { atlas, garde, nig, defaut }, oB) {
   const partAire = aire && casesBase ? dansAire / casesBase : null;
   const aireCrue = partAire !== null && partAire >= PART_AIRE;
   const annee = niveaux(vB, refB);
-  // calculé sur les seules cases des listes, avant les ajouts ; vaut aussi pour les 12 mois (l'aire n'a pas de saison)
+  // calculé sur les seules cases des listes, avant les ajouts ; vaut aussi pour les périodes (l'aire n'a pas de saison)
   const permis = aireCrue ? permisAire(aire.large, annee, f) : null;
   let ajoutees = 0, horsAire = 0, horsAireMois = 0, prochesListes = 0;
   if (ajoutPossible) for (let l = 0; l < WH; l++) {
@@ -565,13 +624,13 @@ function carteRegle(e, obs, { atlas, garde, nig, defaut }, oB) {
     annee[l] = n; ajoutees++;
   }
 
-  // ----- les 12 mois, avec les mois voisins -----
+  // ----- les périodes (12 mois ou 52 semaines), avec les périodes voisines -----
   const images = [annee];
   const casesMois = [];
-  for (let m = 0; m < 12; m++) {
+  for (let m = 0; m < P; m++) {
     const eBv = base.voisins(m);
     const vBm = valeursImage(obsVoisins(f, oB, m, base.faible(m)), W, H, eBv, base.voisinsLisse(m));
-    const vIm = valeursImage(obsVoisins(f, oI, m, l => I_FAIBLE[m * N + f.glob(l)]), W, H, f.decoupe(IV, m * N), f.decoupe(LIV, m * N));
+    const vIm = valeursImage(obsVoisins(f, oI, m, l => brutDe(I, m, f.glob(l)) < EMPRUNT_SOUS), W, H, f.extraire(k => voisinDe(I, m, k)), f.extraire(k => lisseDe(LIV, m, k)));
     const ref = trier(vBm), im = niveaux(vBm, ref);
     const nivB = []; for (const v of im) if (v) nivB.push(v);
     nivB.sort((x, y) => x - y);
@@ -597,7 +656,8 @@ function carteRegle(e, obs, { atlas, garde, nig, defaut }, oB) {
 }
 
 // ---------- Une carte de présence (sans effort) ----------
-// mois : 12 Map(case -> comptage) ; valeur = comptage lissé, rangée parmi les cases de la même image.
+// mois : une Map(case -> comptage) par période (12, ou P pour ce téléchargement) ; valeur = comptage lissé,
+// rangée parmi les cases de la même image.
 function cartePresence(code, mois) {
   const f = fenetre(mois);
   if (!f) return null;
@@ -621,7 +681,7 @@ for (let p = 0; p < PARTS; p++) {
   let faites = 0;
   for (let e = 0; e < taxo.length; e++) {
     if (debut[e] === debut[e + 1] || eteintes.has(e)) continue;
-    const obs = Array.from({ length: 7 }, () => Array.from({ length: 12 }, () => new Map()));
+    const obs = Array.from({ length: 7 }, () => Array.from({ length: P }, () => new Map()));
     for (let q = debut[e]; q < debut[e + 1]; q++) {
       const o = ordre[q] * LIGNE, g = obs[buf[o + 2]][buf[o + 3]], k = buf.readUInt32LE(o + 4);
       g.set(k, (g.get(k) || 0) + buf.readUInt32LE(o + 8));
@@ -633,7 +693,7 @@ for (let p = 0; p < PARTS; p++) {
     // des listes complètes, mais pas assez pour la règle : carte de présence d'après ces listes SEULEMENT. Avec les
     // observations isolées, l'Ara canindé, qui ne vit qu'en Bolivie, couvrait 870 cases de large (oiseaux de zoo).
     else if (total(oB) > 0) enAttente.set(e, oB);
-    if (++faites % 500 === 0) console.log(`  ${faites} espèces de ce morceau, ${Math.round(stat.octets / 1e6)} Mo, ${secondes()}`);
+    if (++faites % 500 === 0) console.log(`  ${faites} espèces de ce morceau, ${Math.round(stat.octets / 1e6)} Mo, ${secondes()}, mémoire ${memoire()}`);
   }
   fs.unlinkSync(fichierMorceau(p));
   console.log(`morceau ${p + 1}/${PARTS} : ${nl} lignes, ${faites} espèces, ${secondes()}`);
@@ -682,10 +742,11 @@ fs.rmSync(MORCEAUX, { recursive: true, force: true });
 const tri = o => Object.fromEntries(Object.keys(o).sort().map(k => [k, o[k]]));
 const fichierIndex = path.join(SORTIE, SEUL ? 'cartes-index-essai.json' : 'cartes-index.json');
 fs.writeFileSync(fichierIndex, JSON.stringify(tri(index)));
-fs.writeFileSync(path.join(SOURCES, 'tout', SEUL ? 'cartes-bilan-essai.json' : 'cartes-bilan.json'), JSON.stringify(tri(bilan), null, 1));
+fs.writeFileSync(process.env.BILAN || path.join(SOURCES, 'tout', SEUL ? 'cartes-bilan-essai.json' : 'cartes-bilan.json'), JSON.stringify(tri(bilan), null, 1));
 const noms = Object.keys(index), parSrc = s => noms.filter(n => index[n][5] === s).length;
 const fiches = Object.values(bilan).filter(b => b.src === 'e');
 console.log(`${noms.length} cartes (${parSrc('e')} par la règle, ${parSrc('p')} + ${parSrc('o')} de présence), ${stat.vides} espèces sans carte, ${eteintes.size} éteintes écartées, ${(stat.octets / 1e6).toFixed(1)} Mo de PNG écrits, ${secondes()}`);
 console.log(`règle : ${fiches.filter(b => b.atlasEcartes).length} espèces avec un atlas écarté, ${fiches.filter(b => b.ajoutees && !b.etalonne).length} aux cases ajoutées au niveau médian, ${fiches.filter(b => b.ajoutees && b.etalonne).length} étalonnées`);
-console.log(`aire iNaturalist : crue pour ${fiches.filter(b => b.aire?.crue).length} espèces, pas crue pour ${fiches.filter(b => b.aire?.crue === false).length}, absente pour ${fiches.filter(b => b.aire === 'absente').length} ; cases retirées hors de l'aire : ${fiches.reduce((s, b) => s + b.horsAire, 0)} sur l'année (${fiches.filter(b => b.horsAire).length} espèces), ${fiches.reduce((s, b) => s + b.horsAireMois, 0)} sur les 12 mois ; gardées hors de l'aire car près des listes : ${fiches.reduce((s, b) => s + b.prochesListes, 0)} sur l'année`);
+console.log(`aire iNaturalist : crue pour ${fiches.filter(b => b.aire?.crue).length} espèces, pas crue pour ${fiches.filter(b => b.aire?.crue === false).length}, absente pour ${fiches.filter(b => b.aire === 'absente').length} ; cases retirées hors de l'aire : ${fiches.reduce((s, b) => s + b.horsAire, 0)} sur l'année (${fiches.filter(b => b.horsAire).length} espèces), ${fiches.reduce((s, b) => s + b.horsAireMois, 0)} sur les ${P} périodes ; gardées hors de l'aire car près des listes : ${fiches.reduce((s, b) => s + b.prochesListes, 0)} sur l'année`);
 console.log('index :', fichierIndex, Math.round(fs.statSync(fichierIndex).size / 1024), 'Ko');
+memoire(); console.log(`pic de mémoire relevé : ${Math.round(picMemoire / 1e6)} Mo`);
