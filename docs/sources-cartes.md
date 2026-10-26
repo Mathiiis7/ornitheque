@@ -209,9 +209,12 @@ moins de 300 observations, la moitié des deux semaines voisines s'y ajoute.
 - **Gris où l'oiseau manque** : `outils/build/effort-semaine.mjs` écrit `effort-s.png`, commun à
   toutes les espèces, quatre semaines par octet (13,5 millions de pixels ; Safari sur iPhone refuse
   un canvas de plus de 16,7 millions). Le navigateur lit aussi les piles par tranches : la plus
-  haute, le Labbe à longue queue, fait 44,7 millions de pixels.
-- **Courbe iNaturalist de la zone affichée** : PAS BRANCHÉE. Les conditions d'utilisation
-  d'iNaturalist sont derrière une vérification anti-robot que je n'ai pas pu lire ; à lire avant.
+  haute, le Labbe à longue queue, fait 44,7 millions de pixels. Un seul gris, adouci entre les
+  cases (choix de Mathis le 2026-10-27) : le niveau « peu prospecté » reste dans le fichier, inutilisé.
+- **Courbe iNaturalist de la zone affichée** (2026-10-27) : demandée en direct, semaine par semaine,
+  part des observations d'oiseaux du rectangle qui sont l'espèce. Conditions d'iNaturalist du
+  11/07/2023 lues : rien n'interdit l'usage par un site tiers, pas de logo (point 6), observations en
+  CC BY-NC ; API : 1 requête par seconde, 10 000 par jour.
 
 Contrôles et mesures (hors dépôt) : `notes-privees/essai-cartes/tout/verif/` - `comparer23.mjs`
 (générateur contre la page validée), `avant-apres.mjs` (cases par espèce), `noms-sous-especes.mjs`
