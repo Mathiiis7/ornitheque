@@ -8,7 +8,7 @@ const nav = await chromium.launch();
 const ctx = await nav.newContext({ viewport:{ width:largeur, height:mobile ? 812 : 900 }, isMobile:mobile, hasTouch:mobile, locale:'fr-FR' });
 const p = await ctx.newPage();
 const erreurs = []; p.on('pageerror', e => erreurs.push(e.message));
-await p.goto('http://localhost:8765/demo/', { waitUntil:'load' });
+await p.goto(process.env.BASE || 'http://localhost:8765/demo/', { waitUntil:'load' });
 await p.waitForTimeout(1500);
 await p.keyboard.press('Escape'); await p.keyboard.press('Escape');
 await p.evaluate(() => document.querySelector('.tab[data-view="map"]').click());
