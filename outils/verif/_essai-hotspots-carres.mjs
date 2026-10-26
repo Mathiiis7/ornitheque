@@ -31,7 +31,8 @@ async function essai(nom, opts, refuser){
     const lignes = [...document.querySelectorAll('#ctListeHot .ct-rang-hs')];
     const nbCarres = carres.map(c => +c.textContent).sort((a, b) => b - a);
     const nbLignes = lignes.map(l => +l.querySelector('.droite b').textContent);
-    return { carres:carres.length, ronds:document.querySelectorAll('.ct-carte path.leaflet-interactive[fill="#1e6091"]').length, lignes:lignes.length,
+    const crans = [0, 1, 2, 3, 4].map(c => document.querySelectorAll('.ct-hs-ico .ct-hs-c' + c).length);
+    return { crans:crans.join('/'), carres:carres.length, ronds:document.querySelectorAll('.ct-carte path.leaflet-interactive[fill="#1e6091"]').length, lignes:lignes.length,
       memesNombres:JSON.stringify(nbCarres) === JSON.stringify(nbLignes), premiere:lignes[0] ? lignes[0].innerText.replace(/\s+/g, ' ') : '',
       onglet:document.querySelector('#ctOnglets [data-onglet="hot"] .ct-nb')?.textContent, legende:document.querySelector('.ct-legende')?.innerText.replace(/\s+/g, ' ').slice(-90) };
   });
@@ -52,5 +53,6 @@ async function essai(nom, opts, refuser){
 }
 await essai('ordinateur', { viewport:{ width:1440, height:900 } });
 await essai('telephone', { viewport:{ width:375, height:812 }, isMobile:true, hasTouch:true, deviceScaleFactor:2 });
-await essai('refus', { viewport:{ width:1440, height:900 } }, true);
+await essai('sombre', { viewport:{ width:1440, height:900 }, colorScheme:'dark' });
+await essai('refus',{ viewport:{ width:1440, height:900 } }, true);
 await nav.close();

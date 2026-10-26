@@ -7229,6 +7229,7 @@ function _updateLegend(){
     const quoi = hotspotSort==='total' ? 'espèces vues ici' : 'espèces à cocher pour toi';
     parts.push(`<div class="ml-title">Hotspots</div><div class="ct-leg-formes">` +
       `<span class="ml-row"><span class="ct-hs ct-hs-sym" aria-hidden="true">12</span><span class="ml-txt">Le nombre : ${quoi}</span></span>` +
+      `<span class="ml-row"><span class="ct-leg-crans" aria-hidden="true">${[0, 1, 2, 3, 4].map(c => `<span class="ct-hs ct-hs-sym ct-hs-c${c}"></span>`).join('')}</span><span class="ml-txt">Plus le vert est plein, plus il y a à cocher</span></span>` +
       (myUid ? `<span class="ml-row"><span class="ct-hs ct-hs-sym ct-hs-fav" aria-hidden="true">12</span><span class="ml-txt">Un de tes favoris</span></span>` : '') + '</div>');
   }
   _legendDiv.innerHTML = parts.join('') || '<div class="ml-row"><span class="ml-txt">Aucune couche allumée</span></div>';
@@ -8894,7 +8895,7 @@ document.addEventListener('click', async e=>{
   if(_lyrHotspots){
     _lyrHotspots.eachLayer(m => {
       if(m._hotspotId !== locId || !m._hs) return;
-      m.setIcon(_ctIconeHotspot(m._hs.nb, !wasFav));
+      m.setIcon(_ctIconeHotspot(m._hs.nb, !wasFav, m._hs.cran));
     });
     _ctListeHot();
   }
@@ -9301,9 +9302,13 @@ function _ctSymbole(k){
 // Un hotspot sur la carte : un carré qui porte le nombre d'espèces à cocher (ou vues ici, en tri
 // « total »), celui de la liste du panneau. Les ronds bleus d'avant se confondaient avec les pastilles
 // de la ligue ; la maquette choisie le 2026-10-23 distingue les couches par la forme.
-function _ctIconeHotspot(nb, favori){
+// cran (0 à 4) : le fond fonce avec le nombre, rapporté au meilleur hotspot affiché (direction 2 de
+// notes-privees/maquettes/hotspots-taille/, choisie par Mathis le 2026-10-27 : les carrés tous pareils ne
+// montraient pas où il y a le plus à cocher). Les couleurs des crans vivent dans styles.css.
+const _ctCranHotspot = (nb, max) => max > 0 ? Math.min(4, Math.floor(nb / max * 5)) : 0;
+function _ctIconeHotspot(nb, favori, cran = 0){
   const chiffres = String(nb).length, larg = Math.max(28, 14 + 9 * chiffres);
-  return L.divIcon({ html:`<span class="ct-hs${favori ? ' ct-hs-fav' : ''}">${nb}</span>`, className:'ct-hs-ico', iconSize:[larg, 26] });
+  return L.divIcon({ html:`<span class="ct-hs ct-hs-c${cran}${favori ? ' ct-hs-fav' : ''}">${nb}</span>`, className:'ct-hs-ico', iconSize:[larg, 26] });
 }
 function _ctDessineCouches(){
   const box = document.getElementById('ctCouches'); if(!box) return;
@@ -11410,6 +11415,9 @@ async function _loadHotspotsLayer(region){
       m.on('popupopen', () => _loadHotspotCounts(m));
       _lyrHotspots.addLayer(m);
     }
+    // Les crans se comptent sur le meilleur des carrés posés : il n'est connu qu'une fois tous posés.
+    const maxHs = Math.max(0, ..._lyrHotspots.getLayers().map(x => x._hs ? x._hs.nb : 0));
+    _lyrHotspots.eachLayer(x => { if(!x._hs) return; x._hs.cran = _ctCranHotspot(x._hs.nb, maxHs); x.setIcon(_ctIconeHotspot(x._hs.nb, myFavHotspots.has(x._hotspotId), x._hs.cran)); });
     // Après un refus, le prochain passage relit eBird au lieu de garder ce chargement incomplet.
     _loaded.hotspots = (_hsRefus.zones || _hsRefus.listes) ? '' : key;
   } catch(_){ }
