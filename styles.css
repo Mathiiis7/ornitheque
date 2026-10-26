@@ -3812,8 +3812,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .ct-ariane button { min-height:52px; }
     .ct-poignee { height:52px; margin:-6px 0 -10px; }
     .ct-page .map-search input { height:52px; }
-    /* Les menus du Récent, sa case et « Voir les autres ». */
-    .ct-filtres .filt-sel, .ct-filtres .cp-btn, .ct-filtres .ct-case, .ct-plus, .ct-source button, .ct-portee .seg button, .ct-volet > .ct-case, .ct-pli-btn, .ct-obs { min-height:52px; }
+    /* Les menus du Récent et de la Ligue, sa case et « Voir les autres ». */
+    .ct-filtres .filt-sel, .ct-filtres .cp-btn, .ct-volet .map-controls .cp-btn, .ct-filtres .ct-case, .ct-plus, .ct-source button, .ct-portee .seg button, .ct-volet > .ct-case, .ct-pli-btn, .ct-obs { min-height:52px; }
     .ct-rang-n { width:52px; }
     .ct-gl-l, .ct-gl-n { min-height:52px; }
     /* Dans la liste d'une grappe, on touche la ligne, pas la pastille : elle garde la taille souris

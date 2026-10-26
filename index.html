@@ -49,7 +49,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=481">
+<link rel="modulepreload" href="app.js?v=482">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -747,7 +747,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
                         <button type="button" role="radio" data-ct-portee="pays">Pays</button>
                         <button type="button" role="radio" data-ct-portee="zone">Zone</button>
                       </div>
-                      <span class="ct-portee-note" id="ctPorteeNote"></span>
+                      <span class="ct-portee-note"></span>
                     </div>
                   </div>
                   </div>
@@ -767,19 +767,52 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
                   <details class="ct-pli" id="ctPliLigue">
                   <summary class="ct-pli-tete"><span class="ct-pli-btn">Filtres</span><span class="ct-pli-resume" id="ctPliResumeLigue"></span></summary>
                   <div class="ct-pli-corps">
+                  <!-- Comme le Récent (Mathis, 2026-10-26) : membre et pays s'ouvrent au milieu de l'écran,
+                       la rareté est une rangée de pastilles (plusieurs paliers à la fois), mesurée sur le pays
+                       ou sur la zone. Les <select> restent, cachés : _ctSyncFiltres recopie leur choix. -->
                   <div class="map-controls" id="mapCtrlsMine">
-                    <select class="filt-sel" id="mapPlayerSel" aria-label="Filtrer par personne">
+                    <span class="ct-choix">
+                    <button type="button" class="cp-btn" data-ct-choix="mapPlayerSel" title="Membre"><span class="cp-btn-label">Tout le monde</span><span class="cp-btn-arrow">▾</span></button>
+                    <select class="ct-cache" id="mapPlayerSel" aria-hidden="true" tabindex="-1">
                       <option value="all">Tout le monde</option>
                     </select>
-                    <select class="filt-sel" id="mapTierSel" aria-label="Filtrer par rareté terrain">
-                      <option value="any">Toutes les raretés</option>
-                    </select>
-                    <select class="filt-sel" id="mapCountrySel" aria-label="Filtrer par pays">
+                    </span>
+                    <span class="ct-choix">
+                    <button type="button" class="cp-btn" data-ct-choix="mapCountrySel" title="Pays"><span class="cp-btn-label">Tous les pays</span><span class="cp-btn-arrow">▾</span></button>
+                    <select class="ct-cache" id="mapCountrySel" aria-hidden="true" tabindex="-1">
                       <option value="any">Tous les pays</option>
                     </select>
+                    </span>
                     <label class="explorer-lbl" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;" title="Afficher toutes les obs (chaque cochage separement) au lieu d'une seule par espece par personne">
                       <input type="checkbox" id="mapMineShowAllObs" style="vertical-align:middle;"> Afficher tous les cochages
                     </label>
+                  </div>
+                  <div class="rar-rangee ct-rarete" id="ctLigRarete">
+                    <span class="rar-rangee-titre">Rareté</span>
+                    <div id="ctLigRarChips" class="rar-chips" role="group" aria-label="Filtrer la ligue par rareté">
+                      <button type="button" class="rar-chip on" data-rar="1" title="Omniprésent">1</button>
+                      <button type="button" class="rar-chip on" data-rar="2" title="Très commun">2</button>
+                      <button type="button" class="rar-chip on" data-rar="3" title="Commun">3</button>
+                      <button type="button" class="rar-chip on" data-rar="4" title="Assez commun">4</button>
+                      <button type="button" class="rar-chip on" data-rar="5" title="Peu commun">5</button>
+                      <button type="button" class="rar-chip on" data-rar="6" title="Assez rare">6</button>
+                      <button type="button" class="rar-chip on" data-rar="7" title="Rare">7</button>
+                      <button type="button" class="rar-chip on" data-rar="8" title="Très rare">8</button>
+                      <button type="button" class="rar-chip on" data-rar="9" title="Ultra rare">9</button>
+                      <button type="button" class="rar-chip on" data-rar="10" title="Exceptionnel (vagrant accidentel)">10</button>
+                      <button type="button" class="rar-chip" data-rar-all title="Cocher toutes les raretés">Tout</button>
+                      <button type="button" class="rar-chip" data-rar-none title="Décocher toutes les raretés">Vide</button>
+                      <span class="rar-cats"><span class="rar-sep" aria-hidden="true"></span><button type="button" class="rar-chip" data-cat="N" title="Introduit établi (N)">N</button></span>
+                    </div>
+                    <!-- Le même réglage que celui du Récent (_ctRarZone) : la zone choisie vaut pour les deux onglets. -->
+                    <div class="ct-portee" id="ctPorteeLigue">
+                      <span class="ct-portee-titre" id="ctPorteeTitreLigue">Mesurée sur</span>
+                      <div class="seg" role="radiogroup" aria-labelledby="ctPorteeTitreLigue">
+                        <button type="button" role="radio" data-ct-portee="pays">Pays</button>
+                        <button type="button" role="radio" data-ct-portee="zone">Zone</button>
+                      </div>
+                      <span class="ct-portee-note"></span>
+                    </div>
                   </div>
                   </div>
                   </details>
@@ -1517,4 +1550,4 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=481"></script>
+<script type="module" src="app.js?v=482"></script>

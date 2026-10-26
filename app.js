@@ -7062,7 +7062,8 @@ const carteCouches = new Set();
 let _lyrMissing=null, _lyrHotspots=null;
 let _loaded = { missing:'', hotspots:'' };   // clé de cache (région+jours)
 // Filtres propres au mode "mine"
-let mapFilter = { player:'all', tier:'any', country:'any', showAllObs:false };
+// La rareté de la ligue se règle comme celle du Récent (2026-10-26) : plusieurs paliers à la fois, ou un statut N.
+let mapFilter = { player:'all', rarities:new Set([1,2,3,4,5,6,7,8,9,10]), cats:new Set(), country:'any', showAllObs:false };
 // Filtres propres aux modes eBird
 // `rarities` = Set des paliers sélectionnés (1-10). `cats` = statuts X / P / N cochés : non vide,
 // il prime sur les paliers, comme au Birdydex (voir _passeRarCarte).
@@ -7563,12 +7564,6 @@ function _fillMapSelects(pts){
     pl.innerHTML='<option value="all">Tout le monde</option>'+names.map(([uid,nm])=>`<option value="${esc(uid)}">${esc(nm)}</option>`).join('');
     if([...pl.options].some(o=>o.value===cur)) pl.value=cur;
   }
-  const ti=$('#mapTierSel'); if(ti){
-    const cur=ti.value||'any';
-    const tiers=[...new Set(pts.map(p=>p.w))].sort((a,b)=>a-b);
-    ti.innerHTML='<option value="any">Toutes les raretés</option>'+tiers.map(w=>`<option value="${w}">${w} · ${REAL_LABELS[w]||('niveau '+w)}</option>`).join('');
-    if([...ti.options].some(o=>o.value===cur)) ti.value=cur;
-  }
   const co=$('#mapCountrySel'); if(co){
     const cur=co.value||'any';
     const codes=[...new Set(pts.map(p=>p.cc).filter(Boolean))].sort((a,b)=>a==='FR'?-1:b==='FR'?1:countryLabel(a).localeCompare(countryLabel(b),'fr'));
@@ -7683,9 +7678,17 @@ function _spreadGroup(group){
 // disait la France et la couleur le pays, et un Faisan de Colchide vu en Autriche portait le 4
 // français dans un rond gris. Les 47 pays mesurés ont leurs paliers dans data/rarity_pays.json ;
 // un pays hors de ce registre garde ceux de la France.
+// « Mesurée sur Zone » vaut aussi pour la ligue (2026-10-26) : un point du pays ouvert prend le palier
+// de la zone choisie, comme le Récent.
 function _paliersLigue(sci, cc){
   const c = cc || 'FR';
-  return (c !== 'FR' && _countryEntry(c)) ? rarityForCountry(sci, c) : rarityReal(sci);
+  return _ctPalierDeZone(sci, c, (c !== 'FR' && _countryEntry(c)) ? rarityForCountry(sci, c) : rarityReal(sci));
+}
+// Le filtre de rareté de la ligue, le même que celui du Récent (_passeRarCarte) sur mapFilter.
+function _passeRarLigue(p){
+  const f = mapFilter;
+  if(f.cats.size) return (exoticCategoriesInCountry(p.sci, p.cc || 'FR') || []).some(c => f.cats.has(c));
+  return !p.w || f.rarities.has(p.w);
 }
 function _mapMarker(pt, groupSize){
   // La couleur dit le palier écrit dans la bulle (pt.w), le gris seulement quand il n'y en a pas.
@@ -8000,7 +8003,7 @@ function _renderModeMine(el){
   const endOrd = _tlDates.length ? _tlDates[_tlPlayId ? _tlPlayPos : _tlEndIdx] : Infinity;
   const pts = allPts.filter(p=>{
     if(f.player!=='all' && p.uid!==f.player) return false;
-    if(f.tier!=='any' && String(p.w)!==f.tier) return false;
+    if(!_passeRarLigue(p)) return false;
     if(f.country!=='any' && p.cc!==f.country) return false;
     if(p.dateOrd!=null && (p.dateOrd<startOrd || p.dateOrd>endOrd)) return false;
     return true;
@@ -8675,7 +8678,6 @@ function _fitLayer(lyr){
 }
 document.addEventListener('change', e=>{
   if(e.target.id==='mapPlayerSel'){ mapFilter.player=e.target.value; renderMap(); }
-  else if(e.target.id==='mapTierSel'){ mapFilter.tier=e.target.value; renderMap(); }
   else if(e.target.id==='mapCountrySel'){ mapFilter.country=e.target.value; renderMap(); }
   else if(e.target.id==='mapMineShowAllObs'){ mapFilter.showAllObs = !!e.target.checked; renderMap(); }
   else if(e.target.id==='mapEbShowObserved' || e.target.id==='ctRecManque'){
@@ -8775,8 +8777,15 @@ const _ctEchappeEnEurope = k => {
 function _ctRarete(sci, cc){
   const brut = (sci || '').trim().toLowerCase(), k = SCI_ALIAS[brut] || brut;
   const w = rarityForCountry(sci, cc) || (k && _ctPaysMesure(cc) && !isExoticInCountry(sci, cc, true) && !_ctEchappeEnEurope(k) ? 10 : 0);
-  const z = w && _ctRarZone ? _ctZoneFreq() : '';
+  return _ctPalierDeZone(sci, cc, w);
+}
+// Le palier w du pays devient celui de la zone choisie, quand « Zone » est allumé et que l'oiseau est
+// dans le pays de cette zone (un point de la ligue en Espagne garde le palier espagnol). Sans palier
+// dans le pays, rien à mesurer : il reste à 0.
+function _ctPalierDeZone(sci, cc, w){
+  const z = w && _ctRarZone && cc === (ebFilter.country || 'FR') ? _ctZoneFreq() : '';
   if(!z) return w;
+  const brut = (sci || '').trim().toLowerCase(), k = SCI_ALIAS[brut] || brut;
   const ligne = REAL_FREQ_MONTHLY_BY_REGION_MULTI[cc][z];
   return annualFreqToTier(_valeurAnnuelleZone(ligne[k] || ligne[brut], cc, z));
 }
@@ -8794,48 +8803,57 @@ function _paintRarChip(el, val, on){
   el.classList.add('on');
   el.style.background = realColor(val);
 }
-// Synchronise l'affichage de tous les chips avec ebFilter.rarities (utile pour init + Tout/Aucun).
+// Deux rangées de pastilles, chacune son réglage : le Récent (ebFilter), la Ligue (mapFilter, 2026-10-26).
+const _RAR_RANGEES = { mapEbRarityChips:() => ebFilter, ctLigRarChips:() => mapFilter };
+// Synchronise l'affichage des chips avec leur réglage (utile pour init + Tout/Aucun).
 function _refreshRarChips(){
-  document.querySelectorAll('#mapEbRarityChips .rar-chip[data-rar]').forEach(el=>{
-    const val = +el.dataset.rar;
-    _paintRarChip(el, val, !ebFilter.cats.size && ebFilter.rarities.has(val));
-  });
-  document.querySelectorAll('#mapEbRarityChips .rar-chip[data-cat]').forEach(el=>{
-    const on = ebFilter.cats.has(el.dataset.cat);
-    el.classList.toggle('on', on);
-    el.style.background = on ? '#7e8a99' : ''; el.style.color = on ? '#fff' : '';
-  });
+  for(const [id, filtre] of Object.entries(_RAR_RANGEES)){
+    const f = filtre();
+    document.querySelectorAll(`#${id} .rar-chip[data-rar]`).forEach(el=>{
+      const val = +el.dataset.rar;
+      _paintRarChip(el, val, !f.cats.size && f.rarities.has(val));
+    });
+    document.querySelectorAll(`#${id} .rar-chip[data-cat]`).forEach(el=>{
+      const on = f.cats.has(el.dataset.cat);
+      el.classList.toggle('on', on);
+      el.style.background = on ? '#7e8a99' : ''; el.style.color = on ? '#fff' : '';
+    });
+  }
 }
 // Init au chargement pour que les chips reflètent l'état par défaut (tous cochés)
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', _refreshRarChips);
 else _refreshRarChips();
 // Chips rareté (mode À cocher) : toggle Set, background = couleur rareté quand actif.
 document.addEventListener('click', e=>{
+  const rangee = e.target.closest('#mapEbRarityChips, #ctLigRarChips'); if(!rangee) return;
+  const f = _RAR_RANGEES[rangee.id]();
+  // La Ligue redessine ses points ; le Récent doit en plus relire sa couche.
+  const relance = () => { if(f === ebFilter) _loaded.missing=''; renderMap(); };
   // Boutons Tout / - (aucun)
-  if(e.target.matches('[data-rar-all]')){
-    ebFilter.rarities = new Set([1,2,3,4,5,6,7,8,9,10]); ebFilter.cats = new Set();
-    _refreshRarChips(); _loaded.missing=''; renderMap(); return;
+  if(e.target.closest('[data-rar-all]')){
+    f.rarities = new Set([1,2,3,4,5,6,7,8,9,10]); f.cats = new Set();
+    _refreshRarChips(); relance(); return;
   }
-  if(e.target.matches('[data-rar-none]')){
-    ebFilter.rarities = new Set(); ebFilter.cats = new Set();
-    _refreshRarChips(); _loaded.missing=''; renderMap(); return;
+  if(e.target.closest('[data-rar-none]')){
+    f.rarities = new Set(); f.cats = new Set();
+    _refreshRarChips(); relance(); return;
   }
   // Statut X / P / N : cumulable ; tant qu'un est coche, les paliers sont ignores.
-  const cb = e.target.closest('#mapEbRarityChips .rar-chip[data-cat]');
+  const cb = e.target.closest('.rar-chip[data-cat]');
   if(cb){
     const cat = cb.dataset.cat;
-    if(ebFilter.cats.has(cat)) ebFilter.cats.delete(cat); else ebFilter.cats.add(cat);
-    _refreshRarChips(); _loaded.missing=''; renderMap(); return;
+    if(f.cats.has(cat)) f.cats.delete(cat); else f.cats.add(cat);
+    _refreshRarChips(); relance(); return;
   }
-  const c = e.target.closest('#mapEbRarityChips .rar-chip[data-rar]'); if(!c) return;
+  const c = e.target.closest('.rar-chip[data-rar]'); if(!c) return;
   // Toucher un palier sort du mode statut, comme au Birdydex.
-  if(ebFilter.cats.size){ ebFilter.cats = new Set(); _refreshRarChips(); }
+  if(f.cats.size){ f.cats = new Set(); _refreshRarChips(); }
   const val = +c.dataset.rar;
-  const set = ebFilter.rarities;
+  const set = f.rarities;
   if(set.has(val)){ set.delete(val); }
   else { set.add(val); }
   _paintRarChip(c, val, set.has(val));
-  _loaded.missing=''; renderMap();
+  relance();
 });
 // Boutons +/- pour le champ "min à cocher" (arrondi natif trop petit).
 document.addEventListener('click', e=>{
@@ -9709,14 +9727,17 @@ function _ctTesteZone(){
 // sans zone).
 function _ctPointsLigue(){
   const f = mapFilter;
-  const pts = _mapCollectPoints().filter(p => (f.player === 'all' || p.uid === f.player) && (f.tier === 'any' || String(p.w) === f.tier) && (f.country === 'any' || p.cc === f.country));
+  const pts = _mapCollectPoints().filter(p => (f.player === 'all' || p.uid === f.player) && _passeRarLigue(p) && (f.country === 'any' || p.cc === f.country));
   const teste = _ctTesteZone();
   return { teste, pts:teste ? pts.filter(p => teste(p.lat, p.lon)) : pts };
 }
-// Ce que disent les Filtres repliés de la Ligue, en une ligne : « Tout le monde · toutes les raretés · tous les pays ».
+// Ce que disent les Filtres repliés de la Ligue, en une ligne : « Tout le monde · tous les paliers · tous les pays ».
 function _ctResumeLigue(){
   const lib = id => { const s = document.getElementById(id); return s && s.selectedIndex >= 0 ? s.options[s.selectedIndex].textContent.trim() : ''; };
-  const morceaux = [lib('mapPlayerSel'), lib('mapTierSel').toLowerCase(), lib('mapCountrySel').toLowerCase()];
+  // « tous les pays » en minuscule, mais « France » garde sa majuscule.
+  const morceaux = [lib('mapPlayerSel'), _ctPaliersTexte(mapFilter), mapFilter.country === 'any' ? 'tous les pays' : lib('mapCountrySel')];
+  if(mapFilter.cats.has('N')) morceaux.push('établies (N)');
+  if(_ctRarZoneActive()) morceaux.push('rareté de la zone');
   if(document.getElementById('mapMineShowAllObs')?.checked) morceaux.push('tous les cochages');
   return morceaux.filter(Boolean).join(' · ');
 }
@@ -10483,34 +10504,42 @@ function _ctSyncFiltres(){
 // Ce que disent les Filtres repliés, en une ligne : « eBird · 14 j · paliers 6 à 10 · rareté de la zone ».
 // La zone n'y est pas : le fil d'Ariane la dit déjà.
 function _ctResumeFiltres(src, j){
-  const r = [...ebFilter.rarities].sort((a, b) => a - b);
-  const suite = r.length > 1 && r.every((v, i) => !i || v === r[i - 1] + 1);
-  const paliers = r.length === 10 ? 'tous les paliers' : !r.length ? (ebFilter.cats.size ? '' : 'aucun palier')
-    : r.length === 1 ? `palier ${r[0]}` : suite ? `paliers ${r[0]} à ${r[r.length - 1]}` : `paliers ${r.join(', ')}`;
-  const morceaux = [src === 'gbif' ? 'Années passées' : `eBird · ${j} j`, paliers];
+  const morceaux = [src === 'gbif' ? 'Années passées' : `eBird · ${j} j`, _ctPaliersTexte(ebFilter)];
   if(ebFilter.cats.has('N')) morceaux.push('établies (N)');
   if(src !== 'gbif' && _ctRarZoneActive()) morceaux.push('rareté de la zone');
   return morceaux.filter(Boolean).join(' · ');
 }
+// Les paliers cochés, en quelques mots : « tous les paliers », « paliers 6 à 10 », « paliers 2, 5 ».
+// Rien quand un statut (N) est coché : les paliers ne comptent plus.
+function _ctPaliersTexte(f){
+  if(f.cats.size) return '';
+  const r = [...f.rarities].sort((a, b) => a - b);
+  const suite = r.length > 1 && r.every((v, i) => !i || v === r[i - 1] + 1);
+  return r.length === 10 ? 'tous les paliers' : !r.length ? (f.cats.size ? '' : 'aucun palier')
+    : r.length === 1 ? `palier ${r[0]}` : suite ? `paliers ${r[0]} à ${r[r.length - 1]}` : `paliers ${r.join(', ')}`;
+}
 // Pays / Zone : le bouton allumé dit la mesure en vigueur, jamais le seul souhait. Sans zone qui ait
 // ses fréquences, « Zone » se grise et une ligne dit pourquoi ; le choix est gardé pour la suivante.
+// Deux boîtes, Récent et Ligue, pour un seul réglage.
 function _ctSyncPortee(){
-  const boite = document.getElementById('ctPortee'); if(!boite) return;
+  const boites = document.querySelectorAll('.ct-portee'); if(!boites.length) return;
   _ctAttendFreq();
   const cc = ebFilter.country || 'FR', zf = _ctZoneFreq(), active = _ctRarZoneActive();
   const zone = ebFilter.dept || (ebFilter.region && ebFilter.region !== cc ? ebFilter.region : '');
-  boite.querySelectorAll('[data-ct-portee]').forEach(b => {
-    const on = (b.dataset.ctPortee === 'zone') === active;
-    b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on));
-    if(b.dataset.ctPortee === 'zone') b.setAttribute('aria-disabled', String(!zf));
-    b.title = b.dataset.ctPortee === 'zone' ? (zf ? _ctNomZone().nom : '') : countryLabel(cc);
-  });
-  const note = document.getElementById('ctPorteeNote');
-  if(note) note.textContent = zf ? (active ? `Rareté mesurée sur les listes de la zone : ${_ctNomZone().nom}.` : '')
+  const texte = zf ? (active ? `Rareté mesurée sur les listes de la zone : ${_ctNomZone().nom}.` : '')
     : ebFilter.polygon ? 'Une zone dessinée n\'a pas de mesure à elle : rareté du pays.'
     : !zone ? 'Choisis une région ou un département pour mesurer la rareté dans la zone.'
     : !REAL_FREQ_MONTHLY_BY_REGION_MULTI[cc] ? 'Mesure de la zone… chargement'
     : 'Pas de mesure pour cette zone : rareté du pays.';
+  for(const boite of boites){
+    boite.querySelectorAll('[data-ct-portee]').forEach(b => {
+      const on = (b.dataset.ctPortee === 'zone') === active;
+      b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on));
+      if(b.dataset.ctPortee === 'zone') b.setAttribute('aria-disabled', String(!zf));
+      b.title = b.dataset.ctPortee === 'zone' ? (zf ? _ctNomZone().nom : '') : countryLabel(cc);
+    });
+    const note = boite.querySelector('.ct-portee-note'); if(note) note.textContent = texte;
+  }
 }
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-ct-portee]'); if(!b || b.getAttribute('aria-disabled') === 'true') return;
@@ -10541,7 +10570,7 @@ document.addEventListener('click', async e => {
     const sel = document.getElementById(choix.dataset.ctChoix); if(!sel) return;
     const options = [...sel.options].filter(o => !o.disabled).map(o => ({ value:o.value, label:o.textContent }));
     const v = await _openFilterPicker(sel.value, {
-      title: choix.dataset.ctChoix === 'mapEbDept' ? 'Département' : 'Région',
+      title: choix.title || 'Région',
       options, searchable: options.length > 8 });
     if(v != null) _ctRegleMenu(sel.id, v);
     choix.focus();
