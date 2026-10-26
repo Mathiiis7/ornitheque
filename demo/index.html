@@ -124,7 +124,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=476">
+<link rel="modulepreload" href="app.js?v=477">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -758,7 +758,12 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
                        s'ouvrent au milieu de l'écran, la source et la rareté se voient sans menu, la période
                        est un curseur. Les <select> restent, cachés : tout le code les lit et les écoute, les
                        commandes visibles ne font que les régler (_ctSyncFiltres). Région et département
-                       viennent du bloc des Hotspots : app.js les y déplace. -->
+                       viennent du bloc des Hotspots : app.js les y déplace.
+                       Repliés sous « Filtres » depuis le 2026-10-26 (Mathis : « très chargé, on s'y perd ») :
+                       la liste monte en haut, le résumé d'une ligne dit ce qui est réglé (_ctResumeFiltres). -->
+                  <details class="ct-pli" id="ctPliRecent">
+                  <summary class="ct-pli-tete"><span class="ct-pli-btn">Filtres</span><span class="ct-pli-resume" id="ctPliResume"></span></summary>
+                  <div class="ct-pli-corps">
                   <div class="seg ct-source" id="mapEbSourceLbl" role="radiogroup" aria-label="Source des données">
                     <button type="button" role="radio" data-ct-source="ebird">eBird, en direct</button>
                     <button type="button" role="radio" data-ct-source="gbif">Les années passées, ce mois-ci</button>
@@ -787,7 +792,6 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
                     <input type="range" id="ctJours" min="0" max="2" step="1" value="1" aria-valuetext="14 derniers jours">
                     <div class="ct-jours-reperes" aria-hidden="true"><span>7 j</span><span>14 j</span><span>30 j</span></div>
                   </div>
-                  <label class="miss-toggle ct-case" id="ctRecManqueLbl"><input type="checkbox" id="ctRecManque" checked> Seulement ce qui me manque</label>
                   <div class="rar-rangee ct-rarete" id="mapEbRarityLbl">
                     <span class="rar-rangee-titre">Rareté</span>
                     <div id="mapEbRarityChips" class="rar-chips" role="group" aria-label="Filtrer par rareté">
@@ -817,6 +821,9 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
                       <span class="ct-portee-note" id="ctPorteeNote"></span>
                     </div>
                   </div>
+                  </div>
+                  </details>
+                  <label class="miss-toggle ct-case" id="ctRecManqueLbl"><input type="checkbox" id="ctRecManque" checked> Seulement ce qui me manque</label>
                   <p class="ct-compte ct-etat" id="ctRecEtat" role="status"></p>
                   <div class="ct-liste" id="ctListeRecent"></div>
                   <p class="ct-mention" id="ctMentionRecent"></p>
@@ -1573,5 +1580,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=476"></script>
+<script type="module" src="app.js?v=477"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>

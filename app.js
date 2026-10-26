@@ -2123,9 +2123,15 @@ function sciColorForCountry(sci, country){
 // Les exotiques établies (N : Ibis sacré, Perruche à collier...) restent.
 // dept : le département de l'observation quand on le connaît. Son statut prime sur celui du pays
 // (EXOTIC_STATUS_BY_DEP_FR : l'Oie cendrée est X dans 2 départements, le Cygne noir N dans l'Ain).
+// Une espèce sans aucune mesure dans le pays qu'eBird classe échappée ailleurs en Europe l'est aussi :
+// le Tadorne radjah, oiseau d'Australie, absent de la liste française des échappés mais X en Belgique
+// et en Allemagne, restait gris avec un « ? » (Mathis, 2026-10-26).
 function estEchappeDansPays(sci, country, dept){
   const s = statutAuLieu(sci, country, dept);
-  return s === 'X' || s === 'P' || s === 'C';
+  if(s === 'X' || s === 'P' || s === 'C') return true;
+  if(s) return false;   // N : établie là
+  const brut = (sci || '').trim().toLowerCase();
+  return !rarityForCountry(sci, country) && _ctEchappeEnEurope(SCI_ALIAS[brut] || brut);
 }
 // La lettre X, P, N ou C de l'espèce à l'endroit de l'observation, '' pour un oiseau sauvage. Le
 // survol et la liste du Récent la posent à côté de la pastille (Mathis, 2026-10-23).
@@ -10336,16 +10342,21 @@ function _ctListeRecent(){
   // qu'eBird rend, la date d'une région entière aurait dit « depuis 14 jours » et « il en manque ».
   // Une grande région étrangère se lit d'un coup : la coupe porte alors son code, pas un nom.
   const nomCoupe = c => c.nom || DEPT_NAMES[c.z] || (c.z === (ebFilter.dept || ebFilter.region) ? _ctNomZone().nom : c.z);
-  const coupes = !parListes ? [] : (L_.coupes || []).map(c => `${esc(nomCoupe(c))} : seulement depuis le ${esc(_ctDateLongue(c.depuis))}, eBird n'en donne pas plus de 200`);
-  if(parListes && L_.plafond) coupes.push(`les ${L_.plafond.max} plus récentes sur ${L_.plafond.total}, depuis le ${esc(_ctDateLongue(L_.plafond.depuis))} : au-delà, une seule région épuiserait la limite horaire d'eBird, partagée par tous`);
+  // Texte brut : la bulle (note, plus bas) l'échappe une fois.
+  const coupes = !parListes ? [] : (L_.coupes || []).map(c => `${nomCoupe(c)} : seulement depuis le ${_ctDateLongue(c.depuis)}, eBird n'en donne pas plus de 200`);
+  if(parListes && L_.plafond) coupes.push(`les ${L_.plafond.max} plus récentes sur ${L_.plafond.total}, depuis le ${_ctDateLongue(L_.plafond.depuis)} : au-delà, une seule région épuiserait la limite horaire d'eBird, partagée par tous`);
+  // D'où viennent les points : une ligne courte, le détail dans la bulle du site (Mathis, 2026-10-26 :
+  // le panneau était « très chargé »). Les textes longs d'avant sont devenus ces détails.
+  const note = (court, detail) => `<p class="ct-note" data-tip="${esc(detail)}">${court}</p>`;
   const source = parListes
-    ? `<p class="ct-compte">Lu dans ${L_.lues === 1 ? 'la seule liste déposée' : `les ${L_.lues} listes déposées`} ici ${quand}` +
-      (L_.reste ? `, ${L_.reste} pas encore lue${s(L_.reste)}` : '') + '.' + (coupes.length ? ' ' + coupes.join(' ; ') + '.' : '') + '</p>'
+    ? note(`${L_.lues} liste${s(L_.lues)} lue${s(L_.lues)}${L_.reste || coupes.length ? ' (en partie)' : ''}`,
+      `Lu dans ${L_.lues === 1 ? 'la seule liste déposée' : `les ${L_.lues} listes déposées`} ici ${quand}` +
+      (L_.reste ? `, ${L_.reste} pas encore lue${s(L_.reste)}` : '') + '.' + (coupes.length ? ' ' + coupes.join(' ; ') + '.' : ''))
     : gbif ? ''
-    : _ctRecListesEtat === 'lecture' ? '<p class="ct-compte">Lecture de toutes les listes de la zone… En attendant : la dernière observation de chaque espèce.</p>'
-    : _ctRecListesEtat === 'echec' ? '<p class="ct-compte">Les listes n\'ont pas répondu : la dernière observation de chaque espèce seulement, et tous les lieux des plus rares.</p>'
-    : _ctPaysEntier(_ctRecZones) ? '<p class="ct-compte">Le résumé d\'eBird : la dernière observation de chaque espèce. Clique une région pour voir tous les points.</p>'
-    : '<p class="ct-compte">La dernière observation de chaque espèce, et tous les lieux des plus rares.</p>';
+    : _ctRecListesEtat === 'lecture' ? note('… lecture des listes', 'Lecture de toutes les listes de la zone. En attendant : la dernière observation de chaque espèce.')
+    : _ctRecListesEtat === 'echec' ? note('Une observation par espèce', 'Les listes n\'ont pas répondu : la dernière observation de chaque espèce seulement, et tous les lieux des plus rares.')
+    : _ctPaysEntier(_ctRecZones) ? note('Une observation par espèce', 'Le résumé d\'eBird : la dernière observation de chaque espèce. Clique une région pour voir tous les points.')
+    : note('Une observation par espèce', 'La dernière observation de chaque espèce, et tous les lieux des plus rares.');
   box.innerHTML = `<p class="ct-compte">${tete}</p>${source}<p class="ct-petit">Les plus rares d'abord</p>${vus.map(rang).join('')}` +
     (n > vus.length ? `<button type="button" class="ct-plus" id="ctRecPlus">Voir les ${n - vus.length} autres</button>` : '');
 }
@@ -10371,6 +10382,19 @@ function _ctSyncFiltres(){
   const curseur = document.getElementById('ctJours');
   if(curseur && document.activeElement !== curseur) curseur.value = String(Math.max(0, _CT_JOURS.indexOf(j)));
   _ctJoursTexte(j);
+  const resume = document.getElementById('ctPliResume'); if(resume) resume.textContent = _ctResumeFiltres(src, j);
+}
+// Ce que disent les Filtres repliés, en une ligne : « eBird · 14 j · paliers 6 à 10 · rareté de la zone ».
+// La zone n'y est pas : le fil d'Ariane la dit déjà.
+function _ctResumeFiltres(src, j){
+  const r = [...ebFilter.rarities].sort((a, b) => a - b);
+  const suite = r.length > 1 && r.every((v, i) => !i || v === r[i - 1] + 1);
+  const paliers = r.length === 10 ? 'tous les paliers' : !r.length ? (ebFilter.cats.size ? '' : 'aucun palier')
+    : r.length === 1 ? `palier ${r[0]}` : suite ? `paliers ${r[0]} à ${r[r.length - 1]}` : `paliers ${r.join(', ')}`;
+  const morceaux = [src === 'gbif' ? 'Années passées' : `eBird · ${j} j`, paliers];
+  if(ebFilter.cats.has('N')) morceaux.push('établies (N)');
+  if(src !== 'gbif' && _ctRarZoneActive()) morceaux.push('rareté de la zone');
+  return morceaux.filter(Boolean).join(' · ');
 }
 // Pays / Zone : le bouton allumé dit la mesure en vigueur, jamais le seul souhait. Sans zone qui ait
 // ses fréquences, « Zone » se grise et une ligne dit pourquoi ; le choix est gardé pour la suivante.
