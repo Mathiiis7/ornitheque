@@ -2,12 +2,13 @@
 // la ligue, sur la vraie carte de la démo, on essaie plusieurs lignes de base (attribut y du texte SVG)
 // et on mesure l'écart entre le centre du disque et le centre de l'encre blanche, en pixels d'appareil,
 // à 100, 125 et 150 %. Même mesure que lettres-carte.mjs.
-// node outils/verif/_lettres-balayage.mjs [lieux] [y1,y2,...]
+// node outils/verif/_lettres-balayage.mjs [lieux] [y1,y2,...] [dpr1,dpr2,...]
 import { chromium } from 'playwright';
 const nbLieux = +(process.argv[2] || 25);
 const ys = (process.argv[3] || '13.2,13.6,14,14.4').split(',').map(Number);
 const nav = await chromium.launch();
-for(const dpr of [1, 1.25, 1.5]){
+const dprs = (process.argv[4] || '1,1.25,1.5').split(',').map(Number);
+for(const dpr of dprs){
   const ctx = await nav.newContext({ viewport:{ width:1300, height:850 }, deviceScaleFactor:dpr, locale:'fr-FR' });
   await ctx.addInitScript(() => {
     const att = () => { if(window.L && L.Map && !L.Map.__pris){ L.Map.__pris = true; L.Map.addInitHook(function(){ window.__carte = this; }); } else if(!window.L) setTimeout(att, 5); };

@@ -45,6 +45,9 @@ await p.mouse.click(cible.x, cible.y);
 await p.waitForTimeout(800);
 const avant = await lireBulle();
 console.log('grappe de', cible.n, 'espèces, rareté du pays :', avant.length, 'lignes', JSON.stringify(avant.slice(0, 8)));
+// Une espèce dépliée doit le rester après la mise à jour.
+const depliee = await p.evaluate(() => { const b = document.querySelector('.ct-gl .ct-gl-n'); if(!b) return ''; b.click(); return b.parentElement.querySelector('.ct-gl-nom')?.textContent || ''; });
+await p.waitForTimeout(500);
 await p.screenshot({ path:`${DOS}/grappe-pays-${largeur}.png` });
 await p.evaluate(() => document.querySelector('[data-ct-portee="zone"]').click());
 for(let i = 0; i < 30; i++){ await p.waitForTimeout(1000); if(JSON.stringify(await lireBulle()) !== JSON.stringify(avant)) break; }
@@ -57,6 +60,9 @@ await p.waitForTimeout(2000);
 const apres = await lireBulle();
 console.log('même grappe, rareté de la zone :', apres.length, 'lignes', JSON.stringify(apres.slice(0, 8)));
 console.log('bulle ouverte :', await p.evaluate(() => !!document.querySelector('.ct-gl')), '- a changé :', JSON.stringify(avant) !== JSON.stringify(apres));
+console.log('dépliée avant :', depliee, '- encore dépliée :', await p.evaluate(nom => { const b = [...document.querySelectorAll('.ct-gl .ct-gl-n')].find(x => x.parentElement.querySelector('.ct-gl-nom')?.textContent === nom); return !!b && b.getAttribute('aria-expanded') === 'true' && !b.parentElement.nextElementSibling.hidden; }, depliee));
+// Les espèces de la liste du Récent au palier 10, pour y chercher un oiseau commun mal reconnu.
+console.log('palier 10 dans la liste :', JSON.stringify(await p.evaluate(() => [...document.querySelectorAll('#ctListeRecent .ct-rang')].filter(r => r.querySelector('.tier-rond')?.textContent.trim() === '10').map(r => r.querySelector('.nom')?.textContent))));
 await p.screenshot({ path:`${DOS}/grappe-zone-${largeur}.png` });
 await p.evaluate(() => { try{ localStorage.removeItem('mb-ct-rar-zone'); }catch(_){} });
 console.log('erreurs :', erreurs.length ? erreurs : 'aucune');

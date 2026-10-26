@@ -8735,13 +8735,27 @@ function _ctAttendFreq(){
 const _ctRarZoneActive = () => _ctRarZone && !!_ctZoneFreq();
 // Le palier d'une espèce dans le Récent. Un oiseau sauvage absent des listes du pays (ou de la zone)
 // depuis 2019 y est au palier 10 : vu récemment, il est exceptionnel, pas « sans mesure » (la Paruline
-// tigrée de Corse arrivait en gris avec un « ? », Mathis, 2026-10-26). Un échappé sans mesure reste à 0.
+// tigrée de Corse arrivait en gris avec un « ? », Mathis, 2026-10-26). Un échappé sans mesure reste à 0,
+// et un pays sans table (Kenya, Japon, ou la sienne pas encore arrivée) aussi : tout y serait à 10.
+// Un oiseau qu'eBird classe échappé dans un pays d'Europe aussi : le Tadorne radjah, absent de la liste
+// française des échappés mais X en Belgique et en Allemagne, passait au palier 10. Les États-Unis ne
+// comptent pas : ils y classent l'Oie naine, vraie rareté sauvage en France.
+const _ctPaysMesure = cc => { const reg = _countryEntry(cc), t = reg && reg.barTier(); for(const _ in t || {}) return true; return false; };
+const CT_HORS_EUROPE = new Set(['LK', 'NA', 'AU', 'NZ', 'US', 'CA', 'KE', 'JP']);
+let _ctEchappesEurope = null;
+const _ctEchappeEnEurope = k => {
+  if(!_ctEchappesEurope){
+    _ctEchappesEurope = new Set();
+    for(const [c, t] of Object.entries(EXOTIQUES_EBIRD_PAR_PAYS)) if(!CT_HORS_EUROPE.has(c)) for(const sp in t) _ctEchappesEurope.add(sp);
+  }
+  return _ctEchappesEurope.has(k);
+};
 function _ctRarete(sci, cc){
-  const w = rarityForCountry(sci, cc) || (sci && !isExoticInCountry(sci, cc, true) ? 10 : 0);
+  const brut = (sci || '').trim().toLowerCase(), k = SCI_ALIAS[brut] || brut;
+  const w = rarityForCountry(sci, cc) || (k && _ctPaysMesure(cc) && !isExoticInCountry(sci, cc, true) && !_ctEchappeEnEurope(k) ? 10 : 0);
   const z = w && _ctRarZone ? _ctZoneFreq() : '';
   if(!z) return w;
   const ligne = REAL_FREQ_MONTHLY_BY_REGION_MULTI[cc][z];
-  const brut = (sci || '').trim().toLowerCase(), k = SCI_ALIAS[brut] || brut;
   return annualFreqToTier(_valeurAnnuelleZone(ligne[k] || ligne[brut], cc, z));
 }
 // Sa couleur : celle de son palier (de la zone, ou 10 hors des listes), sauf le gris des échappés, qui
@@ -9629,6 +9643,8 @@ function _ctRetourPays(monde){
   // des oiseaux à l'étranger (trouvé en traçant les cadrages, 2026-10-23). Il refait le cadrage
   // de la première ouverture, la France.
   if(monde) _ctCadreFait = false;
+  // La carte de l'arrivée est vide (Mathis, 2026-10-24), l'onglet, lui, reste : la Ligue s'éteint aussi.
+  if(monde) carteCouches.delete('ligue');
   renderMap(); _reloadSpeciesForZone();
 }
 // Au téléphone, le panneau vit DANS la carte (le tiroir) ; sur ordinateur, à sa droite.
@@ -10031,12 +10047,21 @@ function _ctRafraichitGrappe(groupe){
   for(const [v, n] of compte) if(n > n0){ n0 = n; meilleure = v; }
   if(meilleure) _ctRefaitListe(meilleure);
 }
-// Refait la liste ouverte à la même hauteur de défilement.
+// Refait la liste ouverte à la même hauteur de défilement, les espèces dépliées encore dépliées.
 function _ctRefaitListe(c){
   const defile = () => _ctPopGrappe.getElement() && _ctPopGrappe.getElement().querySelector('.ct-gl-liste');
+  const nomDe = b => b.parentElement.querySelector('.ct-gl-nom')?.textContent || '';
   const y = defile() ? defile().scrollTop : 0;
+  const ouvertes = new Set(defile() ? [...defile().querySelectorAll('.ct-gl-n[aria-expanded="true"]')].map(nomDe) : []);
   _ctListeGrappe(c);
-  if(defile()) defile().scrollTop = y;
+  if(!defile()) return;
+  for(const b of defile().querySelectorAll('.ct-gl-n')){
+    if(!ouvertes.has(nomDe(b))) continue;
+    const liste = b.parentElement.nextElementSibling; if(liste) liste.hidden = false;
+    b.setAttribute('aria-expanded', 'true');
+  }
+  if(ouvertes.size) _ctPopGrappe.update();
+  defile().scrollTop = y;
 }
 // Un pays entier, que ses régions découpent (pas Malte ni les Féroé, lus en entier comme une région).
 const _ctPaysEntier = zones => !ebFilter.polygon && zones.length === 1 && /^[A-Z]{2}$/.test(zones[0]) &&

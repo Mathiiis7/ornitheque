@@ -42,7 +42,7 @@ for(const onglet of (process.argv[3] || 'ligue,recent,hot').split(',')){
   console.log('  (région trouvée : ' + (reg ? await clicForme('ebird', 'FR-PDL') : false) + ')'); await etat('Pays de la Loire'); await p.screenshot({ path:'C:/Users/mathi/AppData/Local/Temp/claude/C--Users-mathi-Documents-0-Claude-1-App-ornitheque/758021a1-dbe9-4f01-a281-98ef248c4ecc/scratchpad/mode-' + onglet + '-pdl-' + largeur + '.png' });
   console.log('  (Espagne trouvée : ' + await clicForme('cc', 'ES') + ')'); await etat('Espagne');
   await p.evaluate(() => document.querySelector('#ctAriane [data-carte="monde"]')?.click());
-  await etat('↺ / Tous les pays');
+  await etat('↺ / Tous les pays'); await p.screenshot({ path:'C:/Users/mathi/AppData/Local/Temp/claude/C--Users-mathi-Documents-0-Claude-1-App-ornitheque/758021a1-dbe9-4f01-a281-98ef248c4ecc/scratchpad/mode-' + onglet + '-retour-' + largeur + '.png' });
   console.log('  erreurs :', erreurs.length ? erreurs : 'aucune');
   await ctx.close();
 }
