@@ -2766,6 +2766,19 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      directement que l'espèce (Mathis, 2026-10-26). */
   .ct-rang .sous { color:color-mix(in srgb, var(--ink-3) 75%, var(--surface)); }
   .ct-rang .droite { color:color-mix(in srgb, var(--ink-3) 75%, var(--surface)); text-align:right; white-space:nowrap; }
+  /* La ligne d'espèce des deux listes (_ctRangHtml, 2026-10-26) : le nom ouvre la fiche, la flèche à
+     droite déplie les observations. Le filet passe de la ligne à son cadre, qui porte les deux. */
+  .ct-rang-e { display:flex; align-items:stretch; border-bottom:1px solid var(--line); }
+  .ct-rang-e:last-child { border-bottom:0; }
+  .ct-rang-e > .ct-rang { flex:1; min-width:0; border-bottom:0; }
+  .ct-rang-n { flex:none; width:34px; border:0; border-radius:8px; background:none; color:var(--ink-2); font:18px/1 var(--sans); cursor:pointer; padding:9px 0 0; align-self:stretch; }
+  .ct-rang-n:hover, .ct-rang-n:focus-visible { background:var(--surface-2); color:var(--ink); }
+  .ct-rang-n span { display:inline-block; transition:transform .15s; }
+  .ct-rang-n[aria-expanded="true"] span { transform:rotate(180deg); }
+  /* L'aide de la Ligue en petit lien gris, en bas de la liste (2026-10-26). */
+  .import-guide.ct-aide { margin:12px 0; }
+  .import-guide.ct-aide summary { font-weight:400; color:var(--ink-3); }
+  .import-guide.ct-aide summary:hover { text-decoration:underline; }
   /* Les observations d'une espèce dépliée, sous sa ligne (2026-10-26) : le lieu, puis date et nombre
      dans le gris pâle ; un clic mène au point. Alignées sur le nom, après la pastille. */
   .ct-rang-obs { list-style:none; margin:0 0 6px; padding:0 0 0 38px; }
@@ -3801,6 +3814,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .ct-page .map-search input { height:52px; }
     /* Les menus du Récent, sa case et « Voir les autres ». */
     .ct-filtres .filt-sel, .ct-filtres .cp-btn, .ct-filtres .ct-case, .ct-plus, .ct-source button, .ct-portee .seg button, .ct-volet > .ct-case, .ct-pli-btn, .ct-obs { min-height:52px; }
+    .ct-rang-n { width:52px; }
     .ct-gl-l, .ct-gl-n { min-height:52px; }
     /* Dans la liste d'une grappe, on touche la ligne, pas la pastille : elle garde la taille souris
        (à 52 px, six lignes ne tenaient plus dans la bulle, vu le 2026-10-24). */

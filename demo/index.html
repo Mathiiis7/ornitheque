@@ -124,7 +124,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=478">
+<link rel="modulepreload" href="app.js?v=479">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -833,6 +833,11 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
                   <p class="ct-mention">Données <a href="https://ebird.org" target="_blank" rel="noopener">eBird.org</a>, lues en direct pour la zone choisie.</p>
                 </div>
                 <div class="ct-volet" id="ctVoletLigue" role="tabpanel" aria-labelledby="ctOngletLigue" data-volet="ligue">
+                  <!-- Les filtres de la Ligue repliés sous « Filtres », comme le Récent (Mathis, 2026-10-26) :
+                       le résumé d'une ligne vient de _ctResumeLigue. -->
+                  <details class="ct-pli" id="ctPliLigue">
+                  <summary class="ct-pli-tete"><span class="ct-pli-btn">Filtres</span><span class="ct-pli-resume" id="ctPliResumeLigue"></span></summary>
+                  <div class="ct-pli-corps">
                   <div class="map-controls" id="mapCtrlsMine">
                     <select class="filt-sel" id="mapPlayerSel" aria-label="Filtrer par personne">
                       <option value="all">Tout le monde</option>
@@ -847,11 +852,14 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
                       <input type="checkbox" id="mapMineShowAllObs" style="vertical-align:middle;"> Afficher tous les cochages
                     </label>
                   </div>
+                  </div>
+                  </details>
                   <div id="mapStats" class="map-stats"></div>
                   <div class="ct-liste" id="ctListeLigue"></div>
                   <div id="mapNote" class="help" style="margin:6px 0 8px; display:none;"></div>
-                  <details class="import-guide" style="margin:0 0 12px;">
-                    <summary>📍 Comment afficher tes observations sur la carte ?</summary>
+                  <!-- Discrète, en bas de la liste (Mathis, 2026-10-26) : un petit lien gris. -->
+                  <details class="import-guide ct-aide">
+                    <summary>Comment afficher tes observations sur la carte ?</summary>
                     <p style="margin:8px 0 0;">Pour avoir tes observations sur la carte (position exacte de chaque oiseau vu) : télécharge <a href="https://ebird.org/downloadMyData" target="_blank" rel="noopener">ebird.org/downloadMyData</a> → <b>« Submit »</b> (fichier <code>MyEBirdData.csv</code> reçu par email en quelques minutes). Ce fichier contient les <b>coordonnées GPS</b> de chaque obs. La life list simple ne les a pas. Dépose-le ensuite dans l'onglet <b>Ma liste</b>.</p>
                   </details>
                 </div>
@@ -1580,5 +1588,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=478"></script>
+<script type="module" src="app.js?v=479"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>

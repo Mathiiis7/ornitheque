@@ -7903,7 +7903,9 @@ async function renderMap(){
   if(drawClear) drawClear.style.display = (showDraw && ebFilter.polygon) ? '' : 'none';
   // Timeline retiree du mode "observations de la ligue" (peu utile, ajoute du bruit).
   $('#mapTimeline').style.display = 'none';
-  $('#mapStats').style.display = mine ? '' : 'none';
+  // La boîte grise des chiffres de la ligue ne s'affiche plus : ses chiffres sont entre parenthèses
+  // derrière la phrase de la liste (_ctListeLigue, Mathis, 2026-10-26).
+  $('#mapStats').style.display = 'none';
   $('#mapNote').style.display = 'none';
   // Cache toutes les couches ; le mode courant remet la sienne.
   // _lyrDetail (obs d'une espèce spécifique via clic dropdown) NE se vide QUE sur changement
@@ -9702,28 +9704,66 @@ function _ctTesteZone(){
   if(!formes.length) return null;
   return (la, lo) => formes.some(({ b, g }) => b.contains([la, lo]) && _ctDansForme(la, lo, g));
 }
-function _ctListeLigue(){
-  const box = document.getElementById('ctListeLigue'); if(!box) return { especes:0 };
+// Les points de la ligue que montre la liste : ceux des filtres, dans la zone choisie (toute la ligue
+// sans zone).
+function _ctPointsLigue(){
   const f = mapFilter;
   const pts = _mapCollectPoints().filter(p => (f.player === 'all' || p.uid === f.player) && (f.tier === 'any' || String(p.w) === f.tier) && (f.country === 'any' || p.cc === f.country));
   const teste = _ctTesteZone();
-  if(!teste){ box.innerHTML = ''; return { especes:new Set(pts.map(p => (p.sci || '').toLowerCase())).size }; }
+  return { teste, pts:teste ? pts.filter(p => teste(p.lat, p.lon)) : pts };
+}
+// Ce que disent les Filtres repliés de la Ligue, en une ligne : « Tout le monde · toutes les raretés · tous les pays ».
+function _ctResumeLigue(){
+  const lib = id => { const s = document.getElementById(id); return s && s.selectedIndex >= 0 ? s.options[s.selectedIndex].textContent.trim() : ''; };
+  const morceaux = [lib('mapPlayerSel'), lib('mapTierSel').toLowerCase(), lib('mapCountrySel').toLowerCase()];
+  if(document.getElementById('mapMineShowAllObs')?.checked) morceaux.push('tous les cochages');
+  return morceaux.filter(Boolean).join(' · ');
+}
+function _ctListeLigue(){
+  const box = document.getElementById('ctListeLigue'); if(!box) return { especes:0 };
+  const resume = document.getElementById('ctPliResumeLigue'); if(resume) resume.textContent = _ctResumeLigue();
+  const { teste, pts } = _ctPointsLigue();
+  const s = n => n > 1 ? 's' : '';
+  // Les chiffres de l'ancienne boîte grise (#mapStats), entre parenthèses derrière la phrase (Mathis,
+  // 2026-10-26) : ceux de la zone quand il y en a une.
+  const lieux = new Set(pts.map(p => p.lat.toFixed(5) + ',' + p.lon.toFixed(5))).size, pays = new Set(pts.map(p => p.cc).filter(Boolean)).size;
+  const chiffres = ` <span class="ct-note">(${pts.length} obs · ${lieux} lieu${lieux > 1 ? 'x' : ''} · ${pays} pays)</span>`;
   const parSp = new Map();
   for(const p of pts){
-    if(!teste(p.lat, p.lon)) continue;
     const k = (p.sci || '').toLowerCase();
-    if(!parSp.has(k)) parSp.set(k, { sci:p.sci, nom:p.common, w:p.w || 0, qui:new Set(), ord:0, date:'' });
-    const e = parSp.get(k); e.qui.add(p.who);
+    if(!parSp.has(k)) parSp.set(k, { sci:p.sci, nom:p.common, w:p.w || 0, cc:p.cc || '', qui:new Set(), ord:-Infinity, date:'', n:0 });
+    const e = parSp.get(k); e.qui.add(p.who); e.n++;
     if(p.dateOrd != null && p.dateOrd > e.ord){ e.ord = p.dateOrd; e.date = p.date; }
   }
   const rangs = [...parSp.values()].sort((a, b) => (b.w - a.w) || a.nom.localeCompare(b.nom, 'fr'));
   const membres = new Set(); for(const r of rangs) for(const q of r.qui) membres.add(q);
+  const tete = `<b>${rangs.length} espèce${s(rangs.length)}</b> vue${s(rangs.length)} ${teste ? 'ici ' : ''}par la ligue · ${membres.size} membre${s(membres.size)}`;
+  // Sans zone, la phrase et les chiffres seulement : la liste de toute la ligue serait sans fin.
+  if(!teste){ box.innerHTML = pts.length ? `<p class="ct-compte">${tete}${chiffres}</p>` : '<p class="ct-compte">Aucune obs à afficher avec ces filtres.</p>'; return { especes:rangs.length }; }
   if(!rangs.length){ box.innerHTML = '<div class="ct-vide"><b>Rien encore ici</b>Personne de la ligue n\'a d\'observation placée dans cette zone.</div>'; return { especes:0 }; }
-  const s = n => n > 1 ? 's' : '';
-  box.innerHTML = `<p class="ct-compte"><b>${rangs.length} espèce${s(rangs.length)}</b> vue${s(rangs.length)} ici par la ligue · ${membres.size} membre${s(membres.size)}</p>` +
-    `<p class="ct-petit">Les plus rares d'abord</p>` +
-    rangs.map(r => `<button type="button" class="ct-rang sp-link" data-sci="${esc(r.sci)}"><span><span class="nom">${esc(r.nom)}</span><br><span class="lat">${esc(r.sci.charAt(0).toUpperCase() + r.sci.slice(1))}</span><br><span class="sous">${esc([...r.qui].sort((a, b) => a.localeCompare(b, 'fr')).join(', '))}${r.date ? ' · ' + esc(_fmtOrd(r.ord)) : ''}</span></span><span class="droite">${r.qui.size} membre${s(r.qui.size)}</span></button>`).join('');
+  box.innerHTML = `<p class="ct-compte">${tete}${chiffres}</p><p class="ct-petit">Les plus rares d'abord</p>` +
+    rangs.map(r => _ctRangHtml({ liste:'lig', sci:r.sci, w:r.w, coul:r.w ? realColor(r.w) : sciColorForCountry(r.sci, r.cc), nom:r.nom,
+      statut:statutAuLieu(r.sci, r.cc || 'FR'), sous:[...r.qui].sort((a, b) => a.localeCompare(b, 'fr')).join(', '),
+      droite:r.date ? _fmtOrd(r.ord) : '', n:r.n, ouverte:r.sci === _ctLigOuverte, obsHtml:() => _ctObsLigue(r.sci, pts) })).join('');
   return { especes:rangs.length };
+}
+// Les observations d'une espèce de la Ligue : qui, quand, où ; chacune retrouve son point sur la carte.
+function _ctObsLigue(sci, pts){
+  const tous = (_mapLayer && _mapLayer._ctTous) || [];
+  const cle = (la, lo) => la.toFixed(5) + ',' + lo.toFixed(5);
+  const obs = pts.filter(p => p.sci === sci).sort((a, b) => (b.dateOrd || 0) - (a.dateOrd || 0));
+  return _ctObsHtml(obs.map(p => {
+    const m = tous.find(x => x._sciName === sci && x._ligue && x._ligue.who === p.who && x._ligue.date === p.date && cle(x.getLatLng().lat, x.getLatLng().lng) === cle(p.lat, p.lon));
+    return { id:m ? L.stamp(m) : '', titre:p.who, detail:[_ctDateCourte(p.date) || p.date, p.loc].filter(Boolean).join(' · ') };
+  }), 'lig');
+}
+// La flèche d'une espèce de la Ligue : la carte cadre ses points dans la zone, sans ouvrir de bulle.
+function _ctMontreLigue(sci){
+  if(!_map) return;
+  const pts = _ctPointsLigue().pts.filter(p => p.sci === sci); if(!pts.length) return;
+  if(_mapLayer && !_map.hasLayer(_mapLayer)){ _ctAllume('ligue'); _ctAppliqueCouches(); }
+  if(pts.length === 1) _map.setView([pts[0].lat, pts[0].lon], Math.max(_map.getZoom(), 11), { animate:false });
+  else _map.fitBounds(L.latLngBounds(pts.map(p => [p.lat, p.lon])), { ..._ctMarges(), maxZoom:12, animate:false });
 }
 function _ctNomZone(){
   const cc = ebFilter.country || 'FR';
@@ -9796,9 +9836,8 @@ document.addEventListener('click', e => {
   if(e.target.closest('#ctAriane [data-carte="region"]')){ _ctChoisirRegion(ebFilter.region); return; }
   if(e.target.closest('#ctBtnLegende')){ _ctLegendeOuverte = !_ctLegendeOuverte; _ctDessineLegendeOuverte(); return; }
   // Effacer ta zone ne redessine la carte que dans le Récent : le panneau, lui, doit toujours suivre.
-  if(e.target.closest('#mapDrawClear')){ _ctSurligne(); _ctAppliqueCouches(); return; }
-  const r = e.target.closest('#ctListeLigue .ct-rang[data-sci]');
-  if(r && r.dataset.sci) _ctOuvreFiche(r.dataset.sci);
+  if(e.target.closest('#mapDrawClear')){ _ctSurligne(); _ctAppliqueCouches(); }
+  // Les lignes de la liste de la Ligue : même gestionnaire que le Récent (_ctRangHtml, plus bas).
 });
 // Flèches gauche et droite entre les onglets du panneau, comme une vraie rangée d'onglets.
 document.addEventListener('keydown', e => {
@@ -10279,9 +10318,26 @@ async function _ctMontreEspece(sci){
     }
   }, 450);
 }
-// L'espèce dépliée dans la liste du Récent : toutes ses observations sous sa ligne (Mathis, 2026-10-26 :
-// la ligne disait « 4 listes » et le clic n'en montrait qu'une, au hasard des grappes).
-let _ctRecOuverte = '';
+// Une ligne d'espèce des deux listes de la Carte (Récent, Ligue), la même partout (Mathis, 2026-10-26 :
+// les deux ne se comportaient pas pareil) : le nom ouvre la fiche, la flèche à droite déplie toutes les
+// observations sous la ligne. liste : 'rec' ou 'lig'. obsHtml : appelée seulement si la ligne est dépliée.
+function _ctRangHtml(o){
+  const voir = o.n > 1 ? `Voir les ${o.n} observations` : 'Voir l\'observation';
+  return `<div class="ct-rang-e"><button type="button" class="ct-rang ct-rang-rec" data-sci="${esc(o.sci)}" data-liste="${o.liste}"${o.cc ? ` data-cc="${esc(o.cc)}"` : ''}>` +
+    `${tierChip(o.w || '?', o.coul, { cls:'tier-rond' })}` +
+    `<span class="col"><span class="nom">${esc(o.nom)}</span>${o.statut ? ' ' + jetonExo(o.statut) : ''}${o.nv ? '<span class="ct-tag nv">non validée</span>' : ''}<br>` +
+    `<span class="lat">${esc(o.sci.charAt(0).toUpperCase() + o.sci.slice(1))}</span><br><span class="sous">${esc(o.sous)}</span></span>` +
+    `<span class="droite">${esc(o.droite)}</span></button>` +
+    `<button type="button" class="ct-rang-n" data-sci="${esc(o.sci)}" data-liste="${o.liste}" aria-expanded="${!!o.ouverte}" aria-label="${voir} : ${esc(o.nom)}" data-tip="${voir}"><span aria-hidden="true">▾</span></button></div>` +
+    (o.ouverte ? o.obsHtml() : '');
+}
+// Les observations d'une ligne dépliée : le lieu (ou qui l'a vue), puis le détail dans le gris pâle ; un
+// clic mène au point. items : { id, titre, detail }, id = L.stamp du point sur la carte.
+const _ctObsHtml = (items, liste) => `<ul class="ct-rang-obs">${items.map(o => `<li><button type="button" class="ct-obs" data-pt="${o.id}" data-liste="${liste}">` +
+  `<span class="ct-obs-lieu">${esc(o.titre)}</span><span class="ct-obs-d">${esc(o.detail)}</span></button></li>`).join('')}</ul>`;
+// L'espèce dépliée dans chaque liste (Mathis, 2026-10-26 : la ligne disait « 4 listes » et le clic n'en
+// montrait qu'une, au hasard des grappes).
+let _ctRecOuverte = '', _ctLigOuverte = '';
 function _ctObsEspece(sci, gbif){
   const s = n => n > 1 ? 's' : '', obs = [];
   if(_lyrMissing) _lyrMissing.eachLayer(m => {
@@ -10290,23 +10346,28 @@ function _ctObsEspece(sci, gbif){
   });
   obs.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   const quand = d => gbif ? _ctDateCourte(d) : _ctIlYa(d);
-  return `<ul class="ct-rang-obs">${obs.map(o => `<li><button type="button" class="ct-obs" data-pt="${o.id}">` +
-    `<span class="ct-obs-lieu">${esc(o.lieu || 'lieu inconnu')}</span>` +
-    `<span class="ct-obs-d">${esc([quand(o.date), o.nb ? `${o.nb} oiseau${o.nb > 1 ? 'x' : ''} compté${s(o.nb)}` : '', o.nv ? 'non validée' : ''].filter(Boolean).join(' · '))}</span>` +
-    `</button></li>`).join('')}</ul>`;
+  return _ctObsHtml(obs.map(o => ({ id:o.id, titre:o.lieu || 'lieu inconnu',
+    detail:[quand(o.date), o.nb ? `${o.nb} oiseau${o.nb > 1 ? 'x' : ''} compté${s(o.nb)}` : '', o.nv ? 'non validée' : ''].filter(Boolean).join(' · ') })), 'rec');
+}
+// Le point d'une observation dépliée, dans sa couche : la Ligue garde tous ses points dans _ctTous (son
+// filtre retire de la grappe ceux qu'il cache).
+function _ctPointObs(liste, id){
+  if(liste === 'lig') return _mapLayer && (_mapLayer._ctTous || []).find(m => L.stamp(m) === +id) || null;
+  return _lyrMissing && _lyrMissing.getLayer(+id) || null;
 }
 // Une observation de la liste dépliée : la carte va sur son point et ouvre sa bulle. Encore rangé dans
 // une grappe, la bulle se pose à sa place sans défaire la grappe : zoomToShowLayer zoomait au plus près
 // puis écartait les points en étoile, l'éventail que Mathis avait écarté le 2026-10-24.
 let _ctSurvolLibre = null;
-function _ctVaSurObs(id){
-  const m = _lyrMissing && _lyrMissing.getLayer(+id); if(!m || !_map) return;
-  if(!_map.hasLayer(_lyrMissing)){ _ctAllume('recent'); _ctAppliqueCouches(); }
+function _ctVaSurObs(liste, id){
+  const m = _ctPointObs(liste, id); if(!m || !_map) return;
+  const groupe = liste === 'lig' ? _mapLayer : _lyrMissing, couche = liste === 'lig' ? 'ligue' : 'recent';
+  if(!_map.hasLayer(groupe)){ _ctAllume(couche); _ctAppliqueCouches(); }
   const ll = m.getLatLng();
   _map.setView(ll, Math.max(_map.getZoom(), 13), { animate:false });
   setTimeout(() => {
     if(_ctSurvolLibre){ _map.closeTooltip(_ctSurvolLibre); _ctSurvolLibre = null; }
-    const parent = _lyrMissing.getVisibleParent ? _lyrMissing.getVisibleParent(m) : m;
+    const parent = groupe.getVisibleParent ? groupe.getVisibleParent(m) : m;
     if(!parent || parent === m) return _ctOuvreSurvol(m);
     if(_ctSurvolOuvert){ _ctSurvolOuvert.closeTooltip(); _ctSurvolOuvert = null; }
     _ctSurvolLibre = L.tooltip(_ctSensSurvol(ll, 11)).setLatLng(ll).setContent(_ctSurvolPoint(m));
@@ -10343,9 +10404,9 @@ function _ctListeRecent(){
   const parSp = new Map();
   if(_lyrMissing) _lyrMissing.eachLayer(m => {
     const r = m._rec; if(!r) return;
-    const e = parSp.get(r.sci) || { r, n:0, listes:new Set() };
+    const e = parSp.get(r.sci) || { r, n:0, obs:0, listes:new Set() };
     if(!parSp.has(r.sci)) parSp.set(r.sci, e);
-    e.n++; if(r.subId) e.listes.add(r.subId);
+    e.n++; e.obs += r.toutes ? r.toutes.length : 1; if(r.subId) e.listes.add(r.subId);
     if(r.date > e.r.date) e.r = r;
   });
   const rangs = [...parSp.values()].map(e => ({ ...e, w:_ctRarete(e.r.sci, cc) || 0 }))
@@ -10369,10 +10430,9 @@ function _ctListeRecent(){
   const rang = e => {
     const r = e.r, lieux = gbif ? e.n : parListes ? e.listes.size : _ctRecLieux.get(r.sci);
     const compte = !lieux ? '' : gbif ? ` · ${lieux} obs` : parListes ? ` · ${lieux} liste${s(lieux)}` : ` · ${lieux} lieu${lieux > 1 ? 'x' : ''}`;
-    const ouverte = r.sci === _ctRecOuverte;
-    return `<button type="button" class="ct-rang ct-rang-rec" data-sci="${esc(r.sci)}" aria-expanded="${ouverte}">${tierChip(e.w || '?', _ctCouleur(r.sci, cc), { cls:'tier-rond' })}` +
-      `<span class="col"><span class="nom">${esc(r.nom)}</span>${r.statut ? ' ' + jetonExo(r.statut) : ''}${r.nv ? '<span class="ct-tag nv">non validée</span>' : ''}<br><span class="lat">${esc(r.sci.charAt(0).toUpperCase() + r.sci.slice(1))}</span><br><span class="sous">${esc(r.lieu || 'lieu inconnu')}${compte}</span></span>` +
-      `<span class="droite">${esc(gbif ? _ctDateCourte(r.date) : _ctIlYa(r.date))}</span></button>` + (ouverte ? _ctObsEspece(r.sci, gbif) : '');
+    return _ctRangHtml({ liste:'rec', sci:r.sci, w:e.w, coul:_ctCouleur(r.sci, cc), nom:r.nom, statut:r.statut, nv:r.nv,
+      sous:(r.lieu || 'lieu inconnu') + compte, droite:gbif ? _ctDateCourte(r.date) : _ctIlYa(r.date),
+      n:e.obs, ouverte:r.sci === _ctRecOuverte, obsHtml:() => _ctObsEspece(r.sci, gbif) });
   };
   const vus = _ctRecTout ? rangs : rangs.slice(0, CT_RANGS_MAX);
   // D'où viennent les points : toutes les listes de la période, ou les plus récentes seulement.
@@ -10492,18 +10552,19 @@ document.addEventListener('click', async e => {
   }
   const src = e.target.closest('[data-ct-source]');
   if(src){ _ctRegleMenu('mapEbSource', src.dataset.ctSource); return; }
-  const o = e.target.closest('#ctListeRecent .ct-obs[data-pt]');
-  if(o){ _ctVaSurObs(o.dataset.pt); return; }
-  // Un clic sur l'espèce la déplie (toutes ses observations) et cadre la carte sur ses points ; un
-  // second clic la replie.
-  const r = e.target.closest('#ctListeRecent .ct-rang[data-sci]');
-  if(r){
-    const sci = r.dataset.sci;
-    _ctRecOuverte = _ctRecOuverte === sci ? '' : sci;
-    _ctListeRecent();
-    if(_ctRecOuverte) _ctMontreEspece(sci);
+  // Les lignes d'espèce des deux listes (Récent, Ligue) : le nom ouvre la fiche, la flèche déplie ses
+  // observations et cadre la carte sur leurs points, un second clic replie ; une observation mène à son point.
+  const o = e.target.closest('#ctContenu .ct-obs[data-pt]');
+  if(o){ _ctVaSurObs(o.dataset.liste, o.dataset.pt); return; }
+  const fl = e.target.closest('#ctContenu .ct-rang-n[data-sci]');
+  if(fl){
+    const sci = fl.dataset.sci;
+    if(fl.dataset.liste === 'lig'){ _ctLigOuverte = _ctLigOuverte === sci ? '' : sci; _ctListeLigue(); if(_ctLigOuverte) _ctMontreLigue(sci); }
+    else { _ctRecOuverte = _ctRecOuverte === sci ? '' : sci; _ctListeRecent(); if(_ctRecOuverte) _ctMontreEspece(sci); }
     return;
   }
+  const r = e.target.closest('#ctContenu .ct-rang[data-sci]');
+  if(r){ _ctOuvreFiche(r.dataset.sci, r.dataset.cc || undefined); return; }
   if(e.target.closest('#ctRecPlus')){ _ctRecTout = true; _ctListeRecent(); }
 });
 // Le curseur dit la période en glissant, mais ne relit eBird qu'une fois lâché.
