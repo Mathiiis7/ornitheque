@@ -7225,13 +7225,11 @@ function _updateLegend(){
       `<div class="ml-row">${tierChip(w, realColor(w), { cls:'tier-rond' })}<span class="ml-txt">${esc(REAL_LABELS[w]||'')}</span></div>`).join('') + '</div>');
   }
   if(carteCouches.has('hot')){
-    const isTotal = hotspotSort==='total';
-    // Mêmes formules que le rendu (fonction sqrt continue) pour que la légende reflète les vraies tailles.
-    const size = v => Math.max(4, Math.min(18, 3 + Math.sqrt(v) * (isTotal ? 0.7 : 1.5)));
-    const samples = isTotal ? [[500,'≥ 500 espèces (all-time)'],[300,'≥ 300'],[200,'≥ 200'],[100,'≥ 100'],[50,'≥ 50'],[20,'≥ 20']]
-                            : [[100,'≥ 100 espèces à cocher'],[50,'≥ 50'],[20,'≥ 20'],[10,'≥ 10'],[5,'≥ 5'],[1,'1']];
-    parts.push(`<div class="ml-title">Hotspots : ${isTotal?'total d\'espèces':'espèces à cocher'}</div><div class="ct-leg-tailles">`+
-      samples.map(([v,lbl])=>{ const r = size(v); return `<div class="ml-row"><span class="ml-dot ml-hs" style="width:${(r*2).toFixed(0)}px;height:${(r*2).toFixed(0)}px"></span><span class="ml-txt">${esc(lbl)}</span></div>`; }).join('') + '</div>');
+    // Le carré dit son nombre : plus besoin de l'échelle des tailles des ronds d'avant.
+    const quoi = hotspotSort==='total' ? 'espèces vues ici' : 'espèces à cocher pour toi';
+    parts.push(`<div class="ml-title">Hotspots</div><div class="ct-leg-formes">` +
+      `<span class="ml-row"><span class="ct-hs ct-hs-sym" aria-hidden="true">12</span><span class="ml-txt">Le nombre : ${quoi}</span></span>` +
+      (myUid ? `<span class="ml-row"><span class="ct-hs ct-hs-sym ct-hs-fav" aria-hidden="true">12</span><span class="ml-txt">Un de tes favoris</span></span>` : '') + '</div>');
   }
   _legendDiv.innerHTML = parts.join('') || '<div class="ml-row"><span class="ml-txt">Aucune couche allumée</span></div>';
 }
@@ -8247,7 +8245,12 @@ async function _renderModeHotspots(){
   _lyrHotspots.addTo(_map);
   const n = _lyrHotspots.getLayers().length;
   const zoneLbl = esc(_zoneLabel());
-  if(cnt) cnt.textContent = n ? `top ${n} hotspots${zoneLbl}` : 'Aucun hotspot trouvé'+zoneLbl;
+  // Un refus d'eBird se dit comme tel : « Aucun hotspot » faisait croire la zone vide (2026-10-26).
+  const { zones:zRef, listes:lRef } = _hsRefus;
+  const refus = !n && (zRef || lRef) ? 'eBird ne répond pas pour l\'instant : réessaie dans quelques minutes.'
+    : lRef ? ` · ${lRef} hotspot${lRef > 1 ? 's' : ''} sans réponse d'eBird, réessaie plus tard`
+    : zRef ? ' · une partie de ta zone sans réponse d\'eBird, réessaie plus tard' : '';
+  if(cnt) cnt.textContent = !n && refus ? refus : n ? `top ${n} hotspots${zoneLbl}${refus}` : 'Aucun hotspot trouvé'+zoneLbl;
   _fitLayer(_lyrHotspots);
   _mapApplyFilter();
   setTimeout(()=>{ try{ _map.invalidateSize(); }catch(_){} }, 60);
@@ -8879,13 +8882,13 @@ document.addEventListener('click', async e=>{
   const wasFav = myFavHotspots.has(locId);
   if(wasFav){ myFavHotspots.delete(locId); b.textContent='☆'; b.classList.remove('on'); }
   else { myFavHotspots.add(locId); b.textContent='★'; b.classList.add('on'); }
-  // MAJ live du marker sans re-render : style yellow/blue selon nouvel état.
+  // Le carré du hotspot change de bord sans redessiner la couche (ce qui fermerait la bulle).
   if(_lyrHotspots){
     _lyrHotspots.eachLayer(m => {
-      if(m._hotspotId !== locId) return;
-      const isFav = !wasFav;
-      m.setStyle({ weight:isFav?2.5:1.5, color:'#fff', fillColor:isFav?'#f4b400':'#1e6091', fillOpacity:.85 });
+      if(m._hotspotId !== locId || !m._hs) return;
+      m.setIcon(_ctIconeHotspot(m._hs.nb, !wasFav));
     });
+    _ctListeHot();
   }
   try{ await updateDoc(doc(db,'leagues',leagueId,'members',myUid),
     { favHotspots:[...myFavHotspots] }); }catch(err){ showError(err); }
@@ -9284,7 +9287,15 @@ function _ctSymbole(k){
   if(k === 'recent') return `<svg class="ct-sym-oeil" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">` +
     `<circle cx="9" cy="9" r="8.25" fill="${realColor(7)}" stroke="#fff" stroke-width="1.5"/>` +
     `<g transform="translate(3.5 3.5) scale(.6875)" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"><path d="M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8 12.1 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="1.9" fill="#fff" stroke="none"/></g></svg>`;
-  return `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="#1e6091" stroke="#fff" stroke-width="1.2"/></svg>`;
+  // Le hotspot : un carré arrondi bordé de la couleur d'accent, comme sur la carte (maquette du 2026-10-23).
+  return `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="3" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/></svg>`;
+}
+// Un hotspot sur la carte : un carré qui porte le nombre d'espèces à cocher (ou vues ici, en tri
+// « total »), celui de la liste du panneau. Les ronds bleus d'avant se confondaient avec les pastilles
+// de la ligue ; la maquette choisie le 2026-10-23 distingue les couches par la forme.
+function _ctIconeHotspot(nb, favori){
+  const chiffres = String(nb).length, larg = Math.max(28, 14 + 9 * chiffres);
+  return L.divIcon({ html:`<span class="ct-hs${favori ? ' ct-hs-fav' : ''}">${nb}</span>`, className:'ct-hs-ico', iconSize:[larg, 26] });
 }
 function _ctDessineCouches(){
   const box = document.getElementById('ctCouches'); if(!box) return;
@@ -9822,7 +9833,7 @@ function _ctDessinePanneau(){
   const nom = document.getElementById('ctZoneNom'); if(nom) nom.textContent = z.nom;
   const meta = document.getElementById('ctZoneMeta'); if(meta) meta.textContent = z.meta;
   const ligue = _ctListeLigue();
-  _ctListeRecent(); _ctSyncFiltres();
+  _ctListeRecent(); _ctListeHot(); _ctSyncFiltres();
   const especesRecent = new Set(); if(_lyrMissing) _lyrMissing.eachLayer(m => { if(m._sciName) especesRecent.add(m._sciName.toLowerCase()); });
   const nb = { ligue:ligue.especes || '', recent:especesRecent.size || '', hot:(_lyrHotspots && _lyrHotspots.getLayers().length) || '' };
   document.querySelectorAll('#ctOnglets [data-nb]').forEach(s => { s.textContent = nb[s.dataset.nb] ? String(nb[s.dataset.nb]) : ''; });
@@ -10403,6 +10414,34 @@ function _ctVaSurObs(liste, id){
     _map.once('click movestart', () => { if(_ctSurvolLibre){ _map.closeTooltip(_ctSurvolLibre); _ctSurvolLibre = null; } });
   }, 350);
 }
+// Le volet Hotspots : une ligne par carré de la carte, celui qui a le plus à cocher en haut (maquette
+// proto.html, contenuHot). Le panneau ne disait que « top 100 hotspots » ; le détail n'était que dans
+// la bulle de chaque carré. Un clic sur la ligne va au carré et ouvre sa bulle (liens eBird et Maps).
+function _ctListeHot(){
+  const box = document.getElementById('ctListeHot'); if(!box) return;
+  const hs = []; if(_lyrHotspots) _lyrHotspots.eachLayer(m => { if(m._hs) hs.push(m); });
+  if(!hs.length){ box.innerHTML = ''; return; }
+  const total = hotspotSort === 'total', s = n => n > 1 ? 's' : '';
+  hs.sort((a, b) => b._hs.nb - a._hs.nb || b._hs.allSp - a._hs.allSp || a._hs.nom.localeCompare(b._hs.nom, 'fr'));
+  box.innerHTML = hs.map(m => {
+    const h = m._hs, fav = myFavHotspots.has(m._hotspotId);
+    const sous = [h.dept || h.region, total ? '' : `${h.allSp} espèce${s(h.allSp)} ${hotspotSort === 'recent' ? 'ces 30 jours' : 'depuis toujours'}`,
+      h.dernier ? `dernière liste ${_ctIlYa(h.dernier)}` : ''].filter(Boolean).join(' · ');
+    return `<button type="button" class="ct-rang ct-rang-hs" data-hs="${esc(m._hotspotId)}">` +
+      `<span class="col"><span class="nom">${fav ? '<span class="ct-hs-etoile" aria-label="favori">★</span> ' : ''}${esc(h.nom)}</span><br><span class="sous">${esc(sous)}</span></span>` +
+      `<span class="droite"><b>${h.nb}</b><br>${total ? `espèce${s(h.nb)}` : 'à cocher'}</span></button>`;
+  }).join('');
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('.ct-rang-hs'); if(!b || !_lyrHotspots || !_map) return;
+  let m = null; _lyrHotspots.eachLayer(x => { if(x._hotspotId === b.dataset.hs) m = x; });
+  if(!m) return;
+  if(!_map.hasLayer(_lyrHotspots)){ _ctAllume('hot'); _ctAppliqueCouches(); }
+  // Au téléphone, le tiroir redescend pour laisser voir le carré et sa bulle.
+  if(_ctTel.matches && carteTiroir !== 'bas'){ carteTiroir = 'bas'; _ctDessinePanneau(); }
+  _map.setView(m.getLatLng(), Math.max(_map.getZoom(), 12), { animate:false });
+  m.openPopup();
+});
 // Le volet Récent : une ligne par espèce (maquette finale.html, contenuRecent), tirée des triangles
 // de la carte, donc toujours d'accord avec eux.
 function _ctListeRecent(){
@@ -11198,6 +11237,9 @@ async function _loadHotspotCounts(marker){
 // Si oui, on abandonne silencieusement pour ne pas ecraser la couche avec les hotspots
 // d'une zone perimee.
 let _hotspotsRunSeq = 0;
+// Ce qu'eBird a refusé au dernier chargement : listes de hotspots d'une zone, listes d'espèces d'un
+// hotspot. _renderModeHotspots le dit au lieu de « Aucun hotspot trouvé ».
+let _hsRefus = { zones:0, listes:0 };
 async function _loadHotspotsLayer(region){
   if(!_lyrHotspots) return;
   // Une zone dessinée se lit par les départements ou les régions qu'elle touche (le crayon marche dans
@@ -11209,10 +11251,14 @@ async function _loadHotspotsLayer(region){
   const key = zones.join('+') + (poly ? ':' + poly.map(p => p.join(',')).join(';') : '') + ':' + hotspotSort;
   if(_loaded.hotspots===key && _lyrHotspots.getLayers().length) return;
   _lyrHotspots.clearLayers();
+  _hsRefus = { zones:0, listes:0 };
   try{
     let list = [];
     for(const z of zones){
-      const l = await _ebFetch(`https://api.ebird.org/v2/ref/hotspot/${z}?fmt=json`);
+      // Un refus d'eBird (429, panne) sans copie gardée : la zone est comptée, pas tue. Avant, la Carte
+      // disait « Aucun hotspot trouvé » sur un refus, comme si la zone n'en avait pas (2026-10-26).
+      let l = null;
+      try{ l = await _ebFetch(`https://api.ebird.org/v2/ref/hotspot/${z}?fmt=json`); }catch(_){ _hsRefus.zones++; }
       if(!stillMine()) return;
       if(Array.isArray(l)) list.push(...l);
     }
@@ -11244,6 +11290,7 @@ async function _loadHotspotsLayer(region){
       const poolRaw = pool.slice(0, CAP);
       const enriched = await _enrichHotspots(poolRaw, region, hotspotSort==='recent'?'recent':'all', stillMine);
       if(!stillMine()) return;
+      _hsRefus.listes = enriched.filter(h => h.err).length;
       const usable = enriched.filter(h => (h.allSp||0) > 0);
       if(hotspotSort==='todo') usable.sort((a,b)=> b.toDo - a.toDo);
       else usable.sort((a,b)=> b.allSp - a.allSp);
@@ -11273,13 +11320,10 @@ async function _loadHotspotsLayer(region){
       if(hotspotSort!=='total' && ebFilter.minTodo>0 && toDoShown < ebFilter.minTodo) continue;
       // Favori : rendu en jaune (marker doré + bord blanc épais pour le distinguer visuellement).
       const isFavHs = myFavHotspots.has(h.locId);
-      // Taille = nb d'espèces qui me manquent (post-filtre mois) en mode enrichi.
-      // Échelle continue (sqrt) plus étalée : max 18 px, saturation à 100 espèces à cocher.
-      const rN = (hotspotSort==='total') ? n : toDoShown;
-      const r = (hotspotSort==='total')
-        ? Math.max(4, Math.min(18, 3 + Math.sqrt(rN) * 0.7))    // rN 20→6, 100→10, 300→15, 500+→18
-        : Math.max(4, Math.min(18, 3 + Math.sqrt(rN) * 1.5));   // rN 1→4.5, 10→7.7, 50→13.6, 100→18
-      const m = L.circleMarker([h.dispLat, h.dispLon], { radius:r, weight:isFavHs?2.5:1.5, color:'#fff', fillColor:isFavHs?'#f4b400':'#1e6091', fillOpacity:.85, opacity:1 });
+      // Le carré porte le nombre d'espèces à cocher (après le filtre du mois), ou le total en tri « total ».
+      const nbHs = (hotspotSort==='total') ? n : toDoShown;
+      const m = L.marker([h.dispLat, h.dispLon], { riseOnHover:true, icon:_ctIconeHotspot(nbHs, isFavHs) });
+      m._hs = { nom:h.locName||h.name||'?', nb:nbHs, allSp:n, dept:h.subnational2Name||'', region:h.subnational1Name||'', dernier:(h.latestObsDt||'').slice(0,10) };
       const gm = `<a href="https://www.google.com/maps?q=${h.lat},${h.lng}" target="_blank" rel="noopener" class="p-btn pl-gmaps">🗺️ Google Maps</a>`;
       // Ouvre Google Maps en mode transport en commun depuis la position actuelle (pas d'origin → device location).
       const tr = `<a href="https://www.google.com/maps/dir/?api=1&destination=${h.lat},${h.lng}&travelmode=transit" target="_blank" rel="noopener" class="p-btn pl-transit">🚌 Transit</a>`;
@@ -11358,7 +11402,8 @@ async function _loadHotspotsLayer(region){
       m.on('popupopen', () => _loadHotspotCounts(m));
       _lyrHotspots.addLayer(m);
     }
-    _loaded.hotspots = key;
+    // Après un refus, le prochain passage relit eBird au lieu de garder ce chargement incomplet.
+    _loaded.hotspots = (_hsRefus.zones || _hsRefus.listes) ? '' : key;
   } catch(_){ }
 }
 

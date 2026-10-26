@@ -2507,7 +2507,6 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .map-el .map-legend .ml-title { font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; margin-bottom:7px; color:#47534f; }
   .map-el .map-legend .ml-row { display:flex; align-items:center; gap:7px; padding:2px 0; }
   .map-el .map-legend .ml-dot { width:12px; height:12px; border-radius:50%; flex:none; border:1.5px solid #fff; box-shadow:0 0 0 .5px rgba(0,0,0,.2); }
-  .map-el .map-legend .ml-dot.ml-hs { background:#1e6091; }
   .map-el .map-legend .ml-row { align-items:center; }
   .map-el .map-legend .ml-txt { white-space:nowrap; }
   .map-el .leaflet-control-layers { background:rgba(255,255,255,.95); border-radius:8px; padding:4px 8px; font-size:12px; font-weight:600; }
@@ -2615,6 +2614,17 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-pt-nb { position:absolute; right:-7px; bottom:-6px; min-width:14px; height:14px; padding:0 3px; box-sizing:border-box;
     border-radius:7px; background:var(--ink); color:var(--surface); font:700 10px/14px var(--sans); text-align:center; pointer-events:none; }
   .ct-pt-ico:focus:not(:focus-visible), .ct-gr-ico:focus:not(:focus-visible) { outline:none; }
+  /* Les hotspots (étape 3 de la refonte, maquette proto.html) : un carré arrondi bordé de l'accent,
+     qui porte le nombre d'espèces à cocher. Un favori prend un bord doré, comme le rond doré d'avant. */
+  .ct-hs-ico { background:none; border:0; }
+  .ct-hs-ico:focus:not(:focus-visible) { outline:none; }
+  .ct-hs { display:flex; align-items:center; justify-content:center; width:100%; height:100%; box-sizing:border-box;
+    background:var(--surface); border:2px solid var(--accent); border-radius:7px; color:var(--accent-ink);
+    font:800 14px/1 var(--sans); padding-bottom:1px; box-shadow:0 1px 4px rgba(0,0,0,.25); cursor:pointer; }
+  .ct-hs.ct-hs-fav { border-color:#f4b400; box-shadow:0 0 0 1.5px #f4b400, 0 1px 4px rgba(0,0,0,.25); }
+  .ct-hs.ct-hs-sym { display:inline-flex; width:28px; height:22px; flex:none; cursor:default; }
+  .ct-rang .ct-hs-etoile { color:#f4b400; }
+  .ct-rang-hs .droite b { color:var(--ink); font-size:15px; }
   .ct-gr { display:flex; align-items:center; justify-content:center; border-radius:50%; padding:5px; box-sizing:border-box; box-shadow:0 1px 4px rgba(0,0,0,.35); cursor:pointer; }
   /* Le nombre se recentre sur son encre : sans rembourrage il tombait 0,6 à 2 px d'appareil trop bas
      (banc pastilles, 2026-10-23). Le rembourrage déplace le centre de sa moitié. */
@@ -2676,7 +2686,6 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-carte .ct-legende .ml-title { color:var(--ink-3); }
   .ct-carte .ct-legende .ct-leg-paliers { display:grid; grid-template-columns:auto auto; grid-auto-flow:column; grid-template-rows:repeat(5, auto); column-gap:14px; }
   .ct-carte .ct-legende > .ml-row { display:inline-flex; margin-right:12px; }
-  .ct-carte .ct-legende .ct-leg-tailles { display:grid; grid-template-columns:auto auto; column-gap:14px; align-items:center; }
   .ct-carte .ct-legende .ml-title:not(:first-child) { margin-top:10px; }
   .ct-carte .ct-legende[hidden] { display:none; }
   .ct-bulle { position:absolute; z-index:500; top:10px; left:54px; right:130px; display:flex; justify-content:center; pointer-events:none; }
