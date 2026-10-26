@@ -49,7 +49,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=480">
+<link rel="modulepreload" href="app.js?v=481">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -789,7 +789,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
                   <!-- Discrète, en bas de la liste (Mathis, 2026-10-26) : un petit lien gris. -->
                   <details class="import-guide ct-aide">
                     <summary>Comment afficher tes observations sur la carte ?</summary>
-                    <p style="margin:8px 0 0;">Pour avoir tes observations sur la carte (position exacte de chaque oiseau vu) : télécharge <a href="https://ebird.org/downloadMyData" target="_blank" rel="noopener">ebird.org/downloadMyData</a> → <b>« Submit »</b> (fichier <code>MyEBirdData.csv</code> reçu par email en quelques minutes). Ce fichier contient les <b>coordonnées GPS</b> de chaque obs. La life list simple ne les a pas. Dépose-le ensuite dans l'onglet <b>Ma liste</b>.</p>
+                    <p style="margin:8px 0 0;">Seul le fichier complet d'eBird donne l'endroit de chaque observation : demande-le sur <a href="https://ebird.org/downloadMyData" target="_blank" rel="noopener">ebird.org/downloadMyData</a>, puis dépose-le dans <b>Ma liste</b>.</p>
                   </details>
                 </div>
               </div>
@@ -1517,4 +1517,4 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=480"></script>
+<script type="module" src="app.js?v=481"></script>

@@ -7052,6 +7052,9 @@ let _map=null, _mapLayer=null, _allBounds=null;
 // Mode carte : 'mine' (mes obs) | 'missing' (à cocher) | 'hotspots'
 // Depuis la refonte du 2026-10-23, c'est l'onglet ouvert du panneau (Ligue, Récent, Hotspots).
 let mapMode = 'mine';
+// La Carte s'ouvre sur le Récent, sa couche éteinte (Mathis, 2026-10-26) ; vrai dès qu'un onglet a été
+// choisi, à la main ou par la fiche espèce (« Voir en grand »), qui garde alors le sien.
+let _ctOngletDepart = false;
 // Couches allumées par les boutons au-dessus de la carte (refonte, voir « Carte : la page refaite »)
 // Aucune à l'ouverture : la carte arrive vide, on allume ce qu'on veut voir (Mathis, 2026-10-23).
 const carteCouches = new Set();
@@ -7903,8 +7906,8 @@ async function renderMap(){
   if(drawClear) drawClear.style.display = (showDraw && ebFilter.polygon) ? '' : 'none';
   // Timeline retiree du mode "observations de la ligue" (peu utile, ajoute du bruit).
   $('#mapTimeline').style.display = 'none';
-  // La boîte grise des chiffres de la ligue ne s'affiche plus : ses chiffres sont entre parenthèses
-  // derrière la phrase de la liste (_ctListeLigue, Mathis, 2026-10-26).
+  // La boîte grise des chiffres de la ligue (obs, lieux, pays) ne s'affiche plus, nulle part (Mathis,
+  // 2026-10-26, après les avoir vus entre parenthèses derrière la phrase de la liste).
   $('#mapStats').style.display = 'none';
   $('#mapNote').style.display = 'none';
   // Cache toutes les couches ; le mode courant remet la sienne.
@@ -7974,13 +7977,9 @@ function _renderModeMine(el){
     _chargerDonneesPays().then(() => { if(_donneesPaysPretes() && mapMode === 'mine') renderMap(); }).catch(() => {});
   }
   _fillMapSelects(allPts);
-  const withoutCoords = state.people.reduce((n,p)=>{
-    const a=p._active||p.species; if(!a) return n;
-    let c=0; for(const v of a.values()) if(typeof v.lat!=='number') c++;
-    return n+c;
-  },0);
-  if(withoutCoords>0){ note.style.display=''; note.innerHTML=`💡 ${withoutCoords} observation${withoutCoords>1?'s':''} sans coordonnées (import ancien ou life list simple). <b>Réimporte via <a href="https://ebird.org/downloadMyData" target="_blank" rel="noopener">Download My Data</a></b> pour les afficher.`; }
-  else note.style.display='none';
+  // Le message « N observations sans coordonnées » ne s'affiche plus (Mathis, 2026-10-26) : l'aide
+  // repliée en bas de la liste dit déjà comment les faire apparaître.
+  note.style.display='none';
   // Timeline
   _tlDates = [...new Set(allPts.map(p=>p.dateOrd).filter(x=>x!=null))].sort((a,b)=>a-b);
   const tlEl=$('#mapTimeline'), tlStart=$('#mapTlStart'), tlEnd=$('#mapTlEnd'), tlLabel=$('#mapTlLabel');
@@ -8899,6 +8898,7 @@ document.addEventListener('change', e=>{
 document.addEventListener('click', e=>{
   const b = e.target.closest('#mapModes button[data-mode]');
   if(!b) return;
+  _ctOngletDepart = true;
   mapMode = b.dataset.mode;
   document.querySelectorAll('#mapModes button').forEach(x=>x.classList.toggle('on', x===b));
   _ctSuitMode();   // l'onglet du panneau suit le mode, d'où qu'on l'ait choisi
@@ -9725,10 +9725,6 @@ function _ctListeLigue(){
   const resume = document.getElementById('ctPliResumeLigue'); if(resume) resume.textContent = _ctResumeLigue();
   const { teste, pts } = _ctPointsLigue();
   const s = n => n > 1 ? 's' : '';
-  // Les chiffres de l'ancienne boîte grise (#mapStats), entre parenthèses derrière la phrase (Mathis,
-  // 2026-10-26) : ceux de la zone quand il y en a une.
-  const lieux = new Set(pts.map(p => p.lat.toFixed(5) + ',' + p.lon.toFixed(5))).size, pays = new Set(pts.map(p => p.cc).filter(Boolean)).size;
-  const chiffres = ` <span class="ct-note">(${pts.length} obs · ${lieux} lieu${lieux > 1 ? 'x' : ''} · ${pays} pays)</span>`;
   const parSp = new Map();
   for(const p of pts){
     const k = (p.sci || '').toLowerCase();
@@ -9740,9 +9736,9 @@ function _ctListeLigue(){
   const membres = new Set(); for(const r of rangs) for(const q of r.qui) membres.add(q);
   const tete = `<b>${rangs.length} espèce${s(rangs.length)}</b> vue${s(rangs.length)} ${teste ? 'ici ' : ''}par la ligue · ${membres.size} membre${s(membres.size)}`;
   // Sans zone, la phrase et les chiffres seulement : la liste de toute la ligue serait sans fin.
-  if(!teste){ box.innerHTML = pts.length ? `<p class="ct-compte">${tete}${chiffres}</p>` : '<p class="ct-compte">Aucune obs à afficher avec ces filtres.</p>'; return { especes:rangs.length }; }
+  if(!teste){ box.innerHTML = pts.length ? `<p class="ct-compte">${tete}</p>` : '<p class="ct-compte">Aucune obs à afficher avec ces filtres.</p>'; return { especes:rangs.length }; }
   if(!rangs.length){ box.innerHTML = '<div class="ct-vide"><b>Rien encore ici</b>Personne de la ligue n\'a d\'observation placée dans cette zone.</div>'; return { especes:0 }; }
-  box.innerHTML = `<p class="ct-compte">${tete}${chiffres}</p><p class="ct-petit">Les plus rares d'abord</p>` +
+  box.innerHTML = `<p class="ct-compte">${tete}</p><p class="ct-petit">Les plus rares d'abord</p>` +
     rangs.map(r => _ctRangHtml({ liste:'lig', sci:r.sci, w:r.w, coul:r.w ? realColor(r.w) : sciColorForCountry(r.sci, r.cc), nom:r.nom,
       statut:statutAuLieu(r.sci, r.cc || 'FR'), sous:[...r.qui].sort((a, b) => a.localeCompare(b, 'fr')).join(', '),
       droite:r.date ? _fmtOrd(r.ord) : '', n:r.n, ouverte:r.sci === _ctLigOuverte, obsHtml:() => _ctObsLigue(r.sci, pts) })).join('');
@@ -13279,7 +13275,11 @@ document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{
   if(b.dataset.view==='requests'){ renderRequests(); markSeen('requests'); }
   if(b.dataset.view==='quiz') renderQuizInit();
   if(b.dataset.view==='pokedex') renderPokedex();
-  if(b.dataset.view==='map') renderMap();
+  if(b.dataset.view==='map'){
+    // Première ouverture : le Récent, sans allumer sa couche (la carte arrive vide, 2026-10-23).
+    if(!_ctOngletDepart && mapMode === 'mine'){ _ctModeBouton('missing')?.click(); carteCouches.delete('recent'); }
+    renderMap();
+  }
   // Flush les renders differes pour ranking/trophies (voir renderResults + _rankingDirty).
   if(b.dataset.view==='ranking' || b.dataset.view==='trophies') _flushDirtyForView(b.dataset.view);
   try{ localStorage.setItem('mb-last-tab', b.dataset.view); }catch(_){ }
@@ -14098,13 +14098,27 @@ const _spPhotoCache = new Map();      // sci → {url, thumb, credit} | null (é
 try{ Object.keys(localStorage).filter(k => k.startsWith('mb-sp-photo-cache') && k !== _SP_PHOTO_CACHE_KEY).forEach(k => localStorage.removeItem(k)); }catch(_){}
 // Ecrire ce qui compte (progression, statistiques, reglages) meme si la memoire du site est
 // pleine : on libere alors les caches, qui se refont seuls, et on reessaie une fois.
+// Les copies des réponses d'eBird (« ebc: », _ebFetch) en sont depuis le 2026-10-26 : elles ne servent
+// que 6 h mais n'étaient jamais effacées, et la Carte en dépose beaucoup (100 listes d'espèces pour les
+// hotspots d'une région, 0,5 Mo ; la France entière, 0,2 Mo, mesuré dans la démo). Accumulées sur des
+// jours, elles pouvaient remplir la mémoire et la progression du quiz se perdait encore (Mathis).
 function _stockageEcrire(cle, valeur){
   try{ localStorage.setItem(cle, valeur); return true; }catch(_){}
   try{
-    Object.keys(localStorage).filter(k => k.startsWith('mb-sp-photo-cache') || k.startsWith('gbifMissing-')).forEach(k => localStorage.removeItem(k));
+    Object.keys(localStorage).filter(k => k.startsWith('mb-sp-photo-cache') || k.startsWith('gbifMissing-') || k.startsWith('ebc:')).forEach(k => localStorage.removeItem(k));
     localStorage.setItem(cle, valeur); return true;
   }catch(_){ return false; }
 }
+// Au démarrage, les copies d'eBird de plus de 3 jours partent. Pas celles de plus de 6 h (EBIRD_TTL_MS) :
+// une copie périmée sert encore quand eBird refuse (_ebPerimes, « voici ce qu'il disait le… »), et celle
+// de la veille est la plus utile. La progression, elle, passe toujours avant (_stockageEcrire).
+try{
+  for(const k of Object.keys(localStorage)){
+    if(!k.startsWith('ebc:')) continue;
+    let ts = 0; try{ ts = JSON.parse(localStorage.getItem(k)).ts || 0; }catch(_){}
+    if(Date.now() - ts > 3 * 24 * 3600 * 1000) localStorage.removeItem(k);
+  }
+}catch(_){}
 try{
   const raw = localStorage.getItem(_SP_PHOTO_CACHE_KEY);
   if(raw){
