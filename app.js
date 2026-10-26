@@ -15685,7 +15685,7 @@ async function _renderSpeciesRangeCard(sci){
     </div>
     <div style="margin-top:4px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
       <div style="font-size:10.5px; color:var(--ink-3);">${entry.src !== 'e' ? 'Échelle relative à l\'espèce (percentiles du nombre d\'observations)' : 'Échelle relative à l\'espèce (percentiles de la fréquence de signalement)'}</div>
-      <button type="button" data-map-render-toggle style="font-size:11px; padding:3px 8px; border:1px solid var(--line); background:var(--surface-2); border-radius:4px; cursor:pointer;">${document.body.dataset.mapRender === 'sharp' ? '🌊 Rendu flou' : '🔲 Rendu net'}</button>
+      <button type="button" data-map-render-toggle class="btn ghost tiny">${_libelleRendu()}</button>
     </div>
     <div style="margin-top:6px; font-size:10.5px; color:var(--ink-3);">${_carteSourceHtml(entry)}</div>
     ${teinte ? `<div style="margin-top:2px; font-size:10.5px; color:var(--ink-3);">Aire estimée : <a href="https://www.inaturalist.org/pages/range_maps" target="_blank" rel="noopener">iNaturalist Open Range Map</a>, modèle Geomodel ${TEINTES_GEOMODEL}, CC BY. Une estimation : l'oiseau n'y a pas forcément été vu.</div>` : ''}
@@ -15750,7 +15750,9 @@ async function _renderSpeciesRangeCard(sci){
 // Les 236 cartes de presence tirees des autres sources n'ont que 12 mois : la semaine y montre son mois.
 // Gris ou l'oiseau manque : effort-s.png, commun a toutes les especes (outils/build/effort-semaine.mjs).
 const CARTES_SEM_VERSION = '20261026', CARTES_SEM_NIV = 16, CARTES_SEM_DOI = '10.15468/dl.wa632u';
-const MIG_GRIS = [90, 100, 98], MIG_GRIS_ALPHA = 120;   // teinte de la maquette, hors de la rampe des frequences
+// Teinte de la maquette, hors de la rampe des frequences. Opacite 60 / 255 (24 %) : a 120, Mathis le trouvait
+// trop fonce (2026-10-27).
+const MIG_GRIS = [90, 100, 98], MIG_GRIS_ALPHA = 60;
 const CARTES_MOIS = ['janv','fév','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'];
 let _semIndexCache = null;
 async function _loadSemIndex(){
@@ -15804,48 +15806,38 @@ function _semImage(e, s){
   return mem.rendus.get(cle);
 }
 // Gris ou l'oiseau manque : case prospectee (effort 2) sans rang pour l'espece ; rend null si l'effort n'a pas
-// pu etre lu. Choix de Mathis le 2026-10-27 : un seul gris, ADOUCI comme la couleur de l'oiseau (memes poids
-// que _carteTeinte). En carres nets avec un second gris « peu prospecte » (effort 1, encore dans le fichier),
+// pu etre lu. Choix de Mathis le 2026-10-27 : un seul gris, ADOUCI (voir la boucle). En carres nets avec un second gris « peu prospecte » (effort 1, encore dans le fichier),
 // une semaine donnait un damier mouchete : trop peu d'observations par case et par semaine.
+// Le gris couvre le MONDE (cadre MIG_GRIS_CADRE, de 85 N a 85 S comme la carte), pas le seul cadre de l'espece :
+// borne a ce cadre, il s'arretait net au milieu des Etats-Unis (vu par Mathis le 2026-10-27). Un pixel par case :
+// a 2 ou 3, l'image du monde aurait fait 8 a 19 millions de pixels a colorier chaque semaine.
+const MIG_GRIS_CADRE = { i0:0, j0:20, w:1440, h:680 };
 function _semGris(e, s){
   const mem = _semOuvrir(e), cle = 'g' + s;
   if(!mem.rendus.has(cle)) mem.rendus.set(cle, (async () => {
     const [g, eff] = await Promise.all([_semGrille(e, s), _effortSemaine()]);
     if(!eff) return null;
     const NI = 1440, N = NI * 720, bloc = (s >> 2) * N, dec = (s & 3) * 2;
-    const W = e.w, H = e.h, cadre = _carteCadre(e), sud = cadre[0][0], nord = cadre[1][0];
+    const M = MIG_GRIS_CADRE, W = M.w, H = M.h, cadre = _carteCadre(M), sud = cadre[0][0], nord = cadre[1][0];
     const mercY = phi => Math.log(Math.tan(Math.PI / 4 + (phi * Math.PI / 180) / 2));
     const mN = mercY(nord), mS = mercY(sud);
-    const PX = W > 900 ? 2 : 3;
+    const PX = 1;
     const cw = W * PX, ch = Math.round(cw * (mN - mS) / (W * CARTES_CASE * Math.PI / 180));
     const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
     const ctx = cv.getContext('2d'), out = ctx.createImageData(cw, ch), d = out.data;
-    // 1 = gris (prospectee, oiseau pas note), 2 = couleur de l'oiseau, 0 = rien
-    const sorte = new Uint8Array(W * H);
-    for(let jj = 0; jj < H; jj++){
-      const ligne = bloc + (e.j0 + jj) * NI + e.i0;
-      for(let ii = 0; ii < W; ii++){
-        const k = jj * W + ii;
-        sorte[k] = g[k] ? 2 : ((eff[ligne + ii] >> dec) & 3) === 2 ? 1 : 0;
-      }
-    }
+    // Case la plus proche, un pixel par case : c'est le navigateur qui adoucit en agrandissant l'image (sauf en
+    // « Rendu net », voulu). Calculer l'adoucissement soi-meme sur le monde faisait sauter des semaines a la
+    // lecture au telephone (2 images posees sur 20, processeur ralenti 4 fois).
     for(let y = 0; y < ch; y++){
       const lat = (2 * Math.atan(Math.exp(mN - (y + 0.5) / ch * (mN - mS))) - Math.PI / 2) * 180 / Math.PI;
-      const v = (nord - lat) / CARTES_CASE, jf = Math.floor(v - 0.5), fv = v - 0.5 - jf;
+      const J = M.j0 + Math.min(H - 1, Math.floor((nord - lat) / CARTES_CASE));
+      const ligne = bloc + J * NI, je = J - e.j0, dansJ = je >= 0 && je < e.h;
       for(let x = 0; x < cw; x++){
-        const u = (x + 0.5) / cw * W, i = Math.floor(u - 0.5), fu = u - 0.5 - i;
-        let wG = 0, wD = 0;
-        for(let q = 0; q < 4; q++){
-          const ii = i + (q & 1), jj = jf + (q >> 1);
-          if(ii < 0 || ii >= W || jj < 0 || jj >= H) continue;
-          const z = sorte[jj * W + ii], wt = ((q & 1) ? fu : 1 - fu) * ((q >> 1) ? fv : 1 - fv);
-          if(z === 2) wD += wt; else if(z === 1) wG += wt;
-        }
-        const w = wG + wD;
-        if(!wG || w < 0.35) continue;
+        if(((eff[ligne + x] >> dec) & 3) !== 2) continue;
+        const ie = x - e.i0;
+        if(dansJ && ie >= 0 && ie < e.w && g[je * e.w + ie]) continue;   // l'oiseau est note ici
         const o = (y * cw + x) * 4;
-        d[o] = MIG_GRIS[0]; d[o + 1] = MIG_GRIS[1]; d[o + 2] = MIG_GRIS[2];
-        d[o + 3] = MIG_GRIS_ALPHA * (wG / w) * Math.min(1, w / 0.6);
+        d[o] = MIG_GRIS[0]; d[o + 1] = MIG_GRIS[1]; d[o + 2] = MIG_GRIS[2]; d[o + 3] = MIG_GRIS_ALPHA;
       }
     }
     ctx.putImageData(out, 0, 0);
@@ -15908,7 +15900,7 @@ function _migCourbeHtml(sem, s, etroit){
       <span style="position:absolute; left:6px; top:-2px; color:var(--ink-3);">${haut} %</span>
     </div>
     <div aria-hidden="true" style="display:flex; color:var(--ink-3);">${mois}</div>
-    <div style="color:var(--ink-3);">Part des observations d'oiseaux de la zone qui sont cette espèce, semaine par semaine, toutes années confondues. Surtout des photos : un passage spectaculaire y pèse plus qu'un oiseau discret. Bouger ou zoomer la carte change la courbe. Source : <a href="https://www.inaturalist.org" target="_blank" rel="noopener">iNaturalist</a>.</div>`;
+    <div style="color:var(--ink-3);">Part de cette espèce parmi les oiseaux notés sur iNaturalist dans la zone affichée. Source : <a href="https://www.inaturalist.org" target="_blank" rel="noopener">iNaturalist</a>.</div>`;
 }
 let _migFsMap = null, _migFsPlay = null;
 async function _openMigrationFullscreen(sci){
@@ -15952,9 +15944,9 @@ async function _openMigrationFullscreen(sci){
           <span>${presence ? 'Beaucoup d\'observations' : 'Fréquent'}</span>
         </span>
         <span id="migFsGrisLeg" style="display:inline-flex; align-items:center; gap:6px;"><b style="display:inline-block; width:24px; height:12px; border-radius:3px; border:1px solid var(--line-2); background:rgba(${MIG_GRIS}, ${(MIG_GRIS_ALPHA / 255).toFixed(2)});"></b>Prospecté, oiseau pas noté</span>
-        <button type="button" data-map-render-toggle style="font-size:11px; padding:3px 10px; border:1px solid var(--line); background:var(--surface-2); border-radius:4px; cursor:pointer;">${document.body.dataset.mapRender === 'sharp' ? '🌊 Rendu flou' : '🔲 Rendu net'}</button>
+        <button type="button" data-map-render-toggle class="btn ghost tiny">${_libelleRendu()}</button>
       </div>
-      <div style="padding:0 20px; font-size:14px; color:var(--ink-2);">Les couleurs se comparent d'un lieu à l'autre au sein d'une même semaine : elles disent où l'espèce est la plus fréquente cette semaine-là, pas combien elle est nombreuse. ${entry.src === 'p' ? 'Cette espèce n\'a de données que mois par mois : chaque semaine montre son mois.' : 'Là où il y a peu d\'observations, chaque semaine est mêlée à moitié avec ses deux voisines.'}</div>
+      <div style="padding:0 20px; font-size:14px; color:var(--ink-2);">${entry.src === 'p' ? 'Couleurs : où l\'espèce est le plus notée ; ses données ne vont que mois par mois, chaque semaine montre son mois.' : 'Couleurs : où l\'espèce est la plus fréquente cette semaine ; là où il y a peu d\'observations, les semaines voisines comptent à moitié.'}</div>
       <div style="padding:4px 20px 12px; font-size:10.5px; color:var(--ink-3);">${source}</div>
     </div>`;
   document.body.appendChild(modal);
@@ -16007,7 +15999,7 @@ async function _openMigrationFullscreen(sci){
     // Chaque semaine se colorie a la demande (une centaine de ms) et l'on prepare les trois suivantes :
     // colorier les 52 a l'ouverture prendrait plusieurs secondes, bien plus au telephone. L'image affichee est
     // celle de la semaine demandee au moment ou elle est prete, jamais une image en retard.
-    let overlay = null, gris = null, demande = 0;
+    let overlay = null, gris = null, demande = 0, affichee = -1;
     const cadre = _carteCadre(entry);
     // Courbe iNaturalist : redemandee quand la carte s'est posee (500 ms sans mouvement), la reponse la plus
     // recente seule est dessinee ; changer de semaine ne deplace que la bande pale.
@@ -16046,7 +16038,8 @@ async function _openMigrationFullscreen(sci){
       try{
         const [r, rg] = await Promise.all([_semImage(entry, i), _semGris(entry, i).catch(() => null)]);
         if(_migFsMap !== carte || demande !== i) return;
-        if(rg){ if(gris) gris.setUrl(rg.url); else gris = L.imageOverlay(rg.url, cadre, { interactive:false, className:'sharp-overlay', zIndex:1 }).addTo(carte); }
+        affichee = i;
+        if(rg){ if(gris) gris.setUrl(rg.url); else gris = L.imageOverlay(rg.url, _carteCadre(MIG_GRIS_CADRE), { interactive:false, className:'sharp-overlay', zIndex:1 }).addTo(carte); }
         else { if(gris){ carte.removeLayer(gris); gris = null; } modal.querySelector('#migFsGrisLeg').hidden = true; }
         if(overlay) overlay.setUrl(r.url);
         else overlay = L.imageOverlay(r.url, cadre, { opacity:0.78, interactive:false, className:'sharp-overlay', zIndex:2 }).addTo(carte);
@@ -16060,6 +16053,9 @@ async function _openMigrationFullscreen(sci){
       else {
         playBtn.classList.add('playing');
         _migFsPlay = setInterval(() => {
+          // la semaine suivante attend que celle-ci soit a l'ecran : sur un telephone lent, la lecture ralentit
+          // au lieu de ne montrer que la date qui defile sur une carte figee
+          if(affichee !== +slider.value) return;
           let v = (+slider.value + 1) % 52;
           slider.value = String(v);
           setFrame(v);
@@ -20131,6 +20127,8 @@ function _updateAdminBuildStamp(){
 // Restaure la preference du rendu des overlays raster (net/flou) au boot
 try{ const m = localStorage.getItem('mb-map-render'); if(m === 'sharp') document.body.dataset.mapRender = 'sharp'; }catch(_){}
 // Toggle rendu net/flou sur les cartes range + migration. Persiste en localStorage.
+// Libelle sans emoji, bouton .btn.ghost.tiny de la charte (Mathis, 2026-10-27 : emojis et police systeme juraient).
+function _libelleRendu(){ return document.body.dataset.mapRender === 'sharp' ? 'Rendu flou' : 'Rendu net'; }
 function _toggleMapRender(){
   const cur = document.body.dataset.mapRender === 'sharp' ? 'sharp' : 'smooth';
   const next = cur === 'sharp' ? 'smooth' : 'sharp';
@@ -20139,7 +20137,7 @@ function _toggleMapRender(){
   try{ localStorage.setItem('mb-map-render', next); }catch(_){}
   // Update les labels des boutons visibles
   document.querySelectorAll('[data-map-render-toggle]').forEach(b => {
-    b.textContent = next === 'sharp' ? '🌊 Rendu flou' : '🔲 Rendu net';
+    b.textContent = _libelleRendu();
   });
 }
 document.addEventListener('click', e => {
