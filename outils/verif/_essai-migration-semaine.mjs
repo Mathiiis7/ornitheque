@@ -50,9 +50,13 @@ for (const [mode, opts] of [['ordinateur', { viewport: { width: 1440, height: 90
     await page.waitForTimeout(2000);
     await page.click('#migFsPlayBtn');
     const valeur = await page.evaluate(() => +document.getElementById('migFsSlider').value);
+    // courbe iNaturalist (en direct : un échec du réseau se dit, il ne compte pas comme un défaut de l'appli)
+    try { await page.waitForFunction(() => document.querySelector('#migFsCourbe path') || /ne répond pas|ne connaît pas/.test(document.getElementById('migFsCourbe').textContent), null, { timeout: 20000 }); } catch (_) {}
+    const courbe = await page.evaluate(() => { const p = document.querySelector('#migFsCourbe path'); return p ? `${(p.getAttribute('d').match(/[ML]/g) || []).length} points` : document.getElementById('migFsCourbe').textContent.slice(0, 80); });
+    const bande = await page.evaluate(() => document.querySelector('#migFsGraphe rect')?.getAttribute('x'));
     const bon = couches >= 1 && r20.srcs !== r0.srcs && r20.libelle === '21-27 mai' && valeur > 22 && !r0.debordement && r0.curseur >= (mode === 'telephone' ? 250 : 800);
     ok &&= bon;
-    console.log(`${bon ? 'OK    ' : 'DÉFAUT'} ${mode.padEnd(10)} ${sci.padEnd(26)} couches ${couches} en ${ms} ms, « ${r0.libelle} » -> « ${r20.libelle} », lecture jusqu'à ${valeur}, curseur ${r0.curseur} px, débordement ${r0.debordement}${/mois par mois/.test(r0.note) ? ', note 12 mois' : ''}`);
+    console.log(`${bon ? 'OK    ' : 'DÉFAUT'} ${mode.padEnd(10)} ${sci.padEnd(26)} couches ${couches} en ${ms} ms, « ${r0.libelle} » -> « ${r20.libelle} », lecture jusqu'à ${valeur}, curseur ${r0.curseur} px, débordement ${r0.debordement}, courbe : ${courbe}, bande x=${bande}${/mois par mois/.test(r0.note) ? ', note 12 mois' : ''}`);
   }
   // Fluidité au téléphone : processeur ralenti 4 fois, lecture 6 s sur une espèce mondiale qu'on rouvre
   // (rien en mémoire) ; on compte les images de fréquence réellement posées.

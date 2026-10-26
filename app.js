@@ -15742,7 +15742,7 @@ async function _renderSpeciesRangeCard(sci){
 // Les 236 cartes de presence tirees des autres sources n'ont que 12 mois : la semaine y montre son mois.
 // Gris ou l'oiseau manque : effort-s.png, commun a toutes les especes (outils/build/effort-semaine.mjs).
 const CARTES_SEM_VERSION = '20261026', CARTES_SEM_NIV = 16, CARTES_SEM_DOI = '10.15468/dl.wa632u';
-const MIG_GRIS = [90, 100, 98];   // teinte de la maquette, hors de la rampe des frequences
+const MIG_GRIS = [90, 100, 98], MIG_GRIS_ALPHA = 120;   // teinte de la maquette, hors de la rampe des frequences
 const CARTES_MOIS = ['janv','fév','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'];
 let _semIndexCache = null;
 async function _loadSemIndex(){
@@ -15795,8 +15795,10 @@ function _semImage(e, s){
   if(!mem.rendus.has(cle)) mem.rendus.set(cle, _semGrille(e, s).then(g => _carteColorier(e, g, CARTES_SEM_NIV)));
   return mem.rendus.get(cle);
 }
-// Gris ou l'oiseau manque : case prospectee (effort 2) ou peu prospectee (1) sans rang pour l'espece. Case la
-// plus proche, sans lissage (comme la maquette retenue) ; rend null si l'effort n'a pas pu etre lu.
+// Gris ou l'oiseau manque : case prospectee (effort 2) sans rang pour l'espece ; rend null si l'effort n'a pas
+// pu etre lu. Choix de Mathis le 2026-10-27 : un seul gris, ADOUCI comme la couleur de l'oiseau (memes poids
+// que _carteTeinte). En carres nets avec un second gris « peu prospecte » (effort 1, encore dans le fichier),
+// une semaine donnait un damier mouchete : trop peu d'observations par case et par semaine.
 function _semGris(e, s){
   const mem = _semOuvrir(e), cle = 'g' + s;
   if(!mem.rendus.has(cle)) mem.rendus.set(cle, (async () => {
@@ -15810,18 +15812,32 @@ function _semGris(e, s){
     const cw = W * PX, ch = Math.round(cw * (mN - mS) / (W * CARTES_CASE * Math.PI / 180));
     const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
     const ctx = cv.getContext('2d'), out = ctx.createImageData(cw, ch), d = out.data;
-    const alpha = [0, 50, 120];
+    // 1 = gris (prospectee, oiseau pas note), 2 = couleur de l'oiseau, 0 = rien
+    const sorte = new Uint8Array(W * H);
+    for(let jj = 0; jj < H; jj++){
+      const ligne = bloc + (e.j0 + jj) * NI + e.i0;
+      for(let ii = 0; ii < W; ii++){
+        const k = jj * W + ii;
+        sorte[k] = g[k] ? 2 : ((eff[ligne + ii] >> dec) & 3) === 2 ? 1 : 0;
+      }
+    }
     for(let y = 0; y < ch; y++){
       const lat = (2 * Math.atan(Math.exp(mN - (y + 0.5) / ch * (mN - mS))) - Math.PI / 2) * 180 / Math.PI;
-      const jj = Math.min(H - 1, Math.floor((nord - lat) / CARTES_CASE));
-      const ligne = bloc + (e.j0 + jj) * NI + e.i0;
+      const v = (nord - lat) / CARTES_CASE, jf = Math.floor(v - 0.5), fv = v - 0.5 - jf;
       for(let x = 0; x < cw; x++){
-        const ii = Math.floor(x / PX);
-        if(g[jj * W + ii]) continue;
-        const a = alpha[(eff[ligne + ii] >> dec) & 3];
-        if(!a) continue;
+        const u = (x + 0.5) / cw * W, i = Math.floor(u - 0.5), fu = u - 0.5 - i;
+        let wG = 0, wD = 0;
+        for(let q = 0; q < 4; q++){
+          const ii = i + (q & 1), jj = jf + (q >> 1);
+          if(ii < 0 || ii >= W || jj < 0 || jj >= H) continue;
+          const z = sorte[jj * W + ii], wt = ((q & 1) ? fu : 1 - fu) * ((q >> 1) ? fv : 1 - fv);
+          if(z === 2) wD += wt; else if(z === 1) wG += wt;
+        }
+        const w = wG + wD;
+        if(!wG || w < 0.35) continue;
         const o = (y * cw + x) * 4;
-        d[o] = MIG_GRIS[0]; d[o + 1] = MIG_GRIS[1]; d[o + 2] = MIG_GRIS[2]; d[o + 3] = a;
+        d[o] = MIG_GRIS[0]; d[o + 1] = MIG_GRIS[1]; d[o + 2] = MIG_GRIS[2];
+        d[o + 3] = MIG_GRIS_ALPHA * (wG / w) * Math.min(1, w / 0.6);
       }
     }
     ctx.putImageData(out, 0, 0);
@@ -15829,6 +15845,62 @@ function _semGris(e, s){
     return { url:URL.createObjectURL(blob) };
   })());
   return mem.rendus.get(cle);
+}
+// Courbe de passage de la zone affichee, demandee en direct a iNaturalist (choix de Mathis le 2026-10-26,
+// branchee le 2026-10-27 apres lecture de leurs conditions du 11/07/2023 : rien n'interdit l'usage par un
+// site tiers, pas de logo (point 6), observations en CC BY-NC). Semaine par semaine, toutes annees confondues :
+// la part des observations d'oiseaux (taxon 3) du rectangle qui sont cette espece, sinon l'ete paraitrait
+// charge parce qu'on sort plus. Leurs regles d'API : 1 requete par seconde, 10 000 par jour ; ici 2 par
+// mouvement de carte, une fois la carte posee. Le numero de l'espece se cherche par son nom EXACT : taxon_name
+// seul rendait la Grue de paradis pour « Grus grus » (essai du 2026-10-26).
+const INAT_API = 'https://api.inaturalist.org/v1';
+const _inatCache = new Map(), _inatIds = new Map();
+function _inatJson(url){
+  if(!_inatCache.has(url)) _inatCache.set(url, fetch(url).then(r => { if(!r.ok) throw new Error(r.status); return r.json(); }).catch(err => { _inatCache.delete(url); throw err; }));
+  return _inatCache.get(url);
+}
+function _inatIdEspece(sci){
+  if(!_inatIds.has(sci)) _inatIds.set(sci, _inatJson(`${INAT_API}/taxa?q=${encodeURIComponent(sci)}&rank=species&per_page=30`)
+    .then(j => (j.results.find(t => t.name.toLowerCase() === sci.toLowerCase()) || {}).id || null)
+    .catch(err => { _inatIds.delete(sci); throw err; }));
+  return _inatIds.get(sci);
+}
+// 52 valeurs {n, part} ; iNaturalist compte 53 semaines, la 53e est fondue dans la 52e comme nos cartes.
+// Moins de 50 oiseaux notes dans la semaine : pas de point (une poignee d'observations fait n'importe quoi).
+async function _inatSemaines(sci, b){
+  const r = v => Math.round(v * 100) / 100;
+  const zone = `swlat=${r(Math.max(-89, b.getSouth()))}&swlng=${r(Math.max(-180, b.getWest()))}&nelat=${r(Math.min(89, b.getNorth()))}&nelng=${r(Math.min(180, b.getEast()))}`;
+  const id = await _inatIdEspece(sci);
+  if(!id) return null;
+  const [esp, tous] = await Promise.all([id, 3].map(t => _inatJson(`${INAT_API}/observations/histogram?taxon_id=${t}&${zone}&interval=week_of_year&verifiable=true`)));
+  const e = esp.results.week_of_year, t = tous.results.week_of_year;
+  return Array.from({ length:52 }, (_, w) => {
+    const n = (e[w + 1] || 0) + (w === 51 ? e[53] || 0 : 0), d = (t[w + 1] || 0) + (w === 51 ? t[53] || 0 : 0);
+    return { n, part: d >= 50 ? n / d : null };
+  });
+}
+// Dessin de la courbe : sem = 52 valeurs, s = semaine affichee (bande pale), etroit = initiales des mois.
+function _migCourbeHtml(sem, s, etroit){
+  const max = Math.max(1e-6, ...sem.map(v => v.part || 0));
+  const pts = sem.map((v, w) => v.part === null ? null : [(w + 0.5) / 52 * 100, 100 - v.part / max * 92]);
+  let chemin = '', ouvert = false;
+  pts.forEach(pt => { if(!pt){ ouvert = false; return; } chemin += (ouvert ? 'L' : 'M') + pt[0].toFixed(2) + ' ' + pt[1].toFixed(2) + ' '; ouvert = true; });
+  const total = sem.reduce((a, v) => a + v.n, 0);
+  const haut = (max * 100).toLocaleString('fr', { maximumFractionDigits: max < 0.01 ? 2 : 1 });
+  const mois = CARTES_MOIS.map(m => `<span style="flex:1; text-align:center;">${etroit ? m[0].toUpperCase() : m}</span>`).join('');
+  return `<div style="display:flex; flex-wrap:wrap; justify-content:space-between; gap:0 12px; margin-top:4px;">
+      <b style="color:var(--ink);">Dans la zone affichée, sur iNaturalist</b>
+      <span style="color:var(--ink-3);">${total.toLocaleString('fr')} observations de l'espèce</span>
+    </div>
+    <div id="migFsGraphe" title="Cliquer pour aller à cette semaine" style="position:relative; height:72px; margin-top:4px; border-left:1px solid var(--line-2); border-bottom:1px solid var(--line-2); cursor:pointer;">
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" style="position:absolute; inset:0; width:100%; height:100%; overflow:visible;">
+        <rect x="${s / 52 * 100}" y="0" width="${100 / 52}" height="100" fill="var(--accent)" opacity=".18"/>
+        <path d="${chemin}" fill="none" stroke="var(--accent)" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>
+      </svg>
+      <span style="position:absolute; left:6px; top:-2px; color:var(--ink-3);">${haut} %</span>
+    </div>
+    <div aria-hidden="true" style="display:flex; color:var(--ink-3);">${mois}</div>
+    <div style="color:var(--ink-3);">Part des observations d'oiseaux de la zone qui sont cette espèce, semaine par semaine, toutes années confondues. Surtout des photos : un passage spectaculaire y pèse plus qu'un oiseau discret. Bouger ou zoomer la carte change la courbe. Source : <a href="https://www.inaturalist.org" target="_blank" rel="noopener">iNaturalist</a>.</div>`;
 }
 let _migFsMap = null, _migFsPlay = null;
 async function _openMigrationFullscreen(sci){
@@ -15847,7 +15919,7 @@ async function _openMigrationFullscreen(sci){
   modal.id = 'migFsModal';
   modal.innerHTML = `
     <div id="migFsBackdrop" style="position:fixed; inset:0; background:rgba(0,0,0,.85); z-index:2147483500;"></div>
-    <div id="migFsContent" style="position:fixed; inset:5vh 5vw; z-index:2147483501; background:var(--surface); border-radius:12px; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.6);">
+    <div id="migFsContent" style="position:fixed; inset:5vh 5vw; z-index:2147483501; background:var(--surface); border-radius:12px; display:flex; flex-direction:column; overflow:hidden auto; box-shadow:0 20px 60px rgba(0,0,0,.6);">
       <div style="padding:14px 20px; display:flex; align-items:center; justify-content:space-between; gap:12px; border-bottom:1px solid var(--line);">
         <div>
           <div style="font-size:11px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.5px; font-weight:700;">🎞️ Migration semaine par semaine</div>
@@ -15855,7 +15927,8 @@ async function _openMigrationFullscreen(sci){
         </div>
         <button type="button" id="migFsClose" title="Fermer (Échap)" style="border:none; background:var(--surface-2); font-size:20px; width:36px; height:36px; border-radius:50%; cursor:pointer;">✕</button>
       </div>
-      <div id="migFsMapEl" style="flex:1; background:var(--surface-3);"></div>
+      <!-- La carte garde 260 px au moins : au telephone, avec la courbe, le reste defile en dessous. -->
+      <div id="migFsMapEl" style="flex:1 0 260px; background:var(--surface-3);"></div>
       <!-- Au telephone, la date passe sous le curseur (retour a la ligne) : sur la meme ligne, le curseur
            ne faisait que 125 px pour 52 semaines, environ 2 px d'ecran par semaine. -->
       <div style="padding:12px 20px; display:flex; flex-wrap:wrap; align-items:center; gap:4px 12px; border-top:1px solid var(--line);">
@@ -15863,16 +15936,14 @@ async function _openMigrationFullscreen(sci){
         <input type="range" id="migFsSlider" min="0" max="51" value="0" step="1" aria-label="Semaine" style="flex:1 1 240px; min-width:0; cursor:pointer;">
         <span id="migFsLabel" style="font-size:14px; color:var(--ink); min-width:9.5em; margin-left:auto; text-align:right; white-space:nowrap;">${_semLibelle(0)}</span>
       </div>
+      <div id="migFsCourbe" style="padding:0 20px 4px; font-size:14px; color:var(--ink-2);"></div>
       <div style="padding:8px 20px 4px; display:flex; flex-wrap:wrap; align-items:center; gap:6px 16px; font-size:14px; color:var(--ink-2);">
         <span style="flex:1 1 260px; display:flex; align-items:center; gap:10px;">
           <span>Rare</span>
           <div style="flex:1; height:12px; border-radius:3px; background:linear-gradient(to right, #3ea86b, #a8d155, #f5c518, #f0733a, #a11408);"></div>
           <span>${presence ? 'Beaucoup d\'observations' : 'Fréquent'}</span>
         </span>
-        <span id="migFsGrisLeg" style="display:inline-flex; flex-wrap:wrap; gap:6px 16px;">
-          <span style="display:inline-flex; align-items:center; gap:6px;"><b style="display:inline-block; width:24px; height:12px; border-radius:3px; border:1px solid var(--line-2); background:rgba(${MIG_GRIS}, ${(120 / 255).toFixed(2)});"></b>Prospecté, oiseau pas noté</span>
-          <span style="display:inline-flex; align-items:center; gap:6px;"><b style="display:inline-block; width:24px; height:12px; border-radius:3px; border:1px solid var(--line-2); background:rgba(${MIG_GRIS}, ${(50 / 255).toFixed(2)});"></b>Peu prospecté</span>
-        </span>
+        <span id="migFsGrisLeg" style="display:inline-flex; align-items:center; gap:6px;"><b style="display:inline-block; width:24px; height:12px; border-radius:3px; border:1px solid var(--line-2); background:rgba(${MIG_GRIS}, ${(MIG_GRIS_ALPHA / 255).toFixed(2)});"></b>Prospecté, oiseau pas noté</span>
         <button type="button" data-map-render-toggle style="font-size:11px; padding:3px 10px; border:1px solid var(--line); background:var(--surface-2); border-radius:4px; cursor:pointer;">${document.body.dataset.mapRender === 'sharp' ? '🌊 Rendu flou' : '🔲 Rendu net'}</button>
       </div>
       <div style="padding:0 20px; font-size:14px; color:var(--ink-2);">Les couleurs se comparent d'un lieu à l'autre au sein d'une même semaine : elles disent où l'espèce est la plus fréquente cette semaine-là, pas combien elle est nombreuse. ${entry.src === 'p' ? 'Cette espèce n\'a de données que mois par mois : chaque semaine montre son mois.' : 'Là où il y a peu d\'observations, chaque semaine est mêlée à moitié avec ses deux voisines.'}</div>
@@ -15930,9 +16001,40 @@ async function _openMigrationFullscreen(sci){
     // celle de la semaine demandee au moment ou elle est prete, jamais une image en retard.
     let overlay = null, gris = null, demande = 0;
     const cadre = _carteCadre(entry);
+    // Courbe iNaturalist : redemandee quand la carte s'est posee (500 ms sans mouvement), la reponse la plus
+    // recente seule est dessinee ; changer de semaine ne deplace que la bande pale.
+    const courbeBox = modal.querySelector('#migFsCourbe');
+    let courbe = null, cleCourbe = '', attente = null, tourCourbe = 0;
+    const dessineCourbe = () => { if(courbe) courbeBox.innerHTML = _migCourbeHtml(courbe, +slider.value, courbeBox.clientWidth < 500); };
+    const majCourbe = () => {
+      clearTimeout(attente);
+      attente = setTimeout(async () => {
+        if(_migFsMap !== carte) return;
+        const b = carte.getBounds(), cle = b.toBBoxString(), ici = ++tourCourbe;
+        if(cle === cleCourbe) return;
+        if(!courbe) courbeBox.textContent = 'Courbe iNaturalist : chargement…';
+        try{
+          const sem = await _inatSemaines(sci, b);
+          if(_migFsMap !== carte || ici !== tourCourbe) return;
+          cleCourbe = cle; courbe = sem;
+          if(sem) dessineCourbe(); else courbeBox.textContent = 'iNaturalist ne connaît pas ce nom d\'espèce : pas de courbe.';
+        }catch(err){
+          if(ici === tourCourbe) courbeBox.textContent = `iNaturalist ne répond pas (${err.message}) : pas de courbe pour l'instant.`;
+        }
+      }, 500);
+    };
+    carte.on('moveend', majCourbe);
+    majCourbe();
+    courbeBox.addEventListener('click', ev => {
+      const g = ev.target.closest('#migFsGraphe'); if(!g) return;
+      const r = g.getBoundingClientRect(), s = Math.max(0, Math.min(51, Math.floor((ev.clientX - r.left) / r.width * 52)));
+      slider.value = String(s); setFrame(s);
+    });
     const setFrame = async i => {
       demande = i;
       label.textContent = _semLibelle(i);
+      const bande = courbeBox.querySelector('#migFsGraphe rect');
+      if(bande) bande.setAttribute('x', String(i / 52 * 100));
       try{
         const [r, rg] = await Promise.all([_semImage(entry, i), _semGris(entry, i).catch(() => null)]);
         if(_migFsMap !== carte || demande !== i) return;
