@@ -15848,10 +15848,12 @@ async function _openMigrationFullscreen(sci){
         <button type="button" id="migFsClose" title="Fermer (Échap)" style="border:none; background:var(--surface-2); font-size:20px; width:36px; height:36px; border-radius:50%; cursor:pointer;">✕</button>
       </div>
       <div id="migFsMapEl" style="flex:1; background:var(--surface-3);"></div>
-      <div style="padding:12px 20px; display:flex; align-items:center; gap:12px; border-top:1px solid var(--line);">
+      <!-- Au telephone, la date passe sous le curseur (retour a la ligne) : sur la meme ligne, le curseur
+           ne faisait que 125 px pour 52 semaines, environ 2 px d'ecran par semaine. -->
+      <div style="padding:12px 20px; display:flex; flex-wrap:wrap; align-items:center; gap:4px 12px; border-top:1px solid var(--line);">
         <button type="button" id="migFsPlayBtn" class="pc-lecture pc-lecture-mini" aria-label="Lire l'animation" title="Lire l'animation">${PC_LECTURE_SVG}</button>
-        <input type="range" id="migFsSlider" min="0" max="51" value="0" step="1" aria-label="Semaine" style="flex:1; min-width:0; cursor:pointer;">
-        <span id="migFsLabel" style="font-size:14px; color:var(--ink); min-width:9.5em; text-align:right; white-space:nowrap;">${_semLibelle(0)}</span>
+        <input type="range" id="migFsSlider" min="0" max="51" value="0" step="1" aria-label="Semaine" style="flex:1 1 240px; min-width:0; cursor:pointer;">
+        <span id="migFsLabel" style="font-size:14px; color:var(--ink); min-width:9.5em; margin-left:auto; text-align:right; white-space:nowrap;">${_semLibelle(0)}</span>
       </div>
       <div style="padding:8px 20px 4px; display:flex; flex-wrap:wrap; align-items:center; gap:6px 16px; font-size:14px; color:var(--ink-2);">
         <span style="flex:1 1 260px; display:flex; align-items:center; gap:10px;">
@@ -15865,7 +15867,8 @@ async function _openMigrationFullscreen(sci){
         </span>
         <button type="button" data-map-render-toggle style="font-size:11px; padding:3px 10px; border:1px solid var(--line); background:var(--surface-2); border-radius:4px; cursor:pointer;">${document.body.dataset.mapRender === 'sharp' ? '🌊 Rendu flou' : '🔲 Rendu net'}</button>
       </div>
-      <div style="padding:0 20px 12px; font-size:10.5px; color:var(--ink-3);">Les couleurs se comparent d'un lieu à l'autre au sein d'une même semaine : elles disent où l'espèce est la plus fréquente cette semaine-là, pas combien elle est nombreuse. ${entry.src === 'p' ? 'Cette espèce n\'a de données que mois par mois : chaque semaine montre son mois.' : 'Là où il y a peu d\'observations, chaque semaine est mêlée à moitié avec ses deux voisines.'} ${source}</div>
+      <div style="padding:0 20px; font-size:14px; color:var(--ink-2);">Les couleurs se comparent d'un lieu à l'autre au sein d'une même semaine : elles disent où l'espèce est la plus fréquente cette semaine-là, pas combien elle est nombreuse. ${entry.src === 'p' ? 'Cette espèce n\'a de données que mois par mois : chaque semaine montre son mois.' : 'Là où il y a peu d\'observations, chaque semaine est mêlée à moitié avec ses deux voisines.'}</div>
+      <div style="padding:4px 20px 12px; font-size:10.5px; color:var(--ink-3);">${source}</div>
     </div>`;
   document.body.appendChild(modal);
   const closeModal = () => {

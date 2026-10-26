@@ -32,8 +32,10 @@ for (const [mode, opts] of [['ordinateur', { viewport: { width: 1440, height: 90
       couches: document.querySelectorAll('#migFsMapEl img.leaflet-image-layer').length,
       srcs: [...document.querySelectorAll('#migFsMapEl img.leaflet-image-layer')].map(i => i.src).join(' '),
       libelle: document.getElementById('migFsLabel').textContent,
-      note: document.querySelector('#migFsContent > div:last-child').textContent,
+      note: document.getElementById('migFsContent').textContent,
       debordement: document.documentElement.scrollWidth > innerWidth,
+      // en pixels d'ECRAN (getBoundingClientRect, body en zoom 0,85)
+      curseur: Math.round(document.getElementById('migFsSlider').getBoundingClientRect().width),
     }));
     const r0 = await lire();
     couches = r0.couches;
@@ -48,9 +50,26 @@ for (const [mode, opts] of [['ordinateur', { viewport: { width: 1440, height: 90
     await page.waitForTimeout(2000);
     await page.click('#migFsPlayBtn');
     const valeur = await page.evaluate(() => +document.getElementById('migFsSlider').value);
-    const bon = couches >= 1 && r20.srcs !== r0.srcs && r20.libelle === '21-27 mai' && valeur > 22 && !r0.debordement;
+    const bon = couches >= 1 && r20.srcs !== r0.srcs && r20.libelle === '21-27 mai' && valeur > 22 && !r0.debordement && r0.curseur >= (mode === 'telephone' ? 250 : 800);
     ok &&= bon;
-    console.log(`${bon ? 'OK    ' : 'DÉFAUT'} ${mode.padEnd(10)} ${sci.padEnd(26)} couches ${couches} en ${ms} ms, « ${r0.libelle} » -> « ${r20.libelle} », lecture jusqu'à ${valeur}, débordement ${r0.debordement}${/mois par mois/.test(r0.note) ? ', note 12 mois' : ''}`);
+    console.log(`${bon ? 'OK    ' : 'DÉFAUT'} ${mode.padEnd(10)} ${sci.padEnd(26)} couches ${couches} en ${ms} ms, « ${r0.libelle} » -> « ${r20.libelle} », lecture jusqu'à ${valeur}, curseur ${r0.curseur} px, débordement ${r0.debordement}${/mois par mois/.test(r0.note) ? ', note 12 mois' : ''}`);
+  }
+  // Fluidité au téléphone : processeur ralenti 4 fois, lecture 6 s sur une espèce mondiale qu'on rouvre
+  // (rien en mémoire) ; on compte les images de fréquence réellement posées.
+  if (mode === 'telephone') {
+    const cdp = await ctx.newCDPSession(page);
+    await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+    await page.evaluate(() => { document.getElementById('migFsClose')?.click(); const b = document.createElement('button'); b.className = 'mig-fs-btn'; b.dataset.sci = 'Acanthis flammea'; document.body.appendChild(b); b.click(); b.remove(); });
+    await page.waitForFunction(() => document.querySelectorAll('#migFsMapEl img.leaflet-image-layer').length >= 2, null, { timeout: 60000 });
+    await page.evaluate(() => { window.__vues = new Set(); const img = [...document.querySelectorAll('#migFsMapEl img.leaflet-image-layer')].pop(); new MutationObserver(() => window.__vues.add(img.src)).observe(img, { attributes: true, attributeFilter: ['src'] }); });
+    await page.click('#migFsPlayBtn');
+    await page.waitForTimeout(6000);
+    await page.click('#migFsPlayBtn');
+    const { vues, semaine } = await page.evaluate(() => ({ vues: window.__vues.size, semaine: +document.getElementById('migFsSlider').value }));
+    const fluide = vues >= semaine * 0.6;
+    ok &&= fluide;
+    console.log(`${fluide ? 'OK    ' : 'DÉFAUT'} telephone  processeur /4, Sizerin flammé : ${vues} images posées pour ${semaine} semaines lues en 6 s`);
+    await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
   }
   if (erreurs.length) { ok = false; console.log('erreurs', mode, erreurs); }
   await ctx.close();
