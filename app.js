@@ -1908,9 +1908,10 @@ const SCI_ALIAS = {
   // anciens noms sur beaucoup de datasets.
   'cecropis daurica': 'cecropis rufula',
   'hirundo daurica': 'cecropis rufula',
-  // Traquet oreillard split : Oenanthe hispanica (ouest) et O. melanoleuca (est). Aux Balkans
-  // c'est melanoleuca ; les anciens records / dataset legacy utilisent encore hispanica.
-  'oenanthe hispanica': 'oenanthe melanoleuca',
+  // Traquet oreillard : PAS d'alias. Oenanthe hispanica (ouest) et O. melanoleuca (est) sont deux
+  // espèces chez eBird, et nos tables les séparent (hispanica : ES 6, PT 7, IT 8 ; melanoleuca : GR 3,
+  // BG 6...). L'alias hispanica -> melanoleuca, pensé pour d'anciens relevés des Balkans, mettait le
+  // Traquet oreillard d'Espagne au palier 10 et celui du Portugal sans mesure (retiré le 2026-10-26).
   // Sylvia -> Curruca (fauvettes) : anciens noms de genre pour toutes les fauvettes.
   'sylvia curruca': 'curruca curruca',
   'sylvia cantillans': 'curruca cantillans',
@@ -7885,9 +7886,9 @@ async function renderMap(){
   const mine = mapMode==='mine';
   $('#mapCtrlsMine').style.display = mine ? '' : 'none';
   $('#mapCtrlsEbird').style.display = mine ? 'none' : '';
-  // Boutons Dessiner/Effacer visibles seulement en mode "A cocher" ET quand aucune espece
-  // n'est chargee (fiche espece = dessiner n'a pas de sens, on affiche deja les obs cibles).
-  const showDraw = mapMode === 'missing' && !_hasSpeciesSearch();
+  // Boutons Dessiner/Effacer visibles dans tous les onglets (2026-10-26) quand aucune espece n'est
+  // chargee (fiche espece = dessiner n'a pas de sens, on affiche deja les obs cibles).
+  const showDraw = !_hasSpeciesSearch();
   const drawStart = $('#mapDrawStart'), drawClear = $('#mapDrawClear');
   if(drawStart) drawStart.style.display = showDraw ? '' : 'none';
   if(drawClear) drawClear.style.display = (showDraw && ebFilter.polygon) ? '' : 'none';
@@ -8214,8 +8215,15 @@ async function _renderModeHotspots(){
   if(cnt) cnt.textContent='… chargement';
   // Snapshot du sequence courant : si un autre render demarre entre-temps, on ne touche
   // plus a l'UI (addTo, fitLayer, textContent) pour eviter d'ecraser avec la mauvaise zone.
+  // Une zone dessinée : les départements ou régions qu'elle touche, comme le Récent.
+  const parDessin = ebFilter.polygon ? _ctZonesRecent() : null;
+  if(parDessin && !parDessin.zones.length){
+    _hotspotsRunSeq++; if(_lyrHotspots) _lyrHotspots.clearLayers(); _loaded.hotspots = '';
+    if(cnt) cnt.textContent = parDessin.trop ? `Ta zone touche ${parDessin.trop} départements, sur plus de deux régions : dessine-la plus petite.` : '';
+    return;
+  }
   const myRun = _hotspotsRunSeq + 1;
-  await _loadHotspotsLayer(zone);
+  await _loadHotspotsLayer(parDessin ? parDessin.zones : zone);
   if(myRun !== _hotspotsRunSeq) return;
   _lyrHotspots.addTo(_map);
   const n = _lyrHotspots.getLayers().length;
@@ -8337,15 +8345,17 @@ async function _drawFinish(){
   _drawState.active = false;
   _drawState.finalPoly = L.polygon(_drawState.vertices, { color:'#0b7c77', weight:2.5, fillColor:'#0b7c77', fillOpacity:0.12 });
   _drawState.finalPoly.addTo(_lyrDraw);
-  // Bascule sur le polygone dans le filtre missing.
+  // La zone vaut pour l'onglet ouvert, quel qu'il soit (Mathis, 2026-10-26) : la Ligue garde ses
+  // points dedans, le Récent et les Hotspots se lisent dedans. Sa couche s'allume, comme au clic d'une zone.
   ebFilter.polygon = _drawState.vertices.slice();
-  _loaded.missing = ''; // invalide le cache de layer
+  _loaded.missing = ''; _loaded.hotspots = '';
   const drawClear = $('#mapDrawClear'); if(drawClear) drawClear.style.display = '';
   const finishBtn = $('#mapDrawFinish'); if(finishBtn) finishBtn.style.display = 'none';
+  _ctAllumeMode();
   renderMap();
 }
 // Efface tout : polygone + filtres associes + re-render sans polygone.
-function _drawClear(){
+function _drawClear(rendre = true){
   if(_lyrDraw){ _lyrDraw.clearLayers(); }
   if(_drawState.onMapClick){ _map.off('click', _drawState.onMapClick); _drawState.onMapClick = null; }
   if(_drawState.onMapMove){ _map.off('mousemove', _drawState.onMapMove); _drawState.onMapMove = null; }
@@ -8358,8 +8368,10 @@ function _drawClear(){
   const finishBtn = $('#mapDrawFinish'); if(finishBtn) finishBtn.style.display = 'none';
   const hadPoly = !!ebFilter.polygon;
   ebFilter.polygon = null;
-  _loaded.missing = '';
-  if(hadPoly && mapMode === 'missing') renderMap();
+  _loaded.missing = ''; _loaded.hotspots = '';
+  // rendre : faux quand l'appelant change la zone puis redessine lui-même (choisir un pays, une
+  // région) ; sinon les Hotspots relisaient l'ancienne zone pour rien, jusqu'à 100 appels eBird.
+  if(hadPoly && rendre) renderMap();
 }
 // Fermer la zone : avec 3 sommets ou plus elle se ferme, avec moins le dessin s'arrête.
 function _drawTermine(){
@@ -9514,7 +9526,7 @@ function _ctCadrePays(cc){
 // ne bougent pas), ses régions s'affichent ; dans le Récent, le résumé du pays se charge (une requête).
 async function _ctOuvrePays(cc){
   if(!_ctPaysCliquable(cc)) return;
-  if(ebFilter.polygon) _drawClear();
+  if(ebFilter.polygon) _drawClear(false);
   const change = cc !== (ebFilter.country || 'FR');
   _ctPaysOuvert = cc;
   ebFilter.country = cc; ebFilter.region = cc; ebFilter.dept = '';
@@ -9559,7 +9571,7 @@ function _ctPoseZones(cc, geo){
 function _ctChoisirZone(code){
   const cc = _ctPaysOuvert;
   if(!code || !cc || cc === 'FR') return;
-  if(ebFilter.polygon) _drawClear();
+  if(ebFilter.polygon) _drawClear(false);
   const morceaux = code.split('-');
   ebFilter.region = morceaux.length === 3 ? morceaux.slice(0, 2).join('-') : code;
   ebFilter.dept = morceaux.length === 3 ? code : '';
@@ -9586,7 +9598,7 @@ function _ctAssurePaysOuvert(){
 }
 function _ctChoisirDep(code){
   if(!code || !_ctFrance()) return;
-  if(ebFilter.polygon) _drawClear();
+  if(ebFilter.polygon) _drawClear(false);
   ebFilter.region = code.split('-').slice(0, 2).join('-'); ebFilter.dept = code;
   _loaded.missing = ''; _loaded.hotspots = '';
   const rs = document.getElementById('mapEbRegion'); if(rs) rs.value = ebFilter.region;
@@ -9604,7 +9616,7 @@ function _ctChoisirDep(code){
 // ouvert (Mathis, 2026-10-26) ; dans le Récent, toutes ses listes, même lourdes la première fois.
 function _ctChoisirRegion(region, ouvrir){
   if(!region || !_ctFrance()) return;
-  if(ebFilter.polygon) _drawClear();
+  if(ebFilter.polygon) _drawClear(false);
   ebFilter.region = region; ebFilter.dept = '';
   _loaded.missing = ''; _loaded.hotspots = '';
   const rs = document.getElementById('mapEbRegion'); if(rs) rs.value = region;
@@ -9617,7 +9629,7 @@ function _ctChoisirRegion(region, ouvrir){
 // monde : le bouton ↺ et « Tous les pays » du fil d'Ariane ferment aussi le pays, comme à l'arrivée ;
 // le nom du pays dans le fil d'Ariane revient seulement au pays entier.
 function _ctRetourPays(monde){
-  if(ebFilter.polygon) _drawClear();
+  if(ebFilter.polygon) _drawClear(false);
   if(monde){
     _ctPaysOuvert = '';
     // Comme à l'arrivée, la Carte reprend le pays du site : restée sur l'Autriche, l'onglet Récent
@@ -9773,8 +9785,6 @@ document.addEventListener('click', e => {
   if(e.target.closest('#ctAriane [data-carte="pays"]')){ _ctRetourPays(false); return; }
   if(e.target.closest('#ctAriane [data-carte="region"]')){ _ctChoisirRegion(ebFilter.region); return; }
   if(e.target.closest('#ctBtnLegende')){ _ctLegendeOuverte = !_ctLegendeOuverte; _ctDessineLegendeOuverte(); return; }
-  // Le crayon dessine dans le Récent : c'est lui qui sait lire ta zone.
-  if(e.target.closest('#mapDrawStart') && mapMode !== 'missing'){ _ctModeBouton('missing')?.click(); return; }
   // Effacer ta zone ne redessine la carte que dans le Récent : le panneau, lui, doit toujours suivre.
   if(e.target.closest('#mapDrawClear')){ _ctSurligne(); _ctAppliqueCouches(); return; }
   const r = e.target.closest('#ctListeLigue .ct-rang[data-sci]');
@@ -10916,11 +10926,14 @@ async function _batch(items, n, fn){
   } return out;
 }
 // Enrichit chaque hotspot avec { allSp, mySp, toDo } - via spplist (all-time) OU obs récentes (30j)
-async function _enrichHotspots(hotspots, region, kind){
+// encore : faux dès qu'un autre chargement a pris la main. Les appels qui restent ne partent plus : passé
+// de la France à une zone dessinée, les 100 de la France continuaient (154 au lieu de 44, 2026-10-26).
+async function _enrichHotspots(hotspots, region, kind, encore = () => true){
   const tax = await _loadTaxonomy();
   const me = realPeople.find(p=>p.id===myUid);
   const mine = new Set(me ? [...me.species.keys()] : []);
   return _batch(hotspots, 8, async h => {
+    if(!encore()) return { ...h, allSp:0, mySp:0, toDo:0 };
     try{
       let sciSet;
       if(kind==='recent'){
@@ -10986,14 +10999,23 @@ async function _loadHotspotCounts(marker){
 let _hotspotsRunSeq = 0;
 async function _loadHotspotsLayer(region){
   if(!_lyrHotspots) return;
+  // Une zone dessinée se lit par les départements ou les régions qu'elle touche (le crayon marche dans
+  // tous les onglets, Mathis, 2026-10-26) : leurs hotspots réunis, seuls ceux du dessin gardés.
+  const zones = [].concat(region), poly = ebFilter.polygon;
+  region = zones.length === 1 ? zones[0] : '';
   const myRun = ++_hotspotsRunSeq;
   const stillMine = () => myRun === _hotspotsRunSeq;
-  const key = region+':'+hotspotSort;
+  const key = zones.join('+') + (poly ? ':' + poly.map(p => p.join(',')).join(';') : '') + ':' + hotspotSort;
   if(_loaded.hotspots===key && _lyrHotspots.getLayers().length) return;
   _lyrHotspots.clearLayers();
   try{
-    const list = await _ebFetch(`https://api.ebird.org/v2/ref/hotspot/${region}?fmt=json`);
-    if(!stillMine()) return;
+    let list = [];
+    for(const z of zones){
+      const l = await _ebFetch(`https://api.ebird.org/v2/ref/hotspot/${z}?fmt=json`);
+      if(!stillMine()) return;
+      if(Array.isArray(l)) list.push(...l);
+    }
+    if(poly) list = list.filter(h => typeof h.lat === 'number' && typeof h.lng === 'number' && _pointInPolygon(h.lat, h.lng, poly));
     // 100 hotspots au plus, les plus gros, pour un pays entier comme pour une région (Mathis,
     // 2026-10-26) : c'est aussi le nombre de listes d'espèces demandées à eBird pour les enrichir,
     // une par hotspot (200 avant, 40 % du plafond horaire de la clé pour un seul clic).
@@ -11019,7 +11041,7 @@ async function _loadHotspotsLayer(region){
         pool.sort((a,b)=>b.numSpeciesAllTime-a.numSpeciesAllTime);
       }
       const poolRaw = pool.slice(0, CAP);
-      const enriched = await _enrichHotspots(poolRaw, region, hotspotSort==='recent'?'recent':'all');
+      const enriched = await _enrichHotspots(poolRaw, region, hotspotSort==='recent'?'recent':'all', stillMine);
       if(!stillMine()) return;
       const usable = enriched.filter(h => (h.allSp||0) > 0);
       if(hotspotSort==='todo') usable.sort((a,b)=> b.toDo - a.toDo);
@@ -11041,7 +11063,7 @@ async function _loadHotspotsLayer(region){
       // Liste "espèces qui vous manquent ici", filtrée par mois si demandé.
       const rawMiss = Array.isArray(h.missingSci) ? h.missingSci : [];
       const filteredMiss = (hotspotSort!=='total' && monthFilter)
-        ? rawMiss.filter(sci => activeInMonth(sci, monthFilter, region, h.subnational2Code))
+        ? rawMiss.filter(sci => activeInMonth(sci, monthFilter, region || h.subnational1Code, h.subnational2Code))
         : rawMiss;
       const toDoShown = (hotspotSort==='total') ? null : filteredMiss.length;
       // Skip les hotspots sans données en mode enrichi OU sans espèce à cocher (compte tenu du filtre mois).
@@ -11071,7 +11093,7 @@ async function _loadHotspotsLayer(region){
       if(hotspotSort!=='total' && filteredMiss.length){
         // Fréquence à afficher : département > région > national (même priorité que activeInMonth).
         // Pour "mois filtré" → freq du mois, sinon pic annuel.
-        const dept = h.subnational2Code;
+        const dept = h.subnational2Code, regionH = region || h.subnational1Code;   // zone dessinée : la région du hotspot
         const freqFor = sci => {
           const k = (sci||'').toLowerCase();
           let arr = null;
@@ -11079,8 +11101,8 @@ async function _loadHotspotsLayer(region){
             const dmap = REAL_FREQ_MONTHLY_BY_REGION[dept];
             if(dmap && dmap[k]) arr = dmap[k];
           }
-          if(!arr && region && region!=='FR'){
-            const rmap = REAL_FREQ_MONTHLY_BY_REGION[region];
+          if(!arr && regionH && regionH!=='FR'){
+            const rmap = REAL_FREQ_MONTHLY_BY_REGION[regionH];
             if(rmap && rmap[k]) arr = rmap[k];
           }
           if(!arr) arr = REAL_FREQ_MONTHLY[k];
@@ -11105,7 +11127,7 @@ async function _loadHotspotsLayer(region){
         }).join('');
         // Source réellement utilisée (département si dispo, sinon région, sinon national) - affichée dans le hint.
         const scope = (dept && REAL_FREQ_MONTHLY_BY_REGION[dept]) ? dept
-                     : (region && region!=='FR' && REAL_FREQ_MONTHLY_BY_REGION[region]) ? region
+                     : (regionH && regionH!=='FR' && REAL_FREQ_MONTHLY_BY_REGION[regionH]) ? regionH
                      : 'national';
         const monthShown = monthFilter || (hotspotSort==='recent' ? (new Date().getMonth()+1) : 0);
         const hint = monthShown
