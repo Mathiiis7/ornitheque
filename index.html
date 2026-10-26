@@ -49,7 +49,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=482">
+<link rel="modulepreload" href="app.js?v=483">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -778,7 +778,9 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
                     </select>
                     </span>
                     <span class="ct-choix">
-                    <button type="button" class="cp-btn" data-ct-choix="mapCountrySel" title="Pays"><span class="cp-btn-label">Tous les pays</span><span class="cp-btn-arrow">▾</span></button>
+                    <!-- Le sélecteur de pays du site, drapeaux et continents, avec les observations de la ligue
+                         au bout de chaque ligne (Mathis, 2026-10-26) : comme le Classement. -->
+                    <button type="button" class="cp-btn" id="ctLigPaysBtn" title="Pays"><span class="cp-btn-flag" style="display:none;"></span><span class="cp-btn-label">Tous les pays</span><span class="cp-btn-arrow">▾</span></button>
                     <select class="ct-cache" id="mapCountrySel" aria-hidden="true" tabindex="-1">
                       <option value="any">Tous les pays</option>
                     </select>
@@ -1550,4 +1552,4 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=482"></script>
+<script type="module" src="app.js?v=483"></script>

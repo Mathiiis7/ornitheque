@@ -1069,7 +1069,9 @@ function _openCountryPicker(currentCode, opts = {}){
     // opts.compte (filtre pays du Classement) : le nombre a afficher vient de l'appelant, et un
     // pays visite par la ligue reste listé même sans données de rareté chez nous.
     // opts.tous : une première ligne « Tous les pays », qui rend ''.
+    // opts.unite : ce que compte le nombre, « esp. » par défaut ; « obs. » pour la ligue sur la Carte.
     const avecCompte = typeof opts.compte === 'function';
+    const unite = opts.unite || 'esp.';
     const allCodes = avecCompte ? availableCodes.slice() : availableCodes.filter(cc => COUNTRIES_REG[cc]);
     const nomPays = cc => (COUNTRIES_REG[cc] && COUNTRIES_REG[cc].name) || countryLabel(cc);
     // Si opts.sci est passe (appel depuis fiche espece), on trie par abondance pour
@@ -1231,7 +1233,7 @@ function _openCountryPicker(currentCode, opts = {}){
         html += `<div class="cp-item sans-palier${ccCourant === '' ? ' on' : ''}" data-cc="">
           <span class="cp-item-flag"></span>
           <span class="cp-item-name">${esc(opts.tous.label)}</span>
-          <span class="cp-item-exo"></span><span class="cp-item-meta">${n} esp.</span>
+          <span class="cp-item-exo"></span><span class="cp-item-meta">${n} ${unite}</span>
           <div class="reg-picker-bar"><div style="width:${Math.round(n / maxEspeces * 100)}%; color:var(--accent);"></div></div>
         </div>`;
       }
@@ -1357,7 +1359,7 @@ function _openCountryPicker(currentCode, opts = {}){
             const nSp = nEspecesDe(cc);
             meta = '<span class="cp-item-exo"></span>'
               + (nSp > 0 || avecCompte
-                  ? `<span class="cp-item-meta">${nSp} esp.</span>`
+                  ? `<span class="cp-item-meta">${nSp} ${unite}</span>`
                     + `<div class="reg-picker-bar"><div style="width:${Math.round(nSp / maxEspeces * 100)}%; color:var(--accent);"></div></div>`
                   : '<span></span><span></span>');
           }
@@ -10489,6 +10491,15 @@ function _ctSyncFiltres(){
     // Un choix autre que « Toutes / Tous » prend l'accent, comme les filtres du Birdydex.
     b.classList.toggle('actif', sel.selectedIndex > 0);
   });
+  // Le pays de la ligue : son drapeau devant son nom, comme au Classement.
+  const pb = document.getElementById('ctLigPaysBtn');
+  if(pb){
+    const cc = mapFilter.country === 'any' ? '' : mapFilter.country;
+    pb.querySelector('.cp-btn-label').textContent = cc ? countryLabel(cc) : 'Tous les pays';
+    const fl = pb.querySelector('.cp-btn-flag');
+    if(fl){ fl.innerHTML = cc ? flagImg(cc) : ''; fl.style.display = cc ? '' : 'none'; }
+    pb.classList.toggle('actif', !!cc);
+  }
   const src = document.getElementById('mapEbSource')?.value || 'ebird';
   document.querySelectorAll('[data-ct-source]').forEach(b => {
     const on = b.dataset.ctSource === src;
@@ -10570,10 +10581,26 @@ document.addEventListener('click', async e => {
     const sel = document.getElementById(choix.dataset.ctChoix); if(!sel) return;
     const options = [...sel.options].filter(o => !o.disabled).map(o => ({ value:o.value, label:o.textContent }));
     const v = await _openFilterPicker(sel.value, {
-      title: choix.title || 'Région',
+      // Le survol déplace title dans data-tip (bulle du site) : lu aux deux endroits, sinon la
+      // fenêtre Membre s'appelait « Région ».
+      title: choix.title || choix.dataset.tip || 'Région',
       options, searchable: options.length > 8 });
     if(v != null) _ctRegleMenu(sel.id, v);
     choix.focus();
+    return;
+  }
+  // Le pays de la ligue : chaque ligne compte les observations que les autres filtres (membre,
+  // rareté) laissent dans ce pays.
+  const paysLig = e.target.closest('#ctLigPaysBtn');
+  if(paysLig){
+    const f = mapFilter, tous = _mapCollectPoints();
+    const pts = tous.filter(p => (f.player === 'all' || p.uid === f.player) && _passeRarLigue(p));
+    const compte = new Map(); for(const p of pts) if(p.cc) compte.set(p.cc, (compte.get(p.cc) || 0) + 1);
+    const v = await _openCountryPicker(f.country === 'any' ? '' : f.country, {
+      availableCodes: [...new Set(tous.map(p => p.cc).filter(Boolean))], titre: 'Observées dans quel pays ?', unite: 'obs.',
+      compte: cc => compte.get(cc) || 0, tous: { label: 'Tous les pays', count: pts.length } });
+    if(v != null) _ctRegleMenu('mapCountrySel', v || 'any');
+    paysLig.focus();
     return;
   }
   const src = e.target.closest('[data-ct-source]');
