@@ -10263,6 +10263,9 @@ async function _ctMontreEspece(sci){
   const dernier = ms.reduce((a, b) => (b._rec.date > a._rec.date ? b : a));
   if(pts.length === 1) _map.setView(pts[0], Math.max(_map.getZoom(), 11), { animate:false });
   else _map.fitBounds(L.latLngBounds(pts), { ..._ctMarges(), maxZoom:12, animate:false });
+  // Plusieurs points : la liste dépliée sous la ligne les donne tous, la carte les cadre sans ouvrir
+  // la bulle de l'un d'eux, qui semblait choisi au hasard (Mathis, 2026-10-26).
+  if(ms.length > 1) return;
   // L'infobulle s'ouvre une fois les grappes refaites (leur animation dure 0,3 s) : ouverte avant, la
   // grappe refaite l'emportait (Ibis falcinelle dans les 303 points de Genusson, 2026-10-23). Si le
   // point est encore rangé dans une grappe, c'est l'infobulle de la grappe qui s'ouvre, sans zoomer plus.
@@ -10275,6 +10278,41 @@ async function _ctMontreEspece(sci){
       _ctSurvolOuvert = parent;
     }
   }, 450);
+}
+// L'espèce dépliée dans la liste du Récent : toutes ses observations sous sa ligne (Mathis, 2026-10-26 :
+// la ligne disait « 4 listes » et le clic n'en montrait qu'une, au hasard des grappes).
+let _ctRecOuverte = '';
+function _ctObsEspece(sci, gbif){
+  const s = n => n > 1 ? 's' : '', obs = [];
+  if(_lyrMissing) _lyrMissing.eachLayer(m => {
+    const r = m._rec; if(!r || r.sci !== sci) return;
+    for(const t of r.toutes || [{ date:r.date, nb:r.nb, nv:r.nv }]) obs.push({ id:L.stamp(m), lieu:r.lieu, ...t });
+  });
+  obs.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  const quand = d => gbif ? _ctDateCourte(d) : _ctIlYa(d);
+  return `<ul class="ct-rang-obs">${obs.map(o => `<li><button type="button" class="ct-obs" data-pt="${o.id}">` +
+    `<span class="ct-obs-lieu">${esc(o.lieu || 'lieu inconnu')}</span>` +
+    `<span class="ct-obs-d">${esc([quand(o.date), o.nb ? `${o.nb} oiseau${o.nb > 1 ? 'x' : ''} compté${s(o.nb)}` : '', o.nv ? 'non validée' : ''].filter(Boolean).join(' · '))}</span>` +
+    `</button></li>`).join('')}</ul>`;
+}
+// Une observation de la liste dépliée : la carte va sur son point et ouvre sa bulle. Encore rangé dans
+// une grappe, la bulle se pose à sa place sans défaire la grappe : zoomToShowLayer zoomait au plus près
+// puis écartait les points en étoile, l'éventail que Mathis avait écarté le 2026-10-24.
+let _ctSurvolLibre = null;
+function _ctVaSurObs(id){
+  const m = _lyrMissing && _lyrMissing.getLayer(+id); if(!m || !_map) return;
+  if(!_map.hasLayer(_lyrMissing)){ _ctAllume('recent'); _ctAppliqueCouches(); }
+  const ll = m.getLatLng();
+  _map.setView(ll, Math.max(_map.getZoom(), 13), { animate:false });
+  setTimeout(() => {
+    if(_ctSurvolLibre){ _map.closeTooltip(_ctSurvolLibre); _ctSurvolLibre = null; }
+    const parent = _lyrMissing.getVisibleParent ? _lyrMissing.getVisibleParent(m) : m;
+    if(!parent || parent === m) return _ctOuvreSurvol(m);
+    if(_ctSurvolOuvert){ _ctSurvolOuvert.closeTooltip(); _ctSurvolOuvert = null; }
+    _ctSurvolLibre = L.tooltip(_ctSensSurvol(ll, 11)).setLatLng(ll).setContent(_ctSurvolPoint(m));
+    _map.openTooltip(_ctSurvolLibre);
+    _map.once('click movestart', () => { if(_ctSurvolLibre){ _map.closeTooltip(_ctSurvolLibre); _ctSurvolLibre = null; } });
+  }, 350);
 }
 // Le volet Récent : une ligne par espèce (maquette finale.html, contenuRecent), tirée des triangles
 // de la carte, donc toujours d'accord avec eux.
@@ -10331,9 +10369,10 @@ function _ctListeRecent(){
   const rang = e => {
     const r = e.r, lieux = gbif ? e.n : parListes ? e.listes.size : _ctRecLieux.get(r.sci);
     const compte = !lieux ? '' : gbif ? ` · ${lieux} obs` : parListes ? ` · ${lieux} liste${s(lieux)}` : ` · ${lieux} lieu${lieux > 1 ? 'x' : ''}`;
-    return `<button type="button" class="ct-rang ct-rang-rec" data-sci="${esc(r.sci)}">${tierChip(e.w || '?', _ctCouleur(r.sci, cc), { cls:'tier-rond' })}` +
+    const ouverte = r.sci === _ctRecOuverte;
+    return `<button type="button" class="ct-rang ct-rang-rec" data-sci="${esc(r.sci)}" aria-expanded="${ouverte}">${tierChip(e.w || '?', _ctCouleur(r.sci, cc), { cls:'tier-rond' })}` +
       `<span class="col"><span class="nom">${esc(r.nom)}</span>${r.statut ? ' ' + jetonExo(r.statut) : ''}${r.nv ? '<span class="ct-tag nv">non validée</span>' : ''}<br><span class="lat">${esc(r.sci.charAt(0).toUpperCase() + r.sci.slice(1))}</span><br><span class="sous">${esc(r.lieu || 'lieu inconnu')}${compte}</span></span>` +
-      `<span class="droite">${esc(gbif ? _ctDateCourte(r.date) : _ctIlYa(r.date))}</span></button>`;
+      `<span class="droite">${esc(gbif ? _ctDateCourte(r.date) : _ctIlYa(r.date))}</span></button>` + (ouverte ? _ctObsEspece(r.sci, gbif) : '');
   };
   const vus = _ctRecTout ? rangs : rangs.slice(0, CT_RANGS_MAX);
   // D'où viennent les points : toutes les listes de la période, ou les plus récentes seulement.
@@ -10345,19 +10384,19 @@ function _ctListeRecent(){
   // Texte brut : la bulle (note, plus bas) l'échappe une fois.
   const coupes = !parListes ? [] : (L_.coupes || []).map(c => `${nomCoupe(c)} : seulement depuis le ${_ctDateLongue(c.depuis)}, eBird n'en donne pas plus de 200`);
   if(parListes && L_.plafond) coupes.push(`les ${L_.plafond.max} plus récentes sur ${L_.plafond.total}, depuis le ${_ctDateLongue(L_.plafond.depuis)} : au-delà, une seule région épuiserait la limite horaire d'eBird, partagée par tous`);
-  // D'où viennent les points : une ligne courte, le détail dans la bulle du site (Mathis, 2026-10-26 :
-  // le panneau était « très chargé »). Les textes longs d'avant sont devenus ces détails.
-  const note = (court, detail) => `<p class="ct-note" data-tip="${esc(detail)}">${court}</p>`;
+  // D'où viennent les points : entre parenthèses derrière la première phrase, « (138 listes) », le
+  // détail dans la bulle du site (Mathis, 2026-10-26 : le panneau était « très chargé »).
+  const note = (court, detail) => ` <span class="ct-note" data-tip="${esc(detail)}">(${court})</span>`;
   const source = parListes
-    ? note(`${L_.lues} liste${s(L_.lues)} lue${s(L_.lues)}${L_.reste || coupes.length ? ' (en partie)' : ''}`,
+    ? note(`${L_.lues} liste${s(L_.lues)}${L_.reste || coupes.length ? ', en partie' : ''}`,
       `Lu dans ${L_.lues === 1 ? 'la seule liste déposée' : `les ${L_.lues} listes déposées`} ici ${quand}` +
       (L_.reste ? `, ${L_.reste} pas encore lue${s(L_.reste)}` : '') + '.' + (coupes.length ? ' ' + coupes.join(' ; ') + '.' : ''))
     : gbif ? ''
-    : _ctRecListesEtat === 'lecture' ? note('… lecture des listes', 'Lecture de toutes les listes de la zone. En attendant : la dernière observation de chaque espèce.')
-    : _ctRecListesEtat === 'echec' ? note('Une observation par espèce', 'Les listes n\'ont pas répondu : la dernière observation de chaque espèce seulement, et tous les lieux des plus rares.')
-    : _ctPaysEntier(_ctRecZones) ? note('Une observation par espèce', 'Le résumé d\'eBird : la dernière observation de chaque espèce. Clique une région pour voir tous les points.')
-    : note('Une observation par espèce', 'La dernière observation de chaque espèce, et tous les lieux des plus rares.');
-  box.innerHTML = `<p class="ct-compte">${tete}</p>${source}<p class="ct-petit">Les plus rares d'abord</p>${vus.map(rang).join('')}` +
+    : _ctRecListesEtat === 'lecture' ? note('lecture des listes…', 'Lecture de toutes les listes de la zone. En attendant : la dernière observation de chaque espèce.')
+    : _ctRecListesEtat === 'echec' ? note('une observation par espèce', 'Les listes n\'ont pas répondu : la dernière observation de chaque espèce seulement, et tous les lieux des plus rares.')
+    : _ctPaysEntier(_ctRecZones) ? note('une observation par espèce', 'Le résumé d\'eBird : la dernière observation de chaque espèce. Clique une région pour voir tous les points.')
+    : note('une observation par espèce', 'La dernière observation de chaque espèce, et tous les lieux des plus rares.');
+  box.innerHTML = `<p class="ct-compte">${tete}${source}</p><p class="ct-petit">Les plus rares d'abord</p>${vus.map(rang).join('')}` +
     (n > vus.length ? `<button type="button" class="ct-plus" id="ctRecPlus">Voir les ${n - vus.length} autres</button>` : '');
 }
 // Les commandes visibles du Récent (Mathis, 2026-10-24) recopient les <select> cachés, que le code
@@ -10453,8 +10492,18 @@ document.addEventListener('click', async e => {
   }
   const src = e.target.closest('[data-ct-source]');
   if(src){ _ctRegleMenu('mapEbSource', src.dataset.ctSource); return; }
+  const o = e.target.closest('#ctListeRecent .ct-obs[data-pt]');
+  if(o){ _ctVaSurObs(o.dataset.pt); return; }
+  // Un clic sur l'espèce la déplie (toutes ses observations) et cadre la carte sur ses points ; un
+  // second clic la replie.
   const r = e.target.closest('#ctListeRecent .ct-rang[data-sci]');
-  if(r){ _ctMontreEspece(r.dataset.sci); return; }
+  if(r){
+    const sci = r.dataset.sci;
+    _ctRecOuverte = _ctRecOuverte === sci ? '' : sci;
+    _ctListeRecent();
+    if(_ctRecOuverte) _ctMontreEspece(sci);
+    return;
+  }
   if(e.target.closest('#ctRecPlus')){ _ctRecTout = true; _ctListeRecent(); }
 });
 // Le curseur dit la période en glissant, mais ne relit eBird qu'une fois lâché.

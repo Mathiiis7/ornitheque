@@ -2726,8 +2726,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-pli-resume { font-size:14px; color:var(--ink-3); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .ct-pli-corps { padding:0 0 4px; }
   .ct-pli-corps > .ct-source { margin-top:10px; }
-  /* Le message d'où viennent les points : une ligne courte, le détail dans la bulle (2026-10-26). */
-  .ct-note { font-size:14px; color:var(--ink-3); margin:2px 0; }
+  /* D'où viennent les points : « (138 listes) » derrière la première phrase, le détail dans la bulle (2026-10-26). */
+  .ct-note { color:var(--ink-3); white-space:nowrap; }
   .ct-jours-tete { font-size:14px; color:var(--ink-3); }
   .ct-jours-tete b { color:var(--ink); font-weight:600; }
   .ct-jours input[type=range] { width:100%; margin:4px 0 0; accent-color:var(--accent); cursor:pointer; }
@@ -2762,8 +2762,17 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-rang:hover .nom { text-decoration:underline; }
   .ct-rang .nom { font-weight:600; color:var(--ink); }
   .ct-rang .lat { font-style:italic; color:var(--ink-2); }
-  .ct-rang .sous { color:var(--ink-3); }
-  .ct-rang .droite { color:var(--ink-2); text-align:right; white-space:nowrap; }
+  /* Le lieu et la date dans le gris pâle du Classement (.board-sp-sous) : on les voit moins
+     directement que l'espèce (Mathis, 2026-10-26). */
+  .ct-rang .sous { color:color-mix(in srgb, var(--ink-3) 75%, var(--surface)); }
+  .ct-rang .droite { color:color-mix(in srgb, var(--ink-3) 75%, var(--surface)); text-align:right; white-space:nowrap; }
+  /* Les observations d'une espèce dépliée, sous sa ligne (2026-10-26) : le lieu, puis date et nombre
+     dans le gris pâle ; un clic mène au point. Alignées sur le nom, après la pastille. */
+  .ct-rang-obs { list-style:none; margin:0 0 6px; padding:0 0 0 38px; }
+  .ct-obs { display:flex; flex-direction:column; width:100%; padding:5px 8px; border:0; border-top:1px solid var(--line); background:none;
+    font:14px/1.35 var(--sans); color:var(--ink-2); text-align:left; cursor:pointer; }
+  .ct-obs:hover, .ct-obs:focus-visible { background:var(--surface-2); }
+  .ct-obs-d { color:color-mix(in srgb, var(--ink-3) 75%, var(--surface)); }
   .ct-volet .import-guide { margin:14px 0 0; font-size:14px; color:var(--ink-2); background:var(--surface-2); border-radius:10px; padding:9px 12px; }
   .ct-volet .import-guide summary { cursor:pointer; font-weight:600; }
   /* Téléphone et petite tablette : la carte prend la largeur, le panneau devient un tiroir */
@@ -3791,7 +3800,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .ct-poignee { height:52px; margin:-6px 0 -10px; }
     .ct-page .map-search input { height:52px; }
     /* Les menus du Récent, sa case et « Voir les autres ». */
-    .ct-filtres .filt-sel, .ct-filtres .cp-btn, .ct-filtres .ct-case, .ct-plus, .ct-source button, .ct-portee .seg button, .ct-volet > .ct-case, .ct-pli-btn { min-height:52px; }
+    .ct-filtres .filt-sel, .ct-filtres .cp-btn, .ct-filtres .ct-case, .ct-plus, .ct-source button, .ct-portee .seg button, .ct-volet > .ct-case, .ct-pli-btn, .ct-obs { min-height:52px; }
     .ct-gl-l, .ct-gl-n { min-height:52px; }
     /* Dans la liste d'une grappe, on touche la ligne, pas la pastille : elle garde la taille souris
        (à 52 px, six lignes ne tenaient plus dans la bulle, vu le 2026-10-24). */
