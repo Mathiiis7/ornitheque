@@ -1,12 +1,18 @@
+# COMMITÉ, PAS POUSSÉ (2026-10-26) : v901 / app.js?v=475 (9c6671f1). Prochain numéro v902 / 476
+- Rareté Pays / Zone dans le Récent (choix « Mesurée sur » sous les pastilles de rareté, retenu dans localStorage mb-ct-rar-zone) : _ctRarete / _ctCouleur / _ctZoneFreq, même calcul que la carte par zone de la fiche (_valeurAnnuelleZone + annualFreqToTier). Il s'applique au filtre, aux tris, aux points, à la liste, à eBird comme à GBIF ; les Hotspots et la ligue restent sur le pays. Espèce absente des listes de la zone = palier 10 ; palier 0 du pays reste 0.
+- « Zone » grisé, avec une phrase, quand il n'y a pas de zone, pour une zone dessinée, ou dans les 8 pays dont les fréquences sont rangées en régions regroupées et pas dans les zones eBird de la Carte : GB, CH, HU, SI, LV, MK, ME, MD (mesuré : 36 autres pays et la France concordent). Piste possible : rattacher chaque zone de la Carte à sa région regroupée (outils/config, zones-agregees).
+- Testé (Playwright, démo, 1440 et 375 px) : Corse-du-Sud, 51 espèces sur 60 changent de palier, Sittelle corse 8 -> 5 (2,33 % des listes, recalculé à la main dans les fichiers), Choucas trouvé par SCI_ALIAS (coloeus monedula). 11 bancs CONFORME.
+- Dates de la ligue : « 3 juil. 2025 » dans le dépliage ET dans le survol (même défaut aux deux endroits).
+- Le « C » : 9 points isolés mesurés (C, S, A ; 100/125/150 %), toujours un peu trop bas : +0,1 à +0,5 px à 100 et 125 %, +0,9 à +1,1 px à 150 %, et dx ≈ 0. La plupart des points de la démo restent en grappes même à fort zoom. Script : scratchpad lettres-nombreuses.mjs (copie à faire dans outils/verif pour trouver playwright). Rien changé : choix demandé à Mathis.
 # POUSSÉ (2026-10-26) : v897 à v900 / app.js?v=471 à 474 (dernier : Carte, croix, dépliage, réponse périmée). Prochain numéro v901 / 475
 - v897 : pointe de la bulle d'une grappe au-dessus de l'anneau (offset) ; déplier « ×N » garde la position de défilement (popup.update() réinsère le contenu).
 - v898 : pays entier dans le Récent = résumé eBird seul, 1 requête (_ctPaysEntier : plus les 8 plus rares en détail ; une espèce cherchée garde ses lieux) ; ouvrir un pays (_ctOuvrePays) ou revenir au pays par son nom garde l'onglet Récent (↺ et « Tous les pays » remettent toujours à l'arrivée).
 - v899 : la ligue dit qui a vu chaque espèce (_ctQui, survol et liste) ; statutAuLieu passe accidentelles=true à isExoticInCountry (Ara bleu FR, palier 10, était affiché en sauvage).
 - v900 : croix de la liste dans le cadre (marge du contenu remplacée par un rembourrage + règle plus forte que Leaflet) ; flèche ▾ pour déplier aussi une espèce vue une fois ; _ebFetch rend la dernière réponse connue quand eBird refuse (_ebPerimes), message « voici ce qu'il disait le … ». Testé en démo en simulant des 429.
 ## À FAIRE DEMAIN
-1. Rareté de la ZONE (choix de Mathis : interrupteur Pays / Zone dans le Récent ; les pastilles 1-10 et le filtre de rareté se recalculent avec la fréquence de l'espèce dans la région ou le département). Données : REAL_FREQ_MONTHLY_BY_REGION_MULTI (freq_by_region.json par pays). Chercher comment barTier est tiré de la fréquence pour refaire le même barème par zone. Rien de codé.
+1. Rareté de la ZONE : FAIT (v901, voir en haut).
 2. Le « C » des points de la ligue : Mathis le voit mal centré sur un point seul. Banc pastilles (calque translate3d ajouté, « C » ajouté) : centré à 0,2 px. Vraie carte (notes-privees/essai-lettre-carte.mjs, démo) : +1,1 px trop bas à 100 % mais sur 2 points seulement. Arrêté après deux essais ; reprendre avec plus de points ou une capture agrandie de Mathis.
-3. Vu, pas corrigé : la date des observations de la ligue s'affiche brute (« 2020-06-11 ») dans le dépliage.
+3. Date brute de la ligue : FAITE (v901).
 
 # POUSSÉ (2026-10-25) : v896 / app.js?v=470 (aca18285), vérifié en ligne (grappe de la Cité des Oiseaux, ×5 déplié, 0 erreur). Prochain sujet : étape 3, les Hotspots ; prochain numéro v897 / 471
 - Centre d'une grappe = nombre d'ESPÈCES (anneau partagé par espèce) ; grappe d'une seule espèce = point + nombre d'observations (vérifié par Mathis sur ses Pluviers dorés).
