@@ -8995,7 +8995,8 @@ const _ctLettreDessinee = l => `<svg class="ct-pt-dessin" viewBox="0 0 18 18" ar
 // nb : plus d'une observation de l'espèce à cet endroit, dite par un petit chiffre en bas à droite.
 function _ctPastille(latlng, couleur, w, dedans, nb){
   const marque = nb > 1 ? `<span class="ct-pt-nb">${nb}</span>` : '';
-  return L.marker(latlng, { w:w || 0, coul:couleur, dedans, riseOnHover:true,
+  // zIndexOffset : le plus rare dessiné par-dessus, quel que soit l'ordre où il a été posé.
+  return L.marker(latlng, { w:w || 0, coul:couleur, dedans, riseOnHover:true, zIndexOffset:(w || 0) * 1000,
     icon:L.divIcon({ html:`<span class="${_ctClassePt(dedans)}" style="background:${couleur}">${dedans}${marque}</span>`, className:'ct-pt-ico', iconSize:[22, 22] }) });
 }
 // Le palier et la couleur d'un point du Récent. Établie (N) là où elle a été vue, l'espèce prend la
@@ -10015,8 +10016,10 @@ function _ctPoseRecent(liste, cc){
   for(const p of pts){ const k = p.lat.toFixed(5) + ',' + p.lon.toFixed(5); if(!groupes.has(k)) groupes.set(k, []); groupes.get(k).push(p); }
   // En grappes, un même endroit garde ses points en place : la grappe les liste au clic.
   for(const g of groupes.values()){ if(_ctEnGrappes(_lyrMissing)) for(const p of g){ p.dispLat = p.lat; p.dispLon = p.lon; } else _spreadGroup(g); }
-  // Les plus rares ajoutés en dernier, donc dessinés par-dessus.
-  pts.sort((a, b) => (_ctRarete(a.o.sciName, cc) || 0) - (_ctRarete(b.o.sciName, cc) || 0));
+  // Toujours le même ordre, celui des lieux : les grappes se forment autour des premiers points posés,
+  // et l'ordre des paliers les refaisait autrement en passant la rareté du pays à la zone, au même lieu
+  // et au même zoom (Mathis, 2026-10-26). Les plus rares restent dessus par leur zIndexOffset.
+  pts.sort((a, b) => (a.lat - b.lat) || (a.lon - b.lon) || (a.o.sciName || '').localeCompare(b.o.sciName || ''));
   // Plus de bulle au clic : le survol dit l'oiseau, quand, où et combien (Mathis, 2026-10-23).
   const marqueurs = pts.map(p => {
     const o = p.o, sci = (o.sciName || '').toLowerCase();
