@@ -9850,7 +9850,11 @@ document.addEventListener('click', e => {
     _ctAllume(k);
     const l = { ligue:_mapLayer, recent:_lyrMissing, hot:_lyrHotspots }[k];
     // Une couche jamais chargée se charge en ouvrant son onglet (c'est lui qui porte ses réglages).
-    if(!l || !l.getLayers().length) _ctModeBouton(CARTE_ONGLET_MODE[k])?.click();
+    // Une couche eBird périmée aussi (zone ou réglage changés pendant qu'elle était éteinte : _loaded
+    // remis à '') : rallumés après un passage du département à la région, les Hotspots remontraient
+    // ceux du département (2026-10-26).
+    const perimee = (k === 'recent' && !_loaded.missing) || (k === 'hot' && !_loaded.hotspots);
+    if(!l || !l.getLayers().length || perimee) _ctModeBouton(CARTE_ONGLET_MODE[k])?.click();
     else _ctAppliqueCouches();
     return;
   }
