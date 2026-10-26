@@ -7933,6 +7933,13 @@ async function renderMap(){
     else if(mapMode==='missing') await _renderModeMissing();
     else if(mapMode==='hotspots') await _renderModeHotspots();
   } finally { _ctAppliqueCouches(); }
+  // Les Hotspots allumés par-dessus un autre onglet suivent la zone eux aussi : un département choisi
+  // dans le Récent laissait les hotspots de toute la région (Mathis, 2026-10-27). Rechargés sans recadrer
+  // la carte, que l'onglet ouvert a déjà cadrée.
+  if(mapMode!=='hotspots' && carteCouches.has('hot') && !_loaded.hotspots && _lyrHotspots){
+    await _renderModeHotspots(true);
+    _ctAppliqueCouches();
+  }
 }
 function _ensureMapInit(el){
   if(_map) return;
@@ -8218,7 +8225,8 @@ async function _renderModeMissingGbif(){
   // restent a leur position exacte. Re-run automatique a chaque zoom via zoomend.
   setTimeout(()=>{ try{ _map.invalidateSize(); _mainMapSpreadGbifMarkers(); }catch(_){} }, 100);
 }
-async function _renderModeHotspots(){
+// enFond : la couche est allumée par-dessus un autre onglet ; elle ne recadre pas la carte.
+async function _renderModeHotspots(enFond = false){
   // Si un département est sélectionné, on l'utilise comme zone à interroger (plus fin).
   const zone = ebFilter.dept || ebFilter.region;
   const cnt=$('#mapEbCount');
@@ -8242,7 +8250,7 @@ async function _renderModeHotspots(){
   const myRun = _hotspotsRunSeq + 1;
   await _loadHotspotsLayer(parDessin ? parDessin.zones : zone);
   if(myRun !== _hotspotsRunSeq) return;
-  _lyrHotspots.addTo(_map);
+  if(!enFond || carteCouches.has('hot')) _lyrHotspots.addTo(_map);
   const n = _lyrHotspots.getLayers().length;
   const zoneLbl = esc(_zoneLabel());
   // Un refus d'eBird se dit comme tel : « Aucun hotspot » faisait croire la zone vide (2026-10-26).
@@ -8251,9 +8259,9 @@ async function _renderModeHotspots(){
     : lRef ? ` · ${lRef} hotspot${lRef > 1 ? 's' : ''} sans réponse d'eBird, réessaie plus tard`
     : zRef ? ' · une partie de ta zone sans réponse d\'eBird, réessaie plus tard' : '';
   if(cnt) cnt.textContent = !n && refus ? refus : n ? `top ${n} hotspots${zoneLbl}${refus}` : 'Aucun hotspot trouvé'+zoneLbl;
-  _fitLayer(_lyrHotspots);
+  if(!enFond) _fitLayer(_lyrHotspots);
   _mapApplyFilter();
-  setTimeout(()=>{ try{ _map.invalidateSize(); }catch(_){} }, 60);
+  if(!enFond) setTimeout(()=>{ try{ _map.invalidateSize(); }catch(_){} }, 60);
 }
 
 // ---- Mode "Dessiner une zone" : polygone libre + query GBIF ----
@@ -11323,7 +11331,7 @@ async function _loadHotspotsLayer(region){
       // Le carré porte le nombre d'espèces à cocher (après le filtre du mois), ou le total en tri « total ».
       const nbHs = (hotspotSort==='total') ? n : toDoShown;
       const m = L.marker([h.dispLat, h.dispLon], { riseOnHover:true, icon:_ctIconeHotspot(nbHs, isFavHs) });
-      m._hs = { nom:h.locName||h.name||'?', nb:nbHs, allSp:n, dept:h.subnational2Name||'', region:h.subnational1Name||'', dernier:(h.latestObsDt||'').slice(0,10) };
+      m._hs = { nom:h.locName||h.name||'?', nb:nbHs, allSp:n, dept:h.subnational2Name||'', deptCode:h.subnational2Code||'', region:h.subnational1Name||'', dernier:(h.latestObsDt||'').slice(0,10) };
       const gm = `<a href="https://www.google.com/maps?q=${h.lat},${h.lng}" target="_blank" rel="noopener" class="p-btn pl-gmaps">🗺️ Google Maps</a>`;
       // Ouvre Google Maps en mode transport en commun depuis la position actuelle (pas d'origin → device location).
       const tr = `<a href="https://www.google.com/maps/dir/?api=1&destination=${h.lat},${h.lng}&travelmode=transit" target="_blank" rel="noopener" class="p-btn pl-transit">🚌 Transit</a>`;
