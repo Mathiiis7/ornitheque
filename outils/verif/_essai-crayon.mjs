@@ -34,7 +34,7 @@ for(const onglet of onglets){
   console.log('== onglet ' + onglet + ' : crayon visible ' + await visible('#mapDrawStart'));
   await p.evaluate(() => document.querySelector('#mapDrawStart').click());
   await p.waitForTimeout(300);
-  for(const ll of TRIANGLE){ await p.evaluate(ll => window.__carte.fire('click', { latlng:L.latLng(ll[0], ll[1]) }), ll); await p.waitForTimeout(150); }
+  for(const ll of TRIANGLE){ await p.evaluate(ll => { window.__carte.fire('click', { latlng:L.latLng(ll[0], ll[1]) }); }, ll); await p.waitForTimeout(150); }
   await p.keyboard.press('Enter');
   for(let i = 0; i < 90; i++){ await p.waitForTimeout(1000); const t = await p.evaluate(() => (document.getElementById('mapEbCount')?.textContent || '') + (document.getElementById('ctRecEtat')?.textContent || '')); if(!t.includes('…') && i > 2) break; }
   await p.waitForTimeout(1500);

@@ -7150,6 +7150,9 @@ function _zoneLabel(){
   // Renvoie " · <dept>" ou " · <region>" ou " · <pays>", precede d'un separateur.
   // Vide si pays FR sans region/dept (vue nationale par defaut).
   const cty = ebFilter.country || 'FR';
+  // Une zone dessinée passe avant la région restée choisie (« top 44 hotspots · Bretagne » pour un
+  // dessin autour de Nantes, 2026-10-26).
+  if(ebFilter.polygon) return ' · ta zone';
   if(ebFilter.dept){
     const nm = DEPT_NAMES[ebFilter.dept] || ebFilter.dept;
     return ` · ${nm}`;
