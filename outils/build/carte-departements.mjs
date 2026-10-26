@@ -1,6 +1,12 @@
 // Contours des 96 départements pour la page Carte : data/carte-departements.json.
 // Repris de la maquette de la refonte (notes-privees/maquettes/carte/outils/prepare.mjs, 2026-10-23).
-// Source : outils/config/departements-fr.geojson, déjà dans le dépôt (le même que pour la démo).
+// Source depuis le 2026-10-26 : outils/config/departements-ign.geojson et regions-ign.geojson, IGN Admin
+// Express COG 2018 (Licence Ouverte), mis en GeoJSON par github.com/gregoiredavid/france-geojson
+// (departements.geojson, regions.geojson : 25 % des points de l'IGN). Les anciens departements-fr et
+// regions-fr.geojson étaient leur « version simplifiée » (5 %) : 363 sommets pour la Loire-Atlantique,
+// la côte du Croisic coupée en ligne droite et des points du département dessinés dehors (Mathis). Ils
+// restent pour la démo et la mini-carte de la fiche, qui les lisent encore.
+// SRC_DEP, SRC_REG : pour essayer une autre source.
 // Chaque département porte son code eBird (FR-PDL-85 ; Paris FR-IDF-75C), celui que l'appli
 // interroge, lu dans les clés de data/departements-fr-simplified.json : on ne le refabrique pas.
 // Lancer depuis la racine du dépôt : node outils/build/carte-departements.mjs
@@ -39,7 +45,7 @@ const codesEbird = Object.keys(JSON.parse(fs.readFileSync('data/departements-fr-
 const ebirdDe = Object.fromEntries(codesEbird.map(k => [k.split('-')[2], k]));
 ebirdDe['75'] ??= 'FR-IDF-75C';   // Paris manque au fichier simplifié ; eBird le nomme ainsi
 
-const deps = JSON.parse(fs.readFileSync('outils/config/departements-fr.geojson', 'utf8'));
+const deps = JSON.parse(fs.readFileSync(process.env.SRC_DEP || 'outils/config/departements-ign.geojson', 'utf8'));
 const sortie = {
   type: 'FeatureCollection',
   features: deps.features.map(f => ({
@@ -56,7 +62,7 @@ console.log(`${sortie.features.length} départements, ${(texte.length / 1024).to
 
 // Les 13 régions : data/carte-regions.json, même simplification. Sur la carte de France, on clique
 // d'abord une région, puis ses départements (choix de Mathis, 2026-10-23). Source :
-// outils/config/regions-fr.geojson, codes INSEE. Le code eBird (FR-PDL) se lit sur les départements
+// outils/config/regions-ign.geojson, codes INSEE. Le code eBird (FR-PDL) se lit sur les départements
 // qui tombent dedans, plutôt que d'une table écrite à la main : un écart ferait échouer le script.
 const dansAnneau = ([x, y], r) => {
   let dedans = false;
@@ -73,7 +79,7 @@ const temoin = g => {
   const c = [r.reduce((s, p) => s + p[0], 0) / r.length, r.reduce((s, p) => s + p[1], 0) / r.length];
   return dansAnneau(c, r) ? c : r[0];
 };
-const regions = JSON.parse(fs.readFileSync('outils/config/regions-fr.geojson', 'utf8'));
+const regions = JSON.parse(fs.readFileSync(process.env.SRC_REG || 'outils/config/regions-ign.geojson', 'utf8'));
 const sortieR = {
   type: 'FeatureCollection',
   features: regions.features.map(f => {

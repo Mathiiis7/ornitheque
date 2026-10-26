@@ -9461,11 +9461,12 @@ function _ctSurligne(){
 // Les 96 départements, chargés à la première ouverture de la Carte (95 Ko gzippés, mesuré le
 // 2026-10-23) : jamais au démarrage de l'appli. Dans un calque sous les points, sinon leurs
 // formes intercepteraient les clics des marqueurs.
-// Les 13 régions (data/carte-regions.json, 52 Ko gzippés, outils/build/carte-departements.mjs) viennent
-// avec, dans le même calque, au-dessus.
+// Les 13 régions (data/carte-regions.json, outils/build/carte-departements.mjs) viennent avec, dans le
+// même calque, au-dessus. Depuis le 2026-10-26, contours IGN plus fins (la côte du Croisic n'est plus
+// coupée en ligne droite) : 201 Ko gzippés pour les départements, 83 pour les régions (95 et 51 avant).
 async function _ctChargeDeps(){
-  if(!_ctDepsPromesse) _ctDepsPromesse = fetch('data/carte-departements.json?v=20261023').then(r => r.ok ? r.json() : null).catch(() => null);
-  if(!_ctRegsPromesse) _ctRegsPromesse = fetch('data/carte-regions.json?v=20261023').then(r => r.ok ? r.json() : null).catch(() => null);
+  if(!_ctDepsPromesse) _ctDepsPromesse = fetch('data/carte-departements.json?v=20261026').then(r => r.ok ? r.json() : null).catch(() => null);
+  if(!_ctRegsPromesse) _ctRegsPromesse = fetch('data/carte-regions.json?v=20261026').then(r => r.ok ? r.json() : null).catch(() => null);
   const [geo, geoR] = await Promise.all([_ctDepsPromesse, _ctRegsPromesse]);
   if(!geo || !_map || _lyrDeps) return;
   if(!_map.getPane('ctDeps')){ _map.createPane('ctDeps').style.zIndex = 350; }

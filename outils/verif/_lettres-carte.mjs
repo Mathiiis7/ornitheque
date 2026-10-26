@@ -4,7 +4,8 @@
 // centre du disque de couleur contre centre de l'encre blanche, en pixels d'appareil.
 import { chromium } from 'playwright';
 const nav = await chromium.launch();
-for(const dpr of [1, 1.25, 1.5]){
+const dprs = (process.argv[3] || '1,1.25,1.5').split(',').map(Number);
+for(const dpr of dprs){
   const ctx = await nav.newContext({ viewport:{ width:1300, height:850 }, deviceScaleFactor:dpr, locale:'fr-FR' });
   await ctx.addInitScript(() => {
     const att = () => { if(window.L && L.Map && !L.Map.__pris){ L.Map.__pris = true; L.Map.addInitHook(function(){ window.__carte = this; }); } else if(!window.L) setTimeout(att, 5); };
