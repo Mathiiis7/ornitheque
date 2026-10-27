@@ -15,7 +15,8 @@ async function essai(nom, opts){
   const p = await ctx.newPage();
   const erreurs = []; p.on('pageerror', e => erreurs.push(e.message));
   const req = []; p.on('request', r => { if(/ornitheque-relais/.test(r.url())) req.push(r.url().replace(/^.*\/v2\//, '').replace(/\?.*$/, '')); });
-  await p.goto('http://localhost:8765/demo/', { waitUntil:'load' });
+  // BASE=https://mathiiis7.github.io/ornitheque pour la démo en ligne.
+  await p.goto((process.env.BASE || 'http://localhost:8765') + '/demo/', { waitUntil:'load' });
   await p.waitForTimeout(1500);
   await p.keyboard.press('Escape'); await p.keyboard.press('Escape');
   await p.evaluate(() => document.querySelector('.tab[data-view="map"]').click());
