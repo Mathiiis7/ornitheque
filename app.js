@@ -1070,6 +1070,9 @@ function _openCountryPicker(currentCode, opts = {}){
     // pays visite par la ligue reste listé même sans données de rareté chez nous.
     // opts.tous : une première ligne « Tous les pays », qui rend ''.
     // opts.unite : ce que compte le nombre, « esp. » par défaut ; « obs. » pour la ligue sur la Carte.
+    // Un compte qui vaut null n'est pas encore arrivé (« … ») ; undefined, introuvable (« – ») :
+    // les filtres eBird de la Carte les reçoivent un par un (opts.surMaj, plus bas).
+    // opts.tip(cc) : la bulle de la ligne (le nom du meilleur hotspot).
     const avecCompte = typeof opts.compte === 'function';
     const unite = opts.unite || 'esp.';
     const allCodes = avecCompte ? availableCodes.slice() : availableCodes.filter(cc => COUNTRIES_REG[cc]);
@@ -1230,11 +1233,12 @@ function _openCountryPicker(currentCode, opts = {}){
         (opts.tous && opts.tous.count) || 0);
       if(opts.tous && !fLC){
         const n = opts.tous.count || 0;
+        // Sans nombre (count null) : « Tous les pays » ne compte rien, la ligne n'a que son nom.
         html += `<div class="cp-item sans-palier${ccCourant === '' ? ' on' : ''}" data-cc="">
           <span class="cp-item-flag"></span>
           <span class="cp-item-name">${esc(opts.tous.label)}</span>
-          <span class="cp-item-exo"></span><span class="cp-item-meta">${n} ${unite}</span>
-          <div class="reg-picker-bar"><div style="width:${Math.round(n / maxEspeces * 100)}%; color:var(--accent);"></div></div>
+          <span class="cp-item-exo"></span>${opts.tous.count == null ? '<span></span><span></span>' : `<span class="cp-item-meta">${n} ${unite}</span>
+          <div class="reg-picker-bar"><div style="width:${Math.round(n / maxEspeces * 100)}%; color:var(--accent);"></div></div>`}
         </div>`;
       }
       for(const cont of CONTINENT_ORDER){
@@ -1357,8 +1361,12 @@ function _openCountryPicker(currentCode, opts = {}){
             // qui tombaient deja sur le bar chart (l'Espagne annoncait 284 especes contre
             // 694 reelles). Le bar chart partout, c'est comparable.
             const nSp = nEspecesDe(cc);
+            const brut = avecCompte ? opts.compte(cc) : 0;
+            if(typeof opts.tip === 'function') titreLigne = opts.tip(cc) || '';
             meta = '<span class="cp-item-exo"></span>'
-              + (nSp > 0 || avecCompte
+              + (avecCompte && brut == null
+                  ? `<span class="cp-item-meta">${brut === null ? '…' : '–'}</span><div class="reg-picker-bar"></div>`
+                  : nSp > 0 || avecCompte
                   ? `<span class="cp-item-meta">${nSp} ${unite}</span>`
                     + `<div class="reg-picker-bar"><div style="width:${Math.round(nSp / maxEspeces * 100)}%; color:var(--accent);"></div></div>`
                   : '<span></span><span></span>');
@@ -1377,6 +1385,16 @@ function _openCountryPicker(currentCode, opts = {}){
       listEl.innerHTML = html || '<div style="padding:16px; text-align:center; color:var(--ink-3);">Aucun pays trouvé.</div>';
     };
     render();
+    // Les comptes qui arrivent après l'ouverture (filtres eBird de la Carte) : l'appelant rappelle
+    // redessiner à chaque arrivée ; il sait que la fenêtre est fermée quand ouverte() rend faux.
+    // Lancé une fois la fenêtre posée (plus bas) : avant, ouverte() rendait faux et le chargement
+    // s'arrêtait aussitôt (les Hotspots restaient sur « … », 2026-10-27).
+    const lancerMaj = () => {
+      if(typeof opts.surMaj !== 'function') return;
+      let attente = 0;
+      opts.surMaj(() => { if(!backdrop.isConnected || attente) return; attente = requestAnimationFrame(() => { attente = 0; if(backdrop.isConnected) render(searchEl.value); }); },
+        () => backdrop.isConnected);
+    };
     // Les frequences mensuelles des pays etrangers vivent dans un fichier a part depuis le
     // 2026-09-27, et ce selecteur est le seul endroit qui les veuille TOUTES a la fois. Si
     // elles ne sont pas encore arrivees, chaque ligne afficherait « - » : on redessine des
@@ -1462,6 +1480,7 @@ function _openCountryPicker(currentCode, opts = {}){
       render();
     });
     document.body.appendChild(backdrop);
+    lancerMaj();
     setTimeout(() => searchEl.focus(), 50);
   });
 }
@@ -8800,8 +8819,11 @@ function _ctRarete(sci, cc){
 // Le palier w du pays devient celui de la zone choisie, quand « Zone » est allumé et que l'oiseau est
 // dans le pays de cette zone (un point de la ligue en Espagne garde le palier espagnol). Sans palier
 // dans le pays, rien à mesurer : il reste à 0.
+// Vrai le temps de compter un pays entier pour le sélecteur de pays : ni la zone, ni le dessin, ni le
+// département du moment ne s'y appliquent (_ctCompteRecentPays).
+let _ctComptePays = false;
 function _ctPalierDeZone(sci, cc, w){
-  const z = w && _ctRarZone && cc === (ebFilter.country || 'FR') ? _ctZoneFreq() : '';
+  const z = w && _ctRarZone && !_ctComptePays && cc === (ebFilter.country || 'FR') ? _ctZoneFreq() : '';
   if(!z) return w;
   const brut = (sci || '').trim().toLowerCase(), k = SCI_ALIAS[brut] || brut;
   const ligne = REAL_FREQ_MONTHLY_BY_REGION_MULTI[cc][z];
@@ -10069,9 +10091,9 @@ function _ctEspecesRecent(obs, cc){
   for(const o of obs){
     const k = (o.sciName || '').toLowerCase();
     if(!k || !o.speciesCode || typeof o.lat !== 'number' || typeof o.lng !== 'number') continue;
-    if(isNonSpecies(o.comName || '', o.sciName || '') || estEchappeDansPays(o.sciName, cc, ebFilter.dept)) continue;
+    if(isNonSpecies(o.comName || '', o.sciName || '') || estEchappeDansPays(o.sciName, cc, _ctComptePays ? '' : ebFilter.dept)) continue;
     if(_mineHas(mine, k) || !_passeRarCarte(o.sciName, cc, _ctRarete(o.sciName, cc))) continue;   // _mineHas suit « Seulement ce qui me manque »
-    if(ebFilter.polygon && !_pointInPolygon(o.lat, o.lng, ebFilter.polygon)) continue;
+    if(ebFilter.polygon && !_ctComptePays && !_pointInPolygon(o.lat, o.lng, ebFilter.polygon)) continue;
     const d = parSp.get(k);
     if(!d || (o.obsDt || '') > (d.obsDt || '')) parSp.set(k, o);
   }
@@ -10543,6 +10565,45 @@ function _ctListeRecent(){
 // règle aussi tout seul (clic sur un département, retour à la France, fiche espèce) : on les
 // repeint à chaque dessin du panneau plutôt que de suivre chaque endroit qui touche un menu.
 const _CT_JOURS = [7, 14, 30];
+// Les nombres du sélecteur de pays du Récent : la réponse d'eBird de chaque pays (une demande, la même
+// que le Récent du pays ouvert), gardée dans l'onglet seulement (garder:false). Le compte se refait à
+// chaque ouverture, pour suivre la case « Seulement ce qui me manque » et les paliers cochés.
+const _ctRecentPays = new Map();   // 'FR:14' -> observations, ou 'erreur'
+function _ctCompteRecentPays(cc){
+  const obs = _ctRecentPays.get(cc + ':' + (+(document.getElementById('mapEbDays')?.value) || 14));
+  if(obs === undefined) return null;
+  if(obs === 'erreur') return undefined;
+  _ctComptePays = true;
+  try{ return _ctEspecesRecent(obs, cc).length; } finally { _ctComptePays = false; }
+}
+async function _ctChargeRecentPays(codes, redessine, ouverte){
+  const days = +(document.getElementById('mapEbDays')?.value) || 14;
+  // Les paliers des pays étrangers : sans eux, le filtre de rareté ne laisserait rien passer.
+  if(!_donneesPaysPretes()){ try{ await _chargerDonneesPays(); }catch(_){} redessine(); }
+  for(const cc of codes){
+    if(!ouverte()) return;
+    const k = cc + ':' + days; if(_ctRecentPays.has(k)) continue;
+    try{ _ctRecentPays.set(k, await _ebFetch(_ctUrlRecent(cc, days), { garder:false })); }
+    catch(_){ _ctRecentPays.set(k, 'erreur'); }
+    redessine();
+  }
+}
+// Les nombres du sélecteur de pays des Hotspots : le relais lit la liste des hotspots du pays chez eBird
+// et ne rend que le meilleur (carte/meilleur-hotspot, quelques octets gardés une semaine).
+const _ctMeilleursHs = new Map();   // cc -> { n, nom, locId }, ou 'erreur'
+function _ctNbMeilleurHs(cc){
+  const m = _ctMeilleursHs.get(cc);
+  return m === undefined ? null : m === 'erreur' ? undefined : m.n;
+}
+async function _ctChargeMeilleursHs(codes, redessine, ouverte){
+  for(const cc of codes){
+    if(!ouverte()) return;
+    if(_ctMeilleursHs.has(cc)) continue;
+    try{ _ctMeilleursHs.set(cc, await _ebFetch(`https://api.ebird.org/v2/carte/meilleur-hotspot/${cc}`)); }
+    catch(_){ _ctMeilleursHs.set(cc, 'erreur'); }
+    redessine();
+  }
+}
 function _ctSyncFiltres(){
   document.querySelectorAll('[data-ct-choix]').forEach(b => {
     const sel = document.getElementById(b.dataset.ctChoix); if(!sel) return;
@@ -10560,7 +10621,16 @@ function _ctSyncFiltres(){
     if(fl){ fl.innerHTML = cc ? flagImg(cc) : ''; fl.style.display = cc ? '' : 'none'; }
     pb.classList.toggle('actif', !!cc);
   }
-  const src = document.getElementById('mapEbSource')?.value || 'ebird';
+  // Le pays ouvert sur la Carte, pour le Récent et les Hotspots.
+  const eb = document.getElementById('ctEbPaysBtn');
+  if(eb){
+    const cc = _ctPaysOuvert;
+    eb.querySelector('.cp-btn-label').textContent = cc ? countryLabel(cc) : 'Tous les pays';
+    const fl = eb.querySelector('.cp-btn-flag');
+    if(fl){ fl.innerHTML = cc ? flagImg(cc) : ''; fl.style.display = cc ? '' : 'none'; }
+    eb.classList.toggle('actif', !!cc);
+  }
+  const src =document.getElementById('mapEbSource')?.value || 'ebird';
   document.querySelectorAll('[data-ct-source]').forEach(b => {
     const on = b.dataset.ctSource === src;
     b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on));
@@ -10661,6 +10731,23 @@ document.addEventListener('click', async e => {
       compte: cc => compte.get(cc) || 0, tous: { label: 'Tous les pays', count: pts.length } });
     if(v != null) _ctRegleMenu('mapCountrySel', v || 'any');
     paysLig.focus();
+    return;
+  }
+  // Le pays du Récent et des Hotspots, comme celui de la Ligue (Mathis, 2026-10-27) : on ne pouvait y
+  // choisir qu'une région du pays déjà ouvert. Le nombre suit l'onglet : les espèces que la liste du
+  // Récent montrerait, ou les espèces du meilleur hotspot du pays.
+  const paysEb = e.target.closest('#ctEbPaysBtn');
+  if(paysEb){
+    const hot = mapMode === 'hotspots';
+    const codes = Object.keys(COUNTRIES_REG).filter(_ctPaysCliquable);
+    const v = await _openCountryPicker(_ctPaysOuvert || '', {
+      availableCodes: codes, unite: 'esp.', tous: { label: 'Tous les pays', count: null },
+      titre: hot ? 'Pays · espèces de son meilleur hotspot' : `Pays · espèces vues en ${+(document.getElementById('mapEbDays')?.value) || 14} jours`,
+      compte: cc => hot ? _ctNbMeilleurHs(cc) : _ctCompteRecentPays(cc),
+      tip: hot ? cc => { const m = _ctMeilleursHs.get(cc); return m && m.nom ? `Meilleur hotspot : ${m.nom.replace(/\s*\((?:veuillez|please)[^)]*\)/i, '')}` : ''; } : null,
+      surMaj: (redessine, ouverte) => (hot ? _ctChargeMeilleursHs : _ctChargeRecentPays)(codes, redessine, ouverte) });
+    if(v === '') _ctRetourPays(true); else if(v) _ctOuvrePays(v);
+    paysEb.focus();
     return;
   }
   const src = e.target.closest('[data-ct-source]');
@@ -11460,7 +11547,7 @@ const _ebDocId = url => url.replace(/[^A-Za-z0-9]/g,'_').slice(0,200);
 // « eBird ne répond pas » (Mathis, 2026-10-26). url -> date de la réponse servie à sa place ; la Carte
 // le dit, pour ne pas faire passer la veille pour aujourd'hui.
 const _ebPerimes = new Map();
-async function _ebFetch(url){
+async function _ebFetch(url, opts = {}){
   // 1) Mémoire (5 min)
   const memHit = _ebCache.get(url);
   if(memHit && (Date.now()-memHit.ts) < 5*60*1000) return memHit.data;
@@ -11501,6 +11588,9 @@ async function _ebFetch(url){
   const data = await r.json();
   const stamp = Date.now();
   _ebCache.set(url, { ts:stamp, data });
+  // garder faux : seulement la mémoire de l'onglet. Le sélecteur de pays du Récent lit 49 pays d'un
+  // coup, des centaines de Ko chacun : de quoi remplir le localStorage et en chasser le reste.
+  if(opts.garder === false) return data;
   try{ localStorage.setItem('ebc:'+url, JSON.stringify({ts:stamp,data})); }catch(_){ }
   // fire-and-forget : écrit en Firestore pour partager avec les autres amis
   if(leagueId){
