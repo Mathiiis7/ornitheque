@@ -5,6 +5,12 @@
 - ornitheque-data : 10 935 <code>-s.png + effort-s.png COMMITÉS là-bas (21ac7af13), pas poussés (333 Mo publiés, 33 % du plafond). Les anciens -m.png (91 Mo) ne sont plus lus : les retirer = à Mathis de dire.
 - MISE EN LIGNE, sur son « pousse » : pousser ornitheque-data D'ABORD, puis ce dépôt (qui part en v913 / 487 avec les Hotspots).
 - PUIS (dae493d2, choix de Mathis le 27/10) : un seul gris (« prospecté, oiseau pas noté »), ADOUCI entre les cases (en carrés nets avec le gris pâle, une semaine faisait un damier moucheté) ; courbe iNaturalist de la zone affichée BRANCHÉE sous le curseur (conditions du 11/07/2023 collées par Mathis : rien n'interdit, pas de logo, CC BY-NC), clic sur la courbe = semaine. Essai CONFORME (courbe 52 semaines sur 7 ouvertures), 11 bancs CONFORME. Part avec v913 / 487 (rien poussé depuis v911).
+# PAYS DANS LES FILTRES RÉCENT / HOTSPOTS (2026-10-27) : v915 / app.js?v=489 (2411dcd2), COMMITÉ PAS POUSSÉ. Prochain v916 / 490
+- Bouton #ctEbPaysBtn (sélecteur du site), nombre par pays : Récent = espèces que la liste montrerait (suit « ce qui me manque » et les paliers ; ES 184 = onglet, vérifié), Hotspots = espèces du meilleur hotspot (relais carte/meilleur-hotspot/XX, gardé 7 j). Essai _essai-pays-eb.
+- RELAIS : 3aab96a commité dans ../ornitheque-relais, PAS POUSSÉ (pousser = mettre en ligne sur Vercel, accord de Mathis). D'ici là les Hotspots affichent « – ».
+- Fait avant (en ligne en v913/v914) : carrés, liste, refus eBird, Hotspots qui suivent le département (couche par-dessus le Récent), teinte en 5 crans (direction 2 de notes-privees/maquettes/hotspots-taille/).
+- Vu, pas fait : les nombres des Hotspots attendent derrière les ~100 demandes du chargement en cours (~30 s) ; le menu Région montre les régions françaises quand aucun pays n'est ouvert.
+
 # HOTSPOTS FINIS, COMMITÉ PAS POUSSÉ (2026-10-27) : v913 / app.js?v=487 (cb7a0bd6). Prochain numéro v914 / 488
 - Carrés chiffrés (nombre à cocher, bord doré = favori), liste dans le volet Hotspots (clic = carré + bulle), refus d'eBird dit « eBird ne répond pas » au lieu de « Aucun hotspot ». Essai _essai-hotspots-carres (1440, 375, 429 simulé) ; _essai-hotspots-region refait : PDL 100 hotspots sans refus, chargement breton arrêté (12 appels partis sur 100). 11 bancs CONFORME.
 - Vu, pas fait : les carrés se chevauchent sur la côte vendéenne (comme les ronds d'avant, en plus gros) ; à proposer : grappes ou carrés plus petits dézoomé. Lien eBird de la maquette pas dans la ligne (il est dans la bulle).
