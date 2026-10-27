@@ -5,6 +5,11 @@
 - ornitheque-data : 10 935 <code>-s.png + effort-s.png COMMITÉS là-bas (21ac7af13), pas poussés (333 Mo publiés, 33 % du plafond). Les anciens -m.png (91 Mo) ne sont plus lus : les retirer = à Mathis de dire.
 - MISE EN LIGNE, sur son « pousse » : pousser ornitheque-data D'ABORD, puis ce dépôt (qui part en v913 / 487 avec les Hotspots).
 - PUIS (dae493d2, choix de Mathis le 27/10) : un seul gris (« prospecté, oiseau pas noté »), ADOUCI entre les cases (en carrés nets avec le gris pâle, une semaine faisait un damier moucheté) ; courbe iNaturalist de la zone affichée BRANCHÉE sous le curseur (conditions du 11/07/2023 collées par Mathis : rien n'interdit, pas de logo, CC BY-NC), clic sur la courbe = semaine. Essai CONFORME (courbe 52 semaines sur 7 ouvertures), 11 bancs CONFORME. Part avec v913 / 487 (rien poussé depuis v911).
+# RÉCENT D'UN PAYS ENTIER (2026-10-27) : v916 / app.js?v=490 (db765e4f), COMMITÉ PAS POUSSÉ. Prochain v917 / 491
+- Pays entier : liste seule, aucun point du Récent ; ▾ d'une espèce = ses points sur _lyrDeplie (copies), 1 demande (_ctDetailEspece). Recherche d'espèce (eBird et GBIF) posée par _ctPoseRecent sur _lyrDetail en grappes : survol + fiche au clic. Essai _essai-pays-deplie.
+- Relais 3aab96a POUSSÉ et vérifié en ligne le 27/10 (IT 263, FR 324). Le nombre n'existe que dans le sélecteur de PAYS ; les menus Région / Département n'en ont pas.
+- Vu, pas fait : la recherche ne propose pas les espèces sans mesure de rareté dans le pays (Paruline tigrée en France), défaut d'avant.
+
 # PAYS DANS LES FILTRES RÉCENT / HOTSPOTS (2026-10-27) : v915 / app.js?v=489 (2411dcd2), COMMITÉ PAS POUSSÉ. Prochain v916 / 490
 - Bouton #ctEbPaysBtn (sélecteur du site), nombre par pays : Récent = espèces que la liste montrerait (suit « ce qui me manque » et les paliers ; ES 184 = onglet, vérifié), Hotspots = espèces du meilleur hotspot (relais carte/meilleur-hotspot/XX, gardé 7 j). Essai _essai-pays-eb.
 - RELAIS : 3aab96a commité dans ../ornitheque-relais, PAS POUSSÉ (pousser = mettre en ligne sur Vercel, accord de Mathis). D'ici là les Hotspots affichent « – ».
