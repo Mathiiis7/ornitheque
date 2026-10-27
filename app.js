@@ -8455,7 +8455,7 @@ async function _showSpeciesDetailGbif(sciName){
   const myGen = ++_spDetailGen;
   const stillMine = () => myGen === _spDetailGen;
   const cnt = _ebCompteur();
-  if(!_lyrDetail){ _lyrDetail = L.layerGroup(); }
+  if(!_lyrDetail){ _lyrDetail = _ctGrappes(); }   // grappes, survol et clic du Récent
   // NE PAS clearLayers ici : on garde les vieux markers visibles pendant le fetch pour
   // eviter le flash "carte vide". On remplace en swap a la fin (voir plus bas).
   _lyrDetail.addTo(_map);
@@ -8566,46 +8566,15 @@ async function _showSpeciesDetailGbif(sciName){
       if(cnt) cnt.textContent = `Aucune obs GBIF de ${nm} dans ${ctyName} pour cette période`;
       return 0;
     }
-    // Swap : cree la nouvelle couche puis remplace les vieux markers d'un coup (evite le
-    // flash "carte vide" pendant le fetch, sensible sur reseau lent).
-    const newMarkers = [];
-    // Dedup par lieu (coord arrondie a 3 decimales = ~110m). Beaucoup d'obs d'un meme
-    // hotspot ont un GPS legerement different (submitters differents), 3 dec groupe bien.
-    const dedup = new Map();
-    for(const o of obs){
-      if(typeof o.decimalLatitude !== 'number' || typeof o.decimalLongitude !== 'number') continue;
-      const k = o.decimalLatitude.toFixed(3) + ',' + o.decimalLongitude.toFixed(3);
-      if(!dedup.has(k)) dedup.set(k, []);
-      dedup.get(k).push(o);
-    }
-    for(const group of dedup.values()){
-      const first = group[0];
-      const commune = first.gadm && first.gadm.level3 && first.gadm.level3.name || '';
-      const dept = first.gadm && first.gadm.level2 && first.gadm.level2.name || '';
-      const loc = first.locality || commune || dept || 'lieu';
-      const nGroup = group.length;
-      const dates = [...new Set(group.map(o => (o.eventDate||'').slice(0,10)).filter(Boolean))].sort().reverse();
-      const dateLine = nGroup === 1
-        ? `<span class="p-meta">${esc(dates[0]||'')}${((typeof first.individualCount === 'number' && first.individualCount > 0) ? _ctOiseauxComptes(first.individualCount) : '')}</span>`
-        : `<span class="p-meta">${nGroup} obs · derniere ${esc(dates[0]||'?')}${dates.length > 1 ? ` (${dates.length} dates distinctes)` : ''}</span>`;
-      const countBadge = nGroup > 1 ? ` <span style="display:inline-block;background:#0b7c77;color:#fff;padding:1px 7px;border-radius:5px;font-weight:700;font-size:11px;vertical-align:middle;margin-left:4px;">×${nGroup}</span>` : '';
-      // Coord d'affichage : moyenne pour placer le point au centre du cluster reel.
-      const avgLat = group.reduce((s,o)=>s+o.decimalLatitude,0)/nGroup;
-      const avgLon = group.reduce((s,o)=>s+o.decimalLongitude,0)/nGroup;
-      const gm = `<a href="https://www.google.com/maps?q=${avgLat},${avgLon}" target="_blank" rel="noopener" class="p-link">🗺️ Google Maps</a>`;
-      const gbifLink = first.gbifID ? `<a href="https://www.gbif.org/occurrence/${esc(first.gbifID)}" target="_blank" rel="noopener" class="p-link">🌍 GBIF</a> · ` : '';
-      const radius = nGroup > 1 ? Math.min(12, 7 + Math.log2(nGroup) * 1.2) : 7;
-      const dot = _ctPastille([avgLat, avgLon], color, w, CT_OEIL);
-      dot.bindPopup(`<b class="sp-link" data-sci="${esc(sciName)}" style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted;">${esc(nm)}</b>${countBadge} <span class="p-sci">${esc(sciName)}</span>`+
-        `<span class="p-meta">📍 ${esc(loc)}</span>`+
-        dateLine +
-        `<span class="p-meta">${_rarityBadge(w, country, sciName)}</span><span class="p-meta">${gbifLink}${gm}</span>`);
-      dot._sciName = sciName;
-      newMarkers.push(dot);
-    }
     if(!stillMine()) return 0;
+    // Les points du Récent, comme la recherche eBird (2026-10-27) : chaque observation GBIF prend la
+    // forme d'une observation eBird (lieu, date, nombre) ; à ~110 m près, les lieux d'un même site se
+    // rejoignent en un point qui les porte toutes, comme avant.
+    const nomLieu = o => o.locality || (o.gadm && ((o.gadm.level3 && o.gadm.level3.name) || (o.gadm.level2 && o.gadm.level2.name))) || 'lieu';
     _lyrDetail.clearLayers();
-    for(const dot of newMarkers) _lyrDetail.addLayer(dot);
+    _ctPoseRecent(obs.filter(o => typeof o.decimalLatitude === 'number' && typeof o.decimalLongitude === 'number').map(o => ({
+      sciName, speciesCode:_sciToCode(sciName) || '', lat:+o.decimalLatitude.toFixed(3), lng:+o.decimalLongitude.toFixed(3), locName:nomLieu(o),
+      obsDt:(o.eventDate || '').slice(0, 10), howMany:(typeof o.individualCount === 'number' && o.individualCount > 0) ? o.individualCount : 0 })), country, _lyrDetail);
     const trunc = (totalCount > obs.length && !gadmFilter && !cached) ? ` (sur ${totalCount} au total, tronqué)` : '';
     const cacheTag = cached ? ' · cache' : '';
     if(cnt) cnt.textContent = `${obs.length} obs GBIF de ${nm} dans ${ctyName}${zoneLabelExtra} (${yMin===yMax?yMin:yMin+'-'+yMax})${trunc}${cacheTag}`;
@@ -8625,7 +8594,7 @@ async function _showSpeciesDetail(sciName, speciesCode){
   const myGen = ++_spDetailGen;
   const stillMine = () => myGen === _spDetailGen;
   const days = ebFilter.days || 14;
-  if(!_lyrDetail){ _lyrDetail = L.layerGroup(); }
+  if(!_lyrDetail){ _lyrDetail = _ctGrappes(); }   // grappes, survol et clic du Récent
   // Ne pas clearLayers ici : on garde les vieux markers visibles pendant le fetch
   // (swap en fin de fonction quand les nouvelles obs sont pretes, cf. _showSpeciesDetailGbif).
   _lyrDetail.addTo(_map);
@@ -8658,45 +8627,13 @@ async function _showSpeciesDetail(sciName, speciesCode){
       return 0;
     }
     if(_lyrMissing && _map.hasLayer(_lyrMissing)) _map.removeLayer(_lyrMissing);
-    // Swap : construit les nouveaux markers puis remplace en un coup (evite le flash "vide").
-    const newMarkers = [];
-    // Dedup par hotspot (coord ~110m). Groupe les obs eBird du meme hotspot pour eviter
-    // 5-10 markers stackes au meme endroit. Un lieu privé (souvent une adresse) se range à sa
-    // position arrondie à 0,02°, sans son nom ni lien Google Maps, comme dans _ctPoseRecent :
-    // la Fauvette épervière de Mieres en avait 22, nommés « 16 Calle ... » (2026-10-23).
-    const dedupEB = new Map();
-    const arrondi = v => Math.round(v / .02) * .02;
-    for(const o of data){
-      if(typeof o.lat!=='number'||typeof o.lng!=='number') continue;
-      const pos = o.locationPrivate ? [arrondi(o.lat), arrondi(o.lng)] : [o.lat, o.lng];
-      const k = pos[0].toFixed(3) + ',' + pos[1].toFixed(3);
-      if(!dedupEB.has(k)) dedupEB.set(k, []);
-      dedupEB.get(k).push({ ...o, lat:pos[0], lng:pos[1] });
-    }
-    for(const group of dedupEB.values()){
-      const first = group.find(o => !o.locationPrivate) || { ...group[0], locName:'un lieu privé' };
-      const nGroup = group.length;
-      const avgLat = group.reduce((s,o)=>s+o.lat,0)/nGroup;
-      const avgLon = group.reduce((s,o)=>s+o.lng,0)/nGroup;
-      const dates = [...new Set(group.map(o => (o.obsDt||'').slice(0,10)).filter(Boolean))].sort().reverse();
-      const dateLine = nGroup === 1
-        ? `<span class="p-meta">${esc((first.obsDt||'').slice(0,10))}${first.howMany ? _ctOiseauxComptes(first.howMany) : ''}</span>`
-        : `<span class="p-meta">${nGroup} obs · derniere ${esc(dates[0]||'?')}${dates.length > 1 ? ` (${dates.length} dates distinctes)` : ''}</span>`;
-      const countBadge = nGroup > 1 ? ` <span style="display:inline-block;background:#0b7c77;color:#fff;padding:1px 7px;border-radius:5px;font-weight:700;font-size:11px;vertical-align:middle;margin-left:4px;">×${nGroup}</span>` : '';
-      const radius = nGroup > 1 ? Math.min(12, 7 + Math.log2(nGroup) * 1.2) : 7;
-      const dot = _ctPastille([avgLat, avgLon], color, w, CT_OEIL);
-      const gm = group.every(o => o.locationPrivate) ? '' : `<span class="p-meta"><a href="https://www.google.com/maps?q=${avgLat},${avgLon}" target="_blank" rel="noopener" class="p-link">🗺️ Google Maps</a></span>`;
-      dot.bindPopup(`<b class="sp-link" data-sci="${esc(sciName||'')}" style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted;">${esc(nm)}</b>${countBadge} <span class="p-sci">${esc(sciName||'')}</span>`+
-        `<span class="p-meta">📍 ${esc(first.locName||'?')}</span>`+
-        dateLine +
-        `<span class="p-meta">${_rarityBadge(w, (ebFilter && ebFilter.country) || "FR", sciName)}</span>${gm}`);
-      dot._q = _mapNorm(nm+' '+(sciName||'')+' '+(first.locationPrivate ? '' : (first.locName||'')));
-      dot._sciName = sciName; dot._speciesCode = speciesCode;
-      newMarkers.push(dot);
-    }
     if(!stillMine()) return 0;
+    // Les points du Récent : pastille au palier, un point par lieu qui porte toutes ses observations,
+    // survol puis fiche au clic, lieux privés arrondis et sans nom (_ctPoseRecent). La recherche
+    // ouvrait encore l'ancienne bulle (Mathis, 2026-10-27).
     _lyrDetail.clearLayers();
-    for(const dot of newMarkers) _lyrDetail.addLayer(dot);
+    const newMarkers = _ctPoseRecent(data.filter(o => typeof o.lat === 'number' && typeof o.lng === 'number')
+      .map(o => ({ ...o, sciName:o.sciName || sciName, speciesCode:o.speciesCode || speciesCode })), country, _lyrDetail);
     const count = newMarkers.length;
     // Fit sur les points chargés
     const latlngs=[]; _lyrDetail.eachLayer(l=>{ const ll=l.getLatLng?l.getLatLng():null; if(ll) latlngs.push([ll.lat,ll.lng]); });
@@ -9392,9 +9329,15 @@ function _ctAppliqueCouches(){
   const couches = { ligue:_mapLayer, recent:_lyrMissing, hot:_lyrHotspots };
   for(const [k, l] of Object.entries(couches)){
     if(!l) continue;
-    const on = carteCouches.has(k) && !(k === 'recent' && detail);
+    // Un pays entier montre sa liste, pas ses points : seule l'espèce dépliée a les siens (_lyrDeplie).
+    const on = carteCouches.has(k) && !(k === 'recent' && (detail || _ctRecSansPoints()));
     if(on && !_map.hasLayer(l) && l.getLayers().length) l.addTo(_map);
     if(!on && _map.hasLayer(l)) _map.removeLayer(l);
+  }
+  if(_lyrDeplie){
+    const on = carteCouches.has('recent') && !detail && _ctRecSansPoints() && !!_ctRecOuverte;
+    if(on && !_map.hasLayer(_lyrDeplie) && _lyrDeplie.getLayers().length) _lyrDeplie.addTo(_map);
+    if(!on && _map.hasLayer(_lyrDeplie)) _map.removeLayer(_lyrDeplie);
   }
   // Les contours : un calque ajouté n'a ses formes qu'à ce moment-là, le surlignage les règle ensuite.
   // Le pays du site a pu changer ailleurs (Birdydex) : le pays ouvert sur la Carte ne vaut plus.
@@ -10119,7 +10062,9 @@ function _ctIlYa(ymd){
 // Pose les triangles. Un lieu privé est souvent un jardin, nommé par son adresse : ni son nom, ni sa
 // position exacte (arrondie à 0,02°, environ 2 km), ni de lien vers Google Maps. Jamais le nom de
 // l'observateur (docs/carte-donnees.md, « À l'affichage »).
-function _ctPoseRecent(liste, cc){
+// groupe : la couche où les poser ; la recherche d'une espèce (_lyrDetail) s'en sert depuis le
+// 2026-10-27, pour le même survol et le même clic que le Récent (elle ouvrait encore l'ancienne bulle).
+function _ctPoseRecent(liste, cc, groupe = _lyrMissing){
   const arrondi = v => Math.round(v / .02) * .02;
   // Une espèce notée sur plusieurs listes du même lieu n'a qu'un point, qui porte toutes ses observations
   // (Mathis, 2026-10-24 : deux Sarcelles d'hiver à la Cité des Oiseaux dépliaient deux points identiques).
@@ -10137,7 +10082,7 @@ function _ctPoseRecent(liste, cc){
   const groupes = new Map();
   for(const p of pts){ const k = p.lat.toFixed(5) + ',' + p.lon.toFixed(5); if(!groupes.has(k)) groupes.set(k, []); groupes.get(k).push(p); }
   // En grappes, un même endroit garde ses points en place : la grappe les liste au clic.
-  for(const g of groupes.values()){ if(_ctEnGrappes(_lyrMissing)) for(const p of g){ p.dispLat = p.lat; p.dispLon = p.lon; } else _spreadGroup(g); }
+  for(const g of groupes.values()){ if(_ctEnGrappes(groupe)) for(const p of g){ p.dispLat = p.lat; p.dispLon = p.lon; } else _spreadGroup(g); }
   // Toujours le même ordre, celui des lieux : les grappes se forment autour des premiers points posés,
   // et l'ordre des paliers les refaisait autrement en passant la rareté du pays à la zone, au même lieu
   // et au même zoom (Mathis, 2026-10-26). Les plus rares restent dessus par leur zIndexOffset.
@@ -10161,8 +10106,9 @@ function _ctPoseRecent(liste, cc){
     return m;
   });
   // D'un bloc : une région pose plusieurs milliers de points, un par un la grappe se recalcule à chaque fois.
-  if(_lyrMissing.addLayers) _lyrMissing.addLayers(marqueurs); else marqueurs.forEach(m => _lyrMissing.addLayer(m));
-  _ctRafraichitGrappe(_lyrMissing);
+  if(groupe.addLayers) groupe.addLayers(marqueurs); else marqueurs.forEach(m => groupe.addLayer(m));
+  _ctRafraichitGrappe(groupe);
+  return marqueurs;
 }
 // La liste d'une grappe ouverte suit les points redessinés (passer la rareté du pays à la zone, Mathis,
 // 2026-10-26) : sans cela elle gardait les paliers d'avant jusqu'au prochain clic. On reprend la grappe
@@ -10212,6 +10158,7 @@ async function _loadMissingLayer(zones, days){
   const tour = ++_ctRecTour;
   _gbifRunSeq++;   // un chargement GBIF encore en route ne doit plus écrire dans la couche
   _lyrMissing.clearLayers(); _ctRecLieux.clear(); _ctRecListes = null; _ctRecListesEtat = '';
+  _ctViderDeplie();
   _ctRecZones = zones; _ctRecTout = false; _ctRecErreur = false; _ctRecCharge = true;
   const etat = document.getElementById('ctRecEtat'); if(etat) etat.textContent = '… chargement';
   _ctDessinePanneau();
@@ -10371,7 +10318,15 @@ async function _ctMontreEspece(sci){
   const siens = () => { const out = []; _lyrMissing.eachLayer(m => { if(m._rec && m._rec.sci === sci) out.push(m); }); return out; };
   let ms = siens(); if(!ms.length) return;
   if(ebFilter.source !== 'gbif' && !_ctRecListes && !_ctRecLieux.has(sci)){ await _ctDetailEspece(ms[0]._rec.o, _ctRecTour); ms = siens(); if(!ms.length) return; }
-  if(!_map.hasLayer(_lyrMissing)){ _ctAllume('recent'); _ctAppliqueCouches(); }
+  // Un pays entier : ses points sur la couche à part, si l'espèce est encore celle qu'on a dépliée.
+  let groupe = _lyrMissing;
+  if(_ctRecSansPoints()){
+    if(_ctRecOuverte !== sci) return;
+    if(!carteCouches.has('recent')){ _ctAllume('recent'); }
+    ms = _ctPoseDeplie(sci); groupe = _lyrDeplie;
+    _ctAppliqueCouches();
+    _ctListeRecent();
+  } else if(!_map.hasLayer(_lyrMissing)){ _ctAllume('recent'); _ctAppliqueCouches(); }
   const pts = ms.map(m => m.getLatLng());
   const dernier = ms.reduce((a, b) => (b._rec.date > a._rec.date ? b : a));
   if(pts.length === 1) _map.setView(pts[0], Math.max(_map.getZoom(), 11), { animate:false });
@@ -10383,7 +10338,7 @@ async function _ctMontreEspece(sci){
   // grappe refaite l'emportait (Ibis falcinelle dans les 303 points de Genusson, 2026-10-23). Si le
   // point est encore rangé dans une grappe, c'est l'infobulle de la grappe qui s'ouvre, sans zoomer plus.
   setTimeout(() => {
-    const parent = _ctEnGrappes(_lyrMissing) && _lyrMissing.getVisibleParent ? _lyrMissing.getVisibleParent(dernier) : dernier;
+    const parent = _ctEnGrappes(groupe) && groupe.getVisibleParent ? groupe.getVisibleParent(dernier) : dernier;
     if(!parent || parent === dernier) return _ctOuvreSurvol(dernier);
     if(parent.getAllChildMarkers){
       const h = parent._icon ? parent._icon.offsetHeight : 34;
@@ -10414,19 +10369,50 @@ const _ctObsHtml = (items, liste) => `<ul class="ct-rang-obs">${items.map(o => `
 let _ctRecOuverte = '', _ctLigOuverte = '';
 function _ctObsEspece(sci, gbif){
   const s = n => n > 1 ? 's' : '', obs = [];
-  if(_lyrMissing) _lyrMissing.eachLayer(m => {
+  // Un pays entier : les observations sont celles de l'espèce dépliée, sur sa couche à part.
+  const dep = _ctRecSansPoints(), groupe = dep ? _lyrDeplie : _lyrMissing;
+  if(groupe) groupe.eachLayer(m => {
     const r = m._rec; if(!r || r.sci !== sci) return;
     for(const t of r.toutes || [{ date:r.date, nb:r.nb, nv:r.nv }]) obs.push({ id:L.stamp(m), lieu:r.lieu, ...t });
   });
+  // Pas encore arrivées (une demande à eBird) : la ligne le dit plutôt que de rester vide.
+  if(dep && !obs.length) return '<ul class="ct-rang-obs"><li class="ct-obs-d" style="padding:5px 8px;">… chargement de ses observations</li></ul>';
   obs.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   const quand = d => gbif ? _ctDateCourte(d) : _ctIlYa(d);
   return _ctObsHtml(obs.map(o => ({ id:o.id, titre:o.lieu || 'lieu inconnu',
-    detail:[quand(o.date), o.nb ? `${o.nb} oiseau${o.nb > 1 ? 'x' : ''} compté${s(o.nb)}` : '', o.nv ? 'non validée' : ''].filter(Boolean).join(' · ') })), 'rec');
+    detail:[quand(o.date), o.nb ? `${o.nb} oiseau${o.nb > 1 ? 'x' : ''} compté${s(o.nb)}` : '', o.nv ? 'non validée' : ''].filter(Boolean).join(' · ') })), dep ? 'dep' : 'rec');
+}
+// Un pays entier dans le Récent : sa liste seulement, pas ses points sur la carte (Mathis, 2026-10-27 :
+// un point par espèce, posé là où eBird l'a vue en dernier, ne disait rien). Déplier une espèce montre
+// tous ses points, comme la recherche d'une espèce : une seule demande à eBird (_ctDetailEspece), sur
+// une couche à part, _lyrDeplie, qui ne garde que l'espèce dépliée.
+let _lyrDeplie = null;
+const _ctRecSansPoints = () => ebFilter.source !== 'gbif' && _ctPaysEntier(_ctRecZones || []);
+function _ctViderDeplie(){
+  if(!_lyrDeplie) return;
+  _lyrDeplie.clearLayers();
+  if(_map && _map.hasLayer(_lyrDeplie)) _map.removeLayer(_lyrDeplie);
+}
+// Les points de l'espèce, recopiés depuis le Récent (un point ne vit que dans une couche à la fois).
+function _ctPoseDeplie(sci){
+  if(!_lyrDeplie) _lyrDeplie = _ctGrappes();
+  _lyrDeplie.clearLayers();
+  const copies = [];
+  if(_lyrMissing) _lyrMissing.eachLayer(m => {
+    if(!m._rec || m._rec.sci !== sci) return;
+    const c = L.marker(m.getLatLng(), { ...m.options });
+    Object.assign(c, { _rec:m._rec, _sciName:m._sciName, _speciesCode:m._speciesCode, _q:m._q });
+    copies.push(c);
+  });
+  if(_lyrDeplie.addLayers) _lyrDeplie.addLayers(copies); else copies.forEach(c => _lyrDeplie.addLayer(c));
+  if(carteCouches.has('recent')) _lyrDeplie.addTo(_map);
+  return copies;
 }
 // Le point d'une observation dépliée, dans sa couche : la Ligue garde tous ses points dans _ctTous (son
 // filtre retire de la grappe ceux qu'il cache).
 function _ctPointObs(liste, id){
   if(liste === 'lig') return _mapLayer && (_mapLayer._ctTous || []).find(m => L.stamp(m) === +id) || null;
+  if(liste === 'dep') return _lyrDeplie && _lyrDeplie.getLayer(+id) || null;
   return _lyrMissing && _lyrMissing.getLayer(+id) || null;
 }
 // Une observation de la liste dépliée : la carte va sur son point et ouvre sa bulle. Encore rangé dans
@@ -10435,7 +10421,7 @@ function _ctPointObs(liste, id){
 let _ctSurvolLibre = null;
 function _ctVaSurObs(liste, id){
   const m = _ctPointObs(liste, id); if(!m || !_map) return;
-  const groupe = liste === 'lig' ? _mapLayer : _lyrMissing, couche = liste === 'lig' ? 'ligue' : 'recent';
+  const groupe = liste === 'lig' ? _mapLayer : liste === 'dep' ? _lyrDeplie : _lyrMissing, couche = liste === 'lig' ? 'ligue' : 'recent';
   if(!_map.hasLayer(groupe)){ _ctAllume(couche); _ctAppliqueCouches(); }
   const ll = m.getLatLng();
   _map.setView(ll, Math.max(_map.getZoom(), 13), { animate:false });
@@ -10556,7 +10542,7 @@ function _ctListeRecent(){
     : gbif ? ''
     : _ctRecListesEtat === 'lecture' ? note('lecture des listes…', 'Lecture de toutes les listes de la zone. En attendant : la dernière observation de chaque espèce.')
     : _ctRecListesEtat === 'echec' ? note('une observation par espèce', 'Les listes n\'ont pas répondu : la dernière observation de chaque espèce seulement, et tous les lieux des plus rares.')
-    : _ctPaysEntier(_ctRecZones) ? note('une observation par espèce', 'Le résumé d\'eBird : la dernière observation de chaque espèce. Clique une région pour voir tous les points.')
+    : _ctPaysEntier(_ctRecZones) ? note('déplie une espèce pour voir ses points', 'Le pays entier : sa liste seulement. La flèche d\'une espèce montre tous ses points sur la carte ; une région cliquée montre tous les siens.')
     : note('une observation par espèce', 'La dernière observation de chaque espèce, et tous les lieux des plus rares.');
   box.innerHTML = `<p class="ct-compte">${tete}${source}</p><p class="ct-petit">Les plus rares d'abord</p>${vus.map(rang).join('')}` +
     (n > vus.length ? `<button type="button" class="ct-plus" id="ctRecPlus">Voir les ${n - vus.length} autres</button>` : '');
@@ -10760,7 +10746,12 @@ document.addEventListener('click', async e => {
   if(fl){
     const sci = fl.dataset.sci;
     if(fl.dataset.liste === 'lig'){ _ctLigOuverte = _ctLigOuverte === sci ? '' : sci; _ctListeLigue(); if(_ctLigOuverte) _ctMontreLigue(sci); }
-    else { _ctRecOuverte = _ctRecOuverte === sci ? '' : sci; _ctListeRecent(); if(_ctRecOuverte) _ctMontreEspece(sci); }
+    else {
+      _ctRecOuverte = _ctRecOuverte === sci ? '' : sci;
+      // Replier une espèce d'un pays entier retire ses points ; en déplier une autre les remplace.
+      if(_ctRecSansPoints()) _ctViderDeplie();
+      _ctListeRecent(); if(_ctRecOuverte) _ctMontreEspece(sci);
+    }
     return;
   }
   const r = e.target.closest('#ctContenu .ct-rang[data-sci]');
