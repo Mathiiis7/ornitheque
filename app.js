@@ -1890,21 +1890,6 @@ function hasRarityCalibrationInCountry(sci, country){
   // FR (par defaut) : bar chart FR OU exotique (curated ou eBird API per-pays)
   return !!REAL_RARITY[k] || isExoticInCountry(k, 'FR');
 }
-// Met a jour le hint sous les ctrls carte qui explicite la calibration rarete utilisee.
-// Affiche seulement si country != FR (pour FR c'est evident, pas besoin de le dire).
-function _updateCountryHint(){
-  const el = document.getElementById('mapCountryHint'); if(!el) return;
-  const c = (typeof ebFilter !== 'undefined' && ebFilter.country) || 'FR';
-  if(c === 'FR'){ el.style.display = 'none'; el.innerHTML = ''; return; }
-  const flg = flagImg(c) || '';
-  const wrap = `<span style="display:inline-block;vertical-align:middle;margin-right:6px;">${flg}</span>`;
-  // Les 16 pays sont desormais calibres sur la meme mesure, le bar chart eBird 2019-2026.
-  // Le message disait encore que seul le Montenegro l'etait et que la France ajoutait du
-  // Status & Trends : les deux branches etaient fausses.
-  const nom = (COUNTRIES_REG[c] && COUNTRIES_REG[c].name) || c;
-  el.innerHTML = `${wrap} Rareté calibrée pour ${esc(nom)} sur le bar chart eBird 2019-2026, même échelle que la France.`;
-  el.style.display = '';
-}
 // Rareté par pays. Passe explicitement 'FR' ou 'ME' etc. Retourne 0 si pas calibre pour
 // ce pays (marker sera colore gris "inconnue" dans sciColorForCountry). Utile pour les modes
 // carte voyage : FR bat REAL_RARITY, ME bat REAL_RARITY_ME_EBIRD, autres pays -> 0 gris.
@@ -8719,7 +8704,6 @@ document.addEventListener('change', e=>{
   else if(e.target.id==='mapEbCountry'){
     ebFilter.country = e.target.value || 'FR';
     _loaded.missing=''; _loaded.hotspots='';
-    _updateCountryHint();
     _repopulateEbRegionsForCountry(ebFilter.country)
       .catch(err => console.warn('eBird regions fetch failed for', ebFilter.country, err))
       .finally(() => { renderMap(); _reloadSpeciesForZone(); });
@@ -9366,9 +9350,6 @@ function _ctRangeReglages(){
   const zone = document.getElementById('ctMenusZone');
   const iciZone = recent ? document.querySelector('[data-ici-zone="recent"]') : eb;
   if(zone && iciZone && zone.parentElement !== iciZone) iciZone.prepend(zone);
-  const hint = document.getElementById('mapCountryHint'), etat = document.getElementById('ctRecEtat');
-  if(hint && recent && etat && hint.previousElementSibling !== etat) etat.after(hint);
-  if(hint && !recent && hot && hint.parentElement !== hot) hot.appendChild(hint);
 }
 // Ouvrir un onglet allume sa couche, une fois : l'éteindre ensuite tient jusqu'au prochain onglet,
 // un réglage changé ne la rallume pas.
@@ -9655,7 +9636,6 @@ async function _ctOuvrePays(cc){
   // Namibie à la France, on retombait sur la Ligue sans l'avoir demandé). Le Récent d'un pays coûte une
   // requête, France comprise ; ses Hotspots, 100 au plus (_loadHotspotsLayer).
   _ctGardeCoucheDuMode();
-  _updateCountryHint();
   if(change) _repopulateEbRegionsForCountry(cc).catch(() => {}).finally(() => _ctSyncFiltres());
   else {
     const rs = document.getElementById('mapEbRegion'); if(rs) rs.value = cc;
@@ -9756,7 +9736,6 @@ function _ctRetourPays(monde){
     // chargeait toute l'Autriche, et une zone dessinée en Vendée se lisait en Autriche, donc vide.
     if((ebFilter.country || 'FR') !== _globalCountry){
       ebFilter.country = _globalCountry;
-      _updateCountryHint();
       _repopulateEbRegionsForCountry(_globalCountry).catch(() => {}).finally(() => _ctSyncFiltres());
     }
   }

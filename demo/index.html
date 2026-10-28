@@ -124,7 +124,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=497">
+<link rel="modulepreload" href="app.js?v=498">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -989,7 +989,6 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
               <span class="map-count" id="mapEbCount" role="status"></span>
             </div>
           </div>
-          <div id="mapCountryHint" class="help" style="display:none; margin:-4px 0 6px;"></div>
           <div class="map-timeline" id="mapTimeline" style="display:none;">
             <button type="button" class="pc-lecture pc-lecture-mini" id="mapTlPlay" title="Lancer l'animation dans le temps" aria-label="Lancer l'animation dans le temps"></button>
             <div class="tl-sliders">
@@ -1632,5 +1631,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=497"></script>
+<script type="module" src="app.js?v=498"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>
