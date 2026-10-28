@@ -2616,7 +2616,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-gl-obs[hidden] { display:none; }
   /* Plusieurs observations de l'espèce au même endroit : leur nombre en bas à droite du point (2026-10-24). */
   .ct-pt-ico .ct-pt { position:relative; }
-  .ct-pt-nb { position:absolute; right:-7px; bottom:-6px; min-width:14px; height:14px; padding:0 3px; box-sizing:border-box;
+  /* Accroché par la gauche : il s'allonge vers la droite. Par la droite, « 21 » glissait sous le point
+     (Mathis, 2026-10-28). À un chiffre (14 px), même place qu'avant. */
+  .ct-pt-nb { position:absolute; left:calc(100% - 7px); bottom:-6px; min-width:14px; height:14px; padding:0 3px; box-sizing:border-box;
     border-radius:7px; background:var(--ink); color:var(--surface); font:700 10px/14px var(--sans); text-align:center; pointer-events:none; }
   .ct-pt-ico:focus:not(:focus-visible), .ct-gr-ico:focus:not(:focus-visible) { outline:none; }
   /* Les hotspots (étape 3 de la refonte, maquette proto.html) : un carré arrondi bordé de l'accent,

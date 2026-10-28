@@ -122,7 +122,18 @@ const GB_NOM_EXPLICITE = {
   'Orkney':'GB-SCT-ORK',
   // Coquille dans Natural Earth : il manque le r de Ayrshire.
   'North Ayshire':'GB-SCT-NAY',
+  // Irlande du Nord : Natural Earth a les 26 anciens districts, eBird 8 zones, à peu près les comtés.
+  // Seuls 8 districts portaient le nom d'une zone : les 18 autres manquaient sur la carte (Mathis,
+  // 2026-10-28). Rattachés par les 244 hotspots eBird d'Irlande du Nord tombés dans chacun ; Magherafelt,
+  // sans hotspot, va au comté de Londonderry dont il fait partie, Lisburn à Antrim (7 hotspots sur 10).
+  'Strabane':'GB-NIR-OMH', 'Dungannon':'GB-NIR-OMH', 'Mid Ulster':'GB-NIR-OMH',
+  'Limavady':'GB-NIR-DRY', 'Coleraine':'GB-NIR-DRY', 'Magherafelt':'GB-NIR-DRY',
+  'Moyle':'GB-NIR-ANT', 'Larne':'GB-NIR-ANT', 'Carrickfergus':'GB-NIR-ANT', 'Newtownabbey':'GB-NIR-ANT',
+  'Ballymoney':'GB-NIR-ANT', 'Ballymena':'GB-NIR-ANT', 'Lisburn':'GB-NIR-ANT',
+  'North Down':'GB-NIR-DOW', 'Ards':'GB-NIR-DOW', 'Banbridge':'GB-NIR-DOW',
+  'Craigavon':'GB-NIR-ARM', 'Castlereagh':'GB-NIR-BFS',
 };
+const GB_NIR_RATTACHES = new Set(Object.entries(GB_NOM_EXPLICITE).filter(([, c]) => c.startsWith('GB-NIR-')).map(([n]) => n));
 // Les 33 boroughs londoniens portent chacun leur nom ; c'est leur champ 'region' qui dit
 // Londres, et eBird n'en fait qu'une zone.
 const GB_REGION_EXPLICITE = { 'Greater London':'GB-ENG-LND' };
@@ -665,7 +676,8 @@ function buildCountry(features, cc){
     const code = resolveCode(cc, f.properties);
     if(!code || !allowed.has(code)){ skipped++; continue; }
     (byCode[code] = byCode[code] || []).push(...ringsOf(f.geometry));
-    if(!neNames[code]) neNames[code] = f.properties.name_fr || f.properties.name;
+    // Un district rattaché à la main ne nomme pas la zone : Moyle n'est pas le nom de la zone d'Antrim.
+    if(!neNames[code] && !GB_NIR_RATTACHES.has(f.properties.name)) neNames[code] = f.properties.name_fr || f.properties.name;
   }
   // Anneaux que Natural Earth range sous une zone alors qu'ils appartiennent a une autre.
   // Jan Mayen, a 8 degres OUEST par 71 nord, est classee dans le Nordland - a 1 000 km de

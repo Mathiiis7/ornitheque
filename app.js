@@ -8765,12 +8765,29 @@ function _ctZoneFreq(){
   if(ebFilter.polygon) return '';
   const z = ebFilter.dept || (ebFilter.region && ebFilter.region !== cc ? ebFilter.region : '');
   const parZone = REAL_FREQ_MONTHLY_BY_REGION_MULTI[cc];
-  return z && parZone && parZone[z] ? z : '';
+  if(!z || !parZone) return '';
+  if(parZone[z]) return z;
+  // Huit pays n'ont de fréquences que par regroupement de zones : un comté d'Irlande du Nord se mesure
+  // sur l'Irlande du Nord entière (GB-R10). Sans ce relais, « Zone » y restait grisé partout.
+  const g = _ctRegroupees && _ctRegroupees[cc] && _ctRegroupees[cc][z];
+  return g && parZone[g] ? g : '';
+}
+// La table zone -> regroupement (11 Ko), lue la première fois qu'on attend des fréquences.
+let _ctRegroupees = null, _ctRegroupeesDemandees = false;
+function _ctChargeRegroupees(){
+  if(_ctRegroupeesDemandees) return;
+  _ctRegroupeesDemandees = true;
+  fetch('data/zones-regroupees.json?v=20261028').then(r => r.ok ? r.json() : null).then(t => {
+    if(!t) return;
+    _ctRegroupees = t;
+    if(_ctRarZone && _ctZoneFreq()){ _loaded.missing = ''; renderMap(); } else _ctDessinePanneau();
+  }).catch(() => {});
 }
 // Les fréquences par zone ne sont pas en dur, même pour la France : on les demande, puis on redessine.
 let _ctFreqDemandee = '';
 function _ctAttendFreq(){
   const cc = ebFilter.country || 'FR';
+  _ctChargeRegroupees();
   if(REAL_FREQ_MONTHLY_BY_REGION_MULTI[cc] || _ctFreqDemandee === cc) return;
   _ctFreqDemandee = cc;
   _loadFreqDataForCountry(cc).then(() => { if(_ctRarZone && _ctZoneFreq()){ _loaded.missing = ''; renderMap(); } else _ctDessinePanneau(); }).catch(() => {});
@@ -9579,7 +9596,7 @@ async function _ctChargePays(){
 // Les régions d'un pays étranger, lues à son premier clic.
 function _ctChargeZones(cc){
   if(cc === 'FR' || CT_PAYS_SANS_ZONES.has(cc)) return Promise.resolve(null);
-  if(!(cc in _ctZonesPromesses)) _ctZonesPromesses[cc] = fetch(`data/carte-zones/${cc.toLowerCase()}.json?v=20261024`).then(r => r.ok ? r.json() : null).catch(() => null);
+  if(!(cc in _ctZonesPromesses)) _ctZonesPromesses[cc] = fetch(`data/carte-zones/${cc.toLowerCase()}.json?v=20261028`).then(r => r.ok ? r.json() : null).catch(() => null);
   return _ctZonesPromesses[cc];
 }
 // Cadre un pays sur son plus grand morceau : son cadre entier irait de la Guyane aux Canaries, de
@@ -9854,7 +9871,7 @@ function _ctDessinePanneau(){
     if(eteinte && !msg){
       const nom = (CARTE_COUCHES.find(([c]) => c === k) || [, k])[1];
       msg = document.createElement('div'); msg.className = 'ct-vide ct-eteinte';
-      msg.innerHTML = `<b>La couche « ${esc(nom)} » n'est pas affichée</b>Allume-la pour la voir sur la carte et dans cette liste.` +
+      msg.innerHTML = `<b>La couche « ${esc(nom)} » n'est pas affichée</b>` +
         `<button type="button" class="ct-couche ct-eteinte-btn" data-ct-allume="${k}" aria-pressed="false">${_ctSymbole(k)}Afficher la couche</button>`;
       v.prepend(msg);
     }
@@ -10728,7 +10745,10 @@ function _ctSyncPortee(){
   _ctAttendFreq();
   const cc = ebFilter.country || 'FR', zf = _ctZoneFreq(), active = _ctRarZoneActive();
   const zone = ebFilter.dept || (ebFilter.region && ebFilter.region !== cc ? ebFilter.region : '');
-  const texte = zf ? (active ? `Rareté mesurée sur les listes de la zone : ${_ctNomZone().nom}.` : '')
+  // Une zone mesurée par son regroupement le dit : « Antrim » se mesure sur l'Irlande du Nord entière.
+  const nomRegroupe = zf && zf !== zone ? (((typeof REGIONS_BY_COUNTRY === 'object' && REGIONS_BY_COUNTRY[cc]) || []).find(r => r.code === zf) || {}).name : '';
+  const texte = zf ? (active ? (nomRegroupe ? `Rareté mesurée sur les listes de la zone plus large « ${nomRegroupe} », qui contient ${_ctNomZone().nom}.`
+      : `Rareté mesurée sur les listes de la zone : ${_ctNomZone().nom}.`) : '')
     : ebFilter.polygon ? 'Une zone dessinée n\'a pas de mesure à elle : rareté du pays.'
     : !zone ? 'Choisis une région ou un département pour mesurer la rareté dans la zone.'
     : !REAL_FREQ_MONTHLY_BY_REGION_MULTI[cc] ? 'Mesure de la zone… chargement'
