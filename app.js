@@ -8297,7 +8297,9 @@ async function _renderModeHotspots(enFond = false){
   // ↺ ne change plus de mode, 2026-10-26 ; sans cela il lisait la France sans qu'on l'ait choisie).
   if(!_ctPaysOuvert && !ebFilter.polygon){
     _hotspotsRunSeq++; if(_lyrHotspots) _lyrHotspots.clearLayers(); _loaded.hotspots = '';
-    if(cnt) cnt.textContent = `Choisis un pays : ${_ctAuDoigt.matches ? 'touche' : 'clique'}-le sur la carte.`;
+    // L'invitation à choisir un pays est l'encadré de la liste (_ctListeHot), comme au Récent.
+    if(cnt) cnt.textContent = '';
+    _ctListeHot();
     return;
   }
   if(cnt) cnt.textContent='… chargement';
@@ -9241,9 +9243,10 @@ function _ctListeGrappe(c){
   const html = `<p class="ct-gl-t">${tri.length} espèce${s(tri.length)} ici · ${obs} observation${s(obs)}</p>` +
     `<div class="ct-gl-liste">${tri.map(e => `<div class="ct-gl-e"><button type="button" class="ct-gl-l"${e.sci ? ` data-sci="${esc(e.sci)}"` : ''}${e.cc ? ` data-cc="${esc(e.cc)}"` : ''}>` +
       `${tierChip(e.w || '?', e.coul, { cls:'tier-rond' })}${e.statut ? jetonExo(e.statut) : ''}<span class="ct-gl-nom">${esc(e.nom)}</span>${e.qui.size ? `<span class="ct-gl-qui">${_ctQui(e.qui)}</span>` : ''}</button>` +
-      // Une seule observation se déplie aussi, par la flèche seule : sa date et son lieu ne se voyaient
+      // En ligue, pas de « ×N » : « 2 personnes » le dit déjà, et il serrait le nom (Mathis, 2026-10-28).
+  // Une seule observation se déplie aussi, par la flèche seule : sa date et son lieu ne se voyaient
       // nulle part (Mathis, 2026-10-26).
-      `${e.obs.length ? `<button type="button" class="ct-gl-n" aria-expanded="false" title="${e.n > 1 ? `Voir les ${e.n} observations` : 'Voir l\'observation'}">${e.n > 1 ? `×${e.n} ` : ''}<span aria-hidden="true">▾</span></button>` : ''}</div>` +
+      `${e.obs.length ? `<button type="button" class="ct-gl-n" aria-expanded="false" title="${e.n > 1 ? `Voir les ${e.n} observations` : 'Voir l\'observation'}">${e.n > 1 && !e.qui.size ? `×${e.n} ` : ''}<span aria-hidden="true">▾</span></button>` : ''}</div>` +
       (e.obs.length ? detailHtml(e) : '')).join('')}</div>`;
   if(!_ctPopGrappe) _ctPopGrappe = L.popup({ className:'ct-gl', maxWidth:300, minWidth:220, autoPanPadding:[24, 24], closeButton:true });
   _ctGrappeOuverte = c;
@@ -9360,8 +9363,11 @@ function _ctGardeCoucheDuMode(){
 // Cliquer une zone montre ce que l'onglet ouvert y a : sa couche s'allume, comme le faisait le Récent
 // quand ce clic l'ouvrait (en Ligue, la carte restait sinon sur « Aucune couche allumée »).
 const _ctAllumeMode = () => _ctAllume(CARTE_MODE_ONGLET[mapMode] || 'ligue');
+// Un onglet du panneau ne fait que montrer sa page : seules les pastilles au-dessus de la carte allument
+// une couche (Mathis, 2026-10-28). Le clic d'onglet passe par le bouton de mode, d'où ce drapeau.
+let _ctOngletSansCouche = false;
 function _ctSuitMode(){
-  _ctAllume(CARTE_MODE_ONGLET[mapMode] || 'ligue');
+  if(!_ctOngletSansCouche) _ctAllume(CARTE_MODE_ONGLET[mapMode] || 'ligue');
   _ctRangeReglages();
   _ctDessinePanneau();
 }
@@ -9840,6 +9846,20 @@ function _ctDessinePanneau(){
     b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1;
   });
   document.querySelectorAll('#ctContenu [data-volet]').forEach(v => { v.hidden = v.dataset.volet !== onglet; });
+  // Couche éteinte : l'onglet le dit et propose de l'afficher, au lieu d'une liste que la carte ne montre
+  // pas (Mathis, 2026-10-28). Le reste du volet est seulement masqué : ses réglages gardent leur état.
+  document.querySelectorAll('#ctContenu [data-volet]').forEach(v => {
+    const k = v.dataset.volet, eteinte = !carteCouches.has(k);
+    let msg = v.querySelector(':scope > .ct-eteinte');
+    if(eteinte && !msg){
+      const nom = (CARTE_COUCHES.find(([c]) => c === k) || [, k])[1];
+      msg = document.createElement('div'); msg.className = 'ct-vide ct-eteinte';
+      msg.innerHTML = `<b>La couche « ${esc(nom)} » n'est pas affichée</b>Allume-la pour la voir sur la carte et dans cette liste.` +
+        `<button type="button" class="ct-couche ct-eteinte-btn" data-ct-allume="${k}" aria-pressed="false">${_ctSymbole(k)}Afficher la couche</button>`;
+      v.prepend(msg);
+    }
+    v.classList.toggle('ct-volet-eteint', eteinte);
+  });
   const cc = ebFilter.country || 'FR';
   const z = _ctNomZone();
   const ariane = document.getElementById('ctAriane');
@@ -9873,9 +9893,13 @@ document.addEventListener('click', e => {
   if(t){
     if(_ctTel.matches && carteTiroir === 'bas') carteTiroir = 'mi';
     const mode = CARTE_ONGLET_MODE[t.dataset.onglet];
-    if(mode === mapMode) _ctDessinePanneau(); else _ctModeBouton(mode)?.click();
+    if(mode === mapMode) _ctDessinePanneau();
+    else { _ctOngletSansCouche = true; try{ _ctModeBouton(mode)?.click(); } finally { _ctOngletSansCouche = false; } }
     return;
   }
+  // « Afficher la couche » d'un onglet dont la couche est éteinte : la même chose que sa pastille.
+  const al = e.target.closest('#ctContenu [data-ct-allume]');
+  if(al){ document.querySelector(`#ctCouches [data-couche="${al.dataset.ctAllume}"]`)?.click(); return; }
   const c = e.target.closest('#ctCouches [data-couche]');
   if(c){
     const k = c.dataset.couche;
@@ -10486,7 +10510,13 @@ function _ctVaSurObs(liste, id){
 function _ctListeHot(){
   const box = document.getElementById('ctListeHot'); if(!box) return;
   const hs = []; if(_lyrHotspots) _lyrHotspots.eachLayer(m => { if(m._hs) hs.push(m); });
-  if(!hs.length){ box.innerHTML = ''; return; }
+  if(!hs.length){
+    // Rien de choisi : le même encadré que le Récent (Mathis, 2026-10-28), plutôt qu'une ligne en bas.
+    const clic = _ctAuDoigt.matches ? 'touche' : 'clique';
+    box.innerHTML = !_ctPaysOuvert && !ebFilter.polygon
+      ? `<div class="ct-vide"><b>Choisis un pays</b>Les hotspots se chargent zone par zone : ${clic} un pays sur la carte, puis une de ses régions, ou dessine ta zone.</div>` : '';
+    return;
+  }
   const total = hotspotSort === 'total', s = n => n > 1 ? 's' : '';
   hs.sort((a, b) => b._hs.nb - a._hs.nb || b._hs.allSp - a._hs.allSp || a._hs.nom.localeCompare(b._hs.nom, 'fr'));
   box.innerHTML = hs.map(m => {

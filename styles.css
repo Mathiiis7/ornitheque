@@ -2778,6 +2778,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-mention a { color:var(--accent-ink); }
   .ct-vide { border:1px dashed var(--line-2); border-radius:12px; padding:18px 16px; text-align:center; font-size:14px; color:var(--ink-3); margin-top:14px; }
   .ct-vide b { display:block; color:var(--ink); font-size:15px; margin-bottom:4px; }
+  /* Couche éteinte : le volet ne montre que l'invitation à l'afficher (2026-10-28). */
+  .ct-volet-eteint > :not(.ct-eteinte) { display:none !important; }
+  .ct-volet:not(.ct-volet-eteint) > .ct-eteinte { display:none; }
+  .ct-eteinte-btn { margin:12px auto 0; }
   .ct-petit { font-size:13px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:var(--ink-3); margin:14px 0 2px; }
   .ct-compte { font-size:14px; color:var(--ink-3); margin:8px 0 2px; }
   .ct-compte b { color:var(--ink); }

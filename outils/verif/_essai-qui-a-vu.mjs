@@ -15,6 +15,8 @@ async function essai(nom, opts){
   await p.waitForTimeout(3000);
   await p.keyboard.press('Escape');
   await p.evaluate(() => document.querySelector('#ctOnglets [data-onglet="ligue"]').click());
+  // Depuis le 2026-10-28, l'onglet n'allume plus sa couche : c'est la pastille qui le fait.
+  await p.evaluate(() => { const b = document.querySelector('#ctCouches [data-couche="ligue"]'); if(b && b.getAttribute('aria-pressed') !== 'true') b.click(); });
   await p.waitForTimeout(2500);
   // La plus grosse grappe : celle qui a le plus de chances d'avoir des espèces vues par plusieurs.
   const ok = await p.evaluate(() => {
@@ -33,6 +35,7 @@ async function essai(nom, opts){
   const plusieurs = lignes.filter(l => / personnes$/.test(l.qui)).length, seul = lignes.filter(l => l.qui && !/ personnes$/.test(l.qui)).length;
   console.log('   un nom :', seul, '; « N personnes » :', plusieurs, '; noms d\'oiseau sur 3 lignes ou plus :', lignes.filter(l => l.lignesNom >= 3).length);
   console.log('   exemples :', JSON.stringify(lignes.slice(0, 8)));
+  console.log('   « ×N » affichés en ligue :', await p.evaluate(() => [...document.querySelectorAll('.ct-gl-n')].filter(b => /×/.test(b.textContent)).length));
   console.log('   restes « et N autres » :', lignes.filter(l => /autres|,/.test(l.qui)).length);
   await p.screenshot({ path:`${SORTIE}/qui-a-vu-${nom}.png` });
   await ctx.close();
