@@ -33,6 +33,7 @@ const ES_HASC = {
   'ES.AN':'ES-AN','ES.AR':'ES-AR','ES.AS':'ES-AS','ES.CB':'ES-CB','ES.CE':'ES-CE',
   'ES.CL':'ES-CL','ES.CM':'ES-CM','ES.CN':'ES-CN','ES.CT':'ES-CT','ES.EX':'ES-EX',
   'ES.GA':'ES-GA','ES.MD':'ES-MD','ES.PV':'ES-PV','ES.VC':'ES-VC',
+  'ES.ML':'ES-ML',   // Melilla, oubliée : seule forme espagnole écartée (2026-10-28)
   // Divergences entre le HASC de NE et le code ISO utilise par eBird
   'ES.PM':'ES-IB',   // Baleares
   'ES.MU':'ES-MC',   // Murcie
@@ -52,6 +53,11 @@ const GB_UNIT = {
 };
 // Codes iso_3166_2 de NE qui different du code eBird
 const ISO_FIXUP = {
+  // Trous de la Carte (2026-10-28, outils/verif/_trous-zones.mjs) : Natural Earth a des codes qu'eBird ne
+  // connaît pas. Camenca et Grigoriopol sont en Transnistrie (MD-SN chez eBird) ; Érd est une ville de
+  // Pest ; Apace s'est détachée de Gornja Radgona en 2006 ; « Zasavska » est chez Natural Earth une seule
+  // forme pour Hrastnik, Trbovlje et Zagorje, rangée sous Zagorje (même groupe SI-R12).
+  'MD-CAM':'MD-SN', 'MD-GRI':'MD-SN', 'HU-ED':'HU-PE', 'SI-195':'SI-029', 'SI-05':'SI-142',
   'GR-A1':'GR-I',     // Attique
   'NZ-CIT':'NZ-CI',   // Chatham Islands
   // Natural Earth nomme encore la Zabaikalie par son ancien nom, Tchita.
@@ -132,6 +138,24 @@ const GB_NOM_EXPLICITE = {
   'Ballymoney':'GB-NIR-ANT', 'Ballymena':'GB-NIR-ANT', 'Lisburn':'GB-NIR-ANT',
   'North Down':'GB-NIR-DOW', 'Ards':'GB-NIR-DOW', 'Banbridge':'GB-NIR-DOW',
   'Craigavon':'GB-NIR-ARM', 'Castlereagh':'GB-NIR-BFS',
+  // Les 45 autorités unitaires et boroughs qu'aucun des chemins ci-dessus ne rattachait : des villes surtout
+  // (Liverpool, Hull, Southampton, Nottingham, la moitié de Manchester), des trous sur la Carte (2026-10-28).
+  // Rattachées comme l'Irlande du Nord, par le comté eBird de la majorité des 19 201 hotspots d'Angleterre
+  // et d'Écosse tombés dedans (au plus 7 hotspots sur 48 ailleurs, à South Gloucestershire).
+  'Hartlepool':'GB-ENG-DUR', 'Darlington':'GB-ENG-DUR',
+  'Redcar and Cleveland':'GB-ENG-NYK', 'Middlesbrough':'GB-ENG-NYK', 'York':'GB-ENG-NYK',
+  'Kingston upon Hull':'GB-ENG-ERY', 'North Lincolnshire':'GB-ENG-LIN', 'North East Lincolnshire':'GB-ENG-LIN',
+  'Southend-on-Sea':'GB-ENG-ESS', 'Thurrock':'GB-ENG-ESS', 'Medway':'GB-ENG-KEN', 'Brighton and Hove':'GB-ENG-ESX',
+  'Portsmouth':'GB-ENG-HAM', 'Southampton':'GB-ENG-HAM', 'Bournemouth':'GB-ENG-DOR', 'Poole':'GB-ENG-DOR',
+  'Torbay':'GB-ENG-DEV', 'Plymouth':'GB-ENG-DEV', 'Isles of Scilly':'GB-ENG-CON',
+  'North Somerset':'GB-ENG-SOM', 'Bath and North East Somerset':'GB-ENG-SOM', 'South Gloucestershire':'GB-ENG-GLS',
+  'Knowsley':'GB-ENG-KWL', 'Liverpool':'GB-ENG-KWL', 'Sefton':'GB-ENG-KWL',
+  'Blackpool':'GB-ENG-LAN', 'Blackburn with Darwen':'GB-ENG-LAN',
+  'Wigan':'GB-ENG-MAN', 'Stockport':'GB-ENG-MAN', 'Salford':'GB-ENG-MAN', 'Bolton':'GB-ENG-MAN', 'Trafford':'GB-ENG-MAN',
+  'Oldham':'GB-ENG-MAN', 'Rochdale':'GB-ENG-MAN', 'Tameside':'GB-ENG-MAN', 'Bury':'GB-ENG-MAN',
+  'Milton Keynes':'GB-ENG-BKM', 'Luton':'GB-ENG-BDF', 'Peterborough':'GB-ENG-CAM', 'Swindon':'GB-ENG-WIL',
+  'Nottingham':'GB-ENG-NTT', 'Leicester':'GB-ENG-LEC', 'Derby':'GB-ENG-DBY',
+  'Inverclyde':'GB-SCT-RFW', 'East Renfrewshire':'GB-SCT-RFW',
 };
 const GB_NIR_RATTACHES = new Set(Object.entries(GB_NOM_EXPLICITE).filter(([, c]) => c.startsWith('GB-NIR-')).map(([n]) => n));
 // Les 33 boroughs londoniens portent chacun leur nom ; c'est leur champ 'region' qui dit
@@ -683,7 +707,8 @@ function buildCountry(features, cc){
   let skipped = 0;
   for(const f of features){
     const code = resolveCode(cc, f.properties);
-    if(!code || !allowed.has(code)){ skipped++; continue; }
+    // ECARTES=1 : nomme chaque feature laissée de côté, pour trouver les trous de la Carte (2026-10-28).
+    if(!code || !allowed.has(code)){ skipped++; if(process.env.ECARTES) console.log(`  écartée ${cc} : ${f.properties.name} (${f.properties.iso_3166_2}) -> ${code || 'aucun code'}`); continue; }
     (byCode[code] = byCode[code] || []).push(...ringsOf(f.geometry));
     // Un district rattaché à la main ne nomme pas la zone : Moyle n'est pas le nom de la zone d'Antrim.
     if(!neNames[code] && !GB_NIR_RATTACHES.has(f.properties.name)) neNames[code] = f.properties.name_fr || f.properties.name;
