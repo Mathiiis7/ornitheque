@@ -9232,8 +9232,11 @@ function _ctListeGrappe(c){
     const obsPt = detailDe(m), k = obsPt.length || 1;
     const d = parSp.get(nom);
     // Le palier d'un point du Récent se relit à chaque fois : la rareté passée du pays à la zone refait
-    // la liste ouverte sans attendre les nouveaux points (Mathis, 2026-10-26).
-    const pal = m._rec ? _ctPalierPoint(m._rec.sci, m._rec.cc || ebFilter.country || 'FR', m._rec.statut) : { w:m.options.w, coul:m.options.coul };
+    // la liste ouverte sans attendre les nouveaux points (Mathis, 2026-10-26). Ceux de la ligue aussi : ils
+    // gardaient le palier lu à la pose du point, et la liste restait sur le pays (Mathis, 2026-10-28).
+    const palLigue = () => { const w = _paliersLigue(m._sciName, m._ligue.cc); return { w, coul:w ? realColor(w) : sciColorForCountry(m._sciName, m._ligue.cc) }; };
+    const pal = m._rec ? _ctPalierPoint(m._rec.sci, m._rec.cc || ebFilter.country || 'FR', m._rec.statut)
+      : m._ligue && m._sciName ? palLigue() : { w:m.options.w, coul:m.options.coul };
     if(d){ d.n += k; d.obs.push(...obsPt); }
     else parSp.set(nom, { nom, sci:m._sciName || (m._rec && m._rec.sci) || '', cc:(m._ligue && m._ligue.cc) || '', w:pal.w || 0, coul:pal.coul, n:k, obs:obsPt, statut:_ctStatutPoint(m), qui:new Set() });
     if(m._ligue && m._ligue.who) parSp.get(nom).qui.add(m._ligue.who);
@@ -10827,7 +10830,7 @@ function _ctSyncPortee(){
   // Une zone mesurée par son regroupement le dit : « Antrim » se mesure sur l'Irlande du Nord entière.
   const nomRegroupe = zf && zf !== zone ? (((typeof REGIONS_BY_COUNTRY === 'object' && REGIONS_BY_COUNTRY[cc]) || []).find(r => r.code === zf) || {}).name : '';
   const texte = zf ? (active ? (nomRegroupe ? `Rareté mesurée sur les listes de la zone plus large « ${nomRegroupe} », qui contient ${_ctNomZone().nom}.`
-      : `Rareté mesurée sur les listes de la zone : ${_ctNomZone().nom}.`) : '')
+      : '') : '')   // « Zone » allumé le dit déjà (Mathis, 2026-10-28)
     : ebFilter.polygon ? 'Une zone dessinée n\'a pas de mesure à elle : rareté du pays.'
     : !zone ? 'Choisis une région ou un département pour mesurer la rareté dans la zone.'
     : !REAL_FREQ_MONTHLY_BY_REGION_MULTI[cc] ? 'Mesure de la zone… chargement'
