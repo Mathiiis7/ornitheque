@@ -1,4 +1,6 @@
-# ZONES MIEUX VISIBLES + RÉCENT DES RÉGIONS REGROUPÉES (2026-10-28) : v926 / app.js?v=500 (0a5aec89), COMMITÉ PAS POUSSÉ. Prochain v927 / 501
+# POUSSÉ (2026-10-28) : v926 à v928 / app.js?v=500 à 502, en ligne vérifié. Prochain v929 / 503. Mathis : je pousse moi-même dès que c'est vérifié.
+- v927 : plus de nom scientifique dans les lignes du Récent et de la Ligue (_ctRangHtml) ; nombre sur la flèche qui déplie, même à 1 (o.compte, .ct-rang-nb ; variante B de notes-privees/maquettes/recent-listes). Récent : listes (ou lieux, observations) ; v928 Ligue : observations. Essai _essai-recent-nb-listes.mjs.
+# ZONES MIEUX VISIBLES + RÉCENT DES RÉGIONS REGROUPÉES (2026-10-28) : v926 / app.js?v=500 (0a5aec89)
 - Maquettes notes-privees/maquettes/zones-carte/ (outils/verif/_capture-zones-maquette.mjs) : fond pâli, gris, traits foncés, liseré, zones teintées. Choix de Mathis : E, traits verts + liseré couleur de page (styles.css, drop-shadow sur les calques ctPays et ctDeps ; sombre vérifié). Survol épaissi à 2,4 (sinon une région à 1,5 s'amincissait).
 - Récent d'un groupe (ME, SI, CH, HU, LV, MK, MD) : restait à « une observation par espèce » ; se lit maintenant comme une région (const groupe). ME-P : 53 listes, 13 demandes, 26 s (_essai-recent-groupe.mjs). GB l'avait déjà (codes à 3 morceaux). Coût : une demande au relais par zone du groupe (33 pour le plus gros groupe slovène). 11 bancs CONFORME.
 # POUSSÉ (2026-10-28) : v917 à v922 / app.js?v=491 à 496 (dernier 9ecb787f). Prochain numéro v923 / 497
