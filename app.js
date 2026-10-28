@@ -7163,7 +7163,12 @@ async function _repopulateEbRegionsForCountry(country){
   sel.innerHTML = `<option value="${esc(country)}" selected>Tout le pays</option><option value="" disabled>… chargement</option>`;
   ebFilter.region = country; ebFilter.dept = '';
   try{
-    const regs = await _fetchEbSubregions(country, 'subnational1');
+    // Les 8 pays aux regroupements : leurs groupes, ceux de la Carte et de la rareté (Mathis, 2026-10-28),
+    // pas les 193 communes slovènes qu'eBird donnerait.
+    const geo = await _ctChargeZones(country);
+    const groupes = geo ? geo.features.filter(f => f.properties.zones).map(f => ({ code:f.properties.ebird, name:f.properties.nom })) : [];
+    groupes.sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+    const regs = groupes.length ? groupes : await _fetchEbSubregions(country, 'subnational1');
     sel.innerHTML = `<option value="${esc(country)}" selected>Tout le pays</option>` +
       regs.map(r=>`<option value="${esc(r.code)}">${esc(r.name)}</option>`).join('');
     await _repopulateEbDeptsForRegion(country);
@@ -7178,7 +7183,8 @@ async function _repopulateEbDeptsForRegion(regionCode){
   // Cas FR : on delegue au refresh existant (statique).
   if(ebFilter.country === 'FR'){ _refreshDeptSel(); return; }
   // Cas pays etranger, region du pays lui-meme (subnational0) : pas de subnational2 utile.
-  if(!/-/.test(regionCode)){ sel.style.display='none'; if(lbl) lbl.style.display='none'; return; }
+  // Un groupe de zones n'a pas de subdivision chez eBird, qui ne le connaît pas.
+  if(!/-/.test(regionCode) || _ctGroupes[regionCode]){ sel.style.display='none'; if(lbl) lbl.style.display='none'; return; }
   sel.innerHTML = '<option value="" selected>Toutes provinces</option><option value="" disabled>… chargement</option>';
   sel.style.display=''; if(lbl) lbl.style.display='';
   const subs = await _fetchEbSubregions(regionCode, 'subnational2');
@@ -8314,7 +8320,7 @@ async function _renderModeHotspots(enFond = false){
     return;
   }
   const myRun = _hotspotsRunSeq + 1;
-  await _loadHotspotsLayer(parDessin ? parDessin.zones : zone);
+  await _loadHotspotsLayer(parDessin ? parDessin.zones : _ctZonesEbird(zone));
   if(myRun !== _hotspotsRunSeq) return;
   if(!enFond || carteCouches.has('hot')) _lyrHotspots.addTo(_map);
   const n = _lyrHotspots.getLayers().length;
@@ -8659,9 +8665,10 @@ async function _showSpeciesDetail(sciName, speciesCode){
     const country = ebFilter.country || 'FR';
     const w = rarityForCountry(sciName, country);
     const color = sciColorForCountry(sciName, country);
-    const url = `https://api.ebird.org/v2/data/obs/${deptCode || regionCode || cty}/recent/${speciesCode}?back=${days}&maxResults=10000&locale=fr`;
-    const raw = await _ebFetch(url);
-    let data = Array.isArray(raw) ? raw : [];
+    // Un groupe de zones (8 pays) se lit zone par zone, ses réponses réunies.
+    const lus = await _ctParLots(_ctZonesEbird(deptCode || regionCode || cty),
+      z => _ebFetch(`https://api.ebird.org/v2/data/obs/${z}/recent/${speciesCode}?back=${days}&maxResults=10000&locale=fr`));
+    let data = lus.flatMap(r => Array.isArray(r) ? r : []);
     if(ebFilter.polygon) data = data.filter(o => typeof o.lat === 'number' && _pointInPolygon(o.lat, o.lng, ebFilter.polygon));
     let used = data.length ? { lbl: deptCode ? deptLbl : (regionCode ? 'la région' : 'tout ' + ctyName) } : null;
     if(!stillMine()) return 0;
@@ -8774,15 +8781,14 @@ function _ctZoneFreq(){
   return g && parZone[g] ? g : '';
 }
 // La table zone -> regroupement (11 Ko), lue la première fois qu'on attend des fréquences.
-let _ctRegroupees = null, _ctRegroupeesDemandees = false;
+let _ctRegroupees = null, _ctRegroupeesPromesse = null;
 function _ctChargeRegroupees(){
-  if(_ctRegroupeesDemandees) return;
-  _ctRegroupeesDemandees = true;
-  fetch('data/zones-regroupees.json?v=20261028').then(r => r.ok ? r.json() : null).then(t => {
+  if(!_ctRegroupeesPromesse) _ctRegroupeesPromesse = fetch('data/zones-regroupees.json?v=20261028').then(r => r.ok ? r.json() : null).then(t => {
     if(!t) return;
     _ctRegroupees = t;
     if(_ctRarZone && _ctZoneFreq()){ _loaded.missing = ''; renderMap(); } else _ctDessinePanneau();
   }).catch(() => {});
+  return _ctRegroupeesPromesse;
 }
 // Les fréquences par zone ne sont pas en dur, même pour la France : on les demande, puis on redessine.
 let _ctFreqDemandee = '';
@@ -9146,7 +9152,8 @@ function _ctSurvolGrappe(ms){
   const obs = tri.reduce((t, e) => t + e.n, 0);
   return `<span class="ct-sv-t">${tri.length} espèce${s(tri.length)}, ${obs} observation${s(obs)}</span>` +
     // La ligue dit qui a vu chaque espèce (Mathis, 2026-10-26) ; le Récent, jamais (docs/carte-donnees.md).
-    vus.map(e => { const fin = [_ctQui(e.qui), e.n > 1 ? `×${e.n}` : ''].filter(Boolean).join(' ');
+    // Pas de « ×N » quand la ligne dit qui l'a vue : « 3 personnes » le dit déjà (Mathis, 2026-10-28).
+    vus.map(e => { const fin = [_ctQui(e.qui), e.n > 1 && !e.qui.size ? `×${e.n}` : ''].filter(Boolean).join(' ');
       return _ctLigneSurvol(e.coul, e.w, e.nom, fin ? `<span class="ct-sv-n">${fin}</span>` : '', e.statut); }).join('') +
     (reste ? `<span class="ct-sv-d">et ${reste} autre${s(reste)} : ${_ctAuDoigt.matches ? 'touche' : 'clique'} pour ouvrir</span>` : '');
 }
@@ -9597,8 +9604,27 @@ async function _ctChargePays(){
 // Les régions d'un pays étranger, lues à son premier clic.
 function _ctChargeZones(cc){
   if(cc === 'FR' || CT_PAYS_SANS_ZONES.has(cc)) return Promise.resolve(null);
-  if(!(cc in _ctZonesPromesses)) _ctZonesPromesses[cc] = fetch(`data/carte-zones/${cc.toLowerCase()}.json?v=20261028`).then(r => r.ok ? r.json() : null).catch(() => null);
+  if(!(cc in _ctZonesPromesses)) _ctZonesPromesses[cc] = fetch(`data/carte-zones/${cc.toLowerCase()}.json?v=20261028`).then(r => r.ok ? r.json() : null)
+    .then(geo => { if(geo) for(const f of geo.features) if(f.properties.zones) _ctGroupes[f.properties.ebird] = f.properties.zones; return geo; })
+    .catch(() => null);
   return _ctZonesPromesses[cc];
+}
+// Huit pays montrent des groupes de zones, ceux où se mesure leur rareté (Mathis, 2026-10-28) : eBird ne
+// les connaît pas, on l'interroge sur chacune de leurs zones (jusqu'à 33 en Slovénie). Code du groupe ->
+// codes eBird, lu dans data/carte-zones (propriété zones) ; à défaut, dans la table des regroupements.
+const _ctGroupes = {};
+function _ctZonesEbird(z){
+  if(_ctGroupes[z]) return _ctGroupes[z];
+  const cc = (z || '').split('-')[0], t = _ctRegroupees && _ctRegroupees[cc];
+  const membres = t ? Object.keys(t).filter(k => t[k] === z) : [];
+  return membres.length ? membres : [z];
+}
+// Plusieurs zones à lire : quatre requêtes à la fois, dans l'ordre. Une à une, les 33 d'un groupe
+// slovène se lisaient bout à bout.
+async function _ctParLots(liste, f, n = 4){
+  const res = new Array(liste.length); let i = 0;
+  await Promise.all(Array.from({ length:Math.min(n, liste.length) }, async () => { while(i < liste.length){ const k = i++; res[k] = await f(liste[k], k); } }));
+  return res;
 }
 // Cadre un pays sur son plus grand morceau : son cadre entier irait de la Guyane aux Canaries, de
 // l'Alaska à Hawaï. La France garde le cadre de toujours.
@@ -9774,6 +9800,41 @@ function _ctInitCarte(){
   _ctChargePays();
   const cc = ebFilter.country || 'FR';
   if(cc !== 'FR') _repopulateEbRegionsForCountry(cc).catch(() => {}).finally(() => renderMap());
+}
+// Les zones d'un pays telles que la Carte les dessine : les 13 régions pour la France, data/carte-zones
+// pour les autres (les groupes dans les 8 pays regroupés). Gardées pour l'onglet Régions de la Ligue.
+const _ctGeoZonesLu = {};
+async function _ctGeoZonesPays(cc){
+  if(cc in _ctGeoZonesLu) return _ctGeoZonesLu[cc];
+  let geo = null;
+  if(cc === 'FR'){
+    if(!_ctRegsPromesse) _ctRegsPromesse = fetch('data/carte-regions.json?v=20261026').then(r => r.ok ? r.json() : null).catch(() => null);
+    geo = await _ctRegsPromesse;
+  } else geo = await _ctChargeZones(cc);
+  return (_ctGeoZonesLu[cc] = geo);
+}
+// L'onglet Régions du pays de la Ligue : « Toutes les régions », puis chaque zone avec le nombre
+// d'observations (pts : celles du pays, filtres compris) tombées dans sa forme.
+function _ctLignesZonesLigue(cc, pts){
+  if(!cc) return '<div style="padding:16px; text-align:center; color:var(--ink-3);">Choisis d\'abord un pays.</div>';
+  const geo = _ctGeoZonesLu[cc];
+  if(geo === undefined) return '<div style="padding:16px; text-align:center; color:var(--ink-3);">… chargement</div>';
+  if(!geo || !geo.features.length) return '';
+  const zones = geo.features.map(f => {
+    let s = 90, o = 180, n = -90, e = -180;
+    const g = f.geometry;
+    for(const p of (g.type === 'Polygon' ? [g.coordinates] : g.coordinates)) for(const [x, y] of p[0]){ if(y < s) s = y; if(y > n) n = y; if(x < o) o = x; if(x > e) e = x; }
+    const nb = pts.filter(p => p.lat >= s && p.lat <= n && p.lon >= o && p.lon <= e && _ctDansForme(p.lat, p.lon, g)).length;
+    return { code:f.properties.ebird, nom:f.properties.nom, nb };
+  }).sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
+  const max = Math.max(1, ...zones.map(z => z.nb));
+  const choisie = _ctPaysOuvert === cc ? (ebFilter.dept || (ebFilter.region !== cc ? ebFilter.region : '')) : '';
+  // La France liste ici ses régions, pas ses départements : son libellé habituel les nommerait.
+  return '<div class="reg-picker-item national' + (choisie ? '' : ' on') + '" data-code="">' + esc(cc === 'FR' ? 'Toutes les régions' : libelleToutesZones(cc)) + '</div>' +
+    zones.map(z => '<div class="reg-picker-item sans-palier' + (z.nb ? '' : ' absent') + (z.code === choisie ? ' on' : '') + '" data-code="' + esc(z.code) + '">'
+      + '<span>' + esc(z.nom) + '</span><span class="reg-picker-exo"></span>'
+      + '<span class="reg-picker-val">' + z.nb + ' obs.</span>'
+      + '<div class="reg-picker-bar"><div style="width:' + Math.round(z.nb / max * 100) + '%; color:var(--accent);"></div></div></div>').join('');
 }
 // Ce que la ligue a vu dans la zone choisie : une ligne par espèce, ses membres, la dernière date.
 // Les points sont ceux de la couche Ligue (première observation de chaque personne), filtres compris.
@@ -10110,7 +10171,8 @@ function _ctZonesRecent(){
   const z = ebFilter.dept || ebFilter.region || cc;
   // Un pays entier ne se charge que s'il est ouvert sur la carte. La France comprise depuis le 2026-10-26
   // (Mathis) : le résumé d'eBird seul, une requête, une observation par espèce (_ctPaysEntier).
-  return { zones:z === cc && !_ctPaysOuvert ? [] : [z] };
+  // Un groupe de zones se lit zone par zone (_ctZonesEbird).
+  return { zones:z === cc && !_ctPaysOuvert ? [] : z === cc ? [z] : _ctZonesEbird(z) };
 }
 // Une ligne par espèce, sa dernière observation dans la zone, les plus rares d'abord.
 function _ctEspecesRecent(obs, cc){
@@ -10250,7 +10312,7 @@ async function _loadMissingLayer(zones, days){
   const etat = document.getElementById('ctRecEtat'); if(etat) etat.textContent = '… chargement';
   _ctDessinePanneau();
   const reponses = [];
-  try{ for(const z of zones) reponses.push(await _ebFetch(_ctUrlRecent(z, days))); }
+  try{ reponses.push(...await _ctParLots(zones, z => _ebFetch(_ctUrlRecent(z, days)))); }
   catch(_){
     if(tour !== _ctRecTour) return 'remplace';
     _ctRecCharge = false; _ctRecErreur = true;
@@ -10812,15 +10874,27 @@ document.addEventListener('click', async e => {
   }
   // Le pays de la ligue : chaque ligne compte les observations que les autres filtres (membre,
   // rareté) laissent dans ce pays.
+  // Un onglet Régions, comme les autres sélecteurs de pays (Mathis, 2026-10-28) : chaque zone compte les
+  // observations de la ligue qu'elle contient ; en choisir une la choisit sur la carte, où la liste la suit.
   const paysLig = e.target.closest('#ctLigPaysBtn');
   if(paysLig){
     const f = mapFilter, tous = _mapCollectPoints();
     const pts = tous.filter(p => (f.player === 'all' || p.uid === f.player) && _passeRarLigue(p));
     const compte = new Map(); for(const p of pts) if(p.cc) compte.set(p.cc, (compte.get(p.cc) || 0) + 1);
-    const v = await _openCountryPicker(f.country === 'any' ? '' : f.country, {
+    let ccChoisi = f.country === 'any' ? '' : f.country;
+    if(ccChoisi) await _ctGeoZonesPays(ccChoisi);
+    const res = await _openCountryPicker(ccChoisi, {
       availableCodes: [...new Set(tous.map(p => p.cc).filter(Boolean))], titre: 'Observées dans quel pays ?', unite: 'obs.',
-      compte: cc => compte.get(cc) || 0, tous: { label: 'Tous les pays', count: pts.length } });
-    if(v != null) _ctRegleMenu('mapCountrySel', v || 'any');
+      compte: cc => compte.get(cc) || 0, tous: { label: 'Tous les pays', count: pts.length },
+      zones: cc => _ctLignesZonesLigue(cc, pts.filter(p => p.cc === cc)),
+      onPays: cc => { ccChoisi = cc; _ctRegleMenu('mapCountrySel', cc || 'any'); return cc ? _ctGeoZonesPays(cc) : null; },
+      precharger: cc => _ctGeoZonesPays(cc) });
+    if(res && res.type === 'zone' && ccChoisi){
+      if(_ctPaysOuvert !== ccChoisi) await _ctOuvrePays(ccChoisi);
+      if(!res.code) _ctRetourPays(false);
+      else if(ccChoisi === 'FR') _ctChoisirRegion(res.code, true);
+      else _ctChoisirZone(res.code);
+    }
     paysLig.focus();
     return;
   }
@@ -11450,14 +11524,13 @@ async function _loadHotspotsLayer(region){
   _hsRefus = { zones:0, listes:0 };
   try{
     let list = [];
-    for(const z of zones){
-      // Un refus d'eBird (429, panne) sans copie gardée : la zone est comptée, pas tue. Avant, la Carte
-      // disait « Aucun hotspot trouvé » sur un refus, comme si la zone n'en avait pas (2026-10-26).
-      let l = null;
-      try{ l = await _ebFetch(`https://api.ebird.org/v2/ref/hotspot/${z}?fmt=json`); }catch(_){ _hsRefus.zones++; }
-      if(!stillMine()) return;
-      if(Array.isArray(l)) list.push(...l);
-    }
+    // Un refus d'eBird (429, panne) sans copie gardée : la zone est comptée, pas tue. Avant, la Carte
+    // disait « Aucun hotspot trouvé » sur un refus, comme si la zone n'en avait pas (2026-10-26).
+    const lues = await _ctParLots(zones, async z => {
+      try{ return await _ebFetch(`https://api.ebird.org/v2/ref/hotspot/${z}?fmt=json`); }catch(_){ _hsRefus.zones++; return null; }
+    });
+    if(!stillMine()) return;
+    for(const l of lues) if(Array.isArray(l)) list.push(...l);
     if(poly) list = list.filter(h => typeof h.lat === 'number' && typeof h.lng === 'number' && _pointInPolygon(h.lat, h.lng, poly));
     // 100 hotspots au plus, les plus gros, pour un pays entier comme pour une région (Mathis,
     // 2026-10-26) : c'est aussi le nombre de listes d'espèces demandées à eBird pour les enrichir,
@@ -18979,8 +19052,12 @@ async function _smFetchEbirdRecent(sci, days, zone){
   const d = days || 30;
   const z = zone || 'FR';
   try{
-    const data = await _ebFetch(`https://api.ebird.org/v2/data/obs/${z}/recent/${code}?back=${d}&maxResults=10000&locale=fr`);
-    if(!Array.isArray(data)){ return { points:[], error:'network' }; }
+    // La fiche propose les groupes de zones des 8 pays regroupés : eBird ne les connaît pas, on lit
+    // chacune de leurs zones (la table est lue ici si la Carte ne l'a pas encore demandée).
+    await _ctChargeRegroupees();
+    const lus = await _ctParLots(_ctZonesEbird(z), zz => _ebFetch(`https://api.ebird.org/v2/data/obs/${zz}/recent/${code}?back=${d}&maxResults=10000&locale=fr`));
+    if(!lus.some(Array.isArray)){ return { points:[], error:'network' }; }
+    const data = lus.flatMap(r => Array.isArray(r) ? r : []);
     const points = data.filter(o => typeof o.lat==='number' && typeof o.lng==='number').map(o => ({
       lat:o.lat, lon:o.lng, name:o.locName||'lieu', si:0, loc:o.locName||'', date:(o.obsDt||'').slice(0,10),
       count: (typeof o.howMany==='number'&&o.howMany>0)?o.howMany:null,

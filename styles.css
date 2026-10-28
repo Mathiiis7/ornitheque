@@ -2606,8 +2606,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     flex:none; max-width:9em; overflow:hidden; text-overflow:ellipsis; }
   /* Une ligne : le nom (ouvre la fiche) et, à droite, « ×N ▾ » qui déplie les observations. */
   .ct-gl-e { display:flex; align-items:stretch; }
-  .ct-gl-e .ct-gl-l { flex:1; min-width:0; }
-  .ct-gl-n { flex:none; border:0; background:none; font:inherit; color:var(--ink-3); padding:5px 12px 5px 8px; cursor:pointer; white-space:nowrap; }
+  /* Qui l'a vue colle à la flèche : 20 px les séparaient, le nom flottait au milieu (Mathis, 2026-10-28). */
+  .ct-gl-e .ct-gl-l { flex:1; min-width:0; padding-right:2px; }
+  .ct-gl-n { flex:none; border:0; background:none; font:inherit; color:var(--ink-3); padding:5px 12px 5px 4px; cursor:pointer; white-space:nowrap; }
   .ct-gl-n:hover, .ct-gl-n:focus-visible { background:var(--surface-2); color:var(--ink); }
   .ct-gl-n[aria-expanded="true"] span { display:inline-block; transform:rotate(180deg); }
   .ct-gl-obs { list-style:none; margin:0 0 4px; padding:0 12px 0 38px; color:var(--ink-2); font-size:14px; }

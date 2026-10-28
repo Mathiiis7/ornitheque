@@ -170,6 +170,12 @@ const NOM_VERS_CODE = (() => {
   } catch(e){ return {}; }
 })();
 
+const NOMS_GROUPES = (() => {
+  try {
+    const p = join(__dir, 'zones-agregees.json');
+    return existsSync(p) ? JSON.parse(readFileSync(p, 'utf8')).noms || {} : {};
+  } catch(e){ return {}; }
+})();
 const AGREGE = (() => {
   try {
     const p = join(__dir, 'zones-agregees.json');
@@ -181,7 +187,9 @@ function resolveCode(cc, props){
   // La Carte appelle eBird zone par zone : elle a besoin des vrais codes d'eBird (cantons suisses,
   // comtés anglais, communes slovènes), pas des regroupements faits pour les fréquences, qu'eBird
   // ne connaît pas (vérifié le 2026-10-24 contre ref/region/list/subnational1).
-  if(CARTE) return resolveCodeBrut(cc, props);
+  // Sauf dans les 8 pays aux regroupements : la Carte y montre les groupes, ceux de la rareté (Mathis,
+  // 2026-10-28). Chacun porte la liste de ses zones eBird (propriété zones), qu'elle interroge une à une.
+  if(CARTE && !AGREGE[cc]) return resolveCodeBrut(cc, props);
   if(AGREGE[cc]){
     const base = resolveCodeBrut(cc, props);
     return base ? (AGREGE[cc][base] || null) : null;
@@ -668,7 +676,8 @@ function buildCountry(features, cc){
   // En --carte, seuls les codes qu'eBird connaît (outils/config/ebird-zones-carte.json, lu par
   // ebird-zones-carte.mjs) : la liste stricte EBIRD_REGIONS porte les regroupements, et le préfixe du
   // pays seul laissait passer Porto Rico, les îles australiennes « AU-X03~ »...
-  if(CARTE) allowed.has = c => !!ZONES_EBIRD[cc]?.includes(c) || (c === 'SJ' && cc === 'NO');
+  if(CARTE) allowed.has = AGREGE[cc] ? (c => Object.values(AGREGE[cc]).includes(c))
+    : (c => !!ZONES_EBIRD[cc]?.includes(c) || (c === 'SJ' && cc === 'NO'));
   const byCode = {};
   const neNames = {};
   let skipped = 0;
@@ -947,7 +956,18 @@ for(const cc of COUNTRIES){
   if(!res){ console.warn(`${cc} : aucune region resolue sur ${feats.length} features.`); continue; }
   if(CARTE){
     const noms = Object.fromEntries(Object.entries(res.out).map(([c, v]) => [c, v.name]));
+    // Un groupe prend son nom dans zones-agregees.json (pas celui de son premier comté), et la liste de
+    // ses zones eBird : ce sont elles que la Carte interroge, eBird ne connaît pas le groupe.
+    const groupes = {};
+    if(AGREGE[cc]){
+      const n = NOMS_GROUPES[cc] || {};
+      for(const [g, nom] of Object.entries(Array.isArray(n) ? Object.fromEntries(n.map(r => [r.code, r.name])) : n)) noms[g] = nom;
+      for(const [z, g] of Object.entries(AGREGE[cc])) if(ZONES_EBIRD[cc]?.includes(z)) (groupes[g] = groupes[g] || []).push(z);
+      const sansZone = Object.keys(res.geo).filter(g => !groupes[g.split('#')[0]]);
+      if(sansZone.length) console.warn(`  ${cc} : groupe(s) sans zone eBird : ${sansZone.join(', ')}`);
+    }
     const { fc, tol } = zonesCarte(res.geo, noms);
+    for(const f of fc.features) if(groupes[f.properties.ebird]) f.properties.zones = groupes[f.properties.ebird].sort();
     const json = JSON.stringify(fc);
     mkdirSync(join(OUT_DIR, 'carte-zones'), { recursive:true });
     writeFileSync(join(OUT_DIR, 'carte-zones', `${cc.toLowerCase()}.json`), json);
