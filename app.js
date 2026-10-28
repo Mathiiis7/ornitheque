@@ -8092,7 +8092,9 @@ function _renderModeMine(el){
   }
   if(pts.length){
     _allBounds = L.latLngBounds(allPts.map(p=>[p.lat,p.lon]));
-    if(!_tlSkipFit){ _ctCadre(L.latLngBounds(pts.map(p=>[p.lat,p.lon])), { padding:[30,30], maxZoom:14 }); }
+    // Couche éteinte, la carte ne bouge pas : ouvrir l'onglet Ligue une deuxième fois dézoomait sur le
+    // monde entier, cadré sur des points qu'on ne voyait pas (Mathis, 2026-10-28).
+    if(!_tlSkipFit && carteCouches.has('ligue')){ _ctCadre(L.latLngBounds(pts.map(p=>[p.lat,p.lon])), { padding:[30,30], maxZoom:14 }); }
   }
   _tlSkipFit=false;
   _mapApplyFilter();
