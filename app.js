@@ -9868,7 +9868,7 @@ function _ctListeLigue(){
   box.innerHTML = `<p class="ct-compte">${tete}</p><p class="ct-petit">Les plus rares d'abord</p>` +
     rangs.map(r => _ctRangHtml({ liste:'lig', sci:r.sci, w:r.w, coul:r.w ? realColor(r.w) : sciColorForCountry(r.sci, r.cc), nom:r.nom,
       statut:statutAuLieu(r.sci, r.cc || 'FR'), sous:[...r.qui].sort((a, b) => a.localeCompare(b, 'fr')).join(', '),
-      droite:r.date ? _fmtOrd(r.ord) : '', n:r.n, ouverte:r.sci === _ctLigOuverte, obsHtml:() => _ctObsLigue(r.sci, pts) })).join('');
+      droite:r.date ? _fmtOrd(r.ord) : '', n:r.n, compte:{ nb:r.n, mot:'observation' }, ouverte:r.sci === _ctLigOuverte, obsHtml:() => _ctObsLigue(r.sci, pts) })).join('');
   return { especes:rangs.length };
 }
 // Les observations d'une espèce de la Ligue : qui, quand, où ; chacune retrouve son point sur la carte.
@@ -10489,7 +10489,8 @@ async function _ctMontreEspece(sci){
 // gris pâle, on ne voyait pas qu'une espèce avait été vue plusieurs fois.
 function _ctRangHtml(o){
   const voir = o.n > 1 ? `Voir les ${o.n} observations` : 'Voir l\'observation';
-  const c = o.compte, quoi = c ? `${c.nb} ${c.mot}${c.nb > 1 ? (c.mot === 'lieu' ? 'x' : 's') : ''}` : '';
+  // Des observations : « Voir les 3 observations » le dit déjà, on ne le répète pas dans la bulle.
+  const c = o.compte, quoi = c && c.mot !== 'observation' ? `${c.nb} ${c.mot}${c.nb > 1 ? (c.mot === 'lieu' ? 'x' : 's') : ''}` : '';
   const fleche = c ? `<span class="ct-rang-nb" aria-hidden="true">${c.nb}<span class="fl">▾</span></span>` : '<span class="fl" aria-hidden="true">▾</span>';
   return `<div class="ct-rang-e"><button type="button" class="ct-rang ct-rang-rec" data-sci="${esc(o.sci)}" data-liste="${o.liste}"${o.cc ? ` data-cc="${esc(o.cc)}"` : ''}>` +
     `${tierChip(o.w || '?', o.coul, { cls:'tier-rond' })}` +
