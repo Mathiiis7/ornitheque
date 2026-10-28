@@ -2511,6 +2511,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .map-el .map-legend .ml-txt { white-space:nowrap; }
   .map-el .leaflet-control-layers { background:rgba(255,255,255,.95); border-radius:8px; padding:4px 8px; font-size:12px; font-weight:600; }
   .map-el .leaflet-control-layers label { display:flex; align-items:center; gap:4px; margin:2px 0; }
+  /* Leaflet mesure la carte à l'ouverture : encore pliée (hauteur 0), il juge Plan / Satellite trop haut,
+     lui fixe une hauteur et une barre de défilement à flèches qui ne servent à rien (Mathis, 2026-10-28). */
+  .map-el .leaflet-control-layers-scrollbar { overflow:visible; padding-right:0; height:auto !important; }
   .map-el .map-custom-btn a { width:30px; height:30px; line-height:30px; text-align:center; font-size:16px; text-decoration:none; color:#333; background:#fff; display:block; }
   .map-el .map-custom-btn a:hover { background:#f4f4f4; }
   .map-stats { margin-top:10px; font-size:14px; color:var(--ink-2); padding:6px 10px; background:var(--surface-2); border:1px solid var(--line); border-radius:8px; display:inline-block; }

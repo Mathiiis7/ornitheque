@@ -1943,6 +1943,49 @@ const SCI_ALIAS = {
   'sylvia undata': 'curruca undata',
   'sylvia sarda': 'curruca sarda',
   'sylvia conspicillata': 'curruca conspicillata',
+  // Taxonomie eBird d'octobre 2026 : 40 espèces changent de nom scientifique (même code eBird, comparé
+  // à la version 2025). Sans ces lignes, le Récent les montrait en anglais au palier 10 (Troglodyte
+  // mignon, Bruant des roseaux, Mathis, 2026-10-28). Nos tables gardent l'ancien nom.
+  'ptilinopus holosericeus': 'ptilinopus holosericea',   // Ptilope vlouvlou
+  'grus carunculata': 'grus carunculatus',   // Grue caronculée
+  'grus paradisea': 'grus paradiseus',   // Grue de paradis
+  'pinarostola ixoides': 'pycnopygius ixoides',   // Méliphage ocré
+  'pinarostola cinerea': 'pycnopygius cinereus',   // Méliphage marbré
+  'troglodytes browni': 'thryorchilus browni',   // Troglodyte des volcans
+  'nannus troglodytes': 'troglodytes troglodytes',   // Troglodyte mignon
+  'nannus pacificus': 'troglodytes pacificus',   // Troglodyte de Baird
+  'nannus hiemalis': 'troglodytes hiemalis',   // Troglodyte des forêts
+  'muscicapa flavirostris': 'humblotia flavirostris',   // Gobemouche des Comores
+  'euplectes anomalus': 'brachycope anomala',   // Brachycope du Congo
+  'melophus lathami': 'emberiza lathami',   // Bruant huppé
+  'melophus melanocephalus': 'emberiza melanocephala',   // Bruant mélanocéphale
+  'melophus bruniceps': 'emberiza bruniceps',   // Bruant à tête rousse
+  'fringillaria affinis': 'emberiza affinis',   // Bruant à ventre jaune
+  'fringillaria cabanisi': 'emberiza cabanisi',   // Bruant de Cabanis
+  'fringillaria flaviventris': 'emberiza flaviventris',   // Bruant à poitrine dorée
+  'fringillaria poliopleura': 'emberiza poliopleura',   // Bruant de Somalie
+  'fringillaria capensis': 'emberiza capensis',   // Bruant du Cap
+  'fringillaria impetuani': 'emberiza impetuani',   // Bruant des rochers
+  'fringillaria socotrana': 'emberiza socotrana',   // Bruant de Socotra
+  'fringillaria tahapisi': 'emberiza tahapisi',   // Bruant cannelle
+  'fringillaria goslingi': 'emberiza goslingi',   // Bruant de Gosling
+  'fringillaria sahari': 'emberiza sahari',   // Bruant du Sahara
+  'fringillaria striolata': 'emberiza striolata',   // Bruant striolé
+  'schoeniclus siemsseni': 'emberiza siemsseni',   // Bruant bleu
+  'schoeniclus elegans': 'emberiza elegans',   // Bruant élégant
+  'schoeniclus yessoensis': 'emberiza yessoensis',   // Bruant de Yéso
+  'schoeniclus pallasi': 'emberiza pallasi',   // Bruant de Pallas
+  'schoeniclus schoeniclus': 'emberiza schoeniclus',   // Bruant des roseaux
+  'schoeniclus aureolus': 'emberiza aureola',   // Bruant auréole
+  'schoeniclus pusillus': 'emberiza pusilla',   // Bruant nain
+  'schoeniclus rusticus': 'emberiza rustica',   // Bruant rustique
+  'schoeniclus sulphuratus': 'emberiza sulphurata',   // Bruant du Japon
+  'schoeniclus spodocephalus': 'emberiza spodocephala',   // Bruant masqué
+  'schoeniclus personatus': 'emberiza personata',   // Bruant de Temminck
+  'schoeniclus rutilus': 'emberiza rutila',   // Bruant roux
+  'schoeniclus chrysophrys': 'emberiza chrysophrys',   // Bruant à sourcils jaunes
+  'schoeniclus tristrami': 'emberiza tristrami',   // Bruant de Tristram
+  'schoeniclus variabilis': 'emberiza variabilis',   // Bruant gris
 };
 // FR_NAMES contient volontairement le vieux nom ET le canonique (ex: 'phalacrocorax
 // aristotelis' + 'gulosus aristotelis' -> tous les deux 'Cormoran huppé'). Utile pour
@@ -6355,7 +6398,7 @@ function _codeToFrName(code){
   if(!code || !_taxMap) return null;
   const sci = _taxMap[code];
   if(!sci) return null;
-  return FR_NAMES[sci.toLowerCase()] || null;
+  return frName(sci, null);
 }
 function _xcSlugToFrName(slug){
   if(!slug) return null;
@@ -10091,7 +10134,8 @@ function _ctPoseRecent(liste, cc, groupe = _lyrMissing){
   // Plus de bulle au clic : le survol dit l'oiseau, quand, où et combien (Mathis, 2026-10-23).
   const marqueurs = pts.map(p => {
     const o = p.o, sci = (o.sciName || '').toLowerCase();
-    const nm = FR_NAMES[sci] || o.comName || o.sciName;
+    // frName passe par SCI_ALIAS : eBird écrit ses nouveaux noms, nos tables les anciens.
+    const nm = frName(sci, o.comName || o.sciName);
     // Le statut là où l'oiseau a été vu : établi (N) dans ce département, il prend la couleur de sa
     // rareté même si le pays le dit échappé (Cygne noir dans l'Ain).
     const statut = statutAuLieu(o.sciName, cc, o.dep || ebFilter.dept), pal = _ctPalierPoint(o.sciName, cc, statut);
@@ -18495,6 +18539,9 @@ function _restoreSmScroll(scrollEl, target){
 }
 function openSpeciesModal(sci){
   if(!sci) return;
+  // Un nom venu d'eBird (Récent, carte) peut être le nouveau : la fiche s'ouvre sous celui de nos tables,
+  // sinon elle n'a ni nom français, ni rareté, ni photo (taxonomie eBird d'octobre 2026).
+  { const k = sci.trim().toLowerCase(); if(!FR_NAMES[k] && SCI_ALIAS[k] && FR_NAMES[SCI_ALIAS[k]]) sci = SCI_ALIAS[k]; }
   // Invariant : une zone appartient toujours au pays affiche. Le pays et la zone sont poses
   // par plusieurs chemins - heritage du birdydex, selecteur de la fiche, restauration depuis
   // localStorage au demarrage - et chacun ne connait que sa moitie. Il suffit que deux
