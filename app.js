@@ -9473,16 +9473,17 @@ function _ctMajVoile(){
   const monde = [[-85, -540], [-85, 540], [85, 540], [85, -540]];   // ±540 : couvre les copies du monde
   _lyrVoile = L.polygon([monde, ...trous], { pane:'ctVoile', interactive:false, stroke:false, fillColor:_ctCss('--surface'), fillOpacity:.6 }).addTo(_map);
 }
-const _ctStyleRepos = () => ({ color:_ctCss('--ink-3'), weight:.8, opacity:.55, fillColor:_ctCss('--accent'), fillOpacity:0 });
-const _ctStyleRegion = () => ({ color:_ctCss('--ink-3'), weight:1.2, opacity:.7, fillColor:_ctCss('--accent'), fillOpacity:0 });
+// Contours verts bordés d'un liseré (styles.css) : en gris, ils se perdaient dans le plan (variante E, 2026-10-28).
+const _ctStyleRepos = () => ({ color:_ctCss('--accent'), weight:1.1, opacity:.9, fillColor:_ctCss('--accent'), fillOpacity:0 });
+const _ctStyleRegion = () => ({ color:_ctCss('--accent'), weight:1.5, opacity:.9, fillColor:_ctCss('--accent'), fillOpacity:0 });
 const _ctStyleCache = { opacity:0, fillOpacity:0 };
 // Les frontières : à l'accent pour un pays qui se clique, pâles pour les autres (pas encore couverts).
 // En gris, elles se perdaient dans celles que le fond OpenStreetMap dessine déjà (vu le 2026-10-24).
-const _ctStylePays = () => ({ color:_ctCss('--accent'), weight:1.6, opacity:.6, fillColor:_ctCss('--accent'), fillOpacity:0 });
-const _ctStylePaysMuet = () => ({ color:_ctCss('--ink-3'), weight:.7, opacity:.3, fill:false });
+const _ctStylePays = () => ({ color:_ctCss('--accent'), weight:2, opacity:1, fillColor:_ctCss('--accent'), fillOpacity:0 });
+const _ctStylePaysMuet = () => ({ color:_ctCss('--ink-2'), weight:1, opacity:.55, fill:false });
 // Le survol éclaire une forme qui n'est pas la zone choisie ; une forme cachée ne le reçoit pas.
 function _ctEclaire(l, repos, dedans){
-  l.on('mouseover', () => { if(!dedans()) l.setStyle({ fillOpacity:.08, weight:1.6, opacity:.9, color:_ctCss('--accent') }); });
+  l.on('mouseover', () => { if(!dedans()) l.setStyle({ fillOpacity:.08, weight:2.4, opacity:1, color:_ctCss('--accent') }); });
   l.on('mouseout', () => { if(!dedans()) l.setStyle(repos()); });
 }
 // Une forme cachée ne prend ni clic ni survol : sinon son infobulle sortait encore.
@@ -9498,13 +9499,13 @@ function _ctSurligne(){
   // régions (Danemark...), il reste là et se reclique pour rouvrir son Récent.
   if(_lyrPays) _lyrPays.eachLayer(l => {
     const cc = l.feature.properties.cc, lui = cc === _ctPaysOuvert;
-    if(lui && CT_PAYS_SANS_ZONES.has(cc)){ l.setStyle({ color:_ctCss('--accent'), weight:2, opacity:1, fillOpacity:0 }); _ctMuet(l, false); return; }
+    if(lui && CT_PAYS_SANS_ZONES.has(cc)){ l.setStyle({ color:_ctCss('--accent'), weight:2.5, opacity:1, fillOpacity:0 }); _ctMuet(l, false); return; }
     l.setStyle(lui ? _ctStyleCache : _ctStylePays());
     _ctMuet(l, lui);
   });
   if(_lyrZones) _lyrZones.eachLayer(l => {
     const dedans = _ctDansZone(l);
-    if(dedans){ l.setStyle({ color:_ctCss('--accent'), weight:2.5, opacity:1, fillColor:_ctCss('--accent'), fillOpacity:.06 }); l.bringToFront(); }
+    if(dedans){ l.setStyle({ color:_ctCss('--accent'), weight:3, opacity:1, fillColor:_ctCss('--accent'), fillOpacity:.06 }); l.bringToFront(); }
     else l.setStyle(_ctStyleRegion());
     _ctMuet(l, dedans);   // comme un département : un clic qui manque un point ne recharge pas la zone
   });
@@ -9520,7 +9521,7 @@ function _ctSurligne(){
     if(!region || !code.startsWith(region + '-')){ l.setStyle(_ctStyleCache); _ctMuet(l, true); return; }
     const dedans = _ctDansZone(l);
     if(dedans){
-      l.setStyle({ color:_ctCss('--accent'), weight:ebFilter.dept ? 3 : 2, opacity:1, fillColor:_ctCss('--accent'), fillOpacity:.06 });
+      l.setStyle({ color:_ctCss('--accent'), weight:ebFilter.dept ? 3.5 : 2.5, opacity:1, fillColor:_ctCss('--accent'), fillOpacity:.06 });
       l.bringToFront();
     } else l.setStyle(_ctStyleRepos());
     // Le département choisi ne prend plus les clics : les points sont petits, et un clic qui les
@@ -10317,7 +10318,10 @@ async function _loadMissingLayer(zones, days){
   // Depuis le 2026-10-24, toute région choisie, étrangère aussi (Mathis : avec le seul résumé d'eBird,
   // « on manque des points ») ; et les petits pays qu'eBird ne découpe pas. Le relais plafonne une région
   // étrangère à 600 listes.
-  const regionFr = !ebFilter.polygon && zones.length === 1 &&
+  // Un groupe de zones (Monténégro, Slovénie... : _ctGroupes) se lit comme une région : sans lui, le
+  // Récent d'une région monténégrine restait à une observation par espèce (Mathis, 2026-10-28).
+  const groupe = !ebFilter.polygon && zones.length > 1 && _ctZonesEbird(ebFilter.dept || ebFilter.region || '').length > 1;
+  const regionFr = groupe || !ebFilter.polygon && zones.length === 1 &&
     (/^[A-Z]{2}-[A-Z0-9]{1,3}$/.test(zones[0]) || CT_PAYS_SANS_ZONES.has(zones[0]) || zones[0] === 'SJ');
   // Un pays entier s'en tient au résumé d'eBird, une requête : les lieux des 8 plus rares en coûtaient
   // 8 de plus pour peu (Mathis, 2026-10-26). Cliquer une région lit tous ses points.

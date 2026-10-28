@@ -2694,6 +2694,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      Mathis sur la maquette). La vue satellite, elle, garde ses couleurs. */
   :root[data-theme="dark"] .ct-carte .ct-fond-plan { filter:invert(1) hue-rotate(180deg) grayscale(.55) brightness(.82) contrast(.9); }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ct-carte .ct-fond-plan { filter:invert(1) hue-rotate(180deg) grayscale(.55) brightness(.82) contrast(.9); } }
+  /* Les contours des pays et des zones portent un liseré de la couleur de la page : il les détache du
+     plan, quelle que soit la couleur dessous (variante E de notes-privees/maquettes/zones-carte, choix
+     de Mathis le 2026-10-28 : on voyait mal les zones sur le fond). */
+  .ct-carte .leaflet-ctPays-pane svg, .ct-carte .leaflet-ctDeps-pane svg { filter:drop-shadow(0 0 1px var(--surface)) drop-shadow(0 0 1px var(--surface)); }
   .ct-rond { width:34px; height:34px; border-radius:9px; border:1px solid var(--line-2); background:var(--surface); color:var(--ink-2); display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,.08); padding:0; }
   .ct-rond:hover, .ct-puce:hover { color:var(--accent-ink); border-color:var(--accent); }
   .ct-rond.on { background:var(--accent); border-color:var(--accent); color:#fff; }
