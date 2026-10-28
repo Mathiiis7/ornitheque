@@ -2810,7 +2810,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-rang-n .fl { display:inline-block; transition:transform .15s; }
   .ct-rang-n[aria-expanded="true"] .fl { transform:rotate(180deg); }
   /* Le nombre de listes sur la flèche du Récent (variante B de notes-privees/maquettes/recent-listes, 2026-10-28). */
-  .ct-rang-n.avec-nb { width:auto; min-width:34px; padding:7px 4px 0; }
+  .ct-rang-n.avec-nb { width:auto; min-width:34px; padding:7px 4px 0; -webkit-tap-highlight-color:transparent; }
+  /* La pastille ne bouge pas au survol ni au clic (Mathis, 2026-10-28 : le fond de toute la hauteur du
+     bouton faisait une grosse zone bleue). Le contour du clavier (:focus-visible) reste. */
+  .ct-rang-n.avec-nb:hover, .ct-rang-n.avec-nb:focus-visible { background:none; }
   .ct-rang-nb { display:inline-flex; align-items:center; gap:3px; font-size:14px; font-weight:600; color:var(--ink); background:var(--surface-2); border-radius:8px; padding:3px 7px; }
   .ct-rang-nb .fl { font-size:13px; color:var(--ink-2); }
   /* L'aide de la Ligue en petit lien gris, en bas de la liste (2026-10-26). */

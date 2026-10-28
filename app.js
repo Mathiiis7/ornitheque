@@ -10488,9 +10488,10 @@ async function _ctMontreEspece(sci){
 // (ou de lieux, d'observations) porté par la flèche qui les déplie, même à 1 : rangé au bout du lieu en
 // gris pâle, on ne voyait pas qu'une espèce avait été vue plusieurs fois.
 function _ctRangHtml(o){
-  const voir = o.n > 1 ? `Voir les ${o.n} observations` : 'Voir l\'observation';
+  const c = o.compte, inconnu = c && c.nb === '?';
+  const voir = inconnu ? 'Voir ses observations' : o.n > 1 ? `Voir les ${o.n} observations` : 'Voir l\'observation';
   // Des observations : « Voir les 3 observations » le dit déjà, on ne le répète pas dans la bulle.
-  const c = o.compte, quoi = c && c.mot !== 'observation' ? `${c.nb} ${c.mot}${c.nb > 1 ? (c.mot === 'lieu' ? 'x' : 's') : ''}` : '';
+  const quoi = c && c.mot && c.mot !== 'observation' ?`${c.nb} ${c.mot}${c.nb > 1 ? (c.mot === 'lieu' ? 'x' : 's') : ''}` : '';
   const fleche = c ? `<span class="ct-rang-nb" aria-hidden="true">${c.nb}<span class="fl">▾</span></span>` : '<span class="fl" aria-hidden="true">▾</span>';
   return `<div class="ct-rang-e"><button type="button" class="ct-rang ct-rang-rec" data-sci="${esc(o.sci)}" data-liste="${o.liste}"${o.cc ? ` data-cc="${esc(o.cc)}"` : ''}>` +
     `${tierChip(o.w || '?', o.coul, { cls:'tier-rond' })}` +
@@ -10663,7 +10664,10 @@ function _ctListeRecent(){
   // Le palier : le jeton rond de tout le site (tierChip), plus un rond à part de 24 px (Mathis, 2026-10-23).
   const rang = e => {
     const r = e.r, lieux = gbif ? e.n : parListes ? e.listes.size : _ctRecLieux.get(r.sci);
-    const compte = { nb:lieux || e.obs, mot:gbif || !lieux ? 'observation' : parListes ? 'liste' : 'lieu' };
+    // Un pays entier pas encore lu en détail : eBird n'y rend qu'une observation par espèce, le « 1 »
+    // affiché ne voulait rien dire (Mathis, 2026-10-28). « ? » jusqu'à ce que l'espèce soit dépliée.
+    const compte = !gbif && !lieux && _ctRecSansPoints() ? { nb:'?', mot:'' }
+      : { nb:lieux || e.obs, mot:gbif || !lieux ? 'observation' : parListes ? 'liste' : 'lieu' };
     return _ctRangHtml({ liste:'rec', sci:r.sci, w:e.w, coul:_ctCouleur(r.sci, cc), nom:r.nom, statut:r.statut, nv:r.nv,
       sous:r.lieu || 'lieu inconnu', compte, droite:gbif ? _ctDateCourte(r.date) : _ctIlYa(r.date),
       n:e.obs, ouverte:r.sci === _ctRecOuverte, obsHtml:() => _ctObsEspece(r.sci, gbif) });
