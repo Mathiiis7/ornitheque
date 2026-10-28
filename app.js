@@ -1166,7 +1166,7 @@ function _openCountryPicker(currentCode, opts = {}){
     backdrop.innerHTML = `
       <div class="cp-modal-inner">
         <div class="cp-modal-title">
-          <span>${avecZones ? 'Rareté' + (moisLu == null ? '' : ' · ' + _MOIS_COURTS[moisLu]) : esc(opts.titre || 'Choisir un pays')}</span>
+          <span>${avecZones && !opts.titre ? 'Rareté' + (moisLu == null ? '' : ' · ' + _MOIS_COURTS[moisLu]) : esc(opts.titre || 'Choisir un pays')}</span>
           <button type="button" class="cp-modal-close" aria-label="Fermer">×</button>
         </div>
         ${avecZones ? `<div class="cp-tabs">
@@ -9783,40 +9783,65 @@ function _ctInitCarte(){
   const cc = ebFilter.country || 'FR';
   if(cc !== 'FR') _repopulateEbRegionsForCountry(cc).catch(() => {}).finally(() => renderMap());
 }
-// Les zones d'un pays telles que la Carte les dessine : les 13 régions pour la France, data/carte-zones
-// pour les autres (les groupes dans les 8 pays regroupés). Gardées pour l'onglet Régions de la Ligue.
+// Les zones d'un pays pour l'onglet du sélecteur de lieu (Récent et Ligue) : les départements pour la
+// France, comme au Birdydex (Mathis, 2026-10-28), data/carte-zones pour les autres (les groupes dans les
+// 8 pays regroupés).
 const _ctGeoZonesLu = {};
 async function _ctGeoZonesPays(cc){
   if(cc in _ctGeoZonesLu) return _ctGeoZonesLu[cc];
   let geo = null;
   if(cc === 'FR'){
-    if(!_ctRegsPromesse) _ctRegsPromesse = fetch('data/carte-regions.json?v=20261026').then(r => r.ok ? r.json() : null).catch(() => null);
-    geo = await _ctRegsPromesse;
+    if(!_ctDepsPromesse) _ctDepsPromesse = fetch('data/carte-departements.json?v=20261026').then(r => r.ok ? r.json() : null).catch(() => null);
+    geo = await _ctDepsPromesse;
   } else geo = await _ctChargeZones(cc);
   return (_ctGeoZonesLu[cc] = geo);
 }
-// L'onglet Régions du pays de la Ligue : « Toutes les régions », puis chaque zone avec le nombre
-// d'observations (pts : celles du pays, filtres compris) tombées dans sa forme.
-function _ctLignesZonesLigue(cc, pts){
+// L'onglet Régions (Départements en France) du sélecteur de lieu : « Toutes les … », puis chaque zone.
+// pts : les observations de la Ligue dans le pays, filtres compris, comptées dans chaque forme ; sans
+// pts (le Récent), les noms seuls.
+function _ctLignesZones(cc, pts){
   if(!cc) return '<div style="padding:16px; text-align:center; color:var(--ink-3);">Choisis d\'abord un pays.</div>';
   const geo = _ctGeoZonesLu[cc];
   if(geo === undefined) return '<div style="padding:16px; text-align:center; color:var(--ink-3);">… chargement</div>';
   if(!geo || !geo.features.length) return '';
   const zones = geo.features.map(f => {
+    if(!pts) return { code:f.properties.ebird, nom:f.properties.nom, nb:null };
     let s = 90, o = 180, n = -90, e = -180;
     const g = f.geometry;
     for(const p of (g.type === 'Polygon' ? [g.coordinates] : g.coordinates)) for(const [x, y] of p[0]){ if(y < s) s = y; if(y > n) n = y; if(x < o) o = x; if(x > e) e = x; }
     const nb = pts.filter(p => p.lat >= s && p.lat <= n && p.lon >= o && p.lon <= e && _ctDansForme(p.lat, p.lon, g)).length;
     return { code:f.properties.ebird, nom:f.properties.nom, nb };
   }).sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
-  const max = Math.max(1, ...zones.map(z => z.nb));
+  const max = Math.max(1, ...zones.map(z => z.nb || 0));
   const choisie = _ctPaysOuvert === cc ? (ebFilter.dept || (ebFilter.region !== cc ? ebFilter.region : '')) : '';
-  // La France liste ici ses régions, pas ses départements : son libellé habituel les nommerait.
-  return '<div class="reg-picker-item national' + (choisie ? '' : ' on') + '" data-code="">' + esc(cc === 'FR' ? 'Toutes les régions' : libelleToutesZones(cc)) + '</div>' +
-    zones.map(z => '<div class="reg-picker-item sans-palier' + (z.nb ? '' : ' absent') + (z.code === choisie ? ' on' : '') + '" data-code="' + esc(z.code) + '">'
+  return '<div class="reg-picker-item national' + (choisie ? '' : ' on') + '" data-code="">' + esc(libelleToutesZones(cc)) + '</div>' +
+    zones.map(z => '<div class="reg-picker-item sans-palier' + (z.nb === 0 ? ' absent' : '') + (z.code === choisie ? ' on' : '') + '" data-code="' + esc(z.code) + '">'
       + '<span>' + esc(z.nom) + '</span><span class="reg-picker-exo"></span>'
-      + '<span class="reg-picker-val">' + z.nb + ' obs.</span>'
-      + '<div class="reg-picker-bar"><div style="width:' + Math.round(z.nb / max * 100) + '%; color:var(--accent);"></div></div></div>').join('');
+      + (z.nb == null ? '<span class="reg-picker-val"></span><div></div></div>'
+        : '<span class="reg-picker-val">' + z.nb + ' obs.</span>'
+        + '<div class="reg-picker-bar"><div style="width:' + Math.round(z.nb / max * 100) + '%; color:var(--accent);"></div></div></div>')).join('');
+}
+const _ctMotZone = cc => cc === 'FR' ? 'Départements' : 'Régions';
+// Un lieu choisi dans le sélecteur : son pays s'ouvre sur la carte, puis la zone ('' = le pays entier).
+async function _ctChoisirLieu(cc, code){
+  if(!cc) return;
+  const deja = _ctPaysOuvert === cc;
+  if(!deja) await _ctOuvrePays(cc);
+  if(!code){ if(deja) _ctRetourPays(false); }
+  else if(cc === 'FR') _ctChoisirDep(code);
+  else _ctChoisirZone(code);
+}
+// Ce que dit la case du lieu : la zone choisie sur la carte, sinon le pays (paysFiltre), sinon « Tous les pays ».
+function _ctMajBoutonLieu(b, paysFiltre){
+  if(!b) return;
+  const zone = _ctZoneChoisie(), cc = zone ? (ebFilter.country || 'FR') : paysFiltre;
+  // Le nom français des contours, celui de la liste du sélecteur (« Andalousie », pas « Andalucía »).
+  const code = ebFilter.dept || ebFilter.region, geo = _ctGeoZonesLu[cc];
+  const f = zone && !ebFilter.polygon && geo && geo.features.find(x => x.properties.ebird === code);
+  b.querySelector('.cp-btn-label').textContent = f ? f.properties.nom : zone ? _ctNomZone().nom : cc ? countryLabel(cc) : 'Tous les pays';
+  const fl = b.querySelector('.cp-btn-flag');
+  if(fl){ fl.innerHTML = cc ? flagImg(cc) : ''; fl.style.display = cc ? '' : 'none'; }
+  b.classList.toggle('actif', !!cc);
 }
 // Ce que la ligue a vu dans la zone choisie : une ligne par espèce, ses membres, la dernière date.
 // Les points sont ceux de la couche Ligue (première observation de chaque personne), filtres compris.
@@ -10716,13 +10741,16 @@ async function _ctChargeRecentPays(codes, redessine, ouverte){
   const days = +(document.getElementById('mapEbDays')?.value) || 14;
   // Les paliers des pays étrangers : sans eux, le filtre de rareté ne laisserait rien passer.
   if(!_donneesPaysPretes()){ try{ await _chargerDonneesPays(); }catch(_){} redessine(); }
-  for(const cc of codes){
+  // Quatre à la fois, dans l'ordre de la liste (la France, puis par nom) : un par un et dans l'ordre du
+  // code, la liste restait sur « … » et se remplissait par sauts (Mathis, 2026-10-28).
+  const ordre = codes.slice().sort((a, b) => (a === 'FR' ? -1 : b === 'FR' ? 1 : 0) || countryLabel(a).localeCompare(countryLabel(b), 'fr'));
+  await _ctParLots(ordre, async cc => {
     if(!ouverte()) return;
-    const k = cc + ':' + days; if(_ctRecentPays.has(k)) continue;
+    const k = cc + ':' + days; if(_ctRecentPays.has(k)) return;
     try{ _ctRecentPays.set(k, await _ebFetch(_ctUrlRecent(cc, days), { garder:false })); }
     catch(_){ _ctRecentPays.set(k, 'erreur'); }
     redessine();
-  }
+  });
 }
 // Les nombres du sélecteur de pays des Hotspots : le relais lit la liste des hotspots du pays chez eBird
 // et ne rend que le meilleur (carte/meilleur-hotspot, quelques octets gardés une semaine).
@@ -10748,24 +10776,10 @@ function _ctSyncFiltres(){
     // Un choix autre que « Toutes / Tous » prend l'accent, comme les filtres du Birdydex.
     b.classList.toggle('actif', sel.selectedIndex > 0);
   });
-  // Le pays de la ligue : son drapeau devant son nom, comme au Classement.
-  const pb = document.getElementById('ctLigPaysBtn');
-  if(pb){
-    const cc = mapFilter.country === 'any' ? '' : mapFilter.country;
-    pb.querySelector('.cp-btn-label').textContent = cc ? countryLabel(cc) : 'Tous les pays';
-    const fl = pb.querySelector('.cp-btn-flag');
-    if(fl){ fl.innerHTML = cc ? flagImg(cc) : ''; fl.style.display = cc ? '' : 'none'; }
-    pb.classList.toggle('actif', !!cc);
-  }
-  // Le pays ouvert sur la Carte, pour le Récent et les Hotspots.
-  const eb = document.getElementById('ctEbPaysBtn');
-  if(eb){
-    const cc = _ctPaysOuvert;
-    eb.querySelector('.cp-btn-label').textContent = cc ? countryLabel(cc) : 'Tous les pays';
-    const fl = eb.querySelector('.cp-btn-flag');
-    if(fl){ fl.innerHTML = cc ? flagImg(cc) : ''; fl.style.display = cc ? '' : 'none'; }
-    eb.classList.toggle('actif', !!cc);
-  }
+  // La case du lieu, drapeau devant : la zone choisie sur la carte, sinon le pays de la ligue (Ligue) ou
+  // le pays ouvert sur la Carte (Récent, Hotspots).
+  _ctMajBoutonLieu(document.getElementById('ctLigPaysBtn'), mapFilter.country === 'any' ? '' : mapFilter.country);
+  _ctMajBoutonLieu(document.getElementById('ctEbPaysBtn'), _ctPaysOuvert);
   const src =document.getElementById('mapEbSource')?.value || 'ebird';
   document.querySelectorAll('[data-ct-source]').forEach(b => {
     const on = b.dataset.ctSource === src;
@@ -10879,17 +10893,12 @@ document.addEventListener('click', async e => {
     let ccChoisi = f.country === 'any' ? '' : f.country;
     if(ccChoisi) await _ctGeoZonesPays(ccChoisi);
     const res = await _openCountryPicker(ccChoisi, {
-      availableCodes: [...new Set(tous.map(p => p.cc).filter(Boolean))], titre: 'Observées dans quel pays ?', unite: 'obs.',
+      availableCodes: [...new Set(tous.map(p => p.cc).filter(Boolean))], titre: 'Observations de la ligue', unite: 'obs.',
       compte: cc => compte.get(cc) || 0, tous: { label: 'Tous les pays', count: pts.length },
-      zones: cc => _ctLignesZonesLigue(cc, pts.filter(p => p.cc === cc)),
+      zones: cc => _ctLignesZones(cc, pts.filter(p => p.cc === cc)), motZone: _ctMotZone,
       onPays: cc => { ccChoisi = cc; _ctRegleMenu('mapCountrySel', cc || 'any'); return cc ? _ctGeoZonesPays(cc) : null; },
       precharger: cc => _ctGeoZonesPays(cc) });
-    if(res && res.type === 'zone' && ccChoisi){
-      if(_ctPaysOuvert !== ccChoisi) await _ctOuvrePays(ccChoisi);
-      if(!res.code) _ctRetourPays(false);
-      else if(ccChoisi === 'FR') _ctChoisirRegion(res.code, true);
-      else _ctChoisirZone(res.code);
-    }
+    if(res && res.type === 'zone' && ccChoisi) await _ctChoisirLieu(ccChoisi, res.code);
     paysLig.focus();
     return;
   }
@@ -10900,13 +10909,24 @@ document.addEventListener('click', async e => {
   if(paysEb){
     const hot = mapMode === 'hotspots';
     const codes = Object.keys(COUNTRIES_REG).filter(_ctPaysCliquable);
-    const v = await _openCountryPicker(_ctPaysOuvert || '', {
+    // Le nombre suit la case « Seulement ce qui me manque » : le titre le dit (Mathis, 2026-10-28 : on ne
+    // savait pas si c'était les espèces vues ou celles qui manquent).
+    const j = +(document.getElementById('mapEbDays')?.value) || 14;
+    const manque = !ebFilter.showObserved;
+    let ccChoisi = _ctPaysOuvert || '';
+    if(ccChoisi) await _ctGeoZonesPays(ccChoisi);
+    const res = await _openCountryPicker(ccChoisi, {
       availableCodes: codes, unite: 'esp.', tous: { label: 'Tous les pays', count: null },
-      titre: hot ? 'Pays · espèces de son meilleur hotspot' : `Pays · espèces vues en ${+(document.getElementById('mapEbDays')?.value) || 14} jours`,
+      titre: hot ? 'Espèces du meilleur hotspot' : manque ? `Espèces vues en ${j} jours qui te manquent` : `Espèces vues en ${j} jours`,
       compte: cc => hot ? _ctNbMeilleurHs(cc) : _ctCompteRecentPays(cc),
       tip: hot ? cc => { const m = _ctMeilleursHs.get(cc); return m && m.nom ? `Meilleur hotspot : ${m.nom.replace(/\s*\((?:veuillez|please)[^)]*\)/i, '')}` : ''; } : null,
-      surMaj: (redessine, ouverte) => (hot ? _ctChargeMeilleursHs : _ctChargeRecentPays)(codes, redessine, ouverte) });
-    if(v === '') _ctRetourPays(true); else if(v) _ctOuvrePays(v);
+      surMaj: (redessine, ouverte) => (hot ? _ctChargeMeilleursHs : _ctChargeRecentPays)(codes, redessine, ouverte),
+      // L'onglet Régions (Départements en France), comme au Birdydex : choisir un pays l'ouvre sur la
+      // carte sans fermer la fenêtre, choisir une zone la choisit et ferme.
+      zones: cc => _ctLignesZones(cc, null), motZone: _ctMotZone,
+      onPays: cc => { ccChoisi = cc; if(!cc){ _ctRetourPays(true); return null; } _ctOuvrePays(cc); return _ctGeoZonesPays(cc); },
+      precharger: cc => _ctGeoZonesPays(cc) });
+    if(res && res.type === 'zone' && ccChoisi) await _ctChoisirLieu(ccChoisi, res.code);
     paysEb.focus();
     return;
   }

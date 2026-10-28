@@ -124,7 +124,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=503">
+<link rel="modulepreload" href="app.js?v=504">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -852,7 +852,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
                     <span class="ct-choix">
                     <!-- Le sélecteur de pays du site, drapeaux et continents, avec les observations de la ligue
                          au bout de chaque ligne (Mathis, 2026-10-26) : comme le Classement. -->
-                    <button type="button" class="cp-btn" id="ctLigPaysBtn" title="Pays"><span class="cp-btn-flag" style="display:none;"></span><span class="cp-btn-label">Tous les pays</span><span class="cp-btn-arrow">▾</span></button>
+                    <button type="button" class="cp-btn" id="ctLigPaysBtn" title="Lieu"><span class="cp-btn-flag" style="display:none;"></span><span class="cp-btn-label">Tous les pays</span><span class="cp-btn-arrow">▾</span></button>
                     <select class="ct-cache" id="mapCountrySel" aria-hidden="true" tabindex="-1">
                       <option value="any">Tous les pays</option>
                     </select>
@@ -927,13 +927,13 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
                    la ligne, et cliquer sur le mot deroule le menu sans avoir besoin d'un for. -->
               <!-- Région et département servent au Récent ET aux Hotspots : ils suivent le volet ouvert. -->
               <span class="ct-menus-zone" id="ctMenusZone">
-              <!-- Le pays d'abord, comme dans la Ligue (Mathis, 2026-10-27) : le sélecteur du site, avec un
-                   nombre par pays qui suit l'onglet (app.js, #ctEbPaysBtn). -->
+              <!-- Une seule case, comme au Birdydex (Mathis, 2026-10-28) : elle dit ce qui est choisi sur la
+                   carte (pays, région ou département) et ouvre le sélecteur du site, onglets Pays et Régions
+                   (Départements pour la France). Les menus Région et Département restent, cachés : le code les lit. -->
               <span class="ct-choix">
-              <button type="button" class="cp-btn" id="ctEbPaysBtn" title="Pays"><span class="cp-btn-flag" style="display:none;"></span><span class="cp-btn-label">Tous les pays</span><span class="cp-btn-arrow">▾</span></button>
+              <button type="button" class="cp-btn" id="ctEbPaysBtn" title="Lieu"><span class="cp-btn-flag" style="display:none;"></span><span class="cp-btn-label">Tous les pays</span><span class="cp-btn-arrow">▾</span></button>
               </span>
-              <span class="ct-choix">
-              <button type="button" class="cp-btn" data-ct-choix="mapEbRegion" title="Région"><span class="cp-btn-label">Toutes les régions</span><span class="cp-btn-arrow">▾</span></button>
+              <span class="ct-cache">
               <select class="ct-cache" id="mapEbRegion" aria-hidden="true" tabindex="-1">
                 <option value="FR" selected>Toutes les régions</option>
                 <option value="FR-ARA">Auvergne-Rhône-Alpes</option>
@@ -951,8 +951,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
                 <option value="FR-GES">Grand Est</option>
               </select>
               </span>
-              <span class="ct-choix" id="mapEbDeptLbl" style="display:none;">
-              <button type="button" class="cp-btn" data-ct-choix="mapEbDept" title="Département"><span class="cp-btn-label">Tous les départements</span><span class="cp-btn-arrow">▾</span></button>
+              <span class="ct-cache" id="mapEbDeptLbl" style="display:none;">
               <select class="ct-cache" id="mapEbDept" aria-hidden="true" tabindex="-1" style="display:none;">
                 <option value="" selected>Tous les départements</option>
               </select>
@@ -1631,5 +1630,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=503"></script>
+<script type="module" src="app.js?v=504"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>
