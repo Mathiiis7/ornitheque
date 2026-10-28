@@ -9943,11 +9943,11 @@ function _ctNomZone(){
   const cc = ebFilter.country || 'FR';
   const optTxt = id => { const sel = document.getElementById(id); return sel && sel.selectedIndex >= 0 ? (sel.options[sel.selectedIndex].textContent || '').replace(/\s*\([0-9A-Z]+\)$/, '') : ''; };
   if(ebFilter.polygon) return { nom:'Ta zone', meta:'Dessinée sur la carte', ariane:'pays' };
-  if(ebFilter.dept) return { nom:DEPT_NAMES[ebFilter.dept] || optTxt('mapEbDept') || ebFilter.dept, meta:cc === 'FR' ? 'Département' : '', ariane:'region' };
-  if(ebFilter.region && ebFilter.region !== cc) return { nom:REGION_NAMES[ebFilter.region] || optTxt('mapEbRegion') || ebFilter.region, meta:cc === 'FR' ? 'Région' : '', ariane:'pays' };
-  const verbe = _ctAuDoigt.matches ? 'Touche' : 'Clique';
-  if(!_ctPaysOuvert) return { nom:'Tous les pays', meta:`${verbe} un pays pour voir ses régions. Les frontières pâles : pays pas encore couverts.`, ariane:'' };
-  return { nom:countryLabel(cc), meta:CT_PAYS_SANS_ZONES.has(cc) ? '' : `${verbe} une région pour ce qui y a été vu récemment.`, ariane:'monde' };
+  if(ebFilter.dept) return { nom:DEPT_NAMES[ebFilter.dept] || optTxt('mapEbDept') || ebFilter.dept, meta:'', ariane:'region' };
+  if(ebFilter.region && ebFilter.region !== cc) return { nom:REGION_NAMES[ebFilter.region] || optTxt('mapEbRegion') || ebFilter.region, meta:'', ariane:'pays' };
+  // Plus de mode d'emploi sous le titre : la carte montre déjà quoi toucher (Mathis, 2026-10-28).
+  if(!_ctPaysOuvert) return { nom:'Tous les pays', meta:'', ariane:'' };
+  return { nom:countryLabel(cc), meta:'', ariane:'monde' };
 }
 function _ctDessinePanneau(){
   const zone = document.getElementById('ctZone'); if(!zone) return;
