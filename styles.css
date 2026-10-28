@@ -2735,16 +2735,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-volet .map-controls { margin:12px 0 8px; }
   .ct-volet .map-count { margin-left:0; flex-basis:100%; font-size:14px; }
   .ct-volet .map-stats { display:block; margin-top:4px; }
-  /* Le Récent (étape 2) : ses menus, et sa liste à pastilles de rareté (maquette finale.html). */
-  .ct-filtres { margin:12px 0 8px; }
-  /* Réglages du Récent comme au Birdydex (2026-10-24) : les <select> d'origine restent pour le code,
-     cachés ; on voit la source en deux boutons collés, la période en curseur, la rareté en rangée. */
+  /* Réglages comme au Birdydex (2026-10-24) : les <select> d'origine restent pour le code, cachés. */
   .ct-cache { display:none !important; }
   .ct-choix { display:inline-flex; }
-  .ct-source { margin:12px 0 0; width:max-content; max-width:100%; }
-  .ct-source button { flex:1 1 auto; }
-  .ct-jours { display:flex; flex-direction:column; gap:0; width:min(100%, 260px); margin:0 0 6px; }
-  .ct-volet > .ct-case { display:flex; align-items:center; gap:6px; font-size:14px; min-height:34px; margin:0 0 8px; }
   /* Les réglages du Récent repliés sous « Filtres » (Mathis, 2026-10-26 : « très chargé, on s'y perd ») :
      le bouton de filtre de la charte (34 px, 14 px en 600, coins de 9 px), le résumé à côté en ligne
      de méta (14 px, --ink-3). */
@@ -2757,24 +2750,60 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-pli[open] .ct-pli-btn::before { transform:rotate(90deg); }
   .ct-pli-tete:hover .ct-pli-btn { background:var(--surface-2); }
   .ct-pli-corps { padding:0 0 4px; }
-  .ct-pli-corps > .ct-source { margin-top:10px; }
+  /* Les filtres des trois onglets (maquette A3, notes-privees/maquettes/filtres-carte/v3.html, 2026-10-28) :
+     un bloc gris qui se détache de la liste blanche, une ligne par réglage, son nom à gauche. */
+  .ct-bloc { margin-top:10px; padding:0; background:var(--surface-2); border-radius:12px; }
+  .ct-ligne { display:grid; grid-template-columns:74px minmax(0, 1fr); align-items:center; gap:10px; padding:10px 12px; border-top:1px solid var(--line); }
+  .ct-ligne:first-child { border-top:0; }
+  .ct-ligne[style*="display: none"] + .ct-ligne { border-top:0; }
+  .ct-ligne.ct-haut { align-items:start; }
+  .ct-ligne.ct-haut > .ct-k { padding-top:2px; }
+  .ct-k { font-size:14px; font-weight:600; color:var(--ink-3); line-height:1.15; }
+  .ct-v { min-width:0; }
+  .ct-ici-zone.ct-v { display:block; }
+  .ct-bloc .ct-choix { display:flex; }
+  .ct-bloc .ct-choix .cp-btn { width:100%; justify-content:space-between; background:var(--surface); }
+  /* Le nom collé à gauche dans les trois menus (Où, Qui, Quand) : celui du lieu se centrait. */
+  .ct-bloc .ct-choix .cp-btn-label { flex:1; min-width:0; text-align:left; }
+  .ct-bloc .seg { background:var(--surface); }
+  .ct-seg-plein { display:flex; width:100%; }
+  .ct-seg-plein button { flex:1 1 0; min-width:0; padding-left:6px; padding-right:6px; white-space:nowrap; }
+  .ct-bloc .ct-bascule { display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:14px; font-weight:600; color:var(--ink); cursor:pointer; min-height:34px; }
+  /* L'interrupteur : une case à cocher redessinée, qui garde son clavier et son lecteur d'écran. */
+  .ct-bascule input { appearance:none; -webkit-appearance:none; flex:none; width:38px; height:22px; margin:0; border-radius:11px; background:var(--surface-3); position:relative; cursor:pointer; transition:background .15s; box-shadow:inset 0 0 0 1px var(--line-2); }
+  .ct-bascule input::after { content:""; position:absolute; left:3px; top:3px; width:16px; height:16px; border-radius:50%; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.25); transition:left .15s; }
+  .ct-bascule input:checked { background:var(--accent); box-shadow:none; }
+  .ct-bascule input:checked::after { left:19px; }
+  .ct-annees { display:flex; gap:10px; flex-wrap:wrap; }
+  .ct-annees:has(.ct-annee[style*="display: none"]) { display:none; }
+  .ct-annee { display:inline-flex; align-items:center; gap:6px; font-size:14px; color:var(--ink-2); }
+  .ct-annee input { width:72px; height:34px; font:14px var(--sans); padding:0 8px; border:1px solid var(--line-2); border-radius:9px; background:var(--surface); color:var(--ink); }
+  .ct-bloc .rar-chips { flex-wrap:nowrap; }
+  /* Tout · Aucun à gauche, la mesure (« France / Grand Est ») à droite, 12 px sous les pastilles (Mathis). */
+  .ct-rar-sous { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-top:12px; }
+  .ct-rar-liens { display:inline-flex; align-items:center; gap:6px; color:var(--ink-3); }
+  .ct-lien { border:0; background:none; padding:0; font:600 14px var(--sans); color:var(--accent-ink); cursor:pointer; }
+  .ct-lien:hover { text-decoration:underline; }
+  .ct-bloc .ct-portee { flex:0 1 auto; margin:0; min-width:0; }
+  /* Plus petit que les autres choix (Mathis : « un peu gros dans leurs cases ») : moins de marge, mais
+     14 px, le plancher de ce qui se lit. */
+  .ct-bloc .ct-portee .seg button { font-size:14px; padding:2px 8px; max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ct-bloc .ct-portee-note { display:block; margin-top:6px; }
+  .ct-cacher { display:flex; align-items:center; flex-wrap:wrap; gap:8px; font-size:14px; color:var(--ink-2); }
+  .ct-pas { display:inline-flex; align-items:stretch; height:34px; box-sizing:border-box; border:1px solid var(--line-2); border-radius:9px; overflow:hidden; background:var(--surface); }
+  .ct-pas button { width:32px; border:0; background:none; font:700 16px var(--sans); color:var(--ink-2); cursor:pointer; }
+  .ct-pas button:hover { background:var(--surface-3); }
+  .ct-pas input { width:44px; border:0; border-left:1px solid var(--line-2); border-right:1px solid var(--line-2); text-align:center; font:600 14px var(--sans); color:var(--ink); background:none; -moz-appearance:textfield; }
+  .ct-pas input::-webkit-inner-spin-button, .ct-pas input::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
+  /* Sous le bloc gris, le compte ouvre la liste. */
+  .ct-pli[open] + * { margin-top:14px; }
   /* D'où viennent les points : « (138 listes) » derrière la première phrase, le détail dans la bulle (2026-10-26). */
   .ct-note { color:var(--ink-3); white-space:nowrap; }
-  .ct-jours-tete { font-size:14px; color:var(--ink-3); }
-  .ct-jours-tete b { color:var(--ink); font-weight:600; }
-  .ct-jours input[type=range] { width:100%; margin:4px 0 0; accent-color:var(--accent); cursor:pointer; }
-  /* Les repères sous les trois crans : le premier et le dernier calés aux bouts, comme le curseur. */
-  .ct-jours-reperes { display:flex; justify-content:space-between; font-size:14px; color:var(--ink-3); }
-  .ct-rarete { margin:0 0 8px; }
-  /* Pays / Zone : sur sa propre ligne, sous les pastilles de la rangée. */
-  .ct-portee { flex:1 0 100%; display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; margin-top:4px; }
-  .ct-portee-titre { font-size:14px; color:var(--ink-3); }
+  .ct-portee { display:flex; align-items:center; }
   .ct-portee .seg button[aria-disabled="true"] { opacity:.45; cursor:not-allowed; }
   .ct-portee-note { flex:1 0 100%; font-size:14px; color:var(--ink-3); }
   .ct-portee-note:empty { display:none; }
-  .ct-menus-zone, .ct-ici-zone { display:contents; }
-  .ct-filtres .explorer-lbl { display:inline-flex; align-items:center; gap:6px; font-size:14px; color:var(--ink-2); }
-  .ct-filtres .ct-case { font-size:14px; min-height:34px; }
+  .ct-menus-zone { display:contents; }
   .ct-etat:empty { display:none; }
   .ct-rang.ct-rang-rec { grid-template-columns:auto 1fr auto; }
   .ct-rang .col { min-width:0; }
@@ -2853,10 +2882,6 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .ct-poignee { display:block; width:100%; height:22px; border:0; background:none; cursor:pointer; padding:0; flex:none; }
     .ct-poignee::before { content:""; display:block; width:46px; height:5px; border-radius:3px; background:var(--surface-3); margin:6px auto 0; }
     .ct-zone-nom { font-size:19px; }
-    /* Les menus du Récent sur une rangée qui défile de côté (maquette) : sur trois lignes, ils
-       remplissaient le tiroir à mi-hauteur et cachaient la liste. */
-    .ct-filtres { flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; margin:10px -14px 6px; padding:0 14px 2px; }
-    .ct-filtres > *, .ct-menus-zone > * { flex:none; }
     .ct-carte .ct-legende { min-width:0; }
     /* Les coins bas de Leaflet (légende, crédits) montent au-dessus du tiroir replié, et
        disparaissent quand il s'ouvre : il les couvrirait à moitié. */
@@ -3858,15 +3883,19 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .ct-poignee { height:52px; margin:-6px 0 -10px; }
     .ct-page .map-search input { height:52px; }
     /* Les menus du Récent et de la Ligue, sa case et « Voir les autres ». */
-    .ct-filtres .filt-sel, .ct-filtres .cp-btn, .ct-volet .map-controls .cp-btn, .ct-filtres .ct-case, .ct-plus, .ct-source button, .ct-portee .seg button, .ct-volet > .ct-case, .ct-pli-btn, .ct-obs { min-height:52px; }
+    .ct-bloc .cp-btn, .ct-bloc .seg button, .ct-bloc .ct-bascule, .ct-annee input, .ct-pas, .ct-plus, .ct-pli-btn, .ct-obs { min-height:52px; }
+    .ct-pas button { width:52px; }
+    .ct-lien { min-height:52px; padding:0 4px; }
+    /* Au doigt, les pastilles font 44 px d'écran : elles passent à la ligne au lieu de sortir du bloc,
+       et les choix collés écrivent leur libellé sur deux lignes plutôt que de le couper (375 px, 2026-10-28). */
+    .ct-bloc .rar-chips { flex-wrap:wrap; }
+    .ct-seg-plein button { white-space:normal; line-height:1.15; }
     .ct-rang-n { width:52px; }
     .ct-rang-n.avec-nb { width:auto; min-width:52px; }
     .ct-gl-l, .ct-gl-n { min-height:52px; }
     /* Dans la liste d'une grappe, on touche la ligne, pas la pastille : elle garde la taille souris
        (à 52 px, six lignes ne tenaient plus dans la bulle, vu le 2026-10-24). */
     .ct-gl-l .tier-chip.tier-rond { width:40px; min-width:40px; height:40px; margin:-10px; font-size:20px; padding:0 0 1px; min-height:0; }
-    /* Le curseur garde sa barre fine, mais le doigt l'attrape sur 52 px de haut. */
-    .ct-jours input[type=range] { height:52px; margin:0; }
   }
 
   /* Une seule police pour TOUS les noms latins, partout : celle du texte, en italique (--sans).

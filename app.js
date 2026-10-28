@@ -8694,12 +8694,13 @@ document.addEventListener('change', e=>{
   if(e.target.id==='mapPlayerSel'){ mapFilter.player=e.target.value; renderMap(); }
   else if(e.target.id==='mapCountrySel'){ mapFilter.country=e.target.value; renderMap(); }
   else if(e.target.id==='mapMineShowAllObs'){ mapFilter.showAllObs = !!e.target.checked; renderMap(); }
-  else if(e.target.id==='mapEbShowObserved' || e.target.id==='ctRecManque'){
-    // Deux cases pour un seul réglage : « Inclure déjà observés » (Hotspots) et son inverse,
-    // « Seulement ce qui me manque » (Récent, cochée par défaut).
-    ebFilter.showObserved = e.target.id==='ctRecManque' ? !e.target.checked : !!e.target.checked;
-    const a = document.getElementById('mapEbShowObserved'), b = document.getElementById('ctRecManque');
-    if(a) a.checked = ebFilter.showObserved; if(b) b.checked = !ebFilter.showObserved;
+  else if(e.target.id==='mapEbShowObserved' || e.target.id==='ctRecManque' || e.target.id==='ctHotManque'){
+    // Un seul réglage : « Seulement ce qui me manque » (Récent et Hotspots, allumé par défaut) et son
+    // inverse, l'ancienne case cachée « Inclure déjà observés ».
+    ebFilter.showObserved = e.target.id==='mapEbShowObserved' ? !!e.target.checked : !e.target.checked;
+    const a = document.getElementById('mapEbShowObserved');
+    if(a) a.checked = ebFilter.showObserved;
+    for(const id of ['ctRecManque', 'ctHotManque']){ const b = document.getElementById(id); if(b) b.checked = !ebFilter.showObserved; }
     _loaded.missing='';
     renderMap();
   }
@@ -8857,7 +8858,10 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
 else _refreshRarChips();
 // Chips rareté (mode À cocher) : toggle Set, background = couleur rareté quand actif.
 document.addEventListener('click', e=>{
-  const rangee = e.target.closest('#mapEbRarityChips, #ctLigRarChips'); if(!rangee) return;
+  // Tout / Aucun vivent sous la rangée (2026-10-28) : data-rar-pour dit laquelle.
+  const pour = e.target.closest('[data-rar-pour]');
+  const rangee = pour ? document.getElementById(pour.dataset.rarPour) : e.target.closest('#mapEbRarityChips, #ctLigRarChips');
+  if(!rangee) return;
   const f = _RAR_RANGEES[rangee.id]();
   // La Ligue redessine ses points ; le Récent doit en plus relire sa couche.
   const relance = () => { if(f === ebFilter) _loaded.missing=''; renderMap(); };
@@ -9344,17 +9348,12 @@ function _ctAvantRendu(){
   _ctRangeReglages();
   _ctDessineCouches();
 }
-// Le bloc des réglages eBird d'avant ne sert plus qu'aux Hotspots, jusqu'à l'étape 3 : le Récent a
-// ses menus (étape 2). Région et département servent aux deux : ils suivent le volet ouvert. Les
-// commandes gardent leurs id, donc leurs gestionnaires.
+// La case du lieu sert au Récent ET aux Hotspots : elle se pose dans la ligne « Où » du volet ouvert
+// (2026-10-28 : chaque onglet a son bloc de filtres). Elle garde ses id, donc ses gestionnaires.
 function _ctRangeReglages(){
-  const eb = document.getElementById('mapCtrlsEbird'); if(!eb) return;
-  const hot = document.querySelector('[data-ici-eb="hot"]');
-  if(hot && eb.parentElement !== hot) hot.appendChild(eb);
-  const recent = mapMode === 'missing';
-  const zone = document.getElementById('ctMenusZone');
-  const iciZone = recent ? document.querySelector('[data-ici-zone="recent"]') : eb;
-  if(zone && iciZone && zone.parentElement !== iciZone) iciZone.prepend(zone);
+  const zone = document.getElementById('ctMenusZone'); if(!zone) return;
+  const ici = document.querySelector(`[data-ici-zone="${mapMode === 'hotspots' ? 'hot' : 'recent'}"]`);
+  if(ici && zone.parentElement !== ici) ici.prepend(zone);
 }
 // Ouvrir un onglet allume sa couche, une fois : l'éteindre ensuite tient jusqu'au prochain onglet,
 // un réglage changé ne la rallume pas.
@@ -10753,7 +10752,6 @@ function _ctListeRecent(){
 // Les commandes visibles du Récent (Mathis, 2026-10-24) recopient les <select> cachés, que le code
 // règle aussi tout seul (clic sur un département, retour à la France, fiche espèce) : on les
 // repeint à chaque dessin du panneau plutôt que de suivre chaque endroit qui touche un menu.
-const _CT_JOURS = [7, 14, 30];
 // Les nombres du sélecteur de pays du Récent : la réponse d'eBird de chaque pays (une demande, la même
 // que le Récent du pays ouvert), gardée dans l'onglet seulement (garder:false). Le compte se refait à
 // chaque ouverture, pour suivre la case « Seulement ce qui me manque » et les paliers cochés.
@@ -10804,20 +10802,19 @@ function _ctSyncFiltres(){
     // Un choix autre que « Toutes / Tous » prend l'accent, comme les filtres du Birdydex.
     b.classList.toggle('actif', sel.selectedIndex > 0);
   });
-  // La case du lieu, drapeau devant : la zone choisie sur la carte, sinon le pays de la ligue (Ligue) ou
-  // le pays ouvert sur la Carte (Récent, Hotspots).
-  _ctMajBoutonLieu(document.getElementById('ctLigPaysBtn'), mapFilter.country === 'any' ? '' : mapFilter.country);
+  // La case du lieu, drapeau devant : la zone choisie sur la carte, sinon le pays ouvert, dans les trois
+  // onglets (la Ligue n'a plus son propre filtre de pays depuis le 2026-10-28).
+  _ctMajBoutonLieu(document.getElementById('ctLigPaysBtn'), _ctPaysOuvert);
   _ctMajBoutonLieu(document.getElementById('ctEbPaysBtn'), _ctPaysOuvert);
-  const src =document.getElementById('mapEbSource')?.value || 'ebird';
-  document.querySelectorAll('[data-ct-source]').forEach(b => {
-    const on = b.dataset.ctSource === src;
-    b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on));
+  // Les choix en boutons collés (source, période, tri) suivent leur <select> caché.
+  const allume = (attr, valeur) => document.querySelectorAll(`[${attr}]`).forEach(b => {
+    const on = b.getAttribute(attr) === valeur;
+    b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); b.tabIndex = on ? 0 : -1;
   });
+  allume('data-ct-source', document.getElementById('mapEbSource')?.value || 'ebird');
+  allume('data-ct-jours', document.getElementById('mapEbDays')?.value || '14');
+  allume('data-ct-tri', document.getElementById('mapEbSort')?.value || 'todo');
   _ctSyncPortee();
-  const j = +(document.getElementById('mapEbDays')?.value) || 14;
-  const curseur = document.getElementById('ctJours');
-  if(curseur && document.activeElement !== curseur) curseur.value = String(Math.max(0, _CT_JOURS.indexOf(j)));
-  _ctJoursTexte(j);
 }
 // Pays / Zone : le bouton allumé dit la mesure en vigueur, jamais le seul souhait. Sans zone qui ait
 // ses fréquences, « Zone » se grise et une ligne dit pourquoi ; le choix est gardé pour la suivante.
@@ -10840,9 +10837,12 @@ function _ctSyncPortee(){
       const on = (b.dataset.ctPortee === 'zone') === active;
       b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on));
       if(b.dataset.ctPortee === 'zone') b.setAttribute('aria-disabled', String(!zf));
-      b.title = b.dataset.ctPortee === 'zone' ? (zf ? _ctNomZone().nom : '') : countryLabel(cc);
+      // « France / Grand Est » plutôt que « Pays / Zone » (Mathis, 2026-10-28) : le bouton dit sur quoi
+      // la rareté se mesure. Sans zone mesurable, il garde le mot « Zone », grisé.
+      b.textContent = b.dataset.ctPortee === 'zone' ? (zf ? _ctNomZone().nom : 'Zone') : countryLabel(cc);
+      b.title = b.dataset.ctPortee === 'zone' ? (zf ? `Rareté mesurée sur ${_ctNomZone().nom}` : '') : `Rareté mesurée sur ${countryLabel(cc)}`;
     });
-    const note = boite.querySelector('.ct-portee-note'); if(note) note.textContent = texte;
+    const note = boite.closest('.ct-v')?.querySelector('[data-portee-note]'); if(note) note.textContent = texte;
   }
 }
 document.addEventListener('click', e => {
@@ -10856,11 +10856,6 @@ document.addEventListener('click', e => {
   if(_map && _ctPopGrappe && _map.hasLayer(_ctPopGrappe) && _ctGrappeOuverte) _ctRefaitListe(_ctGrappeOuverte);
   _loaded.missing = ''; renderMap();
 });
-function _ctJoursTexte(j){
-  const t = `${j} derniers jours`;
-  const v = document.getElementById('ctJoursVal'); if(v) v.textContent = t;
-  document.getElementById('ctJours')?.setAttribute('aria-valuetext', t);
-}
 // Règle un <select> caché et prévient ceux qui l'écoutent, comme l'aurait fait un vrai choix.
 function _ctRegleMenu(id, valeur){
   const sel = document.getElementById(id); if(!sel || sel.value === valeur) return;
@@ -10895,18 +10890,21 @@ document.addEventListener('click', async e => {
   // rareté) laissent dans ce pays.
   // Un onglet Régions, comme les autres sélecteurs de pays (Mathis, 2026-10-28) : chaque zone compte les
   // observations de la ligue qu'elle contient ; en choisir une la choisit sur la carte, où la liste la suit.
+  // Depuis le 2026-10-28, c'est le « Où » des trois onglets (accord de Mathis) : choisir un pays l'ouvre
+  // sur la carte, comme au Récent, au lieu de filtrer les points de la ligue à part. Les nombres restent
+  // ceux de la ligue.
   const paysLig = e.target.closest('#ctLigPaysBtn');
   if(paysLig){
     const f = mapFilter, tous = _mapCollectPoints();
     const pts = tous.filter(p => (f.player === 'all' || p.uid === f.player) && _passeRarLigue(p));
     const compte = new Map(); for(const p of pts) if(p.cc) compte.set(p.cc, (compte.get(p.cc) || 0) + 1);
-    let ccChoisi = f.country === 'any' ? '' : f.country;
+    let ccChoisi = _ctPaysOuvert || '';
     if(ccChoisi) await _ctGeoZonesPays(ccChoisi);
     const res = await _openCountryPicker(ccChoisi, {
-      availableCodes: [...new Set(tous.map(p => p.cc).filter(Boolean))], titre: 'Observations de la ligue', unite: 'obs.',
+      availableCodes: [...new Set(tous.map(p => p.cc).filter(cc => cc && _ctPaysCliquable(cc)))], titre: 'Observations de la ligue', unite: 'obs.',
       compte: cc => compte.get(cc) || 0, tous: { label: 'Tous les pays', count: pts.length },
       zones: cc => _ctLignesZones(cc, { pts:pts.filter(p => p.cc === cc) }), motZone: _ctMotZone,
-      onPays: cc => { ccChoisi = cc; _ctRegleMenu('mapCountrySel', cc || 'any'); return cc ? _ctGeoZonesPays(cc) : null; },
+      onPays: cc => { ccChoisi = cc; if(!cc){ _ctRetourPays(true); return null; } _ctOuvrePays(cc); return _ctGeoZonesPays(cc); },
       precharger: cc => _ctGeoZonesPays(cc) });
     if(res && res.type === 'zone' && ccChoisi) await _ctChoisirLieu(ccChoisi, res.code);
     paysLig.focus();
@@ -10950,6 +10948,11 @@ document.addEventListener('click', async e => {
   }
   const src = e.target.closest('[data-ct-source]');
   if(src){ _ctRegleMenu('mapEbSource', src.dataset.ctSource); return; }
+  // La période en trois boutons (le curseur d'avant, 2026-10-28), le tri des Hotspots en deux.
+  const jours = e.target.closest('[data-ct-jours]');
+  if(jours){ _ctRegleMenu('mapEbDays', jours.dataset.ctJours); return; }
+  const tri = e.target.closest('[data-ct-tri]');
+  if(tri){ _ctRegleMenu('mapEbSort', tri.dataset.ctTri); return; }
   // Les lignes d'espèce des deux listes (Récent, Ligue) : le nom ouvre la fiche, la flèche déplie ses
   // observations et cadre la carte sur leurs points, un second clic replie ; une observation mène à son point.
   const o = e.target.closest('#ctContenu .ct-obs[data-pt]');
@@ -10970,15 +10973,15 @@ document.addEventListener('click', async e => {
   if(r){ _ctOuvreFiche(r.dataset.sci, r.dataset.cc || undefined); return; }
   if(e.target.closest('#ctRecPlus')){ _ctRecTout = true; _ctListeRecent(); }
 });
-// Le curseur dit la période en glissant, mais ne relit eBird qu'une fois lâché.
-document.addEventListener('input', e => { if(e.target.id === 'ctJours') _ctJoursTexte(_CT_JOURS[+e.target.value] || 14); });
-document.addEventListener('change', e => { if(e.target.id === 'ctJours') _ctRegleMenu('mapEbDays', String(_CT_JOURS[+e.target.value] || 14)); });
-// Flèches gauche / droite entre les deux sources, comme une vraie paire de boutons radio.
+// Flèches gauche / droite dans les boutons collés des filtres (source, période, tri, mesure de la
+// rareté), comme dans un vrai groupe de boutons radio.
 document.addEventListener('keydown', e => {
-  const b = e.target.closest && e.target.closest('[data-ct-source]');
-  if(!b || (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight')) return;
+  if(e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+  const b = e.target.closest && e.target.closest('.ct-bloc [role="radio"]'); if(!b) return;
+  const tous = [...b.parentElement.querySelectorAll('[role="radio"]')].filter(x => x.getAttribute('aria-disabled') !== 'true');
+  const i = tous.indexOf(b); if(i < 0) return;
   e.preventDefault();
-  const autre = b.parentElement.querySelector(`[data-ct-source]:not([data-ct-source="${b.dataset.ctSource}"])`);
+  const autre = tous[(i + (e.key === 'ArrowRight' ? 1 : tous.length - 1)) % tous.length];
   autre.focus(); autre.click();
 });
 // Charge la couche "A cocher" via GBIF (historique) : cherche dans la region/dept, mois et annees

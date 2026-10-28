@@ -124,7 +124,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=507">
+<link rel="modulepreload" href="app.js?v=508">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -754,141 +754,189 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
               </div>
               <div class="ct-contenu" id="ctContenu">
                 <div class="ct-volet" id="ctVoletRecent" role="tabpanel" aria-labelledby="ctOngletRecent" data-volet="recent" hidden>
-                  <!-- Les réglages du Récent comme au Birdydex (Mathis, 2026-10-24) : région et département
-                       s'ouvrent au milieu de l'écran, la source et la rareté se voient sans menu, la période
-                       est un curseur. Les <select> restent, cachés : tout le code les lit et les écoute, les
-                       commandes visibles ne font que les régler (_ctSyncFiltres). Région et département
-                       viennent du bloc des Hotspots : app.js les y déplace.
-                       Repliés sous « Filtres » depuis le 2026-10-26 (Mathis : « très chargé, on s'y perd ») :
-                       la liste monte en haut. Plus de résumé à côté de « Filtres » (Mathis, 2026-10-28 : il
-                       ajoutait pour rien). -->
+                  <!-- Les filtres des trois onglets dans un bloc gris, une ligne par réglage, dans le MÊME ordre
+                       partout : Où, Qui, Source, Quand, Afficher, puis ce qui est propre à l'onglet, Rareté en
+                       dernier (maquette A3, notes-privees/maquettes/filtres-carte/v3.html, Mathis 2026-10-28).
+                       Les <select> restent, cachés : tout le code les lit et les écoute, les commandes visibles
+                       ne font que les régler (_ctSyncFiltres). La case du lieu (ctMenusZone) est posée dans
+                       « Où » par app.js, dans le volet ouvert. Repliés sous « Filtres » depuis le 2026-10-26. -->
                   <details class="ct-pli" id="ctPliRecent">
                   <summary class="ct-pli-tete"><span class="ct-pli-btn">Filtres</span></summary>
-                  <div class="ct-pli-corps">
-                  <div class="seg ct-source" id="mapEbSourceLbl" role="radiogroup" aria-label="Source des données">
-                    <button type="button" role="radio" data-ct-source="ebird">eBird, en direct</button>
-                    <button type="button" role="radio" data-ct-source="gbif">Les années passées, ce mois-ci</button>
-                  </div>
-                  <select class="ct-cache" id="mapEbSource" aria-hidden="true" tabindex="-1">
-                    <option value="ebird" selected>Source : eBird, en direct</option>
-                    <option value="gbif">Source : les années passées, ce mois-ci</option>
-                  </select>
-                  <div class="fm-barre ct-filtres" id="ctFiltresRecent">
-                    <span class="ct-ici-zone" data-ici-zone="recent"></span>
-                    <select class="ct-cache" id="mapEbDays" aria-hidden="true" tabindex="-1">
-                      <option value="7">7 derniers jours</option>
-                      <option value="14" selected>14 derniers jours</option>
-                      <option value="30">30 derniers jours</option>
-                    </select>
-                    <label class="explorer-lbl" id="mapEbYearMinLbl" style="display:none;">De
-                    <input type="number" id="mapEbYearMin" style="width:64px; font-size:14px; padding:5px 6px; border:1px solid var(--line-2); border-radius:8px;" min="1970" max="2026" value="2024">
-                    </label>
-                    <label class="explorer-lbl" id="mapEbYearMaxLbl" style="display:none;">à
-                    <input type="number" id="mapEbYearMax" style="width:64px; font-size:14px; padding:5px 6px; border:1px solid var(--line-2); border-radius:8px;" min="1970" max="2026" value="2025">
-                    </label>
-                  </div>
-                  <!-- Hors de la rangée des menus, qui défile de côté au téléphone : le curseur y était coupé. -->
-                  <div class="ct-jours" id="mapEbDaysLbl">
-                    <label class="ct-jours-tete" for="ctJours">Période <b id="ctJoursVal">14 derniers jours</b></label>
-                    <input type="range" id="ctJours" min="0" max="2" step="1" value="1" aria-valuetext="14 derniers jours">
-                    <div class="ct-jours-reperes" aria-hidden="true"><span>7 j</span><span>14 j</span><span>30 j</span></div>
-                  </div>
-                  <div class="rar-rangee ct-rarete" id="mapEbRarityLbl">
-                    <span class="rar-rangee-titre">Rareté</span>
-                    <div id="mapEbRarityChips" class="rar-chips" role="group" aria-label="Filtrer par rareté">
-                      <button type="button" class="rar-chip on" data-rar="1" title="Omniprésent">1</button>
-                      <button type="button" class="rar-chip on" data-rar="2" title="Très commun">2</button>
-                      <button type="button" class="rar-chip on" data-rar="3" title="Commun">3</button>
-                      <button type="button" class="rar-chip on" data-rar="4" title="Assez commun">4</button>
-                      <button type="button" class="rar-chip on" data-rar="5" title="Peu commun">5</button>
-                      <button type="button" class="rar-chip on" data-rar="6" title="Assez rare">6</button>
-                      <button type="button" class="rar-chip on" data-rar="7" title="Rare">7</button>
-                      <button type="button" class="rar-chip on" data-rar="8" title="Très rare">8</button>
-                      <button type="button" class="rar-chip on" data-rar="9" title="Ultra rare">9</button>
-                      <button type="button" class="rar-chip on" data-rar="10" title="Exceptionnel (vagrant accidentel)">10</button>
-                      <button type="button" class="rar-chip" data-rar-all title="Cocher toutes les raretés">Tout</button>
-                      <button type="button" class="rar-chip" data-rar-none title="Décocher toutes les raretés">Vide</button>
-                      <!-- Les statuts du Birdydex, a la place du palier 0 « exotique » (2026-10-22). X et P retirés
-                           le 2026-10-23 : la Carte ne montre plus les échappés, ils ne trouveraient rien. -->
-                      <span class="rar-cats"><span class="rar-sep" aria-hidden="true"></span><button type="button" class="rar-chip" data-cat="N" title="Introduit établi (N)">N</button></span>
-                    </div>
-                    <!-- La rareté mesurée sur le pays ou sur la zone choisie (Mathis, 2026-10-26) : _ctRarete. -->
-                    <div class="ct-portee" id="ctPortee">
-                      <span class="ct-portee-titre" id="ctPorteeTitre">Mesurée sur</span>
-                      <div class="seg" role="radiogroup" aria-labelledby="ctPorteeTitre">
-                        <button type="button" role="radio" data-ct-portee="pays">Pays</button>
-                        <button type="button" role="radio" data-ct-portee="zone">Zone</button>
+                  <div class="ct-pli-corps ct-bloc">
+                    <div class="ct-ligne"><span class="ct-k">Où</span><span class="ct-v ct-ici-zone" data-ici-zone="recent"></span></div>
+                    <div class="ct-ligne"><span class="ct-k" id="ctKSource">Source</span>
+                      <div class="seg ct-seg-plein" id="mapEbSourceLbl" role="radiogroup" aria-labelledby="ctKSource">
+                        <button type="button" role="radio" data-ct-source="ebird">eBird, en direct</button>
+                        <button type="button" role="radio" data-ct-source="gbif">Années passées</button>
                       </div>
-                      <span class="ct-portee-note"></span>
+                      <select class="ct-cache" id="mapEbSource" aria-hidden="true" tabindex="-1">
+                        <option value="ebird" selected>Source : eBird, en direct</option>
+                        <option value="gbif">Source : les années passées, ce mois-ci</option>
+                      </select>
                     </div>
-                  </div>
+                    <div class="ct-ligne"><span class="ct-k" id="ctKQuand">Quand</span>
+                      <div class="ct-v">
+                        <!-- Trois boutons au lieu du curseur. Les années passées (GBIF) prennent le mois en cours,
+                             entre deux années : les champs De / à remplacent alors les boutons. -->
+                        <div class="seg ct-seg-plein" id="mapEbDaysLbl" role="radiogroup" aria-labelledby="ctKQuand">
+                          <button type="button" role="radio" data-ct-jours="7">7 j</button>
+                          <button type="button" role="radio" data-ct-jours="14">14 j</button>
+                          <button type="button" role="radio" data-ct-jours="30">30 j</button>
+                        </div>
+                        <select class="ct-cache" id="mapEbDays" aria-hidden="true" tabindex="-1">
+                          <option value="7">7 derniers jours</option>
+                          <option value="14" selected>14 derniers jours</option>
+                          <option value="30">30 derniers jours</option>
+                        </select>
+                        <span class="ct-annees">
+                        <label class="ct-annee" id="mapEbYearMinLbl" style="display:none;">De
+                        <input type="number" id="mapEbYearMin" min="1970" max="2026" value="2024">
+                        </label>
+                        <label class="ct-annee" id="mapEbYearMaxLbl" style="display:none;">à
+                        <input type="number" id="mapEbYearMax" min="1970" max="2026" value="2025">
+                        </label>
+                        </span>
+                      </div>
+                    </div>
+                    <div class="ct-ligne" id="ctRecManqueLbl"><span class="ct-k">Afficher</span>
+                      <label class="ct-bascule"><span>Seulement ce qui me manque</span><input type="checkbox" role="switch" id="ctRecManque" checked></label>
+                    </div>
+                    <div class="ct-ligne ct-haut" id="mapEbRarityLbl"><span class="ct-k">Rareté</span>
+                      <div class="ct-v">
+                        <div id="mapEbRarityChips" class="rar-chips" role="group" aria-label="Filtrer par rareté">
+                          <button type="button" class="rar-chip on" data-rar="1" title="Omniprésent">1</button>
+                          <button type="button" class="rar-chip on" data-rar="2" title="Très commun">2</button>
+                          <button type="button" class="rar-chip on" data-rar="3" title="Commun">3</button>
+                          <button type="button" class="rar-chip on" data-rar="4" title="Assez commun">4</button>
+                          <button type="button" class="rar-chip on" data-rar="5" title="Peu commun">5</button>
+                          <button type="button" class="rar-chip on" data-rar="6" title="Assez rare">6</button>
+                          <button type="button" class="rar-chip on" data-rar="7" title="Rare">7</button>
+                          <button type="button" class="rar-chip on" data-rar="8" title="Très rare">8</button>
+                          <button type="button" class="rar-chip on" data-rar="9" title="Ultra rare">9</button>
+                          <button type="button" class="rar-chip on" data-rar="10" title="Exceptionnel (vagrant accidentel)">10</button>
+                          <!-- Les statuts du Birdydex, a la place du palier 0 « exotique » (2026-10-22). X et P retirés
+                               le 2026-10-23 : la Carte ne montre plus les échappés, ils ne trouveraient rien. -->
+                          <span class="rar-cats"><span class="rar-sep" aria-hidden="true"></span><button type="button" class="rar-chip" data-cat="N" title="Introduit établi (N)">N</button></span>
+                        </div>
+                        <!-- Tout / Aucun sous les pastilles, la mesure à droite : « France / Grand Est » plutôt que
+                             « Pays / Zone » (Mathis, 2026-10-28), libellés posés par _ctSyncPortee. -->
+                        <div class="ct-rar-sous">
+                          <span class="ct-rar-liens"><button type="button" class="ct-lien" data-rar-all data-rar-pour="mapEbRarityChips" title="Cocher toutes les raretés">Tout</button><span aria-hidden="true">·</span><button type="button" class="ct-lien" data-rar-none data-rar-pour="mapEbRarityChips" title="Décocher toutes les raretés">Aucun</button></span>
+                          <div class="ct-portee" id="ctPortee">
+                            <div class="seg" role="radiogroup" aria-label="Rareté mesurée sur">
+                              <button type="button" role="radio" data-ct-portee="pays">Pays</button>
+                              <button type="button" role="radio" data-ct-portee="zone">Zone</button>
+                            </div>
+                          </div>
+                        </div>
+                        <span class="ct-portee-note" data-portee-note></span>
+                      </div>
+                    </div>
                   </div>
                   </details>
-                  <label class="miss-toggle ct-case" id="ctRecManqueLbl"><input type="checkbox" id="ctRecManque" checked> Seulement ce qui me manque</label>
                   <p class="ct-compte ct-etat" id="ctRecEtat" role="status"></p>
                   <div class="ct-liste" id="ctListeRecent"></div>
                   <p class="ct-mention" id="ctMentionRecent"></p>
                 </div>
                 <div class="ct-volet" id="ctVoletHot" role="tabpanel" aria-labelledby="ctOngletHot" data-volet="hot" hidden>
-                  <div class="ct-ici-eb" data-ici-eb="hot"></div>
+                  <!-- Les Hotspots sous « Filtres » eux aussi, mêmes lignes et même ordre que le Récent (accord de
+                       Mathis, 2026-10-28). « Seulement ce qui me manque » est l'inverse d'« Inclure déjà observés »,
+                       le même réglage que la case du Récent (ebFilter.showObserved) ; l'ancienne case reste, cachée. -->
+                  <details class="ct-pli" id="ctPliHot">
+                  <summary class="ct-pli-tete"><span class="ct-pli-btn">Filtres</span></summary>
+                  <div class="ct-pli-corps ct-bloc">
+                    <div class="ct-ligne"><span class="ct-k">Où</span><span class="ct-v ct-ici-zone" data-ici-zone="hot"></span></div>
+                    <div class="ct-ligne" id="mapEbMonthLbl"><span class="ct-k">Quand</span>
+                      <span class="ct-v ct-choix"><button type="button" class="cp-btn" data-ct-choix="mapEbMonth" title="Mois"><span class="cp-btn-label">Tous les mois</span><span class="cp-btn-arrow">▾</span></button></span>
+                      <select class="ct-cache" id="mapEbMonth" aria-hidden="true" tabindex="-1">
+                        <option value="0" selected>Tous les mois</option>
+                        <option value="1">janvier</option><option value="2">février</option>
+                        <option value="3">mars</option><option value="4">avril</option>
+                        <option value="5">mai</option><option value="6">juin</option>
+                        <option value="7">juillet</option><option value="8">août</option>
+                        <option value="9">septembre</option><option value="10">octobre</option>
+                        <option value="11">novembre</option><option value="12">décembre</option>
+                      </select>
+                    </div>
+                    <div class="ct-ligne" id="mapEbShowObservedLbl"><span class="ct-k">Afficher</span>
+                      <label class="ct-bascule"><span>Seulement ce qui me manque</span><input type="checkbox" role="switch" id="ctHotManque" checked></label>
+                      <input type="checkbox" class="ct-cache" id="mapEbShowObserved" aria-hidden="true" tabindex="-1">
+                    </div>
+                    <div class="ct-ligne" id="mapEbSortLbl"><span class="ct-k" id="ctKTri">Trier par</span>
+                      <div class="seg ct-seg-plein" role="radiogroup" aria-labelledby="ctKTri">
+                        <button type="button" role="radio" data-ct-tri="todo">À cocher pour moi</button>
+                        <button type="button" role="radio" data-ct-tri="recent">Activité 30 j</button>
+                      </div>
+                      <select class="ct-cache" id="mapEbSort" aria-hidden="true" tabindex="-1">
+                        <option value="todo" selected>Espèces à cocher pour moi</option>
+                        <option value="recent">Activité 30 jours</option>
+                      </select>
+                    </div>
+                    <div class="ct-ligne" id="mapEbMinTodoLbl" title="N'affiche que les hotspots où il te manque au moins N espèces"><span class="ct-k">Cacher</span>
+                      <span class="ct-v ct-cacher">sous
+                      <span class="ct-pas" id="mapEbMinTodoBox" role="group" aria-label="Nombre minimum d'espèces à cocher">
+                        <button type="button" id="mapEbMinTodoDec" title="−1" aria-label="Un de moins">−</button>
+                        <input type="number" id="mapEbMinTodo" min="0" max="500" value="0" step="1" title="Espèces à cocher minimum">
+                        <button type="button" id="mapEbMinTodoInc" title="+1" aria-label="Un de plus">+</button>
+                      </span>
+                      <span id="mapEbMinTodoSuffix">espèces à cocher</span></span>
+                    </div>
+                  </div>
+                  </details>
+                  <span class="map-count" id="mapEbCount" role="status"></span>
                   <div class="ct-liste" id="ctListeHot"></div>
                   <p class="ct-mention">Données <a href="https://ebird.org" target="_blank" rel="noopener">eBird.org</a>, lues en direct pour la zone choisie.</p>
                 </div>
                 <div class="ct-volet" id="ctVoletLigue" role="tabpanel" aria-labelledby="ctOngletLigue" data-volet="ligue">
-                  <!-- Les filtres de la Ligue repliés sous « Filtres », comme le Récent (Mathis, 2026-10-26),
-                       sans résumé à côté (2026-10-28). -->
+                  <!-- Mêmes lignes, même ordre que le Récent (maquette A3, 2026-10-28). « Où » choisit la zone
+                       sur la carte, comme dans les deux autres onglets : l'ancien filtre par pays de la ligue
+                       (mapCountrySel) s'y est fondu (accord de Mathis) et reste à « any ». -->
                   <details class="ct-pli" id="ctPliLigue">
                   <summary class="ct-pli-tete"><span class="ct-pli-btn">Filtres</span></summary>
-                  <div class="ct-pli-corps">
-                  <!-- Comme le Récent (Mathis, 2026-10-26) : membre et pays s'ouvrent au milieu de l'écran,
-                       la rareté est une rangée de pastilles (plusieurs paliers à la fois), mesurée sur le pays
-                       ou sur la zone. Les <select> restent, cachés : _ctSyncFiltres recopie leur choix. -->
-                  <div class="map-controls" id="mapCtrlsMine">
-                    <span class="ct-choix">
-                    <button type="button" class="cp-btn" data-ct-choix="mapPlayerSel" title="Membre"><span class="cp-btn-label">Tout le monde</span><span class="cp-btn-arrow">▾</span></button>
-                    <select class="ct-cache" id="mapPlayerSel" aria-hidden="true" tabindex="-1">
-                      <option value="all">Tout le monde</option>
-                    </select>
-                    </span>
-                    <span class="ct-choix">
-                    <!-- Le sélecteur de pays du site, drapeaux et continents, avec les observations de la ligue
-                         au bout de chaque ligne (Mathis, 2026-10-26) : comme le Classement. -->
-                    <button type="button" class="cp-btn" id="ctLigPaysBtn" title="Lieu"><span class="cp-btn-flag" style="display:none;"></span><span class="cp-btn-label">Tous les pays</span><span class="cp-btn-arrow">▾</span></button>
-                    <select class="ct-cache" id="mapCountrySel" aria-hidden="true" tabindex="-1">
-                      <option value="any">Tous les pays</option>
-                    </select>
-                    </span>
-                    <label class="explorer-lbl" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;" title="Afficher toutes les obs (chaque cochage separement) au lieu d'une seule par espece par personne">
-                      <input type="checkbox" id="mapMineShowAllObs" style="vertical-align:middle;"> Afficher tous les cochages
-                    </label>
-                  </div>
-                  <div class="rar-rangee ct-rarete" id="ctLigRarete">
-                    <span class="rar-rangee-titre">Rareté</span>
-                    <div id="ctLigRarChips" class="rar-chips" role="group" aria-label="Filtrer la ligue par rareté">
-                      <button type="button" class="rar-chip on" data-rar="1" title="Omniprésent">1</button>
-                      <button type="button" class="rar-chip on" data-rar="2" title="Très commun">2</button>
-                      <button type="button" class="rar-chip on" data-rar="3" title="Commun">3</button>
-                      <button type="button" class="rar-chip on" data-rar="4" title="Assez commun">4</button>
-                      <button type="button" class="rar-chip on" data-rar="5" title="Peu commun">5</button>
-                      <button type="button" class="rar-chip on" data-rar="6" title="Assez rare">6</button>
-                      <button type="button" class="rar-chip on" data-rar="7" title="Rare">7</button>
-                      <button type="button" class="rar-chip on" data-rar="8" title="Très rare">8</button>
-                      <button type="button" class="rar-chip on" data-rar="9" title="Ultra rare">9</button>
-                      <button type="button" class="rar-chip on" data-rar="10" title="Exceptionnel (vagrant accidentel)">10</button>
-                      <button type="button" class="rar-chip" data-rar-all title="Cocher toutes les raretés">Tout</button>
-                      <button type="button" class="rar-chip" data-rar-none title="Décocher toutes les raretés">Vide</button>
-                      <span class="rar-cats"><span class="rar-sep" aria-hidden="true"></span><button type="button" class="rar-chip" data-cat="N" title="Introduit établi (N)">N</button></span>
+                  <div class="ct-pli-corps ct-bloc" id="mapCtrlsMine">
+                    <div class="ct-ligne"><span class="ct-k">Où</span>
+                      <span class="ct-v ct-choix"><button type="button" class="cp-btn" id="ctLigPaysBtn" title="Lieu"><span class="cp-btn-flag" style="display:none;"></span><span class="cp-btn-label">Tous les pays</span><span class="cp-btn-arrow">▾</span></button></span>
+                      <select class="ct-cache" id="mapCountrySel" aria-hidden="true" tabindex="-1">
+                        <option value="any">Tous les pays</option>
+                      </select>
                     </div>
-                    <!-- Le même réglage que celui du Récent (_ctRarZone) : la zone choisie vaut pour les deux onglets. -->
-                    <div class="ct-portee" id="ctPorteeLigue">
-                      <span class="ct-portee-titre" id="ctPorteeTitreLigue">Mesurée sur</span>
-                      <div class="seg" role="radiogroup" aria-labelledby="ctPorteeTitreLigue">
-                        <button type="button" role="radio" data-ct-portee="pays">Pays</button>
-                        <button type="button" role="radio" data-ct-portee="zone">Zone</button>
+                    <div class="ct-ligne"><span class="ct-k">Qui</span>
+                      <span class="ct-v ct-choix"><button type="button" class="cp-btn" data-ct-choix="mapPlayerSel" title="Membre"><span class="cp-btn-label">Tout le monde</span><span class="cp-btn-arrow">▾</span></button></span>
+                      <select class="ct-cache" id="mapPlayerSel" aria-hidden="true" tabindex="-1">
+                        <option value="all">Tout le monde</option>
+                      </select>
+                    </div>
+                    <div class="ct-ligne"><span class="ct-k">Afficher</span>
+                      <label class="ct-bascule" title="Chaque cochage à sa place, au lieu d'un point par espèce et par personne"><span>Tous les cochages</span><input type="checkbox" role="switch" id="mapMineShowAllObs"></label>
+                    </div>
+                    <div class="ct-ligne ct-haut" id="ctLigRarete"><span class="ct-k">Rareté</span>
+                      <div class="ct-v">
+                        <div id="ctLigRarChips" class="rar-chips" role="group" aria-label="Filtrer la ligue par rareté">
+                          <button type="button" class="rar-chip on" data-rar="1" title="Omniprésent">1</button>
+                          <button type="button" class="rar-chip on" data-rar="2" title="Très commun">2</button>
+                          <button type="button" class="rar-chip on" data-rar="3" title="Commun">3</button>
+                          <button type="button" class="rar-chip on" data-rar="4" title="Assez commun">4</button>
+                          <button type="button" class="rar-chip on" data-rar="5" title="Peu commun">5</button>
+                          <button type="button" class="rar-chip on" data-rar="6" title="Assez rare">6</button>
+                          <button type="button" class="rar-chip on" data-rar="7" title="Rare">7</button>
+                          <button type="button" class="rar-chip on" data-rar="8" title="Très rare">8</button>
+                          <button type="button" class="rar-chip on" data-rar="9" title="Ultra rare">9</button>
+                          <button type="button" class="rar-chip on" data-rar="10" title="Exceptionnel (vagrant accidentel)">10</button>
+                          <span class="rar-cats"><span class="rar-sep" aria-hidden="true"></span><button type="button" class="rar-chip" data-cat="N" title="Introduit établi (N)">N</button></span>
+                        </div>
+                        <!-- Le même réglage que celui du Récent (_ctRarZone) : la zone choisie vaut pour les deux onglets. -->
+                        <div class="ct-rar-sous">
+                          <span class="ct-rar-liens"><button type="button" class="ct-lien" data-rar-all data-rar-pour="ctLigRarChips" title="Cocher toutes les raretés">Tout</button><span aria-hidden="true">·</span><button type="button" class="ct-lien" data-rar-none data-rar-pour="ctLigRarChips" title="Décocher toutes les raretés">Aucun</button></span>
+                          <div class="ct-portee" id="ctPorteeLigue">
+                            <div class="seg" role="radiogroup" aria-label="Rareté mesurée sur">
+                              <button type="button" role="radio" data-ct-portee="pays">Pays</button>
+                              <button type="button" role="radio" data-ct-portee="zone">Zone</button>
+                            </div>
+                          </div>
+                        </div>
+                        <span class="ct-portee-note" data-portee-note></span>
                       </div>
-                      <span class="ct-portee-note"></span>
                     </div>
-                  </div>
                   </div>
                   </details>
                   <div id="mapStats" class="map-stats"></div>
@@ -958,35 +1006,6 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
               </select>
               </span>
               </span>
-              <label class="explorer-lbl" id="mapEbSortLbl" style="display:none;">Trier par
-              <select class="filt-sel" id="mapEbSort" style="display:none;">
-                <option value="todo" selected>Espèces à cocher pour moi</option>
-                <option value="recent">Activité 30 jours</option>
-              </select>
-              </label>
-              <label class="explorer-lbl" id="mapEbMonthLbl" style="display:none;" title="Filtre les espèces à celles actives ce mois-là en France (bar chart eBird nationaux). Ne re-charge PAS l'API - filtre client-side.">Mois
-              <select class="filt-sel" id="mapEbMonth" style="display:none;">
-                <option value="0" selected>Tous</option>
-                <option value="1">janvier</option><option value="2">février</option>
-                <option value="3">mars</option><option value="4">avril</option>
-                <option value="5">mai</option><option value="6">juin</option>
-                <option value="7">juillet</option><option value="8">août</option>
-                <option value="9">septembre</option><option value="10">octobre</option>
-                <option value="11">novembre</option><option value="12">décembre</option>
-              </select>
-              </label>
-              <span class="explorer-lbl" id="mapEbMinTodoLbl" style="display:none;" title="N'affiche que les hotspots où il te manque au moins N espèces">Cacher hotspots avec moins de
-              <div id="mapEbMinTodoBox" role="group" aria-label="Nombre minimum d'espèces à cocher" style="display:none; align-items:center; gap:0;">
-                <button type="button" class="btn tiny" id="mapEbMinTodoDec" style="padding:2px 8px; font-size:15px; border-radius:6px 0 0 6px;" title="−1">−</button>
-                <input type="number" id="mapEbMinTodo" min="0" max="500" value="0" step="1" style="width:52px; font-size:12px; padding:3px 4px; border:1px solid var(--line-2); border-left:none; border-right:none; border-radius:0; text-align:center; -moz-appearance:textfield;" title="Espèces à cocher minimum">
-                <button type="button" class="btn tiny" id="mapEbMinTodoInc" style="padding:2px 8px; font-size:15px; border-radius:0 6px 6px 0;" title="+1">+</button>
-              </div>
-              <span id="mapEbMinTodoSuffix" style="display:none;">espèces à cocher</span>
-              </span>
-              <label id="mapEbShowObservedLbl" class="explorer-lbl" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;" title="Afficher aussi les espèces déjà dans ta life list (utile pour vérifier si tes obs sont cohérentes avec la localisation)">
-                <input type="checkbox" id="mapEbShowObserved" style="vertical-align:middle;"> Inclure déjà observés
-              </label>
-              <span class="map-count" id="mapEbCount" role="status"></span>
             </div>
           </div>
           <div class="map-timeline" id="mapTimeline" style="display:none;">
@@ -1631,5 +1650,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=507"></script>
+<script type="module" src="app.js?v=508"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>
