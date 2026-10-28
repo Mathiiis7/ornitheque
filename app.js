@@ -1493,7 +1493,8 @@ function _openCountryPicker(currentCode, opts = {}){
 // options[0] est generalement l'option "Tous / Toutes" (value = '').
 function _openFilterPicker(currentValue, opts){
   return new Promise(resolve => {
-    const { title = 'Choisir', options = [], searchable = true } = opts || {};
+    // unite : ce que compte count (« esp. » par défaut, « obs. » pour les membres de la Carte).
+    const { title = 'Choisir', options = [], searchable = true, unite = 'esp.' } = opts || {};
     const backdrop = document.createElement('div');
     backdrop.className = 'cp-modal-backdrop';
     backdrop.innerHTML = `
@@ -1520,7 +1521,7 @@ function _openFilterPicker(currentValue, opts){
         // chip : la pastille numerotee du niveau (fil), a la place du simple point de couleur.
         const dot = o.chip != null ? `<span class="cp-item-chip" style="background:${o.color};">${esc(String(o.chip))}</span>`
           : o.color ? `<span class="cp-item-dot" style="background:${o.color};"></span>` : '';
-        const cnt = (o.count != null) ? `<span class="cp-item-meta">${o.count} esp.</span>` : '';
+        const cnt = (o.count != null) ? `<span class="cp-item-meta">${o.count} ${esc(unite)}</span>` : '';
         // cp-item-simple : ce selecteur generique ne pose que deux ou trois elements, quand
         // .cp-item dessine depuis la grille a six colonnes du selecteur de pays. Sans lui, le
         // libelle tombait dans la colonne du drapeau, large de 28 px, et « Par famille » se
@@ -10791,11 +10792,20 @@ document.addEventListener('click', async e => {
   if(choix){
     const sel = document.getElementById(choix.dataset.ctChoix); if(!sel) return;
     const options = [...sel.options].filter(o => !o.disabled).map(o => ({ value:o.value, label:o.textContent }));
+    // Le membre, comme le pays de la ligue (Mathis, 2026-10-28) : chaque ligne compte les observations
+    // que les autres filtres (pays, rareté) lui laissent.
+    let unite;
+    if(sel.id === 'mapPlayerSel'){
+      const f = mapFilter, pts = _mapCollectPoints().filter(p => (f.country === 'any' || p.cc === f.country) && _passeRarLigue(p));
+      const compte = new Map(); for(const p of pts) compte.set(p.uid, (compte.get(p.uid) || 0) + 1);
+      for(const o of options) o.count = o.value === 'all' ? pts.length : (compte.get(o.value) || 0);
+      unite = 'obs.';
+    }
     const v = await _openFilterPicker(sel.value, {
       // Le survol déplace title dans data-tip (bulle du site) : lu aux deux endroits, sinon la
       // fenêtre Membre s'appelait « Région ».
       title: choix.title || choix.dataset.tip || 'Région',
-      options, searchable: options.length > 8 });
+      options, searchable: options.length > 8, unite });
     if(v != null) _ctRegleMenu(sel.id, v);
     choix.focus();
     return;
