@@ -124,7 +124,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=504">
+<link rel="modulepreload" href="app.js?v=505">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -760,9 +760,10 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
                        commandes visibles ne font que les régler (_ctSyncFiltres). Région et département
                        viennent du bloc des Hotspots : app.js les y déplace.
                        Repliés sous « Filtres » depuis le 2026-10-26 (Mathis : « très chargé, on s'y perd ») :
-                       la liste monte en haut, le résumé d'une ligne dit ce qui est réglé (_ctResumeFiltres). -->
+                       la liste monte en haut. Plus de résumé à côté de « Filtres » (Mathis, 2026-10-28 : il
+                       ajoutait pour rien). -->
                   <details class="ct-pli" id="ctPliRecent">
-                  <summary class="ct-pli-tete"><span class="ct-pli-btn">Filtres</span><span class="ct-pli-resume" id="ctPliResume"></span></summary>
+                  <summary class="ct-pli-tete"><span class="ct-pli-btn">Filtres</span></summary>
                   <div class="ct-pli-corps">
                   <div class="seg ct-source" id="mapEbSourceLbl" role="radiogroup" aria-label="Source des données">
                     <button type="button" role="radio" data-ct-source="ebird">eBird, en direct</button>
@@ -834,10 +835,10 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
                   <p class="ct-mention">Données <a href="https://ebird.org" target="_blank" rel="noopener">eBird.org</a>, lues en direct pour la zone choisie.</p>
                 </div>
                 <div class="ct-volet" id="ctVoletLigue" role="tabpanel" aria-labelledby="ctOngletLigue" data-volet="ligue">
-                  <!-- Les filtres de la Ligue repliés sous « Filtres », comme le Récent (Mathis, 2026-10-26) :
-                       le résumé d'une ligne vient de _ctResumeLigue. -->
+                  <!-- Les filtres de la Ligue repliés sous « Filtres », comme le Récent (Mathis, 2026-10-26),
+                       sans résumé à côté (2026-10-28). -->
                   <details class="ct-pli" id="ctPliLigue">
-                  <summary class="ct-pli-tete"><span class="ct-pli-btn">Filtres</span><span class="ct-pli-resume" id="ctPliResumeLigue"></span></summary>
+                  <summary class="ct-pli-tete"><span class="ct-pli-btn">Filtres</span></summary>
                   <div class="ct-pli-corps">
                   <!-- Comme le Récent (Mathis, 2026-10-26) : membre et pays s'ouvrent au milieu de l'écran,
                        la rareté est une rangée de pastilles (plusieurs paliers à la fois), mesurée sur le pays
@@ -1630,5 +1631,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=504"></script>
+<script type="module" src="app.js?v=505"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>

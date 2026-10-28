@@ -902,6 +902,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .reg-picker-item.on { background:var(--surface-2); font-weight:700; }
   .reg-picker-item.absent { opacity:.5; }
   .reg-picker-item.national { grid-template-columns:1fr; height:auto; padding:8px 10px; border-bottom:1px solid var(--line-2); margin-bottom:4px; font-weight:600; }
+  /* Une région française en tête de ses départements, sur la Carte (2026-10-28) : elle se choisit aussi. */
+  .reg-picker-item.ct-zone-tete { font-weight:700; margin-top:10px; }
   /* Le palier, ecrit, plutot qu'une pastille de couleur a decoder : c'est le meme
      rectangle que partout ailleurs dans l'appli. La couleur reste, elle devient le fond. */
   .reg-picker-item.absent .tier-chip { color:var(--ink-3); }
@@ -2754,7 +2756,6 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-pli-btn::before { content:'▸'; color:var(--ink-3); font-weight:400; transition:transform .15s; }
   .ct-pli[open] .ct-pli-btn::before { transform:rotate(90deg); }
   .ct-pli-tete:hover .ct-pli-btn { background:var(--surface-2); }
-  .ct-pli-resume { font-size:14px; color:var(--ink-3); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .ct-pli-corps { padding:0 0 4px; }
   .ct-pli-corps > .ct-source { margin-top:10px; }
   /* D'où viennent les points : « (138 listes) » derrière la première phrase, le détail dans la bulle (2026-10-26). */
