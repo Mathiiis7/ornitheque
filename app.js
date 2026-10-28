@@ -9063,9 +9063,10 @@ function _ctSurvolPoint(m){
 }
 // Une ligne par espèce, les plus rares d'abord ; « ×3 » quand elle a plusieurs points dans la grappe.
 const CT_SURVOL_MAX = 10;
-// Les amis qui ont vu l'espèce dans la grappe : « Lina, Samir », « Lina et 3 autres » au-delà de deux.
-const _ctQui = qui => { const t = [...(qui || [])].sort((a, b) => a.localeCompare(b, 'fr'));
-  return esc(t.length > 2 ? `${t[0]} et ${t.length - 1} autres` : t.join(', ')); };
+// Les amis qui ont vu l'espèce dans la grappe : « Lina » seul, sinon « 3 personnes ». Les noms en toutes
+// lettres serraient la colonne au point de couper le nom de l'oiseau en trois lignes (Mathis, 2026-10-28).
+const _ctQui = qui => { const n = qui ? qui.size : 0;
+  return n === 1 ? esc([...qui][0]) : n > 1 ? `${n} personnes` : ''; };
 function _ctSurvolGrappe(ms){
   const parSp = new Map();
   for(const m of ms){

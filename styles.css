@@ -2598,7 +2598,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-gl-l .pkdx-exo { width:16px; min-width:16px; height:16px; margin:0; transform:none; font-size:9.5px; padding:0 0 0.5px; }
   .ct-gl-nom { min-width:0; }
   /* Qui l'a vue, pour la ligue (2026-10-26) : à droite du nom, en gris comme « ×N ». */
-  .ct-gl-qui { margin-left:auto; padding-left:8px; color:var(--ink-3); white-space:nowrap; }
+  /* Un nom trop long finit en « … » plutôt que de serrer le nom de l'oiseau (2026-10-28). */
+  .ct-gl-qui { margin-left:auto; padding-left:8px; color:var(--ink-3); white-space:nowrap;
+    flex:none; max-width:9em; overflow:hidden; text-overflow:ellipsis; }
   /* Une ligne : le nom (ouvre la fiche) et, à droite, « ×N ▾ » qui déplie les observations. */
   .ct-gl-e { display:flex; align-items:stretch; }
   .ct-gl-e .ct-gl-l { flex:1; min-width:0; }
