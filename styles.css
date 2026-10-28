@@ -2796,7 +2796,6 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-rang:last-child { border-bottom:0; }
   .ct-rang:hover .nom { text-decoration:underline; }
   .ct-rang .nom { font-weight:600; color:var(--ink); }
-  .ct-rang .lat { font-style:italic; color:var(--ink-2); }
   /* Le lieu et la date dans le gris pâle du Classement (.board-sp-sous) : on les voit moins
      directement que l'espèce (Mathis, 2026-10-26). */
   .ct-rang .sous { color:color-mix(in srgb, var(--ink-3) 75%, var(--surface)); }
@@ -2808,8 +2807,12 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-rang-e > .ct-rang { flex:1; min-width:0; border-bottom:0; }
   .ct-rang-n { flex:none; width:34px; border:0; border-radius:8px; background:none; color:var(--ink-2); font:18px/1 var(--sans); cursor:pointer; padding:9px 0 0; align-self:stretch; }
   .ct-rang-n:hover, .ct-rang-n:focus-visible { background:var(--surface-2); color:var(--ink); }
-  .ct-rang-n span { display:inline-block; transition:transform .15s; }
-  .ct-rang-n[aria-expanded="true"] span { transform:rotate(180deg); }
+  .ct-rang-n .fl { display:inline-block; transition:transform .15s; }
+  .ct-rang-n[aria-expanded="true"] .fl { transform:rotate(180deg); }
+  /* Le nombre de listes sur la flèche du Récent (variante B de notes-privees/maquettes/recent-listes, 2026-10-28). */
+  .ct-rang-n.avec-nb { width:auto; min-width:34px; padding:7px 4px 0; }
+  .ct-rang-nb { display:inline-flex; align-items:center; gap:3px; font-size:14px; font-weight:600; color:var(--ink); background:var(--surface-2); border-radius:8px; padding:3px 7px; }
+  .ct-rang-nb .fl { font-size:13px; color:var(--ink-2); }
   /* L'aide de la Ligue en petit lien gris, en bas de la liste (2026-10-26). */
   .import-guide.ct-aide { margin:12px 0; }
   .import-guide.ct-aide summary { font-weight:400; color:var(--ink-3); }
@@ -3850,6 +3853,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     /* Les menus du Récent et de la Ligue, sa case et « Voir les autres ». */
     .ct-filtres .filt-sel, .ct-filtres .cp-btn, .ct-volet .map-controls .cp-btn, .ct-filtres .ct-case, .ct-plus, .ct-source button, .ct-portee .seg button, .ct-volet > .ct-case, .ct-pli-btn, .ct-obs { min-height:52px; }
     .ct-rang-n { width:52px; }
+    .ct-rang-n.avec-nb { width:auto; min-width:52px; }
     .ct-gl-l, .ct-gl-n { min-height:52px; }
     /* Dans la liste d'une grappe, on touche la ligne, pas la pastille : elle garde la taille souris
        (à 52 px, six lignes ne tenaient plus dans la bulle, vu le 2026-10-24). */

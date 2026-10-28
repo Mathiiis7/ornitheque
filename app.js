@@ -10484,14 +10484,19 @@ async function _ctMontreEspece(sci){
 // Une ligne d'espèce des deux listes de la Carte (Récent, Ligue), la même partout (Mathis, 2026-10-26 :
 // les deux ne se comportaient pas pareil) : le nom ouvre la fiche, la flèche à droite déplie toutes les
 // observations sous la ligne. liste : 'rec' ou 'lig'. obsHtml : appelée seulement si la ligne est dépliée.
+// Plus de nom scientifique sous le nom (Mathis, 2026-10-28). o.compte = { nb, mot } : le nombre de listes
+// (ou de lieux, d'observations) porté par la flèche qui les déplie, même à 1 : rangé au bout du lieu en
+// gris pâle, on ne voyait pas qu'une espèce avait été vue plusieurs fois.
 function _ctRangHtml(o){
   const voir = o.n > 1 ? `Voir les ${o.n} observations` : 'Voir l\'observation';
+  const c = o.compte, quoi = c ? `${c.nb} ${c.mot}${c.nb > 1 ? (c.mot === 'lieu' ? 'x' : 's') : ''}` : '';
+  const fleche = c ? `<span class="ct-rang-nb" aria-hidden="true">${c.nb}<span class="fl">▾</span></span>` : '<span class="fl" aria-hidden="true">▾</span>';
   return `<div class="ct-rang-e"><button type="button" class="ct-rang ct-rang-rec" data-sci="${esc(o.sci)}" data-liste="${o.liste}"${o.cc ? ` data-cc="${esc(o.cc)}"` : ''}>` +
     `${tierChip(o.w || '?', o.coul, { cls:'tier-rond' })}` +
     `<span class="col"><span class="nom">${esc(o.nom)}</span>${o.statut ? ' ' + jetonExo(o.statut) : ''}${o.nv ? '<span class="ct-tag nv">non validée</span>' : ''}<br>` +
-    `<span class="lat">${esc(o.sci.charAt(0).toUpperCase() + o.sci.slice(1))}</span><br><span class="sous">${esc(o.sous)}</span></span>` +
+    `<span class="sous">${esc(o.sous)}</span></span>` +
     `<span class="droite">${esc(o.droite)}</span></button>` +
-    `<button type="button" class="ct-rang-n" data-sci="${esc(o.sci)}" data-liste="${o.liste}" aria-expanded="${!!o.ouverte}" aria-label="${voir} : ${esc(o.nom)}" data-tip="${voir}"><span aria-hidden="true">▾</span></button></div>` +
+    `<button type="button" class="ct-rang-n${c ? ' avec-nb' : ''}" data-sci="${esc(o.sci)}" data-liste="${o.liste}" aria-expanded="${!!o.ouverte}" aria-label="${quoi ? quoi + ' · ' : ''}${voir} : ${esc(o.nom)}" data-tip="${quoi ? quoi + ' · ' : ''}${voir}">${fleche}</button></div>` +
     (o.ouverte ? o.obsHtml() : '');
 }
 // Les observations d'une ligne dépliée : le lieu (ou qui l'a vue), puis le détail dans le gris pâle ; un
@@ -10657,9 +10662,9 @@ function _ctListeRecent(){
   // Le palier : le jeton rond de tout le site (tierChip), plus un rond à part de 24 px (Mathis, 2026-10-23).
   const rang = e => {
     const r = e.r, lieux = gbif ? e.n : parListes ? e.listes.size : _ctRecLieux.get(r.sci);
-    const compte = !lieux ? '' : gbif ? ` · ${lieux} obs` : parListes ? ` · ${lieux} liste${s(lieux)}` : ` · ${lieux} lieu${lieux > 1 ? 'x' : ''}`;
+    const compte = { nb:lieux || e.obs, mot:gbif || !lieux ? 'observation' : parListes ? 'liste' : 'lieu' };
     return _ctRangHtml({ liste:'rec', sci:r.sci, w:e.w, coul:_ctCouleur(r.sci, cc), nom:r.nom, statut:r.statut, nv:r.nv,
-      sous:(r.lieu || 'lieu inconnu') + compte, droite:gbif ? _ctDateCourte(r.date) : _ctIlYa(r.date),
+      sous:r.lieu || 'lieu inconnu', compte, droite:gbif ? _ctDateCourte(r.date) : _ctIlYa(r.date),
       n:e.obs, ouverte:r.sci === _ctRecOuverte, obsHtml:() => _ctObsEspece(r.sci, gbif) });
   };
   const vus = _ctRecTout ? rangs : rangs.slice(0, CT_RANGS_MAX);
