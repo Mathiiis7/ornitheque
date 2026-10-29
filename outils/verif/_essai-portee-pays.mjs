@@ -17,6 +17,14 @@ console.log('Grand Est, ancien réglage « zone » dans le navigateur :', await 
 await p.evaluate(() => document.querySelector('#ctPortee [data-ct-portee="zone"]').click()); await p.waitForTimeout(800);
 console.log('« Zone » choisi :', await portee());
 await regle('mapEbRegion', 'FR-BFC');
-console.log('autre région :', await portee());
+console.log('autre région (« Zone » doit rester) :', await portee());
+// Revenir sur le site : la mesure repart du pays (le réglage n'est plus retenu dans le navigateur).
+await p.reload({ waitUntil:'load' }); await p.waitForTimeout(1500);
+await p.keyboard.press('Escape'); await p.keyboard.press('Escape');
+await p.evaluate(() => document.querySelector('.tab[data-view="map"]').click()); await p.waitForTimeout(2500);
+await p.keyboard.press('Escape');
+await p.evaluate(() => document.querySelector('#ctOnglets [data-onglet="recent"]').click()); await p.waitForTimeout(500);
+await regle('mapEbRegion', 'FR-GES');
+console.log('après rechargement (pays attendu) :', await portee());
 console.log('erreurs :', erreurs.length ? erreurs : 'aucune');
 await nav.close();

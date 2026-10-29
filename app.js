@@ -8753,13 +8753,12 @@ function _passeRarCarte(sci, cc, w){
 // La rareté du Récent se mesure sur le pays, ou sur la zone choisie (Mathis, 2026-10-26) : la Sittelle
 // corse, palier 7 en France, est au palier 1 en Corse-du-Sud. Même calcul que la carte par zone de la
 // fiche espèce (_valeurAnnuelleZone, pondéré par l'effort de la zone), donc les deux disent le même chiffre.
-// « Zone » ne vaut que pour la zone où on l'a choisi : à l'arrivée et dès qu'on change de zone, la mesure
-// revient au pays (Mathis, 2026-10-29 : retenu d'une zone à l'autre, c'était trompeur). _ctRarZone garde
-// la zone choisie, '' pour le pays ; l'ancien réglage retenu dans le navigateur est oublié.
-let _ctRarZone = '';
+// La mesure part toujours du pays à l'arrivée sur le site : retenue d'une visite à l'autre, elle était
+// trompeuse (Mathis, 2026-10-29). Choisie, « Zone » suit ensuite d'une zone à l'autre pendant la visite.
+// L'ancien réglage retenu dans le navigateur est oublié.
+let _ctRarZone = false;
 try{ localStorage.removeItem('mb-ct-rar-zone'); }catch(_){}
-const _ctCleZone = () => (ebFilter.country || 'FR') + '|' + (ebFilter.dept || ebFilter.region || '');
-const _ctRarZoneOn = () => !!_ctRarZone && _ctRarZone === _ctCleZone();
+const _ctRarZoneOn = () => _ctRarZone;
 // La zone dont on lit la fréquence : le département, sinon la région. '' sans zone, pour une zone
 // dessinée, ou quand le fichier des fréquences n'a pas cette zone : 8 pays (GB, CH, HU, SI, LV, MK,
 // ME, MD) rangent leurs fréquences en régions regroupées, pas dans les zones eBird de la Carte
@@ -10859,7 +10858,7 @@ function _ctSyncPortee(){
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-ct-portee]'); if(!b || b.getAttribute('aria-disabled') === 'true') return;
   const zone = b.dataset.ctPortee === 'zone'; if(zone === _ctRarZoneActive()) return;
-  _ctRarZone = zone ? _ctCleZone() : '';
+  _ctRarZone = zone;
   _ctSyncPortee();
   // La liste d'une grappe ouverte prend ses nouveaux paliers tout de suite, avant que les points
   // ne soient reposés (_ctRafraichitGrappe la recale ensuite sur la nouvelle grappe).
