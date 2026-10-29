@@ -7287,10 +7287,10 @@ function _updateLegend(){
   }
   if(carteCouches.has('hot')){
     // Le carré dit son nombre : plus besoin de l'échelle des tailles des ronds d'avant.
-    const quoi = hotspotSort==='total' ? 'espèces vues ici' : 'espèces non observées';
+    const quoi = hotspotSort==='total' || ebFilter.showObserved ? 'espèces vues ici' : 'espèces non observées';
     parts.push(`<div class="ml-title">Hotspots</div><div class="ct-leg-formes">` +
       `<span class="ml-row"><span class="ct-hs ct-hs-sym" aria-hidden="true">12</span><span class="ml-txt">Le nombre : ${quoi}</span></span>` +
-      `<span class="ml-row"><span class="ct-leg-crans" aria-hidden="true">${[0, 1, 2, 3, 4].map(c => `<span class="ct-hs ct-hs-sym ct-hs-c${c}"></span>`).join('')}</span><span class="ml-txt">Plus le vert est plein, plus il y a d'espèces non observées</span></span>` +
+      `<span class="ml-row"><span class="ct-leg-crans" aria-hidden="true">${[0, 1, 2, 3, 4].map(c => `<span class="ct-hs ct-hs-sym ct-hs-c${c}"></span>`).join('')}</span><span class="ml-txt">Plus le vert est plein, plus il y a ${quoi === 'espèces vues ici' ? "d'espèces" : "d'espèces non observées"}</span></span>` +
       (myUid ? `<span class="ml-row"><span class="ct-hs ct-hs-sym ct-hs-fav" aria-hidden="true">12</span><span class="ml-txt">Un de tes favoris</span></span>` : '') + '</div>');
   }
   if(carteCouches.has('res') && _ctFranceOuverte()){
@@ -10901,11 +10901,13 @@ function _ctListeHot(){
     box.innerHTML = '';
     return;
   }
-  const total = hotspotSort === 'total', s = n => n > 1 ? 's' : '';
-  hs.sort((a, b) => b._hs.nb - a._hs.nb || b._hs.allSp - a._hs.allSp || a._hs.nom.localeCompare(b._hs.nom, 'fr'));
+  // « Non observées » éteint : le nombre compte toutes les espèces, le classement reste celui du tri choisi.
+  const total = hotspotSort === 'total' || !!ebFilter.showObserved, s = n => n > 1 ? 's' : '';
+  const cle = h => hotspotSort === 'todo' && h.aVoir != null ? h.aVoir : h.nb;
+  hs.sort((a, b) => cle(b._hs) - cle(a._hs) || b._hs.nb - a._hs.nb || b._hs.allSp - a._hs.allSp || a._hs.nom.localeCompare(b._hs.nom, 'fr'));
   box.innerHTML = hs.map(m => {
     const h = m._hs, fav = myFavHotspots.has(m._hotspotId);
-    const sous = [h.dept || h.region, total ? '' : `${h.allSp} espèce${s(h.allSp)} ${hotspotSort === 'recent' ? 'ces 30 jours' : 'depuis toujours'}`,
+    const sous = [h.dept || h.region, hotspotSort === 'total' ? '' : `${h.allSp} espèce${s(h.allSp)} ${hotspotSort === 'recent' ? 'ces 30 jours' : 'depuis toujours'}`,
       h.dernier ? `dernière liste ${_ctIlYa(h.dernier)}` : ''].filter(Boolean).join(' · ');
     return `<button type="button" class="ct-rang ct-rang-hs" data-hs="${esc(m._hotspotId)}">` +
       `<span class="col"><span class="nom">${fav ? '<span class="ct-hs-etoile" aria-label="favori">★</span> ' : ''}${esc(h.nom)}</span><br><span class="sous">${esc(sous)}</span></span>` +
@@ -11754,10 +11756,13 @@ async function _enrichHotspots(hotspots, region, kind, encore = () => true){
       }
       // Les échappés ne sont jamais à cocher sur la Carte (Mathis, 2026-10-23) : le Flamant du Chili passait
       // en gris marqué 9 dans les bulles des hotspots de Camargue (2026-10-29).
-      const missing = [...sciSet].filter(s => !mine.has(s) && !estEchappeDansPays(s, h.countryCode || (region || 'FR').slice(0, 2), h.subnational2Code));
+      const sauvages = [...sciSet].filter(s => !estEchappeDansPays(s, h.countryCode || (region || 'FR').slice(0, 2), h.subnational2Code));
+      const missing = sauvages.filter(s => !mine.has(s));
       // Compté à part : les échappés retirés de missing ne sont pas pour autant vus par toi.
       const seen = [...sciSet].filter(s => mine.has(s)).length;
-      return { ...h, allSp:sciSet.size, mySp:seen, toDo:missing.length, missingSci:missing };
+      // sauvagesSci : ce que la bulle montre quand « Non observées » est éteint (2026-10-29 : l'interrupteur ne
+      // changeait rien aux Hotspots, seules les espèces non observées étaient gardées).
+      return { ...h, allSp:sciSet.size, mySp:seen, toDo:missing.length, missingSci:missing, sauvagesSci:sauvages };
     }catch(_){ return { ...h, allSp:0, mySp:0, toDo:0, err:true }; }
   });
 }
@@ -11849,7 +11854,8 @@ async function _loadHotspotsLayer(region){
   region = zones.length === 1 ? zones[0] : '';
   const myRun = ++_hotspotsRunSeq;
   const stillMine = () => myRun === _hotspotsRunSeq;
-  const key = zones.join('+') + (poly ? ':' + poly.map(p => p.join(',')).join(';') : '') + ':' + hotspotSort;
+  // « Non observées » dans la clé : sans lui, basculer l'interrupteur trouvait la couche à jour et ne changeait rien.
+  const key = zones.join('+') + (poly ? ':' + poly.map(p => p.join(',')).join(';') : '') + ':' + hotspotSort + ':' + (ebFilter.showObserved ? 'tout' : 'manque');
   if(_loaded.hotspots===key && _lyrHotspots.getLayers().length) return;
   _lyrHotspots.clearLayers();
   _hsRefus = { zones:0, listes:0 };
@@ -11915,16 +11921,23 @@ async function _loadHotspotsLayer(region){
         ? rawMiss.filter(sci => activeInMonth(sci, monthFilter, region || h.subnational1Code, h.subnational2Code))
         : rawMiss;
       const toDoShown = (hotspotSort==='total') ? null : filteredMiss.length;
-      // Skip les hotspots sans données en mode enrichi OU sans espèce à cocher (compte tenu du filtre mois).
-      if(hotspotSort!=='total' && (n===0 || toDoShown===0)) continue;
+      // « Non observées » éteint : les espèces déjà vues par toi aussi, au carré, dans la bulle et au survol ;
+      // le tri, le gras du résumé et « Cacher sous » restent sur les non observées.
+      const tout = !!ebFilter.showObserved;
+      const montrees = !tout ? filteredMiss : (() => {
+        const toutes = Array.isArray(h.sauvagesSci) ? h.sauvagesSci : rawMiss;
+        return (hotspotSort!=='total' && monthFilter) ? toutes.filter(sci => activeInMonth(sci, monthFilter, region || h.subnational1Code, h.subnational2Code)) : toutes;
+      })();
+      // Skip les hotspots sans données en mode enrichi OU sans espèce à montrer (compte tenu du filtre mois).
+      if(hotspotSort!=='total' && (n===0 || montrees.length===0)) continue;
       // Filtre "min à cocher" (mode enrichi uniquement).
       if(hotspotSort!=='total' && ebFilter.minTodo>0 && toDoShown < ebFilter.minTodo) continue;
       // Favori : rendu en jaune (marker doré + bord blanc épais pour le distinguer visuellement).
       const isFavHs = myFavHotspots.has(h.locId);
       // Le carré porte le nombre d'espèces à cocher (après le filtre du mois), ou le total en tri « total ».
-      const nbHs = (hotspotSort==='total') ? n : toDoShown;
+      const nbHs = (hotspotSort==='total') ? n : montrees.length;
       const m = L.marker([h.dispLat, h.dispLon], { riseOnHover:true, icon:_ctIconeHotspot(nbHs, isFavHs) });
-      m._hs = { nom:h.locName||h.name||'?', nb:nbHs, allSp:n, dept:h.subnational2Name||'', deptCode:h.subnational2Code||'', region:h.subnational1Name||'', dernier:(h.latestObsDt||'').slice(0,10) };
+      m._hs = { nom:h.locName||h.name||'?', nb:nbHs, aVoir:toDoShown, allSp:n, dept:h.subnational2Name||'', deptCode:h.subnational2Code||'', region:h.subnational1Name||'', dernier:(h.latestObsDt||'').slice(0,10) };
       // La bulle, comme la liste d'une grappe (variante A de notes-privees/maquettes/hotspot-bulle/, choisie par
       // Mathis le 2026-10-29) : le nom et l'étoile, une ligne grise de lieu, une de résumé, puis une ligne par
       // espèce à cocher (palier, nom, dernière fois vue ici), ouverte d'emblée. Plus de pourcentage : la rareté
@@ -11938,9 +11951,9 @@ async function _loadHotspotsLayer(region){
           ? `${n} espèce${s(n)} vue${s(n)} ici depuis toujours`
           : `<b>${toDoShown} non observée${s(toDoShown)}${monthFilter ? ` en ${MONTH_NAMES[monthFilter]}` : ''}</b> · ${n} espèce${s(n)} vue${s(n)} ici${hotspotSort === 'recent' ? ' ces 30 jours' : ''} · ${h.mySp} par toi`;
         let liste = '';
-        if(hotspotSort !== 'total' && filteredMiss.length){
+        if(hotspotSort !== 'total' && montrees.length){
           // Les plus rares d'abord, comme la liste d'une grappe.
-          const items = filteredMiss
+          const items = montrees
             // frName passe par SCI_ALIAS : les noms d'eBird d'octobre 2026 (Melophus bruniceps) s'affichaient en latin.
             .map(sci => ({ sci, name:frName(sci, sci), w:_ctRarete(sci, ccHs) }))
             .sort((a, b) => b.w - a.w || a.name.localeCompare(b.name, 'fr'));
@@ -11974,7 +11987,7 @@ async function _loadHotspotsLayer(region){
         m.on('mouseover', () => {
           if(m.isPopupOpen()) return;
           const s = x => x > 1 ? 's' : '';
-          const esp = hotspotSort === 'total' ? [] : filteredMiss.map(sci => ({ nom:frName(sci, sci), w:_ctRarete(sci, ccHs), coul:_ctCouleur(sci, ccHs) }))
+          const esp = hotspotSort === 'total' ? [] : montrees.map(sci => ({ nom:frName(sci, sci), w:_ctRarete(sci, ccHs), coul:_ctCouleur(sci, ccHs) }))
             .sort((a, b) => b.w - a.w || a.nom.localeCompare(b.nom, 'fr'));
           const vus = esp.length - CT_SURVOL_MAX > 1 ? esp.slice(0, CT_SURVOL_MAX) : esp, reste = esp.length - vus.length;
           const tete = hotspotSort === 'total' ? `${n} espèce${s(n)} vue${s(n)} ici` : `${toDoShown} non observée${s(toDoShown)} · ${n} espèce${s(n)} vue${s(n)} ici`;
@@ -11988,9 +12001,9 @@ async function _loadHotspotsLayer(region){
       }
       // Recherche : nom du hotspot + région/dept + noms fr des espèces manquantes ici
       // (permet à la barre "Filtrer par nom d'espèce" de matcher un hotspot où l'espèce est présente).
-      const missNames = filteredMiss.map(sci => FR_NAMES[sci]||sci).join(' ');
+      const missNames = montrees.map(sci => FR_NAMES[sci]||sci).join(' ');
       m._q = _mapNorm((h.locName||h.name||'')+' '+(h.subnational1Name||'')+' '+(h.subnational2Name||'')+' '+missNames);
-      m._missSci = filteredMiss;   // pour l'autocomplétion "espèces uniquement" en mode hotspots
+      m._missSci = montrees;   // pour l'autocomplétion "espèces uniquement" en mode hotspots
       // Lazy-load : à l'ouverture du popup, on récupère la date de dernière obs par espèce (cache 3 niveaux)
       // ET le créneau horaire fréquent des sorties à ce hotspot.
       m._hotspotId = h.locId;
