@@ -9644,7 +9644,7 @@ async function _ctChargePays(){
 // Les régions d'un pays étranger, lues à son premier clic.
 function _ctChargeZones(cc){
   if(cc === 'FR' || CT_PAYS_SANS_ZONES.has(cc)) return Promise.resolve(null);
-  if(!(cc in _ctZonesPromesses)) _ctZonesPromesses[cc] = fetch(`data/carte-zones/${cc.toLowerCase()}.json?v=20261028b`).then(r => r.ok ? r.json() : null)
+  if(!(cc in _ctZonesPromesses)) _ctZonesPromesses[cc] = fetch(`data/carte-zones/${cc.toLowerCase()}.json?v=20261029`).then(r => r.ok ? r.json() : null)
     .then(geo => { if(geo) for(const f of geo.features) if(f.properties.zones) _ctGroupes[f.properties.ebird] = f.properties.zones; return geo; })
     .catch(() => null);
   return _ctZonesPromesses[cc];

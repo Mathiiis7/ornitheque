@@ -917,6 +917,54 @@ const COUNTRIES = filter ? filter.split(',').map(s => s.trim().toUpperCase()) : 
 // Une région en GeoJSON : chaque anneau devient un polygone. Les trous de Natural Earth (Berlin dans le
 // Brandebourg) deviennent donc des polygones pleins, sans effet sur le dessin (aucun remplissage) ; les
 // petites zones sont posées en dernier, donc au-dessus, pour garder leur clic.
+// Simplifier anneau par anneau donnait deux tracés différents à la frontière de deux zones voisines :
+// leurs traits se croisaient sur la Carte et le sol de l'une passait dans l'autre (Portugal, vu par
+// Mathis le 2026-10-29 ; 23 points sur 10 000 dans deux zones, mesuré par outils/verif/_chevauchements.mjs).
+// Chaque anneau est donc coupé en morceaux là où change l'ensemble des zones qui passent par ses sommets
+// (une frontière commune, une côte), chaque morceau est simplifié UNE fois, dans un sens fixé, et repris
+// tel quel par chacune des zones qui le partagent. Natural Earth donne les mêmes sommets des deux côtés
+// d'une frontière, c'est ce qui permet de les reconnaître.
+function simplifierEnPartage(parBase, tol){
+  const cle = ([x, y]) => x.toFixed(7) + ',' + y.toFixed(7);
+  const qui = new Map();   // sommet -> zones qui y passent
+  for(const [code, rings] of Object.entries(parBase)) for(const ring of rings) for(const p of ring){
+    const k = cle(p); let s = qui.get(k); if(!s) qui.set(k, s = new Set()); s.add(code);
+  }
+  const sig = p => [...qui.get(cle(p))].sort().join('|');
+  const faits = new Map();
+  const morceau = arc => {
+    // Le sens fixé : celui dont le premier sommet a la plus petite clé (à égalité, le deuxième).
+    const a = cle(arc[0]), b = cle(arc[arc.length - 1]);
+    const inverse = a > b || (a === b && arc.length > 2 && cle(arc[1]) > cle(arc[arc.length - 2]));
+    const can = inverse ? arc.slice().reverse() : arc;
+    const k = cle(can[0]) + '>' + cle(can[1]) + '>' + cle(can[can.length - 1]) + '#' + can.length;
+    let s = faits.get(k);
+    if(!s) faits.set(k, s = douglasPeucker(can, tol));
+    return inverse ? s.slice().reverse() : s;
+  };
+  const out = {};
+  for(const [code, rings] of Object.entries(parBase)){
+    out[code] = rings.map(ring0 => {
+      const ring = cle(ring0[0]) === cle(ring0[ring0.length - 1]) ? ring0.slice(0, -1) : ring0;
+      const n = ring.length; if(n < 3) return ring0;
+      const sg = ring.map(sig);
+      const coupes = [];
+      for(let i = 0; i < n; i++) if(sg[i] !== sg[(i + n - 1) % n] || sg[i] !== sg[(i + 1) % n]) coupes.push(i);
+      // Sans voisine (une île), l'anneau entier, comme avant.
+      if(!coupes.length) return douglasPeucker([...ring, ring[0]], tol);
+      const res = [];
+      for(let c = 0; c < coupes.length; c++){
+        const i = coupes[c], j = coupes[(c + 1) % coupes.length];
+        const arc = [];
+        for(let t = i; ; t = (t + 1) % n){ arc.push(ring[t]); if(t === j && arc.length > 1) break; }
+        const s = morceau(arc);
+        res.push(...(res.length ? s.slice(1) : s));
+      }
+      return res;   // fermé : le dernier morceau revient sur le premier sommet
+    });
+  }
+  return out;
+}
 function zonesCarte(geo, noms){
   const parBase = {};
   for(const [code, rings] of Object.entries(geo)) (parBase[code.split('#')[0]] = parBase[code.split('#')[0]] || []).push(...rings);
@@ -927,11 +975,11 @@ function zonesCarte(geo, noms){
   const tol = Math.min(0.04, Math.max(0.004, span * 0.0007));
   const aire = r => { let a = 0; for(let i = 0, j = r.length - 1; i < r.length; j = i++) a += (r[j][0] + r[i][0]) * (r[j][1] - r[i][1]); return Math.abs(a / 2); };
   const features = [];
-  for(const [code, rings] of Object.entries(parBase)){
+  const simples = simplifierEnPartage(parBase, tol);
+  for(const code of Object.keys(parBase)){
     const polys = [];
     let surface = 0;
-    for(const ring of rings){
-      const s = douglasPeucker(ring, tol);
+    for(const s of simples[code]){
       if(s.length < 4) continue;
       surface += aire(s);
       polys.push([s.map(([x, y]) => [+x.toFixed(3), +y.toFixed(3)])]);
