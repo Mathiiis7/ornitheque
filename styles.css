@@ -2835,7 +2835,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      environ 15 px de marge à la souris. Au doigt, les pastilles de 44 px passent à la ligne de toute façon. */
   @media (pointer: fine){
     .ct-bloc .rar-chips { column-gap:2px; }
-    .ct-bloc .rar-sep { margin:0 4px 0 1px; }
+    /* Pile au milieu (Mathis) : 2 px d'écart + 4 de marge à gauche, les 6 px d'écart de .rar-cats à droite. */
+    .ct-bloc .rar-sep { margin:0 0 0 4px; }
     .ct-bloc .rar-cats { margin-left:0; }
   }
   /* Tout · Aucun à gauche, la mesure (« France / Grand Est ») à droite, 12 px sous les pastilles (Mathis). */
