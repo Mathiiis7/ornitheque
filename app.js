@@ -7354,13 +7354,18 @@ function _toggleSpeciesSearchUI(searchActive){
     }
   }
 }
+// Les choix de zone redessinent toute la carte même pendant une recherche (voile, panneau, liste) :
+// renderMap ne recharge pas le Récent tant qu'une espèce est cherchée (_renderModeMissing), et
+// _ctAppliqueCouches refait le reste. On les sautait, et le voile restait sur l'ancienne zone.
+// Dans la Ligue et les Hotspots, la barre ne fait que filtrer leurs points : rien à demander à eBird.
 function _reloadSpeciesForZone(){
+  if(mapMode !== 'missing') return;
   const q = (mapSearch||'').trim();
   const hasDetail = _lyrDetail && _lyrDetail.getLayers && _lyrDetail.getLayers().length;
   // Refetch si une espece est chargee (_lyrDetail non vide) OU si l'utilisateur a un
   // terme dans la barre (ex: recherche 14j qui a retourne 0 obs, on switch 30j → refetch).
   if(!hasDetail && !q) return;
-  if(!q){ if(_lyrDetail){ _lyrDetail.remove(); _lyrDetail.clearLayers(); } return; }
+  if(!q){ if(_lyrDetail){ _lyrDetail.clearLayers(); _lyrDetail.remove(); } return; }
   // Résout le nom saisi vers un sciName. On NE filtre PAS par mine ici : l'utilisateur a
   // explicitement cherche cette espece, on refetch quoi qu'il arrive (meme si deja cochee).
   let sci = null;
@@ -7377,13 +7382,16 @@ function _reloadSpeciesForZone(){
   if(sci && ebFilter.source === 'gbif'){ _showSpeciesDetailGbif(sci); return; }
   const code = sci ? _sciToCode(sci) : null;
   if(sci && code){ _showSpeciesDetail(sci, code); }
-  else { if(_lyrDetail){ _lyrDetail.remove(); _lyrDetail.clearLayers(); } }
+  else { if(_lyrDetail){ _lyrDetail.clearLayers(); _lyrDetail.remove(); } }
 }
 // Restaure la vue generale "missing" apres la vidange de la barre de recherche :
 // nettoie _lyrDetail et force un renderMap (pas juste re-attacher la vieille couche,
 // sinon on garde des donnees potentiellement stale + le compteur ne se met pas a jour).
 function _restoreMissingView(){
-  if(_lyrDetail){ _lyrDetail.remove(); _lyrDetail.clearLayers(); }
+  // Vider AVANT de retirer : une couche en grappes retirée de la carte garde ses points dans
+  // clearLayers (bibliothèque markercluster), et le Récent, croyant l'espèce encore là, ne se
+  // rechargeait plus (2026-10-29). Même ordre partout où _lyrDetail se vide.
+  if(_lyrDetail){ _lyrDetail.clearLayers(); _lyrDetail.remove(); }
   _toggleSpeciesSearchUI(false);
   _loaded.missing = '';   // invalide le cache pour forcer un fetch complet
   renderMap();
@@ -7392,6 +7400,8 @@ let _mapSearchGbifTmr = null;
 $('#mapSearch')?.addEventListener('input', e=>{
   const prev = mapSearch;
   mapSearch = e.target.value; _mapApplyFilter(); _updateMapSuggest();
+  // Ligue et Hotspots : leur liste suit la frappe, comme leurs points. Le Récent attend une espèce choisie.
+  if(mapMode !== 'missing') _ctDessinePanneau();
   // Mode À cocher + source GBIF : la barre pilote un refetch cible GBIF (sinon on filtre
   // juste les 1200+ markers pre-charges par substring ce qui est incoherent avec la rarete
   // + le spread garderait les positions decalees). Debounce 350ms.
@@ -7544,14 +7554,14 @@ $('#mapSearchSuggest')?.addEventListener('mousedown', e=>{
   // Cas suggestion espèce en mode hotspots : on injecte le nom fr dans la barre,
   // et le filtre existant (basé sur m._q) garde les hotspots concernés.
   if(m && m.kind==='sp-hotspot'){
-    const s = $('#mapSearch'); s.value = m.name; mapSearch = m.name; _mapApplyFilter();
+    const s = $('#mapSearch'); s.value = m.name; mapSearch = m.name; _mapApplyFilter(); _ctDessinePanneau();
     return;
   }
   // Cas suggestion "Toutes les especes" (reset) : vide la barre et restaure la vue generale.
   if(m && m.kind==='sp-missing-all'){
     const s = $('#mapSearch'); s.value = ''; mapSearch = '';
     _mapApplyFilter();
-    if(_lyrDetail){ _lyrDetail.remove(); _lyrDetail.clearLayers(); }
+    if(_lyrDetail){ _lyrDetail.clearLayers(); _lyrDetail.remove(); }
     _loaded.missing = '';   // force renderMap a refetch (pas seulement re-attacher la vieille couche)
     renderMap();
     return;
@@ -7576,30 +7586,22 @@ $('#mapSearchSuggest')?.addEventListener('mousedown', e=>{
     else { showError(new Error('Pas de code eBird trouvé pour cette espèce - impossible de charger ses obs.')); }
     return;
   }
+  // Une espèce de la ligue reste écrite dans la barre : la carte, la liste et les zones choisies ensuite
+  // la gardent, comme la recherche du Récent (Mathis, 2026-10-29). On vidait la barre en ne gardant que
+  // ses points, et le premier redessin (une autre région) remettait toute la ligue.
+  if(m._sciName && mapMode==='mine' && _mapLayer){
+    const nm = FR_NAMES[(m._sciName||'').toLowerCase()] || m._sciName;
+    const s = $('#mapSearch'); s.value = nm; mapSearch = nm;
+    // La carte s'ouvre sans couche (2026-10-23) : choisir une espèce de la ligue allume la Ligue.
+    if(!carteCouches.has('ligue')) _ctAllume('ligue');
+    _ctAppliqueCouches();
+    _fitLayer(_mapLayer);
+    return;
+  }
   const s = $('#mapSearch'); s.value=''; mapSearch=''; _mapApplyFilter();
   if(m._sciName && m._speciesCode){
     // Mode missing : on récupère toutes les obs récentes de l'espèce
     _showSpeciesDetail(m._sciName, m._speciesCode);
-  } else if(m._sciName && mapMode==='mine' && _mapLayer){
-    // Mode mine : on filtre sur cette espèce et on fitBounds sur toutes ses obs
-    // La carte s'ouvre sans couche (2026-10-23) : choisir une espèce de la ligue allume la Ligue, sinon
-    // rien ne s'affiche et la recherche a l'air cassée.
-    if(!carteCouches.has('ligue')){ _ctAllume('ligue'); _ctAppliqueCouches(); }
-    const target = (m._sciName||'').toLowerCase();
-    const latlngs = [];
-    if(_ctEnGrappes(_mapLayer) && _mapLayer._ctTous){
-      // En grappes : on ne garde que les points de l'espèce (la prochaine recherche remet les autres).
-      const siens = _mapLayer._ctTous.filter(x => (x._sciName||'').toLowerCase() === target);
-      _mapLayer.clearLayers(); _mapLayer.addLayers(siens); _mapLayer._ctFiltre = 'espece:' + target;
-      for(const x of siens){ const ll = x.getLatLng(); latlngs.push([ll.lat, ll.lng]); }
-    } else _mapLayer.eachLayer(x => {
-      const sameSp = (x._sciName||'').toLowerCase() === target;
-      const el = x._path || x._icon;
-      if(el) el.style.display = sameSp ? '' : 'none';
-      if(sameSp && x.getLatLng){ const ll=x.getLatLng(); latlngs.push([ll.lat, ll.lng]); }
-    });
-    if(latlngs.length) _map.fitBounds(L.latLngBounds(latlngs), { padding:[40,40], maxZoom:12 });
-    if(latlngs.length===1) setTimeout(()=>m.openPopup && m.openPopup(), 250);
   } else {
     const ll = m.getLatLng ? m.getLatLng() : null;
     if(ll){ _map.setView([ll.lat, ll.lng], 13); m.openPopup && m.openPopup(); }
@@ -7745,12 +7747,15 @@ function _passeRarLigue(p){
   if(f.cats.size) return (exoticCategoriesInCountry(p.sci, p.cc || 'FR') || []).some(c => f.cats.has(c));
   return !p.w || f.rarities.has(p.w);
 }
+// Ce que la barre de recherche lit d'un point de la ligue : le nom écrit dans la suggestion (FR_NAMES),
+// celui de la liste, le latin, le lieu, l'ami. La carte et la liste du volet filtrent avec la même clé.
+const _ctCleLigue = pt => _mapNorm((FR_NAMES[(pt.sci||'').toLowerCase()] || '')+' '+pt.common+' '+pt.sci+' '+(pt.loc||'')+' '+(pt.who||''));
 function _mapMarker(pt, groupSize){
   // La couleur dit le palier écrit dans la bulle (pt.w), le gris seulement quand il n'y en a pas.
   const color = pt.w ? realColor(pt.w) : sciColorForCountry(pt.sci, pt.cc);
   // Plus de bulle au clic : le survol dit l'oiseau, l'ami, la date et le lieu (Mathis, 2026-10-23).
   const m = _ctPastille([pt.dispLat, pt.dispLon], color, pt.w, _ctLettreDessinee(_ctInitiale(pt.who)));
-  m._q = _mapNorm(pt.common+' '+pt.sci+' '+(pt.loc||'')+' '+(pt.who||''));
+  m._q = _ctCleLigue(pt);
   m._sciName = pt.sci; m._common = pt.common;   // pour l'autocomplétion (nom espèce dans le dropdown)
   m._ligue = { who:pt.who, date:pt.date, loc:pt.loc || '', cc:pt.cc || '', statut:statutAuLieu(pt.sci, pt.cc || 'FR') };   // pour le survol et la fiche
   return m;
@@ -7979,7 +7984,7 @@ async function renderMap(){
   // ensuite les couches éteintes.
   const propre = { mine:_mapLayer, missing:_lyrMissing, hotspots:_lyrHotspots }[mapMode];
   if(propre) propre.remove();
-  if(_lyrDetail && modeChanged){ _lyrDetail.remove(); _lyrDetail.clearLayers(); }
+  if(_lyrDetail && modeChanged){ _lyrDetail.clearLayers(); _lyrDetail.remove(); }
   // Dispatch. Depuis la refonte (2026-10-23), le mode est l'onglet ouvert du panneau, et les
   // couches allumées des autres modes restent sur la carte : _ctAppliqueCouches les remet.
   _ctAvantRendu();
@@ -8606,6 +8611,7 @@ async function _showSpeciesDetailGbif(sciName){
       // Aucune obs pour cette source : on nettoie les vieux markers avant d'afficher le message.
       _lyrDetail.clearLayers();
       if(cnt) cnt.textContent = `Aucune obs GBIF de ${nm} dans ${ctyName} pour cette période`;
+      _ctAppliqueCouches();
       return 0;
     }
     if(!stillMine()) return 0;
@@ -8621,6 +8627,7 @@ async function _showSpeciesDetailGbif(sciName){
     const cacheTag = cached ? ' · cache' : '';
     if(cnt) cnt.textContent = `${obs.length} obs GBIF de ${nm} dans ${ctyName}${zoneLabelExtra} (${yMin===yMax?yMin:yMin+'-'+yMax})${trunc}${cacheTag}`;
     _fitLayer(_lyrDetail);
+    _ctAppliqueCouches();
     return obs.length;
   }catch(err){
     if(cnt) cnt.textContent = `Erreur : ${err.message}`;
@@ -8656,7 +8663,10 @@ async function _showSpeciesDetail(sciName, speciesCode){
     const w = rarityForCountry(sciName, country);
     const color = sciColorForCountry(sciName, country);
     // Un groupe de zones (8 pays) se lit zone par zone, ses réponses réunies.
-    const lus = await _ctParLots(_ctZonesEbird(deptCode || regionCode || cty),
+    // Ta zone dessinée se lit dans les départements qu'elle touche, comme le Récent (_ctZonesRecent) : la
+    // région restée choisie avant le dessin (la Bretagne pour un dessin en Vendée) ne rendait rien.
+    const zonesLues = ebFilter.polygon ? (_ctZonesRecent().zones || []) : [deptCode || regionCode || cty];
+    const lus = await _ctParLots(zonesLues.flatMap(_ctZonesEbird),
       z => _ebFetch(`https://api.ebird.org/v2/data/obs/${z}/recent/${speciesCode}?back=${days}&maxResults=10000&locale=fr`));
     let data = lus.flatMap(r => Array.isArray(r) ? r : []);
     if(ebFilter.polygon) data = data.filter(o => typeof o.lat === 'number' && _pointInPolygon(o.lat, o.lng, ebFilter.polygon));
@@ -8667,6 +8677,7 @@ async function _showSpeciesDetail(sciName, speciesCode){
       const cnt = _ebCompteur();
       // « ici » : la zone est écrite en tête du panneau (et « dans la France » sonnait faux).
       if(cnt) cnt.textContent = `Aucune obs récente de ${nm} ${ebFilter.polygon ? 'dans ta zone' : 'ici'} ces ${days} jours (eBird).`;
+      _ctAppliqueCouches();
       return 0;
     }
     if(_lyrMissing && _map.hasLayer(_lyrMissing)) _map.removeLayer(_lyrMissing);
@@ -8678,12 +8689,12 @@ async function _showSpeciesDetail(sciName, speciesCode){
     const newMarkers = _ctPoseRecent(data.filter(o => typeof o.lat === 'number' && typeof o.lng === 'number')
       .map(o => ({ ...o, sciName:o.sciName || sciName, speciesCode:o.speciesCode || speciesCode })), country, _lyrDetail);
     const count = newMarkers.length;
-    // Fit sur les points chargés
-    const latlngs=[]; _lyrDetail.eachLayer(l=>{ const ll=l.getLatLng?l.getLatLng():null; if(ll) latlngs.push([ll.lat,ll.lng]); });
-    if(latlngs.length){ _map.fitBounds(L.latLngBounds(latlngs), { padding:[40,40], maxZoom:11 }); }
-    _mapApplyFilter();
+    // Cadrée comme sans recherche : la zone choisie ou le pays ouvert gardent la carte (_ctCadre), sinon
+    // les points. Puis le voile, la liste et la légende, comme après tout dessin (_ctAppliqueCouches).
+    _fitLayer(_lyrDetail);
     const cnt = _ebCompteur();
     if(cnt) cnt.textContent = `${count} obs de ${nm} (${days} j)${_zoneLabel()}`;
+    _ctAppliqueCouches();
     return count;
   }catch(_){ return 0; }
 }
@@ -8717,20 +8728,20 @@ document.addEventListener('change', e=>{
   else if(e.target.id==='mapEbRegion'){
     ebFilter.region=e.target.value; ebFilter.dept='';
     _loaded.missing=''; _loaded.hotspots='';
-    _repopulateEbDeptsForRegion(ebFilter.region).then(() => { if(!_hasSpeciesSearch()) renderMap(); _reloadSpeciesForZone(); });
+    _repopulateEbDeptsForRegion(ebFilter.region).then(() => { renderMap(); _reloadSpeciesForZone(); });
   }
   else if(e.target.id==='mapEbDept'){
     ebFilter.dept=e.target.value||'';
     _loaded.hotspots=''; _loaded.missing='';
-    if(!_hasSpeciesSearch()) renderMap();
+    renderMap();
     _reloadSpeciesForZone();
   }
   else if(e.target.id==='mapEbDays'){
     ebFilter.days=+e.target.value; _loaded.missing='';
-    if(!_hasSpeciesSearch()) renderMap();
+    renderMap();
     _reloadSpeciesForZone();
   }
-  else if(e.target.id==='mapEbMonth'){ ebFilter.month=+e.target.value||0; _loaded.hotspots=''; if(!_hasSpeciesSearch()) renderMap(); _reloadSpeciesForZone(); }
+  else if(e.target.id==='mapEbMonth'){ ebFilter.month=+e.target.value||0; _loaded.hotspots=''; renderMap(); _reloadSpeciesForZone(); }
 });
 // Slider "min à cocher" + champ "contient espèce" (event input pour réponse live).
 // Ces filtres sont client-side mais nécessitent un re-render de la couche → on invalide le cache.
@@ -9191,6 +9202,9 @@ function _ctBrancheSurvol(g){
   g.on('clusterclick', e => {
     e.layer.unbindTooltip();
     const ms = e.layer.getAllChildMarkers();
+    // Les grappes de l'espèce cherchée n'ont qu'elle : elles ouvrent sa liste, observations dépliées,
+    // pas sa fiche (Mathis, 2026-10-29 : le détail des observations manquait).
+    if(g === _lyrDetail || (_hasSpeciesSearch() && _ctEspeceUnique(ms))){ _ctListeGrappe(e.layer, true); return; }
     if(_ctEspeceUnique(ms)){ const m = ms[0]; _ctOuvreFiche(m._sciName || (m._rec && m._rec.sci), m._ligue && m._ligue.cc); return; }
     _ctListeGrappe(e.layer);
   });
@@ -9228,7 +9242,8 @@ const _ctEspeceUnique = ms => ms.length > 0 && !!ms[0]._sciName && ms.every(m =>
 // La liste d'une grappe : une ligne par espèce, les plus rares d'abord, avec son palier, son statut et
 // « ×N » quand elle a plusieurs observations ; une ligne cliquée ouvre la fiche de l'espèce.
 let _ctPopGrappe = null, _ctGrappeOuverte = null;
-function _ctListeGrappe(c){
+// deplie : une liste d'une seule espèce s'ouvre sur ses observations.
+function _ctListeGrappe(c, deplie){
   if(!_map) return;
   const parSp = new Map(), s = n => n > 1 ? 's' : '';
   // Chaque observation du point, pour le détail : date, lieu, nombre d'oiseaux (Récent) ; qui, quand,
@@ -9255,6 +9270,7 @@ function _ctListeGrappe(c){
   }
   const tri = [...parSp.values()].sort((a, b) => (b.w - a.w) || (b.n - a.n) || a.nom.localeCompare(b.nom, 'fr'));
   const obs = tri.reduce((t, e) => t + e.n, 0);
+  const ouvre = !!deplie && tri.length === 1;
   // Une ligne d'observation : « il y a 3 j · Lac de Grand-Lieu · 12 oiseaux comptés ».
   // Toutes au même lieu (cinq listes à la Cité des Oiseaux) : le lieu s'écrit une fois, en tête.
   const ligneObs = (o, sansLieu) => [o.qui, o.quand, sansLieu ? '' : o.lieu, o.nb ? `${o.nb} oiseau${o.nb > 1 ? 'x' : ''} compté${s(o.nb)}` : '', o.nv ? 'non validée' : '']
@@ -9262,7 +9278,7 @@ function _ctListeGrappe(c){
   const detailHtml = e => {
     const unLieu = e.obs.length > 1 && e.obs.every(o => o.lieu === e.obs[0].lieu) ? e.obs[0].lieu : '';
     const lignes = e.obs.slice().sort((a, b) => (b.tri || '').localeCompare(a.tri || '')).map(o => `<li>${ligneObs(o, !!unLieu)}</li>`).join('');
-    return `<ul class="ct-gl-obs" hidden>${unLieu ? `<li class="ct-gl-lieu">${esc(unLieu)}</li>` : ''}${lignes}</ul>`;
+    return `<ul class="ct-gl-obs"${ouvre ? '' : ' hidden'}>${unLieu ? `<li class="ct-gl-lieu">${esc(unLieu)}</li>` : ''}${lignes}</ul>`;
   };
   // Le nom ouvre la fiche ; le « ×N ▾ » déplie les N observations (Mathis, 2026-10-25 : six Oies à tête
   // barrée, sans pouvoir voir combien chaque liste en comptait).
@@ -9272,7 +9288,7 @@ function _ctListeGrappe(c){
       // En ligue, pas de « ×N » : « 2 personnes » le dit déjà, et il serrait le nom (Mathis, 2026-10-28).
   // Une seule observation se déplie aussi, par la flèche seule : sa date et son lieu ne se voyaient
       // nulle part (Mathis, 2026-10-26).
-      `${e.obs.length ? `<button type="button" class="ct-gl-n" aria-expanded="false" title="${e.n > 1 ? `Voir les ${e.n} observations` : 'Voir l\'observation'}">${e.n > 1 && !e.qui.size ? `×${e.n} ` : ''}<span aria-hidden="true">▾</span></button>` : ''}</div>` +
+      `${e.obs.length ? `<button type="button" class="ct-gl-n" aria-expanded="${ouvre}" title="${e.n > 1 ? `Voir les ${e.n} observations` : 'Voir l\'observation'}">${e.n > 1 && !e.qui.size ? `×${e.n} ` : ''}<span aria-hidden="true">▾</span></button>` : ''}</div>` +
       (e.obs.length ? detailHtml(e) : '')).join('')}</div>`;
   if(!_ctPopGrappe) _ctPopGrappe = L.popup({ className:'ct-gl', maxWidth:300, minWidth:220, autoPanPadding:[24, 24], closeButton:true });
   _ctGrappeOuverte = c;
@@ -9717,7 +9733,7 @@ function _ctChoisirZone(code){
   _ctSurligne(); _ctCadreZone();
   // L'onglet ouvert reste ouvert (Mathis, 2026-10-26).
   _ctAllumeMode();
-  if(!_hasSpeciesSearch()) renderMap();
+  renderMap();
   _reloadSpeciesForZone();
 }
 // Une zone choisie dans les menus ouvre son pays sur la carte, si ce n'est pas déjà fait.
@@ -9741,7 +9757,7 @@ function _ctChoisirDep(code){
   // L'onglet ouvert reste ouvert : choisir un département n'ouvre plus le Récent de lui-même
   // (Mathis, 2026-10-26, à la place de la maquette du 23/10).
   _ctAllumeMode();
-  if(!_hasSpeciesSearch()) renderMap();
+  renderMap();
   _reloadSpeciesForZone();
 }
 // ouvrir : un clic sur la région, sur la carte, ouvre le panneau au téléphone. L'onglet ouvert reste
@@ -9755,7 +9771,7 @@ function _ctChoisirRegion(region, ouvrir){
   _refreshDeptSel();
   _ctSurligne(); _ctCadreZone();
   if(ouvrir){ if(_ctTel.matches && carteTiroir === 'bas') carteTiroir = 'mi'; _ctAllumeMode(); }
-  if(!_hasSpeciesSearch()) renderMap();
+  renderMap();
   _reloadSpeciesForZone();
 }
 // monde : le bouton ↺ et « Tous les pays » du fil d'Ariane ferment aussi le pays, comme à l'arrivée ;
@@ -9923,7 +9939,10 @@ function _ctTesteZone(){
 // sans zone).
 function _ctPointsLigue(){
   const f = mapFilter;
-  const pts = _mapCollectPoints().filter(p => (f.player === 'all' || p.uid === f.player) && _passeRarLigue(p) && (f.country === 'any' || p.cc === f.country));
+  // L'espèce cherchée dans la barre : la liste ne garde que ce que la carte montre (Mathis, 2026-10-29).
+  const q = _mapNorm(mapSearch).trim();
+  const pts = _mapCollectPoints().filter(p => (f.player === 'all' || p.uid === f.player) && _passeRarLigue(p) && (f.country === 'any' || p.cc === f.country)
+    && (!q || _ctCleLigue(p).includes(q)));
   const teste = _ctTesteZone();
   return { teste, pts:teste ? pts.filter(p => teste(p.lat, p.lon)) : pts };
 }
@@ -10016,8 +10035,11 @@ function _ctDessinePanneau(){
   const meta = document.getElementById('ctZoneMeta'); if(meta) meta.textContent = z.meta;
   const ligue = _ctListeLigue();
   _ctListeRecent(); _ctListeHot(); _ctSyncFiltres();
-  const especesRecent = new Set(); if(_lyrMissing) _lyrMissing.eachLayer(m => { if(m._sciName) especesRecent.add(m._sciName.toLowerCase()); });
-  const nb = { ligue:ligue.especes || '', recent:especesRecent.size || '', hot:(_lyrHotspots && _lyrHotspots.getLayers().length) || '' };
+  // Les nombres des onglets comptent ce que montrent leurs listes, espèce cherchée comprise.
+  const especesRecent = new Set(), rec = _ctCoucheRecent(); if(rec) rec.eachLayer(m => { if(m._sciName) especesRecent.add(m._sciName.toLowerCase()); });
+  const q = _mapNorm(mapSearch).trim();
+  let nbHot = 0; if(_lyrHotspots) _lyrHotspots.eachLayer(m => { if(!q || (m._q && m._q.includes(q))) nbHot++; });
+  const nb = { ligue:ligue.especes || '', recent:especesRecent.size || '', hot:nbHot || '' };
   document.querySelectorAll('#ctOnglets [data-nb]').forEach(s => { s.textContent = nb[s.dataset.nb] ? String(nb[s.dataset.nb]) : ''; });
   zone.dataset.tiroir = carteTiroir;
   const bulle = document.getElementById('ctBulle');
@@ -10527,19 +10549,21 @@ async function _ctDetailEspece(o0, tour){
 // Un rang de la liste ouvert : la carte va sur l'espèce, tous ses lieux lus (un appel au plus),
 // et ouvre la bulle de sa dernière observation.
 async function _ctMontreEspece(sci){
-  if(!_map || !_lyrMissing) return;
-  const siens = () => { const out = []; _lyrMissing.eachLayer(m => { if(m._rec && m._rec.sci === sci) out.push(m); }); return out; };
+  const cherche = _ctCherche(), src = _ctCoucheRecent();
+  if(!_map || !src) return;
+  const siens = () => { const out = []; src.eachLayer(m => { if(m._rec && m._rec.sci === sci) out.push(m); }); return out; };
   let ms = siens(); if(!ms.length) return;
-  if(ebFilter.source !== 'gbif' && !_ctRecListes && !_ctRecLieux.has(sci)){ await _ctDetailEspece(ms[0]._rec.o, _ctRecTour); ms = siens(); if(!ms.length) return; }
+  // L'espèce cherchée a déjà tous ses lieux : rien à redemander à eBird.
+  if(!cherche && ebFilter.source !== 'gbif' && !_ctRecListes && !_ctRecLieux.has(sci)){ await _ctDetailEspece(ms[0]._rec.o, _ctRecTour); ms = siens(); if(!ms.length) return; }
   // Un pays entier : ses points sur la couche à part, si l'espèce est encore celle qu'on a dépliée.
-  let groupe = _lyrMissing;
+  let groupe = src;
   if(_ctRecSansPoints()){
     if(_ctRecOuverte !== sci) return;
     if(!carteCouches.has('recent')){ _ctAllume('recent'); }
     ms = _ctPoseDeplie(sci); groupe = _lyrDeplie;
     _ctAppliqueCouches();
     _ctListeRecent();
-  } else if(!_map.hasLayer(_lyrMissing)){ _ctAllume('recent'); _ctAppliqueCouches(); }
+  } else if(!cherche && !_map.hasLayer(_lyrMissing)){ _ctAllume('recent'); _ctAppliqueCouches(); }
   const pts = ms.map(m => m.getLatLng());
   const dernier = ms.reduce((a, b) => (b._rec.date > a._rec.date ? b : a));
   if(pts.length === 1) _map.setView(pts[0], Math.max(_map.getZoom(), 11), { animate:false });
@@ -10590,7 +10614,7 @@ let _ctRecOuverte = '', _ctLigOuverte = '';
 function _ctObsEspece(sci, gbif){
   const s = n => n > 1 ? 's' : '', obs = [];
   // Un pays entier : les observations sont celles de l'espèce dépliée, sur sa couche à part.
-  const dep = _ctRecSansPoints(), groupe = dep ? _lyrDeplie : _lyrMissing;
+  const dep = _ctRecSansPoints(), groupe = dep ? _lyrDeplie : _ctCoucheRecent();
   if(groupe) groupe.eachLayer(m => {
     const r = m._rec; if(!r || r.sci !== sci) return;
     for(const t of r.toutes || [{ date:r.date, nb:r.nb, nv:r.nv }]) obs.push({ id:L.stamp(m), lieu:r.lieu, ...t });
@@ -10600,14 +10624,19 @@ function _ctObsEspece(sci, gbif){
   obs.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   const quand = d => gbif ? _ctDateCourte(d) : _ctIlYa(d);
   return _ctObsHtml(obs.map(o => ({ id:o.id, titre:o.lieu || 'lieu inconnu',
-    detail:[quand(o.date), o.nb ? `${o.nb} oiseau${o.nb > 1 ? 'x' : ''} compté${s(o.nb)}` : '', o.nv ? 'non validée' : ''].filter(Boolean).join(' · ') })), dep ? 'dep' : 'rec');
+    detail:[quand(o.date), o.nb ? `${o.nb} oiseau${o.nb > 1 ? 'x' : ''} compté${s(o.nb)}` : '', o.nv ? 'non validée' : ''].filter(Boolean).join(' · ') })), dep ? 'dep' : _ctCherche() ? 'cherche' : 'rec');
 }
 // Un pays entier dans le Récent : sa liste seulement, pas ses points sur la carte (Mathis, 2026-10-27 :
 // un point par espèce, posé là où eBird l'a vue en dernier, ne disait rien). Déplier une espèce montre
 // tous ses points, comme la recherche d'une espèce : une seule demande à eBird (_ctDetailEspece), sur
 // une couche à part, _lyrDeplie, qui ne garde que l'espèce dépliée.
 let _lyrDeplie = null;
-const _ctRecSansPoints = () => ebFilter.source !== 'gbif' && _ctPaysEntier(_ctRecZones || []);
+const _ctRecSansPoints = () => ebFilter.source !== 'gbif' && !_ctCherche() && _ctPaysEntier(_ctRecZones || []);
+// Une espèce cherchée dans la barre, dans le Récent : ses points (_lyrDetail) tiennent lieu de ceux du
+// Récent pour la liste, le dépliage et les observations (Mathis, 2026-10-29 : tout doit se passer comme
+// sans recherche ; la liste restait celle de toutes les espèces).
+const _ctCherche = () => mapMode === 'missing' && _hasSpeciesSearch() && !!_lyrDetail;
+const _ctCoucheRecent = () => _ctCherche() ? _lyrDetail : _lyrMissing;
 function _ctViderDeplie(){
   if(!_lyrDeplie) return;
   _lyrDeplie.clearLayers();
@@ -10633,6 +10662,7 @@ function _ctPoseDeplie(sci){
 function _ctPointObs(liste, id){
   if(liste === 'lig') return _mapLayer && (_mapLayer._ctTous || []).find(m => L.stamp(m) === +id) || null;
   if(liste === 'dep') return _lyrDeplie && _lyrDeplie.getLayer(+id) || null;
+  if(liste === 'cherche') return _lyrDetail && _lyrDetail.getLayer(+id) || null;
   return _lyrMissing && _lyrMissing.getLayer(+id) || null;
 }
 // Une observation de la liste dépliée : la carte va sur son point et ouvre sa bulle. Encore rangé dans
@@ -10641,8 +10671,8 @@ function _ctPointObs(liste, id){
 let _ctSurvolLibre = null;
 function _ctVaSurObs(liste, id){
   const m = _ctPointObs(liste, id); if(!m || !_map) return;
-  const groupe = liste === 'lig' ? _mapLayer : liste === 'dep' ? _lyrDeplie : _lyrMissing, couche = liste === 'lig' ? 'ligue' : 'recent';
-  if(!_map.hasLayer(groupe)){ _ctAllume(couche); _ctAppliqueCouches(); }
+  const groupe = liste === 'lig' ? _mapLayer : liste === 'dep' ? _lyrDeplie : liste === 'cherche' ? _lyrDetail : _lyrMissing, couche = liste === 'lig' ? 'ligue' : 'recent';
+  if(!_map.hasLayer(groupe) && liste !== 'cherche'){ _ctAllume(couche); _ctAppliqueCouches(); }
   const ll = m.getLatLng();
   _map.setView(ll, Math.max(_map.getZoom(), 13), { animate:false });
   setTimeout(() => {
@@ -10660,7 +10690,9 @@ function _ctVaSurObs(liste, id){
 // la bulle de chaque carré. Un clic sur la ligne va au carré et ouvre sa bulle (liens eBird et Maps).
 function _ctListeHot(){
   const box = document.getElementById('ctListeHot'); if(!box) return;
-  const hs = []; if(_lyrHotspots) _lyrHotspots.eachLayer(m => { if(m._hs) hs.push(m); });
+  // L'espèce cherchée : seulement les hotspots que la carte garde (_mapApplyFilter, même clé _q).
+  const q = _mapNorm(mapSearch).trim();
+  const hs = []; if(_lyrHotspots) _lyrHotspots.eachLayer(m => { if(m._hs && (!q || (m._q && m._q.includes(q)))) hs.push(m); });
   if(!hs.length){
     // Rien de choisi : plus d'encadré qui demande de choisir une zone (Mathis, 2026-10-29), la carte le dit.
     box.innerHTML = '';
@@ -10706,9 +10738,10 @@ function _ctListeRecent(){
     box.innerHTML = '';
     return;
   }
-  if(_ctRecCharge){ box.innerHTML = ''; return; }
+  const cherche = _ctCherche(), src = _ctCoucheRecent();
+  if(_ctRecCharge && !cherche){ box.innerHTML = ''; return; }
   const parSp = new Map();
-  if(_lyrMissing) _lyrMissing.eachLayer(m => {
+  if(src) src.eachLayer(m => {
     const r = m._rec; if(!r) return;
     const e = parSp.get(r.sci) || { r, n:0, obs:0, listes:new Set() };
     if(!parSp.has(r.sci)) parSp.set(r.sci, e);
@@ -10722,23 +10755,27 @@ function _ctListeRecent(){
   const quand = gbif ? `en ${_MONTH_FR[_ctMoisGbif() - 1]}, ${yMin === yMax ? 'en ' + yMin : `de ${yMin} à ${yMax}`}` : `ces ${ebFilter.days} jours`;
   if(!rangs.length){
     const etat = document.getElementById('ctRecEtat');
-    if(_ctRecErreur || (etat && etat.textContent)){ box.innerHTML = ''; return; }
+    // L'espèce cherchée pas encore arrivée, ou absente : sa ligne d'état le dit.
+    if(cherche || _ctRecErreur || (etat && etat.textContent)){ box.innerHTML = ''; return; }
     box.innerHTML = manque
       ? `<div class="ct-vide"><b>Rien ne te manque ici</b>Tout ce qui a été vu ${quand} est déjà dans ta liste.</div>`
       : `<div class="ct-vide"><b>Rien de vu ici</b>Aucune observation ${quand} dans cette zone.</div>`;
     return;
   }
   const n = rangs.length;
-  const tete = manque ? `<b>${n} espèce${s(n)} te manque${n > 1 ? 'nt' : ''}</b>, vue${s(n)} ${quand}` : `<b>${n} espèce${s(n)}</b> vue${s(n)} ${quand}`;
+  // L'espèce cherchée s'affiche même déjà cochée : « te manque » serait faux.
+  const tete = cherche ? `<b>L'espèce cherchée</b>, vue ${quand}`
+    : manque ? `<b>${n} espèce${s(n)} te manque${n > 1 ? 'nt' : ''}</b>, vue${s(n)} ${quand}` : `<b>${n} espèce${s(n)}</b> vue${s(n)} ${quand}`;
   // Lu dans les listes : le vrai « nombre de listes » de la maquette. Sinon, les lieux lus en détail.
   const parListes = !gbif && !!_ctRecListes;
   // Le palier : le jeton rond de tout le site (tierChip), plus un rond à part de 24 px (Mathis, 2026-10-23).
   const rang = e => {
-    const r = e.r, lieux = gbif ? e.n : parListes ? e.listes.size : _ctRecLieux.get(r.sci);
+    // L'espèce cherchée : un point par lieu, tous lus.
+    const r = e.r, lieux = gbif || cherche ? e.n : parListes ? e.listes.size : _ctRecLieux.get(r.sci);
     // Un pays entier pas encore lu en détail : eBird n'y rend qu'une observation par espèce, le « 1 »
     // affiché ne voulait rien dire (Mathis, 2026-10-28). « ? » jusqu'à ce que l'espèce soit dépliée.
     const compte = !gbif && !lieux && _ctRecSansPoints() ? { nb:'?', mot:'' }
-      : { nb:lieux || e.obs, mot:gbif || !lieux ? 'observation' : parListes ? 'liste' : 'lieu' };
+      : { nb:lieux || e.obs, mot:gbif || !lieux ? 'observation' : parListes && !cherche ? 'liste' : 'lieu' };
     return _ctRangHtml({ liste:'rec', sci:r.sci, w:e.w, coul:_ctCouleur(r.sci, cc), nom:r.nom, statut:r.statut, nv:r.nv,
       sous:r.lieu || 'lieu inconnu', compte, droite:gbif ? _ctDateCourte(r.date) : _ctIlYa(r.date),
       n:e.obs, ouverte:r.sci === _ctRecOuverte, obsHtml:() => _ctObsEspece(r.sci, gbif) });
@@ -10756,8 +10793,8 @@ function _ctListeRecent(){
   // D'où viennent les points : entre parenthèses derrière la première phrase, « (138 listes) », le
   // détail dans la bulle du site (Mathis, 2026-10-26 : le panneau était « très chargé »).
   const note = (court, detail) => ` <span class="ct-note" data-tip="${esc(detail)}">(${court})</span>`;
-  const source = parListes
-    ? note(`${L_.lues} liste${s(L_.lues)}${L_.reste || coupes.length ? ', en partie' : ''}`,
+  const source = cherche ? ''
+    : parListes ? note(`${L_.lues} liste${s(L_.lues)}${L_.reste || coupes.length ? ', en partie' : ''}`,
       `Lu dans ${L_.lues === 1 ? 'la seule liste déposée' : `les ${L_.lues} listes déposées`} ici ${quand}` +
       (L_.reste ? `, ${L_.reste} pas encore lue${s(L_.reste)}` : '') + '.' + (coupes.length ? ' ' + coupes.join(' ; ') + '.' : ''))
     : gbif ? ''
@@ -10765,7 +10802,7 @@ function _ctListeRecent(){
     : _ctRecListesEtat === 'echec' ? note('une observation par espèce', 'Les listes n\'ont pas répondu : la dernière observation de chaque espèce seulement, et tous les lieux des plus rares.')
     : _ctPaysEntier(_ctRecZones) ? note('déplie une espèce pour voir ses points', 'Le pays entier : sa liste seulement. La flèche d\'une espèce montre tous ses points sur la carte ; une région cliquée montre tous les siens.')
     : note('une observation par espèce', 'La dernière observation de chaque espèce, et tous les lieux des plus rares.');
-  box.innerHTML = `<p class="ct-compte">${tete}${source}</p><p class="ct-petit">Les plus rares d'abord</p>${vus.map(rang).join('')}` +
+  box.innerHTML = `<p class="ct-compte">${tete}${source}</p>${cherche ? '' : '<p class="ct-petit">Les plus rares d\'abord</p>'}${vus.map(rang).join('')}` +
     (n > vus.length ? `<button type="button" class="ct-plus" id="ctRecPlus">Voir les ${n - vus.length} autres</button>` : '');
 }
 // Les commandes visibles du Récent (Mathis, 2026-10-24) recopient les <select> cachés, que le code
