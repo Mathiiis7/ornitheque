@@ -49,7 +49,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=525">
+<link rel="modulepreload" href="app.js?v=526">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -793,7 +793,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
                     </div>
                     <div class="ct-ligne" id="mapEbSortLbl"><span class="ct-k" id="ctKTri">Trier par</span>
                       <div class="seg ct-seg-plein" role="radiogroup" aria-labelledby="ctKTri">
-                        <button type="button" role="radio" data-ct-tri="todo">À cocher pour moi</button>
+                        <button type="button" role="radio" data-ct-tri="todo">Espèces manquantes</button>
                         <button type="button" role="radio" data-ct-tri="recent">Activité 30 j</button>
                       </div>
                       <select class="ct-cache" id="mapEbSort" aria-hidden="true" tabindex="-1">
@@ -1615,4 +1615,4 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=525"></script>
+<script type="module" src="app.js?v=526"></script>

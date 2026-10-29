@@ -2815,6 +2815,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-bloc .seg { background:var(--surface); }
   .ct-seg-plein { display:flex; width:100%; }
   .ct-bloc .ct-seg-plein button { flex:1 1 0; min-width:0; padding-left:6px; padding-right:6px; white-space:nowrap; }
+  /* « Espèces manquantes » (Mathis, 2026-10-29) ne tient pas dans une moitié : chaque bouton du tri prend la
+     largeur de son texte, le reste se partage. */
+  #mapEbSortLbl .ct-bloc .ct-seg-plein button, .ct-bloc #mapEbSortLbl .ct-seg-plein button { flex:1 1 auto; }
   .ct-bloc .ct-bascule { display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:14px; font-weight:600; color:var(--ink); cursor:pointer; min-height:34px; }
   /* L'interrupteur : une case à cocher redessinée, qui garde son clavier et son lecteur d'écran. */
   .ct-bascule input { appearance:none; -webkit-appearance:none; flex:none; width:38px; height:22px; margin:0; border-radius:11px; background:var(--surface-3); position:relative; cursor:pointer; transition:background .15s; box-shadow:inset 0 0 0 1px var(--line-2); }
@@ -2827,6 +2830,14 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-annee input { width:72px; height:34px; font:14px var(--sans); padding:0 8px; border:1px solid var(--line-2); border-radius:9px; background:var(--surface); color:var(--ink); }
   /* À la ligne plutôt que hors du cadre : dans un panneau étroit, le N dépassait (Mathis, 2026-10-29). */
   .ct-bloc .rar-chips { flex-wrap:wrap; row-gap:6px; }
+  /* Mais le N tenait à 5 px près sur la ligne des paliers (223 px pour 228, mesuré le 2026-10-29) : un zoom
+     ou un arrondi le faisait passer dessous, seul (Mathis). Écarts resserrés d'un pixel, filet plus près :
+     environ 15 px de marge à la souris. Au doigt, les pastilles de 44 px passent à la ligne de toute façon. */
+  @media (pointer: fine){
+    .ct-bloc .rar-chips { column-gap:2px; }
+    .ct-bloc .rar-sep { margin:0 4px 0 1px; }
+    .ct-bloc .rar-cats { margin-left:0; }
+  }
   /* Tout · Aucun à gauche, la mesure (« France / Grand Est ») à droite, 12 px sous les pastilles (Mathis). */
   .ct-rar-sous { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-top:12px; }
   .ct-rar-liens { display:inline-flex; align-items:center; gap:6px; color:var(--ink-3); }
