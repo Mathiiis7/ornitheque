@@ -164,6 +164,8 @@ const GB_REGION_EXPLICITE = { 'Greater London':'GB-ENG-LND' };
 const DEPENDANCES_GB = new Set(['JE', 'GG', 'IM']);
 // Leurs noms sur la Carte : Natural Earth les donne en anglais (« Isle of Man »).
 const NOMS_DEPENDANCES = { JE:'Jersey', GG:'Guernesey', IM:'Île de Man' };
+// Leurs traits fins, dans notes-privees/contours-monde/ (voir plus bas, au choix des formes).
+const CONTOURS_FINS_GB = { JE:'osm-JEY.geojson', GG:'geoBoundaries-GGY-ADM0.geojson', IM:'geoBoundaries-IMN-ADM0.geojson' };
 const GB_PAR_NOM = new Map([["bedfordshire","GB-ENG-BDF"],["berkshire","GB-ENG-BRC"],["bristol","GB-ENG-BST"],["buckinghamshire","GB-ENG-BKM"],["cambridgeshire","GB-ENG-CAM"],["cheshire","GB-ENG-CHS"],["cornwall","GB-ENG-CON"],["cumbria","GB-ENG-CMA"],["derbyshire","GB-ENG-DBY"],["devon","GB-ENG-DEV"],["dorset","GB-ENG-DOR"],["durham","GB-ENG-DUR"],["east riding of yorkshire","GB-ENG-ERY"],["east sussex","GB-ENG-ESX"],["essex","GB-ENG-ESS"],["gloucestershire","GB-ENG-GLS"],["halton","GB-ENG-HAL"],["hampshire","GB-ENG-HAM"],["herefordshire","GB-ENG-HEF"],["hertfordshire","GB-ENG-HRT"],["isle of wight","GB-ENG-IOW"],["kent","GB-ENG-KEN"],["lancashire","GB-ENG-LAN"],["leicestershire","GB-ENG-LEC"],["lincolnshire","GB-ENG-LIN"],["london","GB-ENG-LND"],["manchester","GB-ENG-MAN"],["merseyside","GB-ENG-KWL"],["norfolk","GB-ENG-NFK"],["north yorkshire","GB-ENG-NYK"],["northamptonshire","GB-ENG-NTH"],["northumberland","GB-ENG-NBL"],["nottinghamshire","GB-ENG-NTT"],["oxfordshire","GB-ENG-OXF"],["rutland","GB-ENG-RUT"],["shropshire","GB-ENG-SHR"],["somerset","GB-ENG-SOM"],["south yorkshire","GB-ENG-BNS"],["staffordshire","GB-ENG-STS"],["stockton-on-tees","GB-ENG-STT"],["suffolk","GB-ENG-SFK"],["surrey","GB-ENG-SRY"],["tyne and wear","GB-ENG-GAT"],["warwickshire","GB-ENG-WAR"],["west midlands","GB-ENG-SAW"],["west sussex","GB-ENG-WSX"],["west yorkshire","GB-ENG-WKF"],["wiltshire","GB-ENG-WIL"],["worcestershire","GB-ENG-WOR"],["aberdeen","GB-SCT-ABE"],["aberdeenshire","GB-SCT-ABD"],["angus","GB-SCT-ANS"],["argyll and bute","GB-SCT-AGB"],["clackmannanshire","GB-SCT-CLK"],["dumfries and galloway","GB-SCT-DGY"],["dundee","GB-SCT-DND"],["east ayrshire","GB-SCT-EAY"],["east dunbartonshire","GB-SCT-EDU"],["east lothian","GB-SCT-ELN"],["edinburgh","GB-SCT-EDH"],["eilean siar","GB-SCT-ELS"],["falkirk","GB-SCT-FAL"],["fife","GB-SCT-FIF"],["glasgow","GB-SCT-GLG"],["highland","GB-SCT-HLD"],["midlothian","GB-SCT-MLN"],["moray","GB-SCT-MRY"],["north ayrshire","GB-SCT-NAY"],["north lanarkshire","GB-SCT-NLK"],["orkney islands","GB-SCT-ORK"],["perthshire and kinross","GB-SCT-PKN"],["renfrewshire","GB-SCT-RFW"],["scottish borders","GB-SCT-SCB"],["shetland islands","GB-SCT-ZET"],["south ayrshire","GB-SCT-SAY"],["south lanarkshire","GB-SCT-SLK"],["stirling","GB-SCT-STG"],["west dunbartonshire","GB-SCT-WDU"],["west lothian","GB-SCT-WLN"],["anglesey","GB-WLS-AGY"],["blaenau gwent","GB-WLS-BGW"],["bridgend","GB-WLS-BGE"],["caerphilly","GB-WLS-CAY"],["cardiff","GB-WLS-CRF"],["carmarthenshire","GB-WLS-CMN"],["ceredigion","GB-WLS-CGN"],["conwy","GB-WLS-CWY"],["denbighshire","GB-WLS-DEN"],["flintshire","GB-WLS-FLN"],["gwynedd","GB-WLS-GWN"],["merthyr tydfil","GB-WLS-MTY"],["monmouthshire","GB-WLS-MON"],["neath port talbot","GB-WLS-NTL"],["newport","GB-WLS-NWP"],["pembrokeshire","GB-WLS-PEM"],["powys","GB-WLS-POW"],["rhondda, cynon, taff","GB-WLS-RCT"],["swansea","GB-WLS-SWA"],["torfaen","GB-WLS-TOF"],["vale of glamorgan","GB-WLS-VGL"],["wrexham","GB-WLS-WRX"],["antrim","GB-NIR-ANT"],["armagh","GB-NIR-ARM"],["belfast","GB-NIR-BFS"],["derry","GB-NIR-DRY"],["down","GB-NIR-DOW"],["fermanagh","GB-NIR-FER"],["newry and mourne","GB-NIR-NYM"],["omagh","GB-NIR-OMH"]]);
 function resolveGB(props){
   const n = (props.name || '').toLowerCase();
@@ -1016,6 +1018,18 @@ for(const cc of COUNTRIES){
   let feats = raw.features.filter(f => f.properties.adm0_a3 === a3
     || (f.properties.iso_3166_2 || '').startsWith(cc + '-')
     || (cc === 'GB' && CARTE && DEPENDANCES_GB.has(f.properties.iso_a2)));
+  // Leur trait au 1:10 M reste grossier : Saint-Hélier à 500 m en mer, Aurigny réduit à un losange, un tiers
+  // des hotspots eBird de Jersey dehors à plus de 300 m (outils/verif/_contours-iles.mjs, 2026-10-29). On
+  // garde leurs propriétés et on prend un trait plus fin, s'il est là : geoBoundaries (CC BY 4.0, Sentinel-2)
+  // pour Guernesey et l'île de Man, OpenStreetMap (ODbL, outils/build/jersey-osm.mjs) pour Jersey.
+  if(cc === 'GB' && CARTE) feats = feats.map(f => {
+    const fin = CONTOURS_FINS_GB[f.properties.iso_a2];
+    if(!fin || !DEPENDANCES_GB.has(f.properties.iso_a2)) return f;
+    const src = join(__dir, '..', '..', 'notes-privees', 'contours-monde', fin);
+    if(!existsSync(src)){ console.warn(`  ${f.properties.iso_a2} : ${fin} absent, trait de Natural Earth gardé.`); return f; }
+    const polys = JSON.parse(readFileSync(src, 'utf8')).features.flatMap(g => g.geometry.type === 'Polygon' ? [g.geometry.coordinates] : g.geometry.coordinates);
+    return { ...f, geometry:{ type:'MultiPolygon', coordinates:polys } };
+  });
   // Danemark en --carte : Natural Earth n'a que ses 5 régions, eBird en compte 13. On prend les 98
   // communes de geoBoundaries (domaine public, notes-privees/contours-monde/), rattachées par leur nom
   // aux communes d'eBird, dont le code nomme la zone parente (DK-07-01 -> DK-07). Le dissolve efface

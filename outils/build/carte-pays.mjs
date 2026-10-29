@@ -12,7 +12,7 @@
   Sortie : un FeatureCollection, propriétés { cc, nom } (code ISO à deux lettres, nom français).
   Le site décide seul quels pays se cliquent (ceux dont il connaît la rareté).
 */
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -21,6 +21,13 @@ const SORTIE = join(__dir, '..', '..', 'data', 'carte-pays.json');
 // 0,03° (~3 km) : à l'échelle d'un continent, aucune différence visible avec le tracé d'origine,
 // pour un fichier divisé par dix. Les régions d'un pays cliqué ont leur propre tracé, plus fin.
 const TOL = 0.03;
+// Sauf pour Jersey, Guernesey et l'île de Man, qui s'ouvrent sur leur zone du Royaume-Uni d'un clic : à
+// 0,03° leur forme n'avait que 4 à 8 sommets, et celle de Guernesey laissait Aurigny et Sercq en mer
+// (33 et 13 km, outils/verif/_contours-iles.mjs, 2026-10-29). Mêmes traits fins que leurs zones
+// (simplify-regions-multi.mjs), à 0,003° (300 m).
+const TOL_ILES = 0.003;
+const CONTOURS = join(__dir, '..', '..', 'notes-privees', 'contours-monde');
+const ILES_FINES = { JE:'osm-JEY.geojson', GG:'geoBoundaries-GGY-ADM0.geojson', IM:'geoBoundaries-IMN-ADM0.geojson' };
 
 function distPerp(p, a, b){
   const dx = b[0] - a[0], dy = b[1] - a[1];
@@ -47,11 +54,14 @@ for(const f of ne.features){
   // ISO_A2_EH donne le code attendu.
   const cc = [p.ISO_A2_EH, p.ISO_A2].find(c => c && c !== '-99');
   if(!cc){ sansCode.push(p.NAME); continue; }
-  const polys = f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates;
+  const fin = ILES_FINES[cc] && existsSync(join(CONTOURS, ILES_FINES[cc])) ? JSON.parse(readFileSync(join(CONTOURS, ILES_FINES[cc]), 'utf8')) : null;
+  const geo = fin ? { type:'MultiPolygon', coordinates:fin.features.flatMap(g => g.geometry.type === 'Polygon' ? [g.geometry.coordinates] : g.geometry.coordinates) } : f.geometry;
+  const polys = geo.type === 'Polygon' ? [geo.coordinates] : geo.coordinates;
+  const [tol, dec] = fin ? [TOL_ILES, 3] : [TOL, 2];
   const out = [];
   for(const poly of polys){
-    const anneaux = poly.map(r => douglasPeucker(r, TOL)).filter(r => r.length >= 4)
-      .map(r => r.map(([x, y]) => [+x.toFixed(2), +y.toFixed(2)]));
+    const anneaux = poly.map(r => douglasPeucker(r, tol)).filter(r => r.length >= 4)
+      .map(r => r.map(([x, y]) => [+x.toFixed(dec), +y.toFixed(dec)]));
     if(anneaux.length) out.push(anneaux);
   }
   if(!out.length) continue;

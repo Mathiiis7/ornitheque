@@ -9630,7 +9630,7 @@ async function _ctChargeDeps(){
 }
 // Les frontières de tous les pays, sous les régions et les départements (calque ctPays, 345).
 async function _ctChargePays(){
-  if(!_ctPaysPromesse) _ctPaysPromesse = fetch('data/carte-pays.json?v=20261024').then(r => r.ok ? r.json() : null).catch(() => null);
+  if(!_ctPaysPromesse) _ctPaysPromesse = fetch('data/carte-pays.json?v=20261029').then(r => r.ok ? r.json() : null).catch(() => null);
   const geo = await _ctPaysPromesse;
   if(!geo || !_map || _lyrPays) return;
   if(!_map.getPane('ctPays')) _map.createPane('ctPays').style.zIndex = 345;
@@ -9651,7 +9651,7 @@ async function _ctChargePays(){
 // Les régions d'un pays étranger, lues à son premier clic.
 function _ctChargeZones(cc){
   if(cc === 'FR' || CT_PAYS_SANS_ZONES.has(cc)) return Promise.resolve(null);
-  if(!(cc in _ctZonesPromesses)) _ctZonesPromesses[cc] = fetch(`data/carte-zones/${cc.toLowerCase()}.json?v=20261029b`).then(r => r.ok ? r.json() : null)
+  if(!(cc in _ctZonesPromesses)) _ctZonesPromesses[cc] = fetch(`data/carte-zones/${cc.toLowerCase()}.json?v=20261029c`).then(r => r.ok ? r.json() : null)
     .then(geo => { if(geo) for(const f of geo.features) if(f.properties.zones) _ctGroupes[f.properties.ebird] = f.properties.zones; return geo; })
     .catch(() => null);
   return _ctZonesPromesses[cc];
