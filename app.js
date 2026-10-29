@@ -3708,7 +3708,7 @@ const ICONS={"medal":"<img src=\"assets/icons/t-shirt.png\" alt=\"Expert Merlin 
 // L'ordre ci-dessous détermine l'ordre des chips.
 const TROPHY_THEMES = {
   classement:   { label:'Classement',           desc:'Position dans la ligue' },
-  groupe:       { label:'Espèces à observer',   desc:"Espèces ou collections d'espèces à cocher" },
+  groupe:       { label:'Espèces à observer',   desc:"Espèces ou collections d'espèces à observer" },
   progression:  { label:'Progression',          desc:'Jalons individuels' },
   communaute:   { label:'Communauté',           desc:'Vote, photos, social' },
   localisation: { label:'Localisation',         desc:'Trophées liés à un lieu ou plusieurs lieux' },
@@ -6034,7 +6034,7 @@ function renderTrophies(data){
       <div class="tro-cat-section">
         <div class="tro-cat-head">
           <div class="tro-cat-title">Trophées uniques</div>
-          <div class="tro-cat-sub">Une espèce ou un petit groupe à cocher une seule fois</div>
+          <div class="tro-cat-sub">Une espèce ou un petit groupe à observer une seule fois</div>
         </div>
         <div class="tro-families">${exoticCards}</div>
       </div>` : '';
@@ -7287,10 +7287,10 @@ function _updateLegend(){
   }
   if(carteCouches.has('hot')){
     // Le carré dit son nombre : plus besoin de l'échelle des tailles des ronds d'avant.
-    const quoi = hotspotSort==='total' ? 'espèces vues ici' : 'espèces à cocher pour toi';
+    const quoi = hotspotSort==='total' ? 'espèces vues ici' : 'espèces non observées';
     parts.push(`<div class="ml-title">Hotspots</div><div class="ct-leg-formes">` +
       `<span class="ml-row"><span class="ct-hs ct-hs-sym" aria-hidden="true">12</span><span class="ml-txt">Le nombre : ${quoi}</span></span>` +
-      `<span class="ml-row"><span class="ct-leg-crans" aria-hidden="true">${[0, 1, 2, 3, 4].map(c => `<span class="ct-hs ct-hs-sym ct-hs-c${c}"></span>`).join('')}</span><span class="ml-txt">Plus le vert est plein, plus il y a à cocher</span></span>` +
+      `<span class="ml-row"><span class="ct-leg-crans" aria-hidden="true">${[0, 1, 2, 3, 4].map(c => `<span class="ct-hs ct-hs-sym ct-hs-c${c}"></span>`).join('')}</span><span class="ml-txt">Plus le vert est plein, plus il y a d'espèces non observées</span></span>` +
       (myUid ? `<span class="ml-row"><span class="ct-hs ct-hs-sym ct-hs-fav" aria-hidden="true">12</span><span class="ml-txt">Un de tes favoris</span></span>` : '') + '</div>');
   }
   if(carteCouches.has('res') && _ctFranceOuverte()){
@@ -9489,7 +9489,7 @@ async function _ctOuvreReserve(f, latlng){
   }).join('');
   const reste = dedans.length - lus.length;
   boite.innerHTML = `<p class="ct-hb-it">Hotspots dans la réserve <span>· ${dedans.length}</span></p>` +
-    `<p class="ct-gl-t ct-hb-s">Le nombre : espèces vues ici qui te manquent</p><div class="ct-rb-liste">${lignes}</div>` +
+    `<p class="ct-gl-t ct-hb-s">Le nombre : espèces non observées</p><div class="ct-rb-liste">${lignes}</div>` +
     (reste > 0 ? `<p class="ct-gl-t">et ${reste} autre${s(reste)}, moins riche${s(reste)}</p>` : '');
   _ctPopReserve.update();
 }
@@ -10909,7 +10909,7 @@ function _ctListeHot(){
       h.dernier ? `dernière liste ${_ctIlYa(h.dernier)}` : ''].filter(Boolean).join(' · ');
     return `<button type="button" class="ct-rang ct-rang-hs" data-hs="${esc(m._hotspotId)}">` +
       `<span class="col"><span class="nom">${fav ? '<span class="ct-hs-etoile" aria-label="favori">★</span> ' : ''}${esc(h.nom)}</span><br><span class="sous">${esc(sous)}</span></span>` +
-      `<span class="droite"><b>${h.nb}</b><br>${total ? `espèce${s(h.nb)}` : 'à cocher'}</span></button>`;
+      `<span class="droite"><b>${h.nb}</b><br>${total ? `espèce${s(h.nb)}` : `non observée${s(h.nb)}`}</span></button>`;
   }).join('');
 }
 document.addEventListener('click', e => {
@@ -10961,7 +10961,7 @@ function _ctListeRecent(){
     // L'espèce cherchée pas encore arrivée, ou absente : sa ligne d'état le dit.
     if(cherche || _ctRecErreur || (etat && etat.textContent)){ box.innerHTML = ''; return; }
     box.innerHTML = manque
-      ? `<div class="ct-vide"><b>Rien ne te manque ici</b>Tout ce qui a été vu ${quand} est déjà dans ta liste.</div>`
+      ? `<div class="ct-vide"><b>Aucune espèce non observée ici</b>Tout ce qui a été vu ${quand} est déjà dans ta liste.</div>`
       : `<div class="ct-vide"><b>Rien de vu ici</b>Aucune observation ${quand} dans cette zone.</div>`;
     return;
   }
@@ -10970,7 +10970,7 @@ function _ctListeRecent(){
   // Une seule ligne pour l'espèce cherchée, la ligne d'état au-dessus se tait (choix de Mathis, 2026-10-29).
   const nbCherche = cherche ? rangs.reduce((t, e) => t + e.obs, 0) : 0;
   const tete = cherche ? `<b>${esc(rangs[0].r.nom)} : ${nbCherche} observation${s(nbCherche)} ${quand}</b>`
-    : manque ? `<b>${n} espèce${s(n)} te manque${n > 1 ? 'nt' : ''}</b>, vue${s(n)} ${quand}` : `<b>${n} espèce${s(n)}</b> vue${s(n)} ${quand}`;
+    : manque ? `<b>${n} espèce${s(n)} non observée${s(n)}</b>, vue${s(n)} ${quand}` : `<b>${n} espèce${s(n)}</b> vue${s(n)} ${quand}`;
   // Lu dans les listes : le vrai « nombre de listes » de la maquette. Sinon, les lieux lus en détail.
   const parListes = !gbif && !!_ctRecListes;
   // Le palier : le jeton rond de tout le site (tierChip), plus un rond à part de 24 px (Mathis, 2026-10-23).
@@ -11194,7 +11194,7 @@ document.addEventListener('click', async e => {
     };
     const res = await _openCountryPicker(ccChoisi, {
       availableCodes: codes, unite: 'esp.', tous: { label: 'Tous les pays', count: null },
-      titre: hot ? 'Espèces du meilleur hotspot' : manque ? `Espèces vues en ${j} jours qui te manquent` : `Espèces vues en ${j} jours`,
+      titre: hot ? 'Espèces du meilleur hotspot' : manque ? `Espèces non observées, vues en ${j} jours` : `Espèces vues en ${j} jours`,
       compte: cc => hot ? _ctNbMeilleurHs(cc) : _ctCompteRecentPays(cc),
       tip: hot ? cc => { const m = _ctMeilleursHs.get(cc); return m && m.nom ? `Meilleur hotspot : ${m.nom.replace(/\s*\((?:veuillez|please)[^)]*\)/i, '')}` : ''; } : null,
       surMaj: (r, o) => { redessine = r; ouverte = o; return (hot ? _ctChargeMeilleursHs : _ctChargeRecentPays)(codes, r, o); },
@@ -11936,7 +11936,7 @@ async function _loadHotspotsLayer(region){
         // Résumé : à cocher d'abord, puis ce qui a été vu ici et par toi (en tri « total », le seul total).
         const resume = hotspotSort === 'total'
           ? `${n} espèce${s(n)} vue${s(n)} ici depuis toujours`
-          : `<b>${toDoShown} à cocher${monthFilter ? ` en ${MONTH_NAMES[monthFilter]}` : ''}</b> · ${n} espèce${s(n)} vue${s(n)} ici${hotspotSort === 'recent' ? ' ces 30 jours' : ''} · ${h.mySp} par toi`;
+          : `<b>${toDoShown} non observée${s(toDoShown)}${monthFilter ? ` en ${MONTH_NAMES[monthFilter]}` : ''}</b> · ${n} espèce${s(n)} vue${s(n)} ici${hotspotSort === 'recent' ? ' ces 30 jours' : ''} · ${h.mySp} par toi`;
         let liste = '';
         if(hotspotSort !== 'total' && filteredMiss.length){
           // Les plus rares d'abord, comme la liste d'une grappe.
@@ -11977,8 +11977,10 @@ async function _loadHotspotsLayer(region){
           const esp = hotspotSort === 'total' ? [] : filteredMiss.map(sci => ({ nom:frName(sci, sci), w:_ctRarete(sci, ccHs), coul:_ctCouleur(sci, ccHs) }))
             .sort((a, b) => b.w - a.w || a.nom.localeCompare(b.nom, 'fr'));
           const vus = esp.length - CT_SURVOL_MAX > 1 ? esp.slice(0, CT_SURVOL_MAX) : esp, reste = esp.length - vus.length;
-          const tete = hotspotSort === 'total' ? `${n} espèce${s(n)} vue${s(n)} ici` : `${toDoShown} à cocher · ${n} espèce${s(n)} vue${s(n)} ici`;
-          const html = `<span class="ct-sv-t">${esc(h.locName || h.name || '?')}</span><span class="ct-sv-d">${tete}</span>` +
+          const tete = hotspotSort === 'total' ? `${n} espèce${s(n)} vue${s(n)} ici` : `${toDoShown} non observée${s(toDoShown)} · ${n} espèce${s(n)} vue${s(n)} ici`;
+          // Le mois choisi dans « Quand », en gris après le nom (Mathis, 2026-10-29) : les espèces à cocher en dépendent.
+          const mois = hotspotSort !== 'total' && monthFilter ? ` <span class="ct-sv-mois">${MONTH_NAMES[monthFilter]}</span>` : '';
+          const html = `<span class="ct-sv-t">${esc(h.locName || h.name || '?')}${mois}</span><span class="ct-sv-d">${tete}</span>` +
             vus.map(e => _ctLigneSurvol(e.coul, e.w, e.nom, '', '')).join('') + (reste ? `<span class="ct-sv-d">et ${reste} autre${s(reste)} : clique pour ouvrir</span>` : '');
           m.bindTooltip(html, _ctSensSurvol(m.getLatLng(), 13)).openTooltip();
         });
@@ -13288,9 +13290,9 @@ const GUIDE_ETAPES = [
     texte:"Un tour du site en une minute : chaque bulle montre une partie de l'écran. Tu peux le refaire quand tu veux depuis le menu ☰." },
   // Carte et Birdydex d'abord : ce que le portfolio met en avant (choix de Mathis le 2026-10-08).
   { vue:'map', cible:'.tab[data-view="map"]', titre:'Carte',
-    texte:"Les observations de la ligue à leur place, pour les listes déposées avec le GPS. Deux autres modes : les espèces signalées récemment sur eBird qui manquent à ta liste, et les meilleurs sites." },
+    texte:"Les observations de la ligue à leur place, pour les listes déposées avec le GPS. Deux autres modes : les espèces non observées signalées récemment sur eBird, et les meilleurs sites." },
   { vue:'pokedex', cible:'.tab[data-view="pokedex"]', titre:'Birdydex',
-    texte:"Toutes les espèces d'un pays, rangées par famille : celles que tu as vues et celles qui te manquent. Un clic sur un oiseau ouvre sa fiche." },
+    texte:"Toutes les espèces d'un pays, rangées par famille : observées et non observées. Un clic sur un oiseau ouvre sa fiche." },
   // fiche : le guide ouvre la fiche du premier oiseau du Birdydex, par un vrai clic sur sa
   // vignette, et la referme a l'etape suivante (voulu par Mathis le 2026-10-07).
   { vue:'pokedex', fiche:true, cible:'#speciesModal .sm-tabs', titre:'La fiche espèce',

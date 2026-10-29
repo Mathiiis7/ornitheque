@@ -124,7 +124,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=527">
+<link rel="modulepreload" href="app.js?v=528">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -799,7 +799,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
                       </div>
                     </div>
                     <div class="ct-ligne" id="ctRecManqueLbl"><span class="ct-k">Afficher</span>
-                      <label class="ct-bascule"><span>Seulement ce qui me manque</span><input type="checkbox" role="switch" id="ctRecManque" checked></label>
+                      <label class="ct-bascule"><span>Non observées</span><input type="checkbox" role="switch" id="ctRecManque" checked></label>
                     </div>
                     <div class="ct-ligne ct-haut" id="mapEbRarityLbl"><span class="ct-k">Rareté</span>
                       <div class="ct-v">
@@ -859,27 +859,27 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
                       </select>
                     </div>
                     <div class="ct-ligne" id="mapEbShowObservedLbl"><span class="ct-k">Afficher</span>
-                      <label class="ct-bascule"><span>Seulement ce qui me manque</span><input type="checkbox" role="switch" id="ctHotManque" checked></label>
+                      <label class="ct-bascule"><span>Non observées</span><input type="checkbox" role="switch" id="ctHotManque" checked></label>
                       <input type="checkbox" class="ct-cache" id="mapEbShowObserved" aria-hidden="true" tabindex="-1">
                     </div>
                     <div class="ct-ligne" id="mapEbSortLbl"><span class="ct-k" id="ctKTri">Trier par</span>
                       <div class="seg ct-seg-plein" role="radiogroup" aria-labelledby="ctKTri">
-                        <button type="button" role="radio" data-ct-tri="todo">Espèces manquantes</button>
+                        <button type="button" role="radio" data-ct-tri="todo">Non observées</button>
                         <button type="button" role="radio" data-ct-tri="recent">Activité 30 j</button>
                       </div>
                       <select class="ct-cache" id="mapEbSort" aria-hidden="true" tabindex="-1">
-                        <option value="todo" selected>Espèces à cocher pour moi</option>
+                        <option value="todo" selected>Espèces non observées</option>
                         <option value="recent">Activité 30 jours</option>
                       </select>
                     </div>
-                    <div class="ct-ligne" id="mapEbMinTodoLbl" title="N'affiche que les hotspots où il te manque au moins N espèces"><span class="ct-k">Cacher</span>
+                    <div class="ct-ligne" id="mapEbMinTodoLbl" title="N'affiche que les hotspots qui ont au moins N espèces non observées"><span class="ct-k">Cacher</span>
                       <span class="ct-v ct-cacher">sous
-                      <span class="ct-pas" id="mapEbMinTodoBox" role="group" aria-label="Nombre minimum d'espèces à cocher">
+                      <span class="ct-pas" id="mapEbMinTodoBox" role="group" aria-label="Nombre minimum d'espèces non observées">
                         <button type="button" id="mapEbMinTodoDec" title="−1" aria-label="Un de moins">−</button>
-                        <input type="number" id="mapEbMinTodo" min="0" max="500" value="0" step="1" title="Espèces à cocher minimum">
+                        <input type="number" id="mapEbMinTodo" min="0" max="500" value="0" step="1" title="Espèces non observées, au minimum">
                         <button type="button" id="mapEbMinTodoInc" title="+1" aria-label="Un de plus">+</button>
                       </span>
-                      <span id="mapEbMinTodoSuffix">espèces à cocher</span></span>
+                      <span id="mapEbMinTodoSuffix">non observées</span></span>
                     </div>
                     <!-- Rareté en dernier, comme au Récent et à la Ligue : le même réglage (_ctRarZone) colore les
                          espèces de la bulle d'un hotspot (Mathis, 2026-10-29). Pas de pastilles : ici on ne filtre pas. -->
@@ -1187,7 +1187,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
           <div class="seg ct-seg-plein" role="radiogroup" aria-labelledby="pkdxKOwned">
             <button type="button" role="radio" data-pkdx-owned="">Toutes</button>
             <button type="button" role="radio" data-pkdx-owned="owned">Vues</button>
-            <button type="button" role="radio" data-pkdx-owned="missing">Manquantes</button>
+            <button type="button" role="radio" data-pkdx-owned="missing">Non observées</button>
           </div>
         </div>
         <div class="ct-ligne"><span class="ct-k">Famille</span>
@@ -1686,5 +1686,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=527"></script>
+<script type="module" src="app.js?v=528"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>
