@@ -149,6 +149,16 @@ await onglet('ligue');
 await compare('Ligue · région Pays de la Loire', () => clicForme('ebird', 'FR-PDL'));
 console.log('== Ligue · recherche gardée, puis la Bretagne cliquée');
 await clicForme('ebird', 'FR-BRE'); ligne(`avec « ${espece} »`, await etat());
+// Changer d'onglet en gardant l'espèce écrite : le Récent doit la retrouver (liste d'une ligne, ses points).
+console.log('== Ligue avec « ' + espece + ' », puis onglet Récent');
+await clicForme('ebird', 'FR-PDL');
+await onglet('recent'); await attendre();
+const r1 = await etat(); ligne('Récent', r1);
+if(r1.lignes !== 1 && !r1.etatRec.includes(espece)){ console.log('   ÉCART : le Récent ne montre pas l’espèce gardée'); defauts++; }
+console.log('== puis Ligue, puis retour au Récent');
+await onglet('ligue'); await onglet('recent'); await attendre();
+const r2 = await etat(); ligne('Récent', r2);
+if(r2.lignes !== 1 && !r2.etatRec.includes(espece)){ console.log('   ÉCART : le Récent ne montre pas l’espèce gardée'); defauts++; }
 console.log('erreurs :', erreurs.length ? erreurs : 'aucune');
 console.log(defauts ? `DÉFAUT (${defauts})` : 'CONFORME');
 await nav.close();

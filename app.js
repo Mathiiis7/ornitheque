@@ -7993,6 +7993,9 @@ async function renderMap(){
     else if(mapMode==='missing') await _renderModeMissing();
     else if(mapMode==='hotspots') await _renderModeHotspots();
   } finally { _ctAppliqueCouches(); }
+  // Arrivé sur le Récent avec une espèce déjà écrite (choisie dans la Ligue, ou avant un aller-retour
+  // d'onglet qui a vidé _lyrDetail) : on va la chercher, sinon le Récent restait vide (2026-10-29).
+  if(modeChanged && mapMode === 'missing' && _hasSpeciesSearch()) _reloadSpeciesForZone();
   // Les Hotspots allumés par-dessus un autre onglet suivent la zone eux aussi : un département choisi
   // dans le Récent laissait les hotspots de toute la région (Mathis, 2026-10-27). Rechargés sans recadrer
   // la carte, que l'onglet ouvert a déjà cadrée.
@@ -9524,8 +9527,12 @@ const _ctStyleRegion = () => ({ color:_ctCss('--accent'), weight:1.5, opacity:.9
 const _ctStyleCache = { opacity:0, fillOpacity:0 };
 // Les frontières : à l'accent pour un pays qui se clique, pâles pour les autres (pas encore couverts).
 // En gris, elles se perdaient dans celles que le fond OpenStreetMap dessine déjà (vu le 2026-10-24).
-const _ctStylePays = () => ({ color:_ctCss('--accent'), weight:2, opacity:1, fillColor:_ctCss('--accent'), fillOpacity:0 });
-const _ctStylePaysMuet = () => ({ color:_ctCss('--ink-2'), weight:1, opacity:.55, fill:false });
+// Un pays ouvert : les frontières des autres s'effacent (le voile les marque déjà). Elles viennent d'un
+// autre fichier que les régions du pays ouvert, simplifié autrement, et doublaient leur bord d'un second
+// trait décalé (Espagne contre Portugal, Mathis, 2026-10-29). Elles restent cliquables, le survol les montre.
+const _ctBordsCaches = () => !!_ctPaysOuvert;
+const _ctStylePays = () => ({ color:_ctCss('--accent'), weight:2, opacity:_ctBordsCaches() ? 0 : 1, fillColor:_ctCss('--accent'), fillOpacity:0 });
+const _ctStylePaysMuet = () => ({ color:_ctCss('--ink-2'), weight:1, opacity:_ctBordsCaches() ? 0 : .55, fill:false });
 // Le survol éclaire une forme qui n'est pas la zone choisie ; une forme cachée ne le reçoit pas.
 function _ctEclaire(l, repos, dedans){
   l.on('mouseover', () => { if(!dedans()) l.setStyle({ fillOpacity:.08, weight:2.4, opacity:1, color:_ctCss('--accent') }); });
@@ -9548,6 +9555,7 @@ function _ctSurligne(){
     l.setStyle(lui ? _ctStyleCache : _ctStylePays());
     _ctMuet(l, lui);
   });
+  if(_lyrPaysMuets) _lyrPaysMuets.setStyle(_ctStylePaysMuet());
   if(_lyrZones) _lyrZones.eachLayer(l => {
     const dedans = _ctDansZone(l);
     if(dedans){ l.setStyle({ color:_ctCss('--accent'), weight:3, opacity:1, fillColor:_ctCss('--accent'), fillOpacity:.06 }); l.bringToFront(); }

@@ -15,6 +15,7 @@ const ESPECES = [
   ['graher1', 'Ardea cinerea', 'Gray Heron'],
   ['eurrob1', 'Erithacus rubecula', 'European Robin'],
   ['rinphe1', 'Phasianus colchicus', 'Ring-necked Pheasant'],
+  ['litegr', 'Egretta garzetta', 'Little Egret'],
 ];
 // Trois lieux par département, à quelques kilomètres : dézoomés, ils se rejoignent en grappe.
 const DEPS = {
