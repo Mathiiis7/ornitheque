@@ -22,6 +22,8 @@ const DEPS = {
   'FR-PDL-44':[47.25, -1.65], 'FR-PDL-85':[46.70, -1.40], 'FR-PDL-49':[47.45, -0.55],
   'FR-BRE-29':[48.30, -4.10], 'FR-BRE-35':[48.10, -1.70], 'FR-GES-67':[48.55, 7.65],
 };
+// Deux espèces vues il y a plus de 30 jours seulement : la bulle d'un hotspot les range à part (2026-10-29).
+const VIEILLES = new Set(['shelar1', 'lapbun']);
 const jour = n => { const d = new Date(Date.now() - n * 86400000); return d.toISOString().slice(0, 10) + ' 08:30'; };
 function observations(){
   const out = [];
@@ -31,7 +33,7 @@ function observations(){
       const lat = +(la + l * 0.03).toFixed(4), lng = +(lo + l * 0.04).toFixed(4), locId = `L${dep.replace(/\W/g, '')}${l}`;
       ESPECES.forEach(([code, sci, en], i) => {
         if((i + l) % 3 === 2) return;   // chaque lieu n'a pas toutes les espèces
-        out.push({ speciesCode:code, comName:en, sciName:sci, locId, locName:`Lieu ${l + 1} (${dep})`, obsDt:jour((k++ % 12) + 1),
+        out.push({ speciesCode:code, comName:en, sciName:sci, locId, locName:`Lieu ${l + 1} (${dep})`, obsDt:jour((VIEILLES.has(code) ? 40 : 1) + (k++ % 12)),
           howMany:1 + (k % 4), lat, lng, obsValid:true, obsReviewed:false, locationPrivate:false, subId:`S${k}`, _dep:dep });
       });
     }
@@ -47,12 +49,15 @@ export async function bouchonEbird(ctx, compte = []){
     compte.push(ch);
     const json = v => route.fulfill({ status:200, contentType:'application/json', headers:{ 'access-control-allow-origin':'*' }, body:JSON.stringify(v) });
     let m;
+    // Comme eBird : back jours au plus (14 par défaut, 30 au plus).
+    const depuis = jour(Math.min(30, +(u.searchParams.get('back') || 14)));
+    const recente = o => o.obsDt >= depuis;
     if(/^ref\/taxonomy\/ebird/.test(ch)) return json(u.searchParams.get('cat') === 'species' ? ESPECES.map(([speciesCode, sciName, comName]) => ({ speciesCode, sciName, comName, category:'species' })) : []);
-    if((m = ch.match(/^data\/obs\/([^/]+)\/recent\/([^/]+)$/))) return json(OBS.filter(o => (dansZone(o, m[1]) || o.locId === m[1]) && o.speciesCode === m[2]).map(propre));
+    if((m = ch.match(/^data\/obs\/([^/]+)\/recent\/([^/]+)$/))) return json(OBS.filter(o => (dansZone(o, m[1]) || o.locId === m[1]) && o.speciesCode === m[2] && recente(o)).map(propre));
     if((m = ch.match(/^data\/obs\/([^/]+)\/recent$/))){
       // Comme eBird : la dernière observation de chaque espèce dans la zone.
       const der = new Map();
-      for(const o of OBS) if(dansZone(o, m[1]) || o.locId === m[1]){ const d = der.get(o.speciesCode); if(!d || o.obsDt > d.obsDt) der.set(o.speciesCode, o); }
+      for(const o of OBS) if((dansZone(o, m[1]) || o.locId === m[1]) && recente(o)){ const d = der.get(o.speciesCode); if(!d || o.obsDt > d.obsDt) der.set(o.speciesCode, o); }
       return json([...der.values()].map(propre));
     }
     if((m = ch.match(/^ref\/hotspot\/([^/]+)$/))){

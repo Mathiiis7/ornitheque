@@ -2624,6 +2624,15 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-hb-vu { margin-left:auto; padding-left:8px; color:var(--ink-3); white-space:nowrap; }
   .ct-hb-vu.hot { color:var(--accent); }
   .ct-hb-vu:empty { display:none; }
+  /* Vues ici ces 30 jours, puis les autres repliées (variante B, 2026-10-29). */
+  .ct-gl.ct-hb .ct-hb-it { margin:2px 12px 2px; font-weight:600; color:var(--ink-2); }
+  .ct-hb-it span { font-weight:400; color:var(--ink-3); }
+  .ct-hb-pli { display:flex; align-items:center; gap:6px; width:100%; margin-top:4px; padding:7px 12px; border:0; border-top:1px solid var(--line);
+    background:none; font:inherit; color:var(--ink-2); text-align:left; cursor:pointer; }
+  .ct-hb-pli:hover, .ct-hb-pli:focus-visible { background:var(--surface-2); color:var(--ink); }
+  .ct-hb-pli span { color:var(--ink-3); }
+  .ct-hb-pli[aria-expanded="true"] span { display:inline-block; transform:rotate(180deg); }
+  .ct-hb-autres[hidden] { display:none; }
   .ct-gl-obs .ct-gl-lieu { color:var(--ink-3); border-top:0; }
   .ct-gl-obs[hidden] { display:none; }
   /* Plusieurs observations de l'espèce au même endroit : leur nombre en bas à droite du point (2026-10-24). */

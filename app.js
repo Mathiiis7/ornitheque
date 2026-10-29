@@ -11624,7 +11624,39 @@ async function _loadHotspotCounts(marker){
   }
   await Promise.all(Array.from({length:Math.min(CONC, items.length)}, worker));
   marker._countsLoaded = true; marker._countsInflight = false;
+  if(el.isConnected) _ctRangeBulleHs(el);
 }
+// Une fois les dates là : les espèces vues ici ces 30 jours d'abord, les autres repliées derrière une ligne
+// (variante B de notes-privees/maquettes/hotspot-bulle/recentes.html, Mathis, 2026-10-29). eBird ne donne
+// pas plus de 30 jours pour un lieu : ce sont 30 jours glissants, pas le mois en cours. Sans aucune vue
+// récente, rien ne se replie : la liste entière reste, sous « Aucune vue ici ces 30 jours ».
+function _ctRangeBulleHs(el){
+  const liste = el.querySelector('.ct-gl-liste'); if(!liste || liste.dataset.range) return;
+  liste.dataset.range = '1';
+  const rows = [...liste.querySelectorAll('.ct-hb-e')];
+  const vues = rows.filter(r => (r.querySelector('.ct-hb-vu')?.textContent || '').trim());
+  const autres = rows.filter(r => !vues.includes(r)), s = n => n > 1 ? 's' : '';
+  const titre = document.createElement('p'); titre.className = 'ct-hb-it';
+  titre.innerHTML = vues.length ? `Vues ici ces 30 jours <span>· ${vues.length}</span>` : 'Aucune vue ici ces 30 jours';
+  liste.prepend(titre);
+  if(!vues.length || !autres.length) return;
+  const repli = document.createElement('div'); repli.className = 'ct-hb-autres'; repli.hidden = true;
+  for(const r of autres) repli.appendChild(r);
+  const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'ct-hb-pli'; btn.setAttribute('aria-expanded', 'false');
+  btn.innerHTML = `${autres.length} autre${s(autres.length)}, pas vue${s(autres.length)} ici ces 30 jours <span aria-hidden="true">▾</span>`;
+  liste.append(btn, repli);
+  if(_map && _map._popup) _map._popup.update();
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('.ct-hb-pli'); if(!b) return;
+  const repli = b.nextElementSibling, ouvrir = !!(repli && repli.hidden);
+  if(repli) repli.hidden = !ouvrir;
+  b.setAttribute('aria-expanded', String(ouvrir));
+  // La bulle a grandi : Leaflet la recale, en gardant la position de défilement (comme une grappe dépliée).
+  const defile = b.closest('.ct-gl-liste'), y = defile ? defile.scrollTop : 0;
+  if(_map && _map._popup) _map._popup.update();
+  if(defile) defile.scrollTop = y;
+});
 // Jeton de generation : chaque appel incrémente le compteur. A chaque checkpoint on
 // verifie que le compteur n'a pas bouge (i.e. qu'un autre appel n'a pas demarre entre-temps).
 // Si oui, on abandonne silencieusement pour ne pas ecraser la couche avec les hotspots
@@ -11723,7 +11755,7 @@ async function _loadHotspotsLayer(region){
       // se mesure déjà sur la zone au choix (France / Grand Est) ; plus de liens Itinéraire, Transports, eBird
       // (Mathis, le même jour). Elle s'écrit à son ouverture : la rareté y suit le réglage du moment, sans relire
       // les hotspots ; elle disait avant la rareté française, même à l'étranger.
-      const contenu = () => {
+      const html = () => {
         const s = x => x > 1 ? 's' : '';
         // Résumé : à cocher d'abord, puis ce qui a été vu ici et par toi (en tri « total », le seul total).
         const resume = hotspotSort === 'total'
@@ -11749,7 +11781,15 @@ async function _loadHotspotsLayer(region){
         return `<p class="ct-hb-t">${esc(h.locName || h.name || '?')}${favBtn}</p>` +
           (lieu ? `<p class="ct-gl-t ct-hb-s">${lieu}</p>` : '') + `<p class="ct-gl-t ct-hb-s">${resume}</p>` + liste;
       };
+      // Un élément, écrit à l'ouverture et gardé tant que la bulle est ouverte : une fonction qui rendait du
+      // texte était rappelée à chaque update() de Leaflet, et la bulle repartait sans ses dates ni son
+      // rangement (même piège que la liste d'une grappe, _ctListeGrappe).
+      const contenu = () => {
+        if(!m._bulle){ m._bulle = document.createElement('div'); m._bulle.innerHTML = html(); }
+        return m._bulle;
+      };
       m.bindPopup(contenu, { className:'ct-gl ct-hb', maxWidth:320, minWidth:260, autoPanPadding:[24, 24] });
+      m.on('popupclose', () => { m._bulle = null; });
       // Recherche : nom du hotspot + région/dept + noms fr des espèces manquantes ici
       // (permet à la barre "Filtrer par nom d'espèce" de matcher un hotspot où l'espèce est présente).
       const missNames = filteredMiss.map(sci => FR_NAMES[sci]||sci).join(' ');

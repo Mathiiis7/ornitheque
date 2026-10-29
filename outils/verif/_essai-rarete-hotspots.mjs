@@ -49,6 +49,19 @@ const bulle = async () => {
 const avant = await bulle();
 console.log('bulle, rareté France :', avant);
 if(largeur >= 700) await p.screenshot({ path:`${SORTIE}/rarete-hot-bulle-${largeur}.png` });
+// Vues ici ces 30 jours d'abord, les autres repliées (variante B).
+const range = async () => p.evaluate(() => { const pop = document.querySelector('.leaflet-popup.ct-hb'); if(!pop) return null;
+  const vis = [...pop.querySelectorAll('.ct-gl-l')].filter(r => r.offsetParent).map(r => r.querySelector('.ct-gl-nom').textContent);
+  return { titre:pop.querySelector('.ct-hb-it')?.textContent, pli:pop.querySelector('.ct-hb-pli')?.textContent.trim(), visibles:vis.join(', ') }; });
+for(let i = 0; i < 20 && !(await p.evaluate(() => !!document.querySelector('.leaflet-popup.ct-hb .ct-hb-it'))); i++) await p.waitForTimeout(500);
+const r1 = await range();
+console.log('rangée :', JSON.stringify(r1));
+if(!r1 || !/Vues ici ces 30 jours/.test(r1.titre || '') || !/2 autres, pas vues ici ces 30 jours/.test(r1.pli || '') || /Alouette|Bruant/.test(r1.visibles)) { console.log('   ÉCART : rangement'); defauts++; }
+await p.evaluate(() => document.querySelector('.leaflet-popup.ct-hb .ct-hb-pli')?.click()); await p.waitForTimeout(500);
+const r2 = await range();
+console.log('dépliée :', r2 && r2.visibles);
+if(!r2 || !/Alouette/.test(r2.visibles) || !/Bruant/.test(r2.visibles)) { console.log('   ÉCART : dépliage'); defauts++; }
+if(largeur >= 700) await p.screenshot({ path:`${SORTIE}/rarete-hot-bulle-depliee-${largeur}.png` });
 const nbDemandes = demandes.length;
 await p.evaluate(() => document.querySelector('#ctPorteeHot [data-ct-portee="zone"]').click());
 await p.waitForTimeout(2000);
