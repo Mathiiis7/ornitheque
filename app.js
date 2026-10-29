@@ -12037,7 +12037,45 @@ async function _ebAppel(url){
   return r;
 }
 const _ebCache = new Map();                        // niveau 1 : mémoire (5 min)
-const EBIRD_TTL_MS = 6*60*60*1000;                 // 6h : localStorage + Firestore partagé
+const EBIRD_TTL_MS = 6*60*60*1000;                 // 6h : IndexedDB + Firestore partagé
+// Les copies des réponses d'eBird vivent dans IndexedDB depuis le 2026-10-29. Dans le localStorage (5 Mo pour
+// tout le site), une seule zone en déposait 0,5 à 0,7 Mo (100 listes d'espèces de hotspots, le Récent),
+// plus 0,9 Mo de taxonomie, mesuré sur le vrai eBird (outils/verif/_poids-stockage.mjs) : plein après une
+// demi-douzaine de zones dans la journée, il refusait en silence toute nouvelle copie, et les Hotspots
+// redemandaient leurs 100 listes à chaque chargement, au pas de la file (0,22 s chacune). IndexedDB a des
+// centaines de Mo. Sans lui (navigation privée de certains navigateurs), la mémoire de l'onglet seule.
+const EB_IDB = 'ornitheque-ebird', EB_IDB_MAGASIN = 'reponses';
+let _ebIdbPromesse = null;
+function _ebIdb(){
+  if(!_ebIdbPromesse) _ebIdbPromesse = new Promise(ok => {
+    try{
+      const rq = indexedDB.open(EB_IDB, 1);
+      rq.onupgradeneeded = () => rq.result.createObjectStore(EB_IDB_MAGASIN);
+      rq.onsuccess = () => ok(rq.result);
+      rq.onerror = rq.onblocked = () => ok(null);
+    }catch(_){ ok(null); }
+  });
+  return _ebIdbPromesse;
+}
+async function _ebIdbLit(url){
+  const base = await _ebIdb(); if(!base) return null;
+  return new Promise(ok => { try{ const rq = base.transaction(EB_IDB_MAGASIN).objectStore(EB_IDB_MAGASIN).get(url); rq.onsuccess = () => ok(rq.result || null); rq.onerror = () => ok(null); }catch(_){ ok(null); } });
+}
+async function _ebIdbEcrit(url, v){
+  const base = await _ebIdb(); if(!base) return;
+  try{ base.transaction(EB_IDB_MAGASIN, 'readwrite').objectStore(EB_IDB_MAGASIN).put(v, url); }catch(_){}
+}
+// Au démarrage, les copies de plus de 3 jours partent (une copie périmée sert encore quand eBird refuse,
+// _ebPerimes ; celle de la veille est la plus utile). Les anciennes copies du localStorage (« ebc: »), qui ne
+// sont plus lues, partent toutes : elles rendent la place à la progression du quiz et aux réglages.
+(async () => {
+  try{ Object.keys(localStorage).filter(k => k.startsWith('ebc:')).forEach(k => localStorage.removeItem(k)); }catch(_){}
+  const base = await _ebIdb(); if(!base) return;
+  try{
+    const rq = base.transaction(EB_IDB_MAGASIN, 'readwrite').objectStore(EB_IDB_MAGASIN).openCursor();
+    rq.onsuccess = () => { const c = rq.result; if(!c) return; if(Date.now() - ((c.value && c.value.ts) || 0) > 3 * 864e5) c.delete(); c.continue(); };
+  }catch(_){}
+})();
 const _ebDocId = url => url.replace(/[^A-Za-z0-9]/g,'_').slice(0,200);
 // Une réponse périmée sert quand eBird refuse : la Loire-Atlantique lue la veille restait vide sur
 // « eBird ne répond pas » (Mathis, 2026-10-26). url -> date de la réponse servie à sa place ; la Carte
@@ -12048,14 +12086,12 @@ async function _ebFetch(url, opts = {}){
   const memHit = _ebCache.get(url);
   if(memHit && (Date.now()-memHit.ts) < 5*60*1000) return memHit.data;
   let perime = memHit || null;
-  // 2) localStorage (6h - évite les refetch en cas de reload)
-  try{
-    const ls = localStorage.getItem('ebc:'+url);
-    if(ls){ const {ts,data}=JSON.parse(ls);
-      if(Date.now()-ts < EBIRD_TTL_MS){ _ebCache.set(url,{ts,data}); return data; }
-      if(!perime || ts > perime.ts) perime = { ts, data };
-    }
-  }catch(_){ }
+  // 2) IndexedDB (6h - évite les refetch en cas de reload)
+  const copie = await _ebIdbLit(url);
+  if(copie && copie.data !== undefined){
+    if(Date.now()-copie.ts < EBIRD_TTL_MS){ _ebCache.set(url,{ ts:copie.ts, data:copie.data }); return copie.data; }
+    if(!perime || copie.ts > perime.ts) perime = { ts:copie.ts, data:copie.data };
+  }
   // 3) Firestore partagé (6h - le 1er ami qui charge remplit pour les autres)
   try{
     if(leagueId){
@@ -12065,7 +12101,7 @@ async function _ebFetch(url, opts = {}){
         if(Date.now()-ts < EBIRD_TTL_MS && d.json){
           const data = JSON.parse(d.json);
           _ebCache.set(url,{ts:Date.now(),data});
-          try{ localStorage.setItem('ebc:'+url, JSON.stringify({ts:Date.now(),data})); }catch(_){ }
+          _ebIdbEcrit(url, { ts:Date.now(), data });
           return data;
         }
         if(d.json && (!perime || ts > perime.ts)) perime = { ts, lire:() => JSON.parse(d.json) };
@@ -12085,9 +12121,9 @@ async function _ebFetch(url, opts = {}){
   const stamp = Date.now();
   _ebCache.set(url, { ts:stamp, data });
   // garder faux : seulement la mémoire de l'onglet. Le sélecteur de pays du Récent lit 49 pays d'un
-  // coup, des centaines de Ko chacun : de quoi remplir le localStorage et en chasser le reste.
+  // coup, des centaines de Ko chacun : inutile de les garder d'une visite à l'autre.
   if(opts.garder === false) return data;
-  try{ localStorage.setItem('ebc:'+url, JSON.stringify({ts:stamp,data})); }catch(_){ }
+  _ebIdbEcrit(url, { ts:stamp, data });
   // fire-and-forget : écrit en Firestore pour partager avec les autres amis
   if(leagueId){
     setDoc(doc(db,'leagues',leagueId,'ebirdCache',_ebDocId(url)),
@@ -14820,16 +14856,8 @@ function _stockageEcrire(cle, valeur){
     localStorage.setItem(cle, valeur); return true;
   }catch(_){ return false; }
 }
-// Au démarrage, les copies d'eBird de plus de 3 jours partent. Pas celles de plus de 6 h (EBIRD_TTL_MS) :
-// une copie périmée sert encore quand eBird refuse (_ebPerimes, « voici ce qu'il disait le… »), et celle
-// de la veille est la plus utile. La progression, elle, passe toujours avant (_stockageEcrire).
-try{
-  for(const k of Object.keys(localStorage)){
-    if(!k.startsWith('ebc:')) continue;
-    let ts = 0; try{ ts = JSON.parse(localStorage.getItem(k)).ts || 0; }catch(_){}
-    if(Date.now() - ts > 3 * 24 * 3600 * 1000) localStorage.removeItem(k);
-  }
-}catch(_){}
+// Les copies d'eBird (« ebc: ») ont quitté le localStorage pour IndexedDB le 2026-10-29 (voir _ebIdb) : elles
+// y sont effacées au démarrage, et leur ménage de plus de 3 jours se fait là-bas.
 try{
   const raw = localStorage.getItem(_SP_PHOTO_CACHE_KEY);
   if(raw){
