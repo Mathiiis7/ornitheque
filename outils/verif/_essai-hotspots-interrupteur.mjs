@@ -46,7 +46,11 @@ const bulle = async id => {
   await p.evaluate(id => { window.__carte.closePopup(); window.__carte.eachLayer(l => { if(l._hotspotId === id) l.openPopup(); }); }, id);
   await p.waitForTimeout(800);
   return p.evaluate(() => { const pop = document.querySelector('.leaflet-popup.ct-hb'); if(!pop) return null;
-    return { resume:pop.querySelectorAll('.ct-hb-s')[1]?.textContent || pop.querySelector('.ct-hb-s')?.textContent, lignes:pop.querySelectorAll('.ct-gl-l').length }; });
+    const d = pop.querySelector('.ct-hb-deja'), n = pop.querySelector('.ct-hb-e:not(.ct-hb-deja)');
+    const style = (el, sel, p) => el ? getComputedStyle(el.querySelector(sel))[p] : null;
+    return { resume:pop.querySelectorAll('.ct-hb-s')[1]?.textContent || pop.querySelector('.ct-hb-s')?.textContent, lignes:pop.querySelectorAll('.ct-gl-l').length,
+      deja:[...pop.querySelectorAll('.ct-hb-deja .ct-gl-nom')].map(x => x.textContent).join(', '), nbDeja:pop.querySelectorAll('.ct-hb-deja').length,
+      couleurDeja:style(d, '.ct-gl-nom', 'color'), couleurAutre:style(n, '.ct-gl-nom', 'color'), opaciteDeja:style(d, '.tier-rond', 'opacity'), opaciteAutre:style(n, '.tier-rond', 'opacity') }; });
 };
 const bascule = async () => { await p.evaluate(() => { window.__carte.closePopup(); document.getElementById('ctHotManque').click(); }); await p.waitForTimeout(3000); };
 const a = await etat();
@@ -67,6 +71,8 @@ const plusPetit = b.hs.filter(h => parId.has(h.id) && h.nb < parId.get(h.id)).le
 console.log('   carrés qui comptent plus :', plusGrand, '· moins :', plusPetit);
 if(b.coche !== false || !plusGrand || plusPetit) { console.log('   ÉCART : les nombres ne suivent pas'); defauts++; }
 if(!ba || !bb || bb.lignes <= ba.lignes) { console.log('   ÉCART : la bulle ne montre pas les espèces déjà vues'); defauts++; }
+// Les déjà vues grisées (variante A) : autant que la différence, nom d'une autre couleur, pastille pâlie ; aucune allumé.
+if(!ba || !bb || ba.nbDeja !== 0 || bb.nbDeja !== bb.lignes - ba.lignes || bb.couleurDeja === bb.couleurAutre || !(+bb.opaciteDeja < 0.5) || +bb.opaciteAutre !== 1) { console.log('   ÉCART : déjà vues pas grisées'); defauts++; }
 if(!/espèces? vues? ici/.test(b.legende) || /non observées/.test(b.legende)) { console.log('   ÉCART : légende'); defauts++; }
 if(!/espèce/.test(b.premiere || '') || /non observée/.test(b.premiere || '')) { console.log('   ÉCART : volet'); defauts++; }
 await bascule();

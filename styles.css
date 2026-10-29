@@ -2624,6 +2624,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-hb-vu { margin-left:auto; padding-left:8px; color:var(--ink-3); white-space:nowrap; }
   .ct-hb-vu.hot { color:var(--accent); }
   .ct-hb-vu:empty { display:none; }
+  /* « Non observées » éteint : une espèce déjà vue par toi, nom gris et pastille pâlie, à sa place
+     (variante A de notes-privees/maquettes/hotspot-bulle/deja-vues.html, Mathis, 2026-10-29). */
+  .ct-gl.ct-hb .ct-hb-deja .ct-gl-nom { color:var(--ink-3); }
+  .ct-gl.ct-hb .ct-hb-deja .tier-rond { opacity:.4; }
   /* Vues ici ces 30 jours, puis les autres repliées (variante B, 2026-10-29). */
   .ct-gl.ct-hb .ct-hb-it { margin:2px 12px 2px; font-weight:600; color:var(--ink-2); }
   .ct-hb-it span { font-weight:400; color:var(--ink-3); }

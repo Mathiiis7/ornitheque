@@ -11957,8 +11957,10 @@ async function _loadHotspotsLayer(region){
             // frName passe par SCI_ALIAS : les noms d'eBird d'octobre 2026 (Melophus bruniceps) s'affichaient en latin.
             .map(sci => ({ sci, name:frName(sci, sci), w:_ctRarete(sci, ccHs) }))
             .sort((a, b) => b.w - a.w || a.name.localeCompare(b.name, 'fr'));
+          // Une espèce déjà vue par toi (« Non observées » éteint) : grisée, à sa place.
+          const nonVues = new Set(filteredMiss);
           // Le nom ouvre la fiche, comme dans la liste d'une grappe ; la date arrive ensuite (_loadHotspotCounts).
-          liste = `<div class="ct-gl-liste">${items.map(it => `<button type="button" class="ct-gl-l ct-hb-e" data-sci="${esc(it.sci)}" data-sc="${esc(_sciToCode(it.sci) || '')}">` +
+          liste = `<div class="ct-gl-liste">${items.map(it => `<button type="button" class="ct-gl-l ct-hb-e${tout && !nonVues.has(it.sci) ? ' ct-hb-deja' : ''}" data-sci="${esc(it.sci)}" data-sc="${esc(_sciToCode(it.sci) || '')}">` +
             `${tierChip(it.w || '?', _ctCouleur(it.sci, ccHs), { cls:'tier-rond' })}<span class="ct-gl-nom">${esc(it.name)}</span>` +
             `<span class="ct-hb-vu" data-cnt></span></button>`).join('')}</div>`;
         }
