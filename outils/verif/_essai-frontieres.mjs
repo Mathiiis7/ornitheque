@@ -23,7 +23,7 @@ await p.waitForTimeout(4000);
 console.log('Portugal ouvert :', await traits());
 await p.evaluate(() => window.__carte.setView([41.5, -7.2], 8, { animate:false })); await p.waitForTimeout(1500);
 await p.screenshot({ path:`${SORTIE}/frontieres-pt.png` });
-// Survol d'Espagne : son trait revient le temps du survol.
+// Survol de l'Espagne : elle se teinte, son trait reste éteint (il chevauchait les régions ouvertes).
 await p.evaluate(() => { window.__carte.eachLayer(l => { if(l.feature && l.feature.properties.cc === 'ES' && !l.feature.properties.ebird && l._path) l.fire('mouseover'); }); });
 console.log('Espagne survolée :', await p.evaluate(() => { let o = ''; window.__carte.eachLayer(l => { if(l.feature && l.feature.properties.cc === 'ES' && !l.feature.properties.ebird && l._path) o = getComputedStyle(l._path).strokeOpacity; }); return 'opacité du trait ' + o; }));
 await p.evaluate(() => document.querySelector('#ctAriane a, #ctAriane [data-carte]')?.click()); await p.waitForTimeout(2500);

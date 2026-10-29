@@ -8627,8 +8627,8 @@ async function _showSpeciesDetailGbif(sciName){
       sciName, speciesCode:_sciToCode(sciName) || '', lat:+o.decimalLatitude.toFixed(3), lng:+o.decimalLongitude.toFixed(3), locName:nomLieu(o),
       obsDt:(o.eventDate || '').slice(0, 10), howMany:(typeof o.individualCount === 'number' && o.individualCount > 0) ? o.individualCount : 0 })), country, _lyrDetail);
     const trunc = (totalCount > obs.length && !gadmFilter && !cached) ? ` (sur ${totalCount} au total, tronqué)` : '';
-    const cacheTag = cached ? ' · cache' : '';
-    if(cnt) cnt.textContent = `${obs.length} obs GBIF de ${nm} dans ${ctyName}${zoneLabelExtra} (${yMin===yMax?yMin:yMin+'-'+yMax})${trunc}${cacheTag}`;
+    // Le nombre est dit en tête de la liste : la ligne d'état ne garde que la coupe éventuelle.
+    if(cnt) cnt.textContent = trunc ? `Les ${obs.length} premières observations${trunc}` : '';
     _fitLayer(_lyrDetail);
     _ctAppliqueCouches();
     return obs.length;
@@ -8696,7 +8696,8 @@ async function _showSpeciesDetail(sciName, speciesCode){
     // les points. Puis le voile, la liste et la légende, comme après tout dessin (_ctAppliqueCouches).
     _fitLayer(_lyrDetail);
     const cnt = _ebCompteur();
-    if(cnt) cnt.textContent = `${count} obs de ${nm} (${days} j)${_zoneLabel()}`;
+    // Le nombre est dit en tête de la liste (_ctListeRecent) : la ligne d'état le redisait.
+    if(cnt) cnt.textContent = '';
     _ctAppliqueCouches();
     return count;
   }catch(_){ return 0; }
@@ -9394,12 +9395,12 @@ function _ctRangeReglages(){
 }
 // Ouvrir un onglet allume sa couche, une fois : l'éteindre ensuite tient jusqu'au prochain onglet,
 // un réglage changé ne la rallume pas.
-// La ligue et le récent ne s'affichent jamais ensemble : « ça brouille tout » (Mathis, 2026-10-23).
-// Allumer l'une éteint l'autre ; les hotspots, eux, se superposent à l'une ou l'autre.
-const CT_EXCLUSIVES = { ligue:'recent', recent:'ligue' };
+// Une seule couche à la fois : la ligue et le récent ensemble « ça brouille tout » (Mathis, 2026-10-23),
+// et depuis le 2026-10-29 les hotspots non plus (« on choisit juste entre les 3 ») : superposés, la
+// recherche d'une espèce les vidait sans qu'on comprenne pourquoi. Allumer l'une éteint les deux autres.
 function _ctAllume(k){
+  carteCouches.clear();
   carteCouches.add(k);
-  if(CT_EXCLUSIVES[k]) carteCouches.delete(CT_EXCLUSIVES[k]);
 }
 // Changer de pays ou de zone éteint les couches eBird qui ne sont pas celle de l'onglet ouvert ; celle-là
 // reste comme elle est (Mathis, 2026-10-26 : le mode ne change qu'à la main).
@@ -9534,8 +9535,10 @@ const _ctBordsCaches = () => !!_ctPaysOuvert;
 const _ctStylePays = () => ({ color:_ctCss('--accent'), weight:2, opacity:_ctBordsCaches() ? 0 : 1, fillColor:_ctCss('--accent'), fillOpacity:0 });
 const _ctStylePaysMuet = () => ({ color:_ctCss('--ink-2'), weight:1, opacity:_ctBordsCaches() ? 0 : .55, fill:false });
 // Le survol éclaire une forme qui n'est pas la zone choisie ; une forme cachée ne le reçoit pas.
-function _ctEclaire(l, repos, dedans){
-  l.on('mouseover', () => { if(!dedans()) l.setStyle({ fillOpacity:.08, weight:2.4, opacity:1, color:_ctCss('--accent') }); });
+// sansTrait : le survol teinte seulement (un pays voisin quand un pays est ouvert : son trait rallumé
+// chevauchait le bord des régions ouvertes, Mathis, 2026-10-29).
+function _ctEclaire(l, repos, dedans, sansTrait = () => false){
+  l.on('mouseover', () => { if(!dedans()) l.setStyle({ fillOpacity:.08, weight:2.4, opacity:sansTrait() ? 0 : 1, color:_ctCss('--accent') }); });
   l.on('mouseout', () => { if(!dedans()) l.setStyle(repos()); });
 }
 // Une forme cachée ne prend ni clic ni survol : sinon son infobulle sortait encore.
@@ -9631,7 +9634,7 @@ async function _ctChargePays(){
     filter:f => _ctPaysCliquable(f.properties.cc),
     onEachFeature:(f, l) => {
       const cc = f.properties.cc;
-      _ctEclaire(l, _ctStylePays, () => cc === _ctPaysOuvert);
+      _ctEclaire(l, _ctStylePays, () => cc === _ctPaysOuvert, _ctBordsCaches);
       l.on('click', () => { if(!_drawState.active) _ctOuvrePays(cc); });
       if(!_ctAuDoigt.matches) l.bindTooltip(countryLabel(cc) || f.properties.nom, { sticky:true, direction:'top', offset:[0, -8] });
     } });
@@ -10772,7 +10775,9 @@ function _ctListeRecent(){
   }
   const n = rangs.length;
   // L'espèce cherchée s'affiche même déjà cochée : « te manque » serait faux.
-  const tete = cherche ? `<b>L'espèce cherchée</b>, vue ${quand}`
+  // Une seule ligne pour l'espèce cherchée, la ligne d'état au-dessus se tait (choix de Mathis, 2026-10-29).
+  const nbCherche = cherche ? rangs.reduce((t, e) => t + e.obs, 0) : 0;
+  const tete = cherche ? `<b>${esc(rangs[0].r.nom)} : ${nbCherche} observation${s(nbCherche)} ${quand}</b>`
     : manque ? `<b>${n} espèce${s(n)} te manque${n > 1 ? 'nt' : ''}</b>, vue${s(n)} ${quand}` : `<b>${n} espèce${s(n)}</b> vue${s(n)} ${quand}`;
   // Lu dans les listes : le vrai « nombre de listes » de la maquette. Sinon, les lieux lus en détail.
   const parListes = !gbif && !!_ctRecListes;

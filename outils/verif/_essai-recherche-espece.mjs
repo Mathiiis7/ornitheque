@@ -108,6 +108,8 @@ const juge = (a, b) => {
   const ecarts = [];
   if(a.voile !== b.voile) ecarts.push(`voile ${a.voile} -> ${b.voile}`);
   if(a.lignes > 0 && b.lignes <= 0) ecarts.push('liste vide');
+  if(a.ouvert === 'recent' && !b.tete.includes(espece)) ecarts.push('la tête de liste ne nomme pas l espèce');
+  if(a.ouvert === 'recent' && b.etatRec) ecarts.push('ligne d état en double');
   if(a.ouvert === 'recent' && b.lignes !== 1) ecarts.push('la liste du Récent ne montre pas la seule espèce cherchée');
   if(a.ouvert === 'recent' && b.grappes && !/détail [1-9]/.test(b.clic || '')) ecarts.push('clic grappe sans détail');
   if(b.grappes === 0 && b.pts === 0 && b.hs === 0 && a.ouvert !== 'hot') ecarts.push('rien sur la carte');
@@ -154,11 +156,11 @@ console.log('== Ligue avec « ' + espece + ' », puis onglet Récent');
 await clicForme('ebird', 'FR-PDL');
 await onglet('recent'); await attendre();
 const r1 = await etat(); ligne('Récent', r1);
-if(r1.lignes !== 1 && !r1.etatRec.includes(espece)){ console.log('   ÉCART : le Récent ne montre pas l’espèce gardée'); defauts++; }
+if(r1.lignes !== 1 && !r1.tete.includes(espece)){ console.log('   ÉCART : le Récent ne montre pas l’espèce gardée'); defauts++; }
 console.log('== puis Ligue, puis retour au Récent');
 await onglet('ligue'); await onglet('recent'); await attendre();
 const r2 = await etat(); ligne('Récent', r2);
-if(r2.lignes !== 1 && !r2.etatRec.includes(espece)){ console.log('   ÉCART : le Récent ne montre pas l’espèce gardée'); defauts++; }
+if(r2.lignes !== 1 && !r2.tete.includes(espece)){ console.log('   ÉCART : le Récent ne montre pas l’espèce gardée'); defauts++; }
 console.log('erreurs :', erreurs.length ? erreurs : 'aucune');
 console.log(defauts ? `DÉFAUT (${defauts})` : 'CONFORME');
 await nav.close();
