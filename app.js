@@ -9488,6 +9488,15 @@ function _ctMajVoile(){
       for(const p of (g.type === 'Polygon' ? [g.coordinates] : g.coordinates)) trous.push(p[0].map(([x, y]) => [y, x]));
     });
   }
+  // Un pays ouvert sans zone choisie voile les autres pays, comme une région voile ses voisines
+  // (Mathis, 2026-10-29).
+  else if(_ctPaysOuvert && _lyrPays){
+    _lyrPays.eachLayer(l => {
+      if(l.feature?.properties?.cc !== _ctPaysOuvert) return;
+      const g = l.feature.geometry;
+      for(const p of (g.type === 'Polygon' ? [g.coordinates] : g.coordinates)) trous.push(p[0].map(([x, y]) => [y, x]));
+    });
+  }
   if(!trous.length) return;
   if(!_map.getPane('ctVoile')) _map.createPane('ctVoile').style.zIndex = 340;
   const monde = [[-85, -540], [-85, 540], [85, 540], [85, -540]];   // ±540 : couvre les copies du monde
