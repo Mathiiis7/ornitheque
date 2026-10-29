@@ -2615,6 +2615,15 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-gl-n[aria-expanded="true"] span { display:inline-block; transform:rotate(180deg); }
   .ct-gl-obs { list-style:none; margin:0 0 4px; padding:0 12px 0 38px; color:var(--ink-2); font-size:14px; }
   .ct-gl-obs li { padding:3px 0; border-top:1px solid var(--line); }
+  /* La bulle d'un hotspot, dans le cadre de la liste d'une grappe (variante A, 2026-10-29) : le nom du lieu
+     et son étoile en tête, deux lignes grises, puis une ligne par espèce avec sa dernière date à droite. */
+  .ct-gl.ct-hb .ct-hb-t { margin:0 28px 2px 12px; font-weight:600; }
+  .ct-gl.ct-hb .ct-hb-s { margin-bottom:2px; }
+  .ct-gl.ct-hb .ct-hb-s:last-of-type { margin-bottom:6px; }
+  .ct-gl.ct-hb .hs-fav { font-size:16px; padding:0 2px; vertical-align:-1px; }
+  .ct-hb-vu { margin-left:auto; padding-left:8px; color:var(--ink-3); white-space:nowrap; }
+  .ct-hb-vu.hot { color:var(--accent); }
+  .ct-hb-vu:empty { display:none; }
   .ct-gl-obs .ct-gl-lieu { color:var(--ink-3); border-top:0; }
   .ct-gl-obs[hidden] { display:none; }
   /* Plusieurs observations de l'espèce au même endroit : leur nombre en bas à droite du point (2026-10-24). */

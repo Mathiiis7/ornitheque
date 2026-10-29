@@ -43,8 +43,8 @@ if(largeur >= 700) await p.screenshot({ path:`${SORTIE}/rarete-hot-filtres-${lar
 const bulle = async () => {
   await p.evaluate(() => { window.__carte.closePopup(); let m = null; window.__carte.eachLayer(l => { if(l._hs && !m) m = l; }); if(m) m.openPopup(); });
   await p.waitForTimeout(800);
-  return p.evaluate(() => { const pop = document.querySelector('.leaflet-popup'); if(!pop) return null; pop.querySelector('details.hs-miss')?.setAttribute('open', '');
-    return [...pop.querySelectorAll('.hs-miss li')].map(li => (li.querySelector('.tier-rond')?.textContent || '?') + ' ' + li.querySelector('span:not(.tier-rond):not([data-cnt]):not(.hs-pct)')?.textContent).join(' ; '); });
+  return p.evaluate(() => { const pop = document.querySelector('.leaflet-popup.ct-hb'); if(!pop) return null;
+    return [...pop.querySelectorAll('.ct-gl-l')].map(li => (li.querySelector('.tier-rond')?.textContent || '?') + ' ' + li.querySelector('.ct-gl-nom')?.textContent + (li.querySelector('.ct-hb-vu')?.textContent ? ' (' + li.querySelector('.ct-hb-vu').textContent + ')' : '')).join(' ; '); });
 };
 const avant = await bulle();
 console.log('bulle, rareté France :', avant);
