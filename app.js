@@ -12016,23 +12016,35 @@ const _ebRelais = url => url.replace('https://api.ebird.org', EBIRD_RELAIS);
 // File d'attente des appels eBird. eBird coupe au-delà de 25 appels par 5 secondes, compté par CLÉ,
 // donc pour tous les visiteurs ensemble (mesuré le 2026-10-23, docs/carte-donnees.md) : les rafales
 // de la Carte (un appel par espèce, par 8 à la fois) se faisaient refuser en silence au-delà du 25e.
-// Un tour toutes les 220 ms, soit 22 appels par 5 s ; un refus (429) fait attendre la fenêtre
-// suivante, puis l'appel est rejoué une fois.
-const EB_INTERVALLE_MS = 220;
-let _ebProchainTour = 0;
+// Au plus 22 appels par 5 s ; un refus (429) fait attendre la fenêtre suivante, puis l'appel est rejoué une fois.
+// Seuls comptent les appels qui vont vraiment chez eBird (2026-10-29). Une réponse que le relais avait gardée
+// (en-tête X-Vercel-Cache : HIT) ne coûte rien à la clé : avec un tour fixe toutes les 220 ms, les 100 listes
+// d'espèces des hotspots d'une zone déjà vue par un membre mettaient quand même 22 s (_perf-caches.mjs).
+// Un appel en vol compte tant que sa réponse n'a pas dit d'où elle venait.
+const EB_PAR_FENETRE = 22, EB_FENETRE_MS = 5000;
+const _ebFenetre = [];   // instants des appels partis chez eBird (ou de provenance inconnue), 5 dernières s
+let _ebEnVol = 0, _ebPauseJusqua = 0;
 async function _ebTour(){
-  const maintenant = Date.now();
-  const tour = Math.max(maintenant, _ebProchainTour);
-  _ebProchainTour = tour + EB_INTERVALLE_MS;
-  if(tour > maintenant) await new Promise(r => setTimeout(r, tour - maintenant));
+  for(;;){
+    const maintenant = Date.now();
+    while(_ebFenetre.length && maintenant - _ebFenetre[0] > EB_FENETRE_MS) _ebFenetre.shift();
+    if(maintenant >= _ebPauseJusqua && _ebFenetre.length + _ebEnVol < EB_PAR_FENETRE) return;
+    const attente = maintenant < _ebPauseJusqua ? _ebPauseJusqua - maintenant
+      : _ebFenetre.length ? EB_FENETRE_MS - (maintenant - _ebFenetre[0]) + 5 : 50;
+    await new Promise(r => setTimeout(r, Math.max(20, attente)));
+  }
 }
 async function _ebAppel(url){
   let r = null;
   for(let essai = 0; essai < 2; essai++){
     await _ebTour();
-    r = await fetch(_ebRelais(url));
+    _ebEnVol++;
+    try{ r = await fetch(_ebRelais(url)); }
+    catch(e){ _ebFenetre.push(Date.now()); throw e; }
+    finally{ _ebEnVol--; }
+    if(!/HIT|STALE/i.test(r.headers.get('x-vercel-cache') || '')) _ebFenetre.push(Date.now());
     if(r.status !== 429) return r;
-    _ebProchainTour = Math.max(_ebProchainTour, Date.now() + 5000);
+    _ebPauseJusqua = Math.max(_ebPauseJusqua, Date.now() + 5000);
   }
   return r;
 }
