@@ -124,7 +124,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=517">
+<link rel="modulepreload" href="app.js?v=518">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -880,6 +880,19 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
                         <button type="button" id="mapEbMinTodoInc" title="+1" aria-label="Un de plus">+</button>
                       </span>
                       <span id="mapEbMinTodoSuffix">espèces à cocher</span></span>
+                    </div>
+                    <!-- Rareté en dernier, comme au Récent et à la Ligue : le même réglage (_ctRarZone) colore les
+                         espèces de la bulle d'un hotspot (Mathis, 2026-10-29). Pas de pastilles : ici on ne filtre pas. -->
+                    <div class="ct-ligne"><span class="ct-k">Rareté</span>
+                      <div class="ct-v">
+                        <div class="ct-portee" id="ctPorteeHot">
+                          <div class="seg" role="radiogroup" aria-label="Rareté mesurée sur">
+                            <button type="button" role="radio" data-ct-portee="pays">Pays</button>
+                            <button type="button" role="radio" data-ct-portee="zone">Zone</button>
+                          </div>
+                        </div>
+                        <span class="ct-portee-note" data-portee-note></span>
+                      </div>
                     </div>
                   </div>
                   </details>
@@ -1672,5 +1685,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=517"></script>
+<script type="module" src="app.js?v=518"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>

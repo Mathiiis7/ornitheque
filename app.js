@@ -11696,6 +11696,7 @@ async function _loadHotspotsLayer(region){
     for(const h of withCoords){ const k=h.lat.toFixed(5)+','+h.lng.toFixed(5); if(!groups.has(k)) groups.set(k,[]); groups.get(k).push(h); }
     for(const g of groups.values()) _spreadGroup(g);
     const monthFilter = ebFilter.month|0;   // 0 = pas de filtre mois ; 1-12 = mois précis
+    const ccHs = ebFilter.country || 'FR';   // le pays des hotspots lus, celui de leur rareté
     const MONTH_NAMES = ['','janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
     for(const h of withCoords){
       // En "total" : on utilise numSpeciesAllTime (pas d'enrichissement).
@@ -11727,6 +11728,9 @@ async function _loadHotspotsLayer(region){
         ? `<b>${n}</b> espèces observées ici (all-time)`
         : `<b>${n}</b> espèces ${scope} · <b>${h.mySp}</b> vues par toi · <b>${h.toDo}</b> à cocher${monthTag}`;
       // Liste dépliable, triée par rareté DESC. En mode "total" pas de liste (pas d'enrichissement).
+      // La bulle s'écrit à son ouverture : la rareté y suit le réglage « France / Grand Est » du moment,
+      // sans relire les hotspots (Mathis, 2026-10-29). Elle disait toujours la rareté française, même à l'étranger.
+      const contenu = () => {
       let missingBlock = '';
       if(hotspotSort!=='total' && filteredMiss.length){
         // Fréquence à afficher : département > région > national (même priorité que activeInMonth).
@@ -11751,7 +11755,7 @@ async function _loadHotspotsLayer(region){
         };
         const fmtPct = v => v===null ? '-' : v>=0.01 ? Math.round(v*100)+_PCT : v>=0.0005 ? _fr((v*100).toFixed(1))+_PCT : '<0,1'+_PCT;
         const items = filteredMiss
-          .map(sci => ({ sci, name:FR_NAMES[sci]||sci, w:rarityReal(sci), freq:freqFor(sci) }))
+          .map(sci => ({ sci, name:FR_NAMES[sci]||sci, w:_ctRarete(sci, ccHs), freq:freqFor(sci) }))
           // Tri : plus grandes chances en 1er (utile pour choisir sa cible), rareté DESC pour départager.
           .sort((a,b)=>{
             const af = a.freq==null ? -1 : a.freq, bf = b.freq==null ? -1 : b.freq;
@@ -11761,7 +11765,8 @@ async function _loadHotspotsLayer(region){
           const sc = _sciToCode(it.sci) || '';
           // Ordre : dot > nom > count (grandit dynamiquement, inline) > % (ancré à droite via margin-left:auto).
           // -> le % reste à sa position fixe, le count grandit à sa gauche sans le pousser.
-          return `<li data-sc="${esc(sc)}"><span class="p-dot" style="background:${sciColor(it.sci)}"></span><span>${esc(it.name)}</span><span class="hs-cnt loading" data-cnt>…</span><span class="hs-pct">${esc(fmtPct(it.freq))}</span></li>`;
+          // Le palier en jeton chiffré, celui du reste de la Carte, à la place du point de couleur seul.
+          return `<li data-sc="${esc(sc)}">${tierChip(it.w || '?', _ctCouleur(it.sci, ccHs), { cls:'tier-rond' })}<span>${esc(it.name)}</span><span class="hs-cnt loading" data-cnt>…</span><span class="hs-pct">${esc(fmtPct(it.freq))}</span></li>`;
         }).join('');
         // Source réellement utilisée (département si dispo, sinon région, sinon national) - affichée dans le hint.
         const scope = (dept && REAL_FREQ_MONTHLY_BY_REGION[dept]) ? dept
@@ -11780,10 +11785,11 @@ async function _loadHotspotsLayer(region){
       // Étoile favori (toggle, persistée en Firestore via handler global).
       const isFav = myFavHotspots.has(h.locId);
       const favBtn = myUid ? `<button class="hs-fav${isFav?' on':''}" data-loc="${esc(h.locId)}" title="${isFav?'Retirer des favoris':'Ajouter aux favoris'}">${isFav?'★':'☆'}</button>` : '';
-      m.bindPopup(`<b>🏞️ ${esc(h.locName||h.name||'?')}</b> ${favBtn}`+
+      return `<b>🏞️ ${esc(h.locName||h.name||'?')}</b> ${favBtn}`+
         `<span class="p-meta">${h.subnational2Name?esc(h.subnational2Name)+' · ':''}${esc(h.subnational1Name||'')}${distTag}</span>`+
-        `<span class="p-meta">${cntLine}</span>${missingBlock}<span class="p-meta">${gm} ${tr} ${eb}</span>`,
-        { maxHeight:340, autoPan:true });
+        `<span class="p-meta">${cntLine}</span>${missingBlock}<span class="p-meta">${gm} ${tr} ${eb}</span>`;
+      };
+      m.bindPopup(contenu, { maxHeight:340, autoPan:true });
       // Recherche : nom du hotspot + région/dept + noms fr des espèces manquantes ici
       // (permet à la barre "Filtrer par nom d'espèce" de matcher un hotspot où l'espèce est présente).
       const missNames = filteredMiss.map(sci => FR_NAMES[sci]||sci).join(' ');
@@ -11792,7 +11798,8 @@ async function _loadHotspotsLayer(region){
       // Lazy-load : à l'ouverture du popup, on récupère la date de dernière obs par espèce (cache 3 niveaux)
       // ET le créneau horaire fréquent des sorties à ce hotspot.
       m._hotspotId = h.locId;
-      m.on('popupopen', () => _loadHotspotCounts(m));
+      // La bulle est réécrite à chaque ouverture (contenu) : ses dates se relisent, depuis le cache d'_ebFetch.
+      m.on('popupopen', () => { m._countsLoaded = false; _loadHotspotCounts(m); });
       _lyrHotspots.addLayer(m);
     }
     // Les crans se comptent sur le meilleur des carrés posés : il n'est connu qu'une fois tous posés.
