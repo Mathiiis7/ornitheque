@@ -7293,7 +7293,7 @@ function _updateLegend(){
       `<span class="ml-row"><span class="ct-leg-crans" aria-hidden="true">${[0, 1, 2, 3, 4].map(c => `<span class="ct-hs ct-hs-sym ct-hs-c${c}"></span>`).join('')}</span><span class="ml-txt">Plus le vert est plein, plus il y a à cocher</span></span>` +
       (myUid ? `<span class="ml-row"><span class="ct-hs ct-hs-sym ct-hs-fav" aria-hidden="true">12</span><span class="ml-txt">Un de tes favoris</span></span>` : '') + '</div>');
   }
-  if(carteCouches.has('res')){
+  if(carteCouches.has('res') && _ctFranceOuverte()){
     // Une couleur par type (Mathis, 2026-10-29), le périmètre de protection en tirets.
     parts.push('<div class="ml-title">Réserves</div><div class="ct-leg-formes">' +
       ['RNN', 'RNR', 'CDL'].map(t => `<span class="ml-row"><svg width="16" height="12" viewBox="0 0 16 12" aria-hidden="true"><rect x="1" y="1" width="14" height="10" rx="2" class="ct-res ct-res-${t}"/></svg><span class="ml-txt">${CT_RES_NOMS[t]}</span></span>`).join('') + '</div>');
@@ -9437,6 +9437,10 @@ const _ctPointsDe = l => l && _map && _map.hasLayer(l) ? l.getLayers().filter(m 
 // Les hotspots se lisent par les zones eBird du site (une demande, gardée 7 jours par le relais), puis la
 // liste d'espèces de chacun (12 au plus, les plus riches) : seulement au clic.
 const CT_RES_MAX_HS = 12;
+// Le lien vers la fiche de l'INPN, masqué : depuis la cyberattaque du Muséum (juillet 2025), le site refait
+// répond 404 à toutes les fiches d'espaces protégés (vérifié le 2026-10-29), annoncées « d'ici la fin de
+// l'année ». À remettre à true quand https://inpn.mnhn.fr/espace/protege/FR3600048 répond de nouveau.
+const CT_RES_FICHE_INPN = false;
 async function _ctOuvreReserve(f, latlng){
   const p = f.properties, s = x => x > 1 ? 's' : '';
   const run = ++_ctReserveRun;
@@ -9445,7 +9449,7 @@ async function _ctOuvreReserve(f, latlng){
   const contenu = document.createElement('div');
   contenu.innerHTML = `<p class="ct-hb-t">${esc(p.n)}</p><p class="ct-gl-t ct-hb-s">${esc(infos)}</p>` + (gere ? `<p class="ct-gl-t ct-hb-s">${esc(gere)}</p>` : '') +
     `<div class="ct-rb-hs"></div>` +
-    (p.i ? `<p class="ct-gl-t ct-rb-lien"><a href="https://inpn.mnhn.fr/espace/protege/${esc(p.i)}" target="_blank" rel="noopener">Fiche de la réserve ↗</a></p>` : '');
+    (p.i && CT_RES_FICHE_INPN ? `<p class="ct-gl-t ct-rb-lien"><a href="https://inpn.mnhn.fr/espace/protege/${esc(p.i)}" target="_blank" rel="noopener">Fiche de la réserve ↗</a></p>` : '');
   if(!_ctPopReserve) _ctPopReserve = L.popup({ className:'ct-gl ct-hb ct-rb', maxWidth:320, minWidth:260, autoPanPadding:[24, 24] });
   _ctPopReserve.setLatLng(latlng).setContent(contenu).openOn(_map);
   const boite = contenu.querySelector('.ct-rb-hs');
@@ -9499,7 +9503,10 @@ document.addEventListener('click', e => {
 function _ctDessineCouches(){
   const box = document.getElementById('ctCouches'); if(!box) return;
   box.innerHTML = CARTE_COUCHES.map(([k, nom]) =>
-    `<button type="button" class="ct-couche" data-couche="${k}" aria-pressed="${carteCouches.has(k)}">${_ctSymbole(k)}${esc(nom)}</button>`).join('');
+    // Hors de France, la pastille des réserves se grise et dit pourquoi, comme le crayon sans pays.
+    k === 'res' && !_ctFranceOuverte()
+      ? `<button type="button" class="ct-couche" data-couche="${k}" aria-pressed="false" aria-disabled="true" data-tip="Les réserves sont françaises : ouvre la France">${_ctSymbole(k)}${esc(nom)}</button>`
+      : `<button type="button" class="ct-couche" data-couche="${k}" aria-pressed="${carteCouches.has(k)}">${_ctSymbole(k)}${esc(nom)}</button>`).join('');
 }
 const _ctFrance = () => (ebFilter.country || 'FR') === 'FR';
 const _ctModeBouton = mode => document.querySelector(`#mapModes button[data-mode="${mode}"]`);
@@ -9567,7 +9574,8 @@ function _ctAppliqueCouches(){
   for(const [k, l] of Object.entries(couches)){
     if(!l) continue;
     // Un pays entier montre sa liste, pas ses points : seule l'espèce dépliée a les siens (_lyrDeplie).
-    const on = carteCouches.has(k) && !(k === 'recent' && (detail || _ctRecSansPoints()));
+    // Les réserves sont françaises : seulement la France ouverte (Mathis, 2026-10-29). Le choix reste retenu.
+    const on = carteCouches.has(k) && !(k === 'recent' && (detail || _ctRecSansPoints())) && (k !== 'res' || _ctFranceOuverte());
     if(on && !_map.hasLayer(l) && l.getLayers().length) l.addTo(_map);
     if(!on && _map.hasLayer(l)) _map.removeLayer(l);
   }
@@ -9587,6 +9595,7 @@ function _ctAppliqueCouches(){
     if(!on && _map.hasLayer(l)) _map.removeLayer(l);
   }
   if(ajoute) _ctSurligne();
+  if(_ctPopReserve && !_ctFranceOuverte() && _map.hasLayer(_ctPopReserve)) _map.closePopup(_ctPopReserve);
   _ctMajVoile();
   _mapApplyFilter();
   _updateLegend();
@@ -10240,6 +10249,7 @@ document.addEventListener('click', e => {
   const c = e.target.closest('#ctCouches [data-couche]');
   if(c){
     const k = c.dataset.couche;
+    if(c.getAttribute('aria-disabled') === 'true') return;
     if(carteCouches.has(k)){ carteCouches.delete(k); _ctAppliqueCouches(); return; }
     // Les réserves n'ont pas d'onglet : elles se chargent, puis se posent.
     if(k === 'res'){ _ctAllume(k); _ctAppliqueCouches(); _ctChargeReserves(); return; }
@@ -10362,6 +10372,7 @@ let _ctRecListes = null;         // { lues, total, reste, coupes } quand la cart
 // qu'une fois tout lu, et jamais si le relais ne répondait pas (« je le vois pas à chaque fois »,
 // Mathis, 2026-10-23).
 let _ctRecListesEtat = '';
+const CT_LISTES_REESSAIS_MS = [20e3, 60e3, 180e3];
 const _ctUrlRecent = (z, days) => `https://api.ebird.org/v2/data/obs/${z}/recent?back=${days}&maxResults=10000&includeProvisional=true`;
 const _ctUrlEspece = (z, code, days) => `https://api.ebird.org/v2/data/obs/${z}/recent/${code}?back=${days}&includeProvisional=true`;
 // Toutes les listes d'un département ou d'une région, en une réponse du relais (pas une route d'eBird :
@@ -10612,7 +10623,22 @@ async function _loadMissingLayer(zones, days){
     if(petite || regionFr){
       _ctRecListesEtat = 'lecture'; _ctDessinePanneau();
       if(await _ctLireListes(tour, zones, days, cc, reponses.flat(), especes)) return;
-      if(tour === _ctRecTour){ _ctRecListesEtat = 'echec'; _ctDessinePanneau(); }
+      if(tour !== _ctRecTour) return;
+      // Un refus d'eBird (429 : la clé est partagée par tous, trop de demandes à la fois) ne dure que quelques
+      // secondes à quelques minutes : la Loire-Atlantique tombait sur « une observation par espèce » et y
+      // restait, alors que la même demande passait deux minutes après (Mathis, 2026-10-29). Le secours
+      // s'affiche, et les listes se redemandent en fond, à 20 s, 1 min puis 3 min ; réussies, elles le
+      // remplacent (_ctLireListes repose tous les points).
+      _ctRecListesEtat = 'echec'; _ctDessinePanneau();
+      await details();
+      for(const attente of CT_LISTES_REESSAIS_MS){
+        await new Promise(r => setTimeout(r, attente));
+        if(tour !== _ctRecTour) return;
+        if(await _ctLireListes(tour, zones, days, cc, reponses.flat(), especes)) return;
+        if(tour !== _ctRecTour) return;
+      }
+      _ctRecListesEtat = 'echec-fin'; _ctDessinePanneau();
+      return;
     }
     if(tour === _ctRecTour) await details();
   })();
@@ -10978,7 +11004,8 @@ function _ctListeRecent(){
       (L_.reste ? `, ${L_.reste} pas encore lue${s(L_.reste)}` : '') + '.' + (coupes.length ? ' ' + coupes.join(' ; ') + '.' : ''))
     : gbif ? ''
     : _ctRecListesEtat === 'lecture' ? note('lecture des listes…', 'Lecture de toutes les listes de la zone. En attendant : la dernière observation de chaque espèce.')
-    : _ctRecListesEtat === 'echec' ? note('une observation par espèce', 'Les listes n\'ont pas répondu : la dernière observation de chaque espèce seulement, et tous les lieux des plus rares.')
+    : _ctRecListesEtat === 'echec' ? note('une observation par espèce, nouvel essai en cours', 'eBird n\'a pas rendu les listes (il limite les demandes quand il y en a trop à la fois) : en attendant, la dernière observation de chaque espèce et tous les lieux des plus rares. Les listes sont redemandées toutes seules et remplacent cet affichage dès qu\'elles arrivent.')
+    : _ctRecListesEtat === 'echec-fin' ? note('une observation par espèce', 'eBird n\'a pas rendu les listes, même après trois nouveaux essais : la dernière observation de chaque espèce seulement, et tous les lieux des plus rares. Rechoisis la zone pour réessayer.')
     : _ctPaysEntier(_ctRecZones) ? note('déplie une espèce pour voir ses points', 'Le pays entier : sa liste seulement. La flèche d\'une espèce montre tous ses points sur la carte ; une région cliquée montre tous les siens.')
     : note('une observation par espèce', 'La dernière observation de chaque espèce, et tous les lieux des plus rares.');
   box.innerHTML = `<p class="ct-compte">${tete}${source}</p>${cherche ? '' : '<p class="ct-petit">Les plus rares d\'abord</p>'}${vus.map(rang).join('')}` +

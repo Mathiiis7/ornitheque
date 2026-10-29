@@ -2672,6 +2672,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-res-RNR { fill:var(--res-RNR); stroke:var(--res-RNR); }
   .ct-res-CDL { fill:var(--res-CDL); stroke:var(--res-CDL); }
   .ct-res.ct-res-p { fill-opacity:0; stroke-dasharray:5 4; }
+  .ct-couche[aria-disabled="true"] { opacity:.45; cursor:not-allowed; }
   .ct-res-sym { fill:color-mix(in srgb, var(--res-RNN) 35%, var(--surface)); stroke:var(--res-RNN); stroke-width:2; }
   .ct-gl.ct-rb .ct-hb-it { margin-top:8px; }
   .ct-rb-liste { max-height:270px; overflow:auto; overscroll-behavior:contain; }
