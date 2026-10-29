@@ -10654,10 +10654,8 @@ function _ctListeHot(){
   const box = document.getElementById('ctListeHot'); if(!box) return;
   const hs = []; if(_lyrHotspots) _lyrHotspots.eachLayer(m => { if(m._hs) hs.push(m); });
   if(!hs.length){
-    // Rien de choisi : le même encadré que le Récent (Mathis, 2026-10-28), plutôt qu'une ligne en bas.
-    const clic = _ctAuDoigt.matches ? 'touche' : 'clique';
-    box.innerHTML = !_ctPaysOuvert && !ebFilter.polygon
-      ? `<div class="ct-vide"><b>Choisis un pays</b>Les hotspots se chargent zone par zone : ${clic} un pays sur la carte, puis une de ses régions, ou dessine ta zone.</div>` : '';
+    // Rien de choisi : plus d'encadré qui demande de choisir une zone (Mathis, 2026-10-29), la carte le dit.
+    box.innerHTML = '';
     return;
   }
   const total = hotspotSort === 'total', s = n => n > 1 ? 's' : '';
@@ -10696,15 +10694,8 @@ function _ctListeRecent(){
   const sansZone = cc === 'FR' && !ebFilter.polygon && !ebFilter.dept && (gbif || ((!ebFilter.region || ebFilter.region === 'FR') && !_ctFranceOuverte()));
   if(sansZone){
     // Sur la France, on choisit d'abord une région (2026-10-23) ; GBIF, lui, attend un de ses départements.
-    const clic = _ctAuDoigt.matches ? 'touche' : 'clique', region = _ctRegionChoisie();
-    // À l'arrivée, la carte ne montre que les pays (2026-10-24) : on commence par en choisir un.
-    if(!_ctPaysOuvert && !region){
-      box.innerHTML = `<div class="ct-vide"><b>Choisis un pays</b>${gbif ? 'Les années passées se lisent' : 'Ce qui a été vu récemment se charge'} zone par zone : ${clic} un pays sur la carte, puis une de ses régions, ou dessine ta zone.</div>`;
-      return;
-    }
-    box.innerHTML = region
-      ? `<div class="ct-vide"><b>Choisis un département</b>Les années passées se lisent département par département : ${clic} un département de la région sur la carte, ou dessine ta zone.</div>`
-      : `<div class="ct-vide"><b>Choisis une région</b>${gbif ? 'Les années passées se lisent' : 'Ce qui a été vu récemment se charge'} zone par zone : ${clic} une région sur la carte, puis${gbif ? '' : ' si tu veux'} un de ses départements, ou dessine ta zone.</div>`;
+    // Plus d'encadré qui le demande (Mathis, 2026-10-29) : la liste reste vide, la bulle de la carte guide.
+    box.innerHTML = '';
     return;
   }
   if(_ctRecCharge){ box.innerHTML = ''; return; }
@@ -10849,7 +10840,7 @@ function _ctSyncPortee(){
   const texte = zf ? (active ? (nomRegroupe ? `Rareté mesurée sur les listes de la zone plus large « ${nomRegroupe} », qui contient ${_ctNomZone().nom}.`
       : '') : '')   // « Zone » allumé le dit déjà (Mathis, 2026-10-28)
     : ebFilter.polygon ? 'Une zone dessinée n\'a pas de mesure à elle : rareté du pays.'
-    : !zone ? 'Choisis une région ou un département pour mesurer la rareté dans la zone.'
+    : !zone ? ''
     : !REAL_FREQ_MONTHLY_BY_REGION_MULTI[cc] ? 'Mesure de la zone… chargement'
     : 'Pas de mesure pour cette zone : rareté du pays.';
   for(const boite of boites){
