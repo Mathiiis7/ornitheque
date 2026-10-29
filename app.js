@@ -9037,7 +9037,8 @@ document.addEventListener('click', e=>{
 // Les sites protégés arrivent à l'étape 4 de la refonte, les hotspots en carrés à l'étape 3.
 const CARTE_ONGLET_MODE = { recent:'missing', hot:'hotspots', ligue:'mine' };
 const CARTE_MODE_ONGLET = { missing:'recent', hotspots:'hot', mine:'ligue' };
-const CARTE_COUCHES = [['ligue', 'La ligue'], ['recent', 'Vu récemment'], ['hot', 'Hotspots']];
+// Même ordre que les onglets du panneau : Récent, Ligue, Hotspots (Mathis, 2026-10-29).
+const CARTE_COUCHES = [['recent', 'Vu récemment'], ['ligue', 'La ligue'], ['hot', 'Hotspots']];
 const CARTE_FRANCE = [[41.3, -5.2], [51.2, 9.7]];
 let carteTiroir = 'bas';            // téléphone : bas, mi, haut
 let _ctCadreFait = false;        // la première ouverture se cadre sur la France
@@ -9057,7 +9058,11 @@ const _ctZonesPromesses = {};
 // Kosovo. Un clic y ouvre le Récent du pays. (Le Danemark a ses 13 zones depuis le 2026-10-24, tirées
 // des communes de geoBoundaries.)
 const CT_PAYS_SANS_ZONES = new Set(['FO', 'MT', 'XK']);
-const _ctPaysCliquable = cc => !!(cc && COUNTRIES_REG[cc]);
+// Jersey, Guernesey et l'île de Man : des pays à part pour eBird et Natural Earth, mais trois zones du
+// Royaume-Uni pour le site, qui compte leurs listes dans sa rareté (ABSORBE, build-rarity-multi-country).
+// Cliquer leur forme ouvre le Royaume-Uni sur elles (Mathis, 2026-10-29 : elles ne se cliquaient pas).
+const CT_DEPENDANCES = { JE:'GB', GG:'GB', IM:'GB' };
+const _ctPaysCliquable = cc => !!(cc && (COUNTRIES_REG[cc] || CT_DEPENDANCES[cc]));
 const _ctFranceOuverte = () => _ctPaysOuvert === 'FR';
 // Les formes où se lit la zone choisie : les départements en France, les régions ailleurs.
 const _ctCalqueZones = () => _ctFranceOuverte() ? _lyrDeps : (_ctPaysOuvert && _ctZonesCc === _ctPaysOuvert ? _lyrZones : null);
@@ -9512,7 +9517,9 @@ function _ctMajVoile(){
   // (Mathis, 2026-10-29).
   else if(_ctPaysOuvert && _lyrPays){
     _lyrPays.eachLayer(l => {
-      if(l.feature?.properties?.cc !== _ctPaysOuvert) return;
+      // Le Royaume-Uni découvre aussi Jersey, Guernesey et l'île de Man, ses zones sur le site.
+      const c = l.feature?.properties?.cc;
+      if(c !== _ctPaysOuvert && CT_DEPENDANCES[c] !== _ctPaysOuvert) return;
       const g = l.feature.geometry;
       for(const p of (g.type === 'Polygon' ? [g.coordinates] : g.coordinates)) trous.push(p[0].map(([x, y]) => [y, x]));
     });
@@ -9644,7 +9651,7 @@ async function _ctChargePays(){
 // Les régions d'un pays étranger, lues à son premier clic.
 function _ctChargeZones(cc){
   if(cc === 'FR' || CT_PAYS_SANS_ZONES.has(cc)) return Promise.resolve(null);
-  if(!(cc in _ctZonesPromesses)) _ctZonesPromesses[cc] = fetch(`data/carte-zones/${cc.toLowerCase()}.json?v=20261029`).then(r => r.ok ? r.json() : null)
+  if(!(cc in _ctZonesPromesses)) _ctZonesPromesses[cc] = fetch(`data/carte-zones/${cc.toLowerCase()}.json?v=20261029b`).then(r => r.ok ? r.json() : null)
     .then(geo => { if(geo) for(const f of geo.features) if(f.properties.zones) _ctGroupes[f.properties.ebird] = f.properties.zones; return geo; })
     .catch(() => null);
   return _ctZonesPromesses[cc];
@@ -9684,31 +9691,42 @@ function _ctCadrePays(cc){
 }
 // Un clic sur un pays : il devient le pays de la Carte (pas celui du site : le Birdydex et le Classement
 // ne bougent pas), ses régions s'affichent ; dans le Récent, le résumé du pays se charge (une requête).
-async function _ctOuvrePays(cc){
+// zone : la zone à choisir d'emblée (une dépendance de la Couronne, ouverte depuis sa forme).
+async function _ctOuvrePays(cc, zone = ''){
+  if(CT_DEPENDANCES[cc]) return _ctOuvrePays(CT_DEPENDANCES[cc], cc);
   if(!_ctPaysCliquable(cc)) return;
   if(ebFilter.polygon) _drawClear(false);
   const change = cc !== (ebFilter.country || 'FR');
   _ctPaysOuvert = cc;
-  ebFilter.country = cc; ebFilter.region = cc; ebFilter.dept = '';
+  ebFilter.country = cc; ebFilter.region = zone || cc; ebFilter.dept = '';
   _loaded.missing = ''; _loaded.hotspots = '';
   // L'onglet ouvert reste ouvert : le mode ne change qu'à la main (Mathis, 2026-10-26 ; passé de la
   // Namibie à la France, on retombait sur la Ligue sans l'avoir demandé). Le Récent d'un pays coûte une
   // requête, France comprise ; ses Hotspots, 100 au plus (_loadHotspotsLayer).
   _ctGardeCoucheDuMode();
-  if(change) _repopulateEbRegionsForCountry(cc).catch(() => {}).finally(() => _ctSyncFiltres());
+  // Le menu des régions remet la région sur le pays entier : une zone demandée (Jersey) se reprend après.
+  if(change) _repopulateEbRegionsForCountry(cc).catch(() => {}).finally(() => {
+    if(zone && _ctPaysOuvert === cc){ ebFilter.region = zone; ebFilter.dept = ''; _ctSurligne(); _ctCadreZone(); renderMap(); _reloadSpeciesForZone(); }
+    _ctSyncFiltres();
+  });
   else {
-    const rs = document.getElementById('mapEbRegion'); if(rs) rs.value = cc;
+    const rs = document.getElementById('mapEbRegion'); if(rs) rs.value = zone || cc;
     if(cc === 'FR') _refreshDeptSel(); else _repopulateEbDeptsForRegion(cc);
   }
   if(_ctTel.matches && carteTiroir === 'bas') carteTiroir = 'mi';
   _ctCadrePays(cc);
   _ctCadreFait = true;
   if(CT_PAYS_SANS_ZONES.has(cc)) _ctSurligne();
-  renderMap(); _reloadSpeciesForZone();
+  // Une zone demandée dans un nouveau pays se lit une fois le menu des régions refait (plus haut) : lire
+  // d'abord le pays entier coûterait une demande à eBird pour rien.
+  if(!(change && zone)){ renderMap(); _reloadSpeciesForZone(); }
   // Sans régions sur la carte, rien à poser de plus.
   if(CT_PAYS_SANS_ZONES.has(cc)) return;
   const geo = await _ctChargeZones(cc);
-  if(geo && _ctPaysOuvert === cc) _ctPoseZones(cc, geo);
+  if(geo && _ctPaysOuvert === cc){
+    _ctPoseZones(cc, geo);
+    if(zone && ebFilter.region === zone){ _ctCadreZone(); _ctMajVoile(); }
+  }
 }
 function _ctPoseZones(cc, geo){
   if(!_map) return;
@@ -10003,7 +10021,9 @@ function _ctNomZone(){
   const optTxt = id => { const sel = document.getElementById(id); return sel && sel.selectedIndex >= 0 ? (sel.options[sel.selectedIndex].textContent || '').replace(/\s*\([0-9A-Z]+\)$/, '') : ''; };
   if(ebFilter.polygon) return { nom:'Ta zone', meta:'Dessinée sur la carte', ariane:'pays' };
   if(ebFilter.dept) return { nom:DEPT_NAMES[ebFilter.dept] || optTxt('mapEbDept') || ebFilter.dept, meta:'', ariane:'region' };
-  if(ebFilter.region && ebFilter.region !== cc) return { nom:REGION_NAMES[ebFilter.region] || optTxt('mapEbRegion') || ebFilter.region, meta:'', ariane:'pays' };
+  // Le nom du contour d'abord pour une zone sans entrée dans le menu (Jersey, Guernesey, l'île de Man).
+  const contour = c => { let n = ''; if(_lyrZones) _lyrZones.eachLayer(l => { if(l.feature?.properties?.ebird === c) n = l.feature.properties.nom; }); return n; };
+  if(ebFilter.region && ebFilter.region !== cc) return { nom:REGION_NAMES[ebFilter.region] || (CT_DEPENDANCES[ebFilter.region] && contour(ebFilter.region)) || optTxt('mapEbRegion') || ebFilter.region, meta:'', ariane:'pays' };
   // Plus de mode d'emploi sous le titre : la carte montre déjà quoi toucher (Mathis, 2026-10-28).
   if(!_ctPaysOuvert) return { nom:'Tous les pays', meta:'', ariane:'' };
   return { nom:countryLabel(cc), meta:'', ariane:'monde' };

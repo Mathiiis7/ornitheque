@@ -162,12 +162,16 @@ const GB_NIR_RATTACHES = new Set(Object.entries(GB_NOM_EXPLICITE).filter(([, c])
 // Londres, et eBird n'en fait qu'une zone.
 const GB_REGION_EXPLICITE = { 'Greater London':'GB-ENG-LND' };
 const DEPENDANCES_GB = new Set(['JE', 'GG', 'IM']);
+// Leurs noms sur la Carte : Natural Earth les donne en anglais (« Isle of Man »).
+const NOMS_DEPENDANCES = { JE:'Jersey', GG:'Guernesey', IM:'Île de Man' };
 const GB_PAR_NOM = new Map([["bedfordshire","GB-ENG-BDF"],["berkshire","GB-ENG-BRC"],["bristol","GB-ENG-BST"],["buckinghamshire","GB-ENG-BKM"],["cambridgeshire","GB-ENG-CAM"],["cheshire","GB-ENG-CHS"],["cornwall","GB-ENG-CON"],["cumbria","GB-ENG-CMA"],["derbyshire","GB-ENG-DBY"],["devon","GB-ENG-DEV"],["dorset","GB-ENG-DOR"],["durham","GB-ENG-DUR"],["east riding of yorkshire","GB-ENG-ERY"],["east sussex","GB-ENG-ESX"],["essex","GB-ENG-ESS"],["gloucestershire","GB-ENG-GLS"],["halton","GB-ENG-HAL"],["hampshire","GB-ENG-HAM"],["herefordshire","GB-ENG-HEF"],["hertfordshire","GB-ENG-HRT"],["isle of wight","GB-ENG-IOW"],["kent","GB-ENG-KEN"],["lancashire","GB-ENG-LAN"],["leicestershire","GB-ENG-LEC"],["lincolnshire","GB-ENG-LIN"],["london","GB-ENG-LND"],["manchester","GB-ENG-MAN"],["merseyside","GB-ENG-KWL"],["norfolk","GB-ENG-NFK"],["north yorkshire","GB-ENG-NYK"],["northamptonshire","GB-ENG-NTH"],["northumberland","GB-ENG-NBL"],["nottinghamshire","GB-ENG-NTT"],["oxfordshire","GB-ENG-OXF"],["rutland","GB-ENG-RUT"],["shropshire","GB-ENG-SHR"],["somerset","GB-ENG-SOM"],["south yorkshire","GB-ENG-BNS"],["staffordshire","GB-ENG-STS"],["stockton-on-tees","GB-ENG-STT"],["suffolk","GB-ENG-SFK"],["surrey","GB-ENG-SRY"],["tyne and wear","GB-ENG-GAT"],["warwickshire","GB-ENG-WAR"],["west midlands","GB-ENG-SAW"],["west sussex","GB-ENG-WSX"],["west yorkshire","GB-ENG-WKF"],["wiltshire","GB-ENG-WIL"],["worcestershire","GB-ENG-WOR"],["aberdeen","GB-SCT-ABE"],["aberdeenshire","GB-SCT-ABD"],["angus","GB-SCT-ANS"],["argyll and bute","GB-SCT-AGB"],["clackmannanshire","GB-SCT-CLK"],["dumfries and galloway","GB-SCT-DGY"],["dundee","GB-SCT-DND"],["east ayrshire","GB-SCT-EAY"],["east dunbartonshire","GB-SCT-EDU"],["east lothian","GB-SCT-ELN"],["edinburgh","GB-SCT-EDH"],["eilean siar","GB-SCT-ELS"],["falkirk","GB-SCT-FAL"],["fife","GB-SCT-FIF"],["glasgow","GB-SCT-GLG"],["highland","GB-SCT-HLD"],["midlothian","GB-SCT-MLN"],["moray","GB-SCT-MRY"],["north ayrshire","GB-SCT-NAY"],["north lanarkshire","GB-SCT-NLK"],["orkney islands","GB-SCT-ORK"],["perthshire and kinross","GB-SCT-PKN"],["renfrewshire","GB-SCT-RFW"],["scottish borders","GB-SCT-SCB"],["shetland islands","GB-SCT-ZET"],["south ayrshire","GB-SCT-SAY"],["south lanarkshire","GB-SCT-SLK"],["stirling","GB-SCT-STG"],["west dunbartonshire","GB-SCT-WDU"],["west lothian","GB-SCT-WLN"],["anglesey","GB-WLS-AGY"],["blaenau gwent","GB-WLS-BGW"],["bridgend","GB-WLS-BGE"],["caerphilly","GB-WLS-CAY"],["cardiff","GB-WLS-CRF"],["carmarthenshire","GB-WLS-CMN"],["ceredigion","GB-WLS-CGN"],["conwy","GB-WLS-CWY"],["denbighshire","GB-WLS-DEN"],["flintshire","GB-WLS-FLN"],["gwynedd","GB-WLS-GWN"],["merthyr tydfil","GB-WLS-MTY"],["monmouthshire","GB-WLS-MON"],["neath port talbot","GB-WLS-NTL"],["newport","GB-WLS-NWP"],["pembrokeshire","GB-WLS-PEM"],["powys","GB-WLS-POW"],["rhondda, cynon, taff","GB-WLS-RCT"],["swansea","GB-WLS-SWA"],["torfaen","GB-WLS-TOF"],["vale of glamorgan","GB-WLS-VGL"],["wrexham","GB-WLS-WRX"],["antrim","GB-NIR-ANT"],["armagh","GB-NIR-ARM"],["belfast","GB-NIR-BFS"],["derry","GB-NIR-DRY"],["down","GB-NIR-DOW"],["fermanagh","GB-NIR-FER"],["newry and mourne","GB-NIR-NYM"],["omagh","GB-NIR-OMH"]]);
 function resolveGB(props){
   const n = (props.name || '').toLowerCase();
   // Dependances de la Couronne, recopiees depuis le fichier admin-0 par
   // ajouter-dependances-gb.mjs : elles portent deja leur code de zone.
   if(DEPENDANCES_GB.has(props.iso_3166_2)) return props.iso_3166_2;
+  // Ou telles que le fichier admin-1 les range, en pays à part (JE-X01~) : leur code ISO de pays.
+  if(CARTE && DEPENDANCES_GB.has(props.iso_a2)) return props.iso_a2;
   if(GB_PAR_NOM.has(n)) return GB_PAR_NOM.get(n);
   const r = (props.region || '').toLowerCase();
   if(GB_PAR_NOM.has(r)) return GB_PAR_NOM.get(r);
@@ -924,6 +928,9 @@ const COUNTRIES = filter ? filter.split(',').map(s => s.trim().toUpperCase()) : 
 // (une frontière commune, une côte), chaque morceau est simplifié UNE fois, dans un sens fixé, et repris
 // tel quel par chacune des zones qui le partagent. Natural Earth donne les mêmes sommets des deux côtés
 // d'une frontière, c'est ce qui permet de les reconnaître.
+// Les dépendances britanniques, petites îles sans voisine, gardent un trait plus fin : à la tolérance du
+// Royaume-Uni (0,011°, un kilomètre), Jersey n'avait plus que six sommets, un trapèze à l'écran.
+const TOL_DEPENDANCES = 0.002;
 function simplifierEnPartage(parBase, tol){
   const cle = ([x, y]) => x.toFixed(7) + ',' + y.toFixed(7);
   const qui = new Map();   // sommet -> zones qui y passent
@@ -951,7 +958,7 @@ function simplifierEnPartage(parBase, tol){
       const coupes = [];
       for(let i = 0; i < n; i++) if(sg[i] !== sg[(i + n - 1) % n] || sg[i] !== sg[(i + 1) % n]) coupes.push(i);
       // Sans voisine (une île), l'anneau entier, comme avant.
-      if(!coupes.length) return douglasPeucker([...ring, ring[0]], tol);
+      if(!coupes.length) return douglasPeucker([...ring, ring[0]], DEPENDANCES_GB.has(code) ? TOL_DEPENDANCES : tol);
       const res = [];
       for(let c = 0; c < coupes.length; c++){
         const i = coupes[c], j = coupes[(c + 1) % coupes.length];
@@ -1003,8 +1010,12 @@ for(const cc of COUNTRIES){
   // Le second test rattrape les regions que Natural Earth range sous un autre pays que
   // celui qui les code : la Crimee et Sebastopol y sont sous adm0_a3 = RUS alors qu'eBird
   // les appelle UA-43 et UA-40.
+  // Jersey, Guernesey et l'île de Man sont dans ce fichier au 1:10 M (47 à 73 sommets, contre 7 à 15 dans
+  // le fichier des pays au 1:50 M), rangées comme des pays à part (JEY, GGY, IMN) : on les reprend pour
+  // le Royaume-Uni. Guernesey y s'appelle « Sark » mais porte bien Guernesey, Sercq et Aurigny.
   let feats = raw.features.filter(f => f.properties.adm0_a3 === a3
-    || (f.properties.iso_3166_2 || '').startsWith(cc + '-'));
+    || (f.properties.iso_3166_2 || '').startsWith(cc + '-')
+    || (cc === 'GB' && CARTE && DEPENDANCES_GB.has(f.properties.iso_a2)));
   // Danemark en --carte : Natural Earth n'a que ses 5 régions, eBird en compte 13. On prend les 98
   // communes de geoBoundaries (domaine public, notes-privees/contours-monde/), rattachées par leur nom
   // aux communes d'eBird, dont le code nomme la zone parente (DK-07-01 -> DK-07). Le dissolve efface
@@ -1028,7 +1039,7 @@ for(const cc of COUNTRIES){
   const res = buildCountry(feats, cc);
   if(!res){ console.warn(`${cc} : aucune region resolue sur ${feats.length} features.`); continue; }
   if(CARTE){
-    const noms = Object.fromEntries(Object.entries(res.out).map(([c, v]) => [c, v.name]));
+    const noms = Object.fromEntries(Object.entries(res.out).map(([c, v]) => [c, NOMS_DEPENDANCES[c] || v.name]));
     // Un groupe prend son nom dans zones-agregees.json (pas celui de son premier comté), et la liste de
     // ses zones eBird : ce sont elles que la Carte interroge, eBird ne connaît pas le groupe.
     const groupes = {};
