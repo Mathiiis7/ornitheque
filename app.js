@@ -1859,9 +1859,16 @@ const ANNEES_PRESENCE = {"AU":{"struthio camelus":8,"casuarius casuarius":8,"dro
 // Sans donnee pour un pays, on ne filtre pas : mieux vaut un catalogue trop large qu'un
 // catalogue ampute par une absence de mesure.
 const _MIN_ANNEES_CATALOGUE = 3;
+// « Le pays a-t-il sa table ? », su une fois par pays : Object.keys d'une table de plus de mille espèces à
+// chaque appel, appelé des milliers de fois par geste, prenait la moitié du temps bloqué de la Carte
+// (476 à 896 ms par clic de zone, processeur ralenti 4 fois, outils/verif/_perf-carte.mjs, 2026-10-29).
+const _anneesPleines = new Map();
 function _estReguliere(sci, cc){
   const parPays = (typeof ANNEES_PRESENCE === 'object') ? ANNEES_PRESENCE[cc || 'FR'] : null;
-  if(!parPays || !Object.keys(parPays).length) return true;
+  if(!parPays) return true;
+  let plein = _anneesPleines.get(parPays);
+  if(plein === undefined){ plein = Object.keys(parPays).length > 0; _anneesPleines.set(parPays, plein); }
+  if(!plein) return true;
   const k = (sci || '').trim().toLowerCase();
   const n = parPays[k] != null ? parPays[k] : parPays[(typeof SCI_ALIAS === 'object' && SCI_ALIAS[k]) || k];
   return (n || 0) >= _MIN_ANNEES_CATALOGUE;
@@ -9260,6 +9267,21 @@ let _ctPopGrappe = null, _ctGrappeOuverte = null;
 // deplie : une liste d'une seule espèce s'ouvre sur ses observations.
 function _ctListeGrappe(c, deplie){
   if(!_map) return;
+  const html = _ctListeHtml(c.getAllChildMarkers(), deplie);
+  if(!_ctPopGrappe) _ctPopGrappe = L.popup({ className:'ct-gl', maxWidth:300, minWidth:220, autoPanPadding:[24, 24], closeButton:true });
+  _ctGrappeOuverte = c;
+  // Un élément, pas du texte : update() (après un dépliage) le garde tel quel, dépliages compris ;
+  // à partir d'un texte, Leaflet le réécrivait et la liste se refermait.
+  const contenu = document.createElement('div'); contenu.innerHTML = html;
+  // La pointe de la bulle s'arrête au bord de l'anneau : posée sur le centre, elle mordait le haut de
+  // l'anneau d'un triangle blanc (Mathis, 2026-10-26). 7 : le décalage par défaut de Leaflet.
+  const h = c._icon ? c._icon.offsetHeight : 34;
+  _ctPopGrappe.options.offset = L.point(0, 7 - h / 2 - 2);
+  _ctPopGrappe.setLatLng(c.getLatLng()).setContent(contenu).openOn(_map);
+}
+// La liste des espèces d'un groupe de points (une grappe, ou ceux d'une réserve, 2026-10-29), la plus rare
+// en tête, chacune dépliable sur ses observations.
+function _ctListeHtml(marqueurs, deplie){
   const parSp = new Map(), s = n => n > 1 ? 's' : '';
   // Chaque observation du point, pour le détail : date, lieu, nombre d'oiseaux (Récent) ; qui, quand,
   // où (ligue). Le nom de l'observateur eBird n'est jamais repris (docs/carte-donnees.md).
@@ -9269,7 +9291,7 @@ function _ctListeGrappe(c, deplie){
     const quand = d => r.gbif ? _ctDateCourte(d) : _ctIlYa(d);
     return (r.toutes || [{ date:r.date, nb:r.nb, nv:r.nv }]).map(t => ({ quand:quand(t.date), tri:t.date || '', lieu:r.lieu || '', nb:t.nb || 0, nv:!!t.nv }));
   };
-  for(const m of c.getAllChildMarkers()){
+  for(const m of marqueurs){
     const nom = m._rec ? m._rec.nom : (m._common || m._sciName || '?');
     const obsPt = detailDe(m), k = obsPt.length || 1;
     const d = parSp.get(nom);
@@ -9305,16 +9327,7 @@ function _ctListeGrappe(c, deplie){
       // nulle part (Mathis, 2026-10-26).
       `${e.obs.length ? `<button type="button" class="ct-gl-n" aria-expanded="${ouvre}" title="${e.n > 1 ? `Voir les ${e.n} observations` : 'Voir l\'observation'}">${e.n > 1 && !e.qui.size ? `×${e.n} ` : ''}<span aria-hidden="true">▾</span></button>` : ''}</div>` +
       (e.obs.length ? detailHtml(e) : '')).join('')}</div>`;
-  if(!_ctPopGrappe) _ctPopGrappe = L.popup({ className:'ct-gl', maxWidth:300, minWidth:220, autoPanPadding:[24, 24], closeButton:true });
-  _ctGrappeOuverte = c;
-  // Un élément, pas du texte : update() (après un dépliage) le garde tel quel, dépliages compris ;
-  // à partir d'un texte, Leaflet le réécrivait et la liste se refermait.
-  const contenu = document.createElement('div'); contenu.innerHTML = html;
-  // La pointe de la bulle s'arrête au bord de l'anneau : posée sur le centre, elle mordait le haut de
-  // l'anneau d'un triangle blanc (Mathis, 2026-10-26). 7 : le décalage par défaut de Leaflet.
-  const h = c._icon ? c._icon.offsetHeight : 34;
-  _ctPopGrappe.options.offset = L.point(0, 7 - h / 2 - 2);
-  _ctPopGrappe.setLatLng(c.getLatLng()).setContent(contenu).openOn(_map);
+  return html;
 }
 document.addEventListener('click', e => {
   const t = e.target.closest('.ct-gl-n');
@@ -9384,7 +9397,7 @@ let _lyrReserves = null, _ctReservesPromesse = null, _ctPopReserve = null, _ctRe
 const CT_RES_NOMS = { RNN:'Réserve naturelle nationale', RNR:'Réserve naturelle régionale', CDL:'Conservatoire du littoral' };
 function _ctChargeReserves(){
   if(!_map) return;
-  if(!_ctReservesPromesse) _ctReservesPromesse = fetch('data/reserves-fr.json?v=20261029').then(r => r.ok ? r.json() : null).catch(() => null)
+  if(!_ctReservesPromesse) _ctReservesPromesse = fetch('data/reserves-fr.json?v=20261029b').then(r => r.ok ? r.json() : null).catch(() => null)
     .then(geo => {
       if(!geo || !_map) return;
       if(!_map.getPane('ctReserves')) _map.createPane('ctReserves').style.zIndex = 380;
@@ -9397,12 +9410,30 @@ function _ctChargeReserves(){
     });
   return _ctReservesPromesse;
 }
-const _ctResDans = (f, lat, lng) => f.geometry.coordinates.some(p => {
+// Dedans, ou à moins de 200 m du bord : un hotspot posé sur la digue ou le parking d'une réserve, une
+// observation notée au bord de l'étang, comptaient dehors (Mathis, 2026-10-29). Le tracé est d'ailleurs
+// simplifié à 100 m près.
+const CT_RES_MARGE_M = 200;
+function _ctResDans(f, lat, lng){
+  const rings = f.geometry.coordinates;
   const dans = r => { let c = false; for(let i = 0, j = r.length - 1; i < r.length; j = i++){ const [xa, ya] = r[i], [xb, yb] = r[j]; if((ya > lat) !== (yb > lat) && lng < (xb - xa) * (lat - ya) / (yb - ya) + xa) c = !c; } return c; };
-  return dans(p[0]) && !p.slice(1).some(dans);
-});
-// La bulle : la fiche (nom, type, date, gestionnaire, surface), les hotspots eBird qui tombent dans la
-// réserve avec leurs espèces à cocher (choix B de la maquette), puis le lien vers la fiche de l'INPN.
+  if(rings.some(p => dans(p[0]) && !p.slice(1).some(dans))) return true;
+  // La distance au bord le plus proche, en mètres (à plat : l'erreur est nulle à cette échelle).
+  if(!f._bb){ let x0 = 180, x1 = -180, y0 = 90, y1 = -90; for(const p of rings) for(const [x, y] of p[0]){ x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); } f._bb = [x0, x1, y0, y1]; }
+  const kx = 111320 * Math.cos(lat * Math.PI / 180), ky = 110540, mx = CT_RES_MARGE_M / kx, my = CT_RES_MARGE_M / ky;
+  if(lng < f._bb[0] - mx || lng > f._bb[1] + mx || lat < f._bb[2] - my || lat > f._bb[3] + my) return false;
+  for(const p of rings) for(const r of p) for(let i = 0; i < r.length - 1; i++){
+    const ax = (r[i][0] - lng) * kx, ay = (r[i][1] - lat) * ky, bx = (r[i + 1][0] - lng) * kx, by = (r[i + 1][1] - lat) * ky;
+    const dx = bx - ax, dy = by - ay, u = Math.max(0, Math.min(1, -(ax * dx + ay * dy) / (dx * dx + dy * dy || 1)));
+    if(Math.hypot(ax + u * dx, ay + u * dy) <= CT_RES_MARGE_M) return true;
+  }
+  return false;
+}
+// Les points d'une couche affichée (grappes comprises), tels qu'ils sont filtrés à l'écran.
+const _ctPointsDe = l => l && _map && _map.hasLayer(l) ? l.getLayers().filter(m => m.getLatLng) : [];
+// La bulle : la fiche (nom, type, date, gestionnaire, surface), puis ce que la couche allumée a dans la
+// réserve (Mathis, 2026-10-29) : ses hotspots et leurs espèces à cocher avec Hotspots, la liste des
+// observations comme celle d'une grappe avec Vu récemment ou La ligue ; enfin le lien vers la fiche de l'INPN.
 // Les hotspots se lisent par les zones eBird du site (une demande, gardée 7 jours par le relais), puis la
 // liste d'espèces de chacun (12 au plus, les plus riches) : seulement au clic.
 const CT_RES_MAX_HS = 12;
@@ -9413,12 +9444,23 @@ async function _ctOuvreReserve(f, latlng){
   const gere = [p.g ? `Gérée par ${p.g}` : '', p.s ? `${p.s.toLocaleString('fr-FR')} ha` : ''].filter(Boolean).join(' · ');
   const contenu = document.createElement('div');
   contenu.innerHTML = `<p class="ct-hb-t">${esc(p.n)}</p><p class="ct-gl-t ct-hb-s">${esc(infos)}</p>` + (gere ? `<p class="ct-gl-t ct-hb-s">${esc(gere)}</p>` : '') +
-    `<div class="ct-rb-hs">${p.z.length ? '<p class="ct-gl-t ct-rb-attente">Recherche des hotspots eBird…</p>' : ''}</div>` +
+    `<div class="ct-rb-hs"></div>` +
     (p.i ? `<p class="ct-gl-t ct-rb-lien"><a href="https://inpn.mnhn.fr/espace/protege/${esc(p.i)}" target="_blank" rel="noopener">Fiche de la réserve ↗</a></p>` : '');
   if(!_ctPopReserve) _ctPopReserve = L.popup({ className:'ct-gl ct-hb ct-rb', maxWidth:320, minWidth:260, autoPanPadding:[24, 24] });
   _ctPopReserve.setLatLng(latlng).setContent(contenu).openOn(_map);
-  if(!p.z.length) return;
   const boite = contenu.querySelector('.ct-rb-hs');
+  // Vu récemment ou La ligue : les points de la couche qui tombent dans la réserve. Un pays entier au Récent
+  // n'a que les points de l'espèce dépliée (_lyrDeplie).
+  const oiseaux = carteCouches.has('recent') ? [..._ctPointsDe(_lyrMissing), ..._ctPointsDe(_lyrDeplie)] : carteCouches.has('ligue') ? _ctPointsDe(_mapLayer) : null;
+  if(oiseaux){
+    const ici = oiseaux.filter(m => { const ll = m.getLatLng(); return _ctResDans(f, ll.lat, ll.lng); });
+    const titre = carteCouches.has('recent') ? 'Vu récemment dans la réserve' : 'La ligue dans la réserve';
+    boite.innerHTML = `<p class="ct-hb-it">${titre}</p>` + (ici.length ? _ctListeHtml(ici) : `<p class="ct-gl-t">Aucune observation affichée dans la réserve.</p>`);
+    _ctPopReserve.update(); return;
+  }
+  if(!carteCouches.has('hot') || !p.z.length) return;
+  boite.innerHTML = '<p class="ct-gl-t ct-rb-attente">Recherche des hotspots eBird…</p>';
+  _ctPopReserve.update();
   const encore = () => run === _ctReserveRun && _map.hasLayer(_ctPopReserve);
   let refus = 0;
   const lues = await Promise.all(p.z.map(z => _ebFetch(`https://api.ebird.org/v2/ref/hotspot/${z}?fmt=json`).catch(() => { refus++; return null; })));
@@ -9449,8 +9491,8 @@ async function _ctOuvreReserve(f, latlng){
 }
 // Une ligne dépliée agrandit la bulle : Leaflet la recale (le dépliage lui-même passe par le gestionnaire des .ct-gl-n).
 document.addEventListener('click', e => {
-  if(!e.target.closest('.ct-rb .ct-rb-h') || !_ctPopReserve || !_map || !_map.hasLayer(_ctPopReserve)) return;
-  const defile = e.target.closest('.ct-rb-liste'), y = defile ? defile.scrollTop : 0;
+  if(!e.target.closest('.ct-rb .ct-gl-n') || !_ctPopReserve || !_map || !_map.hasLayer(_ctPopReserve)) return;
+  const defile = e.target.closest('.ct-rb-liste, .ct-gl-liste'), y = defile ? defile.scrollTop : 0;
   _ctPopReserve.update();
   if(defile) defile.scrollTop = y;
 });
@@ -9589,7 +9631,17 @@ function _ctDansZone(l){
   if(ebFilter.region && ebFilter.region !== (ebFilter.country || 'FR')) return code === ebFilter.region || code.startsWith(ebFilter.region + '-');
   return false;
 }
-const _ctCss = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+// Les couleurs du thème, lues une fois : relire le style de la page à chaque contour stylé (des centaines par
+// clic de zone) coûtait 20 à 45 ms par geste au processeur ralenti (_perf-carte.mjs, 2026-10-29). Oubliées
+// quand le thème change, à la main (data-theme) ou par le système.
+const _ctCssMemo = new Map();
+const _ctCss = n => {
+  let v = _ctCssMemo.get(n);
+  if(v === undefined){ v = getComputedStyle(document.documentElement).getPropertyValue(n).trim(); _ctCssMemo.set(n, v); }
+  return v;
+};
+new MutationObserver(() => _ctCssMemo.clear()).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme', 'class', 'style'] });
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => _ctCssMemo.clear());
 // Le voile : un grand rectangle percé de la zone choisie, qui pâlit tout le reste de la carte.
 // Sous les contours des départements (on peut encore cliquer un voisin) et sous les points.
 let _lyrVoile = null;
@@ -11673,8 +11725,11 @@ async function _enrichHotspots(hotspots, region, kind, encore = () => true){
         const codes = await _ebFetch(url);
         sciSet = new Set(codes.map(c => tax[c]).filter(Boolean));
       }
-      const missing = [...sciSet].filter(s => !mine.has(s));
-      const seen = sciSet.size - missing.length;
+      // Les échappés ne sont jamais à cocher sur la Carte (Mathis, 2026-10-23) : le Flamant du Chili passait
+      // en gris marqué 9 dans les bulles des hotspots de Camargue (2026-10-29).
+      const missing = [...sciSet].filter(s => !mine.has(s) && !estEchappeDansPays(s, h.countryCode || (region || 'FR').slice(0, 2), h.subnational2Code));
+      // Compté à part : les échappés retirés de missing ne sont pas pour autant vus par toi.
+      const seen = [...sciSet].filter(s => mine.has(s)).length;
       return { ...h, allSp:sciSet.size, mySp:seen, toDo:missing.length, missingSci:missing };
     }catch(_){ return { ...h, allSp:0, mySp:0, toDo:0, err:true }; }
   });
@@ -11885,6 +11940,23 @@ async function _loadHotspotsLayer(region){
       };
       m.bindPopup(contenu, { className:'ct-gl ct-hb', maxWidth:320, minWidth:260, autoPanPadding:[24, 24] });
       m.on('popupclose', () => { m._bulle = null; });
+      // L'aperçu au survol (Mathis, 2026-10-29), comme celui d'une grappe : le nom, ce qu'il y a à cocher, les
+      // espèces les plus rares d'abord. Écrit au survol (la rareté suit le réglage du moment) ; muet pendant
+      // que sa bulle est ouverte. Au doigt, pas de survol : le toucher ouvre la bulle.
+      if(!_ctAuDoigt.matches){
+        m.on('mouseover', () => {
+          if(m.isPopupOpen()) return;
+          const s = x => x > 1 ? 's' : '';
+          const esp = hotspotSort === 'total' ? [] : filteredMiss.map(sci => ({ nom:frName(sci, sci), w:_ctRarete(sci, ccHs), coul:_ctCouleur(sci, ccHs) }))
+            .sort((a, b) => b.w - a.w || a.nom.localeCompare(b.nom, 'fr'));
+          const vus = esp.length - CT_SURVOL_MAX > 1 ? esp.slice(0, CT_SURVOL_MAX) : esp, reste = esp.length - vus.length;
+          const tete = hotspotSort === 'total' ? `${n} espèce${s(n)} vue${s(n)} ici` : `${toDoShown} à cocher · ${n} espèce${s(n)} vue${s(n)} ici`;
+          const html = `<span class="ct-sv-t">${esc(h.locName || h.name || '?')}</span><span class="ct-sv-d">${tete}</span>` +
+            vus.map(e => _ctLigneSurvol(e.coul, e.w, e.nom, '', '')).join('') + (reste ? `<span class="ct-sv-d">et ${reste} autre${s(reste)} : clique pour ouvrir</span>` : '');
+          m.bindTooltip(html, _ctSensSurvol(m.getLatLng(), 13)).openTooltip();
+        });
+        m.on('mouseout popupopen', () => m.unbindTooltip());
+      }
       // Recherche : nom du hotspot + région/dept + noms fr des espèces manquantes ici
       // (permet à la barre "Filtrer par nom d'espèce" de matcher un hotspot où l'espèce est présente).
       const missNames = filteredMiss.map(sci => FR_NAMES[sci]||sci).join(' ');

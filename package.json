@@ -1,5 +1,8 @@
 {
   "dependencies": {
+    "@turf/buffer": "^7.4.0",
+    "@turf/helpers": "^7.4.0",
+    "@turf/union": "^7.4.0",
     "firebase-admin": "^14.3.0",
     "playwright": "^1.63.0"
   }

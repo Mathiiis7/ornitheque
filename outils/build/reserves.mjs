@@ -8,6 +8,7 @@
 // node outils/build/reserves.mjs [dossier où garder les réponses brutes]
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
+import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 const __dir = dirname(fileURLToPath(import.meta.url));
@@ -15,6 +16,19 @@ const RACINE = join(__dir, '..', '..');
 const BRUT = process.argv[2] || join(RACINE, 'notes-privees', 'reserves');
 const SORTIE = join(RACINE, 'data', 'reserves-fr.json');
 const TOL = 0.001;
+// Un site d'un seul tenant : le Conservatoire achète parcelle par parcelle, si bien que 570 de ses 814 sites
+// arrivent en plusieurs morceaux (jusqu'à 141), percés des terrains qu'il ne possède pas ; à l'écran, un même
+// marais découpé et troué (Mathis, 2026-10-29). Chaque site est élargi de 150 m puis rétréci d'autant : les
+// morceaux à moins de 300 m se rejoignent, les trous de moins de 300 m de large se bouchent, aucune surface
+// n'est retirée. Un vrai trou plus large (un village au milieu) reste.
+const FERMETURE_M = 150;
+const buffer = (m => m.buffer || m.default)(createRequire(import.meta.url)('@turf/buffer'));
+function ferme(f){
+  try{
+    const g = buffer(buffer(f, FERMETURE_M, { units:'meters', steps:4 }), -FERMETURE_M, { units:'meters', steps:4 });
+    return g && g.geometry && polygones(g.geometry).length ? g.geometry : f.geometry;
+  }catch(_){ return f.geometry; }
+}
 const COUCHES = [['RNN', 'patrinat_rnn:rnn'], ['RNR', 'patrinat_rnr:rnr'], ['CDL', 'patrinat_cdl:conservatoire_littoral']];
 
 function douglasPeucker(pts, tol){
@@ -89,7 +103,8 @@ for(const [t, couche] of COUCHES){
     // Un site plus petit que la tolérance s'effondre en deux points : on le reprend dix fois plus fin, puis à
     // 0,00002° (2 m) - 67 sites, des îlots et des étangs, disparaissaient sinon. Seulement pour lui : reprendre
     // aussi les parcelles minuscules des grands sites doublait le fichier (292 -> 617 Ko gzippés).
-    const trace = tol => polygones(f.geometry).map(poly => poly.map(r => douglasPeucker(r, tol)).filter(r => r.length >= 4)
+    const geo = ferme(f);
+    const trace = tol => polygones(geo).map(poly => poly.map(r => douglasPeucker(r, tol)).filter(r => r.length >= 4)
       .map(r => r.map(([x, y]) => [+x.toFixed(tol >= TOL ? 4 : 5), +y.toFixed(tol >= TOL ? 4 : 5)]))).filter(poly => poly.length);
     const polys = [TOL, TOL / 10, 0.00002].map(trace).find(p => p.length);
     if(!polys) continue;
