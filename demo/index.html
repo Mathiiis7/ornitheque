@@ -124,7 +124,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=522">
+<link rel="modulepreload" href="app.js?v=523">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -1266,6 +1266,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
           <li><b>Wikipedia</b>, <b>iNaturalist</b> et l'<b>INPN</b> - descriptions et photos</li>
           <li><b>BIRDBASE</b> - les milieux de vie. Şekercioğlu et al. 2025, <i>Scientific Data</i> 12:1558, <a href="https://doi.org/10.6084/m9.figshare.27051040" target="_blank" rel="noopener">doi:10.6084/m9.figshare.27051040</a>, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>.</li>
           <li><b>AVONET</b> - morphologie, régime, déplacement. Tobias et al. 2022, <i>Ecology Letters</i>.</li>
+          <li><b>Réserves naturelles nationales et régionales, sites du Conservatoire du littoral</b> - la couche Réserves de la Carte. Données PatriNat (OFB, MNHN, CNRS, IRD) publiées par l'<a href="https://inpn.mnhn.fr/" target="_blank" rel="noopener">INPN</a>, © Muséum national d'Histoire naturelle, <a href="https://www.etalab.gouv.fr/licence-ouverte-open-licence/" target="_blank" rel="noopener">Licence Ouverte</a>, lues sur la Géoplateforme de l'IGN le 29 octobre 2026 et simplifiées à 100 m près.</li>
           <li><b>Natural Earth</b> et <b>geoBoundaries</b> (domaine public) - contours des zones. Ceux de Guernesey et de l'île de Man viennent de <b>geoBoundaries</b> sous <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a> (tirés des images Sentinel-2 de 2021). Ceux d'Åland, de Chypre et de Jersey dérivent d'<b>OpenStreetMap</b> : © les contributeurs OpenStreetMap, <a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" rel="noopener">ODbL 1.0</a>, licence qui s'étend aux contours publiés ici (<code>data/regions-cy-simplified.json</code>, <code>data/regions-fi-simplified.json</code>, <code>data/carte-zones/gb.json</code>, <code>data/carte-pays.json</code>).</li>
         </ul>
 
@@ -1685,5 +1686,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=522"></script>
+<script type="module" src="app.js?v=523"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>

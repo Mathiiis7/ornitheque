@@ -2661,6 +2661,31 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-leg-crans .ct-hs.ct-hs-sym { width:20px; height:18px; }
   .ct-hs.ct-hs-fav { border-color:#f4b400; box-shadow:0 0 0 1.5px #f4b400, 0 1px 4px rgba(0,0,0,.25); }
   .ct-hs.ct-hs-sym { display:inline-flex; width:28px; height:22px; flex:none; cursor:default; }
+  /* Les réserves (2026-10-29) : une couleur par type, choisie par Mathis sur notes-privees/maquettes/reserves/
+     (nationale vert foncé, régionale vert clair, Conservatoire bleu), éclaircies en sombre sur le plan inversé.
+     La couleur passe par CSS, pas par le style Leaflet : elle suit le thème sans redessiner. */
+  :root { --res-RNN:#2f6a2b; --res-RNR:#6f9a2e; --res-CDL:#2f7f9a; }
+  :root[data-theme="dark"] { --res-RNN:#6fbf5f; --res-RNR:#b5d35a; --res-CDL:#5fb6d4; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --res-RNN:#6fbf5f; --res-RNR:#b5d35a; --res-CDL:#5fb6d4; } }
+  .ct-res { fill-opacity:.28; stroke-opacity:.95; stroke-width:1.5px; }
+  .ct-res-RNN { fill:var(--res-RNN); stroke:var(--res-RNN); }
+  .ct-res-RNR { fill:var(--res-RNR); stroke:var(--res-RNR); }
+  .ct-res-CDL { fill:var(--res-CDL); stroke:var(--res-CDL); }
+  .ct-res.ct-res-p { fill-opacity:0; stroke-dasharray:5 4; }
+  .ct-res-sym { fill:color-mix(in srgb, var(--res-RNN) 35%, var(--surface)); stroke:var(--res-RNN); stroke-width:2; }
+  .ct-gl.ct-rb .ct-hb-it { margin-top:8px; }
+  .ct-rb-liste { max-height:270px; overflow:auto; overscroll-behavior:contain; }
+  .ct-rb-h { display:flex; align-items:center; gap:8px; width:100%; padding:5px 12px; text-align:left; color:var(--ink); white-space:normal; }
+  .ct-rb-h .ct-gl-nom { flex:1; }
+  /* La règle des .ct-gl-n retourne tous leurs span une fois dépliés : seule la flèche ici. */
+  .ct-rb-h[aria-expanded="true"] span { transform:none; }
+  .ct-rb-h[aria-expanded="true"] .ct-rb-fl { transform:rotate(180deg); }
+  .ct-rb-fl { color:var(--ink-3); }
+  .ct-rb-h .ct-hs.ct-hs-sym { width:auto; min-width:28px; padding:0 4px; cursor:inherit; }
+  .ct-rb-esp { max-height:none; padding-left:20px; border-bottom:1px solid var(--line); }
+  .ct-rb-esp[hidden] { display:none; }
+  .ct-gl.ct-rb .ct-rb-lien { margin:8px 12px 0; }
+  .ct-gl.ct-rb .ct-rb-lien a { color:var(--accent-ink); }
   .ct-rang .ct-hs-etoile { color:#f4b400; }
   .ct-rang-hs .droite b { color:var(--ink); font-size:15px; }
   .ct-gr { display:flex; align-items:center; justify-content:center; border-radius:50%; padding:5px; box-sizing:border-box; box-shadow:0 1px 4px rgba(0,0,0,.35); cursor:pointer; }
@@ -2917,7 +2942,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   @media (max-width:900px) {
     .ct-corps { display:block; margin-top:8px; }
     .ct-place-panneau { display:none; }
-    .ct-couches { flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; margin:0 -12px; padding:8px 12px 2px; }
+    /* À la ligne depuis la quatrième pastille (Réserves, 2026-10-29) : en rangée qui défile, elle restait
+       entière hors de l'écran (76 à 130 px de trop de 414 à 360 px de large), et Hotspots coupé. */
+    .ct-couches { padding-top:8px; }
     .ct-couche { flex:none; }
     /* La carte prend presque tout l'écran : 100dvh se lit avant le zoom 0,85 du corps, d'où la
        division ; il reste la rangée des couches au-dessus quand on fait défiler jusqu'à elle. */

@@ -7286,6 +7286,11 @@ function _updateLegend(){
       `<span class="ml-row"><span class="ct-leg-crans" aria-hidden="true">${[0, 1, 2, 3, 4].map(c => `<span class="ct-hs ct-hs-sym ct-hs-c${c}"></span>`).join('')}</span><span class="ml-txt">Plus le vert est plein, plus il y a à cocher</span></span>` +
       (myUid ? `<span class="ml-row"><span class="ct-hs ct-hs-sym ct-hs-fav" aria-hidden="true">12</span><span class="ml-txt">Un de tes favoris</span></span>` : '') + '</div>');
   }
+  if(carteCouches.has('res')){
+    // Une couleur par type (Mathis, 2026-10-29), le périmètre de protection en tirets.
+    parts.push('<div class="ml-title">Réserves</div><div class="ct-leg-formes">' +
+      ['RNN', 'RNR', 'CDL'].map(t => `<span class="ml-row"><svg width="16" height="12" viewBox="0 0 16 12" aria-hidden="true"><rect x="1" y="1" width="14" height="10" rx="2" class="ct-res ct-res-${t}"/></svg><span class="ml-txt">${CT_RES_NOMS[t]}</span></span>`).join('') + '</div>');
+  }
   _legendDiv.innerHTML = parts.join('') || '<div class="ml-row"><span class="ml-txt">Aucune couche allumée</span></div>';
 }
 function _mapNorm(s){ return (s||'').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
@@ -9038,7 +9043,8 @@ document.addEventListener('click', e=>{
 const CARTE_ONGLET_MODE = { recent:'missing', hot:'hotspots', ligue:'mine' };
 const CARTE_MODE_ONGLET = { missing:'recent', hotspots:'hot', mine:'ligue' };
 // Même ordre que les onglets du panneau : Récent, Ligue, Hotspots (Mathis, 2026-10-29).
-const CARTE_COUCHES = [['recent', 'Vu récemment'], ['ligue', 'La ligue'], ['hot', 'Hotspots']];
+// Les réserves en quatrième (Mathis, 2026-10-29) : elles s'ajoutent à la couche d'oiseaux (_ctAllume).
+const CARTE_COUCHES = [['recent', 'Vu récemment'], ['ligue', 'La ligue'], ['hot', 'Hotspots'], ['res', 'Réserves']];
 const CARTE_FRANCE = [[41.3, -5.2], [51.2, 9.7]];
 let carteTiroir = 'bas';            // téléphone : bas, mi, haut
 let _ctCadreFait = false;        // la première ouverture se cadre sur la France
@@ -9353,6 +9359,8 @@ function _ctSymbole(k){
   if(k === 'recent') return `<svg class="ct-sym-oeil" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">` +
     `<circle cx="9" cy="9" r="8.25" fill="${realColor(7)}" stroke="#fff" stroke-width="1.5"/>` +
     `<g transform="translate(3.5 3.5) scale(.6875)" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"><path d="M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8 12.1 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="1.9" fill="#fff" stroke="none"/></g></svg>`;
+  // Les réserves : un petit carré de leur vert, teinté, comme leurs formes sur la carte.
+  if(k === 'res') return `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="3" class="ct-res-sym"/></svg>`;
   // Le hotspot : un carré arrondi bordé de la couleur d'accent, comme sur la carte (maquette du 2026-10-23).
   return `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="3" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/></svg>`;
 }
@@ -9367,6 +9375,85 @@ function _ctIconeHotspot(nb, favori, cran = 0){
   const chiffres = String(nb).length, larg = Math.max(28, 14 + 9 * chiffres);
   return L.divIcon({ html:`<span class="ct-hs ct-hs-c${cran}${favori ? ' ct-hs-fav' : ''}">${nb}</span>`, className:'ct-hs-ico', iconSize:[larg, 26] });
 }
+// ---- Les réserves (2026-10-29, notes-privees/maquettes/reserves/, choix de Mathis) ----
+// Réserves naturelles nationales et régionales, sites du Conservatoire du littoral : data/reserves-fr.json
+// (outils/build/reserves.mjs, 1 195 sites, 302 Ko gzippés), lu à la première pastille allumée seulement.
+// Une couleur par type, réglée dans styles.css (classes ct-res-RNN, -RNR, -CDL) pour suivre le thème.
+// Leur calque passe au-dessus des zones (ctDeps, 350) : un clic sur une réserve ouvre sa bulle.
+let _lyrReserves = null, _ctReservesPromesse = null, _ctPopReserve = null, _ctReserveRun = 0;
+const CT_RES_NOMS = { RNN:'Réserve naturelle nationale', RNR:'Réserve naturelle régionale', CDL:'Conservatoire du littoral' };
+function _ctChargeReserves(){
+  if(!_map) return;
+  if(!_ctReservesPromesse) _ctReservesPromesse = fetch('data/reserves-fr.json?v=20261029').then(r => r.ok ? r.json() : null).catch(() => null)
+    .then(geo => {
+      if(!geo || !_map) return;
+      if(!_map.getPane('ctReserves')) _map.createPane('ctReserves').style.zIndex = 380;
+      _lyrReserves = L.geoJSON(geo, { pane:'ctReserves', renderer:L.svg({ pane:'ctReserves' }),
+        // Le périmètre de protection d'une réserve (19 sites) : en tirets, sans teinte.
+        style:f => ({ className:`ct-res ct-res-${f.properties.t}${f.properties.p ? ' ct-res-p' : ''}`, weight:1.5 }),
+                // Pendant un dessin au crayon, le clic va à la carte : il pose un sommet, même sur une réserve.
+        onEachFeature:(f, l) => l.on('click', e => { if(_drawState.active) return; L.DomEvent.stopPropagation(e); _ctOuvreReserve(f, e.latlng); }) });
+      _ctAppliqueCouches();
+    });
+  return _ctReservesPromesse;
+}
+const _ctResDans = (f, lat, lng) => f.geometry.coordinates.some(p => {
+  const dans = r => { let c = false; for(let i = 0, j = r.length - 1; i < r.length; j = i++){ const [xa, ya] = r[i], [xb, yb] = r[j]; if((ya > lat) !== (yb > lat) && lng < (xb - xa) * (lat - ya) / (yb - ya) + xa) c = !c; } return c; };
+  return dans(p[0]) && !p.slice(1).some(dans);
+});
+// La bulle : la fiche (nom, type, date, gestionnaire, surface), les hotspots eBird qui tombent dans la
+// réserve avec leurs espèces à cocher (choix B de la maquette), puis le lien vers la fiche de l'INPN.
+// Les hotspots se lisent par les zones eBird du site (une demande, gardée 7 jours par le relais), puis la
+// liste d'espèces de chacun (12 au plus, les plus riches) : seulement au clic.
+const CT_RES_MAX_HS = 12;
+async function _ctOuvreReserve(f, latlng){
+  const p = f.properties, s = x => x > 1 ? 's' : '';
+  const run = ++_ctReserveRun;
+  const infos = [CT_RES_NOMS[p.t] + (p.p ? ', périmètre de protection' : ''), p.a ? `depuis ${p.a}` : ''].filter(Boolean).join(' · ');
+  const gere = [p.g ? `Gérée par ${p.g}` : '', p.s ? `${p.s.toLocaleString('fr-FR')} ha` : ''].filter(Boolean).join(' · ');
+  const contenu = document.createElement('div');
+  contenu.innerHTML = `<p class="ct-hb-t">${esc(p.n)}</p><p class="ct-gl-t ct-hb-s">${esc(infos)}</p>` + (gere ? `<p class="ct-gl-t ct-hb-s">${esc(gere)}</p>` : '') +
+    `<div class="ct-rb-hs">${p.z.length ? '<p class="ct-gl-t ct-rb-attente">Recherche des hotspots eBird…</p>' : ''}</div>` +
+    (p.i ? `<p class="ct-gl-t ct-rb-lien"><a href="https://inpn.mnhn.fr/espace/protege/${esc(p.i)}" target="_blank" rel="noopener">Fiche de la réserve ↗</a></p>` : '');
+  if(!_ctPopReserve) _ctPopReserve = L.popup({ className:'ct-gl ct-hb ct-rb', maxWidth:320, minWidth:260, autoPanPadding:[24, 24] });
+  _ctPopReserve.setLatLng(latlng).setContent(contenu).openOn(_map);
+  if(!p.z.length) return;
+  const boite = contenu.querySelector('.ct-rb-hs');
+  const encore = () => run === _ctReserveRun && _map.hasLayer(_ctPopReserve);
+  let refus = 0;
+  const lues = await Promise.all(p.z.map(z => _ebFetch(`https://api.ebird.org/v2/ref/hotspot/${z}?fmt=json`).catch(() => { refus++; return null; })));
+  if(!encore()) return;
+  const dedans = lues.filter(Array.isArray).flat().filter(h => typeof h.lat === 'number' && _ctResDans(f, h.lat, h.lng))
+    .sort((a, b) => (b.numSpeciesAllTime || 0) - (a.numSpeciesAllTime || 0));
+  if(!dedans.length){
+    boite.innerHTML = `<p class="ct-gl-t">${refus ? 'eBird ne répond pas pour l\'instant.' : 'Aucun hotspot eBird dans la réserve.'}</p>`;
+    _ctPopReserve.update(); return;
+  }
+  const lus = await _enrichHotspots(dedans.slice(0, CT_RES_MAX_HS), p.z[0], 'all', encore);
+  if(!encore()) return;
+  const cc = /^FR-/.test(p.z[0]) ? 'FR' : p.z[0];
+  const lignes = lus.map(h => {
+    const esp = (h.missingSci || []).map(sci => ({ sci, nom:frName(sci, sci), w:_ctRarete(sci, cc) })).sort((a, b) => b.w - a.w || a.nom.localeCompare(b.nom, 'fr'));
+    const nb = h.err ? '?' : esp.length;
+    const liste = esp.length ? `<div class="ct-gl-liste ct-rb-esp" hidden>${esp.map(e => `<button type="button" class="ct-gl-l" data-sci="${esc(e.sci)}">` +
+      `${tierChip(e.w || '?', _ctCouleur(e.sci, cc), { cls:'tier-rond' })}<span class="ct-gl-nom">${esc(e.nom)}</span></button>`).join('')}</div>` : '';
+    // La ligne entière déplie ses espèces : le gestionnaire commun des .ct-gl-n ouvre l'élément qui suit son parent.
+    return `<div class="ct-rb-l">${liste ? `<button type="button" class="ct-gl-n ct-rb-h" aria-expanded="false">` : '<div class="ct-rb-h">'}` +
+      `<span class="ct-hs ct-hs-sym" aria-hidden="true">${nb}</span><span class="ct-gl-nom">${esc(h.locName || '?')}</span>${liste ? '<span class="ct-rb-fl" aria-hidden="true">▾</span></button>' : '</div>'}</div>${liste}`;
+  }).join('');
+  const reste = dedans.length - lus.length;
+  boite.innerHTML = `<p class="ct-hb-it">Hotspots dans la réserve <span>· ${dedans.length}</span></p>` +
+    `<p class="ct-gl-t ct-hb-s">Le nombre : espèces vues ici qui te manquent</p><div class="ct-rb-liste">${lignes}</div>` +
+    (reste > 0 ? `<p class="ct-gl-t">et ${reste} autre${s(reste)}, moins riche${s(reste)}</p>` : '');
+  _ctPopReserve.update();
+}
+// Une ligne dépliée agrandit la bulle : Leaflet la recale (le dépliage lui-même passe par le gestionnaire des .ct-gl-n).
+document.addEventListener('click', e => {
+  if(!e.target.closest('.ct-rb .ct-rb-h') || !_ctPopReserve || !_map || !_map.hasLayer(_ctPopReserve)) return;
+  const defile = e.target.closest('.ct-rb-liste'), y = defile ? defile.scrollTop : 0;
+  _ctPopReserve.update();
+  if(defile) defile.scrollTop = y;
+});
 function _ctDessineCouches(){
   const box = document.getElementById('ctCouches'); if(!box) return;
   box.innerHTML = CARTE_COUCHES.map(([k, nom]) =>
@@ -9403,9 +9490,14 @@ function _ctRangeReglages(){
 // Une seule couche à la fois : la ligue et le récent ensemble « ça brouille tout » (Mathis, 2026-10-23),
 // et depuis le 2026-10-29 les hotspots non plus (« on choisit juste entre les 3 ») : superposés, la
 // recherche d'une espèce les vidait sans qu'on comprenne pourquoi. Allumer l'une éteint les deux autres.
+// Les réserves font exception (Mathis, 2026-10-29) : un fond sous les oiseaux, pas une couche d'oiseaux. Elles
+// s'ajoutent à celle qui est allumée et restent quand on change de couche.
 function _ctAllume(k){
+  if(k === 'res'){ carteCouches.add(k); return; }
+  const res = carteCouches.has('res');
   carteCouches.clear();
   carteCouches.add(k);
+  if(res) carteCouches.add('res');
 }
 // Changer de pays ou de zone éteint les couches eBird qui ne sont pas celle de l'onglet ouvert ; celle-là
 // reste comme elle est (Mathis, 2026-10-26 : le mode ne change qu'à la main).
@@ -9429,7 +9521,7 @@ function _ctSuitMode(){
 function _ctAppliqueCouches(){
   if(!_map) return;
   const detail = _hasSpeciesSearch() || (_lyrDetail && _lyrDetail.getLayers().length > 0);
-  const couches = { ligue:_mapLayer, recent:_lyrMissing, hot:_lyrHotspots };
+  const couches = { ligue:_mapLayer, recent:_lyrMissing, hot:_lyrHotspots, res:_lyrReserves };
   for(const [k, l] of Object.entries(couches)){
     if(!l) continue;
     // Un pays entier montre sa liste, pas ses points : seule l'espèce dépliée a les siens (_lyrDeplie).
@@ -10097,6 +10189,8 @@ document.addEventListener('click', e => {
   if(c){
     const k = c.dataset.couche;
     if(carteCouches.has(k)){ carteCouches.delete(k); _ctAppliqueCouches(); return; }
+    // Les réserves n'ont pas d'onglet : elles se chargent, puis se posent.
+    if(k === 'res'){ _ctAllume(k); _ctAppliqueCouches(); _ctChargeReserves(); return; }
     _ctAllume(k);
     const l = { ligue:_mapLayer, recent:_lyrMissing, hot:_lyrHotspots }[k];
     // Une couche jamais chargée se charge en ouvrant son onglet (c'est lui qui porte ses réglages).
