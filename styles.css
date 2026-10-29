@@ -2702,6 +2702,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-carte .leaflet-ctPays-pane svg, .ct-carte .leaflet-ctDeps-pane svg { filter:drop-shadow(0 0 1px var(--surface)) drop-shadow(0 0 1px var(--surface)); }
   .ct-rond { width:34px; height:34px; border-radius:9px; border:1px solid var(--line-2); background:var(--surface); color:var(--ink-2); display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,.08); padding:0; }
   .ct-rond:hover, .ct-puce:hover { color:var(--accent-ink); border-color:var(--accent); }
+  /* Le crayon sans pays ouvert (2026-10-29) : grisé, la bulle dit pourquoi. */
+  .ct-rond[aria-disabled="true"] { opacity:.45; cursor:not-allowed; }
+  .ct-rond[aria-disabled="true"]:hover { color:var(--ink-2); border-color:var(--line-2); }
   .ct-rond.on { background:var(--accent); border-color:var(--accent); color:#fff; }
   .ct-puce { height:34px; display:inline-flex; align-items:center; gap:7px; padding:0 13px; border-radius:17px; border:1px solid var(--line-2); background:var(--surface); color:var(--ink-2); font:600 14px var(--sans); box-shadow:0 1px 3px rgba(0,0,0,.08); cursor:pointer; white-space:nowrap; }
   .ct-outils { display:flex; flex-direction:column; gap:6px; align-items:flex-start; }
@@ -2767,7 +2770,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-bloc .ct-choix .cp-btn-label { flex:1; min-width:0; text-align:left; }
   .ct-bloc .seg { background:var(--surface); }
   .ct-seg-plein { display:flex; width:100%; }
-  .ct-seg-plein button { flex:1 1 0; min-width:0; padding-left:6px; padding-right:6px; white-space:nowrap; }
+  .ct-bloc .ct-seg-plein button { flex:1 1 0; min-width:0; padding-left:6px; padding-right:6px; white-space:nowrap; }
   .ct-bloc .ct-bascule { display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:14px; font-weight:600; color:var(--ink); cursor:pointer; min-height:34px; }
   /* L'interrupteur : une case à cocher redessinée, qui garde son clavier et son lecteur d'écran. */
   .ct-bascule input { appearance:none; -webkit-appearance:none; flex:none; width:38px; height:22px; margin:0; border-radius:11px; background:var(--surface-3); position:relative; cursor:pointer; transition:background .15s; box-shadow:inset 0 0 0 1px var(--line-2); }
@@ -2778,7 +2781,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-annees:has(.ct-annee[style*="display: none"]) { display:none; }
   .ct-annee { display:inline-flex; align-items:center; gap:6px; font-size:14px; color:var(--ink-2); }
   .ct-annee input { width:72px; height:34px; font:14px var(--sans); padding:0 8px; border:1px solid var(--line-2); border-radius:9px; background:var(--surface); color:var(--ink); }
-  .ct-bloc .rar-chips { flex-wrap:nowrap; }
+  /* À la ligne plutôt que hors du cadre : dans un panneau étroit, le N dépassait (Mathis, 2026-10-29). */
+  .ct-bloc .rar-chips { flex-wrap:wrap; row-gap:6px; }
   /* Tout · Aucun à gauche, la mesure (« France / Grand Est ») à droite, 12 px sous les pastilles (Mathis). */
   .ct-rar-sous { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-top:12px; }
   .ct-rar-liens { display:inline-flex; align-items:center; gap:6px; color:var(--ink-3); }
@@ -2795,6 +2799,35 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-pas button:hover { background:var(--surface-3); }
   .ct-pas input { width:44px; border:0; border-left:1px solid var(--line-2); border-right:1px solid var(--line-2); text-align:center; font:600 14px var(--sans); color:var(--ink); background:none; -moz-appearance:textfield; }
   .ct-pas input::-webkit-inner-spin-button, .ct-pas input::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
+  /* Le Birdydex reprend ce bloc (version B, 2026-10-29) : la recherche toujours visible à côté de
+     « Filtres », et sur ordinateur les réglages par deux (Où | Afficher, Famille | Milieu), le tri et
+     la rareté sur toute la largeur. */
+  .pkdx-barre { display:flex; align-items:center; gap:10px; margin:10px 0 0; }
+  .pkdx-barre input[type=search] { flex:1; min-width:0; height:36px; padding:0 12px; border:1px solid var(--line-2); border-radius:8px; background:var(--surface-2); color:var(--ink); font:14px var(--sans); }
+  .pkdx-pli-btn { cursor:pointer; }
+  .pkdx-pli-btn[aria-expanded="true"]::before { transform:rotate(90deg); }
+  .pkdx-pli-btn:hover { background:var(--surface-2); }
+  .pkdx-bloc { margin:12px 0 14px; }
+  .pkdx-bloc[hidden] { display:none; }
+  .pkdx-barre:has(+ .pkdx-bloc[hidden]) { margin-bottom:14px; }
+  .pkdx-bloc .pkdx-tri { max-width:420px; }
+  .pkdx-bloc .rar-chips { flex-wrap:wrap; row-gap:6px; }
+  .pkdx-rar-liens { margin-left:14px; }
+  /* Écran étroit, au doigt ou non : les pastilles passent à la ligne et les choix collés écrivent leur
+     libellé sur deux lignes plutôt que de sortir du bloc (« Manquantes » coupé à 375 px, 2026-10-29). */
+  @media (max-width:560px){
+    .ct-bloc .rar-chips { flex-wrap:wrap; }
+    .ct-bloc .ct-seg-plein button { white-space:normal; line-height:1.15; padding-left:3px; padding-right:3px; }
+    .pkdx-bloc .ct-ligne { grid-template-columns:60px minmax(0, 1fr); gap:8px; padding:10px; }
+    /* X, P, N passaient seuls à la ligne : la rareté prend toute la largeur, son nom au-dessus. */
+    .pkdx-bloc .ct-ligne.ct-haut { grid-template-columns:minmax(0, 1fr); gap:6px; }
+  }
+  @media (min-width:761px){
+    .pkdx-bloc { display:grid; grid-template-columns:1fr 1fr; }
+    .pkdx-bloc > .ct-ligne:nth-child(2) { border-top:0; }
+    .pkdx-bloc > .ct-ligne:nth-child(odd):not(.pkdx-pleine) { border-right:1px solid var(--line); }
+    .pkdx-bloc > .pkdx-pleine { grid-column:1 / -1; }
+  }
   /* Sous le bloc gris, le compte ouvre la liste. */
   .ct-pli[open] + * { margin-top:14px; }
   /* D'où viennent les points : « (138 listes) » derrière la première phrase, le détail dans la bulle (2026-10-26). */
@@ -3889,7 +3922,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     /* Au doigt, les pastilles font 44 px d'écran : elles passent à la ligne au lieu de sortir du bloc,
        et les choix collés écrivent leur libellé sur deux lignes plutôt que de le couper (375 px, 2026-10-28). */
     .ct-bloc .rar-chips { flex-wrap:wrap; }
-    .ct-seg-plein button { white-space:normal; line-height:1.15; }
+    .ct-bloc .ct-seg-plein button { white-space:normal; line-height:1.15; }
     .ct-rang-n { width:52px; }
     .ct-rang-n.avec-nb { width:auto; min-width:52px; }
     .ct-gl-l, .ct-gl-n { min-height:52px; }

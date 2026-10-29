@@ -49,7 +49,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=508">
+<link rel="modulepreload" href="app.js?v=509">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -1080,33 +1080,55 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         <div><h2 class="page-title">Birdydex</h2></div>
         <div id="pkdxCounter" class="pkdx-compte">- / -</div>
       </div>
-      <div class="pkdx-ctrls" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:10px 0 14px;">
-        <input type="search" id="pkdxSearch" aria-label="Rechercher dans le birdydex" placeholder="Rechercher (nom fr ou sci)…" style="flex:1; min-width:180px; padding:9px 12px; border:1px solid var(--line-2); border-radius:8px; background:var(--surface-2); color:var(--ink); font:14px system-ui;">
+      <!-- Les filtres dans le bloc gris de la Carte, repliés sous « Filtres », les réglages par deux sur
+           ordinateur (version B de notes-privees/maquettes/filtres-birdydex/, Mathis 2026-10-29). Même
+           ordre que la Carte : Où, Afficher, puis Famille, Milieu, Trier par, Rareté en dernier. La
+           recherche reste toujours visible. -->
+      <div class="pkdx-barre">
+        <input type="search" id="pkdxSearch" aria-label="Rechercher dans le birdydex" placeholder="Rechercher (nom fr ou sci)…">
+        <button type="button" class="ct-pli-btn pkdx-pli-btn" id="pkdxPliBtn" aria-expanded="false" aria-controls="pkdxFiltres">Filtres</button>
+      </div>
+      <div class="ct-bloc pkdx-bloc" id="pkdxFiltres" hidden>
         <!-- Pays du Birdydex : ne s'applique qu'au Birdydex mais est aussi utilise
              pour piloter le pays global (autres onglets suivent). Anciennement dans
              le header, deplace ici le 2026-09-21. -->
-        <button type="button" id="pkdxCountry" class="cp-btn" data-cc="FR" title="Pays du Birdydex (les autres onglets suivent aussi)">
-          <span class="cp-btn-flag">🇫🇷</span>
-          <span class="cp-btn-label">France</span>
-          <span class="cp-btn-arrow">▾</span>
-        </button>
-        <button type="button" id="pkdxSort" class="cp-btn" data-value="famille">
-          <span class="cp-btn-label">Par famille</span><span class="cp-btn-arrow">▾</span>
-        </button>
-        <button type="button" id="pkdxFamily" class="cp-btn" data-value="">
-          <span class="cp-btn-label">Toutes familles</span>
-          <span class="cp-btn-arrow">▾</span>
-        </button>
-        <button type="button" id="pkdxHabitat" class="cp-btn" data-value="">
-          <span class="cp-btn-label">Tous milieux</span>
-          <span class="cp-btn-arrow">▾</span>
-        </button>
-        <button type="button" id="pkdxOwned" class="cp-btn" data-value="">
-          <span class="cp-btn-label">Toutes</span>
-          <span class="cp-btn-arrow">▾</span>
-        </button>
+        <div class="ct-ligne"><span class="ct-k">Où</span>
+          <span class="ct-v ct-choix"><button type="button" id="pkdxCountry" class="cp-btn" data-cc="FR" title="Pays du Birdydex (les autres onglets suivent aussi)">
+            <span class="cp-btn-flag">🇫🇷</span>
+            <span class="cp-btn-label">France</span>
+            <span class="cp-btn-arrow">▾</span>
+          </button></span>
+        </div>
+        <div class="ct-ligne"><span class="ct-k" id="pkdxKOwned">Afficher</span>
+          <div class="seg ct-seg-plein" role="radiogroup" aria-labelledby="pkdxKOwned">
+            <button type="button" role="radio" data-pkdx-owned="">Toutes</button>
+            <button type="button" role="radio" data-pkdx-owned="owned">Vues</button>
+            <button type="button" role="radio" data-pkdx-owned="missing">Manquantes</button>
+          </div>
+        </div>
+        <div class="ct-ligne"><span class="ct-k">Famille</span>
+          <span class="ct-v ct-choix"><button type="button" id="pkdxFamily" class="cp-btn" data-value="">
+            <span class="cp-btn-label">Toutes familles</span>
+            <span class="cp-btn-arrow">▾</span>
+          </button></span>
+        </div>
+        <div class="ct-ligne"><span class="ct-k">Milieu</span>
+          <span class="ct-v ct-choix"><button type="button" id="pkdxHabitat" class="cp-btn" data-value="">
+            <span class="cp-btn-label">Tous milieux</span>
+            <span class="cp-btn-arrow">▾</span>
+          </button></span>
+        </div>
+        <div class="ct-ligne pkdx-pleine"><span class="ct-k" id="pkdxKTri">Trier par</span>
+          <div class="seg ct-seg-plein pkdx-tri" role="radiogroup" aria-labelledby="pkdxKTri">
+            <button type="button" role="radio" data-pkdx-sort="famille">Famille</button>
+            <button type="button" role="radio" data-pkdx-sort="rarete">Rareté</button>
+            <button type="button" role="radio" data-pkdx-sort="habitat">Milieu</button>
+          </div>
+        </div>
+        <div class="ct-ligne ct-haut pkdx-pleine"><span class="ct-k">Rareté</span>
+          <div class="ct-v" id="pkdxTierChips"></div>
+        </div>
       </div>
-      <div id="pkdxTierChips" style="display:flex; flex-wrap:wrap; gap:6px; margin:14px 0; padding:8px 10px; background:var(--surface-2); border-radius:8px;"></div>
       <div id="pkdxGrid" class="pkdx-grid"></div>
       <div id="pkdxEmpty" class="help" style="text-align:center; padding:30px; display:none;">Aucune espèce ne correspond à ces filtres.</div>
     </section>
@@ -1579,4 +1601,4 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=508"></script>
+<script type="module" src="app.js?v=509"></script>

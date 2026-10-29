@@ -8477,7 +8477,10 @@ document.addEventListener('pointerdown', e => {
 }, true);
 // Delegation click : boutons Dessiner (un second clic ferme la zone), Fermer, Effacer.
 document.addEventListener('click', (e) => {
-  if(e.target.closest('#mapDrawStart')){ if(_drawState.active) _drawTermine(); else _drawStart(); return; }
+  if(e.target.closest('#mapDrawStart')){
+    if(e.target.closest('#mapDrawStart').getAttribute('aria-disabled') === 'true') return;
+    if(_drawState.active) _drawTermine(); else _drawStart(); return;
+  }
   if(e.target.closest('#mapDrawFinish')){ _drawFinish(); return; }
   if(e.target.closest('#mapDrawClear')){ _drawClear(); return; }
 });
@@ -8750,7 +8753,13 @@ function _passeRarCarte(sci, cc, w){
 // La rareté du Récent se mesure sur le pays, ou sur la zone choisie (Mathis, 2026-10-26) : la Sittelle
 // corse, palier 7 en France, est au palier 1 en Corse-du-Sud. Même calcul que la carte par zone de la
 // fiche espèce (_valeurAnnuelleZone, pondéré par l'effort de la zone), donc les deux disent le même chiffre.
-let _ctRarZone = (() => { try{ return localStorage.getItem('mb-ct-rar-zone') === '1'; }catch(_){ return false; } })();
+// « Zone » ne vaut que pour la zone où on l'a choisi : à l'arrivée et dès qu'on change de zone, la mesure
+// revient au pays (Mathis, 2026-10-29 : retenu d'une zone à l'autre, c'était trompeur). _ctRarZone garde
+// la zone choisie, '' pour le pays ; l'ancien réglage retenu dans le navigateur est oublié.
+let _ctRarZone = '';
+try{ localStorage.removeItem('mb-ct-rar-zone'); }catch(_){}
+const _ctCleZone = () => (ebFilter.country || 'FR') + '|' + (ebFilter.dept || ebFilter.region || '');
+const _ctRarZoneOn = () => !!_ctRarZone && _ctRarZone === _ctCleZone();
 // La zone dont on lit la fréquence : le département, sinon la région. '' sans zone, pour une zone
 // dessinée, ou quand le fichier des fréquences n'a pas cette zone : 8 pays (GB, CH, HU, SI, LV, MK,
 // ME, MD) rangent leurs fréquences en régions regroupées, pas dans les zones eBird de la Carte
@@ -8773,7 +8782,7 @@ function _ctChargeRegroupees(){
   if(!_ctRegroupeesPromesse) _ctRegroupeesPromesse = fetch('data/zones-regroupees.json?v=20261028').then(r => r.ok ? r.json() : null).then(t => {
     if(!t) return;
     _ctRegroupees = t;
-    if(_ctRarZone && _ctZoneFreq()){ _loaded.missing = ''; renderMap(); } else _ctDessinePanneau();
+    if(_ctRarZoneOn() && _ctZoneFreq()){ _loaded.missing = ''; renderMap(); } else _ctDessinePanneau();
   }).catch(() => {});
   return _ctRegroupeesPromesse;
 }
@@ -8784,9 +8793,9 @@ function _ctAttendFreq(){
   _ctChargeRegroupees();
   if(REAL_FREQ_MONTHLY_BY_REGION_MULTI[cc] || _ctFreqDemandee === cc) return;
   _ctFreqDemandee = cc;
-  _loadFreqDataForCountry(cc).then(() => { if(_ctRarZone && _ctZoneFreq()){ _loaded.missing = ''; renderMap(); } else _ctDessinePanneau(); }).catch(() => {});
+  _loadFreqDataForCountry(cc).then(() => { if(_ctRarZoneOn() && _ctZoneFreq()){ _loaded.missing = ''; renderMap(); } else _ctDessinePanneau(); }).catch(() => {});
 }
-const _ctRarZoneActive = () => _ctRarZone && !!_ctZoneFreq();
+const _ctRarZoneActive = () => _ctRarZoneOn() && !!_ctZoneFreq();
 // Le palier d'une espèce dans le Récent. Un oiseau sauvage absent des listes du pays (ou de la zone)
 // depuis 2019 y est au palier 10 : vu récemment, il est exceptionnel, pas « sans mesure » (la Paruline
 // tigrée de Corse arrivait en gris avec un « ? », Mathis, 2026-10-26). Un échappé sans mesure reste à 0,
@@ -8816,7 +8825,7 @@ function _ctRarete(sci, cc){
 // département du moment ne s'y appliquent (_ctCompteRecentPays).
 let _ctComptePays = false;
 function _ctPalierDeZone(sci, cc, w){
-  const z = w && _ctRarZone && !_ctComptePays && cc === (ebFilter.country || 'FR') ? _ctZoneFreq() : '';
+  const z = w && _ctRarZoneOn() && !_ctComptePays && cc === (ebFilter.country || 'FR') ? _ctZoneFreq() : '';
   if(!z) return w;
   const brut = (sci || '').trim().toLowerCase(), k = SCI_ALIAS[brut] || brut;
   const ligne = REAL_FREQ_MONTHLY_BY_REGION_MULTI[cc][z];
@@ -9344,7 +9353,17 @@ const _ctModeBouton = mode => document.querySelector(`#mapModes button[data-mode
 // Appelé par renderMap avant de dessiner le mode : l'onglet ouvert allume sa couche, les réglages
 // eBird suivent l'onglet, le crayon reste toujours là (il ouvre le Récent s'il le faut).
 function _ctAvantRendu(){
-  const d = document.getElementById('mapDrawStart'); if(d) d.style.display = '';
+  const d = document.getElementById('mapDrawStart');
+  if(d){
+    d.style.display = '';
+    // Sans pays ouvert, une zone dessinée ne se lit nulle part (elle passe par les zones du pays) : le
+    // crayon se grise et le dit (Mathis, 2026-10-29). Un dessin en cours ou posé garde la main.
+    const sansPays = !_ctPaysOuvert && !_drawState.active && !ebFilter.polygon;
+    d.setAttribute('aria-disabled', String(sansPays));
+    d.removeAttribute('title');
+    d.dataset.tip = sansPays ? 'Choisis d\'abord un pays pour dessiner ta zone'
+      : 'Dessiner ta zone : clique sur la carte pour poser les sommets, puis « Fermer » (ou double-clic).';
+  }
   _ctRangeReglages();
   _ctDessineCouches();
 }
@@ -10547,7 +10566,7 @@ function _ctRangHtml(o){
   const fleche = c ? `<span class="ct-rang-nb" aria-hidden="true">${c.nb}<span class="fl">▾</span></span>` : '<span class="fl" aria-hidden="true">▾</span>';
   return `<div class="ct-rang-e"><button type="button" class="ct-rang ct-rang-rec" data-sci="${esc(o.sci)}" data-liste="${o.liste}"${o.cc ? ` data-cc="${esc(o.cc)}"` : ''}>` +
     `${tierChip(o.w || '?', o.coul, { cls:'tier-rond' })}` +
-    `<span class="col"><span class="nom">${esc(o.nom)}</span>${o.statut ? ' ' + jetonExo(o.statut) : ''}${o.nv ? '<span class="ct-tag nv">non validée</span>' : ''}<br>` +
+    `<span class="col"><span class="nom">${esc(o.nom)}</span>${o.statut ? ' ' + jetonExo(o.statut) : ''}${o.nv ? '<span class="ct-tag nv" data-tip="Observation rare qu\'eBird n\'a pas encore vérifiée">non validée</span>' : ''}<br>` +
     `<span class="sous">${esc(o.sous)}</span></span>` +
     `<span class="droite">${esc(o.droite)}</span></button>` +
     `<button type="button" class="ct-rang-n${c ? ' avec-nb' : ''}" data-sci="${esc(o.sci)}" data-liste="${o.liste}" aria-expanded="${!!o.ouverte}" aria-label="${quoi ? quoi + ' · ' : ''}${voir} : ${esc(o.nom)}" data-tip="${quoi ? quoi + ' · ' : ''}${voir}">${fleche}</button></div>` +
@@ -10670,7 +10689,8 @@ function _ctListeRecent(){
   const mention = document.getElementById('ctMentionRecent');
   if(mention) mention.innerHTML = gbif
     ? 'Données <a href="https://www.gbif.org" target="_blank" rel="noopener">GBIF.org</a>, toutes bases confondues : le mois en cours, les années choisies. Les noms des observateurs ne sont pas affichés.'
-    : 'Données <a href="https://ebird.org" target="_blank" rel="noopener">eBird.org</a>, lues en direct pour la zone choisie. « Non validée » : une observation rare qu\'eBird n\'a pas encore vérifiée. Les lieux privés et les noms des observateurs ne sont pas affichés.';
+    // Le crédit seul (Mathis, 2026-10-29) : « non validée » s'explique au survol de son étiquette.
+    : 'Données <a href="https://ebird.org" target="_blank" rel="noopener">eBird.org</a>';
   // GBIF ne lit pas une région entière en France (trop de points) : il lui faut un département. eBird lit
   // la France ouverte en entier (2026-10-26).
   const sansZone = cc === 'FR' && !ebFilter.polygon && !ebFilter.dept && (gbif || ((!ebFilter.region || ebFilter.region === 'FR') && !_ctFranceOuverte()));
@@ -10848,8 +10868,7 @@ function _ctSyncPortee(){
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-ct-portee]'); if(!b || b.getAttribute('aria-disabled') === 'true') return;
   const zone = b.dataset.ctPortee === 'zone'; if(zone === _ctRarZoneActive()) return;
-  _ctRarZone = zone;
-  try{ localStorage.setItem('mb-ct-rar-zone', zone ? '1' : '0'); }catch(_){}
+  _ctRarZone = zone ? _ctCleZone() : '';
   _ctSyncPortee();
   // La liste d'une grappe ouverte prend ses nouveaux paliers tout de suite, avant que les points
   // ne soient reposés (_ctRafraichitGrappe la recale ensuite sur la nouvelle grappe).
@@ -21009,25 +21028,25 @@ function renderPokedex(){
         _pkdxRender();
       });
     }
-    // Tri de la grille : famille (defaut), rarete, milieu.
-    const sortBtn = document.getElementById('pkdxSort');
-    if(sortBtn){
-      const SORT_LABEL = { famille:'Par famille', rarete:'Par rareté', habitat:'Par milieu' };
-      _syncPkdxFilterBtn('pkdxSort', SORT_LABEL[_pkdxFilters.sort] || SORT_LABEL.famille);
-      sortBtn.addEventListener('click', async () => {
-        const chosen = await _openFilterPicker(_pkdxFilters.sort || 'famille', {
-          title: 'Trier la grille', searchable: false,
-          options: [
-            { value:'famille', label:'Par famille' },
-            { value:'rarete',  label:'Par rareté' },
-            { value:'habitat', label:'Par milieu' },
-          ],
-        });
-        if(chosen == null) return;
-        _pkdxFilters.sort = chosen || 'famille';
-        _pkdxSaveFilters();
-        _syncPkdxFilterBtn('pkdxSort', SORT_LABEL[_pkdxFilters.sort]);
-        _pkdxRender();
+    // Tri de la grille (famille, rarete, milieu) et « Afficher » (toutes, vues, manquantes) : des
+    // boutons colles, comme sur la Carte (2026-10-29), au lieu d'une fenetre a choix.
+    const filtres = document.getElementById('pkdxFiltres');
+    if(filtres) filtres.addEventListener('click', e => {
+      const tri = e.target.closest('[data-pkdx-sort]');
+      if(tri){ _pkdxFilters.sort = tri.dataset.pkdxSort || 'famille'; _pkdxSaveFilters(); _pkdxRender(); return; }
+      const vue = e.target.closest('[data-pkdx-owned]');
+      if(vue){ _pkdxFilters.owned = vue.dataset.pkdxOwned; _pkdxSaveFilters(); _pkdxRender(); }
+    });
+    // Le bloc se replie sous « Filtres », comme sur la Carte ; ouvert ou fermé, il le reste d'une
+    // visite à l'autre.
+    const pliBtn = document.getElementById('pkdxPliBtn');
+    if(pliBtn && filtres){
+      const ouvre = on => { filtres.hidden = !on; pliBtn.setAttribute('aria-expanded', String(on)); };
+      let ouvert = false; try{ ouvert = localStorage.getItem('mb-pkdx-filtres-ouverts') === '1'; }catch(_){}
+      ouvre(ouvert);
+      pliBtn.addEventListener('click', () => {
+        const on = filtres.hidden; ouvre(on);
+        try{ localStorage.setItem('mb-pkdx-filtres-ouverts', on ? '1' : '0'); }catch(_){}
       });
     }
     // Habitat : modal picker.
@@ -21049,35 +21068,6 @@ function renderPokedex(){
         _pkdxFilters.habitat = chosen;
         _pkdxSaveFilters();
         _syncPkdxFilterBtn('pkdxHabitat', chosen ? (HABITAT_LABELS[chosen] || chosen) : 'Tous milieux');
-        _pkdxRender();
-      });
-    }
-    // Owned (Vues / Manquantes / Toutes) : modal picker simple.
-    const ownedBtn = document.getElementById('pkdxOwned');
-    if(ownedBtn){
-      const OWNED_LABEL = { '':'Toutes', 'owned':'Vues seulement', 'missing':'Manquantes seulement' };
-      _syncPkdxFilterBtn('pkdxOwned', OWNED_LABEL[_pkdxFilters.owned || ''] || 'Toutes');
-      ownedBtn.addEventListener('click', async () => {
-        const me = realPeople.find(p => p.id === myUid);
-        const mine = me ? new Set([...me.species.keys()]) : new Set();
-        const rows = _filteredPkdxRows('owned');
-        let ownedCnt = 0, missCnt = 0;
-        for(const r of rows){
-          if(_mineHasStrict(mine, r.sci)) ownedCnt++;
-          else missCnt++;
-        }
-        const opts = [
-          { value:'',        label:'Toutes',              count: rows.length },
-          { value:'owned',   label:'Vues seulement',      count: ownedCnt },
-          { value:'missing', label:'Manquantes seulement', count: missCnt },
-        ];
-        const chosen = await _openFilterPicker(_pkdxFilters.owned || '', {
-          title: 'Filtrer par statut', options: opts, searchable: false
-        });
-        if(chosen == null) return;
-        _pkdxFilters.owned = chosen;
-        _pkdxSaveFilters();
-        _syncPkdxFilterBtn('pkdxOwned', OWNED_LABEL[chosen || ''] || 'Toutes');
         _pkdxRender();
       });
     }
@@ -21393,15 +21383,23 @@ function _pkdxRender(){
       const cls = 'rar-chip' + (on ? ' on' : '');
       return `<button type="button" class="${cls}" data-cat="${g.join(',')}" style="${bgStyle}" title="${esc(g.map(c => libelleExo(c, true)).join(' / '))}">${g.join('/')}</button>`;
     }).join('');
-    chipsBox.innerHTML = '<span style="font-size:13px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.4px; font-weight:700; align-self:center; margin-right:6px;">Rareté</span>'
-      + chipsHtml
-      + '<button type="button" class="rar-chip" data-tier-all title="Cocher toutes les raretés">Tout</button>'
-      + '<button type="button" class="rar-chip" data-tier-none title="Décocher toutes les raretés">Vide</button>'
-      // Ils suivent « Tout » et « Vide », separes par un filet vertical : ils ne filtrent
-      // pas un palier mais un statut, et sans cette barre ils se lisaient comme la fin de
-      // l'echelle. Rejetes a l'autre bout, ils etaient loin de ce qu'ils filtrent.
-      + '<span class="rar-cats"><span class="rar-sep" aria-hidden="true"></span>' + catChipsHtml + '</span>';
+    // Le nom « Rareté » est celui de la ligne du bloc ; « Tout · Aucun » passe sous les pastilles,
+    // comme sur la Carte (2026-10-29). X, P, N suivent les paliers, separes par un filet vertical :
+    // ils ne filtrent pas un palier mais un statut.
+    // « Tout · Aucun » au bout de la même ligne, comme avant (Mathis, 2026-10-29) : seul dessous, il
+    // ajoutait une ligne pour rien.
+    chipsBox.innerHTML = '<div class="rar-chips" role="group" aria-label="Filtrer par rareté">' + chipsHtml
+      + '<span class="rar-cats"><span class="rar-sep" aria-hidden="true"></span>' + catChipsHtml + '</span>'
+      + '<span class="ct-rar-liens pkdx-rar-liens"><button type="button" class="ct-lien" data-tier-all title="Cocher toutes les raretés">Tout</button>'
+      + '<span aria-hidden="true">·</span><button type="button" class="ct-lien" data-tier-none title="Décocher toutes les raretés">Aucun</button></span></div>';
   }
+  // Les boutons colles du tri et de « Afficher » suivent le reglage, d'ou qu'il vienne.
+  const allume = (attr, valeur) => document.querySelectorAll(`#pkdxFiltres [${attr}]`).forEach(b => {
+    const on = b.getAttribute(attr) === valeur;
+    b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); b.tabIndex = on ? 0 : -1;
+  });
+  allume('data-pkdx-sort', _pkdxFilters.sort || 'famille');
+  allume('data-pkdx-owned', _pkdxFilters.owned || '');
   // Compteur : X vues / Y filtrees / Z total FR.
   // Le denominateur ne compte que les cases reellement affichables : les accidentelles
   // non cochees restent dans _pkdxAllSorted pour figer les numeros, mais annoncer
