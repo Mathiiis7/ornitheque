@@ -16075,8 +16075,9 @@ async function _renderSpeciesTraitsCard(key){
 // les conditions interdisent l'usage sur un site sans accord ecrit ; depuis le 2026-10-21, observations
 // d'oiseaux publiees sur GBIF, toutes bases (CC BY-NC 4.0, DOI 10.15468/dl.vnrtqk), avant eBird seul.
 // Detail et mesures : docs/sources-cartes.md.
-// FORMAT : par espece, deux PNG en niveaux de gris dans le depot separe ornitheque-data/cartes/ :
-// <code>-a.png (annee) et <code>-m.png (12 mois empiles), 1 pixel par case de 0,25 degre, 0 = pas de
+// FORMAT : par espece, un PNG en niveaux de gris dans le depot separe ornitheque-data/cartes/ :
+// <code>-a.png (annee ; les 12 mois <code>-m.png, plus lus depuis l'animation par semaine, retires
+// le 2026-10-27, l'animation lit <code>-s.png), 1 pixel par case de 0,25 degre, 0 = pas de
 // valeur, 1..32 = rang de la frequence de signalement. Le navigateur les colore et les reechantillonne
 // en Mercator (Leaflet etire une image lineairement en Mercator, pas en latitude). Pourquoi pas des PNG
 // couleur : 2,7 Go pour 10 700 especes, contre ~100 Mo en niveaux de gris. Le manifeste
@@ -16157,26 +16158,23 @@ function _carteLireGris(url){
   });
 }
 // Une seule espece en memoire a la fois : grilles lues, images deja coloriees (URL de blob a rendre).
-let _carteMem = { code:null, an:null, mois:null, rendus:new Map() };
+let _carteMem = { code:null, an:null, rendus:new Map() };
 function _carteOuvrir(e){
   if(_carteMem.code !== e.code){
     for(const p of _carteMem.rendus.values()) p.then(r => URL.revokeObjectURL(r.url)).catch(() => {});
-    _carteMem = { code:e.code, an:null, mois:null, rendus:new Map() };
+    _carteMem = { code:e.code, an:null, rendus:new Map() };
   }
   return _carteMem;
 }
-// m = 0 : annee ; 1..12 : mois. Rend {url} d'une image PNG coloree, alignee en Mercator sur _carteCadre(e).
-function _carteImage(e, m){
+// Carte de l'annee. Rend {url} d'une image PNG coloree, alignee en Mercator sur _carteCadre(e).
+function _carteImage(e){
   const mem = _carteOuvrir(e);
-  if(mem.rendus.has(m)) return mem.rendus.get(m);
+  if(mem.rendus.has(0)) return mem.rendus.get(0);
   const p = (async () => {
-    if(m && !mem.mois) mem.mois = _carteLireGris(`${CARTES_BASE}/${e.code}-m.png?v=${CARTES_VERSION}`);
-    if(!m && !mem.an) mem.an = _carteLireGris(`${CARTES_BASE}/${e.code}-a.png?v=${CARTES_VERSION}`);
-    const grille = await (m ? mem.mois : mem.an);
-    const W = e.w, H = e.h;
-    return _carteColorier(e, m ? grille.subarray((m - 1) * W * H, m * W * H) : grille, CARTES_NIV);
+    if(!mem.an) mem.an = _carteLireGris(`${CARTES_BASE}/${e.code}-a.png?v=${CARTES_VERSION}`);
+    return _carteColorier(e, await mem.an, CARTES_NIV);
   })();
-  mem.rendus.set(m, p);
+  mem.rendus.set(0, p);
   return p;
 }
 // Colorie une grille de rangs 1..nivMax (cadre e) et la reechantillonne en Mercator : rend {url}.
@@ -16339,7 +16337,7 @@ async function _renderSpeciesRangeCard(sci){
     }).addTo(carte);
     carte.fitBounds(dataBounds);
     // La grille est lue puis coloriee dans le navigateur : l'image arrive un instant apres la carte.
-    _carteImage(entry, 0).then(r => {
+    _carteImage(entry).then(r => {
       if(_rangeMapInstance === carte) L.imageOverlay(r.url, _carteCadre(entry), { opacity:0.75, interactive:false, className:'sharp-overlay' }).addTo(carte);
     }).catch(() => {});
     // La teinte dans son propre plan, SOUS celui de la carte (400 pour les calques par defaut) : les deux
