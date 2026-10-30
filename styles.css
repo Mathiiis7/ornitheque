@@ -3812,13 +3812,6 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
 
   /* Pastille dorée des onglets Birdydex et Trophées : ce qui attend d'être touché. */
   .tab-count.tab-count-or { background:var(--gold); }
-  /* Un trophée qui attend : même aura que .a-decouvrir du Birdydex, coupe en silhouette. */
-  .tro-family.tro-attend, .tro-oneshot.tro-attend { cursor:pointer; box-shadow:0 0 14px 3px color-mix(in srgb, var(--gold) 50%, transparent);
-    border-color:color-mix(in srgb, var(--gold) 60%, var(--line)); background:color-mix(in srgb, var(--gold) 8%, var(--surface)); }
-  .tro-family.tro-attend .tro-fam-cup .tro-cup, .tro-oneshot.tro-attend .tro-os-ico img { filter:brightness(0) opacity(.28); }
-  :root[data-theme="dark"] .tro-family.tro-attend .tro-fam-cup .tro-cup, :root[data-theme="dark"] .tro-oneshot.tro-attend .tro-os-ico img { filter:brightness(0) invert(1) opacity(.25); }
-  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .tro-family.tro-attend .tro-fam-cup .tro-cup, :root:not([data-theme="light"]) .tro-oneshot.tro-attend .tro-os-ico img { filter:brightness(0) invert(1) opacity(.25); } }
-  .tro-touche { font-size:14px; font-weight:600; color:color-mix(in srgb, var(--gold) 75%, var(--ink)); margin-top:4px; text-align:center; }
 
   /* Le déblocage d'un trophée : la montée de palier sur fond noir, puis le noir s'efface et une
      carte dans le style du site se pose sur la page (choix de Mathis, 2026-10-30, maquette
@@ -3874,7 +3867,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .tro-sc-phrase { display:block; font-size:14px; color:var(--ink-2); margin:6px 0 14px; line-height:1.4; }
   .tro-sc-reflet { position:absolute; inset:0; pointer-events:none; background:linear-gradient(110deg, transparent 30%, rgba(255,255,255,.55) 48%, transparent 65%);
     transform:translateX(-120%); animation:fut-reflet 2.6s ease-in-out calc(var(--tro-carte) + .5s) 1 both; }
-  /* Passer, ou trophée suivant d'une série : seulement la carte. */
+  /* Passer : seulement la carte. */
   .tro-sc-fini { --tro-choc:0s; --tro-carte:0s; }
   .tro-sc-fini .tro-sc-noir, .tro-sc-fini .tro-sc-rayons, .tro-sc-fini .tro-sc-flash, .tro-sc-fini .tro-sc-titre, .tro-sc-fini .tro-sc-etincelles,
   .tro-sc-fini .tro-sc-coupe, .tro-sc-fini .tro-sc-jauge { display:none; }

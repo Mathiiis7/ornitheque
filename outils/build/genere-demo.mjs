@@ -181,6 +181,7 @@ function listeDe(m){
     const chance = 0.55 + 0.45 * (1 - i / ESPECES.length);
     if(pseudo(i * 7 + graine * 101) > chance) continue;
     const sci = ESPECES[i];
+    if(sci === m.reveSci) continue;   // un reve ne se coche pas encore : le Classement dirait « vu ! »
     const jour = 1 + Math.floor(pseudo(i * 3 + graine) * 27);
     const mois = 1 + Math.floor(pseudo(i * 5 + graine * 2) * 12);
     const lieu = coinPour(m, coins, sci, mois, pseudo(i + graine * 13));
@@ -222,7 +223,7 @@ const ts = ms => ({ __horodatage: ms });      // remplace par un vrai objet dans
 
 const MEMBRES = [
   { id: UID_MOI,      nom: 'Alex',      especes: 212, graine: 1, statut: 'En quête du Guêpier',
-    but: 'Passer les 250 espèces cette année', reve: 'Le Gypaète barbu en vol',
+    but: 'Passer les 250 espèces cette année', reve: 'Le Gypaète barbu', reveSci: 'gypaetus barbatus',
     rare: 'Marouette ponctuée, Brenne, 2023', rareSci: 'porzana porzana', rareDep: 'FR-CVL-36', rareAn: 2023, avatar: '🦅', jours: 400, chezSoi: 'FR-CVL-36' },   // la Brenne de sa rareté
   { id: 'demo-claire', nom: 'Claire',   especes: 318, graine: 2, statut: 'Camargue tous les week-ends',
     but: 'Finir les limicoles de la façade atlantique', reve: 'Une Aigrette des récifs',
@@ -231,10 +232,10 @@ const MEMBRES = [
     but: 'Photographier les dix pics de France', reve: 'Le Grand Tétras',
     rare: 'Chevêchette d’Europe, Jura, 2022', rareSci: 'glaucidium passerinum', rareDep: 'FR-BFC-39', rareAn: 2022, avatar: '🦉', jours: 700, chezSoi: 'FR-BFC-39' },   // le Jura
   { id: 'demo-lina',   nom: 'Lina',     especes: 156, graine: 4, statut: 'Débutante assumée',
-    but: 'Reconnaître dix chants sans tricher', reve: 'Un Martin-pêcheur de près',
+    but: 'Reconnaître dix chants sans tricher', reve: "Le Martin-pêcheur d'Europe", reveSci: 'alcedo atthis',
     rare: 'Torcol fourmilier, jardin, 2025', rareSci: 'jynx torquilla', rareDep: 'FR-NAQ-33', rareAn: 2025, avatar: '🐦', jours: 120, chezSoi: 'FR-NAQ-33' },
   { id: 'demo-samir',  nom: 'Samir',    especes: 389, graine: 5, statut: 'Compte les Pouillots',
-    but: 'Boucler les 400', reve: 'Une Sittelle corse chez elle',
+    but: 'Boucler les 400', reve: 'La Sittelle corse', reveSci: 'sitta whiteheadi',
     rare: 'Rollier d’Europe, Crau, 2021', rareSci: 'coracias garrulus', rareDep: 'FR-PAC-13', rareAn: 2021, avatar: '🐧', jours: 1500, chezSoi: 'FR-BRE-29' },
 ];
 

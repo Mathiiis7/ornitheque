@@ -171,13 +171,14 @@ règles communes dans le bloc « Schémas communs », juste avant celui du doigt
   s'affiche 3 s. Les deux effets s'éteignent séparément (`DEBLOQUE_CARTE`, `DEBLOQUE_REVELATION`
   dans `app.js`). « Ajouter à ma liste », en blanc dans l'en-tête de la fiche, ouvre l'ajout déjà
   rempli.
-- **Le trophée débloqué** (2026-10-30) : gagné, il attend en silhouette sur sa case avec l'aura dorée
-  (`.tro-attend`) ; le toucher joue sa scène : sur fond noir, l'ancienne coupe et la jauge, le flash,
+- **Le trophée débloqué** (2026-10-30) : gagné, sa case reste sur le palier d'avant (une silhouette à
+  toucher montrait déjà ce qu'on avait débloqué, refusée) ; sa scène se joue seule en arrivant sur la
+  page Trophées : sur fond noir, l'ancienne coupe et la jauge, le flash,
   la nouvelle coupe (2,3 s posée : `--tro-carte`, 4,5 s au total était trop court), puis le noir
-  s'efface et une carte dans le style du site se pose sur la page. Plusieurs d'un coup : la scène
-  pour le premier, la carte seule pour les suivants. **Pastille dorée** (`.tab-count-or`) sur les
-  onglets Birdydex et Trophées : le nombre de cases qui attendent ; elle baisse quand on les touche,
-  pas quand on ouvre l'onglet. Rouge = quelqu'un a écrit, or = tu as gagné quelque chose.
+  s'efface et une carte dans le style du site se pose sur la page. Plusieurs d'un coup : les scènes
+  s'enchaînent, « Suivant » lance la suivante. **Pastille dorée** (`.tab-count-or`) sur les
+  onglets Birdydex et Trophées : le nombre de choses qui attendent ; aux Trophées, elle baisse à mesure
+  que les scènes se jouent ; au Birdydex, à chaque case touchée. Rouge = quelqu'un a écrit, or = tu as gagné quelque chose.
 
 ## Règles
 
