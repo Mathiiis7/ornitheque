@@ -2638,6 +2638,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-hb-pli[aria-expanded="true"] span { display:inline-block; transform:rotate(180deg); }
   .ct-hb-autres[hidden] { display:none; }
   .ct-hb-attente .ct-hb-e { display:none; }
+  .ct-bloc #mapEbCompteLbl .ct-seg-plein button { flex:1 1 auto; }
   .ct-gl-obs .ct-gl-lieu { color:var(--ink-3); border-top:0; }
   .ct-gl-obs[hidden] { display:none; }
   /* Plusieurs observations de l'espèce au même endroit : leur nombre en bas à droite du point (2026-10-24). */
