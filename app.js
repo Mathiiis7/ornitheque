@@ -11757,9 +11757,11 @@ async function _enrichHotspots(hotspots, region, kind, encore = () => true){
       // Les échappés ne sont jamais à cocher sur la Carte (Mathis, 2026-10-23) : le Flamant du Chili passait
       // en gris marqué 9 dans les bulles des hotspots de Camargue (2026-10-29).
       const sauvages = [...sciSet].filter(s => !estEchappeDansPays(s, h.countryCode || (region || 'FR').slice(0, 2), h.subnational2Code));
-      const missing = sauvages.filter(s => !mine.has(s));
+      // _mineHasStrict : eBird écrit ses noms d'octobre 2026 (Nannus troglodytes), la liste garde les anciens
+      // (Troglodytes troglodytes) ; Troglodyte mignon et Bruant des roseaux restaient non observés (2026-10-30).
+      const missing = sauvages.filter(s => !_mineHasStrict(mine, s));
       // Compté à part : les échappés retirés de missing ne sont pas pour autant vus par toi.
-      const seen = [...sciSet].filter(s => mine.has(s)).length;
+      const seen = [...sciSet].filter(s => _mineHasStrict(mine, s)).length;
       // sauvagesSci : ce que la bulle montre quand « Non observées » est éteint (2026-10-29 : l'interrupteur ne
       // changeait rien aux Hotspots, seules les espèces non observées étaient gardées).
       return { ...h, allSp:sciSet.size, mySp:seen, toDo:missing.length, missingSci:missing, sauvagesSci:sauvages };
