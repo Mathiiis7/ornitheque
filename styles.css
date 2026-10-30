@@ -2663,6 +2663,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-hs.ct-hs-c2 { background:color-mix(in srgb, var(--accent) 40%, var(--surface)); color:var(--ink); }
   .ct-hs.ct-hs-c3 { background:var(--accent); color:var(--surface); }
   .ct-hs.ct-hs-c4 { background:var(--accent-ink); border-color:var(--accent-ink); color:var(--surface); }
+  /* Un hotspot à 0 ces 30 jours : gris et en retrait, le chiffre reste écrit. */
+  .ct-hs.ct-hs-vide { background:var(--surface-2); border-color:var(--ink-3); color:var(--ink-3); box-shadow:none; opacity:.55; }
   .ct-leg-crans { display:inline-flex; gap:3px; }
   .ct-leg-crans .ct-hs.ct-hs-sym { width:20px; height:18px; }
   .ct-hs.ct-hs-fav { border-color:#f4b400; box-shadow:0 0 0 1.5px #f4b400, 0 1px 4px rgba(0,0,0,.25); }
@@ -2726,6 +2728,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-sv .ct-sv-l { display:flex; align-items:center; gap:7px; }
   .ct-sv .ct-sv-l + .ct-sv-l { margin-top:3px; }
   .ct-sv .ct-sv-l b { font-weight:600; color:var(--ink); }
+  .ct-sv .ct-sv-deja b { color:var(--ink-3); }
+  .ct-sv .ct-sv-deja .tier-rond { opacity:.4; }
   .ct-sv .tier-chip { flex:none; }
   /* Le statut exotique (X, P, N) dans le survol et la liste du Récent : la variante 16 px non réduite
      de la colonne Rareté (#matrix .rar-cell, centrage mesuré par le banc pastilles). Le jeton réduit

@@ -31,7 +31,7 @@ const etat = () => p.evaluate(() => {
   const c = []; window.__carte.eachLayer(l => { if(l._hs) c.push({ id:l._hotspotId, chiffre:l.getElement()?.querySelector('.ct-hs')?.textContent }); });
   c.sort((a, b) => a.id.localeCompare(b.id));
   const on = document.querySelector('[data-ct-compte].on')?.textContent;
-  return { on, chiffres:c.map(x => x.chiffre).join(','), id:c[0]?.id, volet:document.querySelector('#ctListeHot .ct-rang-hs .droite')?.textContent, legende:[...document.querySelectorAll('.ml-txt')].map(x => x.textContent).find(t => /Le nombre/.test(t)) };
+  return { on, chiffres:c.map(x => x.chiffre).join(','), id:c[0]?.id, volet:document.querySelector('#ctListeHot .ct-rang-hs .droite')?.textContent, legende:[...document.querySelectorAll('.ml-txt')].map(x => x.textContent).find(t => /^Espèces/.test(t)) };
 });
 const bulle = async id => {
   await p.evaluate(id => { window.__carte.closePopup(); window.__carte.eachLayer(l => { if(l._hotspotId === id) l.openPopup(); }); }, id);

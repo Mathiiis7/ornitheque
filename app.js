@@ -7286,11 +7286,11 @@ function _updateLegend(){
   }
   if(carteCouches.has('hot')){
     // Le carré dit son nombre : plus besoin de l'échelle des tailles des ronds d'avant.
-    const quoi = (ebFilter.showObserved ? 'espèces vues ici' : 'espèces non observées') + (hotspotCompte === '30' ? ' ces 30 jours' : '');
+    const quoi = (ebFilter.showObserved ? 'Espèces vues ici' : 'Espèces non observées') + (hotspotCompte === '30' ? ' ces 30 jours' : '');
     parts.push(`<div class="ml-title">Hotspots</div><div class="ct-leg-formes">` +
-      `<span class="ml-row"><span class="ct-hs ct-hs-sym" aria-hidden="true">12</span><span class="ml-txt">Le nombre : ${quoi}</span></span>` +
-      `<span class="ml-row"><span class="ct-leg-crans" aria-hidden="true">${[0, 1, 2, 3, 4].map(c => `<span class="ct-hs ct-hs-sym ct-hs-c${c}"></span>`).join('')}</span><span class="ml-txt">Plus le vert est plein, plus il y a ${quoi === 'espèces vues ici' ? "d'espèces" : "d'espèces non observées"}</span></span>` +
-      (myUid ? `<span class="ml-row"><span class="ct-hs ct-hs-sym ct-hs-fav" aria-hidden="true">12</span><span class="ml-txt">Un de tes favoris</span></span>` : '') + '</div>');
+      `<span class="ml-row"><span class="ct-hs ct-hs-sym" aria-hidden="true">12</span><span class="ml-txt">${quoi}</span></span>` +
+      (myUid ? `<span class="ml-row"><span class="ct-hs ct-hs-sym ct-hs-fav" aria-hidden="true">12</span><span class="ml-txt">Favori</span></span>` : '') +
+      `<span class="ml-row"><span class="ct-leg-crans" aria-hidden="true">${[0, 1, 2, 3, 4].map(c => `<span class="ct-hs ct-hs-sym ct-hs-c${c}"></span>`).join('')}</span><span class="ml-txt">De peu à beaucoup</span></span></div>`);
   }
   if(carteCouches.has('res') && _ctFranceOuverte()){
     // Une couleur par type (Mathis, 2026-10-29), le périmètre de protection en tirets.
@@ -9138,8 +9138,8 @@ function _ctAnneau(grappe){
 // faut garder juste le survol ») ; au doigt, qui ne survole pas, toucher un point montre la même chose.
 // La pastille de rareté porte son numéro : la ronde chiffrée de toute l'appli (tierChip), à sa taille.
 // Le statut exotique (X, P, N) de l'espèce là où elle a été vue suit, dans le rond gris du Birdydex.
-const _ctLigneSurvol = (coul, w, nom, fin, statut) =>
-  `<span class="ct-sv-l">${tierChip(w || '?', coul, { cls:'tier-rond' })}${statut ? jetonExo(statut) : ''}<b>${esc(nom)}</b>${fin || ''}</span>`;
+const _ctLigneSurvol = (coul, w, nom, fin, statut, cls = '') =>
+  `<span class="ct-sv-l${cls ? ' ' + cls : ''}">${tierChip(w || '?', coul, { cls:'tier-rond' })}${statut ? jetonExo(statut) : ''}<b>${esc(nom)}</b>${fin || ''}</span>`;
 const _ctStatutPoint = m => (m._rec && m._rec.statut) || (m._ligue && m._ligue.statut) || '';
 function _ctSurvolPoint(m){
   const r = m._rec, l = m._ligue, s = n => n > 1 ? 's' : '';
@@ -9382,7 +9382,8 @@ function _ctSymbole(k){
 const _ctCranHotspot = (nb, max) => max > 0 ? Math.min(4, Math.floor(nb / max * 5)) : 0;
 function _ctIconeHotspot(nb, favori, cran = 0){
   const chiffres = String(nb).length, larg = Math.max(28, 14 + 9 * chiffres);
-  return L.divIcon({ html:`<span class="ct-hs ct-hs-c${cran}${favori ? ' ct-hs-fav' : ''}">${nb}</span>`, className:'ct-hs-ico', iconSize:[larg, 26] });
+  // Un 0 (rien ces 30 jours) reste écrit, mais grisé : il ne doit pas se lire comme un carré à visiter (Mathis, 2026-10-30).
+  return L.divIcon({ html:`<span class="ct-hs ct-hs-c${cran}${String(nb) === '0' ? ' ct-hs-vide' : ''}${favori ? ' ct-hs-fav' : ''}">${nb}</span>`, className:'ct-hs-ico', iconSize:[larg, 26] });
 }
 // ---- Les réserves (2026-10-29, notes-privees/maquettes/reserves/, choix de Mathis) ----
 // Réserves naturelles nationales et régionales, sites du Conservatoire du littoral : data/reserves-fr.json
@@ -11827,24 +11828,25 @@ document.addEventListener('click', e => {
 // d'une zone perimee.
 let _hotspotsRunSeq = 0;
 // Le chiffre des carrés : tout l'historique du lieu ou ces 30 jours (Mathis, 2026-10-30 : sans cliquer, plus
-// moyen de voir où il s'est passé quelque chose). Ne change que ce chiffre, le volet et leur teinte ; la bulle et
-// l'aperçu au survol restent les mêmes. « Ces 30 jours » coûte une demande par hotspot, la même que la bulle, donc
+// moyen de voir où il s'est passé quelque chose). Change ce chiffre, le volet, leur teinte et l'aperçu au survol ;
+// la bulle reste la même. « Ces 30 jours » coûte une demande par hotspot, la même que la bulle, donc
 // gardée pour elle : rien ne part tant qu'on n'a pas appuyé. Un carré sans réponse d'eBird dit « ? », pas 0.
 let hotspotCompte = 'tout', _ctHsCompteRun = 0;
 async function _ctHsCompte(){
   if(!_lyrHotspots) return;
   const run = ++_ctHsCompteRun, ms = _lyrHotspots.getLayers().filter(m => m._hs);
-  const pose = m => m.setIcon(_ctIconeHotspot(m._hs.aff || m._hs.nb, myFavHotspots.has(m._hotspotId), m._hs.cran));
+  // Les carrés à 0 passent sous les autres : sur la côte, ils en cachaient de pleins.
+  const pose = m => { m.setIcon(_ctIconeHotspot(m._hs.aff || m._hs.nb, myFavHotspots.has(m._hotspotId), m._hs.cran)); m.setZIndexOffset(String(m._hs.aff) === '0' ? -1000 : 0); };
   const finit = () => {
     const max = Math.max(0, ...ms.map(m => m._hs.nb));
     for(const m of ms){ m._hs.cran = _ctCranHotspot(m._hs.nb, max); pose(m); }
     _ctListeHot();
   };
   if(hotspotCompte !== '30'){
-    for(const m of ms){ m._hs.nb = m._hs.nbTout; m._hs.aff = null; }
+    for(const m of ms){ m._hs.nb = m._hs.nbTout; m._hs.aff = null; m._hs.vues30 = null; }
     finit(); return;
   }
-  for(const m of ms){ m._hs.aff = '…'; m._hs.cran = 0; pose(m); }
+  for(const m of ms){ m._hs.aff = '…'; m._hs.cran = 0; m._hs.vues30 = null; pose(m); }
   _ctListeHot();
   await _batch(ms, 8, async m => {
     let obs = null;
@@ -11852,7 +11854,7 @@ async function _ctHsCompte(){
     if(run !== _ctHsCompteRun) return;
     if(Array.isArray(obs)){
       const vues = new Set(obs.map(o => (o.sciName || '').toLowerCase()));
-      m._hs.nb = (m._missSci || []).filter(s => vues.has(s)).length; m._hs.aff = String(m._hs.nb);
+      m._hs.nb = (m._missSci || []).filter(s => vues.has(s)).length; m._hs.aff = String(m._hs.nb); m._hs.vues30 = vues;
     } else { m._hs.nb = 0; m._hs.aff = '?'; }
     pose(m);
   });
@@ -11981,14 +11983,24 @@ async function _loadHotspotsLayer(region){
         m.on('mouseover', () => {
           if(m.isPopupOpen()) return;
           const s = x => x > 1 ? 's' : '';
-          const esp = montrees.map(sci => ({ nom:frName(sci, sci), w:_ctRarete(sci, ccHs), coul:_ctCouleur(sci, ccHs) }))
+          // Une espèce déjà vue par toi (« Non observées » éteint) : grisée, comme dans la bulle.
+          const nonVues = new Set(filteredMiss);
+          // « Nombre : ces 30 jours » : les mêmes espèces que le chiffre du carré et le haut de la bulle (Mathis,
+          // 2026-10-30 : le survol restait sur tout l'historique). Tant qu'eBird n'a pas répondu, il le dit.
+          const en30 = hotspotCompte === '30', vues30 = en30 ? m._hs.vues30 : null;
+          const liste = en30 ? (vues30 ? montrees.filter(sci => vues30.has(sci)) : []) : montrees;
+          const esp = liste.map(sci => ({ nom:frName(sci, sci), w:_ctRarete(sci, ccHs), coul:_ctCouleur(sci, ccHs), deja:tout && !nonVues.has(sci) }))
             .sort((a, b) => b.w - a.w || a.nom.localeCompare(b.nom, 'fr'));
           const vus = esp.length - CT_SURVOL_MAX > 1 ? esp.slice(0, CT_SURVOL_MAX) : esp, reste = esp.length - vus.length;
-          const tete = `${toDoShown} non observée${s(toDoShown)} · ${n} espèce${s(n)} vue${s(n)} ici`;
+          const k = esp.length;
+          const tete = !en30 ? `${toDoShown} non observée${s(toDoShown)} · ${n} espèce${s(n)} vue${s(n)} ici`
+            : !vues30 ? (m._hs.aff === '?' ? 'eBird ne répond pas' : 'Lecture de ces 30 jours…')
+            : !k ? `Aucune ${tout ? 'espèce vue' : 'non observée vue'} ici ces 30 jours`
+            : tout ? `${k} espèce${s(k)} vue${s(k)} ici ces 30 jours` : `${k} non observée${s(k)} vue${s(k)} ici ces 30 jours`;
           // Le mois choisi dans « Quand », en gris après le nom (Mathis, 2026-10-29) : les espèces à cocher en dépendent.
           const mois = monthFilter ? ` <span class="ct-sv-mois">${MONTH_NAMES[monthFilter]}</span>` : '';
           const html = `<span class="ct-sv-t">${esc(h.locName || h.name || '?')}${mois}</span><span class="ct-sv-d">${tete}</span>` +
-            vus.map(e => _ctLigneSurvol(e.coul, e.w, e.nom, '', '')).join('') + (reste ? `<span class="ct-sv-d">et ${reste} autre${s(reste)} : clique pour ouvrir</span>` : '');
+            vus.map(e => _ctLigneSurvol(e.coul, e.w, e.nom, '', '', e.deja ? 'ct-sv-deja' : '')).join('') + (reste ? `<span class="ct-sv-d">et ${reste} autre${s(reste)} : clique pour ouvrir</span>` : '');
           m.bindTooltip(html, _ctSensSurvol(m.getLatLng(), 13)).openTooltip();
         });
         m.on('mouseout popupopen', () => m.unbindTooltip());

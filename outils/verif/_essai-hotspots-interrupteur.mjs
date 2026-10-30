@@ -31,7 +31,7 @@ const etat =() => p.evaluate(() => {
   const hs = []; window.__carte.eachLayer(l => { if(l._hs) hs.push({ id:l._hotspotId, nb:l._hs.nb, aVoir:l._hs.aVoir }); });
   hs.sort((a, b) => a.id.localeCompare(b.id));
   const premiere = document.querySelector('#ctListeHot .ct-rang-hs .droite')?.textContent;
-  const legende = [...document.querySelectorAll('.ml-txt')].map(x => x.textContent).filter(t => /Le nombre|vert est plein/.test(t)).join(' / ');
+  const legende = [...document.querySelectorAll('.ml-txt')].map(x => x.textContent).filter(t => /^Espèces/.test(t)).join(' / ');
   return { coche:document.getElementById('ctHotManque')?.checked, hs, premiere, legende };
 });
 const bulle = async id => {
@@ -65,7 +65,7 @@ if(b.coche !== false || !plusGrand || plusPetit) { console.log('   ÉCART : les 
 if(!ba || !bb || bb.lignes <= ba.lignes) { console.log('   ÉCART : la bulle ne montre pas les espèces déjà vues'); defauts++; }
 // Les déjà vues grisées (variante A) : autant que la différence, nom d'une autre couleur, pastille pâlie ; aucune allumé.
 if(!ba || !bb || ba.nbDeja !== 0 || bb.nbDeja !== bb.lignes - ba.lignes || bb.couleurDeja === bb.couleurAutre || !(+bb.opaciteDeja < 0.5) || +bb.opaciteAutre !== 1) { console.log('   ÉCART : déjà vues pas grisées'); defauts++; }
-if(!/espèces? vues? ici/.test(b.legende) || /non observées/.test(b.legende)) { console.log('   ÉCART : légende'); defauts++; }
+if(!/espèces? vues? ici/i.test(b.legende) || /non observées/.test(b.legende)) { console.log('   ÉCART : légende'); defauts++; }
 if(!/espèce/.test(b.premiere || '') || /non observée/.test(b.premiere || '')) { console.log('   ÉCART : volet'); defauts++; }
 await bascule();
 const c = await etat();
