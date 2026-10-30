@@ -8454,12 +8454,11 @@ async function _drawFinish(){
   _drawState.finalPoly = L.polygon(_drawState.vertices, { color:'#0b7c77', weight:2.5, fillColor:'#0b7c77', fillOpacity:0.12 });
   _drawState.finalPoly.addTo(_lyrDraw);
   // La zone vaut pour l'onglet ouvert, quel qu'il soit (Mathis, 2026-10-26) : la Ligue garde ses
-  // points dedans, le Récent et les Hotspots se lisent dedans. Sa couche s'allume, comme au clic d'une zone.
+  // points dedans, le Récent et les Hotspots se lisent dedans. Aucune couche ne s'allume (voir _ctAllume).
   ebFilter.polygon = _drawState.vertices.slice();
   _loaded.missing = ''; _loaded.hotspots = '';
   const drawClear = $('#mapDrawClear'); if(drawClear) drawClear.style.display = '';
   const finishBtn = $('#mapDrawFinish'); if(finishBtn) finishBtn.style.display = 'none';
-  _ctAllumeMode();
   renderMap();
 }
 // Efface tout : polygone + filtres associes + re-render sans polygone.
@@ -9550,9 +9549,8 @@ function _ctGardeCoucheDuMode(){
   const k = CARTE_MODE_ONGLET[mapMode] || 'ligue';
   for(const c of ['recent', 'hot']) if(c !== k) carteCouches.delete(c);
 }
-// Cliquer une zone montre ce que l'onglet ouvert y a : sa couche s'allume, comme le faisait le Récent
-// quand ce clic l'ouvrait (en Ligue, la carte restait sinon sur « Aucune couche allumée »).
-const _ctAllumeMode = () => _ctAllume(CARTE_MODE_ONGLET[mapMode] || 'ligue');
+// Choisir une zone n'allume aucune couche : seules les pastilles le font (Mathis, 2026-10-30, « rien ne doit
+// s'activer si je ne le fais pas moi-même »). Le clic d'un département allumait le Récent.
 // Un onglet du panneau ne fait que montrer sa page : seules les pastilles au-dessus de la carte allument
 // une couche (Mathis, 2026-10-28). Le clic d'onglet passe par le bouton de mode, d'où ce drapeau.
 let _ctOngletSansCouche = false;
@@ -9910,7 +9908,6 @@ function _ctChoisirZone(code){
   if(_ctTel.matches && carteTiroir === 'bas') carteTiroir = 'mi';
   _ctSurligne(); _ctCadreZone();
   // L'onglet ouvert reste ouvert (Mathis, 2026-10-26).
-  _ctAllumeMode();
   renderMap();
   _reloadSpeciesForZone();
 }
@@ -9934,7 +9931,6 @@ function _ctChoisirDep(code){
   _ctSurligne(); _ctCadreZone();
   // L'onglet ouvert reste ouvert : choisir un département n'ouvre plus le Récent de lui-même
   // (Mathis, 2026-10-26, à la place de la maquette du 23/10).
-  _ctAllumeMode();
   renderMap();
   _reloadSpeciesForZone();
 }
@@ -9948,7 +9944,7 @@ function _ctChoisirRegion(region, ouvrir){
   const rs = document.getElementById('mapEbRegion'); if(rs) rs.value = region;
   _refreshDeptSel();
   _ctSurligne(); _ctCadreZone();
-  if(ouvrir){ if(_ctTel.matches && carteTiroir === 'bas') carteTiroir = 'mi'; _ctAllumeMode(); }
+  if(ouvrir && _ctTel.matches && carteTiroir === 'bas') carteTiroir = 'mi';
   renderMap();
   _reloadSpeciesForZone();
 }
