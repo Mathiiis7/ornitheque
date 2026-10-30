@@ -357,15 +357,11 @@ la progression du quiz, `quizProgress/<uid>`, une fiche privée lue par son seul
 
 ## Données eBird
 
-**Le jeton eBird d'`app.js` est public, et c'est assumé.** Le dépôt est public et l'appli
-appelle l'API eBird depuis le navigateur du visiteur : le jeton part forcément avec le code,
-le ranger ailleurs ne le cacherait qu'à nous. Le masquer vraiment demanderait de faire passer
-tous les appels par un serveur à nous, donc de quitter GitHub Pages. Décision prise le
-2026-09-28 : on ne change rien, le jeton ne lit que des données eBird publiques, pas le
-compte ni les listes. Le cookie, lui, reste hors dépôt - c'est lui le vrai secret.
-**Mais les conditions de l'API, lues le 2026-10-23, disent « You will not share your API key(s) with any
-third party » (2.5)**, et interdisent de garder leurs données en fichier publié (2.3, 5.1) : détail et
-décision dans `docs/carte-donnees.md` : un petit relais gardera la clé, à faire avec la refonte de la Carte.
+**La clé eBird n'est plus dans `app.js` depuis la v879 (2026-10-23)** : le site passe par le relais
+Vercel `ornitheque-relais`, qui la garde en secret (variable `EBIRD_KEY`), car les conditions de l'API
+disent « You will not share your API key(s) with any third party » (2.5). **L'ancienne clé reste lisible
+dans l'historique public du dépôt (27 commits) et eBird l'acceptait encore le 2026-10-30.** Le cookie
+reste hors dépôt. Détail et conditions : `docs/carte-donnees.md`.
 
 Récolte et vérification des données (bar charts, fréquences, injecteur, zones, mur anti-robot) :
 skill `donnees-ebird`. Le piège qui a déjà fait conclure à tort : eBird refuse le mode invisible,

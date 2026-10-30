@@ -9505,14 +9505,10 @@ function _ctResDans(f, lat, lng){
 const _ctPointsDe = l => l && _map && _map.hasLayer(l) ? l.getLayers().filter(m => m.getLatLng) : [];
 // La bulle : la fiche (nom, type, date, gestionnaire, surface), puis ce que la couche allumée a dans la
 // réserve (Mathis, 2026-10-29) : ses hotspots et leurs espèces à cocher avec Hotspots, la liste des
-// observations comme celle d'une grappe avec Vu récemment ou La ligue ; enfin le lien vers la fiche de l'INPN.
+// observations comme celle d'une grappe avec Vu récemment ou La ligue.
 // Les hotspots se lisent par les zones eBird du site (une demande, gardée 7 jours par le relais), puis la
 // liste d'espèces de chacun (12 au plus, les plus riches) : seulement au clic.
 const CT_RES_MAX_HS = 12;
-// Le lien vers la fiche de l'INPN, masqué : depuis la cyberattaque du Muséum (juillet 2025), le site refait
-// répond 404 à toutes les fiches d'espaces protégés (vérifié le 2026-10-29), annoncées « d'ici la fin de
-// l'année ». À remettre à true quand https://inpn.mnhn.fr/espace/protege/FR3600048 répond de nouveau.
-const CT_RES_FICHE_INPN = false;
 async function _ctOuvreReserve(f, latlng){
   const p = f.properties, s = x => x > 1 ? 's' : '';
   const run = ++_ctReserveRun;
@@ -9520,8 +9516,7 @@ async function _ctOuvreReserve(f, latlng){
   const gere = [p.g ? `Gérée par ${p.g}` : '', p.s ? `${p.s.toLocaleString('fr-FR')} ha` : ''].filter(Boolean).join(' · ');
   const contenu = document.createElement('div');
   contenu.innerHTML = `<p class="ct-hb-t">${esc(p.n)}</p><p class="ct-gl-t ct-hb-s">${esc(infos)}</p>` + (gere ? `<p class="ct-gl-t ct-hb-s">${esc(gere)}</p>` : '') +
-    `<div class="ct-rb-hs"></div>` +
-    (p.i && CT_RES_FICHE_INPN ? `<p class="ct-gl-t ct-rb-lien"><a href="https://inpn.mnhn.fr/espace/protege/${esc(p.i)}" target="_blank" rel="noopener">Fiche de la réserve ↗</a></p>` : '');
+    `<div class="ct-rb-hs"></div>`;
   if(!_ctPopReserve) _ctPopReserve = L.popup({ className:'ct-gl ct-hb ct-rb', maxWidth:320, minWidth:260, autoPanPadding:[24, 24] });
   _ctPopReserve.setLatLng(latlng).setContent(contenu).openOn(_map);
   const boite = contenu.querySelector('.ct-rb-hs');

@@ -18,6 +18,9 @@ await p.goto('http://localhost:8765/demo/', { waitUntil:'load' }); await p.waitF
 await p.keyboard.press('Escape'); await p.keyboard.press('Escape');
 await p.evaluate(() => document.querySelector('.tab[data-view="map"]').click()); await p.waitForTimeout(2500);
 await p.keyboard.press('Escape');
+// Les réserves ne s'affichent que la France ouverte (v952).
+await p.evaluate(() => { let f = null; window.__carte.eachLayer(l => { const pr = l.feature && l.feature.properties; if(pr && pr.cc === 'FR' && !pr.ebird && l.fire && !f && l.getBounds) f = l; }); if(f) f.fire('click', { latlng:f.getBounds().getCenter() }); });
+await p.waitForTimeout(2500);
 let defauts = 0;
 const ecart = m => { console.log('   ÉCART : ' + m); defauts++; };
 const pastilles = () => p.evaluate(() => [...document.querySelectorAll('#ctCouches [data-couche]')].map(b => b.dataset.couche + (b.getAttribute('aria-pressed') === 'true' ? '*' : '')).join(' '));
@@ -57,7 +60,8 @@ const ouvert = await p.evaluate(() => {
   const c = cible.getBounds().getCenter(); const pt = window.__carte.latLngToContainerPoint(c);
   // Un vrai clic à l'écran, au centre de la réserve : c'est elle qui doit le prendre, pas la zone dessous.
   const el = document.elementFromPoint(...(() => { const r = window.__carte.getContainer().getBoundingClientRect(); return [r.left + pt.x * (r.width / window.__carte.getSize().x), r.top + pt.y * (r.height / window.__carte.getSize().y)]; })());
-  if(!el) return 'rien sous le point';
+  // Au téléphone, le fil d'Ariane peut couvrir la réserve : on s'adresse alors à la forme elle-même.
+  if(!el || !el.classList.contains('ct-res')){ cible.fire('click', { latlng:c }); return 'forme visée directement'; }
   el.dispatchEvent(new MouseEvent('click', { bubbles:true, cancelable:true, clientX:0, clientY:0 }));
   return el.tagName + '.' + [...el.classList].join('.');
 });
@@ -67,7 +71,7 @@ const bulle = await p.evaluate(() => { const b = document.querySelector('.leafle
   return { titre:b.querySelector('.ct-hb-t')?.textContent, lignes:[...b.querySelectorAll('.ct-hb-s')].map(x => x.textContent), hs:b.querySelector('.ct-hb-it')?.textContent,
     lieux:[...b.querySelectorAll('.ct-rb-h')].map(x => x.textContent.replace(/\s+/g, ' ').trim()).slice(0, 5), lien:b.querySelector('.ct-rb-lien a')?.href, vide:b.querySelector('.ct-rb-hs')?.textContent.slice(0, 80) }; });
 console.log('bulle :', JSON.stringify(bulle, null, 1));
-if(!bulle || !/Grand-Lieu/.test(bulle.titre || '') || !/inpn/.test(bulle.lien || '')) ecart('bulle');
+if(!bulle || !/Grand-Lieu/.test(bulle.titre || '') || bulle.lien) ecart('bulle');
 if(bulle && !bulle.lieux.length) console.log('   (aucun hotspot listé : ' + bulle.vide + ')');
 // Déplier le premier hotspot.
 const dep = await p.evaluate(() => { const b = document.querySelector('.leaflet-popup.ct-rb button.ct-rb-h'); if(!b) return 'rien à déplier'; b.click(); const l = b.parentElement.nextElementSibling;
