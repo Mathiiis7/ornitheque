@@ -20019,6 +20019,7 @@ document.addEventListener('change', e=>{
 function closeSpeciesModal(){
   const modal = $('#speciesModal'); if(!modal) return;
   modal.hidden = true;
+  _troReprend();
   // Restore scroll de la page en arriere-plan.
   document.body.classList.remove('species-modal-open');
   // Pause + purge tous les audios du registre (evite les accumulations entre fiches).
@@ -20323,6 +20324,7 @@ $('#tmodalBody').addEventListener('click', e => {
 });
 // Helper : ferme le modal ET debloque le scroll de fond.
 function _closeTrophyModal(){
+  setTimeout(_troReprend);
   $('#trophyModal').classList.remove('open');
   document.body.classList.remove('trophy-modal-open');
 }
@@ -22392,7 +22394,7 @@ function _troMajAttente(possedes){
   });
   if(!etat.vus){ etat.vus = noms; _troSauve(); return; }
   const vus = new Set(etat.vus), neufs = noms.filter(n => !vus.has(n));
-  const avant = etat.attente.join();
+  const avant = etat.attente.join(), vusAvant = etat.vus.length;
   etat.vus.push(...neufs);
   // Trophee perdu entre-temps : il n'attend plus. Plusieurs paliers d'un coup : seul le plus haut.
   const garde = new Map();
@@ -22401,22 +22403,35 @@ function _troMajAttente(possedes){
     if(!deja || _troPalier(t) > _troPalier(TROPHIES.find(x => x.name === deja))) garde.set(cle, nom);
   }
   etat.attente = [...garde.values()];
+  // Rien de neuf : ne rien faire. _troSauve repasse par updateTabDots, qui relance la detection :
+  // sauver a chaque fois la faisait tourner sans fin, toutes les 2 s, sur tous les membres.
+  if(etat.attente.join() === avant && etat.vus.length === vusAvant){
+    if(!_troLanceUneFois) _troLance();
+    return;
+  }
   _troSauve();
   if(etat.attente.join() !== avant && _isViewVisible('viewTrophies')) renderTrophies(trophyData);
   // Deja sur la page : un nouveau trophee se joue, ou celui trouve au demarrage. Mais pas ce
   // qu'on vient d'interrompre avec Echap, qui attendra le prochain passage sur l'onglet.
   if(etat.attente.join() !== avant || !_troLanceUneFois) _troLance();
 }
-let _troLanceUneFois = false;
+let _troLanceUneFois = false, _troReporte = false;
 function _troLance(){
   if(!_isViewVisible('viewTrophies') || !_troEtat().attente.length) return;
   _troLanceUneFois = true;
-  // Une autre fenetre est ouverte (guide, fiche...) : rien par-dessus, on rejouera au retour.
-  if(document.querySelector('dialog[open]') || !$('#speciesModal')?.hidden) return;
+  // Une autre fenetre est ouverte (scene d'une espece, fiche, guide...) : rien par-dessus, on
+  // reprend a sa fermeture. Sans cette reprise, un trophee tombe pendant la scene de l'espece
+  // qui l'a debloque restait en attente sans se jouer (Mathis, 2026-10-30).
+  if(document.querySelector('dialog[open]') || !$('#speciesModal')?.hidden || document.body.classList.contains('trophy-modal-open')){ _troReporte = true; return; }
+  _troReporte = false;
   _troFile = [..._troEtat().attente];
   _troTotal = _troFile.length;
   _troJoue(_troFile.shift());
 }
+function _troReprend(){ if(_troReporte) _troLance(); }
+// « close » ne remonte pas : on l'ecoute a la descente, pour toutes les fenetres. La scene d'un
+// trophee en est exclue : l'interrompre avec Echap garde le reste pour le prochain passage.
+document.addEventListener('close', e => { if(e.target?.id !== 'troDialog') setTimeout(_troReprend); }, true);
 // Le bas de l'image est le socle, et le vide autour n'est pas le meme d'une image a l'autre : on
 // le mesure sur une copie 8 fois plus petite (6 images en 1264 px prenaient 3 s).
 const _troCadres = new Map();
