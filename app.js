@@ -16533,12 +16533,12 @@ function _migCourbeHtml(sem, s, etroit){
       <b style="color:var(--ink);">Dans la zone affichée, sur iNaturalist</b>
       <span style="color:var(--ink-3);">${total.toLocaleString('fr')} observations de l'espèce</span>
     </div>
-    <div id="migFsGraphe" title="Cliquer pour aller à cette semaine" style="position:relative; height:72px; margin-top:4px; border-left:1px solid var(--line-2); border-bottom:1px solid var(--line-2); cursor:pointer;">
+    <div style="color:var(--ink-3); margin-top:4px;">${haut} %</div>
+    <div id="migFsGraphe" title="Cliquer pour aller à cette semaine" style="position:relative; height:72px; border-left:1px solid var(--line-2); border-bottom:1px solid var(--line-2); cursor:pointer;">
       <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" style="position:absolute; inset:0; width:100%; height:100%; overflow:visible;">
         <rect x="${s / 52 * 100}" y="0" width="${100 / 52}" height="100" fill="var(--accent)" opacity=".18"/>
         <path d="${chemin}" fill="none" stroke="var(--accent)" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>
       </svg>
-      <span style="position:absolute; left:6px; top:-2px; color:var(--ink-3);">${haut} %</span>
     </div>
     <div aria-hidden="true" style="display:flex; color:var(--ink-3);">${mois}</div>
     <div style="color:var(--ink-3);">Part de cette espèce parmi les oiseaux notés sur iNaturalist dans la zone affichée. Source : <a href="https://www.inaturalist.org" target="_blank" rel="noopener">iNaturalist</a>.</div>`;
@@ -19256,9 +19256,9 @@ function _openSpeciesModalLiens(sci, key, modal, _wasOpen, _savedScroll){
   const wikiUrl = `https://fr.wikipedia.org/wiki/${encodeURIComponent(sci.replace(/ /g,'_'))}`;
   const xcUrl = `https://xeno-canto.org/species/${encodeURIComponent(sci.replace(/ /g,'-'))}`;
   $('#smLinks').innerHTML = `
-    <a href="${ebirdUrl}" target="_blank" rel="noopener">🌍 eBird</a>
-    <a href="${wikiUrl}" target="_blank" rel="noopener">📖 Wikipédia</a>
-    <a href="${xcUrl}" target="_blank" rel="noopener">🎵 xeno-canto</a>
+    <a href="${ebirdUrl}" target="_blank" rel="noopener">eBird</a>
+    <a href="${wikiUrl}" target="_blank" rel="noopener">Wikipédia</a>
+    <a href="${xcUrl}" target="_blank" rel="noopener">xeno-canto</a>
   `;
   modal.hidden = false;
   // Restore la scroll position si on navigue entre fiches (sinon reset a 0 par le re-render).

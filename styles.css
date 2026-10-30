@@ -2600,7 +2600,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     font:inherit; color:var(--ink); text-align:left; cursor:pointer; }
   .ct-gl-l:hover, .ct-gl-l:focus-visible { background:var(--surface-2); }
   .ct-gl-l .tier-chip, .ct-gl-l .pkdx-exo { flex:none; }
-  .ct-gl-l .pkdx-exo { width:16px; min-width:16px; height:16px; margin:0; transform:none; font-size:9.5px; padding:0 0 0.5px; }
+  .ct-gl-l .pkdx-exo { width:16px; min-width:16px; height:16px; margin:0; transform:none; font-size:9.5px; padding:0 0 0.5px 0.5px; }
   .ct-gl-nom { min-width:0; }
   /* Qui l'a vue, pour la ligue (2026-10-26) : à droite du nom, en gris comme « ×N ». */
   /* Un nom trop long finit en « … » plutôt que de serrer le nom de l'oiseau (2026-10-28). */
@@ -2734,7 +2734,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* Le statut exotique (X, P, N) dans le survol et la liste du Récent : la variante 16 px non réduite
      de la colonne Rareté (#matrix .rar-cell, centrage mesuré par le banc pastilles). Le jeton réduit
      de moitié des vignettes, posé dans une ligne de texte, débordait sur ses voisins. */
-  .ct-sv .pkdx-exo, .ct-rang .pkdx-exo { width:16px; min-width:16px; height:16px; margin:0; transform:none; font-size:9.5px; padding:0 0 0.5px; flex:none; }
+  /* 0,5 px à gauche : le N tombait 0,4 px d'écran trop à gauche à tous les zooms (mesuré sur les pixels, 2026-10-30). */
+  .ct-sv .pkdx-exo, .ct-rang .pkdx-exo { width:16px; min-width:16px; height:16px; margin:0; transform:none; font-size:9.5px; padding:0 0 0.5px 0.5px; flex:none; }
   /* Centré sur la ligne du nom, comme le rond de palier de la ligne (mesuré sur la vraie liste, 2026-10-23).
      À -3px, il tombait 4,8 px d'écran trop bas : « pas aligné ». 2,5 et non 2 : au doigt, l'encre de la
      lettre restait mieux centrée dans son rond (banc pastilles). */
@@ -3998,6 +3999,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     /* Dans la liste d'une grappe, on touche la ligne, pas la pastille : elle garde la taille souris
        (à 52 px, six lignes ne tenaient plus dans la bulle, vu le 2026-10-24). */
     .ct-gl-l .tier-chip.tier-rond { width:40px; min-width:40px; height:40px; margin:-10px; font-size:20px; padding:0 0 1px; min-height:0; }
+    /* Le demi-pixel à gauche du N ne vaut qu'à la souris : à 300 %, il le poussait 0,8 px d'appareil trop à droite. */
+    .ct-sv .pkdx-exo, .ct-rang .pkdx-exo, .ct-gl-l .pkdx-exo { padding:0 0 0.5px; }
   }
 
   /* Une seule police pour TOUS les noms latins, partout : celle du texte, en italique (--sans).
