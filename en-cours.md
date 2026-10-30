@@ -1,4 +1,5 @@
-# À FAIRE (demandes de Mathis du 2026-10-29), dernier poussé v967 / app.js?v=540, prochain v968 / 541
+# À FAIRE (demandes de Mathis du 2026-10-29), dernier poussé v968 / app.js?v=541, prochain v969 / 542
+- FAIT v968 : Récent, la dernière lecture complète d'une zone gardée 3 jours dans le navigateur (_ctListesCopie, IndexedDB) : eBird refuse, elle s'affiche datée (« 77 listes lues il y a 2 h, nouvel essai en cours ») au lieu d'« une observation par espèce » ; les nouveaux essais la remplacent. Essai _essai-listes-copie.mjs (faux eBird).
 - FAIT v967 + relais 1e4251a (accord de Mathis, 30/10) : Jersey, Guernesey, Man lisent leurs listes entières comme une région (LISTES du relais, regionFr du site).
 - FAIT v966 : Jersey, Guernesey, Man : points du Récent sur la carte (ils passaient pour un pays entier, code à 2 lettres : _ctPaysEntier). v965 : « lecture des listes » dit une seule fois, dans la note du compte (_ctRecAvance). Essais _essai-iles-points.mjs, _essai-lecture-une-fois.mjs.
 - FAIT v964 : Hotspots, ligne « Nombre » (Tout l'historique | Ces 30 jours, choix de Mathis 30/10) : change seulement le chiffre des carrés, le volet et la teinte, pas la bulle ni le survol ; se combine avec « Non observées » (_ctHsCompte). « Cacher sous » reste sur tout l'historique. Essai _essai-hotspots-nombre.mjs.

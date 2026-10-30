@@ -10376,8 +10376,15 @@ async function _ctListesZone(z, days, tour, avance){
     if(avance) avance(v);
     if(v.reste >= avant) break;
   }
-  if(!v.reste) _ctListesZones.set(k, { ts:Date.now(), v });
+  if(!v.reste){ _ctListesZones.set(k, { ts:Date.now(), v }); _ebIdbEcrit('carte/listes:' + k, { ts:Date.now(), v }); }
   return v;
+}
+// La dernière lecture complète d'une zone, gardée dans ce navigateur (3 jours, la purge d'IndexedDB). Chaque liste
+// reste 30 jours sur le relais, mais son sommaire n'y reste que 10 min : un sommaire refusé par eBird faisait
+// retomber sur « une observation par espèce » une zone déjà lue (Mathis, 2026-10-30).
+async function _ctListesCopie(z, days){
+  const k = z + ':' + days, c = _ctListesZones.get(k) || await _ebIdbLit('carte/listes:' + k);
+  return c && c.v && Array.isArray(c.v.listes) ? c : null;
 }
 const _ctMoisGbif = () => new Date().getMonth() + 1;
 // Les messages des recherches d'espèce vont dans le volet ouvert : le Récent a sa ligne d'état,
@@ -10609,8 +10616,12 @@ async function _loadMissingLayer(zones, days){
       // restait, alors que la même demande passait deux minutes après (Mathis, 2026-10-29). Le secours
       // s'affiche, et les listes se redemandent en fond, à 20 s, 1 min puis 3 min ; réussies, elles le
       // remplacent (_ctLireListes repose tous les points).
-      _ctRecListesEtat = 'echec'; _ctDessinePanneau();
-      await details();
+      // Déjà lue ici : sa dernière lecture, datée, en attendant ; sinon le secours d'avant.
+      if(!await _ctLireListes(tour, zones, days, cc, reponses.flat(), especes, true)){
+        if(tour !== _ctRecTour) return;
+        _ctRecListesEtat = 'echec'; _ctDessinePanneau();
+        await details();
+      }
       for(const attente of CT_LISTES_REESSAIS_MS){
         await new Promise(r => setTimeout(r, attente));
         if(tour !== _ctRecTour) return;
@@ -10626,16 +10637,25 @@ async function _loadMissingLayer(zones, days){
 }
 // Les listes de la zone lues en entier : un point par espèce et par liste. Rend false si eBird ne
 // donne pas les listes (le chargement par espèces prend alors le relais).
-async function _ctLireListes(tour, zones, days, cc, recents, especes){
+async function _ctLireListes(tour, zones, days, cc, recents, especes, copie = false){
   _ctRecAvance = '';
   const lues = [], coupes = [];
-  let reste = 0, total = 0, plafond = null;
+  let reste = 0, total = 0, plafond = null, copieTs = 0;
+  const depuis = Date.now() - days * 864e5;
   const dansZone = l => typeof l.la === 'number' && typeof l.lo === 'number' && (!ebFilter.polygon || _pointInPolygon(l.la, l.lo, ebFilter.polygon));
   // Une région à froid se lit en plusieurs réponses (60 listes nouvelles chacune) : le volet dit où on en est.
   const avance = v => { if(tour === _ctRecTour && v.total){ _ctRecAvance = ` : ${v.listes.length} sur ${v.total}`; _ctListeRecent(); } };
   try{
     for(const z of zones){
-      const v = await _ctListesZone(z, days, tour, avance);
+      let v;
+      if(copie){
+        const c = await _ctListesCopie(z, days);
+        if(!c) return false;
+        copieTs = copieTs ? Math.min(copieTs, c.ts) : c.ts;
+        // Une copie vieillit : ce qui est sorti de la période n'y reste pas.
+        const dedans = c.v.listes.filter(l => Date.parse((l.d || '').replace(' ', 'T')) >= depuis);
+        v = { ...c.v, listes:dedans, total:dedans.length };
+      } else v = await _ctListesZone(z, days, tour, avance);
       if(tour !== _ctRecTour) return true;
       if(!v || !Array.isArray(v.listes)) return false;
       // Un département à plus de 200 listes dans la période (eBird n'en rend pas plus), ou des
@@ -10687,8 +10707,8 @@ async function _ctLireListes(tour, zones, days, cc, recents, especes){
   const vues = new Set(obs.map(o => o.sciName.toLowerCase()));
   _lyrMissing.clearLayers();
   _ctPoseRecent([...obs, ...especes.filter(o => !vues.has((o.sciName || '').toLowerCase()))], cc);
-  _ctRecListes = lues.length ? { lues:lues.length, total, reste, coupes, plafond } : null;
-  _ctRecListesEtat = 'ok';
+  _ctRecListes = lues.length ? { lues:lues.length, total, reste, coupes, plafond, copieTs } : null;
+  _ctRecListesEtat = copie ? 'echec' : 'ok';
   _mapApplyFilter();
   _ctDessinePanneau();
   return true;
@@ -10981,6 +11001,11 @@ function _ctListeRecent(){
   // détail dans la bulle du site (Mathis, 2026-10-26 : le panneau était « très chargé »).
   const note = (court, detail) => ` <span class="ct-note" data-tip="${esc(detail)}">(${court})</span>`;
   const source = cherche ? ''
+    : parListes && L_.copieTs ? (() => {
+      const min = Math.max(1, Math.round((Date.now() - L_.copieTs) / 60e3)), age = min < 60 ? `${min} min` : min < 2880 ? `${Math.round(min / 60)} h` : `${Math.round(min / 1440)} j`;
+      return note(`${L_.lues} liste${s(L_.lues)} lue${s(L_.lues)} il y a ${age}${_ctRecListesEtat === 'echec' ? ', nouvel essai en cours' : ''}`,
+        'eBird limite les demandes quand il y en a trop à la fois : voici la dernière lecture de la zone. Les listes déposées depuis n\'y sont pas' + (_ctRecListesEtat === 'echec' ? ' ; elles arriveront dès qu\'eBird répond.' : ' : rechoisis la zone pour réessayer.'));
+    })()
     : parListes ? note(`${L_.lues} liste${s(L_.lues)}${L_.reste || coupes.length ? ', en partie' : ''}`,
       `Lu dans ${L_.lues === 1 ? 'la seule liste déposée' : `les ${L_.lues} listes déposées`} ici ${quand}` +
       (L_.reste ? `, ${L_.reste} pas encore lue${s(L_.reste)}` : '') + '.' + (coupes.length ? ' ' + coupes.join(' ; ') + '.' : ''))
