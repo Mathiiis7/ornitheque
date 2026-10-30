@@ -3819,19 +3819,24 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      --tro-carte : la carte arrive. */
   .tro-dlg { position:fixed; inset:0; width:auto; height:auto; max-width:none; max-height:none; margin:0; padding:0; border:none; background:transparent; overflow:hidden; }
   .tro-dlg::backdrop { background:transparent; }
-  .tro-sc { --tro-choc:3s; --tro-carte:6.4s; position:absolute; inset:0; display:grid; place-items:center; overflow:hidden; cursor:pointer; color:#fff; outline:none; }
+  /* --tro-teinte : la couleur du fond, celle de l'ancien palier jusqu'au flash, puis celle du nouveau
+     (Mathis, 2026-10-30). Déclarée pour glisser en douceur ; sans @property, elle bascule d'un coup. */
+  @property --tro-teinte { syntax:'<color>'; inherits:true; initial-value:#888; }
+  @keyframes tro-sc-teinte { from { --tro-teinte:var(--c-av); } to { --tro-teinte:var(--c); } }
+  .tro-sc { --tro-choc:3s; --tro-carte:6.4s; position:absolute; inset:0; display:grid; place-items:center; overflow:hidden; cursor:pointer; color:#fff; outline:none;
+    animation:tro-sc-teinte .5s ease var(--tro-choc) both; }
   .tro-sc-court { --tro-choc:1.9s; --tro-carte:5.2s; }
-  .tro-sc-noir { position:absolute; inset:0; background:radial-gradient(ellipse at 50% 45%, color-mix(in srgb, var(--c) 30%, #04070a) 0%, #04070a 62%);
+  .tro-sc-noir { position:absolute; inset:0; background:radial-gradient(ellipse at 50% 45%, color-mix(in srgb, var(--tro-teinte) 30%, #04070a) 0%, #04070a 62%);
     animation:fut-fondu .35s ease both, tro-sc-part .9s ease var(--tro-carte) both; }
   @keyframes tro-sc-part { to { opacity:0; } }
   .tro-sc-page { position:absolute; inset:0; background:color-mix(in srgb, var(--ink) 45%, transparent); animation:fut-fondu .1s linear calc(var(--tro-carte) - .1s) both; }
   .tro-sc-rayons { position:absolute; left:50%; top:50%; width:220vmax; height:220vmax; margin:-110vmax 0 0 -110vmax; opacity:.55;
-    background:repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--c) 50%, transparent) 0deg 5deg, transparent 5deg 15deg);
+    background:repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--tro-teinte) 50%, transparent) 0deg 5deg, transparent 5deg 15deg);
     -webkit-mask-image:radial-gradient(circle, #000 0%, rgba(0,0,0,.5) 18%, transparent 42%); mask-image:radial-gradient(circle, #000 0%, rgba(0,0,0,.5) 18%, transparent 42%);
     animation:fut-tourne 14s linear infinite, fut-fondu .8s ease both, tro-sc-part .6s ease var(--tro-carte) both; }
   .tro-sc-flash { position:absolute; inset:0; background:#fff; opacity:0; animation:fut-flash .6s ease-out var(--tro-choc) both; }
   .tro-sc-titre { position:absolute; left:0; right:0; top:15%; text-align:center; margin:0; font:700 15px var(--sans); letter-spacing:3px; text-transform:uppercase;
-    color:color-mix(in srgb, var(--c) 45%, #fff); text-shadow:0 0 18px var(--c); animation:fut-titre .8s ease-out .2s both, tro-sc-part .3s ease var(--tro-carte) forwards; }
+    color:color-mix(in srgb, var(--tro-teinte) 45%, #fff); text-shadow:0 0 18px var(--tro-teinte); animation:fut-titre .8s ease-out .2s both, tro-sc-part .3s ease var(--tro-carte) forwards; }
   .tro-sc-etincelles { position:absolute; left:50%; top:46%; width:0; height:0; }
   .tro-sc-etincelles i { position:absolute; width:7px; height:7px; margin:-3.5px; border-radius:50%; background:color-mix(in srgb, var(--c) 40%, #fff); box-shadow:0 0 10px var(--c);
     opacity:0; animation:fut-etincelle 1.1s cubic-bezier(.1,.7,.3,1) calc(var(--tro-choc) + var(--t)) both; }
@@ -3851,7 +3856,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .tro-sc-jauge { --l:min(320px,78vw); position:absolute; left:50%; top:calc(46% + min(180px,38vw)); width:var(--l); margin-left:calc(var(--l) / -2); animation:tro-sc-part .3s ease calc(var(--tro-choc) - .1s) forwards; }
   .tro-sc-jauge-txt { display:flex; justify-content:space-between; gap:12px; font:600 15px var(--sans); margin-bottom:6px; }
   .tro-sc-jauge-fond { height:10px; border-radius:6px; background:rgba(255,255,255,.16); overflow:hidden; }
-  .tro-sc-jauge-plein { height:100%; background:var(--c); box-shadow:0 0 12px var(--c); animation:tro-sc-remplit 1.4s cubic-bezier(.3,.7,.2,1) .6s both; }
+  .tro-sc-jauge-plein { height:100%; background:var(--tro-teinte); box-shadow:0 0 12px var(--tro-teinte); animation:tro-sc-remplit 1.4s cubic-bezier(.3,.7,.2,1) .6s both; }
   @keyframes tro-sc-remplit { from { width:var(--de); } to { width:100%; } }
   .tro-sc-carte { position:relative; width:min(340px,84vw); box-sizing:border-box; padding:22px 18px 18px; text-align:center; border-radius:18px; background:var(--surface); color:var(--ink);
     border:3px solid var(--c); overflow:hidden; box-shadow:0 18px 50px rgba(0,0,0,.35); cursor:default; animation:tro-sc-pose .6s cubic-bezier(.2,.9,.3,1.25) var(--tro-carte) both; }
