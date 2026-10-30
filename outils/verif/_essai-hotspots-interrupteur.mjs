@@ -27,14 +27,6 @@ for(let i = 0; i < 5 && !/Grand Est/.test(await p.evaluate(() => document.getEle
 await p.waitForTimeout(3000);
 await p.evaluate(() => { const d = document.getElementById('ctPliHot'); if(d) d.open = true; });
 let defauts = 0;
-// Les boutons du tri (« Tout l'historique | Ces 30 jours », choix de Mathis) : texte entier, sur une ligne, dans la ligne.
-const tri = await p.evaluate(() => [...document.querySelectorAll('#mapEbSortLbl [data-ct-tri]')].map(b => {
-  const r = b.getBoundingClientRect(), l = b.closest('.ct-ligne').getBoundingClientRect();
-  return { texte:b.textContent, coupe:b.scrollWidth > b.clientWidth + 1, lignes:Math.round(r.height / parseFloat(getComputedStyle(b).lineHeight || 20)), dehors:r.right > l.right + 1 };
-}));
-console.log('tri :', JSON.stringify(tri));
-await p.locator('#mapEbSortLbl').screenshot({ path:`${SORTIE}/hs-tri-${largeur}.png` });
-if(tri.length !== 2 || tri.some(t => t.coupe || t.dehors) || tri[0].texte !== "Tout l'historique" || tri[1].texte !== 'Ces 30 jours') { console.log('   ÉCART : boutons du tri'); defauts++; }
 const etat =() => p.evaluate(() => {
   const hs = []; window.__carte.eachLayer(l => { if(l._hs) hs.push({ id:l._hotspotId, nb:l._hs.nb, aVoir:l._hs.aVoir }); });
   hs.sort((a, b) => a.id.localeCompare(b.id));

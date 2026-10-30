@@ -7259,7 +7259,6 @@ function _refreshDeptSel(){
   if(!list.includes(ebFilter.dept)) ebFilter.dept = '';
   sel.style.display=''; if(lbl) lbl.style.display='';
 }
-let hotspotSort = 'todo';   // 'todo' (à cocher) | 'recent' (activité 30j)
 let _taxMap = null;           // { speciesCode -> sciName lowercase } - cache localStorage
 let _taxInv = null;           // { sciName lowercase -> speciesCode } - inverse construit à la volée
 let mapSearch = '';          // recherche par nom (espèce/lieu) - filtre client-side
@@ -7287,7 +7286,7 @@ function _updateLegend(){
   }
   if(carteCouches.has('hot')){
     // Le carré dit son nombre : plus besoin de l'échelle des tailles des ronds d'avant.
-    const quoi = hotspotSort==='total' || ebFilter.showObserved ? 'espèces vues ici' : 'espèces non observées';
+    const quoi = ebFilter.showObserved ? 'espèces vues ici' : 'espèces non observées';
     parts.push(`<div class="ml-title">Hotspots</div><div class="ct-leg-formes">` +
       `<span class="ml-row"><span class="ct-hs ct-hs-sym" aria-hidden="true">12</span><span class="ml-txt">Le nombre : ${quoi}</span></span>` +
       `<span class="ml-row"><span class="ct-leg-crans" aria-hidden="true">${[0, 1, 2, 3, 4].map(c => `<span class="ct-hs ct-hs-sym ct-hs-c${c}"></span>`).join('')}</span><span class="ml-txt">Plus le vert est plein, plus il y a ${quoi === 'espèces vues ici' ? "d'espèces" : "d'espèces non observées"}</span></span>` +
@@ -8994,15 +8993,12 @@ document.addEventListener('click', e=>{
   // Cache le sélecteur "Derniers" en mode hotspots (endpoint sans param days)
   // Affiche le sélecteur "Trier par" uniquement en mode hotspots
   // Affiche le sélecteur "Rareté min." uniquement en mode missing
-  const daysLbl=$('#mapEbDaysLbl'), daysSel=$('#mapEbDays'), srtLbl=$('#mapEbSortLbl'), srtSel=$('#mapEbSort');
+  const daysLbl=$('#mapEbDaysLbl'), daysSel=$('#mapEbDays');
   const rarLbl=$('#mapEbRarityLbl'), rarChips=$('#mapEbRarityChips');
   const monLbl=$('#mapEbMonthLbl'), monSel=$('#mapEbMonth');
   const showDays = mapMode!=='hotspots';
   if(daysLbl) daysLbl.style.display = showDays ? '' : 'none';
   if(daysSel) daysSel.style.display = showDays ? '' : 'none';
-  const showSort = mapMode==='hotspots';
-  if(srtLbl) srtLbl.style.display = showSort ? '' : 'none';
-  if(srtSel) srtSel.style.display = showSort ? '' : 'none';
   // Rareté chips : visibles en mode "A cocher" quelle que soit la source (eBird ou GBIF).
   const showRar = mapMode==='missing';
   if(rarLbl) rarLbl.style.display = showRar ? '' : 'none';
@@ -9022,13 +9018,13 @@ document.addEventListener('click', e=>{
     if(daysLbl) daysLbl.style.display = 'none';
     if(daysSel) daysSel.style.display = 'none';
   }
-  // "Mois" ne s'applique qu'au mode "todo" (spplist all-time filtrée par saisonnalité). La source
+  // "Mois" ne s'applique qu'aux Hotspots (spplist all-time filtrée par saisonnalité). La source
   // GBIF du Récent prend le mois en cours (_ctMoisGbif).
-  const showMon = mapMode==='hotspots' && hotspotSort==='todo';
+  const showMon = mapMode==='hotspots';
   if(monLbl) monLbl.style.display = showMon ? '' : 'none';
   if(monSel) monSel.style.display = showMon ? '' : 'none';
   // Filtres hotspot-only (min à cocher, contient espèce, favoris, géoloc) : visibles uniquement en mode hotspots.
-  const showMinTodo = (mapMode==='hotspots' && hotspotSort!=='total');
+  const showMinTodo = mapMode==='hotspots';
   const boxDisp = { mapEbMinTodoBox:'inline-flex' };
   ['mapEbMinTodoLbl','mapEbMinTodoBox','mapEbMinTodoSuffix'].forEach(id=>{
     const el = document.getElementById(id); if(el) el.style.display = showMinTodo ? (boxDisp[id]||'') : 'none';
@@ -9475,7 +9471,7 @@ async function _ctOuvreReserve(f, latlng){
     boite.innerHTML = `<p class="ct-gl-t">${refus ? 'eBird ne répond pas pour l\'instant.' : 'Aucun hotspot eBird dans la réserve.'}</p>`;
     _ctPopReserve.update(); return;
   }
-  const lus = await _enrichHotspots(dedans.slice(0, CT_RES_MAX_HS), p.z[0], 'all', encore);
+  const lus = await _enrichHotspots(dedans.slice(0, CT_RES_MAX_HS), p.z[0], encore);
   if(!encore()) return;
   const cc = /^FR-/.test(p.z[0]) ? 'FR' : p.z[0];
   const lignes = lus.map(h => {
@@ -10290,20 +10286,6 @@ document.addEventListener('change', e => {
   else if(_map && ebFilter.region === (ebFilter.country || 'FR')) _ctCadrePays(ebFilter.country || 'FR');
   _ctDessinePanneau();
 });
-document.addEventListener('change', e=>{
-  if(e.target.id==='mapEbSort'){
-    hotspotSort=e.target.value; _loaded.hotspots=''; _updateLegend();
-    const showMon = hotspotSort==='todo';
-    const monLbl=$('#mapEbMonthLbl'), monSel=$('#mapEbMonth');
-    if(monLbl) monLbl.style.display = showMon ? '' : 'none';
-    if(monSel) monSel.style.display = showMon ? '' : 'none';
-    // Min-to-do et filtre espèce n'ont de sens qu'en mode enrichi (todo/recent) - on les cache en "total".
-    ['mapEbMinTodoLbl','mapEbMinTodoBox','mapEbMinTodoSuffix'].forEach(id=>{
-      const el = document.getElementById(id); if(el) el.style.display = (hotspotSort!=='total') ? '' : 'none';
-    });
-    renderMap();
-  }
-});
 // Timeline : sliders (Du/Au), vitesse, play/pause, reset
 document.addEventListener('input', e=>{
   if(e.target.id==='mapTlStart'){ const v=+e.target.value; if(_tlPlayId){ clearInterval(_tlPlayId); _tlPlayId=null; const b=$('#mapTlPlay'); if(b){ b.classList.remove('playing'); _anneauLecture(b, 0); } } _tlStartIdx=v; if(_tlStartIdx>_tlEndIdx){ _tlEndIdx=_tlStartIdx; } _tlSkipFit=true; renderMap(); }
@@ -10901,13 +10883,13 @@ function _ctListeHot(){
     box.innerHTML = '';
     return;
   }
-  // « Non observées » éteint : le nombre compte toutes les espèces, le classement reste celui du tri choisi.
-  const total = hotspotSort === 'total' || !!ebFilter.showObserved, s = n => n > 1 ? 's' : '';
-  const cle = h => hotspotSort === 'todo' && h.aVoir != null ? h.aVoir : h.nb;
+  // « Non observées » éteint : le nombre compte toutes les espèces, le classement reste sur les non observées.
+  const total = !!ebFilter.showObserved, s = n => n > 1 ? 's' : '';
+  const cle = h => h.aVoir != null ? h.aVoir : h.nb;
   hs.sort((a, b) => cle(b._hs) - cle(a._hs) || b._hs.nb - a._hs.nb || b._hs.allSp - a._hs.allSp || a._hs.nom.localeCompare(b._hs.nom, 'fr'));
   box.innerHTML = hs.map(m => {
     const h = m._hs, fav = myFavHotspots.has(m._hotspotId);
-    const sous = [h.dept || h.region, hotspotSort === 'total' ? '' : `${h.allSp} espèce${s(h.allSp)} ${hotspotSort === 'recent' ? 'ces 30 jours' : 'depuis toujours'}`,
+    const sous = [h.dept || h.region, `${h.allSp} espèce${s(h.allSp)} depuis toujours`,
       h.dernier ? `dernière liste ${_ctIlYa(h.dernier)}` : ''].filter(Boolean).join(' · ');
     return `<button type="button" class="ct-rang ct-rang-hs" data-hs="${esc(m._hotspotId)}">` +
       `<span class="col"><span class="nom">${fav ? '<span class="ct-hs-etoile" aria-label="favori">★</span> ' : ''}${esc(h.nom)}</span><br><span class="sous">${esc(sous)}</span></span>` +
@@ -11077,7 +11059,6 @@ function _ctSyncFiltres(){
   });
   allume('data-ct-source', document.getElementById('mapEbSource')?.value || 'ebird');
   allume('data-ct-jours', document.getElementById('mapEbDays')?.value || '14');
-  allume('data-ct-tri', document.getElementById('mapEbSort')?.value || 'todo');
   _ctSyncPortee();
 }
 // Pays / Zone : le bouton allumé dit la mesure en vigueur, jamais le seul souhait. Sans zone qui ait
@@ -11211,11 +11192,9 @@ document.addEventListener('click', async e => {
   }
   const src = e.target.closest('[data-ct-source]');
   if(src){ _ctRegleMenu('mapEbSource', src.dataset.ctSource); return; }
-  // La période en trois boutons (le curseur d'avant, 2026-10-28), le tri des Hotspots en deux.
+  // La période en trois boutons (le curseur d'avant, 2026-10-28).
   const jours = e.target.closest('[data-ct-jours]');
   if(jours){ _ctRegleMenu('mapEbDays', jours.dataset.ctJours); return; }
-  const tri = e.target.closest('[data-ct-tri]');
-  if(tri){ _ctRegleMenu('mapEbSort', tri.dataset.ctTri); return; }
   // Les lignes d'espèce des deux listes (Récent, Ligue) : le nom ouvre la fiche, la flèche déplie ses
   // observations et cadre la carte sur leurs points, un second clic replie ; une observation mène à son point.
   const o = e.target.closest('#ctContenu .ct-obs[data-pt]');
@@ -11734,26 +11713,19 @@ async function _batch(items, n, fn){
     out.push(...r);
   } return out;
 }
-// Enrichit chaque hotspot avec { allSp, mySp, toDo } - via spplist (all-time) OU obs récentes (30j)
+// Enrichit chaque hotspot avec { allSp, mySp, toDo } - via spplist (all-time)
 // encore : faux dès qu'un autre chargement a pris la main. Les appels qui restent ne partent plus : passé
 // de la France à une zone dessinée, les 100 de la France continuaient (154 au lieu de 44, 2026-10-26).
-async function _enrichHotspots(hotspots, region, kind, encore = () => true){
+async function _enrichHotspots(hotspots, region, encore = () => true){
   const tax = await _loadTaxonomy();
   const me = realPeople.find(p=>p.id===myUid);
   const mine = new Set(me ? [...me.species.keys()] : []);
   return _batch(hotspots, 8, async h => {
     if(!encore()) return { ...h, allSp:0, mySp:0, toDo:0 };
     try{
-      let sciSet;
-      if(kind==='recent'){
-        const url = `https://api.ebird.org/v2/data/obs/${h.locId}/recent?back=30`;
-        const data = await _ebFetch(url);
-        sciSet = new Set(data.map(o => (o.sciName||'').toLowerCase()).filter(Boolean));
-      } else {
-        const url = `https://api.ebird.org/v2/product/spplist/${h.locId}`;
-        const codes = await _ebFetch(url);
-        sciSet = new Set(codes.map(c => tax[c]).filter(Boolean));
-      }
+      const url = `https://api.ebird.org/v2/product/spplist/${h.locId}`;
+      const codes = await _ebFetch(url);
+      const sciSet = new Set(codes.map(c => tax[c]).filter(Boolean));
       // Les échappés ne sont jamais à cocher sur la Carte (Mathis, 2026-10-23) : le Flamant du Chili passait
       // en gris marqué 9 dans les bulles des hotspots de Camargue (2026-10-29).
       const sauvages = [...sciSet].filter(s => !estEchappeDansPays(s, h.countryCode || (region || 'FR').slice(0, 2), h.subnational2Code));
@@ -11768,57 +11740,41 @@ async function _enrichHotspots(hotspots, region, kind, encore = () => true){
     }catch(_){ return { ...h, allSp:0, mySp:0, toDo:0, err:true }; }
   });
 }
-// Lazy-load : à l'ouverture d'un popup hotspot, on récupère pour chaque espèce manquante
-// le nb d'obs à ce hotspot sur les 30 derniers jours via /data/obs/{locId}/recent/{sc}.
-// Batch 8-parallèle, cache 3 niveaux mutualisé. Résultat écrit en place dans le DOM du popup.
+// À l'ouverture d'une bulle : ce qui a été vu à ce hotspot ces 30 jours, en UNE demande pour tout le lieu
+// (eBird rend la dernière observation de chaque espèce). Avant, une demande par espèce : à 22 par 5 s, le
+// rangement n'arrivait qu'après la dernière date, et un refus d'eBird passait pour « pas vue ici ».
+// Les lignes restent cachées le temps de la réponse : la liste ne saute pas sous les yeux.
 async function _loadHotspotCounts(marker){
-  if(marker._countsLoaded || marker._countsInflight) return;
-  marker._countsInflight = true;
-  const popup = marker.getPopup(); if(!popup) return;
-  const el = popup._contentNode; if(!el) return;
-  const rows = el.querySelectorAll('[data-sc]');
-  if(!rows.length){ marker._countsInflight=false; marker._countsLoaded=true; return; }
-  const locId = marker._hotspotId;
-  const items = [];
-  rows.forEach(r => { const sc = r.dataset.sc; if(sc) items.push({ el:r, sc }); else { const cnt=r.querySelector('[data-cnt]'); if(cnt) cnt.remove(); } });
-  const CONC = 8; let idx = 0;
-  async function worker(){
-    while(idx < items.length){
-      const it = items[idx++];
-      const cntEl = it.el.querySelector('[data-cnt]'); if(!cntEl) continue;
-      try{
-        // L'endpoint dédup par location => au plus 1 résultat pour un hotspot précis.
-        // On récupère la DATE de la dernière obs (signal utile "vu il y a X j" - récent = actif).
-        const url = `https://api.ebird.org/v2/data/obs/${locId}/recent/${it.sc}?back=30&maxResults=1`;
-        const data = await _ebFetch(url);
-        const last = Array.isArray(data) && data.length ? data[0] : null;
-        cntEl.classList.remove('loading');
-        if(last && last.obsDt){
-          // Écrit comme dans le Récent (« il y a 3 j »), à droite de la ligne ; une semaine ou moins à l'accent.
-          const dt = new Date(last.obsDt.slice(0,10)+'T00:00:00');
-          const days = Math.max(0, Math.round((Date.now() - dt.getTime()) / 86400000));
-          cntEl.textContent = _ctIlYa(last.obsDt);
-          if(days<=7) cntEl.classList.add('hot');
-        } else {
-          cntEl.remove();   // aucune obs récente = info sans valeur, on efface plutôt que d'écrire "jamais 30j"
-        }
-      }catch(_){ cntEl.remove(); }   // API en erreur ou timeout → on efface plutôt qu'afficher un '?' ambigu
-    }
-  }
-  await Promise.all(Array.from({length:Math.min(CONC, items.length)}, worker));
-  marker._countsLoaded = true; marker._countsInflight = false;
-  if(el.isConnected) _ctRangeBulleHs(el);
+  const el = marker._bulle, liste = el && el.querySelector('.ct-gl-liste'); if(!liste) return;
+  const attente = document.createElement('p'); attente.className = 'ct-hb-it'; attente.textContent = 'Vues ici ces 30 jours…';
+  liste.prepend(attente); liste.classList.add('ct-hb-attente');
+  let obs = null;
+  try{ obs = await _ebFetch(`https://api.ebird.org/v2/data/obs/${marker._hotspotId}/recent?back=30`); }catch(_){ }
+  attente.remove(); liste.classList.remove('ct-hb-attente');
+  _ctRangeBulleHs(liste, obs);
+  if(el.isConnected && _map && _map._popup) _map._popup.update();
 }
-// Une fois les dates là : les espèces vues ici ces 30 jours d'abord, les autres repliées derrière une ligne
-// (variante B de notes-privees/maquettes/hotspot-bulle/recentes.html, Mathis, 2026-10-29). eBird ne donne
-// pas plus de 30 jours pour un lieu : ce sont 30 jours glissants, pas le mois en cours. Sans aucune vue
-// récente, rien ne se replie : la liste entière reste, sous « Aucune vue ici ces 30 jours ».
-function _ctRangeBulleHs(el){
-  const liste = el.querySelector('.ct-gl-liste'); if(!liste || liste.dataset.range) return;
-  liste.dataset.range = '1';
+// Les espèces vues ici ces 30 jours d'abord, les autres repliées derrière une ligne (variante B de
+// notes-privees/maquettes/hotspot-bulle/recentes.html, Mathis, 2026-10-29 ; toujours ainsi depuis le 2026-10-30,
+// le tri « Tout l'historique | Ces 30 jours » est retiré). eBird ne donne pas plus de 30 jours pour un lieu :
+// ce sont 30 jours glissants, pas le mois en cours. Sans aucune vue récente, rien ne se replie : la liste
+// entière reste, sous « Aucune vue ici ces 30 jours ». eBird n'a pas répondu : la liste entière, sans rien
+// affirmer sur les 30 jours.
+function _ctRangeBulleHs(liste, obs){
+  if(!Array.isArray(obs)) return;
+  const dates = new Map();
+  for(const o of obs){ if(o.speciesCode) dates.set(o.speciesCode, o.obsDt); if(o.sciName) dates.set(o.sciName.toLowerCase(), o.obsDt); }
   const rows = [...liste.querySelectorAll('.ct-hb-e')];
-  const vues = rows.filter(r => (r.querySelector('.ct-hb-vu')?.textContent || '').trim());
-  const autres = rows.filter(r => !vues.includes(r)), s = n => n > 1 ? 's' : '';
+  const vues = [], autres = [], s = n => n > 1 ? 's' : '';
+  for(const r of rows){
+    const obsDt = dates.get(r.dataset.sc) || dates.get(r.dataset.sci);
+    if(!obsDt){ autres.push(r); continue; }
+    vues.push(r);
+    // Écrit comme dans le Récent (« il y a 3 j »), à droite de la ligne ; une semaine ou moins à l'accent.
+    const jours = Math.max(0, Math.round((Date.now() - new Date(obsDt.slice(0,10)+'T00:00:00').getTime()) / 86400000));
+    const cnt = r.querySelector('[data-cnt]');
+    if(cnt){ cnt.textContent = _ctIlYa(obsDt); if(jours<=7) cnt.classList.add('hot'); }
+  }
   const titre = document.createElement('p'); titre.className = 'ct-hb-it';
   titre.innerHTML = vues.length ? `Vues ici ces 30 jours <span>· ${vues.length}</span>` : 'Aucune vue ici ces 30 jours';
   liste.prepend(titre);
@@ -11828,7 +11784,6 @@ function _ctRangeBulleHs(el){
   const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'ct-hb-pli'; btn.setAttribute('aria-expanded', 'false');
   btn.innerHTML = `${autres.length} autre${s(autres.length)}, pas vue${s(autres.length)} ici ces 30 jours <span aria-hidden="true">▾</span>`;
   liste.append(btn, repli);
-  if(_map && _map._popup) _map._popup.update();
 }
 document.addEventListener('click', e => {
   const b = e.target.closest('.ct-hb-pli'); if(!b) return;
@@ -11857,7 +11812,7 @@ async function _loadHotspotsLayer(region){
   const myRun = ++_hotspotsRunSeq;
   const stillMine = () => myRun === _hotspotsRunSeq;
   // « Non observées » dans la clé : sans lui, basculer l'interrupteur trouvait la couche à jour et ne changeait rien.
-  const key = zones.join('+') + (poly ? ':' + poly.map(p => p.join(',')).join(';') : '') + ':' + hotspotSort + ':' + (ebFilter.showObserved ? 'tout' : 'manque');
+  const key = zones.join('+') + (poly ? ':' + poly.map(p => p.join(',')).join(';') : '') + ':' + (ebFilter.showObserved ? 'tout' : 'manque');
   if(_loaded.hotspots===key && _lyrHotspots.getLayers().length) return;
   _lyrHotspots.clearLayers();
   _hsRefus = { zones:0, listes:0 };
@@ -11879,31 +11834,12 @@ async function _loadHotspotsLayer(region){
     // birder parti…). L'API n'expose pas de "N espèces sur 2 ans", c'est le seul filtre gratuit.
     const cutoff = new Date(Date.now() - 2*365*24*3600*1000).toISOString().slice(0,10);
     const isFresh = h => (h.latestObsDt||'').slice(0,10) >= cutoff;
-    let top;
-    if(hotspotSort==='total'){
-      const topRaw = list.filter(h=>h.numSpeciesAllTime && isFresh(h)).sort((a,b)=>b.numSpeciesAllTime-a.numSpeciesAllTime).slice(0, CAP);
-      top = topRaw.map(h=>({ ...h, allSp:h.numSpeciesAllTime, mySp:null, toDo:null }));
-    } else {
-      // Pool à enrichir. Suivant le mode, on optimise le pré-tri :
-      //  - "recent" (activité 30j) : les hotspots les plus récemment actifs (latestObsDt DESC)
-      //  - "todo" (à cocher) : les plus riches all-time (biais espèces max), mais élargi
-      // Sinon les sites urbains actifs (ex. Plan de la Garde) sont écrasés par les grands sites all-time
-      // (Camargue…). Pool = CAP, filtrage des zéros, puis tri par le critère du mode.
-      let pool = list.filter(h=>h.numSpeciesAllTime && isFresh(h));
-      if(hotspotSort==='recent'){
-        pool.sort((a,b)=>{ const av=a.latestObsDt||'', bv=b.latestObsDt||''; return bv.localeCompare(av); });
-      } else {
-        pool.sort((a,b)=>b.numSpeciesAllTime-a.numSpeciesAllTime);
-      }
-      const poolRaw = pool.slice(0, CAP);
-      const enriched = await _enrichHotspots(poolRaw, region, hotspotSort==='recent'?'recent':'all', stillMine);
-      if(!stillMine()) return;
-      _hsRefus.listes = enriched.filter(h => h.err).length;
-      const usable = enriched.filter(h => (h.allSp||0) > 0);
-      if(hotspotSort==='todo') usable.sort((a,b)=> b.toDo - a.toDo);
-      else usable.sort((a,b)=> b.allSp - a.allSp);
-      top = usable.slice(0, CAP);
-    }
+    // Les plus riches depuis toujours sont enrichis, puis classés sur ce qu'il reste à observer.
+    const pool = list.filter(h=>h.numSpeciesAllTime && isFresh(h)).sort((a,b)=>b.numSpeciesAllTime-a.numSpeciesAllTime);
+    const enriched = await _enrichHotspots(pool.slice(0, CAP), region, stillMine);
+    if(!stillMine()) return;
+    _hsRefus.listes = enriched.filter(h => h.err).length;
+    const top = enriched.filter(h => (h.allSp||0) > 0).sort((a,b)=> b.toDo - a.toDo);
     if(!stillMine()){ _lyrHotspots.clearLayers(); return; }
     // Spread des hotspots qui partagent les mêmes coords (cas rare : ~6 paires sur 17k)
     const withCoords = top.filter(h=>typeof h.lat==='number' && typeof h.lng==='number').map(h=>({ ...h, lat:h.lat, lon:h.lng }));
@@ -11914,30 +11850,28 @@ async function _loadHotspotsLayer(region){
     const ccHs = ebFilter.country || 'FR';   // le pays des hotspots lus, celui de leur rareté
     const MONTH_NAMES = ['','janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
     for(const h of withCoords){
-      // En "total" : on utilise numSpeciesAllTime (pas d'enrichissement).
-      // En "todo"/"recent" : on utilise SEULEMENT h.allSp (issu de l'enrichissement).
-      const n = (hotspotSort==='total') ? (h.numSpeciesAllTime||0) : (h.allSp||0);
+      const n = h.allSp||0;
       // Liste "espèces qui vous manquent ici", filtrée par mois si demandé.
       const rawMiss = Array.isArray(h.missingSci) ? h.missingSci : [];
-      const filteredMiss = (hotspotSort!=='total' && monthFilter)
+      const filteredMiss = monthFilter
         ? rawMiss.filter(sci => activeInMonth(sci, monthFilter, region || h.subnational1Code, h.subnational2Code))
         : rawMiss;
-      const toDoShown = (hotspotSort==='total') ? null : filteredMiss.length;
+      const toDoShown = filteredMiss.length;
       // « Non observées » éteint : les espèces déjà vues par toi aussi, au carré, dans la bulle et au survol ;
       // le tri, le gras du résumé et « Cacher sous » restent sur les non observées.
       const tout = !!ebFilter.showObserved;
       const montrees = !tout ? filteredMiss : (() => {
         const toutes = Array.isArray(h.sauvagesSci) ? h.sauvagesSci : rawMiss;
-        return (hotspotSort!=='total' && monthFilter) ? toutes.filter(sci => activeInMonth(sci, monthFilter, region || h.subnational1Code, h.subnational2Code)) : toutes;
+        return monthFilter ? toutes.filter(sci => activeInMonth(sci, monthFilter, region || h.subnational1Code, h.subnational2Code)) : toutes;
       })();
-      // Skip les hotspots sans données en mode enrichi OU sans espèce à montrer (compte tenu du filtre mois).
-      if(hotspotSort!=='total' && (n===0 || montrees.length===0)) continue;
-      // Filtre "min à cocher" (mode enrichi uniquement).
-      if(hotspotSort!=='total' && ebFilter.minTodo>0 && toDoShown < ebFilter.minTodo) continue;
+      // Skip les hotspots sans données OU sans espèce à montrer (compte tenu du filtre mois).
+      if(n===0 || montrees.length===0) continue;
+      // Filtre "min à cocher".
+      if(ebFilter.minTodo>0 && toDoShown < ebFilter.minTodo) continue;
       // Favori : rendu en jaune (marker doré + bord blanc épais pour le distinguer visuellement).
       const isFavHs = myFavHotspots.has(h.locId);
-      // Le carré porte le nombre d'espèces à cocher (après le filtre du mois), ou le total en tri « total ».
-      const nbHs = (hotspotSort==='total') ? n : montrees.length;
+      // Le carré porte le nombre d'espèces à cocher (après le filtre du mois).
+      const nbHs = montrees.length;
       const m = L.marker([h.dispLat, h.dispLon], { riseOnHover:true, icon:_ctIconeHotspot(nbHs, isFavHs) });
       m._hs = { nom:h.locName||h.name||'?', nb:nbHs, aVoir:toDoShown, allSp:n, dept:h.subnational2Name||'', deptCode:h.subnational2Code||'', region:h.subnational1Name||'', dernier:(h.latestObsDt||'').slice(0,10) };
       // La bulle, comme la liste d'une grappe (variante A de notes-privees/maquettes/hotspot-bulle/, choisie par
@@ -11948,12 +11882,10 @@ async function _loadHotspotsLayer(region){
       // les hotspots ; elle disait avant la rareté française, même à l'étranger.
       const html = () => {
         const s = x => x > 1 ? 's' : '';
-        // Résumé : à cocher d'abord, puis ce qui a été vu ici et par toi (en tri « total », le seul total).
-        const resume = hotspotSort === 'total'
-          ? `${n} espèce${s(n)} vue${s(n)} ici depuis toujours`
-          : `<b>${toDoShown} non observée${s(toDoShown)}${monthFilter ? ` en ${MONTH_NAMES[monthFilter]}` : ''}</b> · ${n} espèce${s(n)} vue${s(n)} ici${hotspotSort === 'recent' ? ' ces 30 jours' : ''} · ${h.mySp} par toi`;
+        // Résumé : à cocher d'abord, puis ce qui a été vu ici et par toi.
+        const resume = `<b>${toDoShown} non observée${s(toDoShown)}${monthFilter ? ` en ${MONTH_NAMES[monthFilter]}` : ''}</b> · ${n} espèce${s(n)} vue${s(n)} ici · ${h.mySp} par toi`;
         let liste = '';
-        if(hotspotSort !== 'total' && montrees.length){
+        if(montrees.length){
           // Les plus rares d'abord, comme la liste d'une grappe.
           const items = montrees
             // frName passe par SCI_ALIAS : les noms d'eBird d'octobre 2026 (Melophus bruniceps) s'affichaient en latin.
@@ -11961,7 +11893,7 @@ async function _loadHotspotsLayer(region){
             .sort((a, b) => b.w - a.w || a.name.localeCompare(b.name, 'fr'));
           // Une espèce déjà vue par toi (« Non observées » éteint) : grisée, à sa place.
           const nonVues = new Set(filteredMiss);
-          // Le nom ouvre la fiche, comme dans la liste d'une grappe ; la date arrive ensuite (_loadHotspotCounts).
+          // Le nom ouvre la fiche, comme dans la liste d'une grappe ; la date arrive ensuite (_ctRangeBulleHs).
           liste = `<div class="ct-gl-liste">${items.map(it => `<button type="button" class="ct-gl-l ct-hb-e${tout && !nonVues.has(it.sci) ? ' ct-hb-deja' : ''}" data-sci="${esc(it.sci)}" data-sc="${esc(_sciToCode(it.sci) || '')}">` +
             `${tierChip(it.w || '?', _ctCouleur(it.sci, ccHs), { cls:'tier-rond' })}<span class="ct-gl-nom">${esc(it.name)}</span>` +
             `<span class="ct-hb-vu" data-cnt></span></button>`).join('')}</div>`;
@@ -11991,12 +11923,12 @@ async function _loadHotspotsLayer(region){
         m.on('mouseover', () => {
           if(m.isPopupOpen()) return;
           const s = x => x > 1 ? 's' : '';
-          const esp = hotspotSort === 'total' ? [] : montrees.map(sci => ({ nom:frName(sci, sci), w:_ctRarete(sci, ccHs), coul:_ctCouleur(sci, ccHs) }))
+          const esp = montrees.map(sci => ({ nom:frName(sci, sci), w:_ctRarete(sci, ccHs), coul:_ctCouleur(sci, ccHs) }))
             .sort((a, b) => b.w - a.w || a.nom.localeCompare(b.nom, 'fr'));
           const vus = esp.length - CT_SURVOL_MAX > 1 ? esp.slice(0, CT_SURVOL_MAX) : esp, reste = esp.length - vus.length;
-          const tete = hotspotSort === 'total' ? `${n} espèce${s(n)} vue${s(n)} ici` : `${toDoShown} non observée${s(toDoShown)} · ${n} espèce${s(n)} vue${s(n)} ici`;
+          const tete = `${toDoShown} non observée${s(toDoShown)} · ${n} espèce${s(n)} vue${s(n)} ici`;
           // Le mois choisi dans « Quand », en gris après le nom (Mathis, 2026-10-29) : les espèces à cocher en dépendent.
-          const mois = hotspotSort !== 'total' && monthFilter ? ` <span class="ct-sv-mois">${MONTH_NAMES[monthFilter]}</span>` : '';
+          const mois = monthFilter ? ` <span class="ct-sv-mois">${MONTH_NAMES[monthFilter]}</span>` : '';
           const html = `<span class="ct-sv-t">${esc(h.locName || h.name || '?')}${mois}</span><span class="ct-sv-d">${tete}</span>` +
             vus.map(e => _ctLigneSurvol(e.coul, e.w, e.nom, '', '')).join('') + (reste ? `<span class="ct-sv-d">et ${reste} autre${s(reste)} : clique pour ouvrir</span>` : '');
           m.bindTooltip(html, _ctSensSurvol(m.getLatLng(), 13)).openTooltip();
@@ -12008,11 +11940,10 @@ async function _loadHotspotsLayer(region){
       const missNames = montrees.map(sci => FR_NAMES[sci]||sci).join(' ');
       m._q = _mapNorm((h.locName||h.name||'')+' '+(h.subnational1Name||'')+' '+(h.subnational2Name||'')+' '+missNames);
       m._missSci = montrees;   // pour l'autocomplétion "espèces uniquement" en mode hotspots
-      // Lazy-load : à l'ouverture du popup, on récupère la date de dernière obs par espèce (cache 3 niveaux)
-      // ET le créneau horaire fréquent des sorties à ce hotspot.
+      // À l'ouverture du popup, ce qui a été vu ici ces 30 jours (_loadHotspotCounts).
       m._hotspotId = h.locId;
       // La bulle est réécrite à chaque ouverture (contenu) : ses dates se relisent, depuis le cache d'_ebFetch.
-      m.on('popupopen', () => { m._countsLoaded = false; _loadHotspotCounts(m); });
+      m.on('popupopen', () => _loadHotspotCounts(m));
       _lyrHotspots.addLayer(m);
     }
     // Les crans se comptent sur le meilleur des carrés posés : il n'est connu qu'une fois tous posés.

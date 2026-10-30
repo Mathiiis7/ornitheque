@@ -75,15 +75,12 @@ await p.waitForTimeout(2000);
 const zoneIci = await p.evaluate(() => !!document.querySelector('[data-ici-zone="hot"] #ctEbPaysBtn'));
 console.log('HOTSPOTS, case du lieu dans « Où » :', zoneIci, JSON.stringify(await mesure('ctPliHot')));
 await capture('ctPliHot', 'hot');
-const lisH = () => p.evaluate(() => ({ tri:document.getElementById('mapEbSort').value, moisVisible:!!document.getElementById('mapEbMonthLbl').offsetWidth,
+const lisH = () => p.evaluate(() => ({ moisVisible:!!document.getElementById('mapEbMonthLbl').offsetWidth,
   cacherVisible:!!document.getElementById('mapEbMinTodoLbl').offsetWidth, min:document.getElementById('mapEbMinTodo').value,
-  triOn:[...document.querySelectorAll('[data-ct-tri]')].filter(b => b.classList.contains('on')).map(b => b.textContent),
   mois:document.querySelector('[data-ct-choix="mapEbMonth"] .cp-btn-label').textContent, compte:document.getElementById('mapEbCount').textContent.slice(0, 80) }));
 console.log('  départ', JSON.stringify(await lisH()));
 await clic('#mapEbMinTodoInc'); await clic('#mapEbMinTodoInc'); console.log('  +2', JSON.stringify(await lisH()));
 await clic('#mapEbMinTodoDec'); await clic('#mapEbMinTodoDec');
-await clic('[data-ct-tri="recent"]'); console.log('  activité', JSON.stringify(await lisH()));
-await clic('[data-ct-tri="todo"]');
 await clic('#ctHotManque'); console.log('  manque décoché aux Hotspots', JSON.stringify(await lis()));
 await clic('#ctHotManque');
 

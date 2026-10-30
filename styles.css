@@ -2637,6 +2637,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-hb-pli span { color:var(--ink-3); }
   .ct-hb-pli[aria-expanded="true"] span { display:inline-block; transform:rotate(180deg); }
   .ct-hb-autres[hidden] { display:none; }
+  .ct-hb-attente .ct-hb-e { display:none; }
   .ct-gl-obs .ct-gl-lieu { color:var(--ink-3); border-top:0; }
   .ct-gl-obs[hidden] { display:none; }
   /* Plusieurs observations de l'espèce au même endroit : leur nombre en bas à droite du point (2026-10-24). */
@@ -2823,7 +2824,6 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-bloc .ct-seg-plein button { flex:1 1 0; min-width:0; padding-left:6px; padding-right:6px; white-space:nowrap; }
   /* « Espèces manquantes » (Mathis, 2026-10-29) ne tient pas dans une moitié : chaque bouton du tri prend la
      largeur de son texte, le reste se partage. */
-  #mapEbSortLbl .ct-bloc .ct-seg-plein button, .ct-bloc #mapEbSortLbl .ct-seg-plein button { flex:1 1 auto; }
   .ct-bloc .ct-bascule { display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:14px; font-weight:600; color:var(--ink); cursor:pointer; min-height:34px; }
   /* L'interrupteur : une case à cocher redessinée, qui garde son clavier et son lecteur d'écran. */
   .ct-bascule input { appearance:none; -webkit-appearance:none; flex:none; width:38px; height:22px; margin:0; border-radius:11px; background:var(--surface-3); position:relative; cursor:pointer; transition:background .15s; box-shadow:inset 0 0 0 1px var(--line-2); }
