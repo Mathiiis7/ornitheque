@@ -97,7 +97,17 @@ croisant chaque site avec nos contours.
      du visiteur et met les réponses en cache quelques minutes. Le site reste sur GitHub Pages. À faire au
      moment de construire la Carte.
    - ne pas nuire à la stabilité des serveurs (2.2) : compter et mettre en cache les appels.
-   - toutes les données de l'API relèvent en plus des « eBird Data Access Terms of Use », **non lues**.
+   - toutes les données de l'API relèvent en plus des « eBird Data Access Terms of Use » (version du
+     09/11/2020, collées par Mathis le 2026-10-30). Ce qui nous concerne :
+     - données fournies « only for applied and basic research and education » : un site de loisir entre amis
+       n'y entre pas clairement ; gratuit et sans revenu, il n'est pas « commercial » au sens du texte ;
+     - interdit de publier les données « in their original format », même en partie, sur un site. Or
+       `data/countries/*/freq48/` publie zone par zone les pourcentages des bar charts d'eBird, très proches
+       de l'original (49 Mo de fichiers de fréquences et de rareté dans `data/`, mesuré le 2026-10-30) ;
+     - des données dérivées ne se transmettent qu'avec ces mêmes conditions : le site ne le dit nulle part ;
+     - citer la source ; pas de logo eBird ou Cornell (aucun fichier à ce nom au premier niveau de `assets/`) ;
+       envoyer une copie de ce qui est publié à eBird@cornell.edu.
+     **Pas d'avis juridique ici, et rien retiré** : à Mathis de décider s'il écrit à ebird@cornell.edu.
    - les conditions générales du Cornell Lab (23/10/2024, collées par Mathis le même jour) le confirment :
      ne pas reproduire, distribuer ni « re-post on another site » leur contenu sans accord écrit (II.2), pas
      de miroir, mais faire des liens vers leurs services (II.4).

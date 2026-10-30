@@ -24039,7 +24039,10 @@ const PARCOURS_BIENTOT = [
   { especes: ['cettia cetti', 'cisticola juncidis', 'emberiza schoeniclus', 'acrocephalus scirpaceus', 'acrocephalus schoenobaenus', 'acrocephalus arundinaceus'] },
   { especes: ['alauda arvensis', 'anthus pratensis', 'saxicola rubicola', 'lullula arborea', 'emberiza calandra', 'anthus trivialis'] },
   { especes: ['emberiza cirlus', 'emberiza citrinella', 'phylloscopus bonelli', 'curruca curruca'] },
-  { especes: ['certhia brachydactyla', 'aegithalos caudatus', 'regulus ignicapilla', 'regulus regulus', 'lophophanes cristatus'] },
+  // La ronde d'hiver : ils voyagent en bandes mêlées avec les mésanges (Mathis le 2026-10-30). Ils se
+  // reconnaissent surtout aux cris : ce serait le premier parcours sur les cris. À trancher : cris seuls,
+  // ou cris puis chants.
+  { especes: ['aegithalos caudatus', 'certhia brachydactyla', 'sitta europaea', 'regulus ignicapilla', 'regulus regulus', 'lophophanes cristatus'] },
 ];
 const PC_CHANTS_PROPOSES = 3;
 const PC_DUREE_MAX = 20;   // secondes lues par chant, comme l'ancien quiz
