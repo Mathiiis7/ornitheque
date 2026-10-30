@@ -238,6 +238,21 @@ const MEMBRES = [
     rare: 'Rollier d’Europe, Crau, 2021', rareSci: 'coracias garrulus', rareDep: 'FR-PAC-13', rareAn: 2021, avatar: '🐧', jours: 1500, chezSoi: 'FR-BRE-29' },
 ];
 
+// Especes preferees, qui vont avec le personnage (de 3 a 5, comme le permet le profil). Le nom doit
+// etre celui du site et l espece dans sa liste : sinon la carte du profil afficherait du vide.
+const FAVORIS = {
+  [UID_MOI]:     ['Milan royal', 'Faucon pèlerin', 'Huppe fasciée', 'Busard Saint-Martin'],
+  'demo-claire': ['Flamant rose', 'Avocette élégante', 'Échasse blanche', "Guêpier d'Europe", 'Bécasseau variable'],
+  'demo-hugo':   ['Pic mar', 'Pic épeichette', 'Chouette hulotte', 'Mésange huppée'],
+  'demo-lina':   ['Rougegorge familier', 'Mésange bleue', 'Merle noir'],
+  'demo-samir':  ['Pouillot de Bonelli', 'Pouillot siffleur', 'Fou de Bassan', 'Macareux moine', "Rollier d'Europe"],
+};
+function favorisDe(m, especes){
+  const noms = new Set(especes.map(e => e.c));
+  for(const n of FAVORIS[m.id]) if(!noms.has(n)) throw new Error('favori absent de la liste de ' + m.nom + ' : ' + n);
+  return FAVORIS[m.id].join('|');
+}
+
 const DONNEES = {};
 DONNEES['leagues/' + LIGUE] = {
   name: 'L’Ornithèque',
@@ -249,7 +264,7 @@ for(const m of MEMBRES){
   DONNEES['leagues/' + LIGUE + '/members/' + m.id] = {
     name: m.nom, species: especes,
     goal: m.but, dream: m.reve, rare: m.rare, status: m.statut, avatar: m.avatar,
-    fav: '', regions,
+    fav: favorisDe(m, especes), regions,
     joinedAt: ts(MAINTENANT - m.jours * JOUR), updatedAt: ts(MAINTENANT - 2 * JOUR),
   };
 }
