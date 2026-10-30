@@ -6,7 +6,8 @@ Ce fichier se remplace à chaque fin de tâche : quelques lignes, pas un journal
 
 ## Reste ouvert
 - **Clé eBird :** l'ancienne clé est dans l'historique public (27 commits) et eBird l'acceptait encore le 30/10.
-  À Mathis : dire si la clé dans Vercel (`EBIRD_KEY`) est la même ; si oui, en demander une nouvelle.
+  Le compte eBird de Mathis affiche cette même clé (vu le 30/10), donc le relais l'utilise très probablement.
+  Reste à demander à eBird une clé neuve ; `EBIRD_KEY` dans Vercel n'est pas relisible, la remplacer puis Redeploy.
   Effacer l'historique des deux dépôts attend la réponse de Cornell.
 - **Conditions d'accès aux données eBird :** lues le 30/10. Elles interdisent de publier les données dans leur
   format d'origine ; `data/countries/*/freq48/` en est très proche. Rien retiré : à Mathis de décider s'il écrit
