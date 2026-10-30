@@ -8030,7 +8030,10 @@ async function renderMap(){
   try{
     if(mine) _renderModeMine(el);
     else if(mapMode==='missing') await _renderModeMissing();
-    else if(mapMode==='hotspots') await _renderModeHotspots();
+    else if(mapMode==='hotspots'){
+      // Le nom, le fond et le voile de la zone d'abord, les carrés ensuite : ils attendaient la fin des ~100 appels (Mathis, 2026-10-30).
+      const charge = _renderModeHotspots(); _ctAppliqueCouches(); await charge;
+    }
   } finally { _ctAppliqueCouches(); }
   // Arrivé sur le Récent avec une espèce déjà écrite (choisie dans la Ligue, ou avant un aller-retour
   // d'onglet qui a vidé _lyrDetail) : on va la chercher, sinon le Récent restait vide (2026-10-29).
