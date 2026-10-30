@@ -2964,6 +2964,9 @@ function _flushDirtyForView(viewName){
     renderTrophies(data);
     _trophiesDirty = false;
   }
+  if(viewName === 'trophies' && _troEtat().attente.length){
+    setTimeout(() => _centrerCase(document.querySelector('#trophyGrid .tro-attend')), 300);
+  }
 }
 
 function fmt(n){ return Math.round(n).toLocaleString('fr-FR'); }
@@ -5859,6 +5862,7 @@ function renderTrophies(data){
     };
     const familyDataIdx = detailIdx++;
     const locked = highestIdx < 0;
+    const attente = sel.isMe ? tiersSorted.find(t => _troAttend(t.name)) : null;
     const cat = displayTier.category || 'progression';
     if(!familyBlocksByCategory[cat]) familyBlocksByCategory[cat] = [];
     // Ordre pour les familles d'especes : (1) plus haut tier atteint en premier
@@ -5877,9 +5881,9 @@ function renderTrophies(data){
       order = familyBlocksByCategory[cat].length * 10;
     }
     familyBlocksByCategory[cat].push({ order, html: `
-      <div class="tro-family ${locked?'locked':'unlocked'} tier-${displayTier.tier} cat-${cat}"
+      <div class="tro-family ${locked?'locked':'unlocked'} tier-${displayTier.tier} cat-${cat}${attente?' tro-attend':''}"
            style="--tier-color:${displayMeta.color}"
-           data-detail="${familyDataIdx}">
+           data-detail="${familyDataIdx}"${attente?` data-tro-attente="${esc(attente.name)}"`:''}>
         <div class="tro-fam-cup">
           <img src="${esc(displayTier.tierImg || displayMeta.img)}" alt="${esc(displayMeta.label)}" class="tro-cup${locked?' grayed':''}" loading="lazy" decoding="async">
         </div>
@@ -5922,6 +5926,7 @@ function renderTrophies(data){
             <div class="tro-fam-bar-fill" style="width:${pct}%"></div>
           </div>
           ${nextTier ? `<div class="tro-fam-prog">${progNow} / ${progTo}</div>` : ''}
+          ${attente ? _TRO_TOUCHE : ''}
         </div>
       </div>` });
   }
@@ -5957,7 +5962,8 @@ function renderTrophies(data){
       }
     }
     const info = (ok && t.info) ? t.info(s) : '';
-    return `<div class="tro-oneshot ${ok?'on':'off'}${clic?' clic':''}"${clic?` data-detail="${dataIdx}"`:''}>
+    const attend = sel.isMe && _troAttend(t.name);
+    return `<div class="tro-oneshot ${ok?'on':'off'}${clic?' clic':''}${attend?' tro-attend':''}"${clic?` data-detail="${dataIdx}"`:''}${attend?` data-tro-attente="${esc(t.name)}"`:''}>
       <div class="tro-os-ico">${t.icon}</div>
       <div class="tro-os-body">
         <div class="tro-os-name">${esc(t.name)}</div>
@@ -5965,6 +5971,7 @@ function renderTrophies(data){
         <div class="tro-os-state">${stateTxt}</div>
         ${info?`<div class="tro-os-info">${esc(info)}</div>`:''}
         ${extra}
+        ${attend ? _TRO_TOUCHE : ''}
       </div>
     </div>`;
   };
@@ -5999,7 +6006,8 @@ function renderTrophies(data){
       speciesFamilyKey: t.speciesFamilyKey || null,
       speciesOwnedSet,
     };
-    return `<div class="tro-family tro-exotic ${ok?'unlocked':'locked'} clic" data-detail="${dataIdx}">
+    const attend = sel.isMe && _troAttend(t.name);
+    return `<div class="tro-family tro-exotic ${ok?'unlocked':'locked'} clic${attend?' tro-attend':''}" data-detail="${dataIdx}"${attend?` data-tro-attente="${esc(t.name)}"`:''}>
       <div class="tro-fam-cup">
         <img src="${esc(imgSrc)}" alt="${esc(t.name)}" class="tro-cup${ok?'':' grayed'}" loading="lazy" decoding="async">
       </div>
@@ -6009,6 +6017,7 @@ function renderTrophies(data){
           <span class="tro-fam-tier ${ok?'':'tro-fam-tier-locked'}">· ${esc(stateTxt)}</span>
         </div>
         <div class="tro-fam-family">${esc(t.desc)}</div>
+        ${attend ? _TRO_TOUCHE : ''}
       </div>
     </div>`;
   };
@@ -6946,6 +6955,7 @@ function _detectTrophyEventsCore(){
     }
   }
   _saveCompState({ unlocked:currUnlocked, holders:currHolders, topRank:currTopRank });
+  _troMajAttente(currUnlocked[myUid]);
   // Ecriture Firestore (ID deterministe). AVANT : setDoc ecrasait le champ 'at' -> chaque
   // appareil qui detectait l'event (a cause d'un localStorage frais / vide) mettait a jour
   // le timestamp -> l'event remontait en tete du feed comme "nouveau". Bug visible : trophies
@@ -12571,6 +12581,14 @@ function updateTabDots(){
     // Hote 3 : item hamburger (badge inline a droite)
     const ham = document.querySelector('.ham-item[data-view="'+v+'"]');
     if(ham) _setBadge(ham, 'notif-badge ham-badge', n, false);
+  });
+  // Pastille doree : ce qui t'attend, pas ce que les autres ont ecrit. Elle ne s'efface donc pas
+  // en ouvrant l'onglet, elle baisse a chaque case touchee (choix de Mathis, 2026-10-30).
+  const moi = realPeople.find(p => p.id === myUid);
+  const especes = [..._decouvertes()].filter(sci => !moi?._active || _mineHasStrict(moi._active, sci)).length;
+  [['pokedex', especes], ['trophies', _troEtat().attente.length]].forEach(([v, n]) => {
+    const tab = document.querySelector('.tab[data-view="' + v + '"]');
+    if(tab) _setBadge(tab, 'tab-count tab-count-or', n, false);
   });
 }
 // Pose/retire une pastille .{className} sur `host`. n > 0 = affiche count, sinon retire.
@@ -20218,6 +20236,8 @@ $('#trophyGrid').addEventListener('click',async e=>{
     catch(err){ showError(err); }
     return;
   }
+  const enAttente=e.target.closest('[data-tro-attente]');
+  if(enAttente){ _troDecouvre(enAttente.dataset.troAttente); return; }
   const card=e.target.closest('.tro-family, .tro-oneshot.clic'); if(!card) return;
   const d=trophyDetails[card.dataset.detail]; if(!d) return;
   let html;
@@ -22318,6 +22338,7 @@ function _decouvertes(){
 }
 function _sauverDecouvertes(){
   try{ localStorage.setItem('mb-a-decouvrir-' + myUid, JSON.stringify([..._decouvertes()])); }catch(_){}
+  updateTabDots();
 }
 function _annonceDecouvertes(scis){
   const liste = [...new Set((scis || []).map(s => SCI_ALIAS[s] || s))];
@@ -22342,6 +22363,172 @@ $('#decouvrirVoir')?.addEventListener('click', () => {
   // La grille se dessine juste apres le changement d'onglet.
   setTimeout(() => _centrerCase(document.querySelector('#pkdxGrid .pkdx-card.a-decouvrir')), 300);
 });
+// ---- Trophees a decouvrir ----
+// Comme les especes : gagne, un trophee attend en silhouette sur sa case, et le toucher joue son
+// entree. Garde dans le navigateur, par compte. La premiere fois, tout ce qui est deja gagne
+// compte comme vu : sinon chacun se retrouverait avec des dizaines de trophees en attente, et un
+// premier depot aussi. Ni votes ni trophee a detenteur unique : ils vont et viennent.
+const _TRO_TOUCHE = '<div class="tro-touche">Touche pour découvrir</div>';
+// Temps sur la nouvelle coupe avant la carte, dans styles.css : --tro-carte (6,4 s). A 4,5 s, la
+// carte arrivait trop vite (Mathis, 2026-10-30).
+var _troMemo = null;   // var : lue par updateTabDots, qui peut tourner avant cette ligne au demarrage
+function _troEtat(){
+  if(!myUid) return { vus:null, attente:[] };
+  if(_troMemo) return _troMemo;
+  _troMemo = { vus:null, attente:[] };
+  try{
+    const v = JSON.parse(localStorage.getItem('mb-trophees-' + myUid) || 'null');
+    if(v && Array.isArray(v.vus) && Array.isArray(v.attente)) _troMemo = v;
+  }catch(_){}
+  return _troMemo;
+}
+function _troAttend(nom){ return _troEtat().attente.includes(nom); }
+function _troSauve(){
+  try{ localStorage.setItem('mb-trophees-' + myUid, JSON.stringify(_troEtat())); }catch(_){}
+  updateTabDots();
+}
+const _troPalier = t => TROPHY_TIERS.findIndex(x => x.key === t.tier);
+function _troMajAttente(possedes){
+  const moi = realPeople.find(p => p.id === myUid);
+  if(!possedes || !moi?.species?.size) return;
+  const etat = _troEtat();
+  const noms = possedes.filter(nom => {
+    const t = TROPHIES.find(x => x.name === nom);
+    return t && t.special !== 'vote' && !SINGLE_HOLDER_TROPHIES.has(nom) && !RANK_TROPHIES.includes(nom);
+  });
+  if(!etat.vus){ etat.vus = noms; _troSauve(); return; }
+  const vus = new Set(etat.vus), neufs = noms.filter(n => !vus.has(n));
+  const avant = etat.attente.join();
+  etat.vus.push(...neufs);
+  // Trophee perdu entre-temps : il n'attend plus. Plusieurs paliers d'un coup : seul le plus haut.
+  const garde = new Map();
+  for(const nom of [...etat.attente.filter(n => noms.includes(n)), ...neufs]){
+    const t = TROPHIES.find(x => x.name === nom), cle = t.tier && t.family ? t.family : nom, deja = garde.get(cle);
+    if(!deja || _troPalier(t) > _troPalier(TROPHIES.find(x => x.name === deja))) garde.set(cle, nom);
+  }
+  etat.attente = [...garde.values()];
+  _troSauve();
+  if(etat.attente.join() !== avant && _isViewVisible('viewTrophies')) renderTrophies(trophyData);
+}
+// Le bas de l'image est le socle, et le vide autour n'est pas le meme d'une image a l'autre : on
+// le mesure sur une copie 8 fois plus petite (6 images en 1264 px prenaient 3 s).
+const _troCadres = new Map();
+async function _troCadre(url){
+  if(_troCadres.has(url)) return _troCadres.get(url);
+  let css = 'background-image:url(' + url + ');background-size:contain;background-position:center;';
+  try{
+    const im = new Image(); im.src = url; await im.decode();
+    const W = 158, H = 158, c = document.createElement('canvas'); c.width = W; c.height = H;
+    const x = c.getContext('2d', { willReadFrequently:true }); x.drawImage(im, 0, 0, W, H);
+    const d = x.getImageData(0, 0, W, H).data; let g = W, dr = 0, h = H, b = 0;
+    for(let j = 0; j < H; j++) for(let i = 0; i < W; i++) if(d[(j * W + i) * 4 + 3] > 20){ g = Math.min(g, i); dr = Math.max(dr, i); h = Math.min(h, j); b = Math.max(b, j); }
+    const s = W / (Math.max(dr - g, b - h, 1) / .9);
+    const pos = (m, t) => s > 1.001 ? ((m / t * s - .5) / (s - 1) * 100).toFixed(1) + '%' : '50%';
+    css = 'background-image:url(' + url + ');background-size:' + (s * 100).toFixed(1) + '%;background-position:' + pos((g + dr) / 2, W) + ' ' + pos((h + b) / 2, H) + ';';
+  }catch(_){}
+  _troCadres.set(url, css);
+  return css;
+}
+function _troInfos(t){
+  const moi = realPeople.find(p => p.id === myUid), s = statsFor(moi, trophyData.N || realPeople.length);
+  const icone = () => (/src="([^"]+)"/.exec(t.icon || '') || [])[1] || 'assets/icons/aigle.png';
+  if(!(t.tier && t.family)){
+    return { nom:t.name, sous:'Trophée unique', phrase:t.desc, couleur:'#e6c235', couleurAvant:'#e6c235', neuf:icone(), ancien:icone(), ombre:true, unique:true };
+  }
+  const paliers = TROPHIES.filter(x => x.tier && x.family === t.family).sort((a, b) => _troPalier(a) - _troPalier(b));
+  const i = paliers.indexOf(t), prec = paliers[i - 1], suiv = paliers[i + 1];
+  const meta = x => TROPHY_TIERS.find(y => y.key === x.tier), img = x => x.tierImg || meta(x).img;
+  return { nom:t.name, sous:t.familyBaseName + ' · Palier ' + meta(t).label, famille:t.familyBaseName,
+    phrase:t.desc + (suiv ? '. Prochain palier : ' + meta(suiv).label + ' à ' + suiv.prog(s)[1] + '.' : '. Toutes les coupes sont débloquées.'),
+    couleur:meta(t).color, couleurAvant:meta(prec || t).color, neuf:img(t), ancien:img(prec || t), ombre:!prec,
+    // Le compteur part du seuil du palier d'avant : c'est le chemin parcouru, quel que soit le
+    // nombre d'especes vues depuis.
+    de:prec ? prec.prog(s)[1] : 0, a:t.prog(s)[1] };
+}
+let _troFile = [], _troTotal = 0, _troCompteur = null;
+async function _troJoue(nom, carteSeule){
+  const t = TROPHIES.find(x => x.name === nom); if(!t) return;
+  const f = _troInfos(t), [cn, ca] = await Promise.all([_troCadre(f.neuf), _troCadre(f.ancien)]);
+  let dlg = document.getElementById('troDialog');
+  if(!dlg){
+    dlg = document.createElement('dialog');
+    dlg.id = 'troDialog'; dlg.className = 'tro-dlg'; dlg.setAttribute('aria-label', 'Nouveau trophée');
+    document.body.appendChild(dlg);
+    dlg.addEventListener('click', e => {
+      if(e.target.closest('[data-tro-suite]')){ _troSuite(); return; }
+      const sc = dlg.querySelector('.tro-sc');
+      if(!sc.classList.contains('tro-sc-posee')) _troSaute(sc);
+      else if(!e.target.closest('.tro-sc-carte') && !_troFile.length) dlg.close();
+    });
+    dlg.addEventListener('cancel', e => {
+      const sc = dlg.querySelector('.tro-sc');
+      if(!sc.classList.contains('tro-sc-posee')){ e.preventDefault(); _troSaute(sc); }
+    });
+    dlg.addEventListener('animationend', e => {
+      if(e.animationName === 'tro-sc-pose') _troPosee(dlg.querySelector('.tro-sc'));
+    });
+    dlg.addEventListener('close', () => {
+      clearInterval(_troCompteur); _troFile = [];
+      if(_isViewVisible('viewTrophies')) renderTrophies(trophyData);
+    });
+  }
+  clearInterval(_troCompteur);
+  _troEtat().attente = _troEtat().attente.filter(n => n !== nom);
+  _troSauve();
+  const rang = _troTotal - _troFile.length;
+  const suite = _troFile.length ? 'Suivant (' + rang + '/' + _troTotal + ')' : 'Continuer';
+  let etincelles = '';
+  for(let i = 0; i < 26; i++) etincelles += '<i style="--a:' + Math.round(i * 360 / 26) + 'deg;--d:' + Math.round(150 + Math.random() * 170) + 'px;--t:' + (Math.random() * .25).toFixed(2) + 's"></i>';
+  dlg.innerHTML = '<div class="tro-sc' + (f.unique ? ' tro-sc-court' : '') + (carteSeule ? ' tro-sc-fini' : '') + '" tabindex="-1" style="--c:' + f.couleur + ';--c-av:' + f.couleurAvant + '">'
+    + '<div class="tro-sc-page"></div><div class="tro-sc-noir"></div><div class="tro-sc-rayons"></div>'
+    + '<p class="tro-sc-titre">' + (f.unique ? 'Nouveau trophée' : 'Palier atteint') + '</p>'
+    + '<div class="tro-sc-coupe tro-sc-ancien' + (f.ombre ? ' ombre' : '') + '" style="' + ca + '"></div>'
+    + '<div class="tro-sc-etincelles">' + etincelles + '</div>'
+    + '<div class="tro-sc-coupe tro-sc-neuf" style="' + cn + '"></div>'
+    + (f.unique ? '' : '<div class="tro-sc-jauge"><div class="tro-sc-jauge-txt"><span>' + esc(f.famille) + '</span><span><span class="tro-n">' + f.de + '</span> / ' + f.a + '</span></div>'
+      + '<div class="tro-sc-jauge-fond"><div class="tro-sc-jauge-plein" style="--de:' + Math.round(f.de / f.a * 100) + '%"></div></div></div>')
+    + '<div class="tro-sc-flash"></div>'
+    + '<div class="tro-sc-carte"><div class="tro-sc-carte-rayons"></div><div class="tro-sc-carte-coupe" style="' + cn + '"></div>'
+    + '<div class="tro-sc-txt"><small>Nouveau trophée</small><b>' + esc(f.nom) + '</b><span class="tro-sc-sous">' + esc(f.sous) + '</span>'
+    + '<span class="tro-sc-phrase">' + esc(f.phrase) + '</span><button type="button" class="btn" data-tro-suite>' + suite + '</button></div>'
+    + '<div class="tro-sc-reflet"></div></div></div>';
+  if(!dlg.open) dlg.showModal();
+  const sc = dlg.querySelector('.tro-sc');
+  sc.focus();
+  annonce('Nouveau trophée : ' + f.nom + '.');
+  if(carteSeule){ _troPosee(sc); return; }
+  if(!f.unique){
+    // Le chiffre monte pendant que la jauge se remplit (de 0,6 a 2 s).
+    const n = sc.querySelector('.tro-n'), pas = Math.max(1, Math.ceil((f.a - f.de) / 14)), debut = Date.now();
+    let v = f.de;
+    _troCompteur = setInterval(() => {
+      if(Date.now() - debut < 600) return;
+      v = Math.min(f.a, v + pas); n.textContent = v;
+      if(v >= f.a) clearInterval(_troCompteur);
+    }, 1400 / Math.max(1, Math.ceil((f.a - f.de) / pas)));
+  }
+}
+function _troPosee(sc){
+  sc.classList.add('tro-sc-posee');
+  sc.querySelector('[data-tro-suite]')?.focus();
+}
+// Passer : un clic, Entree ou Echap, et seule la carte reste.
+function _troSaute(sc){
+  clearInterval(_troCompteur);
+  sc.classList.add('tro-sc-fini');
+  _troPosee(sc);
+}
+function _troSuite(){
+  const prochain = _troFile.shift();
+  if(prochain) _troJoue(prochain, true);
+  else document.getElementById('troDialog')?.close();
+}
+// Plusieurs d'un coup : la grande scene pour celui qu'on touche, la carte seule pour les autres.
+function _troDecouvre(nom){
+  _troFile = _troEtat().attente.filter(n => n !== nom);
+  _troTotal = _troFile.length + 1;
+  _troJoue(nom, false);
+}
 // Delegation click : ouvre la fiche au clic sur une carte pokedex.
 document.addEventListener('click', e => {
   const card = e.target.closest('.pkdx-card[data-sci]');
