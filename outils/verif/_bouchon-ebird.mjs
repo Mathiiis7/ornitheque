@@ -4,7 +4,7 @@
 // observations au même lieu pour que les grappes se forment. Les listes du relais (carte/listes)
 // répondent 503 : le Récent retombe sur « une observation par espèce », son chemin de secours.
 // import { bouchonEbird } from './_bouchon-ebird.mjs'; await bouchonEbird(ctx);
-const ESPECES = [
+export const ESPECES = [
   ['barwar1', 'Curruca nisoria', 'Barred Warbler'],
   ['wallcr1', 'Tichodroma muraria', 'Wallcreeper'],
   ['snobun', 'Plectrophenax nivalis', 'Snow Bunting'],

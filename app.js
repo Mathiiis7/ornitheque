@@ -7300,6 +7300,10 @@ function _updateLegend(){
   _legendDiv.innerHTML = parts.join('') || '<div class="ml-row"><span class="ml-txt">Aucune couche allumée</span></div>';
 }
 function _mapNorm(s){ return (s||'').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
+// La recherche prend le début d'un mot : au milieu d'un mot, « pic » trouvait l'Ibis sacré (aethiopicus) et la
+// Fauvette à lunettes (conspicillata) (2026-10-30). q et cle sont déjà passés par _mapNorm.
+const _mapMots = s => ' ' + (s || '').replace(/[^a-z0-9]+/g, ' ');
+const _mapTrouve = (cle, q) => _mapMots(cle).includes(_mapMots(q).trimEnd());
 function _mapApplyFilter(){
   const cnt = $('#mapSearchCount');
   const q = _mapNorm(mapSearch).trim();
@@ -7317,7 +7321,7 @@ function _mapApplyFilter(){
       if(lyr._ctFiltre === sig) continue;
       lyr._ctFiltre = sig;
       const garder = lyr._ctTous.filter(m => {
-        let match = !q || (m._q && m._q.includes(q));
+        let match = !q || (m._q && _mapTrouve(m._q, q));
         if(match && dansZone && lyr === _mapLayer){ const ll = m.getLatLng(); match = dansZone(ll.lat, ll.lng); }
         return match;
       });
@@ -7327,7 +7331,7 @@ function _mapApplyFilter(){
     lyr.eachLayer(m => {
       const el = m._path || m._icon; if(!el) return;
       total++;
-      let match = !q || (m._q && m._q.includes(q));
+      let match = !q || (m._q && _mapTrouve(m._q, q));
       if(match && dansZone && lyr === _mapLayer && m.getLatLng){ const ll = m.getLatLng(); match = dansZone(ll.lat, ll.lng); }
       el.style.display = match ? '' : 'none';
       if(match) visible++;
@@ -7463,32 +7467,43 @@ function _updateMapSuggest(){
       const list = m._missSci; if(!Array.isArray(list)) return;
       for(const sci of list){
         if(seen.has(sci)) continue;
-        const fr = FR_NAMES[sci] || sci;
-        if(q && !_mapNorm(fr).includes(q) && !sci.includes(q)) continue;
+        const fr = frName(sci, sci);
+        if(q && !_mapTrouve(_mapNorm(fr), q) && !_mapTrouve(sci, q)) continue;
         seen.add(sci);
-        items.push({ sci, name:fr, kind:'sp-hotspot' });
+        items.push({ sci, name:fr, kind:'sp-hotspot', enFr:!q || _mapTrouve(_mapNorm(fr), q) });
       }
     });
-    items.sort((a,b)=> a.name.localeCompare(b.name,'fr'));
+    items.sort((a,b)=> (b.enFr - a.enFr) || a.name.localeCompare(b.name,'fr'));
   } else if(mapMode==='missing'){
-    // Mode "À aller cocher" : suggestions = TOUTES les espèces manquantes de ma life list
-    // (dérivées de FR_NAMES minus ma liste), pas seulement les markers visibles. Permet de
-    // choisir n'importe quel oiseau à cocher même sur la vue FR vide par défaut.
+    // Tous les oiseaux du monde (Mathis, 2026-10-30 : « il manque énormément d'oiseaux ») : on ne proposait que
+    // les espèces non vues et régulières dans le pays ; « merle » ne donnait rien à qui a vu le Merle noir.
+    // Déjà vues : grisées, à leur place. Barre vide : les seules espèces régulières ici, 11 170 lignes sinon.
+    // Le nom français passe devant le latin, les régulières ici devant les autres.
     const me = realPeople.find(p=>p.id===myUid);
     const mine = new Set(me ? [...me.species.keys()] : []);
     const seen = new Set();
     const _ccMiss = (ebFilter && ebFilter.country) || 'FR';
     for(const sci in FR_NAMES){
       if(_isSciAliasSource(sci)) continue;
-      if(!hasRarityCalibrationInCountry(sci, _ccMiss)) continue;   // per-pays, evite les pollutants
-      if(_mineHas(mine, sci)) continue;   // déjà cochée par l'utilisateur
-      const fr = FR_NAMES[sci];
-      if(q && !_mapNorm(fr).includes(q) && !sci.includes(q)) continue;
+      const fr = FR_NAMES[sci], enFr = !q || _mapTrouve(_mapNorm(fr), q);
+      if(!enFr && !_mapTrouve(sci, q)) continue;
+      const ici = hasRarityCalibrationInCountry(sci, _ccMiss);
+      if(!q && !ici) continue;
+      // Pas d'échappés sur la Carte, pays ouvert (Mathis, 2026-10-23). Sans pays, on ne sait pas où ils seront vus.
+      if(_ctPaysOuvert && estEchappeDansPays(sci, _ccMiss)) continue;
+      // 9 espèces de nos tables n'ont plus de code eBird (regroupées, mesuré le 2026-10-30) : GBIF les lit encore.
+      if(ebFilter.source !== 'gbif' && _taxMap && !_sciToCode(sci)) continue;
       if(seen.has(sci)) continue; seen.add(sci);
-      const code = _sciToCode(sci);   // null si pas de taxonomie loaded ou sci absent
-      items.push({ sci, name:fr, code, kind:'sp-missing' });
+      items.push({ sci, name:fr, kind:'sp-missing', deja:_mineHas(mine, sci), enFr, ici });
     }
-    items.sort((a,b)=> a.name.localeCompare(b.name,'fr'));
+    // Les espèces d'eBird sans nom français chez nous (40, séparations récentes) : sous leur nom latin.
+    if(q && _taxMap) for(const c in _taxMap){
+      const sci = _taxMap[c];
+      if(FR_NAMES[sci] || SCI_ALIAS[sci] || seen.has(sci) || !_mapTrouve(sci, q)) continue;
+      seen.add(sci);
+      items.push({ sci, name:sci[0].toUpperCase() + sci.slice(1), kind:'sp-missing', deja:_mineHas(mine, sci), enFr:false, ici:false });
+    }
+    items.sort((a,b)=> (b.enFr - a.enFr) || (b.ici - a.ici) || a.name.localeCompare(b.name,'fr'));
     // Entree "Toutes les especes" en tete : reset rapide sans passer par la croix (utile
     // quand une espece est chargee et qu'on veut revenir a la vue generale).
     items.unshift({ kind:'sp-missing-all', name:'← Toutes les espèces (reset)' });
@@ -7497,7 +7512,7 @@ function _updateMapSuggest(){
     if(!lyr){ box.classList.remove('open'); return; }
     const seen = new Set();
     lyr.eachLayer(m => {
-      if(q && (!m._q || !m._q.includes(q))) return;
+      if(q && (!m._q || !_mapTrouve(m._q, q))) return;
       const key = m._sciName ? m._sciName.toLowerCase() : (m._q||'');
       if(!key || seen.has(key)) return; seen.add(key);
       items.push(m);
@@ -7514,7 +7529,12 @@ function _updateMapSuggest(){
     });
   }
   const top = items;   // pas de cap : la scroll box overflow-y gère (max 60vh)
-  if(!top.length){ box.classList.remove('open'); box.innerHTML=''; _mapSuggestItems=[]; return; }
+  if(!top.length){
+    _mapSuggestItems = [];
+    // Les hotspots appartiennent à un pays : sans lui, la barre le dit au lieu de ne rien répondre.
+    if(mapMode === 'hotspots' && !_ctPaysOuvert && q){ box.innerHTML = '<div class="map-search-suggest-item ss-info">Ouvre un pays pour chercher dans ses hotspots</div>'; box.classList.add('open'); return; }
+    box.classList.remove('open'); box.innerHTML=''; return;
+  }
   _mapSuggestItems = top;
   box.innerHTML = top.map((it, i) => {
     if(it && it.kind==='sp-hotspot'){
@@ -7531,7 +7551,7 @@ function _updateMapSuggest(){
         `<span class="ss-hint">→ vue générale</span></div>`;
     }
     if(it && it.kind==='sp-missing'){
-      return `<div class="map-search-suggest-item" data-idx="${i}">`+
+      return `<div class="map-search-suggest-item${it.deja ? ' ss-deja' : ''}" data-idx="${i}">`+
         `<span class="ss-dot" style="background:${sciColorForCountry(it.sci, (ebFilter && ebFilter.country) || 'FR')}"></span>`+
         `<span>${esc(it.name)}</span>`+
         `<span class="ss-sci">${esc(it.sci)}</span>`+
@@ -7558,7 +7578,7 @@ function _updateMapSuggest(){
   box.classList.add('open');
 }
 $('#mapSearchSuggest')?.addEventListener('mousedown', e=>{
-  const it = e.target.closest('.map-search-suggest-item'); if(!it) return;
+  const it = e.target.closest('.map-search-suggest-item'); if(!it || it.classList.contains('ss-info')) return;
   e.preventDefault();   // évite le blur de l'input avant qu'on ait lu le clic (mais ne bloque pas le scroll ailleurs dans la box)
   const m = _mapSuggestItems[+it.dataset.idx]; if(!m) return;
   const box = $('#mapSearchSuggest'); box.classList.remove('open'); box.innerHTML='';
@@ -7593,8 +7613,16 @@ $('#mapSearchSuggest')?.addEventListener('mousedown', e=>{
       _refreshRarChips();
       _loaded.missing = '';
     }
-    if(m.code){ _showSpeciesDetail(m.sci, m.code); }
-    else { showError(new Error('Pas de code eBird trouvé pour cette espèce - impossible de charger ses obs.')); }
+    // Chercher une espèce la montre : la couche éteinte (l'arrivée sur la Carte) laissait « n'est pas affichée »,
+    // comme une espèce de la ligue allume la Ligue.
+    if(!carteCouches.has('recent')) _ctAllume('recent');
+    // Le code se cherche au clic : la taxonomie (0,9 Mo) peut ne pas être encore arrivée.
+    if(ebFilter.source === 'gbif'){ _showSpeciesDetailGbif(m.sci); return; }
+    _loadTaxonomy().then(() => {
+      const code = _sciToCode(m.sci);
+      if(code) _showSpeciesDetail(m.sci, code);
+      else showError(new Error('Pas de code eBird trouvé pour cette espèce - impossible de charger ses obs.'));
+    });
     return;
   }
   // Une espèce de la ligue reste écrite dans la barre : la carte, la liste et les zones choisies ensuite
@@ -8326,6 +8354,8 @@ async function _renderModeHotspots(enFond = false){
     return;
   }
   const myRun = _hotspotsRunSeq + 1;
+  // Sur la carte avant le chargement : les carrés y paraissent au fur et à mesure.
+  if(!enFond || carteCouches.has('hot')) _lyrHotspots.addTo(_map);
   await _loadHotspotsLayer(parDessin ? parDessin.zones : _ctZonesEbird(zone));
   if(myRun !== _hotspotsRunSeq) return;
   if(!enFond || carteCouches.has('hot')) _lyrHotspots.addTo(_map);
@@ -8521,8 +8551,9 @@ async function _showSpeciesDetailGbif(sciName){
   _lyrDetail.addTo(_map);
   if(_lyrMissing && _map.hasLayer(_lyrMissing)) _map.removeLayer(_lyrMissing);
   const nm = FR_NAMES[(sciName||'').toLowerCase()] || sciName;
-  const country = ebFilter.country || 'FR';
-  const ctyName = { FR:'la France', ME:'le Monténégro', ES:"l'Espagne", PT:'le Portugal', IT:"l'Italie", GR:'la Grèce', HR:'la Croatie', AL:"l'Albanie", MA:'le Maroc', CH:'la Suisse', BE:'la Belgique', DE:"l'Allemagne", GB:'le Royaume-Uni', TR:'la Turquie', IS:"l'Islande", AU:"l'Australie", NZ:'la Nouvelle-Zélande', NA:'la Namibie', NO:'la Norvège', LK:'le Sri Lanka', US:'les États-Unis', CA:'le Canada' }[country] || country;
+  const monde = _ctRechercheMonde();
+  const country = monde ? CT_MONDE : (ebFilter.country || 'FR');
+  const ctyName = { [CT_MONDE]:'le monde', FR:'la France', ME:'le Monténégro', ES:"l'Espagne", PT:'le Portugal', IT:"l'Italie", GR:'la Grèce', HR:'la Croatie', AL:"l'Albanie", MA:'le Maroc', CH:'la Suisse', BE:'la Belgique', DE:"l'Allemagne", GB:'le Royaume-Uni', TR:'la Turquie', IS:"l'Islande", AU:"l'Australie", NZ:'la Nouvelle-Zélande', NA:'la Namibie', NO:'la Norvège', LK:'le Sri Lanka', US:'les États-Unis', CA:'le Canada' }[country] || country;
   const w = rarityForCountry(sciName, country);
   const color = sciColorForCountry(sciName, country);
   const month = _ctMoisGbif();
@@ -8547,7 +8578,7 @@ async function _showSpeciesDetailGbif(sciName){
   } else if(country === 'FR' && ebFilter.region && /^FR-[A-Z]+$/.test(ebFilter.region)){
     bbox = _bboxOfRegion(ebFilter.region);
     zoneLabelExtra = ` · ${ebFilter.region}`;
-  } else if(country !== 'FR' && (ebFilter.dept || ebFilter.region)){
+  } else if(!monde && country !== 'FR' && (ebFilter.dept || ebFilter.region)){
     const zone = ebFilter.dept || ebFilter.region;
     try{
       const info = await _ebFetch(`https://api.ebird.org/v2/ref/region/info/${zone}`);
@@ -8563,7 +8594,7 @@ async function _showSpeciesDetailGbif(sciName){
   // Cache localStorage : clef (sci, country, zone, mois, plage annees). TTL heritee du
   // cache generique GBIF (6h). Utile en voyage sans reseau + evite de re-taper 5 pages
   // GBIF quand on switch juste entre 2 especes.
-  const zoneKey = ebFilter.dept || ebFilter.region || 'all';
+  const zoneKey = monde ? 'all' : (ebFilter.dept || ebFilter.region || 'all');
   const spCacheKey = `gbifMissing-v2-species-${sciName.toLowerCase().replace(/\s+/g,'_')}-${country}-${zoneKey}-${month}-${yMin}-${yMax}`;
   const cached = _gbifCacheRead(spCacheKey);
   let obs, totalCount;
@@ -8575,7 +8606,7 @@ async function _showSpeciesDetailGbif(sciName){
       // Pagination parallele : 1er appel donne count, on lance les pages restantes en parallele.
       // Bien plus rapide que la version sequentielle (facteur ~N sur N pages). Cap 10 pages = 3000 obs.
       const MAX_PAGES = 10;
-      const mkUrl = (page) => `https://api.gbif.org/v1/occurrence/search?taxonKey=${key}&country=${encodeURIComponent(country)}&classKey=212&hasCoordinate=true&year=${encodeURIComponent(yearParam)}${monthParam}${bboxParam}&limit=300&offset=${page*300}`;
+      const mkUrl = (page) => `https://api.gbif.org/v1/occurrence/search?taxonKey=${key}${monde ? '' : '&country=' + encodeURIComponent(country)}&classKey=212&hasCoordinate=true&year=${encodeURIComponent(yearParam)}${monthParam}${bboxParam}&limit=300&offset=${page*300}`;
       const applyFilter = (results) => gadmFilter
         ? results.filter(o => o.gadm && o.gadm[gadmFilter.level] && o.gadm[gadmFilter.level].name === gadmFilter.name)
         : results;
@@ -8639,6 +8670,7 @@ async function _showSpeciesDetailGbif(sciName){
     const trunc = (totalCount > obs.length && !gadmFilter && !cached) ? ` (sur ${totalCount} au total, tronqué)` : '';
     // Le nombre est dit en tête de la liste : la ligne d'état ne garde que la coupe éventuelle.
     if(cnt) cnt.textContent = trunc ? `Les ${obs.length} premières observations${trunc}` : '';
+    if(monde) _ctCadreFait = true;
     _fitLayer(_lyrDetail);
     _ctAppliqueCouches();
     return obs.length;
@@ -8678,9 +8710,15 @@ async function _showSpeciesDetail(sciName, speciesCode){
     // Un groupe de zones (8 pays) se lit zone par zone, ses réponses réunies.
     // Ta zone dessinée se lit dans les départements qu'elle touche, comme le Récent (_ctZonesRecent) : la
     // région restée choisie avant le dessin (la Bretagne pour un dessin en Vendée) ne rendait rien.
-    const zonesLues = ebFilter.polygon ? (_ctZonesRecent().zones || []) : [deptCode || regionCode || cty];
+    const monde = _ctRechercheMonde();
+    // Les tables de rareté des pays arrivent en tâche de fond : sans elles, seuls la France et le Monténégro répondaient.
+    if(monde) await _chargerDonneesPays();
+    if(!stillMine()) return 0;
+    if(monde){ const c0 = _ebCompteur(); if(c0) c0.textContent = `… lecture de ${_ctPaysEspece(sciName).length} pays`; }
+    const zonesLues = monde ? _ctPaysEspece(sciName) : ebFilter.polygon ? (_ctZonesRecent().zones || []) : [deptCode || regionCode || cty];
+    let refus = false;
     const lus = await _ctParLots(zonesLues.flatMap(_ctZonesEbird),
-      z => _ebFetch(`https://api.ebird.org/v2/data/obs/${z}/recent/${speciesCode}?back=${days}&maxResults=10000&locale=fr`));
+      z => _ebFetch(`https://api.ebird.org/v2/data/obs/${z}/recent/${speciesCode}?back=${days}&maxResults=10000&locale=fr`, monde ? { garder:false } : {}).catch(() => { refus = true; return null; }));
     let data = lus.flatMap(r => Array.isArray(r) ? r : []);
     if(ebFilter.polygon) data = data.filter(o => typeof o.lat === 'number' && _pointInPolygon(o.lat, o.lng, ebFilter.polygon));
     let used = data.length ? { lbl: deptCode ? deptLbl : (regionCode ? 'la région' : 'tout ' + ctyName) } : null;
@@ -8689,7 +8727,8 @@ async function _showSpeciesDetail(sciName, speciesCode){
       _lyrDetail.clearLayers();   // nettoie les vieux markers avant d'afficher le message
       const cnt = _ebCompteur();
       // « ici » : la zone est écrite en tête du panneau (et « dans la France » sonnait faux).
-      if(cnt) cnt.textContent = `Aucune obs récente de ${nm} ${ebFilter.polygon ? 'dans ta zone' : 'ici'} ces ${days} jours (eBird).`;
+      if(cnt) cnt.textContent = refus ? 'eBird ne répond pas pour l\'instant : réessaie dans quelques minutes.'
+        : `Aucune obs récente de ${nm} ${monde ? 'dans les pays du site' : ebFilter.polygon ? 'dans ta zone' : 'ici'} ces ${days} jours (eBird).`;
       _ctAppliqueCouches();
       return 0;
     }
@@ -8700,10 +8739,12 @@ async function _showSpeciesDetail(sciName, speciesCode){
     // ouvrait encore l'ancienne bulle (Mathis, 2026-10-27).
     _lyrDetail.clearLayers();
     const newMarkers = _ctPoseRecent(data.filter(o => typeof o.lat === 'number' && typeof o.lng === 'number')
-      .map(o => ({ ...o, sciName:o.sciName || sciName, speciesCode:o.speciesCode || speciesCode })), country, _lyrDetail);
+      .map(o => ({ ...o, sciName:o.sciName || sciName, speciesCode:o.speciesCode || speciesCode })), monde ? CT_MONDE : country, _lyrDetail);
     const count = newMarkers.length;
     // Cadrée comme sans recherche : la zone choisie ou le pays ouvert gardent la carte (_ctCadre), sinon
     // les points. Puis le voile, la liste et la légende, comme après tout dessin (_ctAppliqueCouches).
+    // Le monde cadre sur ses points dès le premier coup : _ctCadre ramène sinon sur la France.
+    if(monde) _ctCadreFait = true;
     _fitLayer(_lyrDetail);
     const cnt = _ebCompteur();
     // Le nombre est dit en tête de la liste (_ctListeRecent) : la ligne d'état le redisait.
@@ -8838,6 +8879,7 @@ const _ctEchappeEnEurope = k => {
   return _ctEchappesEurope.has(k);
 };
 function _ctRarete(sci, cc){
+  if(cc === CT_MONDE) return 0;
   const brut = (sci || '').trim().toLowerCase(), k = SCI_ALIAS[brut] || brut;
   const w = rarityForCountry(sci, cc) || (k && _ctPaysMesure(cc) && !isExoticInCountry(sci, cc, true) && !_ctEchappeEnEurope(k) ? 10 : 0);
   return _ctPalierDeZone(sci, cc, w);
@@ -8858,6 +8900,7 @@ function _ctPalierDeZone(sci, cc, w){
 // Sa couleur : celle de son palier (de la zone, ou 10 hors des listes), sauf le gris des échappés, qui
 // ne dépend pas du lieu.
 function _ctCouleur(sci, cc){
+  if(cc === CT_MONDE) return '#7e8a99';
   const c = sciColorForCountry(sci, cc);
   const w = _ctRarete(sci, cc);
   return w && c !== '#7e8a99' ? realColor(w) : c;
@@ -8963,6 +9006,8 @@ document.addEventListener('change', e=>{
   // Rejoue toute la logique show/hide en simulant un click sur le bouton mode courant.
   const modeBtn = document.querySelector(`#mapModes button[data-mode="${mapMode}"]`);
   if(modeBtn) modeBtn.click();
+  // Une espèce cherchée suit la source : elle gardait les points de l'autre (2026-10-30).
+  _reloadSpeciesForZone();
 });
 // Change handler pour les inputs annee GBIF (mode "A cocher"). Debounce 400ms pour eviter
 // de lancer un fetch a chaque tick des fleches haut/bas de l'input number.
@@ -9101,9 +9146,22 @@ function _ctPastille(latlng, couleur, w, dedans, nb){
   return L.marker(latlng, { w:w || 0, coul:couleur, dedans, riseOnHover:true, zIndexOffset:(w || 0) * 1000,
     icon:L.divIcon({ html:`<span class="${_ctClassePt(dedans)}" style="background:${couleur}">${dedans}${marque}</span>`, className:'ct-pt-ico', iconSize:[22, 22] }) });
 }
+// Une recherche d'espèce sans pays ouvert ni zone dessinée lit le monde entier (Mathis, 2026-10-30).
+const CT_MONDE = 'monde';
+const _ctRechercheMonde = () => !_ctPaysOuvert && !ebFilter.polygon;
+// eBird ne sait pas lire le monde : data/obs/world/recent/<espèce> échoue au bout de 62 s, pour toute espèce (essayé
+// le 2026-10-30). On lit donc les pays du site où l'espèce est connue, un par un : peu de demandes pour une rareté,
+// une par pays au pire. Aucune table ne la connaît : tous les pays.
+const _ctPaysEspece = sci => {
+  const tous = Object.keys(COUNTRIES_REG).filter(_ctPaysCliquable);
+  const siens = tous.filter(cc => rarityForCountry(sci, cc));
+  return siens.length ? siens : tous;
+};
 // Le palier et la couleur d'un point du Récent. Établie (N) là où elle a été vue, l'espèce prend la
 // couleur de sa rareté même si le pays la dit échappée (Cygne noir dans l'Ain).
 const _ctPalierPoint = (sci, cc, statut) => {
+  // Le monde entier n'a pas de rareté : elle se mesure pays par pays, et une observation d'eBird ne dit pas le sien.
+  if(cc === CT_MONDE) return { w:0, coul:'#7e8a99' };
   const w = _ctRarete(sci, cc);
   return { w, coul:statut === 'N' && w ? realColor(w) : _ctCouleur(sci, cc) };
 };
@@ -9379,6 +9437,9 @@ function _ctSymbole(k){
 // cran (0 à 4) : le fond fonce avec le nombre, rapporté au meilleur hotspot affiché (direction 2 de
 // notes-privees/maquettes/hotspots-taille/, choisie par Mathis le 2026-10-27 : les carrés tous pareils ne
 // montraient pas où il y a le plus à cocher). Les couleurs des crans vivent dans styles.css.
+// Leaflet ajoute la hauteur à l'écran du carré à son rang : le pas doit la dépasser, sinon un carré plus bas sur la
+// carte passerait devant un meilleur. Le survol doit passer devant tous (riseOffset, au-delà de 2 000 espèces).
+const CT_HS_RANG = 10000, CT_HS_SURVOL = 2e7;
 const _ctCranHotspot = (nb, max) => max > 0 ? Math.min(4, Math.floor(nb / max * 5)) : 0;
 function _ctIconeHotspot(nb, favori, cran = 0){
   const chiffres = String(nb).length, larg = Math.max(28, 14 + 9 * chiffres);
@@ -10118,7 +10179,7 @@ function _ctPointsLigue(){
   // L'espèce cherchée dans la barre : la liste ne garde que ce que la carte montre (Mathis, 2026-10-29).
   const q = _mapNorm(mapSearch).trim();
   const pts = _mapCollectPoints().filter(p => (f.player === 'all' || p.uid === f.player) && _passeRarLigue(p) && (f.country === 'any' || p.cc === f.country)
-    && (!q || _ctCleLigue(p).includes(q)));
+    && (!q || _mapTrouve(_ctCleLigue(p), q)));
   const teste = _ctTesteZone();
   return { teste, pts:teste ? pts.filter(p => teste(p.lat, p.lon)) : pts };
 }
@@ -10216,7 +10277,7 @@ function _ctDessinePanneau(){
   // Les nombres des onglets comptent ce que montrent leurs listes, espèce cherchée comprise.
   const especesRecent = new Set(), rec = _ctCoucheRecent(); if(rec) rec.eachLayer(m => { if(m._sciName) especesRecent.add(m._sciName.toLowerCase()); });
   const q = _mapNorm(mapSearch).trim();
-  let nbHot = 0; if(_lyrHotspots) _lyrHotspots.eachLayer(m => { if(!q || (m._q && m._q.includes(q))) nbHot++; });
+  let nbHot = 0; if(_lyrHotspots) _lyrHotspots.eachLayer(m => { if(!q || (m._q && _mapTrouve(m._q, q))) nbHot++; });
   const nb = { ligue:ligue.especes || '', recent:especesRecent.size || '', hot:nbHot || '' };
   document.querySelectorAll('#ctOnglets [data-nb]').forEach(s => { s.textContent = nb[s.dataset.nb] ? String(nb[s.dataset.nb]) : ''; });
   zone.dataset.tiroir = carteTiroir;
@@ -10895,7 +10956,7 @@ function _ctListeHot(){
   const box = document.getElementById('ctListeHot'); if(!box) return;
   // L'espèce cherchée : seulement les hotspots que la carte garde (_mapApplyFilter, même clé _q).
   const q = _mapNorm(mapSearch).trim();
-  const hs = []; if(_lyrHotspots) _lyrHotspots.eachLayer(m => { if(m._hs && (!q || (m._q && m._q.includes(q)))) hs.push(m); });
+  const hs = []; if(_lyrHotspots) _lyrHotspots.eachLayer(m => { if(m._hs && (!q || (m._q && _mapTrouve(m._q, q)))) hs.push(m); });
   if(!hs.length){
     // Rien de choisi : plus d'encadré qui demande de choisir une zone (Mathis, 2026-10-29), la carte le dit.
     box.innerHTML = '';
@@ -10928,7 +10989,8 @@ document.addEventListener('click', e => {
 // de la carte, donc toujours d'accord avec eux.
 function _ctListeRecent(){
   const box = document.getElementById('ctListeRecent'); if(!box) return;
-  const cc = ebFilter.country || 'FR', gbif = ebFilter.source === 'gbif', s = n => n > 1 ? 's' : '';
+  const monde = !!_ctCherche() && _ctRechercheMonde();
+  const cc = monde ? CT_MONDE : (ebFilter.country || 'FR'), gbif = ebFilter.source === 'gbif', s = n => n > 1 ? 's' : '';
   const mention = document.getElementById('ctMentionRecent');
   if(mention) mention.innerHTML = gbif
     ? 'Données <a href="https://www.gbif.org" target="_blank" rel="noopener">GBIF.org</a>, toutes bases confondues : le mois en cours, les années choisies. Les noms des observateurs ne sont pas affichés.'
@@ -10936,7 +10998,7 @@ function _ctListeRecent(){
     : 'Données <a href="https://ebird.org" target="_blank" rel="noopener">eBird.org</a>';
   // GBIF ne lit pas une région entière en France (trop de points) : il lui faut un département. eBird lit
   // la France ouverte en entier (2026-10-26).
-  const sansZone = cc === 'FR' && !ebFilter.polygon && !ebFilter.dept && (gbif || ((!ebFilter.region || ebFilter.region === 'FR') && !_ctFranceOuverte()));
+  const sansZone = !monde && cc === 'FR' && !ebFilter.polygon && !ebFilter.dept && (gbif || ((!ebFilter.region || ebFilter.region === 'FR') && !_ctFranceOuverte()));
   if(sansZone){
     // Sur la France, on choisit d'abord une région (2026-10-23) ; GBIF, lui, attend un de ses départements.
     // Plus d'encadré qui le demande (Mathis, 2026-10-29) : la liste reste vide, la bulle de la carte guide.
@@ -11729,7 +11791,11 @@ async function _loadTaxParents(){
 // Reverse : sciName lowercase -> speciesCode. Utile pour appeler /data/obs/{locId}/recent/{speciesCode}.
 function _sciToCode(sci){
   if(!_taxMap) return null;
-  if(!_taxInv){ _taxInv = {}; for(const c in _taxMap) _taxInv[_taxMap[c]] = c; }
+  if(!_taxInv){
+    _taxInv = {}; for(const c in _taxMap) _taxInv[_taxMap[c]] = c;
+    // Nos tables gardent l'ancien nom des espèces qu'eBird a renommées (octobre 2026) : leur code est sous le nouveau.
+    for(const nouveau in SCI_ALIAS){ const c = _taxInv[nouveau], ancien = SCI_ALIAS[nouveau]; if(c && !_taxInv[ancien]) _taxInv[ancien] = c; }
+  }
   return _taxInv[(sci||'').toLowerCase()] || null;
 }
 // Batch d'appels avec concurrence limitée.
@@ -11743,7 +11809,8 @@ async function _batch(items, n, fn){
 // Enrichit chaque hotspot avec { allSp, mySp, toDo } - via spplist (all-time)
 // encore : faux dès qu'un autre chargement a pris la main. Les appels qui restent ne partent plus : passé
 // de la France à une zone dessinée, les 100 de la France continuaient (154 au lieu de 44, 2026-10-26).
-async function _enrichHotspots(hotspots, region, encore = () => true){
+// chaque : appelée dès qu'un hotspot a sa réponse, pour le poser sans attendre les autres.
+async function _enrichHotspots(hotspots, region, encore = () => true, chaque = null){
   const tax = await _loadTaxonomy();
   const me = realPeople.find(p=>p.id===myUid);
   const mine = new Set(me ? [...me.species.keys()] : []);
@@ -11763,7 +11830,9 @@ async function _enrichHotspots(hotspots, region, encore = () => true){
       const seen = [...sciSet].filter(s => _mineHasStrict(mine, s)).length;
       // sauvagesSci : ce que la bulle montre quand « Non observées » est éteint (2026-10-29 : l'interrupteur ne
       // changeait rien aux Hotspots, seules les espèces non observées étaient gardées).
-      return { ...h, allSp:sciSet.size, mySp:seen, toDo:missing.length, missingSci:missing, sauvagesSci:sauvages };
+      const fini = { ...h, allSp:sciSet.size, mySp:seen, toDo:missing.length, missingSci:missing, sauvagesSci:sauvages };
+      if(chaque && encore()) chaque(fini);
+      return fini;
     }catch(_){ return { ...h, allSp:0, mySp:0, toDo:0, err:true }; }
   });
 }
@@ -11835,8 +11904,8 @@ let hotspotCompte = 'tout', _ctHsCompteRun = 0;
 async function _ctHsCompte(){
   if(!_lyrHotspots) return;
   const run = ++_ctHsCompteRun, ms = _lyrHotspots.getLayers().filter(m => m._hs);
-  // Les carrés à 0 passent sous les autres : sur la côte, ils en cachaient de pleins.
-  const pose = m => { m.setIcon(_ctIconeHotspot(m._hs.aff || m._hs.nb, myFavHotspots.has(m._hotspotId), m._hs.cran)); m.setZIndexOffset(String(m._hs.aff) === '0' ? -1000 : 0); };
+  // Le meilleur toujours devant, puis dans l'ordre (Mathis, 2026-10-30) ; un carré à 0 passe donc sous les autres.
+  const pose = m => { m.setIcon(_ctIconeHotspot(m._hs.aff || m._hs.nb, myFavHotspots.has(m._hotspotId), m._hs.cran)); m.setZIndexOffset(CT_HS_RANG * (m._hs.nb || 0)); };
   const finit = () => {
     const max = Math.max(0, ...ms.map(m => m._hs.nb));
     for(const m of ms){ m._hs.cran = _ctCranHotspot(m._hs.nb, max); pose(m); }
@@ -11896,20 +11965,15 @@ async function _loadHotspotsLayer(region){
     const isFresh = h => (h.latestObsDt||'').slice(0,10) >= cutoff;
     // Les plus riches depuis toujours sont enrichis, puis classés sur ce qu'il reste à observer.
     const pool = list.filter(h=>h.numSpeciesAllTime && isFresh(h)).sort((a,b)=>b.numSpeciesAllTime-a.numSpeciesAllTime);
-    const enriched = await _enrichHotspots(pool.slice(0, CAP), region, stillMine);
-    if(!stillMine()) return;
-    _hsRefus.listes = enriched.filter(h => h.err).length;
-    const top = enriched.filter(h => (h.allSp||0) > 0).sort((a,b)=> b.toDo - a.toDo);
-    if(!stillMine()){ _lyrHotspots.clearLayers(); return; }
     // Spread des hotspots qui partagent les mêmes coords (cas rare : ~6 paires sur 17k)
-    const withCoords = top.filter(h=>typeof h.lat==='number' && typeof h.lng==='number').map(h=>({ ...h, lat:h.lat, lon:h.lng }));
+    const withCoords = pool.slice(0, CAP).filter(h=>typeof h.lat==='number' && typeof h.lng==='number').map(h=>({ ...h, lat:h.lat, lon:h.lng }));
     const groups = new Map();
     for(const h of withCoords){ const k=h.lat.toFixed(5)+','+h.lng.toFixed(5); if(!groups.has(k)) groups.set(k,[]); groups.get(k).push(h); }
     for(const g of groups.values()) _spreadGroup(g);
     const monthFilter = ebFilter.month|0;   // 0 = pas de filtre mois ; 1-12 = mois précis
     const ccHs = ebFilter.country || 'FR';   // le pays des hotspots lus, celui de leur rareté
     const MONTH_NAMES = ['','janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
-    for(const h of withCoords){
+    const poseHotspot = h => {
       const n = h.allSp||0;
       // Liste "espèces qui vous manquent ici", filtrée par mois si demandé.
       const rawMiss = Array.isArray(h.missingSci) ? h.missingSci : [];
@@ -11925,15 +11989,15 @@ async function _loadHotspotsLayer(region){
         return monthFilter ? toutes.filter(sci => activeInMonth(sci, monthFilter, region || h.subnational1Code, h.subnational2Code)) : toutes;
       })();
       // Skip les hotspots sans données OU sans espèce à montrer (compte tenu du filtre mois).
-      if(n===0 || montrees.length===0) continue;
+      if(n===0 || montrees.length===0) return;
       // Filtre "min à cocher".
-      if(ebFilter.minTodo>0 && toDoShown < ebFilter.minTodo) continue;
+      if(ebFilter.minTodo>0 && toDoShown < ebFilter.minTodo) return;
       // Favori : rendu en jaune (marker doré + bord blanc épais pour le distinguer visuellement).
       const isFavHs = myFavHotspots.has(h.locId);
       // Le carré porte le nombre d'espèces à cocher (après le filtre du mois).
       const nbHs = montrees.length;
-      const m = L.marker([h.dispLat, h.dispLon], { riseOnHover:true, icon:_ctIconeHotspot(nbHs, isFavHs) });
-      m._hs = { nom:h.locName||h.name||'?', nb:nbHs, nbTout:nbHs, aVoir:toDoShown, allSp:n, dept:h.subnational2Name||'', deptCode:h.subnational2Code||'', region:h.subnational1Name||'', dernier:(h.latestObsDt||'').slice(0,10) };
+      const m = L.marker([h.dispLat, h.dispLon], { riseOnHover:true, riseOffset:CT_HS_SURVOL, zIndexOffset:CT_HS_RANG * nbHs, icon:_ctIconeHotspot(hotspotCompte === '30' ? '…' : nbHs, isFavHs) });
+      m._hs = { aff:hotspotCompte === '30' ? '…' : null, nom:h.locName||h.name||'?', nb:nbHs, nbTout:nbHs, aVoir:toDoShown, allSp:n, dept:h.subnational2Name||'', deptCode:h.subnational2Code||'', region:h.subnational1Name||'', dernier:(h.latestObsDt||'').slice(0,10) };
       // La bulle, comme la liste d'une grappe (variante A de notes-privees/maquettes/hotspot-bulle/, choisie par
       // Mathis le 2026-10-29) : le nom et l'étoile, une ligne grise de lieu, une de résumé, puis une ligne par
       // espèce à cocher (palier, nom, dernière fois vue ici), ouverte d'emblée. Plus de pourcentage : la rareté
@@ -12015,7 +12079,22 @@ async function _loadHotspotsLayer(region){
       // La bulle est réécrite à chaque ouverture (contenu) : ses dates se relisent, depuis le cache d'_ebFetch.
       m.on('popupopen', () => _loadHotspotCounts(m));
       _lyrHotspots.addLayer(m);
-    }
+    };
+    // Chaque carré paraît dès que sa liste arrive, les plus riches d'abord : à 22 demandes par 5 s, eBird met
+    // ~22 s pour 100 listes, et la carte restait vide jusqu'à la dernière (Mathis, 2026-10-30). Le chiffre des 30
+    // jours attend la fin : le relancer à chaque arrivée referait partir toutes ses demandes.
+    let tic = null;
+    const enriched = await _enrichHotspots(withCoords, region, stillMine, h => {
+      poseHotspot(h);
+      if(tic) return;
+      tic = setTimeout(() => {
+        tic = null; if(!stillMine() || !_lyrHotspots) return;
+        if(hotspotCompte === '30') _ctListeHot(); else _ctHsCompte();
+        if(mapSearch) _mapApplyFilter();
+      }, 400);
+    });
+    if(!stillMine()) return;
+    _hsRefus.listes = enriched.filter(h => h.err).length;
     // Les crans se comptent sur le meilleur des carrés posés : il n'est connu qu'une fois tous posés.
     _ctHsCompte();
     // Après un refus, le prochain passage relit eBird au lieu de garder ce chargement incomplet.

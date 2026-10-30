@@ -2541,6 +2541,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .map-search-suggest-item .ss-dot { width:10px; height:10px; border-radius:50%; flex:none; box-shadow:0 0 0 1.5px #fff, 0 0 0 2px rgba(0,0,0,.15); }
   .map-search-suggest-item .ss-sci { font-size:11.5px; color:var(--ink-3); font-style:italic; margin-left:auto; }
   .map-search-suggest-item .ss-hint { font-size:10px; color:var(--ink-3); }
+  /* Une espèce déjà vue, grisée à sa place, comme dans la bulle d'un hotspot. */
+  .map-search-suggest-item.ss-deja { color:var(--ink-3); }
+  .map-search-suggest-item.ss-deja .ss-dot { opacity:.4; }
+  .map-search-suggest-item.ss-info { color:var(--ink-3); cursor:default; background:none; }
   .explorer-lbl { font-size:14px; font-weight:600; color:var(--ink-3); }
   /* Dans la barre de la Carte, le mot ENVELOPPE son reglage : ils forment un seul element
      de la rangee et ne peuvent donc plus se separer au passage a la ligne. Avant, « Source »

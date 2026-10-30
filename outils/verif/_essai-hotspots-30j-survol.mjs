@@ -51,8 +51,8 @@ const tour = () => p.evaluate(async () => {
 const controle = (r, en30) => {
   for(const c of r){
     if(c.vide !== (c.chiffre === '0')) ecart(`${c.nom} : grisé ${c.vide} pour le chiffre ${c.chiffre}`);
-    if(c.vide && (c.z >= 0 || !(+c.opacite < 1))) ecart(`${c.nom} : un 0 pas en retrait`);
-    if(!c.vide && c.z < 0) ecart(`${c.nom} : un carré plein passé dessous`);
+    if(c.vide && (c.z !== 0 || !(+c.opacite < 1))) ecart(`${c.nom} : un 0 pas en retrait`);
+    if(!c.vide && c.z <= 0) ecart(`${c.nom} : un carré plein passé dessous`);
     if(String(c.survol) !== c.chiffre) ecart(`${c.nom} : survol ${c.survol}, carré ${c.chiffre} (${c.tete})`);
     if(en30){
       const bulle = /·\s*(\d+)/.exec(c.titre)?.[1] || (/Aucune/.test(c.titre) ? '0' : null);
