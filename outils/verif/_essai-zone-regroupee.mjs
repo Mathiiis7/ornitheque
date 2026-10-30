@@ -13,6 +13,8 @@ async function essai(cc, groupe){
   });
   const p = await ctx.newPage();
   const erreurs = []; p.on('pageerror', e => erreurs.push(e.message));
+  const statuts = {}; p.on('response', r => { if(/ornitheque-relais/.test(r.url())){ const k = r.url().replace(/^.*\/v2\//, '').split('/')[0] + ':' + r.status(); statuts[k] = (statuts[k] || 0) + 1; } });
+  process.on('exit', () => console.log('   réponses du relais', JSON.stringify(statuts)));
   const req = []; p.on('request', r => { if(/ornitheque-relais|api\.ebird/.test(r.url())) req.push(r.url().replace(/^.*\/v2\//, '').replace(/\?.*$/, '')); });
   await p.goto((process.env.BASE || 'http://localhost:8765') + '/demo/', { waitUntil:'load' });
   await p.waitForTimeout(1500);
@@ -48,8 +50,11 @@ async function essai(cc, groupe){
   const a2 = req.length;
   await p.evaluate(() => document.querySelector('#ctOnglets [data-onglet="hot"]').click());
   await p.evaluate(() => { const b = document.querySelector('#ctCouches [data-couche="hot"]'); if(b.getAttribute('aria-pressed') !== 'true') b.click(); });
-  for(let i = 0; i < 90; i++){ await p.waitForTimeout(1000); if(await p.evaluate(() => document.querySelectorAll('#ctListeHot .ct-rang-hs').length) && i > 2) break; }
-  console.log('   Hotspots', await p.evaluate(() => document.querySelectorAll('#ctListeHot .ct-rang-hs').length), '; demandes de listes', req.slice(a2).filter(u => u.startsWith('ref/hotspot')).length);
+  // Les carrés arrivent au fur et à mesure depuis la v971 : on attend que le chargement soit fini, plus le premier.
+  for(let i = 0; i < 90; i++){ await p.waitForTimeout(1000); if(i > 2 && !/chargement/.test(await p.evaluate(() => document.getElementById('mapEbCount')?.textContent || ''))) break; }
+  await p.waitForTimeout(1000);
+  const finHot = await p.evaluate(() => { const c = []; window.__carte.eachLayer(l => { if(l._hs) c.push(l._hs.nb); }); return { carres:c.length, ligne:document.getElementById('mapEbCount')?.textContent, meilleur:Math.max(0, ...c) }; });
+  console.log('   Hotspots', JSON.stringify(finHot), '; demandes de zones', req.slice(a2).filter(u => u.startsWith('ref/hotspot')).length, '; listes d\'espèces', req.slice(a2).filter(u => u.startsWith('product/spplist')).length);
   console.log('   erreurs', erreurs.length, erreurs.slice(0, 3));
   await ctx.close();
 }

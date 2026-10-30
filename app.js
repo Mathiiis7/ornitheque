@@ -12013,13 +12013,14 @@ async function _loadHotspotsLayer(region){
           // Les plus rares d'abord, comme la liste d'une grappe.
           const items = montrees
             // frName passe par SCI_ALIAS : les noms d'eBird d'octobre 2026 (Melophus bruniceps) s'affichaient en latin.
-            .map(sci => ({ sci, name:frName(sci, sci), w:_ctRarete(sci, ccHs) }))
+            .map(sci => ({ sci, name:frName(sci, sci), w:_ctRarete(sci, ccHs), statut:statutAuLieu(sci, ccHs, h.subnational2Code) }))
             .sort((a, b) => b.w - a.w || a.name.localeCompare(b.name, 'fr'));
           // Une espèce déjà vue par toi (« Non observées » éteint) : grisée, à sa place.
           const nonVues = new Set(filteredMiss);
           // Le nom ouvre la fiche, comme dans la liste d'une grappe ; la date arrive ensuite (_ctRangeBulleHs).
           liste = `<div class="ct-gl-liste">${items.map(it => `<button type="button" class="ct-gl-l ct-hb-e${tout && !nonVues.has(it.sci) ? ' ct-hb-deja' : ''}" data-sci="${esc(it.sci)}" data-sc="${esc(_sciToCode(it.sci) || '')}">` +
-            `${tierChip(it.w || '?', _ctCouleur(it.sci, ccHs), { cls:'tier-rond' })}<span class="ct-gl-nom">${esc(it.name)}</span>` +
+            // Le statut (N, établie), comme au Récent et à la Ligue : l'Érismature rousse n'en disait rien ici (Mathis, 2026-10-30).
+            `${tierChip(it.w || '?', _ctPalierPoint(it.sci, ccHs, it.statut).coul, { cls:'tier-rond' })}${it.statut ? jetonExo(it.statut) : ''}<span class="ct-gl-nom">${esc(it.name)}</span>` +
             `<span class="ct-hb-vu" data-cnt></span></button>`).join('')}</div>`;
         }
         // Distance à vol d'oiseau, si la position est connue.
@@ -12053,7 +12054,8 @@ async function _loadHotspotsLayer(region){
           // 2026-10-30 : le survol restait sur tout l'historique). Tant qu'eBird n'a pas répondu, il le dit.
           const en30 = hotspotCompte === '30', vues30 = en30 ? m._hs.vues30 : null;
           const liste = en30 ? (vues30 ? montrees.filter(sci => vues30.has(sci)) : []) : montrees;
-          const esp = liste.map(sci => ({ nom:frName(sci, sci), w:_ctRarete(sci, ccHs), coul:_ctCouleur(sci, ccHs), deja:tout && !nonVues.has(sci) }))
+          const esp = liste.map(sci => { const statut = statutAuLieu(sci, ccHs, h.subnational2Code);
+            return { nom:frName(sci, sci), w:_ctRarete(sci, ccHs), coul:_ctPalierPoint(sci, ccHs, statut).coul, statut, deja:tout && !nonVues.has(sci) }; })
             .sort((a, b) => b.w - a.w || a.nom.localeCompare(b.nom, 'fr'));
           const vus = esp.length - CT_SURVOL_MAX > 1 ? esp.slice(0, CT_SURVOL_MAX) : esp, reste = esp.length - vus.length;
           const k = esp.length;
@@ -12064,7 +12066,7 @@ async function _loadHotspotsLayer(region){
           // Le mois choisi dans « Quand », en gris après le nom (Mathis, 2026-10-29) : les espèces à cocher en dépendent.
           const mois = monthFilter ? ` <span class="ct-sv-mois">${MONTH_NAMES[monthFilter]}</span>` : '';
           const html = `<span class="ct-sv-t">${esc(h.locName || h.name || '?')}${mois}</span><span class="ct-sv-d">${tete}</span>` +
-            vus.map(e => _ctLigneSurvol(e.coul, e.w, e.nom, '', '', e.deja ? 'ct-sv-deja' : '')).join('') + (reste ? `<span class="ct-sv-d">et ${reste} autre${s(reste)} : clique pour ouvrir</span>` : '');
+            vus.map(e => _ctLigneSurvol(e.coul, e.w, e.nom, '', e.statut, e.deja ? 'ct-sv-deja' : '')).join('') + (reste ? `<span class="ct-sv-d">et ${reste} autre${s(reste)} : clique pour ouvrir</span>` : '');
           m.bindTooltip(html, _ctSensSurvol(m.getLatLng(), 13)).openTooltip();
         });
         m.on('mouseout popupopen', () => m.unbindTooltip());
