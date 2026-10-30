@@ -10591,7 +10591,7 @@ async function _loadMissingLayer(zones, days){
   // Récent d'une région monténégrine restait à une observation par espèce (Mathis, 2026-10-28).
   const groupe = !ebFilter.polygon && zones.length > 1 && _ctZonesEbird(ebFilter.dept || ebFilter.region || '').length > 1;
   const regionFr = groupe || !ebFilter.polygon && zones.length === 1 &&
-    (/^[A-Z]{2}-[A-Z0-9]{1,3}$/.test(zones[0]) || CT_PAYS_SANS_ZONES.has(zones[0]) || zones[0] === 'SJ');
+    (/^[A-Z]{2}-[A-Z0-9]{1,3}$/.test(zones[0]) || CT_PAYS_SANS_ZONES.has(zones[0]) || zones[0] === 'SJ' || CT_DEPENDANCES[zones[0]]);
   // Un pays entier s'en tient au résumé d'eBird, une requête : les lieux des 8 plus rares en coûtaient
   // 8 de plus pour peu (Mathis, 2026-10-26). Cliquer une région lit tous ses points.
   const details = async () => {
@@ -10681,7 +10681,7 @@ async function _ctLireListes(tour, zones, days, cc, recents, especes){
         obsDt:l.d, subId:l.s, obsValid:!nv.has(l.s + ':' + code), howMany:nb || null });
     }
   }
-  if(etat) etat.textContent = '';
+  const etat = document.getElementById('ctRecEtat'); if(etat) etat.textContent = '';
   // Une espèce vue dans la période mais absente des listes lues (au-delà des 200 qu'eBird rend) garde
   // son point de /recent.
   const vues = new Set(obs.map(o => o.sciName.toLowerCase()));
