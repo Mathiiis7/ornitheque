@@ -1,11 +1,17 @@
 # Où on en est (2026-10-30)
 
-Dernière version : v981 / app.js?v=553. Prochaine : v982 / 554. Historique complet jusqu'à ce jour :
+Dernière version : v982 / app.js?v=554. Prochaine : v983 / 555. Historique complet jusqu'à ce jour :
 `archives/en-cours-jusqu-au-2026-10-30.md` (y chercher un mot plutôt que le lire en entier, 85 000 jetons).
 Ce fichier se remplace à chaque fin de tâche : quelques lignes, pas un journal.
 
 ## Reste ouvert
 - **En attente de réponse :** Cornell (22/10), LPO (23/10). Effacer l'historique des deux dépôts attend Cornell.
+
+## Décidé le 31/10
+- Empreinte morphologique sur les fiches (carte Traits, v982) : radar arrondi choisi par Mathis, en proportions du
+  poids. Autres radars (membres, quiz, présence, cycle de vie) maquettés dans `notes-privees/maquettes/radar/`, non retenus.
+  Pas vu : une fiche d'oiseau hors de France.
+- Taille comparée par silhouettes : abandonnée, maquette dans `notes-privees/maquettes/taille-silhouettes/`.
 
 ## Décidé le 30/10
 - **Clé et données eBird : on ne fait rien, on réagira en cas de problème** (choix de Mathis). Pas de mail à eBird,

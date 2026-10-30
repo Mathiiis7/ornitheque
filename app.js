@@ -16102,6 +16102,60 @@ function _wireCustomAudioPlayer(playerEl){
     });
   }
 }
+// L'empreinte morphologique, radar à 5 branches (Mathis, 2026-10-31, maquette notes-privees/maquettes/radar/) :
+// la place de l'oiseau parmi ceux de France. Aile, bec, tarse et queue sont divisés par la racine cubique du
+// poids, le gabarit : en mesures brutes, héron et cygne remplissaient tout le cercle et se ressemblaient.
+// Le poids reste brut, c'est lui qui dit le gabarit, et il n'entre pas dans la phrase.
+const MORPHO_AXES = [
+  { nom:'Poids', c:'ma' }, { nom:'Aile', c:'wi', long:'longues ailes', court:'ailes courtes' }, { nom:'Bec', c:'bl', long:'long bec', court:'bec court' },
+  { nom:'Tarse', c:'ta', long:'longues pattes', court:'pattes courtes' }, { nom:'Queue', c:'tail', long:'longue queue', court:'queue courte' },
+];
+const _morphoValeur = (t, c) => c === 'ma' ? t.ma : t[c] / Math.cbrt(t.ma);
+let _morphoRef = null;
+function _morphoReference(traits){
+  if(_morphoRef) return _morphoRef;
+  const oiseaux = [..._catalogueFR().keys()].map(s => traits[s]).filter(t => t && MORPHO_AXES.every(a => t[a.c] > 0));
+  if(oiseaux.length < 100) return null;   // catalogue pas encore prêt : on réessaiera à la fiche suivante
+  return (_morphoRef = Object.fromEntries(MORPHO_AXES.map(a => [a.c, oiseaux.map(t => _morphoValeur(t, a.c))])));
+}
+// Courbe fermée qui passe par chaque point (Catmull-Rom). Entre deux branches, elle ne mesure rien.
+function _morphoCourbe(p){
+  const n = p.length; let d = `M${p[0][0].toFixed(1)} ${p[0][1].toFixed(1)}`;
+  for(let i = 0; i < n; i++){
+    const a = p[(i + n - 1) % n], b = p[i], c = p[(i + 1) % n], e = p[(i + 2) % n];
+    d += `C${(b[0] + (c[0] - a[0]) / 6).toFixed(1)} ${(b[1] + (c[1] - a[1]) / 6).toFixed(1)} ${(c[0] - (e[0] - b[0]) / 6).toFixed(1)} ${(c[1] - (e[1] - b[1]) / 6).toFixed(1)} ${c[0].toFixed(1)} ${c[1].toFixed(1)}`;
+  }
+  return d + 'Z';
+}
+function _morphoRadarHtml(t, traits, ecrit){
+  if(!MORPHO_AXES.every(a => t[a.c] > 0)) return '';
+  const ref = _morphoReference(traits); if(!ref) return '';
+  const places = MORPHO_AXES.map(a => { const l = ref[a.c], v = _morphoValeur(t, a.c); return l.filter(x => x <= v).length / l.length; });
+  // Seul ce qui sort vraiment du lot : au-delà de 80 % ou en deçà de 20 %.
+  const hauts = [], bas = [];
+  MORPHO_AXES.forEach((a, i) => { if(!a.long) return; if(places[i] >= .8) hauts.push(a.long); else if(places[i] <= .2) bas.push(a.court); });
+  const traitsSaillants = [...hauts, ...bas].join(', ');
+  const phrase = traitsSaillants ? traitsSaillants[0].toUpperCase() + traitsSaillants.slice(1) + ' pour son gabarit.' : 'Bien dans la moyenne, rien qui dépasse.';
+  // 320 de large : à 390, le texte tombait à 9,4 px d'écran au téléphone (mesuré), à 320 il en fait 11,4.
+  const W = 320, H = 270, cx = W / 2, cy = H / 2 + 8, R = 92;
+  const pt = (i, v) => { const a = -Math.PI / 2 + i * 2 * Math.PI / 5; return [cx + R * v * Math.cos(a), cy + R * v * Math.sin(a)]; };
+  const points = places.map((v, i) => pt(i, Math.max(.05, v)));
+  const rayons = MORPHO_AXES.map((_, i) => { const [x, y] = pt(i, 1); return `<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" class="sm-rd-rayon"/>`; }).join('');
+  const marques = points.map(([x, y], i) => {
+    const pct = Math.round(places[i] * 100), a = MORPHO_AXES[i];
+    return `<g data-tip="${a.nom} : ${ecrit(a.c)}, ${i ? 'pour son gabarit, ' : ''}au-dessus de ${pct} % des oiseaux de France"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="14" fill="transparent"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" class="sm-rd-pt"/></g>`;
+  }).join('');
+  const textes = MORPHO_AXES.map((a, i) => {
+    const [x, y] = pt(i, 1.13), dx = x - cx, ancre = Math.abs(dx) < 6 ? 'middle' : dx > 0 ? 'start' : 'end', y0 = i === 0 ? y - 17 : y;
+    return `<text x="${x.toFixed(1)}" y="${y0.toFixed(1)}" text-anchor="${ancre}" class="sm-rd-nom">${a.nom}</text><text x="${x.toFixed(1)}" y="${(y0 + 17).toFixed(1)}" text-anchor="${ancre}" class="sm-rd-val">${ecrit(a.c)}</text>`;
+  }).join('');
+  return `<div class="sm-radar"><p class="sm-rd-phrase">${phrase}</p>
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(phrase)} ${MORPHO_AXES.map(a => `${a.nom} ${ecrit(a.c)}`).join(', ')}.">
+      <circle cx="${cx}" cy="${cy}" r="${R}" class="sm-rd-fond"/><circle cx="${cx}" cy="${cy}" r="${R / 2}" class="sm-rd-median"/>${rayons}
+      <path d="${_morphoCourbe(points)}" class="sm-rd-forme"/>${marques}${textes}
+    </svg>
+    <p class="sm-rd-note">Sa place parmi les oiseaux de France, mesures rapportées à son poids. Pointillé : l'oiseau médian.</p></div>`;
+}
 // Rendu de la card Traits (Avonet) : ecologie + morphologie de l'espece.
 // Lazy fetch au 1er open (1.4 MB de data), puis affichage compact.
 async function _renderSpeciesTraitsCard(key){
@@ -16184,6 +16238,7 @@ async function _renderSpeciesTraitsCard(key){
       <div style="margin-top:${ecoLines.length ? '10px':'4px'};">
         <div style="font-size:10.5px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.5px; font-weight:700; margin-bottom:4px;">Morphologie</div>
         ${morphLines.map(renderLine).join('')}
+        ${_morphoRadarHtml(t, traits, c => c === 'ma' ? `${round(t.ma)} g` : `${cm(t[c])} cm`)}
       </div>` : ''}
   `;
   box.hidden = false;

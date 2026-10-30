@@ -1400,6 +1400,18 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .species-modal .sm-card { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,.04); }
   .species-modal .sm-card:last-child { margin-bottom:0; }
   .species-modal .sm-card-title { font:700 13px/1.2 var(--sans); text-transform:uppercase; letter-spacing:.4px; color:var(--ink-3); margin:0 0 10px; }
+  /* L'empreinte morphologique de la carte Traits : la forme passe devant ses repères, le texte reste en encre. */
+  .sm-radar { margin-top:10px; }
+  .sm-radar svg { display:block; width:100%; max-width:320px; height:auto; margin:0 auto; overflow:visible; }
+  .sm-rd-phrase { margin:0 0 4px; font-size:14px; color:var(--ink-2); }
+  .sm-rd-note { margin:4px 0 0; font-size:14px; line-height:1.35; color:var(--ink-3); }
+  .sm-rd-fond { fill:var(--surface-2); }
+  .sm-rd-median { fill:none; stroke:var(--line-2); stroke-width:1.5; stroke-dasharray:3 4; }
+  .sm-rd-rayon { stroke:var(--line); }
+  .sm-rd-forme { fill:var(--accent); fill-opacity:.82; stroke:var(--accent); stroke-width:2; stroke-linejoin:round; }
+  .sm-rd-pt { fill:var(--accent); stroke:var(--surface); stroke-width:2; }
+  .sm-rd-nom { font:600 14px var(--sans); fill:var(--ink); }
+  .sm-rd-val { font:14px var(--sans); fill:var(--ink-2); }
   .species-modal #smRarityCard > div:last-child { border-bottom:none !important; padding-bottom:0 !important; }
   /* ==== Custom audio player (fiche espece, onglet Sons) ==== */
   .xa-block { margin-bottom:14px; }
