@@ -78,6 +78,10 @@ if(mondeVues.includes('world')) ecart('demande au monde, qu\'eBird refuse');
 if(!mondeVues.includes('FR') || !mondeVues.includes('ES')) ecart('France ou Espagne pas lues');
 if(!mondeVues.length) ecart('pas de demande au monde'); if(!/Aigrette garzette/.test(v1.liste || '')) ecart('la liste ne dit pas l\'espèce');
 if(/pas affichée/.test(v1.liste || '')) ecart('la couche reste éteinte');
+// La rareté vient du pays de l'observation : plus de « ? » gris dans la liste.
+const pastille = await p.evaluate(() => { const c = document.querySelector('#ctListeRecent .tier-chip'); return c ? { t:c.textContent.trim(), fond:c.style.background || getComputedStyle(c).backgroundColor } : null; });
+console.log('pastille de la liste :', JSON.stringify(pastille));
+if(!pastille || pastille.t === '?') ecart('rareté grise');
 await p.screenshot({ path:`${SORTIE}/recherche-monde-${largeur}.png` });
 // 4. Sans pays, années passées : GBIF sans pays.
 const avantGbif = await p.evaluate(() => ({ source:document.getElementById('mapEbSource')?.value, btn:!!document.querySelector('[data-ct-source="gbif"]') }));

@@ -8029,7 +8029,10 @@ async function renderMap(){
   _ctAvantRendu();
   try{
     if(mine) _renderModeMine(el);
-    else if(mapMode==='missing') await _renderModeMissing();
+    else if(mapMode==='missing'){
+      // Comme les Hotspots : le voile restait sur l'ancienne zone le temps de lire les listes.
+      const charge = _renderModeMissing(); _ctAppliqueCouches(); await charge;
+    }
     else if(mapMode==='hotspots'){
       // Le nom, le fond et le voile de la zone d'abord, les carrés ensuite : ils attendaient la fin des ~100 appels (Mathis, 2026-10-30).
       const charge = _renderModeHotspots(); _ctAppliqueCouches(); await charge;
@@ -8669,7 +8672,7 @@ async function _showSpeciesDetailGbif(sciName){
     _lyrDetail.clearLayers();
     _ctPoseRecent(obs.filter(o => typeof o.decimalLatitude === 'number' && typeof o.decimalLongitude === 'number').map(o => ({
       sciName, speciesCode:_sciToCode(sciName) || '', lat:+o.decimalLatitude.toFixed(3), lng:+o.decimalLongitude.toFixed(3), locName:nomLieu(o),
-      obsDt:(o.eventDate || '').slice(0, 10), howMany:(typeof o.individualCount === 'number' && o.individualCount > 0) ? o.individualCount : 0 })), country, _lyrDetail);
+      obsDt:(o.eventDate || '').slice(0, 10), _cc:o.countryCode, howMany:(typeof o.individualCount === 'number' && o.individualCount > 0) ? o.individualCount : 0 })), country, _lyrDetail);
     const trunc = (totalCount > obs.length && !gadmFilter && !cached) ? ` (sur ${totalCount} au total, tronqué)` : '';
     // Le nombre est dit en tête de la liste : la ligne d'état ne garde que la coupe éventuelle.
     if(cnt) cnt.textContent = trunc ? `Les ${obs.length} premières observations${trunc}` : '';
@@ -8721,7 +8724,9 @@ async function _showSpeciesDetail(sciName, speciesCode){
     const zonesLues = monde ? _ctPaysEspece(sciName) : ebFilter.polygon ? (_ctZonesRecent().zones || []) : [deptCode || regionCode || cty];
     let refus = false;
     const lus = await _ctParLots(zonesLues.flatMap(_ctZonesEbird),
-      z => _ebFetch(`https://api.ebird.org/v2/data/obs/${z}/recent/${speciesCode}?back=${days}&maxResults=10000&locale=fr`, monde ? { garder:false } : {}).catch(() => { refus = true; return null; }));
+      z => _ebFetch(`https://api.ebird.org/v2/data/obs/${z}/recent/${speciesCode}?back=${days}&maxResults=10000&locale=fr`, monde ? { garder:false } : {})
+        // Lue pays par pays, chaque observation sait le sien : c'est lui qui donne sa rareté.
+        .then(r => monde && Array.isArray(r) ? r.map(o => ({ ...o, _cc:z })) : r).catch(() => { refus = true; return null; }));
     let data = lus.flatMap(r => Array.isArray(r) ? r : []);
     if(ebFilter.polygon) data = data.filter(o => typeof o.lat === 'number' && _pointInPolygon(o.lat, o.lng, ebFilter.polygon));
     let used = data.length ? { lbl: deptCode ? deptLbl : (regionCode ? 'la région' : 'tout ' + ctyName) } : null;
@@ -10565,13 +10570,15 @@ function _ctPoseRecent(liste, cc, groupe = _lyrMissing){
     const nm = frName(sci, o.comName || o.sciName);
     // Le statut là où l'oiseau a été vu : établi (N) dans ce département, il prend la couleur de sa
     // rareté même si le pays le dit échappé (Cygne noir dans l'Ain).
-    const statut = statutAuLieu(o.sciName, cc, o.dep || ebFilter.dept), pal = _ctPalierPoint(o.sciName, cc, statut);
+    // Sans pays ouvert, la rareté du pays de l'observation ; pays inconnu : gris.
+    const ccPt = cc === CT_MONDE ? (o._cc || CT_MONDE) : cc;
+    const statut = ccPt === CT_MONDE ? '' : statutAuLieu(o.sciName, ccPt, o.dep || (cc === CT_MONDE ? '' : ebFilter.dept)), pal = _ctPalierPoint(o.sciName, ccPt, statut);
     const n = p.toutes.length;
     const m = _ctPastille([p.dispLat, p.dispLon], pal.coul, pal.w, CT_OEIL, n);
     m._q = _mapNorm(nm + ' ' + (o.sciName || '') + ' ' + (p.prive ? '' : (o.locName || '')));
     m._speciesCode = o.speciesCode; m._sciName = o.sciName;
     m._rec = { sci, nom:nm, date:(o.obsDt || '').slice(0, 10), lieu:p.prive ? 'Lieu privé' : (o.locName || ''), nv:o.obsValid === false,
-      nb:o.howMany || 0, statut, o, subId:o.subId, cc,
+      nb:o.howMany || 0, statut, o, subId:o.subId, cc:ccPt,
       // Les observations du même lieu, de la plus récente à la plus ancienne, pour le survol.
       toutes:n > 1 ? p.toutes.slice().sort((a, b) => (b.obsDt || '').localeCompare(a.obsDt || ''))
         .map(t => ({ date:(t.obsDt || '').slice(0, 10), nb:t.howMany || 0, nv:t.obsValid === false })) : null };
@@ -11018,7 +11025,7 @@ function _ctListeRecent(){
     e.n++; e.obs += r.toutes ? r.toutes.length : 1; if(r.subId) e.listes.add(r.subId);
     if(r.date > e.r.date) e.r = r;
   });
-  const rangs = [...parSp.values()].map(e => ({ ...e, w:_ctRarete(e.r.sci, cc) || 0 }))
+  const rangs = [...parSp.values()].map(e => ({ ...e, w:_ctRarete(e.r.sci, monde ? e.r.cc : cc) || 0 }))
     .sort((a, b) => (b.w - a.w) || b.r.date.localeCompare(a.r.date) || a.r.nom.localeCompare(b.r.nom, 'fr'));
   const manque = !ebFilter.showObserved;
   const yMin = Math.min(ebFilter.yearMin, ebFilter.yearMax), yMax = Math.max(ebFilter.yearMin, ebFilter.yearMax);
@@ -11049,7 +11056,7 @@ function _ctListeRecent(){
     // affiché ne voulait rien dire (Mathis, 2026-10-28). « ? » jusqu'à ce que l'espèce soit dépliée.
     const compte = !gbif && !lieux && _ctRecSansPoints() ? { nb:'?', mot:'' }
       : { nb:lieux || e.obs, mot:gbif || !lieux ? 'observation' : parListes && !cherche ? 'liste' : 'lieu' };
-    return _ctRangHtml({ liste:'rec', sci:r.sci, w:e.w, coul:_ctCouleur(r.sci, cc), nom:r.nom, statut:r.statut, nv:r.nv,
+    return _ctRangHtml({ liste:'rec', sci:r.sci, w:e.w, coul:_ctCouleur(r.sci, monde ? r.cc : cc), nom:r.nom, statut:r.statut, nv:r.nv,
       sous:r.lieu || 'lieu inconnu', compte, droite:gbif ? _ctDateCourte(r.date) : _ctIlYa(r.date),
       n:e.obs, ouverte:r.sci === _ctRecOuverte, obsHtml:() => _ctObsEspece(r.sci, gbif) });
   };
@@ -11366,7 +11373,7 @@ function _gbifSlimObs(o){
   return {
     lat: o.decimalLatitude, lon: o.decimalLongitude,
     tk: o.taxonKey || o.speciesKey,
-    ed: o.eventDate, et: o.eventTime,
+    ed: o.eventDate, et: o.eventTime, cc: o.countryCode,
     l2: o.gadm && o.gadm.level2 && o.gadm.level2.name,
     l3: o.gadm && o.gadm.level3 && o.gadm.level3.name,
     loc: o.locality, ic: o.individualCount, rb: o.recordedBy,
@@ -11379,7 +11386,7 @@ function _gbifUnslim(s){
   return {
     decimalLatitude: s.lat, decimalLongitude: s.lon,
     taxonKey: s.tk, speciesKey: s.tk,
-    eventDate: s.ed, eventTime: s.et,
+    eventDate: s.ed, eventTime: s.et, countryCode: s.cc,
     gadm: { level2: s.l2 ? { name:s.l2 } : null, level3: s.l3 ? { name:s.l3 } : null },
     locality: s.loc, individualCount: s.ic, recordedBy: s.rb,
     behavior: s.beh, lifeStage: s.ls, sex: s.sx,
