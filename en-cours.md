@@ -7,7 +7,9 @@ Ce fichier se remplace à chaque fin de tâche : quelques lignes, pas un journal
 ## Reste ouvert
 - **En attente de réponse :** Cornell (22/10), LPO (23/10). Effacer l'historique des deux dépôts attend Cornell.
 - **Vidéo (ticket 39) :** moments 1 et 2 refaits sur le site actuel, brouillon `.onetake/v2-brouillon4.mp4` à valider par Mathis ;
-  détail dans `docs/VIDEO-DEROULE-V2.md`. Ensuite moments 3 à 9, toujours depuis le site actuel, puis son et crédits.
+  détail dans `docs/VIDEO-DEROULE-V2.md`. **Moment 3 :** 4 essais à comparer, `.onetake/m3-a.mp4` à `m3-d.mp4` (a le 212 double Lina et
+  trophée, b la course, c le trophée, d Qui a vu quoi) ; Mathis choisit, puis on l'intègre au film et on supprime les autres.
+  Fabrication : `outils/onetake/v2-m3.py`, `assemble-m3.py`, `film/comp-m3.html`. Ensuite moments 4 à 9, son et crédits.
 
 ## Décidé le 31/10
 - **Anneaux du classement, SUJET CLOS (v993, ticket 61) :** or, argent, bronze sur l'avatar des 3 premiers au nombre d'espèces.

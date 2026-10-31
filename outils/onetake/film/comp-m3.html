@@ -1,0 +1,430 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>L'Ornitheque - moment 3, essais</title>
+<style>
+  html,body{margin:0;background:#000;overflow:hidden}
+  #stage{position:fixed;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0}
+  canvas{display:block;width:1920px;height:1080px}
+</style>
+<div id="stage"><canvas id="cv" width="1920" height="1080"></canvas></div>
+<script src="motion.js"></script>
+<script src="donnees-m3.js"></script>
+<script src="police-v2.js"></script>
+<script src="look.js"></script>
+<script>
+// =============================================================================
+// L'Ornitheque - moment 3 « Mesure-toi a tes amis. », quatre essais a comparer (2026-10-31).
+//   a : le 212 du moment 2 vole dans la ligne d'Alex, qui double Lina ; un trophee s'allume.
+//   b : la course : les cinq nombres et leurs barres montent, les lignes se doublent.
+//   c : le trophee : le classement passe, la camera plonge dans la page Trophees.
+//   d : Qui a vu quoi : la grille se remplit case par case, la colonne d'Alex ressort.
+// Chacun part de la derniere image du moment 2 : le logo et le nom restent, le 212 survit.
+// Tout vient du site (v2-m3.py). Tout est une fonction PURE du temps.
+// =============================================================================
+const V = '__VARIANTE__';
+const DUR = { a: 7.8, b: 8.2, c: 8.2, d: 8.2 }[V];
+window.__meta = { dur: DUR, fps: 30, w: 1920, h: 1080 };
+const W = 1920, H = 1080;
+const { clamp, lerp, spring } = OM;
+const E = OM.ease;
+const seg = (a, b, t) => clamp((t - a) / (b - a), 0, 1);
+const L = window.LOOK.color;
+const titre = px => '700 ' + px + 'px "Source Serif Film"';
+const texte = (poids, px) => poids + ' ' + px + 'px "Segoe UI", sans-serif';
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const IM = {};
+const TB = window.M3.table, GR = window.M3.grille, TA = window.M3.tropheeAvant;
+const ALEX = TB.lignes.findIndex(l => l.moi), LINA = TB.lignes.findIndex(l => l.nom === 'Lina');
+const MAX = TB.lignes[0].n;
+
+// --- Le raccord avec le moment 2 ------------------------------------------------------------
+const SORTIE = 0.5, SORTIE_FIN = 1.15;         // la carte s'efface vers le fond
+function dessineCarte(t) {
+  const k = E.expoInOut(seg(SORTIE, SORTIE_FIN, t));
+  if (k >= 1) return;
+  ctx.save();
+  ctx.globalAlpha = 1 - k;
+  const z = 1 + 0.1 * k;
+  ctx.translate(1180, 540); ctx.scale(z, z); ctx.translate(-1180, -540);
+  ctx.drawImage(IM.carte, 0, 0, W, H);
+  ctx.restore();
+  const v = ctx.createLinearGradient(0, 0, 900, 0);
+  v.addColorStop(0, 'rgba(238,242,241,0.72)'); v.addColorStop(0.6, 'rgba(238,242,241,0.45)'); v.addColorStop(1, 'rgba(238,242,241,0)');
+  ctx.save(); ctx.globalAlpha = 1 - k; ctx.fillStyle = v; ctx.fillRect(0, 0, 900, H); ctx.restore();
+}
+function anciennePhrase(t) {
+  const k = E.expoIn(seg(SORTIE, SORTIE + 0.4, t));
+  if (k >= 1) return;
+  ctx.save();
+  ctx.globalAlpha = 1 - k;
+  ctx.font = titre(104);
+  ['Note chaque', 'oiseau que', 'tu vois.'].forEach((s, i) => {
+    ctx.fillStyle = i === 2 ? L.accent : L.ink;
+    ctx.fillText(s, 74, 310 + i * 120 - 90 * k);
+  });
+  ctx.restore();
+}
+const PHRASE = 'Mesure-toi à tes amis.';
+function phrase(t, t0, fin) {
+  if (t < t0) return;
+  const sort = fin ? E.expoIn(seg(fin, fin + 0.35, t)) : 0;
+  if (sort >= 1) return;
+  ctx.save();
+  ctx.font = titre(84); ctx.textBaseline = 'alphabetic';
+  for (let i = 0; i < PHRASE.length; i++) {
+    const g = OM.letterDrop(t, t0, i, { stagger: 0.02, dist: 50, squash: 0.0075 });
+    if (g.op <= 0.01) continue;
+    ctx.save();
+    ctx.globalAlpha = g.op * (1 - sort);
+    ctx.translate(74 + ctx.measureText(PHRASE.slice(0, i)).width, 208 + g.y - 60 * sort);
+    ctx.scale(g.sx, g.sy);
+    ctx.fillStyle = i >= 13 ? L.accent : L.ink;   // « tes amis. »
+    ctx.fillText(PHRASE[i], 0, 0);
+    ctx.restore();
+  }
+  ctx.restore();
+}
+function logo(t, op = 1) {
+  if (op <= 0) return;
+  ctx.save(); ctx.globalAlpha = op; ctx.drawImage(IM.logo, 0, 0, W, H); ctx.restore();
+}
+
+// --- Le tableau, en coordonnees de la page ; cam = { s, x, y } ---------------------------------
+function camera(cles, t) {
+  let c = cles[0];
+  for (let i = 1; i < cles.length; i++) {
+    const a = cles[i - 1], b = cles[i];
+    if (t <= b.t0) break;
+    const k = E.expoInOut(seg(b.t0, b.t1, t));
+    c = { s: lerp(a.s, b.s, k), x: lerp(a.x, b.x, k), y: lerp(a.y, b.y, k) };
+  }
+  return c;
+}
+const versEcran = (cam, x, y) => [cam.x + x * cam.s, cam.y + y * cam.s];
+function metCam(cam) { ctx.translate(cam.x, cam.y); ctx.scale(cam.s, cam.s); }
+const slotY = TB.lignes.map(l => l.y);
+const ZOOM = 0.85;
+function ligne(i, y, valeur, op = 1) {
+  const l = TB.lignes[i];
+  ctx.save();
+  ctx.globalAlpha = op;
+  ctx.translate(0, y);
+  ctx.drawImage(IM['l' + i], 0, 0, l.w, l.h);
+  // le nombre et sa jauge, comme sur le site
+  const sc = l.score, ec = l.ecart;
+  ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic';
+  ctx.font = texte(700, 14 * ZOOM);
+  ctx.fillStyle = TB.styleNb[2];
+  ctx.fillText(String(Math.round(valeur)), sc.x + sc.w, sc.y - l.y + 11.4);
+  const ey = ec.y - l.y, ex = ec.x;
+  const fond = new Path2D(); fond.roundRect(ex, ey, ec.w, ec.h, ec.h / 2);
+  ctx.fillStyle = l.fondEcart; ctx.fill(fond);
+  const g = new Path2D(); g.roundRect(ex, ey, ec.w * clamp(valeur / MAX, 0, 1), ec.h, ec.h / 2);
+  ctx.fillStyle = l.jaugeCoul; ctx.fill(g);
+  ctx.restore();
+}
+function rangs(slots) {
+  ctx.save();
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  TB.lignes.forEach((l, j) => {
+    if (slots && !slots.includes(j)) return;
+    ctx.font = texte(700, 13 * ZOOM);
+    ctx.fillStyle = TB.styleRang[2];
+    ctx.fillText(l.rangTxt, l.rang.x + l.rang.w / 2, slotY[j] + l.rang.h / 2 + 0.5);
+  });
+  ctx.restore();
+}
+function entete(op = 1) {
+  ctx.save(); ctx.globalAlpha = op;
+  ctx.drawImage(IM.entete, 0, 0, TB.entete.w, TB.entete.h);
+  ctx.restore();
+}
+// Le tableau arrive : chaque rangee monte en ressort depuis le bas, l'une apres l'autre.
+const arrivee = (t, t0, i) => {
+  const k = spring(t - t0 - i * 0.05, 0.6, 22);
+  return { dy: (1 - k) * 70, op: clamp((t - t0 - i * 0.05) / 0.12, 0, 1) };
+};
+
+// --- Le compteur du moment 2 --------------------------------------------------------------
+function compteur(t, vol) {
+  const fin = vol.t1;
+  if (t > fin + 0.02) return;
+  const k = E.expoInOut(seg(vol.t0, fin, t));
+  const [cx, cy] = vol.cible(t);
+  const px = lerp(150, vol.px, k);
+  const dx = lerp(80 + 240, cx, k), dy = lerp(985, cy, k);
+  ctx.save();
+  ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'right';
+  ctx.font = titre(px);
+  ctx.fillStyle = L.accent;
+  ctx.globalAlpha = vol.fondu ? 1 - seg(fin - 0.25, fin, t) : 1;
+  ctx.fillText('212', dx, dy);
+  const rest = 1 - seg(vol.t0, vol.t0 + 0.2, t);
+  if (rest > 0) {
+    ctx.globalAlpha = rest;
+    ctx.textAlign = 'left';
+    ctx.font = titre(60); ctx.fillStyle = L.mute;
+    ctx.fillText('/ 467', 80 + 264, 985);
+    ctx.font = window.LOOK.font('text', 28);
+    ctx.fillText('espèces vues', 88, 1037);
+  }
+  ctx.restore();
+}
+
+// --- Le trophee -----------------------------------------------------------------------------
+const BARRE = TA.bars.find(b => /outer/.test(b.c));
+const COUL_T = 'rgb(209, 136, 85)';
+// La carte Marco Polo : verrouillee, sa barre se remplit, puis la carte gagnee du site prend sa place.
+function carteTrophee(t, cx, cy, s, tRemp, tRemp1, tGagne) {
+  const w = TA.w + 4, h = TA.h + 4;
+  const gagne = E.quartOut(seg(tGagne, tGagne + 0.25, t));
+  const pouls = t > tGagne ? 0.1 * Math.exp(-(t - tGagne) * 7) * Math.cos((t - tGagne) * 22) : 0;
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(s * (1 + pouls), s * (1 + pouls));
+  ctx.translate(-w / 2, -h / 2);
+  // une carte verrouillee n'a pas de fond sur le site (la page est blanche) : ici elle passe sur le tableau
+  const socle = new Path2D(); socle.roundRect(2.5, 2.5, w - 5, h - 5, 11);
+  ctx.save();
+  ctx.shadowColor = 'rgba(21,32,30,0.30)'; ctx.shadowBlur = 40 * s; ctx.shadowOffsetY = 14 * s;
+  ctx.fillStyle = '#fff'; ctx.fill(socle);
+  ctx.restore();
+  ctx.drawImage(IM.mpAvant, 0, 0, w, h);
+  if (t < tGagne + 0.3) {
+    const k = lerp(0.5, 1, E.cubicInOut(seg(tRemp, tRemp1, t)));
+    const b = new Path2D(); b.roundRect(BARRE.x + 2, BARRE.y + 2, BARRE.w * k, BARRE.h, BARRE.h / 2);
+    ctx.fillStyle = COUL_T; ctx.fill(b);
+  }
+  if (gagne > 0) { ctx.globalAlpha = gagne; ctx.drawImage(IM.mpApres, 0, 0, w, h); }
+  ctx.restore();
+}
+
+// --- a : le 212 double Lina ------------------------------------------------------------------
+const CAM_A = [{ t0: 0, t1: 0, s: 1.4, x: 87, y: 262 }, { t0: 2.2, t1: 2.75, s: 2.05, x: 60, y: 245 }];
+function varA(t) {
+  const VOL = 1.35, POSE = 2.0, DOUBLE = 2.95;
+  const kD = spring(t - DOUBLE, 0.62, 14);
+  const cam = camera(CAM_A, t);
+  dessineCarte(t); anciennePhrase(t); logo(t); phrase(t, 0.95);
+  if (t > SORTIE + 0.2) {
+    ctx.save(); metCam(cam);
+    const a0 = arrivee(t, 0.75, 0);
+    ctx.save(); ctx.translate(0, a0.dy); entete(a0.op); ctx.restore();
+    [0, 1, 2].forEach(i => { const a = arrivee(t, 0.75, i + 1); ligne(i, slotY[i] + a.dy, TB.lignes[i].n, a.op); });
+    const a = arrivee(t, 0.75, 4);
+    ligne(LINA, lerp(slotY[3], slotY[4], kD) + a.dy, TB.lignes[LINA].n, a.op);
+    if (t >= POSE) {
+      const p = spring(t - POSE, 0.5, 26);
+      ctx.save();
+      ctx.shadowColor = t > DOUBLE && t < DOUBLE + 0.5 ? 'rgba(21,32,30,0.25)' : 'transparent';
+      ctx.shadowBlur = 16;
+      ctx.translate(0, (1 - p) * 8);
+      ligne(ALEX, lerp(slotY[4], slotY[3], kD), 212, clamp((t - POSE) / 0.08, 0, 1));
+      ctx.restore();
+    }
+    if (a.op > 0) rangs(t >= POSE ? null : [0, 1, 2, 3]);
+    ctx.restore();
+  }
+  compteur(t, { t0: VOL, t1: POSE, px: 14 * ZOOM * cam.s, cible: tt => {
+    const c = camera(CAM_A, tt), l = TB.lignes[ALEX];
+    return versEcran(c, l.score.x + l.score.w, slotY[4] + (l.score.y - l.y) + 11.4);
+  } });
+  // le trophee tombe a droite, puis se gagne
+  const TT = 3.95;
+  if (t > TT) {
+    const k = spring(t - TT, 0.55, 18);
+    carteTrophee(t, 1560, lerp(-300, 610, k), 1.5, TT + 0.55, TT + 1.25, TT + 1.3);
+  }
+}
+
+// --- b : la course ---------------------------------------------------------------------------
+const RACE0 = 1.5, RACE1 = 5.0;
+const PUISS = [0.72, 0.8, 0.86, 1.25, 0.5];        // Alex part lentement, Lina vite : il la double en route
+const valeur = (i, t) => TB.lignes[i].n * Math.pow(E.sineInOut(seg(RACE0, RACE1, t)), PUISS[i]);
+function rangEntier(i, t) {
+  // avant le depart, tous a zero : l'ordre est celui des tout premiers instants de la course
+  const tt = Math.max(t, RACE0 + 0.12);
+  let p = 0;
+  for (let j = 0; j < 5; j++) {
+    if (j === i) continue;
+    const d = valeur(j, tt) - valeur(i, tt);
+    if (d > 0 || (d === 0 && j < i)) p++;
+  }
+  return p;
+}
+function placeCourse(i, t) {
+  // la moyenne du rang sur un court instant : une ligne glisse vers sa nouvelle place en 0,25 s
+  // au lieu de sauter. Une place continue calculee sur les ecarts superposait les lignes a egalite.
+  const N = 8;
+  let p = 0;
+  for (let k = 0; k < N; k++) p += rangEntier(i, t - k * 0.25 / N);
+  return p / N;
+}
+const CAM_B = [{ t0: 0, t1: 0, s: 2.05, x: 60, y: 262 }, { t0: 5.4, t1: 6.1, s: 1.4, x: 87, y: 262 }];
+function varB(t) {
+  const cam = camera(CAM_B, t);
+  dessineCarte(t); anciennePhrase(t); logo(t); phrase(t, 0.95);
+  if (t > SORTIE + 0.2) {
+    ctx.save(); metCam(cam);
+    const a0 = arrivee(t, 0.75, 0);
+    ctx.save(); ctx.translate(0, a0.dy); entete(a0.op); ctx.restore();
+    const ord = [0, 1, 2, 4, 3];
+    ord.forEach(i => {
+      const a = arrivee(t, 0.75, i + 1);
+      const place = placeCourse(i, t);
+      const y = lerp(slotY[0], slotY[4], place / 4);
+      ligne(i, y + a.dy, valeur(i, t), a.op);
+    });
+    if (t > 0.9) rangs(null);
+    ctx.restore();
+  }
+  compteur(t, { t0: SORTIE, t1: 1.3, px: 60, fondu: true, cible: () => [400, 800] });
+}
+
+// --- c : le trophee en vedette ---------------------------------------------------------------
+const CAM_C = [{ t0: 0, t1: 0, s: 1.4, x: 87, y: 262 }, { t0: 2.5, t1: 3.15, s: 9, x: -700, y: -2000 }];
+const CENTRE = { x: TA.x + TA.w / 2, y: TA.y + TA.h / 2 };
+function varC(t) {
+  const POSE = 2.0;
+  const cam = camera(CAM_C, t);
+  const plonge = seg(2.75, 3.1, t);
+  dessineCarte(t); anciennePhrase(t);
+  // la page des trophees : on y arrive sur la carte, puis la camera recule jusqu'a la page entiere
+  if (t > 2.75) {
+    const rec = E.expoInOut(seg(5.45, 6.25, t));
+    const s = lerp(2.4, 1, rec);
+    const ox = lerp(W / 2 - CENTRE.x * s, 0, rec), oy = lerp(H / 2 - CENTRE.y * s, 0, rec);
+    ctx.save();
+    ctx.globalAlpha = E.quartOut(seg(2.75, 3.05, t));
+    ctx.translate(ox, oy); ctx.scale(s, s);
+    ctx.drawImage(IM.pageAvant, 0, 0, W, H);
+    ctx.restore();
+    ctx.save();
+    ctx.globalAlpha = E.quartOut(seg(2.75, 3.05, t));
+    carteTrophee(t, ox + CENTRE.x * s, oy + CENTRE.y * s, s, 3.5, 4.3, 4.35);
+    ctx.restore();
+  }
+  logo(t, 1 - seg(2.6, 2.9, t));
+  phrase(t, 0.95, 2.45);
+  if (t > SORTIE + 0.2 && plonge < 1) {
+    ctx.save();
+    ctx.globalAlpha = 1 - plonge;
+    metCam(cam);
+    const a0 = arrivee(t, 0.75, 0);
+    ctx.save(); ctx.translate(0, a0.dy); entete(a0.op); ctx.restore();
+    [0, 1, 2, 4].forEach(i => { const a = arrivee(t, 0.75, i + 1); ligne(i, slotY[i] + a.dy, TB.lignes[i].n, a.op * (1 - plonge)); });
+    ligne(ALEX, slotY[3], 212, (t >= POSE ? 1 : 0) * (1 - plonge));
+    rangs(null);
+    ctx.restore();
+  }
+  compteur(t, { t0: 1.35, t1: POSE, px: 14 * ZOOM * 1.4, cible: () => {
+    const l = TB.lignes[ALEX];
+    return versEcran(CAM_C[0], l.score.x + l.score.w, slotY[3] + (l.score.y - l.y) + 11.4);
+  } });
+}
+
+// --- d : Qui a vu quoi -----------------------------------------------------------------------
+const GS = 1.4, GX = 87;
+const COL_ALEX = GR.noms.indexOf('Alex');
+function varD(t) {
+  const POSE = 2.0, MONTE = 2.55, MONTE1 = 3.25, V0 = 3.2, V1 = 5.3, HALO = 5.55;
+  dessineCarte(t); anciennePhrase(t); logo(t); phrase(t, 0.95);
+  const m = E.expoInOut(seg(MONTE, MONTE1, t));
+  // le classement monte et sort, la grille arrive sous lui
+  if (t > SORTIE + 0.2 && m < 1) {
+    const y0 = 262 - m * 900;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0, 240, W, H); ctx.clip();
+    ctx.translate(87, y0); ctx.scale(1.4, 1.4);
+    const a0 = arrivee(t, 0.75, 0);
+    ctx.save(); ctx.translate(0, a0.dy); entete(a0.op); ctx.restore();
+    [0, 1, 2, 4].forEach(i => { const a = arrivee(t, 0.75, i + 1); ligne(i, slotY[i] + a.dy, TB.lignes[i].n, a.op); });
+    ligne(ALEX, slotY[3], 212, t >= POSE ? 1 : 0);
+    rangs(null);
+    ctx.restore();
+  }
+  if (t > MONTE) {
+    const gy = lerp(H + 40, 262, m);
+    ctx.save();
+    ctx.translate(GX, gy); ctx.scale(GS, GS);
+    ctx.drawImage(IM.grilleVide, 0, 0, GR.w, GR.h);
+    // chaque case vue se pose, colonne apres colonne ; celle d'Alex en dernier
+    const cols = GR.noms.length - 1;
+    const ordreCol = c => (c === COL_ALEX ? cols - 1 : (c > COL_ALEX ? c - 2 : c - 1));
+    for (const c of GR.cases) {
+      if (!c.vu) continue;
+      const ts = V0 + (V1 - V0 - 0.3) * (ordreCol(c.c) + c.l / 12) / cols;
+      if (t < ts) continue;
+      const k = Math.min(1, spring(t - ts, 0.5, 30));   // sans depassement : une case ne deborde pas sur ses voisines
+      const cx = c.x + c.w / 2, cy = c.y + c.h / 2;
+      ctx.save();
+      ctx.translate(cx, cy); ctx.scale(k, k); ctx.translate(-cx, -cy);
+      ctx.drawImage(IM.grillePleine, c.x * 2, c.y * 2, c.w * 2, c.h * 2, c.x, c.y, c.w, c.h);
+      ctx.restore();
+    }
+    const co = GR.cases.filter(c => c.c === COL_ALEX);
+    if (t > HALO) {
+      const k = E.expoOut(seg(HALO, HALO + 0.35, t));
+      const x = co[0].x, w = co[0].w;
+      ctx.strokeStyle = L.accent; ctx.lineWidth = 2.2;
+      const r = new Path2D(); r.roundRect(x, 0, w, GR.h * k, 4);
+      ctx.stroke(r);
+    }
+    ctx.restore();
+  }
+  compteur(t, { t0: 1.35, t1: POSE, px: 14 * ZOOM * 1.4, cible: () => {
+    const l = TB.lignes[ALEX];
+    return versEcran({ s: 1.4, x: 87, y: 262 }, l.score.x + l.score.w, slotY[3] + (l.score.y - l.y) + 11.4);
+  } });
+}
+
+const VAR = { a: varA, b: varB, c: varC, d: varD }[V];
+function seek(t) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = L.ground;
+  ctx.fillRect(0, 0, W, H);
+  VAR(t);
+  return true;
+}
+// les plages ou ca bouge, et de combien au plus : hors d'elles, les images sont de vrais repos
+const ACTIF = {
+  a: [[0.5, 3.6, 90], [3.95, 5.6, 60]],
+  b: [[0.5, 5.2, 40], [5.4, 6.2, 90]],
+  c: [[0.5, 2.3, 90], [2.5, 4.7, 200], [5.45, 6.3, 120]],
+  d: [[0.5, 2.3, 90], [2.55, 3.3, 120], [3.2, 6.0, 30]],
+}[V];
+window.__motion = (t0, t1) => {
+  let px = 0;
+  for (const [a, b, p] of ACTIF) if (t1 > a && t0 < b) px = Math.max(px, p);
+  return px;
+};
+window.__track = () => ({ logo: { x: 56, y: 28, w: 66, h: 66, op: 1 } });
+window.__events = () => ({ T: DUR, events: [], silences: [] });
+window.__seek = async t => seek(t);
+
+function charge(cle, src) {
+  return new Promise(res => {
+    const im = new Image();
+    im.onload = () => { IM[cle] = im; res(); };
+    im.onerror = () => { console.warn('image absente : ' + src); res(); };
+    im.src = src;
+  });
+}
+window.__ready = (async () => {
+  const jobs = [charge('carte', 'carte-nue.png'), charge('logo', 'logo-nom.png'), charge('entete', 'table-entete.png'),
+    charge('grilleVide', 'grille-vide.png'), charge('grillePleine', 'grille-pleine.png'),
+    charge('pageAvant', 'page-trophees-avant.png'), charge('mpAvant', 'carte-mp-avant.png'), charge('mpApres', 'carte-mp-apres.png')];
+  TB.lignes.forEach((l, i) => jobs.push(charge('l' + i, 'ligne-' + i + '.png')));
+  document.fonts.add(await new FontFace('Source Serif Film', 'url(' + window.POLICE_TITRE + ')', { weight: '700' }).load());
+  await Promise.all(jobs);
+  if (window.LOOK.ready) await window.LOOK.ready;
+  await document.fonts.ready;
+  return seek(0);
+})();
+const q = new URLSearchParams(location.search);
+if (q.has('play')) window.__ready.then(() => { const t0 = performance.now(); const b = () => { seek(((performance.now() - t0) / 1000) % DUR); requestAnimationFrame(b); }; b(); });
+else if (q.has('t')) window.__ready.then(() => seek(parseFloat(q.get('t'))));
+function ajuste() { document.getElementById('stage').style.transform = 'scale(' + Math.min(innerWidth / W, innerHeight / H) + ')'; }
+addEventListener('resize', ajuste); ajuste();
+</script>
