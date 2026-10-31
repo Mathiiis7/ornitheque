@@ -36,8 +36,8 @@ s'écrit. Aucune image extérieure à créditer pour l'ouverture.
 
 ## Moments 1 et 2 refaits sur le site actuel (2026-10-31)
 
-Brouillon `.onetake/v2-brouillon4.mp4` : 15,8 s, 474 images, sans son, oracle : voir le rendu, plus long
-repos 3,6 s. Refaire : `v2-site.py`, `assemble-v2.py`, puis `render.py .onetake/film2/comp.html --workers 4 --samples-max 24
+Brouillon `.onetake/v2-brouillon4.mp4` : 15,8 s, 474 images, sans son, oracle PASS, 60 % d'images immobiles, dernier
+repos 2,5 s. Refaire : `v2-site.py`, `assemble-v2.py`, puis `render.py .onetake/film2/comp.html --workers 4 --samples-max 24
 --gap 16` (241 s). **Ne plus partir des prises du 01/10** (`composants.py`, `.onetake/film/assets/c/`) : Mathis veut le site actuel.
 
 - **Logo :** les tracés de `assets/logos/logo.svg`, dans leur ordre, l'image finale est le vrai logo. L'iris part de son œil.
