@@ -1,6 +1,6 @@
 # Où on en est (2026-10-30)
 
-Dernière version : v989 / app.js?v=561. Prochaine : v990 / 562. Historique complet jusqu'à ce jour :
+Dernière version : v991 / app.js?v=563. Prochaine : v992 / 564. Historique complet jusqu'à ce jour :
 `archives/en-cours-jusqu-au-2026-10-30.md` (y chercher un mot plutôt que le lire en entier, 85 000 jetons).
 Ce fichier se remplace à chaque fin de tâche : quelques lignes, pas un journal.
 
@@ -8,6 +8,10 @@ Ce fichier se remplace à chaque fin de tâche : quelques lignes, pas un journal
 - **En attente de réponse :** Cornell (22/10), LPO (23/10). Effacer l'historique des deux dépôts attend Cornell.
 
 ## Décidé le 31/10
+- Essai de la méthode qa-only (sans gstack, trop lourd) et critique Impeccable : `notes-privees/essai-qa-only/`. Les 8 bugs
+  corrigés (v991). Non conclu : les sons du Quiz ne chargent pas dans le navigateur intégré, à revoir dans un vrai navigateur.
+  Reste de la critique, non demandé : en-tête de fiche haut au téléphone, 15 pictos d'indices, trophées gagnés peu distincts.
+- « Densité habitat » retirée de la carte Traits (v990).
 - Empreinte morphologique sur les fiches (carte Traits, v982) : radar arrondi choisi par Mathis, en proportions du
   poids. Autres radars (membres, quiz, présence, cycle de vie) maquettés dans `notes-privees/maquettes/radar/`, non retenus.
   Lignes de morphologie retirées (v983), « Patte » pour le tarse (v984), comparaison aux oiseaux du monde (v987).

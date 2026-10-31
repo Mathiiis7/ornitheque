@@ -150,7 +150,7 @@ règles communes dans le bloc « Schémas communs », juste avant celui du doigt
 
 ## Composants
 
-- **Bouton principal** (`.btn`) : fond accent, texte blanc, coins de 9 px, 600. **Secondaire**
+- **Bouton principal** (`.btn`) : fond accent, texte `--sur-accent` (blanc en clair ; sombre en mode sombre depuis le 2026-10-31, le blanc n'y faisait que 2,35:1), coins de 9 px, 600. **Secondaire**
   (`.btn.ghost`) : transparent, filet `--line-2`, texte accent.
 - **Choix exclusifs** (`.seg`) : boutons collés dans un cadre de 9 px, le choisi plein d'accent.
 - **Coins** : 8 à 14 px pour l'essentiel (cartes, champs, vignettes), 16 px pour les panneaux,

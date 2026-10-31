@@ -198,6 +198,12 @@ export async function mesure({ navigateur, RACINE }){
     mesureCible('pastille de réaction', tailles.reaction);
     mesureCible('bouton « réagir »', tailles.ajoutReaction);
     mesureCible('onglet de la fiche espèce', tailles.ongletFiche);
+    // Sur les vrais boutons de la barre, pas sur un temoin : leur style vit dans index.html, lu
+    // apres styles.css, et annulait en silence la regle du doigt (36 px, trouve le 2026-10-31).
+    mesureCible('icône de la barre (Fil)', await tel.evaluate(() => {
+      const b = document.querySelector('#fabFeed').getBoundingClientRect();
+      return { l: Math.round(b.width * 10) / 10, h: Math.round(b.height * 10) / 10 };
+    }));
 
     // Une cible de 44 px qu'on ne voit pas reste inatteignable : c'etait le vrai defaut du
     // tchat, ou tout attendait un survol que le doigt ne produit jamais.

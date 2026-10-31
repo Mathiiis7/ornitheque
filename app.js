@@ -14159,7 +14159,28 @@ document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{
   // Flush les renders differes pour ranking/trophies (voir renderResults + _rankingDirty).
   if(b.dataset.view==='ranking' || b.dataset.view==='trophies') _flushDirtyForView(b.dataset.view);
   try{ localStorage.setItem('mb-last-tab', b.dataset.view); }catch(_){ }
+  _barreOnglets(true);
 }));
+// Au telephone, les icones restent par-dessus la rangee d'onglets : quatre onglets sur six etaient
+// caches sans aucun signe, et l'onglet actif pouvait l'etre apres un rechargement (2026-10-31).
+// Un fondu dit de quel cote il en reste ; l'onglet actif est ramene dans la partie visible.
+function _barreOnglets(ramener){
+  const nav = $('.tabs'), droite = nav?.querySelector('.nav-droite');
+  if(!nav || !droite || !nav.getClientRects().length) return;
+  const bord = droite.getBoundingClientRect().left;
+  if(ramener){
+    const t = nav.querySelector('.tab.on:not([hidden])')?.getBoundingClientRect();
+    // scrollLeft parle en pixels CSS, getBoundingClientRect en pixels d'ecran (zoom 0,85).
+    const zoom = nav.getBoundingClientRect().width / nav.offsetWidth, g = nav.getBoundingClientRect().left;
+    if(t?.right > bord - 8) nav.scrollLeft += (t.right - bord + 8) / zoom;
+    else if(t?.left < g + 8) nav.scrollLeft -= (g + 8 - t.left) / zoom;
+  }
+  const onglets = [...nav.querySelectorAll('.tab:not([hidden])')];
+  nav.classList.toggle('a-avant', nav.scrollLeft > 1);
+  nav.classList.toggle('a-suite', onglets[onglets.length - 1]?.getBoundingClientRect().right > droite.getBoundingClientRect().left + 1);
+}
+$('.tabs')?.addEventListener('scroll', () => _barreOnglets(), { passive:true });
+if($('.tabs')) new ResizeObserver(() => _barreOnglets(true)).observe($('.tabs'));
 // Restaure l'onglet visité la dernière fois (par défaut Ma liste).
 // Defer via setTimeout(0) pour laisser le reste du module finir de s'executer avant
 // que renderPokedex etc. n'accedent aux vars _pkdxFilters
@@ -16198,7 +16219,7 @@ async function _renderSpeciesTraitsCard(key){
   // Check async si l'espece a des cartes par semaine -> bouton anim plein ecran
   let hasMonthly = false;
   try{ hasMonthly = !!_carteEntry(await _loadSemIndex(), k); }catch(_){}
-  const animBtn = hasMonthly ? ` <button type="button" class="mig-fs-btn" data-sci="${esc(k)}" title="Animation migration en plein écran" style="margin-left:8px; padding:2px 8px; font-size:11px; border:none; background:var(--accent); color:white; border-radius:4px; cursor:pointer; font-weight:600;">🎞️ Animation</button>` : '';
+  const animBtn = hasMonthly ? ` <button type="button" class="mig-fs-btn" data-sci="${esc(k)}" title="Animation migration en plein écran" style="margin-left:8px; padding:2px 8px; font-size:11px; border:none; background:var(--accent); color:var(--sur-accent); border-radius:4px; cursor:pointer; font-weight:600;">🎞️ Animation</button>` : '';
   if(t.mi && MIG[t.mi])   ecoLines.push({ k:'Migration',      v: MIG[t.mi] + animBtn });
   if(t.tl && TL[t.tl]){
     // Skip le doublon si t.tn (niche precise) == label de la categorie (ex : 'Omnivore').
@@ -19432,6 +19453,7 @@ function _openSpeciesModalLiens(sci, key, modal, _wasOpen, _savedScroll){
     <a href="${xcUrl}" target="_blank" rel="noopener">xeno-canto</a>
   `;
   modal.hidden = false;
+  if(!_wasOpen) _ficheOuverte(modal);
   // Restore la scroll position si on navigue entre fiches (sinon reset a 0 par le re-render).
   if(_wasOpen) _restoreSmScroll(modal.querySelector('.sm-scroll'), _savedScroll);
   else if(_smScrollRestoreStop) _smScrollRestoreStop();   // 1re ouverture : on part du haut
@@ -20082,9 +20104,40 @@ document.addEventListener('change', e=>{
     if(_smMapMode === 'friends' && _smCurrentKey) _renderSpeciesMap(_smCurrentKey);
   }
 });
+// Ouvrir une fiche ajoute une entree a l'historique, pour que le bouton Retour la ferme : au
+// telephone, il quittait le site (2026-10-31). _ficheEntree : cette entree existe encore.
+// _ficheRetours : les history.back() lances par nous, dont le popstate ne doit rien fermer.
+// Une fiche rouverte pendant ce retour attend qu'il soit fini pour ajouter son entree : pushState
+// juste apres back() perdait l'entree, et le Retour suivant quittait le site (mesure le 2026-10-31).
+let _ficheEntree = false, _ficheRetours = 0, _ficheFocusAvant = null;
+function _ficheEntreeAjoute(){
+  history.pushState({ fiche:true }, '');
+  _ficheEntree = true;
+}
+function _ficheOuverte(modal){
+  _ficheFocusAvant = document.activeElement;
+  if(!_ficheRetours) _ficheEntreeAjoute();
+  // Le guide garde le focus sur sa bulle, posee par-dessus la fiche.
+  if(!_guide) modal.querySelector('.sm-box')?.focus({ preventScroll:true });
+}
+window.addEventListener('popstate', () => {
+  if(_ficheRetours){
+    _ficheRetours--;
+    if(!_ficheRetours && !$('#speciesModal').hidden) _ficheEntreeAjoute();
+    return;
+  }
+  if(_ficheEntree){ _ficheEntree = false; closeSpeciesModal(); }
+});
 function closeSpeciesModal(){
   const modal = $('#speciesModal'); if(!modal) return;
+  const etaitOuverte = !modal.hidden;
   modal.hidden = true;
+  if(etaitOuverte){
+    if(_ficheEntree){ _ficheEntree = false; _ficheRetours++; history.back(); }
+    // Le focus revient d'ou il venait, sauf si une fenetre ou le guide le tient, ou si la liste a ete redessinee.
+    const f = _ficheFocusAvant; _ficheFocusAvant = null;
+    if(f?.isConnected && f !== document.body && f.getClientRects().length && !_guide && !document.querySelector('dialog[open]')) f.focus({ preventScroll:true });
+  }
   _troReprend();
   // Restore scroll de la page en arriere-plan.
   document.body.classList.remove('species-modal-open');
@@ -20157,6 +20210,17 @@ document.addEventListener('keydown', e=>{
   if(e.key==='Escape'){ const m=$('#speciesModal'); if(m && !m.hidden) closeSpeciesModal(); return; }
   // Navigation clavier dans la fiche : ← / → passent a l'espece precedente / suivante
   const modal = $('#speciesModal');
+  // Tab reste dans la fiche : il passait sur la liste cachee derriere le voile (2026-10-31).
+  if(e.key === 'Tab' && modal && !modal.hidden && !_guide){
+    const cibles = [...modal.querySelectorAll('a[href],button,input,select,textarea,summary,audio[controls],[tabindex]')]
+      .filter(x => !x.disabled && x.tabIndex >= 0 && x.getClientRects().length);
+    if(!cibles.length) return;
+    const premier = cibles[0], dernier = cibles[cibles.length - 1], actif = document.activeElement;
+    const dehors = !cibles.includes(actif);
+    if(e.shiftKey && (actif === premier || dehors)){ e.preventDefault(); dernier.focus(); }
+    else if(!e.shiftKey && (actif === dernier || dehors)){ e.preventDefault(); premier.focus(); }
+    return;
+  }
   if(modal && !modal.hidden){
     if(e.key === 'ArrowLeft'){ const b = $('#smNavPrev'); if(b && !b.disabled) b.click(); }
     else if(e.key === 'ArrowRight'){ const b = $('#smNavNext'); if(b && !b.disabled) b.click(); }
@@ -24440,7 +24504,9 @@ function _pcPalierLu(sci, st){
 // La serie en cours et le record, sous le nom d'un oiseau.
 function _pcSerieTxt(sci, st){
   const [cur, rec] = _pcSerie(sci, st);
-  return ((st.esp[sci] || [])[0] || 0) ? `${PC_ICO.serie}${cur} · record ${rec}` : 'Pas encore entendu';
+  if(!((st.esp[sci] || [])[0] || 0)) return 'Pas encore entendu';
+  // Entendu mais jamais trouve : « 0 · record 0 » ne disait rien.
+  return rec ? `${PC_ICO.serie}${cur} · record ${rec}` : 'Pas encore reconnu';
 }
 // Sur l'accueil, entre l'entrainement et les parcours : un oiseau par carte, qui ouvre sa fiche.
 function _pcOiseauxSectionHTML(){

@@ -36,6 +36,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     --line-2: rgba(21,32,30,0.16);
     --accent: #0b7c77;
     --accent-ink: #075a56;
+    /* Le texte posé sur l'accent. Blanc en clair (5,1:1), sombre en sombre : le blanc n'y faisait
+       que 2,35:1 sur #2bbcb0, le --bg y fait 7,9:1 (mesuré le 2026-10-31). */
+    --sur-accent: #fff;
     --accent-2: #c05e33;
     --gold: #b98d22;
     --shadow: 0 1px 2px rgba(21,32,30,.06), 0 8px 28px rgba(21,32,30,.07);
@@ -61,7 +64,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
       --bg:#0d1513; --surface:#131f1d; --surface-2:#1a2827; --surface-3:#223231;
       --ink:#e9f1ef; --ink-2:#a7b6b2; --ink-3:#8b9c97;
       --line:rgba(233,241,239,0.10); --line-2:rgba(233,241,239,0.16);
-      --accent:#2bbcb0; --accent-ink:#54cfc4; --accent-2:#e08a4e; --gold:#e0bc59;
+      --accent:#2bbcb0; --accent-ink:#54cfc4; --accent-2:#e08a4e; --gold:#e0bc59; --sur-accent:#0d1513;
       --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
       --s0:#3987e5; --s1:#199e70; --s2:#c98500; --s3:#22a022;
       --s4:#9085e9; --s5:#e66767; --s6:#d55181; --s7:#d95926;
@@ -73,7 +76,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     --bg:#0d1513; --surface:#131f1d; --surface-2:#1a2827; --surface-3:#223231;
     --ink:#e9f1ef; --ink-2:#a7b6b2; --ink-3:#8b9c97;
     --line:rgba(233,241,239,0.10); --line-2:rgba(233,241,239,0.16);
-    --accent:#2bbcb0; --accent-ink:#54cfc4; --accent-2:#e08a4e; --gold:#e0bc59;
+    --accent:#2bbcb0; --accent-ink:#54cfc4; --accent-2:#e08a4e; --gold:#e0bc59; --sur-accent:#0d1513;
     --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
     --s0:#3987e5; --s1:#199e70; --s2:#c98500; --s3:#22a022;
     --s4:#9085e9; --s5:#e66767; --s6:#d55181; --s7:#d95926;
@@ -84,7 +87,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     --bg:#eef2f1; --surface:#ffffff; --surface-2:#e7eceb; --surface-3:#dde4e2;
     --ink:#15201e; --ink-2:#47534f; --ink-3:#616966;
     --line:rgba(21,32,30,0.10); --line-2:rgba(21,32,30,0.16);
-    --accent:#0b7c77; --accent-ink:#075a56; --accent-2:#c05e33; --gold:#b98d22;
+    --accent:#0b7c77; --accent-ink:#075a56; --accent-2:#c05e33; --gold:#b98d22; --sur-accent:#fff;
     --s0:#2a78d6; --s1:#1baf7a; --s2:#eda100; --s3:#008300;
     --s4:#4a3aa7; --s5:#e34948; --s6:#e87ba4; --s7:#eb6834;
     --t-all:#6b7f7a; --t-common:#2f9e6f; --t-uncommon:#c0891f;
@@ -224,7 +227,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .auth-gate-field input:focus { outline:3px solid var(--accent); outline-offset:2px; border-color:var(--accent); background:var(--surface); }
   .auth-gate-consent { display:flex; align-items:flex-start; gap:8px; font-size:12px; color:var(--ink-3); line-height:1.4; cursor:pointer; }
   .auth-gate-consent input { flex:0 0 auto; margin-top:2px; }
-  .auth-gate-cta { padding:15px; border:none; background:var(--accent); color:#fff; border-radius:11px; font:700 16px var(--sans); cursor:pointer; margin-top:6px; transition:filter .12s, transform .1s; }
+  .auth-gate-cta { padding:15px; border:none; background:var(--accent); color:var(--sur-accent); border-radius:11px; font:700 16px var(--sans); cursor:pointer; margin-top:6px; transition:filter .12s, transform .1s; }
   .auth-gate-cta:hover { filter:brightness(1.08); }
   .auth-gate-cta:active { transform:scale(.98); }
   .auth-gate-cta:disabled { opacity:.6; cursor:wait; }
@@ -342,7 +345,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* Qui arrive n'a que « Charger ma liste » : elle doit sauter aux yeux, en couleur pleine */
   #leaguebar:not(.est-membre) .ml-membre { display:none; }
   #leaguebar:not(.est-membre) .ml-boxes { grid-template-columns:minmax(0,320px); }
-  #leaguebar:not(.est-membre) .ml-box-charger { background:var(--accent); border-color:var(--accent); color:#fff; font-size:16px; padding:14px 16px; }
+  #leaguebar:not(.est-membre) .ml-box-charger { background:var(--accent); border-color:var(--accent); color:var(--sur-accent); font-size:16px; padding:14px 16px; }
   #leaguebar:not(.est-membre) .ml-box-charger .ml-ic { background:color-mix(in srgb, #fff 18%, transparent); color:#fff; }
   #leaguebar:not(.est-membre) .ml-box-charger:hover { filter:brightness(1.06); }
   .ml-accueil { margin:4px 0 0; color:var(--ink-2); font-size:15px; }
@@ -376,7 +379,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .tuto-ch b { display:block; font-size:15px; font-weight:600; }
   .tuto-ch span { display:block; font-size:14px; color:var(--ink-3); margin-top:3px; line-height:1.4; }
   .tuto-step { display:flex; gap:14px; align-items:flex-start; padding:2px 0 4px; }
-  .tuto-num { flex:0 0 32px; height:32px; border-radius:50%; background:var(--accent); color:#fff; font-weight:800;
+  .tuto-num { flex:0 0 32px; height:32px; border-radius:50%; background:var(--accent); color:var(--sur-accent); font-weight:800;
     display:grid; place-items:center; font-size:15px; }
   .tuto-step p { margin:4px 0 0; font-size:15px; color:var(--ink); line-height:1.45; }
   .tuto-step code { font-family:var(--mono); font-size:14px; }
@@ -420,10 +423,12 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     border:1px solid var(--line); border-radius:8px; padding:8px 10px; overflow-wrap:anywhere; }
   .invite-actions { display:flex; gap:6px; justify-content:flex-end; margin-top:12px; flex-wrap:wrap; }
 
-  .btn { display:inline-flex; align-items:center; gap:7px; background:var(--accent); color:#fff;
+  .btn { display:inline-flex; align-items:center; gap:7px; background:var(--accent); color:var(--sur-accent);
     border:none; border-radius:9px; padding:9px 15px; font:inherit; font-weight:600; font-size:14px;
     cursor:pointer; }
   .btn:hover { filter:brightness(1.06); }
+  /* Sans cette règle, un bouton désactivé (« C'est parti » sans oiseau coché) gardait l'air cliquable. */
+  .btn:disabled { opacity:.5; cursor:not-allowed; filter:none; }
   .btn.ghost { background:transparent; color:var(--accent-ink); border:1px solid var(--line-2); }
   .btn.ghost:hover { border-color:var(--accent); }
   .btn.tiny { padding:5px 10px; font-size:14px; }
@@ -522,7 +527,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .pchip .dot { width:11px; height:11px; border-radius:50%; background:var(--series); flex:none; }
   .pchip .pname { font-weight:600; font-size:13.5px; }
   .pchip .n { color:var(--ink-3); font-size:12px; font-variant-numeric:tabular-nums; }
-  .youtag { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#fff;
+  .youtag { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--sur-accent);
     background:var(--accent); border-radius:20px; padding:1px 6px; margin-left:4px; }
 
 
@@ -853,7 +858,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .seg { display:flex; border:1px solid var(--line-2); border-radius:9px; overflow:hidden; }
   .seg button { border:none; background:var(--surface); color:var(--ink-2); font:inherit; font-size:14px; font-weight:600;
     padding:7px 11px; cursor:pointer; }
-  .seg button.on { background:var(--accent); color:#fff; }
+  .seg button.on { background:var(--accent); color:var(--sur-accent); }
   .filt-sel { border:1px solid var(--line-2); background:var(--surface); color:var(--ink); font:inherit; font-weight:600;
     font-size:14px; padding:5px 10px; border-radius:9px; cursor:pointer; max-width:220px; }
   .filt-sel:hover { border-color:var(--accent); }
@@ -960,7 +965,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .cp-tabs { display:flex; gap:6px; margin-bottom:8px; }
   .cp-tab { flex:1; padding:7px 10px; border:1px solid var(--line-2); background:var(--surface); color:var(--ink-3); border-radius:8px; font:600 12.5px/1 var(--sans); cursor:pointer; }
   .cp-tab:hover { border-color:var(--accent); }
-  .cp-tab.on { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:700; }
+  .cp-tab.on { background:var(--accent); border-color:var(--accent); color:var(--sur-accent); font-weight:700; }
   .cp-list { overflow-y:auto; overscroll-behavior:contain; flex:1; }
   .cp-group-title { font:700 13px var(--sans); text-transform:uppercase; letter-spacing:.4px; color:var(--ink-3); padding:8px 10px 4px; }
   /* Meme plancher que .reg-picker-item : les deux onglets du selecteur partagent le pas
@@ -1387,13 +1392,18 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
        bas (refusé deux fois le 2026-10-06) ; un dessin se centre exactement, quelle que soit la police. */
     .species-modal .sm-nav-btn { width:40px !important; height:40px !important; }
     .species-modal .sm-nav-btn svg { width:22px; height:22px; }
+    /* Le nom s'arrête avant les flèches et la croix (150 px écrits depuis le bord) : il passait
+       dessous pour 4 fiches sur 10 à 375 px (2026-10-31). */
+    .species-modal .sm-title { padding-right:150px; text-wrap:balance; }
   }
+  /* La fiche reçoit le focus à son ouverture : le panneau entier, sans anneau autour. */
+  .species-modal .sm-box:focus { outline:none; }
   /* Nav tabs : pills colorees arrondies */
   .species-modal .sm-tabs { display:flex; gap:6px; padding:12px 16px; background:var(--surface-2); flex:none; border-bottom:1px solid var(--line); overflow-x:auto; scrollbar-width:none; }
   .species-modal .sm-tabs::-webkit-scrollbar { display:none; }
   .species-modal .sm-tab { flex:1; min-width:auto; padding:9px 14px; font:600 13px/1 var(--sans); color:var(--ink-3); background:var(--surface); border:1.5px solid transparent; border-radius:22px; cursor:pointer; transition:all .15s ease; white-space:nowrap; }
   .species-modal .sm-tab:hover { color:var(--ink); background:var(--surface); border-color:var(--line-2); }
-  .species-modal .sm-tab.on { color:#fff; background:var(--accent); border-color:var(--accent); box-shadow:0 2px 8px color-mix(in srgb, var(--accent) 40%, transparent); }
+  .species-modal .sm-tab.on { color:var(--sur-accent); background:var(--accent); border-color:var(--accent); box-shadow:0 2px 8px color-mix(in srgb, var(--accent) 40%, transparent); }
   /* Zone scroll principale : cards separees avec ombres */
   .species-modal .sm-scroll { flex:1; overflow-y:auto; overscroll-behavior:contain; padding:14px 16px 20px; background:var(--surface-2); }
   .species-modal .sm-panel[hidden] { display:none; }
@@ -1498,12 +1508,12 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .qz-empty { text-align:center; padding:32px 0; }
   .qz-empty-icon { font-size:52px; opacity:.85; margin-bottom:8px; }
   .qz-empty p { margin:0 0 20px; color:var(--ink-2); font-size:15px; }
-  .qz-cta { background:var(--accent); color:#fff; border:none; padding:12px 28px; font:700 15px/1 var(--sans); border-radius:24px; cursor:pointer; box-shadow:0 3px 10px color-mix(in srgb, var(--accent) 40%, transparent); transition:transform .15s, box-shadow .15s; }
+  .qz-cta { background:var(--accent); color:var(--sur-accent); border:none; padding:12px 28px; font:700 15px/1 var(--sans); border-radius:24px; cursor:pointer; box-shadow:0 3px 10px color-mix(in srgb, var(--accent) 40%, transparent); transition:transform .15s, box-shadow .15s; }
   .qz-cta:hover { transform:translateY(-1px); box-shadow:0 5px 14px color-mix(in srgb, var(--accent) 55%, transparent); }
   .qz-cta:active { transform:translateY(0); }
   /* Player audio custom quiz : gros bouton play central + progress */
   .qz-player { display:flex; flex-direction:column; align-items:center; gap:14px; margin-bottom:22px; }
-  .qz-play-btn { width:80px; height:80px; border-radius:50%; border:none; background:var(--accent); color:#fff; font-size:0; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 20px color-mix(in srgb, var(--accent) 45%, transparent); transition:transform .12s; padding:0; line-height:1; }
+  .qz-play-btn { width:80px; height:80px; border-radius:50%; border:none; background:var(--accent); color:var(--sur-accent); font-size:0; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 20px color-mix(in srgb, var(--accent) 45%, transparent); transition:transform .12s; padding:0; line-height:1; }
   .qz-play-btn:hover { transform:scale(1.05); }
   .qz-play-btn:active { transform:scale(.98); }
   /* Icones play/pause en SVG inline via pseudos pour centrage geometrique parfait */
@@ -1589,7 +1599,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .qz-daily-right { display:flex; align-items:center; gap:10px; flex:none; }
   .qz-daily-streak { padding:6px 12px; background:color-mix(in srgb,#f97316 12%,var(--surface)); color:#c2410c; border-radius:999px; font:600 14px/1 var(--sans); }
   .qz-daily-streak b { font-weight:700; }
-  .qz-daily-btn { padding:10px 18px; border:none; background:var(--accent); color:#fff; border-radius:10px; font:700 14px/1 var(--sans); cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.15); }
+  .qz-daily-btn { padding:10px 18px; border:none; background:var(--accent); color:var(--sur-accent); border-radius:10px; font:700 14px/1 var(--sans); cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.15); }
   .qz-daily-btn:hover:not(:disabled) { filter:brightness(1.08); transform:translateY(-1px); }
   .qz-daily-btn:disabled { background:var(--line-2); color:var(--ink-3); cursor:default; box-shadow:none; }
   .qz-daily-btn.done { background:#22c55e; color:#fff; opacity:.9; }
@@ -1639,7 +1649,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .qz-inv-card { display:flex; align-items:center; gap:8px; padding:10px 12px; background:var(--surface); border:2px solid var(--line-2); border-radius:12px; transition:all .15s; }
   .qz-inv-card.correct { border-color:#22c55e; background:color-mix(in srgb,#22c55e 12%,var(--surface)); }
   .qz-inv-card.wrong { border-color:#ef4444; background:color-mix(in srgb,#ef4444 12%,var(--surface)); }
-  .qz-inv-play { width:36px; height:36px; border-radius:50%; border:none; background:var(--accent); color:#fff; font-size:14px; cursor:pointer; display:grid; place-items:center; flex:none; }
+  .qz-inv-play { width:36px; height:36px; border-radius:50%; border:none; background:var(--accent); color:var(--sur-accent); font-size:14px; cursor:pointer; display:grid; place-items:center; flex:none; }
   .qz-inv-play:hover { filter:brightness(1.05); }
   .qz-inv-lbl { flex:1; font:600 14px/1 var(--sans); color:var(--ink); }
   .qz-inv-pick { padding:6px 12px; border:1px solid var(--line-2); background:var(--surface-2); color:var(--ink); border-radius:8px; font:600 12px/1 var(--sans); cursor:pointer; }
@@ -1648,7 +1658,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .qz-inv-audio { display:none; }
   @media (max-width: 520px){ .qz-inv-choices { grid-template-columns:1fr; } }
   .qz-actions { display:flex; gap:10px; justify-content:center; margin-top:16px; }
-  .qz-btn-primary { background:var(--accent); color:#fff; border:none; padding:10px 22px; font:600 14px/1 var(--sans); border-radius:20px; cursor:pointer; }
+  .qz-btn-primary { background:var(--accent); color:var(--sur-accent); border:none; padding:10px 22px; font:600 14px/1 var(--sans); border-radius:20px; cursor:pointer; }
   .qz-btn-primary:hover { background:var(--accent-ink); }
   .qz-btn-secondary { background:var(--surface-2); color:var(--ink-2); border:none; padding:10px 20px; font:600 13px/1 var(--sans); border-radius:20px; cursor:pointer; }
   .qz-btn-secondary:hover { background:var(--surface); color:var(--ink); }
@@ -2776,7 +2786,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* Le crayon sans pays ouvert (2026-10-29) : grisé, la bulle dit pourquoi. */
   .ct-rond[aria-disabled="true"] { opacity:.45; cursor:not-allowed; }
   .ct-rond[aria-disabled="true"]:hover { color:var(--ink-2); border-color:var(--line-2); }
-  .ct-rond.on { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .ct-rond.on { background:var(--accent); border-color:var(--accent); color:var(--sur-accent); }
   .ct-puce { height:34px; display:inline-flex; align-items:center; gap:7px; padding:0 13px; border-radius:17px; border:1px solid var(--line-2); background:var(--surface); color:var(--ink-2); font:600 14px var(--sans); box-shadow:0 1px 3px rgba(0,0,0,.08); cursor:pointer; white-space:nowrap; }
   .ct-outils { display:flex; flex-direction:column; gap:6px; align-items:flex-start; }
   .ct-bas { display:flex; flex-direction:column; gap:6px; align-items:flex-start; }
@@ -3036,7 +3046,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .cmt-form { display:flex; gap:5px; align-items:center; }
   .cmt-input { flex:1; font:inherit; font-size:12.5px; padding:6px 10px; border:1px solid var(--line-2); border-radius:14px; background:var(--surface); color:var(--ink); }
   .cmt-input:focus { outline:3px solid var(--accent); outline-offset:1px; }
-  .cmt-send { font-size:13px; padding:5px 11px; border-radius:14px; border:1px solid var(--accent); background:var(--accent); color:#fff; cursor:pointer; }
+  .cmt-send { font-size:13px; padding:5px 11px; border-radius:14px; border:1px solid var(--accent); background:var(--accent); color:var(--sur-accent); cursor:pointer; }
   .cmt-send:hover { filter:brightness(.95); }
   .cmt-send:disabled { opacity:.6; cursor:not-allowed; }
   /* Envoyer, supprimer : dessins au trait depuis le 2026-10-14 (Mathis), a la place de ➤ et ✕. */
@@ -3137,7 +3147,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     font:inherit; font-size:14px; font-weight:600; cursor:pointer; }
   .whochip .dot { width:10px; height:10px; border-radius:50%; background:var(--series); flex:none; }
   .whochip:hover { border-color:var(--accent); }
-  .whochip.on { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .whochip.on { background:var(--accent); color:var(--sur-accent); border-color:var(--accent); }
   .whochip.on .dot { box-shadow:0 0 0 2px rgba(255,255,255,.6); }
   .trophy-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(148px,1fr)); gap:12px; margin-top:10px;
     /* Force toutes les rangees a la meme hauteur (celle du plus grand contenu de la section). */
@@ -3185,7 +3195,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .tinfo { margin-top:6px; font-size:12.5px; font-weight:700; color:var(--ink); background:var(--surface-2);
     border:1px solid var(--line); border-radius:8px; padding:4px 9px; display:inline-block; }
   .vote-btn { margin-top:10px; font:inherit; font-size:12px; font-weight:700; padding:6px 14px; border-radius:9px;
-    border:1px solid var(--accent); background:var(--accent); color:#fff; cursor:pointer; }
+    border:1px solid var(--accent); background:var(--accent); color:var(--sur-accent); cursor:pointer; }
   .vote-btn:hover { filter:brightness(1.06); }
   .vote-btn.voted { background:var(--surface); color:var(--accent-ink); }
   .vote-btn:disabled { opacity:.5; cursor:default; }
@@ -3284,7 +3294,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .tro-oneshot.on .tro-os-state { color:var(--gold); }
   .tro-os-info { font-size:11.5px; font-weight:600; margin-top:4px; color:var(--ink); }
   .vote-btn { margin-top:5px; padding:5px 10px; font-size:11.5px; font-weight:700; border-radius:8px;
-    border:1px solid var(--accent); background:var(--accent); color:#fff; cursor:pointer; }
+    border:1px solid var(--accent); background:var(--accent); color:var(--sur-accent); cursor:pointer; }
   .vote-btn.voted { background:var(--surface-2); color:var(--accent); }
   .vote-note { margin-top:5px; font-size:11px; color:var(--ink-3); font-style:italic; }
   .vote-voters { margin-top:4px; font-size:10.5px; color:var(--ink-3); }
@@ -3941,7 +3951,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .rar-titre { margin:14px 0 10px; font-size:13px; font-weight:700; text-transform:uppercase;
     letter-spacing:0.4px; color:var(--ink-3); }
   .rar-temps { display:grid; grid-template-columns:30px 1fr; column-gap:12px; margin-bottom:6px; }
-  .rar-n { width:28px; height:28px; border-radius:50%; background:var(--accent); color:#fff;
+  .rar-n { width:28px; height:28px; border-radius:50%; background:var(--accent); color:var(--sur-accent);
     font:700 15px/28px var(--sans); text-align:center; }
   .rar-corps { min-width:0; padding-bottom:16px; }
   .rar-corps p { margin:2px 0 10px; color:var(--ink-2); }
@@ -4050,7 +4060,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     /* Les boutons de la bulle du guide. */
     .guide-nav .btn { min-height:52px; }
     /* Fil, Photos, Tchat dans la barre d'onglets : 42 px ecrits a la souris. */
-    .nav-ico { width:52px; height:52px; }
+    /* .nav-droite devant : le style de .nav-ico vit dans index.html, lu apres ce fichier, et
+       annulait la regle seule (36 px d'ecran mesures le 2026-10-31). */
+    .nav-droite .nav-ico { width:52px; height:52px; }
+    .mylist-search, #pkdxSearch, #q { min-height:52px; }
+    .seg button, .whochip { min-height:52px; }
     /* L'interrupteur de theme garde son dessin (34 px) ; seule sa zone de doigt grandit a 54. */
     .theme-sw::before { content:""; position:absolute; inset:-10px -4px; }
     /* Réagir et commenter au bout d'une ligne du fil. */
