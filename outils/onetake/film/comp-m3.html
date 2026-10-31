@@ -394,7 +394,7 @@ function logoPorte(t) {
   const s = lerp(LOGO_SITE.taille / 66, 1, k);
   ctx.save();
   // apparait une fois la page effacee : le nom du site est plus petit que celui du film, les deux se doublaient
-  ctx.globalAlpha = seg(0.2, 0.45, t);
+  ctx.globalAlpha = seg(0.35, 0.55, t);
   ctx.translate(lerp(LOGO_SITE.x, 56, k) - 56 * s, lerp(LOGO_SITE.y, 28, k) - 28 * s);
   ctx.scale(s, s);
   ctx.drawImage(IM.logo, 0, 0, W, H);
