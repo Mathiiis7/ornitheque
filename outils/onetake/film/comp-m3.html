@@ -36,6 +36,9 @@ const IM = {};
 const TB = window.M3.table, GR = window.M3.grille, TA = window.M3.tropheeAvant;
 const ALEX = TB.lignes.findIndex(l => l.moi), LINA = TB.lignes.findIndex(l => l.nom === 'Lina');
 const MAX = TB.lignes[0].n, N_ALEX = TB.lignes[ALEX].n;   // 200, lu sur le site : le Martin-pecheur vient d'entrer
+// Dans la demo Lina a 156 : Alex serait deja devant elle a 199. Pour le film seulement, elle est a 199,
+// et le 200e la double pour de vrai (choix de Mathis, 2026-10-31).
+TB.lignes[LINA].n = 199;
 
 // --- Le raccord avec le moment 2 ------------------------------------------------------------
 const SORTIE = 0.5, SORTIE_FIN = 1.15;         // la carte s'efface vers le fond

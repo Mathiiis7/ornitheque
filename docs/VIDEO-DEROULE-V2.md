@@ -64,6 +64,10 @@ repos 2,5 s. Refaire : `v2-site.py`, `assemble-v2.py`, puis `render.py .onetake/
 Mathis (31/10). `v2-site.py` rattache les 212 espèces à leur anneau par leur GPS et la projection lue sur une tuile ; contrôle : 21
 anneaux sur 23 tombent juste, les 2 autres, voisins, s'échangent une espèce. La composition s'arrête si l'espèce manque à la carte.
 
+**Photos remplacées à la prise** (`photos_libres.py`, 31/10) : au classement, Oie de toundra 604440187 et Faucon pèlerin 236986913 sont
+choisies à l'œil, plus Milan royal, Pic mar, Pic épeichette, Puffin des Anglais, Rollier d'Europe, Pouillot siffleur, Mésange nonnette au
+choix automatique, relues sur la capture. Les auteurs à créditer se lisent par espèce dans `photos_libres.lit_cache()`, à l'étape des crédits.
+
 Le site montre aussi des licences interdites au film (BY-SA 17, BY-NC-ND 16, BY-ND 1, Wikimedia 9 à vérifier, inconnue 1
 sur 212) : `v2-site.py` écarte tout ce qui n'est pas cc0, pd, cc-by, cc-by-nc ou cc-by-nc-sa. Les auteurs et le fond
 OpenStreetMap restent à créditer à l'étape des crédits. Suite : moments 3 à 9, à reprendre aussi depuis le site actuel, puis son et crédits.

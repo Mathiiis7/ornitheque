@@ -7,7 +7,7 @@ site actuel (la demo), plus la fin du moment 2 pour y raccorder. Le serveur doit
 import json, pathlib, re, sys
 from playwright.sync_api import sync_playwright
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
-import demo199
+import demo199, photos_libres
 
 URL = "http://127.0.0.1:8765/demo/"
 OUT = pathlib.Path(".onetake/v2/m3")
@@ -49,6 +49,8 @@ with sync_playwright() as p:
                           user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36")
     # Le classement et Qui a vu quoi viennent apres l'ajout du Martin-pecheur dans le film : le site lui-meme montre 200
     demo199.installe(ctx, apres=True)
+    journal = []
+    photos_libres.installe(ctx, journal)
     # --- 1. Le classement : l'entete et chaque ligne, sans rang ni nombre (la composition les ecrit)
     page = ouvre(ctx)
     onglet(page, "Classement")
@@ -136,3 +138,5 @@ with sync_playwright() as p:
 print("lignes :", [(l["nom"], l["n"], l["jauge"], l["moi"]) for l in t["lignes"]], t["styleNb"], t["styleRang"])
 print("barres trophee :", troph_a["bars"])
 print("cases :", len(g["cases"]), "colonnes :", g["noms"])
+print("photos remplacees :", sorted({s for g_, s, _ in journal if g_ == "remplacee"}))
+print("photos bloquees :", sorted({a for g_, _, a in journal if g_ == "bloquee"}))

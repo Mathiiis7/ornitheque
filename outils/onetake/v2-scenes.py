@@ -10,7 +10,7 @@ vraie choregraphie, a la bonne vitesse, sans une image perdue. --essai ne prend 
 import json, pathlib, re, shutil, sys
 from playwright.sync_api import sync_playwright
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
-import demo199
+import demo199, photos_libres
 
 URL = "http://127.0.0.1:8765/demo/"
 OUT = pathlib.Path(".onetake/v2/scenes")
@@ -53,6 +53,8 @@ with sync_playwright() as p:
     ctx = nav.new_context(viewport={"width": 1920, "height": 1080},
                           user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36")
     demo199.installe(ctx)
+    journal = []
+    photos_libres.installe(ctx, journal)
     page = ctx.new_page()
     erreurs = []
     page.on("pageerror", lambda e: erreurs.append(str(e)[:200]))
@@ -109,4 +111,5 @@ with sync_playwright() as p:
     (OUT / "scenes.json").write_text(json.dumps(info, ensure_ascii=False, indent=1), encoding="utf-8")
     print(json.dumps(info))
     print("erreurs :", erreurs)
+    print("photos bloquees :", sorted({a for g, _, a in journal if g == "bloquee"}))
     nav.close()

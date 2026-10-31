@@ -10,7 +10,7 @@ import json, math, pathlib, re, sys
 from PIL import Image
 from playwright.sync_api import sync_playwright
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
-import demo199
+import demo199, photos_libres
 
 URL = "http://127.0.0.1:8765/demo/"   # pas localhost : http-server n'ecoute qu'en IPv4
 OUT = pathlib.Path(".onetake/v2/site")
@@ -63,6 +63,7 @@ with sync_playwright() as p:
     ctx = nav.new_context(viewport={"width": 1920, "height": 1080}, device_scale_factor=2,
                           user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36")
     demo199.installe(ctx)   # le film part de 199 : le Martin-pecheur fera le 200e
+    photos_libres.installe(ctx)
     page = ctx.new_page()
     page.goto(URL)
     page.wait_for_timeout(6000)

@@ -5,6 +5,7 @@ retire 13 especes en interceptant demo/donnees.js dans le navigateur des prises 
 Birdydex et le classement restent coherents entre eux, et aucun fichier du site n'est touche.
 """
 import json
+from datetime import date
 
 NOUVELLE = "alcedo atthis"
 # Les oiseaux que le film montre, a ne jamais retirer
@@ -47,6 +48,8 @@ def reduit(corps, apres=False):
     if apres:
         martin = next(e for e in especes if e["k"] == NOUVELLE)
         martin["a"] = max(e.get("a", 0) for e in especes) + 1
+        # le classement juge la derniere acquisition sur la date d'observation, pas sur la date d'ajout
+        martin["d"] = date.today().isoformat()
         reste.append(martin)
         return corps[:d] + json.dumps(reste, ensure_ascii=False, separators=(",", ":")) + corps[f + 1:]
     if len(reste) != 199:

@@ -17,10 +17,11 @@ Ce fichier se remplace à chaque fin de tâche : quelques lignes, pas un journal
   formulaire) et prend les deux vraies scènes image par image, animations en pause (`--essai` testé, une image toutes les 0,5 s ; scène
   espèce 7,1 s, scène trophée 9,5 s dont la fin fixe se coupe). Birdydex passe à 200, trophée « Ornithologue chevronné » joué.
   **Fait :** carte et compteur à 199, Rougegorge (Indre) en dernière photo, Alex à 200 dans le classement (`demo199.installe(ctx, apres=True)`),
-  brouillon `.onetake/v2-brouillon5.mp4`, à valider. **À trancher par Mathis :** à 199, Alex est déjà devant Lina (156), le 200 ne la double donc pas.
-  **Reste, dans l'ordre :** 2. **licences :** le mur du Birdydex et les petites
+  brouillon `.onetake/v2-brouillon5.mp4`, à valider. **Lina à 199 pour le film seulement** (choix de Mathis) : le 200e la double pour de vrai.
+  Licences réglées à la prise (`photos_libres.py`, au niveau du réseau) ; les photos que le film montre sont vérifiées à l'œil, pas les autres.
+  **Reste, dans l'ordre :** ~~2. licences : le mur du Birdydex et les petites
   photos du classement montrent des BY-SA, ND ou inconnues (34 cartes sur 212, plus 9 Wikimedia à vérifier) : les remplacer à la prise
-  par une photo libre de la même espèce, le film ne doit pas les montrer ; 3. composer le Birdydex (mur, caméra sur la case grise), une
+  par une photo libre de la même espèce, le film ne doit pas les montrer~~ ; 3. composer le Birdydex (mur, caméra sur la case grise), une
   variante A sans Marco Polo enchaînée à D, puis la fiche (clic sur une espèce non vue par Alex, carte et mois, chant) ; 4. rendre chaque
   morceau et les coller avec ffmpeg, chaque fin raccordant au début suivant ; 5. faire valider, puis récent, quiz, logo, son, crédits.
 
