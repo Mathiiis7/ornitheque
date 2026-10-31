@@ -629,7 +629,7 @@ function varF(t) {
 // Puis une vraie manche du quiz : le chant joue, la fleche choisit, le site repond.
 const RE = window.M3.recent;
 const G = { MONTE: 0.3, POINTS: 1.05, POINTS_FIN: 2.4, SORT: 3.95, QUIZ: 4.0, QUIZ_FIN: 4.6, CLIC: 6.2 };
-const RS = W / RE.cadre.width, RY = 246;
+const RS = 1.536, RY = 246, PX = W - RE.panneau.width * RS;   // la carte, puis son panneau a droite
 // du plus loin au plus pres de Rennes : ils arrivent depuis la pointe, dans le sens de la lecture
 const ORDRE_R = RE.points.map((_, i) => i).sort((a, b) => RE.points[a].x - RE.points[b].x);
 const QS = 1.34, QX = W - RE.cadreQuiz.width * QS - 40, QY = 48;
@@ -669,9 +669,8 @@ function varG(t) {
     ctx.save();
     ctx.globalAlpha = clamp((t - G.MONTE) / 0.12, 0, 1) * (1 - sortie);
     ctx.translate(0, RY + (1 - k) * 700 - sortie * 120);
-    ctx.scale(RS, RS);
     ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(IM.rFond, 0, 0, RE.cadre.width, RE.cadre.height);
+    ctx.drawImage(IM.rFond, 0, 0, RE.carte.w, RE.carte.h);
     ORDRE_R.forEach((i, n) => {
       const q = RE.points[i];
       const ts = G.POINTS + (G.POINTS_FIN - G.POINTS) * n / (ORDRE_R.length - 1);
@@ -684,7 +683,11 @@ function varG(t) {
       ctx.restore();
     });
     // les oiseaux rares arrivent dans le panneau : le fond sans rangees est une case blanche, on les decouvre
-    const ech = IM.rPlein.width / RE.cadre.width;
+    ctx.translate(PX, 0); ctx.scale(RS, RS);
+    const bord = new Path2D(); bord.roundRect(1, 0, RE.panneau.width - 1, RE.panneau.height, 12);
+    ctx.clip(bord);
+    ctx.drawImage(IM.rPlein, 0, 0, RE.panneau.width, RE.panneau.height);
+    const ech = IM.rPlein.width / RE.panneau.width;
     RE.rangees.forEach((r, n) => {
       const ts = G.POINTS + 0.25 + n * 0.17;
       const a = E.cubicOut(seg(ts, ts + 0.22, t));
@@ -779,7 +782,7 @@ window.__ready = (async () => {
     charge('tro', 'trophee-fin.jpg'), charge('pageAvant', 'page-trophees-avant.png'), charge('mpAvant', 'carte-mp-avant.png'), charge('mpApres', 'carte-mp-apres.png')];
   TB.lignes.forEach((l, i) => jobs.push(charge('l' + i, 'ligne-' + i + '.png')));
   if (V === 'g') {
-    jobs.push(charge('ficheSons', 'fiche-sons.png'), charge('rFond', 'recent-fond.png'), charge('rPlein', 'recent-plein.png'), charge('qQuestion', 'quiz-question.png'), charge('qReponse', 'quiz-reponse.png'));
+    jobs.push(charge('ficheSons', 'fiche-sons.png'), charge('rFond', 'recent-fond.png'), charge('rPlein', 'recent-panneau.png'), charge('qQuestion', 'quiz-question.png'), charge('qReponse', 'quiz-reponse.png'));
     window.M3.recent.points.forEach((_, i) => jobs.push(charge('p' + i, 'point-' + i + '.png')));
   }
   if (V === 'f') {

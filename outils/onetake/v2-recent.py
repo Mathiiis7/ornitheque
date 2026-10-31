@@ -3,7 +3,7 @@ Le serveur doit tourner sur 8765.
 
     .onetake/venv/Scripts/python.exe outils/onetake/v2-recent.py
 
-Sortie dans .onetake/v2/recent/ : recent-fond.png, point-*.png, recent-plein.png, quiz-question.png,
+Sortie dans .onetake/v2/recent/ : recent-panneau.png, recent-fond.png, point-*.png, quiz-question.png,
 quiz-reponse.png, recent.json.
 """
 import json, pathlib, re, sys
@@ -14,7 +14,8 @@ import demo199, photos_libres
 URL = "http://127.0.0.1:8765/demo/"
 OUT = pathlib.Path(".onetake/v2/recent")
 OUT.mkdir(parents=True, exist_ok=True)
-CADRE = {"x": 335, "y": 292, "width": 1250, "height": 543}          # la carte et son panneau
+PANNEAU = {"x": 1236, "y": 292, "width": 349, "height": 543}        # le panneau de droite, a sa place sur le site
+CARTE = {"w": 1369, "h": 834}                                       # la carte telle que le film la montre
 CADRE_QUIZ = {"x": 545, "y": 200, "width": 830, "height": 735}      # la manche, de sa barre a sa derniere reponse
 
 
@@ -30,6 +31,13 @@ def onglet(page, nom):
     ferme(page)
 
 
+def ouvre(page):
+    page.goto(URL)
+    page.wait_for_timeout(6000)
+    ferme(page)
+    page.add_style_tag(content="#demoBandeau { display:none !important; }")
+
+
 with sync_playwright() as p:
     nav = p.chromium.launch()
     ctx = nav.new_context(viewport={"width": 1920, "height": 1080}, device_scale_factor=2,
@@ -40,12 +48,7 @@ with sync_playwright() as p:
     page = ctx.new_page()
     erreurs = []
     page.on("pageerror", lambda e: erreurs.append(str(e)[:200]))
-    page.goto(URL)
-    page.wait_for_timeout(6000)
-    ferme(page)
-    # 258 px au lieu de 256 : sous le zoom 0,85 du site, les tuiles se recollent avec des joints blancs
-    page.add_style_tag(content="""#demoBandeau { display:none !important; }
-        #mapEl .leaflet-tile { width: 258px !important; height: 258px !important; }""")
+    ouvre(page)
 
     # 1. La Bretagne, sa couche des observations recentes
     onglet(page, "Carte")
@@ -54,17 +57,15 @@ with sync_playwright() as p:
     page.mouse.click(610, 482)
     page.wait_for_timeout(5000)
     page.locator("button:visible", has_text="Vu récemment").first.click()
-    page.wait_for_timeout(5000)
-    # la legende couvre un coin de la carte : son vrai bouton la replie
-    page.locator("#mapEl button:visible", has_text="Légende").first.click()
     page.mouse.move(5, 5)
+    page.wait_for_timeout(2000)
     # le panneau annonce « lecture des listes : 91 sur 521... » tant qu'il lit : on attend qu'il ait fini
     for _ in range(120):
         if not page.evaluate("/lecture des listes/.test(document.body.innerText)"):
             break
         page.wait_for_timeout(2000)
-    page.wait_for_timeout(4000)
-    page.screenshot(path=str(OUT / "recent-plein.png"), clip=CADRE)
+    page.wait_for_timeout(3000)
+    page.screenshot(path=str(OUT / "recent-panneau.png"), clip=PANNEAU)
     print(page.evaluate("document.body.innerText.match(/\\d+ espèces non observées[^\\n]*/)?.[0]"))
     # les rangees du panneau : ce qui entoure chaque date (« il y a 4 j », « hier »)
     rangees = page.evaluate("""(C) => { const vus = new Set(), sortie = [];
@@ -72,32 +73,50 @@ with sync_playwright() as p:
           if (e.children.length || !e.offsetParent || !/^(il y a \\d+ ?j|hier|aujourd'hui)/i.test(e.textContent.trim())) continue;
           let l = e; while (l && l.getBoundingClientRect().width < 280) l = l.parentElement;
           const r = l.getBoundingClientRect();
-          if (vus.has(l) || r.x < C.x + 880 || r.y > C.y + C.height) continue;
+          if (vus.has(l) || r.x < C.x || r.y > C.y + C.height) continue;
           vus.add(l); sortie.push({ x: r.x - C.x, y: r.y - C.y, w: r.width, h: Math.min(r.height, C.y + C.height - r.y) });
         }
-        return sortie; }""", CADRE)
+        return sortie; }""", PANNEAU)
     print(len(rangees), "rangees")
-    points = page.evaluate("""(C) => [...document.querySelectorAll('#mapEl .leaflet-marker-icon')].map((e, i) => { e.dataset.film = i;
-        const r = e.getBoundingClientRect(); return { i, x: r.x - C.x, y: r.y - C.y, w: r.width, h: r.height }; })""", CADRE)
-    fond = page.add_style_tag(content="#mapEl .leaflet-marker-pane { visibility: hidden !important; }")
+    # La carte : hors du zoom 0,85 du site, les tuiles se recollent sans joints blancs (meme remede que le moment 2)
+    page.add_style_tag(content=f"""
+      body {{ zoom: 1 !important; }}
+      body * {{ visibility: hidden; }}
+      #mapEl, #mapEl * {{ visibility: visible; }}
+      #mapEl {{ position: fixed !important; left: 0 !important; top: 0 !important; width: {CARTE['w']}px !important;
+               height: {CARTE['h']}px !important; z-index: 99999 !important; border-radius: 0 !important; margin: 0 !important; }}
+      #mapEl .leaflet-control-container, #mapEl .leaflet-control-container *, #mapEl .leaflet-tooltip-pane, #mapEl .leaflet-tooltip-pane *,
+      #mapEl .leaflet-popup-pane, #mapEl .leaflet-popup-pane * {{ visibility: hidden !important; }}
+      #mapEl > :not(.leaflet-pane):not(.leaflet-control-container), #mapEl > :not(.leaflet-pane):not(.leaflet-control-container) * {{ visibility: hidden !important; }}
+    """)
+    page.evaluate("window.dispatchEvent(new Event('resize'))")
+    page.wait_for_timeout(8000)
+    points = page.evaluate("""() => [...document.querySelectorAll('#mapEl .leaflet-marker-icon')].map((e, i) => { e.dataset.film = i;
+        const r = e.getBoundingClientRect(); return { i, x: r.x, y: r.y, w: r.width, h: r.height }; })""")
+    clip_carte = {"x": 0, "y": 0, "width": CARTE["w"], "height": CARTE["h"]}
+    fond = page.add_style_tag(content="#mapEl .leaflet-marker-pane, #mapEl .leaflet-marker-pane * { visibility: hidden !important; }")
     page.wait_for_timeout(300)
-    page.screenshot(path=str(OUT / "recent-fond.png"), clip=CADRE)
+    page.screenshot(path=str(OUT / "recent-fond.png"), clip=clip_carte)
     fond.evaluate("e => e.remove()")
+    page.add_style_tag(content="""html, body, #mapEl, .leaflet-container { background: transparent !important; }
+      #mapEl .leaflet-pane:not(.leaflet-map-pane):not(.leaflet-marker-pane), #mapEl .leaflet-pane:not(.leaflet-map-pane):not(.leaflet-marker-pane) * { visibility: hidden !important; }""")
+    for f in OUT.glob("point-*.png"):
+        f.unlink()
     for q in points:
-        st = page.add_style_tag(content=f"""html, body {{ background: transparent !important; }} body * {{ visibility: hidden !important; }}
-            #mapEl .leaflet-marker-icon[data-film="{q['i']}"], #mapEl .leaflet-marker-icon[data-film="{q['i']}"] * {{ visibility: visible !important; }}""")
-        page.wait_for_timeout(60)
-        m = 3
+        page.evaluate("""(i) => document.querySelectorAll('#mapEl .leaflet-marker-icon').forEach(e => {
+            e.style.setProperty('opacity', e.dataset.film == i ? '1' : '0', 'important'); })""", q["i"])
+        m = 4
         page.screenshot(path=str(OUT / f"point-{q['i']}.png"), omit_background=True,
-                        clip={"x": CADRE["x"] + q["x"] - m, "y": CADRE["y"] + q["y"] - m, "width": q["w"] + 2 * m, "height": q["h"] + 2 * m})
-        st.evaluate("e => e.remove()")
+                        clip={"x": q["x"] - m, "y": q["y"] - m, "width": q["w"] + 2 * m, "height": q["h"] + 2 * m})
         q.update(x=q["x"] - m, y=q["y"] - m, w=q["w"] + 2 * m, h=q["h"] + 2 * m)
     print(len(points), "points")
 
-    # 2. Le quiz : une manche ou le premier choix est le bon, pour que la fleche clique juste. Le tirage
-    # est au hasard : on recommence jusqu'a la tomber, le site n'annonce la reponse qu'apres le clic.
+    # 2. Le quiz : une manche ou le premier choix est le bon, pour que la fleche clique juste. Le tirage est au
+    # hasard et le site n'annonce la reponse qu'apres le clic : on recharge la page jusqu'a la tomber. Quitter
+    # une manche pour en relancer une bloquait le site (2026-10-31).
     quiz = None
-    for essai in range(30):
+    for essai in range(40):
+        ouvre(page)
         onglet(page, "Quiz")
         page.locator("button:visible", has_text="Chant vers nom").first.click()
         page.wait_for_timeout(1200)
@@ -118,10 +137,8 @@ with sync_playwright() as p:
             quiz = info
             print("manche trouvee a l'essai", essai + 1, info["chant"], [c["nom"] for c in info["choix"]])
             break
-        page.evaluate("document.querySelector('[data-pc-retour]')?.click()")
-        page.wait_for_timeout(800)
     if not quiz:
         raise SystemExit("aucune manche ou le premier choix est le bon")
-    (OUT / "recent.json").write_text(json.dumps({"cadre": CADRE, "points": points, "rangees": rangees, "cadreQuiz": CADRE_QUIZ, "quiz": quiz}, ensure_ascii=False, indent=1), encoding="utf-8")
+    (OUT / "recent.json").write_text(json.dumps({"panneau": PANNEAU, "carte": CARTE, "points": points, "rangees": rangees, "cadreQuiz": CADRE_QUIZ, "quiz": quiz}, ensure_ascii=False, indent=1), encoding="utf-8")
     print("erreurs", erreurs, "bloquees", sorted({a for g, _, a in journal if g == "bloquee"})[:5])
     nav.close()
