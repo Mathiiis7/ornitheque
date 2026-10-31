@@ -16193,7 +16193,6 @@ async function _renderSpeciesTraitsCard(key){
   const MIG = { 1:'🏃 Sédentaire', 2:'🚶 Migration partielle', 3:'✈️ Migrateur total' };
   const TL  = { C:'🥩 Carnivore', H:'🌿 Herbivore', O:'🍽️ Omnivore', S:'🦴 Charognard' };
   const PL  = { Aer:'🌬️ Aérien', Aqu:'🌊 Aquatique', Ins:'🌳 Percheur', Ter:'🦶 Terrestre', Gen:'🎯 Généraliste' };
-  const HD  = { 1:'🌲 Milieu dense', 2:'🌾 Semi-ouvert', 3:'🏞️ Très ouvert' };
   // Section Écologie
   const ecoLines = [];
   // Check async si l'espece a des cartes par semaine -> bouton anim plein ecran
@@ -16226,7 +16225,6 @@ async function _renderSpeciesTraitsCard(key){
     ecoLines.push({ k:'Régime', v: TL[t.tl] + (niche ? ` <span style="color:var(--ink-3); font-weight:400;">(${esc(niche)})</span>` : '') });
   }
   if(t.pl && PL[t.pl])    ecoLines.push({ k:'Style de vie',   v: PL[t.pl] });
-  if(t.hd && HD[t.hd])    ecoLines.push({ k:'Densité habitat', v: HD[t.hd] });
   // Section Morphologie (masse + longueurs). Longueurs en cm (Avonet fournit en mm).
   const morphLines = [];
   const round = v => v == null ? '' : String(Math.round(v));
