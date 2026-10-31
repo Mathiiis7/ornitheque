@@ -6,7 +6,7 @@ Ce fichier se remplace à chaque fin de tâche : quelques lignes, pas un journal
 
 ## Reste ouvert
 - **En attente de réponse :** Cornell (22/10), LPO (23/10). Effacer l'historique des deux dépôts attend Cornell.
-- **Vidéo (ticket 39) :** moments 1 et 2 refaits sur le site actuel, brouillon `.onetake/v2-brouillon3.mp4` à valider par Mathis ;
+- **Vidéo (ticket 39) :** moments 1 et 2 refaits sur le site actuel, brouillon `.onetake/v2-brouillon4.mp4` à valider par Mathis ;
   détail dans `docs/VIDEO-DEROULE-V2.md`. Ensuite moments 3 à 9, toujours depuis le site actuel, puis son et crédits.
 
 ## Décidé le 31/10

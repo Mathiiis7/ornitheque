@@ -6,7 +6,7 @@ les cartes du Birdydex sont celles qu'un visiteur voit. Le serveur doit tourner 
 
 Sortie dans .onetake/v2/site/ : cartes-birdydex.json (espece, photo, licence), planche, prises.
 """
-import json, pathlib, re
+import json, math, pathlib, re
 from PIL import Image
 from playwright.sync_api import sync_playwright
 
@@ -171,6 +171,37 @@ with sync_playwright() as p:
         e.dataset.film = i; const r = e.getBoundingClientRect();
         return { i, x: r.x, y: r.y, w: r.width, h: r.height, n: parseInt(e.textContent) || 1 }; })""")
     print(len(marqueurs), "anneaux ; somme des nombres :", sum(m["n"] for m in marqueurs))
+
+    # Qui est dans quel anneau : une photo doit surgir la ou l'oiseau a ete note, pas ailleurs (un
+    # Guepier dans le Nord, Mathis, 2026-10-31). Les tuiles donnent la projection exacte de la carte :
+    # une tuile, son z/x/y et sa place a l'ecran suffisent a situer n'importe quel point GPS.
+    tuile = page.evaluate("""() => { const t = [...document.querySelectorAll('#mapEl img.leaflet-tile')]
+          .find(i => /\\/\\d+\\/\\d+\\/\\d+/.test(i.src)); const r = t.getBoundingClientRect();
+        return { src: t.src, x: r.x, y: r.y, w: r.width }; }""")
+    z, tx, ty = [int(v) for v in re.search(r"/(\d+)/(\d+)/(\d+)", tuile["src"]).groups()]
+    def vers_ecran(la, lo):
+        n = 2 ** z
+        wx = (lo + 180) / 360 * n
+        wy = (1 - math.asinh(math.tan(math.radians(la))) / math.pi) / 2 * n
+        return tuile["x"] + (wx - tx) * tuile["w"], tuile["y"] + (wy - ty) * tuile["w"]
+    especes = page.evaluate("""async () => { const m = await import('/demo/donnees.js');
+        return m.DONNEES['leagues/merlin-bird/members/demo-visiteur'].species; }""")
+    for m in marqueurs:
+        m["especes"] = []
+    hors = 0
+    for e in especes:
+        if e.get("la") is None or e.get("co") != "FR":
+            hors += 1
+            continue
+        x, y = vers_ecran(e["la"], e["lo"])
+        proche = min(marqueurs, key=lambda m: math.hypot(m["x"] + m["w"] / 2 - x, m["y"] + m["h"] / 2 - y))
+        proche["especes"].append({"sci": e["k"], "nom": e["c"], "lieu": e["l"]})
+    ecarts = [(m["n"], len(m["especes"])) for m in marqueurs if m["n"] != len(m["especes"])]
+    print("especes rattachees :", sum(len(m["especes"]) for m in marqueurs), "| hors France ou sans GPS :", hors,
+          "| anneaux dont le nombre differe (ecrit, calcule) :", ecarts)
+    for sci in CANDIDATES:
+        ou = [(round(m["x"]), round(m["y"]), e["lieu"]) for m in marqueurs for e in m["especes"] if e["sci"] == sci]
+        print(" ", sci, ou)
     sans = page.add_style_tag(content="#mapEl .leaflet-marker-pane, #mapEl .leaflet-marker-pane * { visibility: hidden !important; }")
     page.wait_for_timeout(500)
     page.screenshot(path=str(OUT / "carte-fond.png"))

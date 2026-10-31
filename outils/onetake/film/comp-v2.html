@@ -64,19 +64,19 @@ const T = {
 const SALVES = [
   { t0: 6.5,  t1: 8.1,  n: 5, puiss: 1 },
   { t0: 8.7,  t1: 10.0, n: 7, puiss: 0.8 },
-  { t0: 11.0, t1: 12.6, n: 0, puiss: 0.7 },   // n = 0 : tout le reste
+  { t0: 11.0, t1: 12.3, n: 0, puiss: 0.7 },   // n = 0 : tout le reste
 ];
 const MONTEE = 0.25;                  // le temps que le nombre d'un anneau s'ajoute au compteur
-const FIN = 12.6 + MONTEE;            // tout est pose ; repos jusqu'a la fin
+const FIN = 12.3 + MONTEE;            // le compteur est a 212
 const TOTAL = 212, SUR = 467;         // « 212 espèces vues sur 467 », lu sur la demo le 2026-10-31
-const PHOTO_TENUE = 0.75, PHOTO_VOL = 0.5;
+const PHOTO_VOL = 0.5;
 const PHOTOS = [
-  { t: 7.15,  n: 1 },
-  { t: 8.85,  n: 6 },
-  { t: 9.3,   n: 10 },
-  { t: 11.3,  n: 14 },
-  { t: 11.65, n: 18 },
-].map((p, i) => ({ ...p, fichier: window.V2.photos[i], tenue: i < 3 ? PHOTO_TENUE : 0.45 }));
+  { t: 7.15,  tenue: 0.75 },
+  { t: 8.85,  tenue: 0.75 },
+  { t: 9.3,   tenue: 0.75 },
+  { t: 11.4,  tenue: 0.45 },
+  { t: 12.42, tenue: 0.35 },   // le martin-pecheur, depuis le dernier anneau, celui de l'Indre
+].map((p, i) => ({ ...p, ...window.V2.photos[i] }));
 const COMPTEUR = { x: 80, base: 985 };
 
 // --- Le logo : les vrais traces de assets/logos/logo.svg ------------------------------------
@@ -300,15 +300,10 @@ function dessinePhrase(t) {
 // Chaque carte sort de l'anneau qui vient de se poser. Elle est prise sur fond transparent
 // (v2-site.py) : son arrondi est celui du site, il n'y a rien a decouper ici.
 const ECHELLE_CARTE = 0.62;
-PHOTOS.forEach((ph, p) => {
-  // l'anneau qui la porte : assez a droite pour ne pas couvrir la phrase, et assez loin de la
-  // photo d'avant, qui est peut-etre encore a l'ecran (une carte fait 170 x 220 px dans le film)
-  const avant = p > 0 ? ANN[PHOTOS[p - 1].anneau] : null;
-  const convient = i => ANN[i].x >= 1000 && !PHOTOS.slice(0, p).some(q => q.anneau === i) &&
-    (!avant || Math.hypot(ANN[i].x - avant.x, ANN[i].y - avant.y) > 240);
-  let k = ph.n;
-  while (k < NA - 2 && !convient(ordre[k])) k++;   // jamais le dernier : le gros anneau final reste seul
-  ph.anneau = ordre[k];
+PHOTOS.forEach(ph => {
+  // l'anneau qui la porte : celui ou la demo a note cet oiseau (v2-site.py)
+  ph.anneau = ANN.findIndex(a => a.especes.some(e => e.sci === ph.sci));
+  if (ph.anneau < 0) throw new Error('espece absente de la carte : ' + ph.sci);
   tArrive[ph.anneau] = ph.t - 0.12;
 });
 function etatPhoto(ph, t) {
