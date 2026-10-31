@@ -18,11 +18,12 @@
 //   b : la course : les cinq nombres et leurs barres montent, les lignes se doublent.
 //   c : le trophee : le classement passe, la camera plonge dans la page Trophees.
 //   d : Qui a vu quoi : la grille se remplit case par case, la colonne d'Alex ressort.
+//   e : le montage retenu : part de la fenetre du trophee, le 200 double Lina, puis la grille.
 // Chacun part de la derniere image du moment 2 : le logo et le nom restent, le 212 survit.
 // Tout vient du site (v2-m3.py). Tout est une fonction PURE du temps.
 // =============================================================================
 const V = '__VARIANTE__';
-const DUR = { a: 7.8, b: 8.2, c: 8.2, d: 8.2 }[V];
+const DUR = { a: 7.8, b: 8.2, c: 8.2, d: 8.2, e: 7.6 }[V];
 window.__meta = { dur: DUR, fps: 30, w: 1920, h: 1080 };
 const W = 1920, H = 1080;
 const { clamp, lerp, spring } = OM;
@@ -151,6 +152,8 @@ const arrivee = (t, t0, i) => {
 // --- Le compteur du moment 2 --------------------------------------------------------------
 function compteur(t, vol) {
   const fin = vol.t1;
+  const entree = vol.entree === undefined ? 1 : seg(vol.entree, vol.entree + 0.25, t);
+  if (entree <= 0) return;
   if (t > fin + 0.02) return;
   const k = E.expoInOut(seg(vol.t0, fin, t));
   const [cx, cy] = vol.cible(t);
@@ -160,11 +163,11 @@ function compteur(t, vol) {
   ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'right';
   ctx.font = titre(px);
   ctx.fillStyle = L.accent;
-  ctx.globalAlpha = vol.fondu ? 1 - seg(fin - 0.25, fin, t) : 1;
+  ctx.globalAlpha = entree * (vol.fondu ? 1 - seg(fin - 0.25, fin, t) : 1);
   ctx.fillText(String(N_ALEX), dx, dy);
   const rest = 1 - seg(vol.t0, vol.t0 + 0.2, t);
   if (rest > 0) {
-    ctx.globalAlpha = rest;
+    ctx.globalAlpha = rest * entree;
     ctx.textAlign = 'left';
     ctx.font = titre(60); ctx.fillStyle = L.mute;
     ctx.fillText('/ 467', 80 + 264, 985);
@@ -381,7 +384,92 @@ function varD(t) {
   } });
 }
 
-const VAR = { a: varA, b: varB, c: varC, d: varD }[V];
+// --- e : le montage retenu par Mathis (2026-10-31) ----------------------------------------------
+// La fenetre du trophee s'efface, le logo du site glisse a la place de celui du film, le compteur
+// revient, vole dans la ligne d'Alex, qui double Lina ; le classement monte, la grille le remplace.
+const CAM_E = [{ t0: 0, t1: 0, s: 1.4, x: 87, y: 262 }, { t0: 1.75, t1: 2.25, s: 2.05, x: 60, y: 245 }, { t0: 3.2, t1: 3.6, s: 1.4, x: 87, y: 262 }];
+const LOGO_SITE = { x: 317, y: 21, taille: 47 };
+function logoPorte(t) {
+  const k = E.expoInOut(seg(0, 0.7, t));
+  const s = lerp(LOGO_SITE.taille / 66, 1, k);
+  ctx.save();
+  // apparait une fois la page effacee : le nom du site est plus petit que celui du film, les deux se doublaient
+  ctx.globalAlpha = seg(0.2, 0.45, t);
+  ctx.translate(lerp(LOGO_SITE.x, 56, k) - 56 * s, lerp(LOGO_SITE.y, 28, k) - 28 * s);
+  ctx.scale(s, s);
+  ctx.drawImage(IM.logo, 0, 0, W, H);
+  ctx.restore();
+}
+function varE(t) {
+  const VOL = 0.95, POSE = 1.6, DOUBLE = 2.45, MONTE = 3.6, MONTE1 = 4.3, V0 = 4.25, V1 = 6.2, HALO = 6.45;
+  const sort = E.cubicInOut(seg(0.05, 0.5, t));
+  if (sort < 1) {
+    ctx.save();
+    ctx.globalAlpha = 1 - sort;
+    ctx.translate(W / 2, H / 2); ctx.scale(1 + 0.04 * sort, 1 + 0.04 * sort); ctx.translate(-W / 2, -H / 2);
+    ctx.drawImage(IM.tro, 0, 0, W, H);
+    ctx.restore();
+  }
+  const kD = spring(t - DOUBLE, 0.62, 14);
+  const m = E.expoInOut(seg(MONTE, MONTE1, t));
+  if (t > 0.35 && m < 1) {
+    const cam = camera(CAM_E, t);
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0, 240, W, H); ctx.clip();
+    ctx.translate(cam.x, cam.y - m * 900); ctx.scale(cam.s, cam.s);
+    const a0 = arrivee(t, 0.4, 0);
+    ctx.save(); ctx.translate(0, a0.dy); entete(a0.op); ctx.restore();
+    [0, 1, 2].forEach(i => { const a = arrivee(t, 0.4, i + 1); ligne(i, slotY[i] + a.dy, TB.lignes[i].n, a.op); });
+    const a = arrivee(t, 0.4, 4);
+    ligne(LINA, lerp(slotY[3], slotY[4], kD) + a.dy, TB.lignes[LINA].n, a.op);
+    if (t >= POSE) {
+      const p = spring(t - POSE, 0.5, 26);
+      ctx.save();
+      ctx.shadowColor = t > DOUBLE && t < DOUBLE + 0.5 ? 'rgba(21,32,30,0.25)' : 'transparent';
+      ctx.shadowBlur = 16;
+      ctx.translate(0, (1 - p) * 8);
+      ligne(ALEX, lerp(slotY[4], slotY[3], kD), N_ALEX, clamp((t - POSE) / 0.08, 0, 1));
+      ctx.restore();
+    }
+    if (t > 0.7) rangs(t >= POSE ? null : [0, 1, 2, 3]);
+    ctx.restore();
+  }
+  if (t > MONTE) {
+    const gy = lerp(H + 40, 262, m);
+    ctx.save();
+    ctx.translate(GX, gy); ctx.scale(GS, GS);
+    ctx.drawImage(IM.grilleVide, 0, 0, GR.w, GR.h);
+    const cols = GR.noms.length - 1;
+    const ordreCol = c => (c === COL_ALEX ? cols - 1 : (c > COL_ALEX ? c - 2 : c - 1));
+    for (const c of GR.cases) {
+      if (!c.vu) continue;
+      const ts = V0 + (V1 - V0 - 0.3) * (ordreCol(c.c) + c.l / 12) / cols;
+      if (t < ts) continue;
+      const k = Math.min(1, spring(t - ts, 0.5, 30));
+      const cx = c.x + c.w / 2, cy = c.y + c.h / 2;
+      ctx.save();
+      ctx.translate(cx, cy); ctx.scale(k, k); ctx.translate(-cx, -cy);
+      ctx.drawImage(IM.grillePleine, c.x * 2, c.y * 2, c.w * 2, c.h * 2, c.x, c.y, c.w, c.h);
+      ctx.restore();
+    }
+    if (t > HALO) {
+      const co = GR.cases.filter(c => c.c === COL_ALEX);
+      const k = E.expoOut(seg(HALO, HALO + 0.35, t));
+      ctx.strokeStyle = L.accent; ctx.lineWidth = 2.2;
+      const r = new Path2D(); r.roundRect(co[0].x, 0, co[0].w, GR.h * k, 4);
+      ctx.stroke(r);
+    }
+    ctx.restore();
+  }
+  logoPorte(t);
+  phrase(t, 0.55);
+  compteur(t, { t0: VOL, t1: POSE, entree: 0.2, px: 14 * ZOOM * 1.4, cible: tt => {
+    const l = TB.lignes[ALEX];
+    return versEcran(camera(CAM_E, tt), l.score.x + l.score.w, slotY[4] + (l.score.y - l.y) + 11.4);
+  } });
+}
+
+const VAR = { a: varA, b: varB, c: varC, d: varD, e: varE }[V];
 function seek(t) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.globalAlpha = 1;
@@ -396,6 +484,7 @@ const ACTIF = {
   b: [[0.5, 5.2, 40], [5.4, 6.2, 90]],
   c: [[0.5, 2.3, 90], [2.5, 4.7, 200], [5.45, 6.3, 120]],
   d: [[0.5, 2.3, 90], [2.55, 3.3, 120], [3.2, 6.0, 30]],
+  e: [[0, 1.0, 90], [0.95, 2.9, 90], [3.2, 4.4, 120], [4.25, 6.9, 30]],
 }[V];
 window.__motion = (t0, t1) => {
   let px = 0;
@@ -417,7 +506,7 @@ function charge(cle, src) {
 window.__ready = (async () => {
   const jobs = [charge('carte', 'carte-nue.png'), charge('logo', 'logo-nom.png'), charge('entete', 'table-entete.png'),
     charge('grilleVide', 'grille-vide.png'), charge('grillePleine', 'grille-pleine.png'),
-    charge('pageAvant', 'page-trophees-avant.png'), charge('mpAvant', 'carte-mp-avant.png'), charge('mpApres', 'carte-mp-apres.png')];
+    charge('tro', 'trophee-fin.jpg'), charge('pageAvant', 'page-trophees-avant.png'), charge('mpAvant', 'carte-mp-avant.png'), charge('mpApres', 'carte-mp-apres.png')];
   TB.lignes.forEach((l, i) => jobs.push(charge('l' + i, 'ligne-' + i + '.png')));
   document.fonts.add(await new FontFace('Source Serif Film', 'url(' + window.POLICE_TITRE + ')', { weight: '700' }).load());
   await Promise.all(jobs);

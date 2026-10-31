@@ -22,7 +22,7 @@
 // Tout vient du site (v2-m3.py, v2-mur.py, v2-scenes.py). Tout est une fonction PURE du temps.
 // =============================================================================
 const V = '__PARTIE__';
-const DUR = { a: 3.85, c: 2.4 }[V];
+const DUR = { a: 3.55, c: 2.4 }[V];
 window.__meta = { dur: DUR, fps: 30, w: 1920, h: 1080 };
 const W = 1920, H = 1080;
 const { clamp, lerp, spring } = OM;
@@ -42,8 +42,8 @@ const DEBUT_S = 1920 / 1284;
 const FIN_CAM = { s: 1.75, ax: 56 + 131.234 * 1.75 / 2, ay: 500 };
 function camera(t) {
   if (V === 'c') return { s: FIN_CAM.s, x: FIN_CAM.ax - CASE.x * FIN_CAM.s, y: FIN_CAM.ay - CASE.y * FIN_CAM.s };
-  const fy = lerp(520, CASE.y, E.quartOut(seg(0.1, 2.1, t)));
-  const k = E.expoInOut(seg(1.45, 2.2, t));
+  const fy = lerp(520, CASE.y, E.quartOut(seg(0.1, 1.8, t)));
+  const k = E.expoInOut(seg(1.15, 1.9, t));
   const s = lerp(DEBUT_S, FIN_CAM.s, k);
   const fx = lerp(D.w / 2, CASE.x, k), ax = lerp(W / 2, FIN_CAM.ax, k);
   return { s, x: ax - fx * s, y: FIN_CAM.ay - fy * s };
@@ -150,7 +150,7 @@ function anneau(cx, cy, w, h, k, op) {
 
 // --- a : le mur, la case grise, le clic ------------------------------------------------------
 function partA(t) {
-  const CLIC = 3.2, NOIR = 3.35, NOIR_FIN = 3.8;
+  const CLIC = 2.9, NOIR = 3.05, NOIR_FIN = 3.5;
   mur(t, IM.m199);
   const f = E.cubicInOut(seg(0.15, 0.7, t));
   if (f < 1) {
@@ -163,14 +163,14 @@ function partA(t) {
   }
   ctx.save(); ctx.globalAlpha = f; voiles(); ctx.restore();
   anciennePhrase(t);
-  phrase(t, 1.85);
+  phrase(t, 1.55);
   const [cx, cy] = versEcran(t, CASE.x, CASE.y);
   const cw = D.carte.w * camera(t).s, ch = D.carte.h * camera(t).s;
   // l'appel sur la case : une onde, puis la fleche qui vient cliquer
-  if (t > 2.35 && t < 3.0) anneau(cx, cy, cw, ch, E.expoOut(seg(2.35, 3.0, t)), 1 - seg(2.45, 3.0, t));
+  if (t > 2.05 && t < 2.7) anneau(cx, cy, cw, ch, E.expoOut(seg(2.05, 2.7, t)), 1 - seg(2.15, 2.7, t));
   const presse = t >= CLIC ? clamp(1 - Math.abs(t - CLIC - 0.06) / 0.08, 0, 1) : 0;
-  if (t > 2.45) {
-    const k = E.expoInOut(seg(2.45, CLIC - 0.03, t));
+  if (t > 2.15) {
+    const k = E.expoInOut(seg(2.15, CLIC - 0.03, t));
     curseur(lerp(1500, cx + 20, k), lerp(1150, cy + 20, k), presse);
   }
   ctx.drawImage(IM.logo, 0, 0, W, H);
@@ -219,7 +219,7 @@ function seek(t) {
   (V === 'a' ? partA : partC)(t);
   return true;
 }
-const ACTIF = { a: [[0.15, 2.3, 200], [2.35, 3.35, 60], [3.35, 3.85, 200]], c: [[0, 1.0, 120], [1.95, 2.4, 200]] }[V];
+const ACTIF = { a: [[0.15, 2.0, 200], [2.05, 3.05, 60], [3.05, 3.55, 200]], c: [[0, 1.0, 120], [1.95, 2.4, 200]] }[V];
 window.__motion = (t0, t1) => {
   let px = 0;
   for (const [a, b, p] of ACTIF) if (t1 > a && t0 < b) px = Math.max(px, p);

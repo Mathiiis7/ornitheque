@@ -8,10 +8,10 @@ import pathlib, subprocess, sys
 
 SORTIE = sys.argv[1]
 SCENES = pathlib.Path(".onetake/v2/scenes")
-ENTREES = [".onetake/v2-brouillon5.mp4", ".onetake/mur-a.mp4", "debloque", ".onetake/mur-c.mp4", "trophee"]
+ENTREES = [".onetake/v2-brouillon5.mp4", ".onetake/mur-a.mp4", "debloque", ".onetake/mur-c.mp4", "trophee", ".onetake/m3-e.mp4"]
 # (debut, fin, vitesse) en secondes de la scene. Debloque : drapeau, famille, rarete, puis la carte.
 # Trophee : la montee du palier, puis la fenetre « Ornithologue chevronne ».
-COUPES = {"debloque": [(0, 5.0, 1.7), (5.0, 6.5, 1)], "trophee": [(0.45, 6.2, 1.4), (6.2, 7.6, 1)]}
+COUPES = {"debloque": [(0, 5.0, 1.4), (5.0, 6.5, 1)], "trophee": [(0.45, 6.2, 1.4), (6.2, 7.6, 1)]}
 
 args, filtres, noms = ["ffmpeg", "-y", "-loglevel", "error"], [], []
 for k, e in enumerate(ENTREES):
@@ -24,7 +24,9 @@ for k, e in enumerate(ENTREES):
         filtres.append("".join(parts) + f"concat=n={len(parts)}:v=1:a=0[m{k}]")
     else:
         args += ["-i", e]
-        filtres.append(f"[{k}:v]fps=30,format=yuv420p,setsar=1[m{k}]")
+        # le repos final du moment 2 raccourci : la transition vers le mur paraissait longue (Mathis, 2026-10-31)
+        coupe = "trim=0:15.1,setpts=PTS-STARTPTS," if k == 0 else ""
+        filtres.append(f"[{k}:v]{coupe}fps=30,format=yuv420p,setsar=1[m{k}]")
     noms.append(f"[m{k}]")
 filtres.append("".join(noms) + f"concat=n={len(noms)}:v=1:a=0[sortie]")
 args += ["-filter_complex", ";".join(filtres), "-map", "[sortie]", "-c:v", "libx264", "-crf", "18", "-preset", "medium", "-pix_fmt", "yuv420p", SORTIE]

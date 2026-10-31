@@ -13,11 +13,13 @@ OUT.mkdir(parents=True, exist_ok=True)
 for f in M3.glob("*.png"):
     shutil.copy2(f, OUT / f.name)
 shutil.copy2(SKILL / "lib" / "motion.js", OUT / "motion.js")
+# la derniere image de la scene du trophee retenue par montage-v2.py : le classement part de la
+shutil.copy2(pathlib.Path(".onetake/v2/scenes/trophee") / f"{round(7.6 * 30):04d}.jpg", OUT / "trophee-fin.jpg")
 shutil.copy2(".onetake/film2/police-v2.js", OUT / "police-v2.js")
 donnees = json.loads((M3 / "m3.json").read_text(encoding="utf-8"))
 (OUT / "donnees-m3.js").write_text("window.M3 = " + json.dumps(donnees, separators=(",", ":"), ensure_ascii=False) + ";\n", encoding="utf-8")
 src = SRC.read_text(encoding="utf-8")
-for v in "abcd":
+for v in "abcde":
     (OUT / f"comp-{v}.html").write_text(src.replace("__VARIANTE__", v), encoding="utf-8")
 r = subprocess.run([sys.executable, str(SKILL / "scripts" / "look.py"), "apply", str(pathlib.Path(".onetake/look-ornitheque.json").resolve()), str((OUT / "comp-a.html").resolve())],
                    capture_output=True, text=True, encoding="utf-8", errors="replace",
