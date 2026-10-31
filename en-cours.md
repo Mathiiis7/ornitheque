@@ -1,6 +1,6 @@
 # Où on en est (2026-10-30)
 
-Dernière version : v988 / app.js?v=560. Prochaine : v989 / 561. Historique complet jusqu'à ce jour :
+Dernière version : v989 / app.js?v=561. Prochaine : v990 / 562. Historique complet jusqu'à ce jour :
 `archives/en-cours-jusqu-au-2026-10-30.md` (y chercher un mot plutôt que le lire en entier, 85 000 jetons).
 Ce fichier se remplace à chaque fin de tâche : quelques lignes, pas un journal.
 
@@ -13,9 +13,12 @@ Ce fichier se remplace à chaque fin de tâche : quelques lignes, pas un journal
   Lignes de morphologie retirées (v983), « Patte » pour le tarse (v984), comparaison aux oiseaux du monde (v987).
 - Mesures Avonet complétées (v986) : feuilles BirdLife et BirdTree pour les noms du site, plus les genres renommés
   (`outils/build/avonet-renommes.mjs`, même famille exigée) ; 657 oiseaux de plus, aucune mesure d'avant modifiée.
-  Restent sans : 2 oiseaux de France (Courlis hudsonien, Pipit de Sibérie) et ~430 étrangers, dont des espèces disparues.
-- Vu, pas corrigé : erreur Leaflet « _leaflet_pos » une fois en ouvrant et fermant des fiches très vite (essai
-  `_essai-traits-monde.mjs`), sans lien établi avec le radar.
+  v989 : 32 renommés de plus, chacun prouvé par GBIF (15) ou iNaturalist (17). SUJET CLOS par Mathis (31/10) : le reste
+  (2 oiseaux de France, ~400 étrangers, surtout disparus ou séparés) ne se rouvre pas sans source nouvelle.
+- Vu, pas corrigé : erreur Leaflet « _leaflet_pos » en fermant des fiches, dans la console seulement. Elle existait
+  avant le radar (mesuré, `_essai-leaflet-pos.mjs` : 13 sur la version 6a098c43, 11 sur v988, 21 en laissant chaque
+  fiche 3 s). Pile : `_onZoomTransitionEnd`, une animation de zoom finit sur une carte déjà retirée. Elle fait échouer
+  `_essai-traits-monde.mjs` par moments.
 - Taille comparée par silhouettes : abandonnée, maquette dans `notes-privees/maquettes/taille-silhouettes/`.
 
 ## Décidé le 30/10

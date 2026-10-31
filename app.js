@@ -7983,7 +7983,7 @@ async function _loadAvonetTraits(){
   if(_avonetTraitsPromise) return _avonetTraitsPromise;
   _avonetTraitsPromise = (async () => {
     try{
-      const d = await fetch('data/avonet_traits.json?v=20261031').then(r => {
+      const d = await fetch('data/avonet_traits.json?v=20261031b').then(r => {
         if(!r.ok) throw new Error('HTTP '+r.status);
         return r.json();
       });

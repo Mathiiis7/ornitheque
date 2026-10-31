@@ -2,7 +2,7 @@
 // ceux qui ont des mesures, y compris un genre renommé ; rien mais sans erreur pour un oiseau disparu.
 // node outils/verif/_essai-traits-monde.mjs
 import { chromium } from 'playwright';
-const AVEC = ['dacelo novaeguineae', 'dromaius novaehollandiae', 'struthio camelus', 'anarhynchus mongolus', 'aegithalos exilis', 'turdus migratorius', 'spheniscus magellanicus', 'trochilus polytmus'];
+const AVEC = ['daptrius chimango', 'pampusana stairi', 'emblema ruficauda', 'athene granti', 'dacelo novaeguineae', 'dromaius novaehollandiae', 'struthio camelus', 'anarhynchus mongolus', 'aegithalos exilis', 'turdus migratorius', 'spheniscus magellanicus', 'trochilus polytmus'];
 const SANS = ['acrocephalus astrolabii', 'akialoa stejnegeri'];
 const nav = await chromium.launch();
 let defauts = 0;
