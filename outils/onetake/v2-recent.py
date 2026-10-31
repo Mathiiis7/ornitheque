@@ -90,6 +90,13 @@ with sync_playwright() as p:
       #mapEl > :not(.leaflet-pane):not(.leaflet-control-container), #mapEl > :not(.leaflet-pane):not(.leaflet-control-container) * {{ visibility: hidden !important; }}
     """)
     page.evaluate("window.dispatchEvent(new Event('resize'))")
+    page.wait_for_timeout(1500)
+    # Un petit glissement : le voile de l'exterieur ne se redessine qu'au deplacement, il laissait un rectangle pale
+    page.mouse.move(700, 400)
+    page.mouse.down()
+    page.mouse.move(660, 400, steps=8)
+    page.mouse.up()
+    page.mouse.move(5, 5)
     page.wait_for_timeout(8000)
     points = page.evaluate("""() => [...document.querySelectorAll('#mapEl .leaflet-marker-icon')].map((e, i) => { e.dataset.film = i;
         const r = e.getBoundingClientRect(); return { i, x: r.x, y: r.y, w: r.width, h: r.height }; })""")
