@@ -7,12 +7,10 @@ Ce fichier se remplace à chaque fin de tâche : quelques lignes, pas un journal
 ## Reste ouvert
 - **En attente de réponse :** Cornell (22/10), LPO (23/10). Effacer l'historique des deux dépôts attend Cornell.
 
-- **Cadres d'avatar, ticket 61 de `qg`, maquette seulement, rien sur le site :** `notes-privees/maquettes/boutique/`
-  (`index.html` la vitrine, `revue.html` + `revue-variantes.js` la revue un par un, `cadres.js` les validés).
-  7 cadres normaux validés le 31/10. À faire, dans l'ordre : revoir un par un les 7 spectaculaires (`spectacle.js`,
-  même méthode : variantes tirées du dessin actuel, Mathis choisit ; `revue.html` ne sait pas encore afficher le grand
-  format) ; refaire la vitrine selon les règles de déblocage du ticket ; fixer les seuils et les prix ; mesurer la
-  fluidité. Il n'aime aucune chouette dessinée : la plus faible des spectaculaires reste « Effraie en vol ».
+- **Anneaux du classement, ticket 61 de `qg`, essai privé, rien sur le site :** `notes-privees/maquettes/boutique/podium.html`.
+  Les 5 premiers au nombre d'espèces : prismatique, diamant, or, argent, bronze, couleurs des paliers de trophées. Boutique,
+  graines, missions, cadres d'espèces et spectaculaires abandonnés le 31/10 après essai sur la démo : ne pas reproposer. Les
+  avatars ne se voient que sur la page Profil et au Tchat (24 px). Reste : sa réponse sur l'essai, puis construire.
 
 ## Décidé le 31/10
 - Essai de la méthode qa-only (sans gstack, trop lourd) et critique Impeccable : `notes-privees/essai-qa-only/`. Les 8 bugs
