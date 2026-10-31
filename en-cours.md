@@ -8,7 +8,7 @@ Ce fichier se remplace à chaque fin de tâche : quelques lignes, pas un journal
 - **En attente de réponse :** Cornell (22/10), LPO (23/10). Effacer l'historique des deux dépôts attend Cornell.
 
 - **Anneaux du classement, ticket 61 de `qg`, essai privé, rien sur le site :** `notes-privees/maquettes/boutique/podium.html`.
-  Les 5 premiers au nombre d'espèces : prismatique, diamant, or, argent, bronze, couleurs des paliers de trophées. Boutique,
+  Les 3 premiers au nombre d'espèces : or, argent, bronze (diamant et prismatique essayés puis écartés le 31/10). Boutique,
   graines, missions, cadres d'espèces et spectaculaires abandonnés le 31/10 après essai sur la démo : ne pas reproposer. Les
   avatars ne se voient que sur la page Profil et au Tchat (24 px). Reste : sa réponse sur l'essai, puis construire.
 
