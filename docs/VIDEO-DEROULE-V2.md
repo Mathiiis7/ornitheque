@@ -88,6 +88,7 @@ Classement et grille : variante e de `comp-m3.html`. Fiche et chant : variante f
 |---|---|---|
 | Photo de l'Accenteur alpin, Alessandro | CC BY-NC | iNaturalist 59007262 |
 | Chant de l'Accenteur alpin, Benjamin Drillat | CC BY-NC-SA 4.0, lue sur sa page le 31/10 | xeno-canto XC982627 |
+| Chant du quiz, Jerome Fischer (change à chaque prise de `v2-recent.py`) | CC BY-NC-SA 4.0, lue sur sa page le 31/10 | xeno-canto XC807845 |
 
 Retours du même jour : pour le film seulement, à 200 Alex passe premier (`demo199.PLAFONDS` : Samir 199, Claire 187, Hugo 172, Lina 156) et il remonte du dernier rang à la tête ;
 la scène de la carte se fond sur une image où ses rayons sont reconstruits autour d'elle (`assemble-mur.py`). Observations récentes et quiz : variante g, `v2-recent.py`.

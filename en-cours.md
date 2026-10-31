@@ -24,7 +24,7 @@ Ce fichier se remplace à chaque fin de tâche : quelques lignes, pas un journal
   par une photo libre de la même espèce, le film ne doit pas les montrer~~ ; ~~3a. Birdydex, scène espèce débloquée, 200, scène trophée~~ fait :
   validé par Mathis à deux retouches près, faites (`v2-mur.py`, `assemble-mur.py`, `film/comp-mur.html`, `montage-v2.py`) ; les scènes sont prises en
   1080p, à reprendre en double définition pour le rendu final ; ~~3b. classement A sans Marco Polo enchaîné à D~~ fait, variante e de `comp-m3.html`,
-  ~~3c. étape Trophées et retour fluide~~ et ~~3d. fiche et chant, variante f, `v2-fiche.py`~~ faits ; ~~3e. Alex premier à 200, récent et quiz, variante g, `v2-recent.py`~~ faits, brouillon `.onetake/v2-brouillon9.mp4`, 58 s, à valider ; reste logo final, son, crédits ;
+  ~~3c. étape Trophées et retour fluide~~ et ~~3d. fiche et chant, variante f, `v2-fiche.py`~~ faits ; ~~3e. Alex premier à 200, récent et quiz, variante g, `v2-recent.py`~~ faits, brouillon `.onetake/v2-brouillon9.mp4`, 58 s, à valider ; défaut connu : rectangle très pâle autour de la Bretagne, cause non trouvée (ni le voile, ni le rechargement des tuiles) ; reste logo final, son, crédits ;
   l'ancienne étape fiche : la fiche (clic sur une espèce non vue par Alex, carte et mois, chant) ; 4. rendre chaque
   morceau et les coller avec ffmpeg, chaque fin raccordant au début suivant ; 5. faire valider, puis récent, quiz, logo, son, crédits.
 

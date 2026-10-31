@@ -90,8 +90,8 @@ with sync_playwright() as p:
       #mapEl > :not(.leaflet-pane):not(.leaflet-control-container), #mapEl > :not(.leaflet-pane):not(.leaflet-control-container) * {{ visibility: hidden !important; }}
     """)
     page.evaluate("window.dispatchEvent(new Event('resize'))")
-    # Un zoom avant puis arriere : les tuiles chargees avant l'agrandissement gardent un fin liseré clair a leur
-    # bord exterieur, qui dessinait un rectangle sur la carte (trouve en retirant les plans un par un, 2026-10-31).
+    # Un zoom avant puis arriere pour recharger les tuiles apres l'agrandissement. Un rectangle tres pale reste
+    # autour de la Bretagne, cause non trouvee : ni le voile (le retirer le rend plus net), ni ce rechargement.
     page.wait_for_timeout(1000)
     page.evaluate("document.querySelector('#mapEl .leaflet-control-zoom-in').click()")
     page.wait_for_timeout(2000)
