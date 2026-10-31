@@ -24,7 +24,7 @@ for(const [largeur, theme] of [[1300, 'light'], [375, 'light'], [1300, 'dark']])
       return { phrase:b.querySelector('.sm-rd-phrase').textContent, valeurs:[...s.querySelectorAll('.sm-rd-val')].map(x => x.textContent), masse:b.textContent.includes('Masse'), large:Math.round(c.width), haut:Math.round(r.height), police:(14 * r.width / s.viewBox.baseVal.width).toFixed(1),
         dehors:[...s.querySelectorAll('text')].filter(t => { const q = t.getBoundingClientRect(); return q.left < c.left - .5 || q.right > c.right + .5; }).length, pagedeborde:document.documentElement.scrollWidth > innerWidth + 1 }; });
     console.log('  ', nom, JSON.stringify(m));
-    if(m){ if(m.phrase !== phrase) ecart(`phrase de ${nom} : ${m.phrase}`); if(m.valeurs.length !== 5 || !m.masse) ecart('valeurs ou lignes manquantes'); if(m.dehors || m.pagedeborde) ecart('débordement'); if(+m.police < 11) ecart('texte trop petit ' + m.police); }
+    if(m){ if(m.phrase !== phrase) ecart(`phrase de ${nom} : ${m.phrase}`); if(m.valeurs.length !== 5) ecart('valeurs manquantes'); if(m.masse) ecart('la ligne Masse est encore là'); if(m.dehors || m.pagedeborde) ecart('débordement'); if(+m.police < 11) ecart('texte trop petit ' + m.police); }
     if(nom === 'Héron cendré'){
       await p.evaluate(() => document.querySelector('#smTraitsCard .sm-radar').scrollIntoView({ block:'center' })); await p.waitForTimeout(400);
       if(!mobile){ const g = p.locator('#smTraitsCard .sm-radar g[data-tip]').nth(3); await g.hover({ force:true }); await p.waitForTimeout(700);

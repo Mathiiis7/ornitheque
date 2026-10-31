@@ -16107,8 +16107,11 @@ function _wireCustomAudioPlayer(playerEl){
 // poids, le gabarit : en mesures brutes, héron et cygne remplissaient tout le cercle et se ressemblaient.
 // Le poids reste brut, c'est lui qui dit le gabarit, et il n'entre pas dans la phrase.
 const MORPHO_AXES = [
-  { nom:'Poids', c:'ma' }, { nom:'Aile', c:'wi', long:'longues ailes', court:'ailes courtes' }, { nom:'Bec', c:'bl', long:'long bec', court:'bec court' },
-  { nom:'Tarse', c:'ta', long:'longues pattes', court:'pattes courtes' }, { nom:'Queue', c:'tail', long:'longue queue', court:'queue courte' },
+  { nom:'Poids', c:'ma', aide:'Masse corporelle moyenne (adulte).' },
+  { nom:'Aile', c:'wi', long:'longues ailes', court:'ailes courtes', aide:'Aile pliée, du poignet à l\'extrémité de la plus grande rémige.' },
+  { nom:'Bec', c:'bl', long:'long bec', court:'bec court', aide:'Culmen : arête supérieure du bec, du front à la pointe.' },
+  { nom:'Tarse', c:'ta', long:'longues pattes', court:'pattes courtes', aide:'Tarse : la partie de la patte entre le talon et les doigts.' },
+  { nom:'Queue', c:'tail', long:'longue queue', court:'queue courte', aide:'De la base à l\'extrémité de la plus longue rectrice.' },
 ];
 const _morphoValeur = (t, c) => c === 'ma' ? t.ma : t[c] / Math.cbrt(t.ma);
 let _morphoRef = null;
@@ -16143,7 +16146,7 @@ function _morphoRadarHtml(t, traits, ecrit){
   const rayons = MORPHO_AXES.map((_, i) => { const [x, y] = pt(i, 1); return `<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" class="sm-rd-rayon"/>`; }).join('');
   const marques = points.map(([x, y], i) => {
     const pct = Math.round(places[i] * 100), a = MORPHO_AXES[i];
-    return `<g data-tip="${a.nom} : ${ecrit(a.c)}, ${i ? 'pour son gabarit, ' : ''}au-dessus de ${pct} % des oiseaux de France"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="14" fill="transparent"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" class="sm-rd-pt"/></g>`;
+    return `<g data-tip="${a.nom} : ${ecrit(a.c)}, ${i ? 'pour son gabarit, ' : ''}au-dessus de ${pct} % des oiseaux de France. ${esc(a.aide)}"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="14" fill="transparent"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" class="sm-rd-pt"/></g>`;
   }).join('');
   const textes = MORPHO_AXES.map((a, i) => {
     const [x, y] = pt(i, 1.13), dx = x - cx, ancre = Math.abs(dx) < 6 ? 'middle' : dx > 0 ? 'start' : 'end', y0 = i === 0 ? y - 17 : y;
@@ -16227,6 +16230,8 @@ async function _renderSpeciesTraitsCard(key){
   const petitEmoji = (v) => String(v).replace(/^(\p{Extended_Pictographic}️?)\s*/u,
     '<span style="font-size:.82em; vertical-align:1px;">$1</span> ');
   const renderLine = ({k, v, hint}) => `<div style="display:flex; justify-content:space-between; gap:12px; padding:3px 0; font-size:13px;"><span style="color:var(--ink-3);${hint?' cursor:help;':''}"${hint?` data-tip="${esc(hint)}"`:''}>${esc(k)}</span><span style="color:var(--ink); font-weight:600; text-align:right;">${petitEmoji(v)}</span></div>`;
+  // Le radar redit ces chiffres (Mathis, 2026-10-31) : les lignes ne restent que pour un oiseau sans radar.
+  const radarMorpho = _morphoRadarHtml(t, traits, c => c === 'ma' ? `${round(t.ma)} g` : `${cm(t[c])} cm`);
   box.innerHTML = `
     <div class="sm-card-title" style="display:flex; align-items:center; gap:8px;">Traits <span style="font-size:10.5px; color:var(--ink-3); text-transform:none; font-weight:400; letter-spacing:0;">- Avonet (Tobias et al. 2022)</span></div>
     ${ecoLines.length ? `
@@ -16237,8 +16242,7 @@ async function _renderSpeciesTraitsCard(key){
     ${morphLines.length ? `
       <div style="margin-top:${ecoLines.length ? '10px':'4px'};">
         <div style="font-size:10.5px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.5px; font-weight:700; margin-bottom:4px;">Morphologie</div>
-        ${morphLines.map(renderLine).join('')}
-        ${_morphoRadarHtml(t, traits, c => c === 'ma' ? `${round(t.ma)} g` : `${cm(t[c])} cm`)}
+        ${radarMorpho || morphLines.map(renderLine).join('')}
       </div>` : ''}
   `;
   box.hidden = false;

@@ -3,7 +3,7 @@
 //   puis rafraichit en background. Prochain reload = nouvelle version.
 // - Requetes cross-origin (Firestore, iNaturalist, xeno-canto, Wikipedia, etc.) : reseau seul.
 // - Bump CACHE_VERSION quand on veut invalider volontairement.
-const CACHE_VERSION = 'v982-2026-10-31-empreinte-morpho';
+const CACHE_VERSION = 'v983-2026-10-31-morpho-sans-lignes';
 const CACHE_NAME = 'lmb-' + CACHE_VERSION;
 
 // Cache des fichiers de donnees, volontairement SANS CACHE_VERSION dans son nom.

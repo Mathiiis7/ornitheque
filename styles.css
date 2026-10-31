@@ -1401,7 +1401,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .species-modal .sm-card:last-child { margin-bottom:0; }
   .species-modal .sm-card-title { font:700 13px/1.2 var(--sans); text-transform:uppercase; letter-spacing:.4px; color:var(--ink-3); margin:0 0 10px; }
   /* L'empreinte morphologique de la carte Traits : la forme passe devant ses repères, le texte reste en encre. */
-  .sm-radar { margin-top:10px; }
+  .sm-radar { margin-top:2px; }
   .sm-radar svg { display:block; width:100%; max-width:320px; height:auto; margin:0 auto; overflow:visible; }
   .sm-rd-phrase { margin:0 0 4px; font-size:14px; color:var(--ink-2); }
   .sm-rd-note { margin:4px 0 0; font-size:14px; line-height:1.35; color:var(--ink-3); }
