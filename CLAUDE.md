@@ -326,7 +326,9 @@ concerne le doigt vit dans un `@media (pointer: coarse)` en fin de `styles.css` 
 à la souris ne bouge pas. **`pointer: coarse` ne se simule pas avec `hasTouch`** : il faut
 `isMobile: true`, sinon on mesure l'affichage souris en croyant mesurer le doigt. Le banc
 `accessibilite` vérifie les deux à la fois, et refait au passage le tour de ce qu'un lecteur
-d'écran annonce (région vivante, rangées d'onglets, noms des commandes).
+d'écran annonce (région vivante, rangées d'onglets, noms des commandes). **Le `<style>` d'`index.html`
+est lu après `styles.css`** : à spécificité égale, il annule le bloc du doigt ; les icônes de la barre
+sont restées à 36 px sans que le banc, qui mesurait un témoin, le voie (2026-10-31).
 
 **Une capture `fullPage` de Playwright retire l'émulation mobile le temps de la photo** : le banc
 `pastilles` mesurait « au doigt » l'affichage souris sans le dire (2026-10-23). Capturer écran par
