@@ -7,9 +7,21 @@ Ce fichier se remplace à chaque fin de tâche : quelques lignes, pas un journal
 ## Reste ouvert
 - **En attente de réponse :** Cornell (22/10), LPO (23/10). Effacer l'historique des deux dépôts attend Cornell.
 - **Vidéo (ticket 39) :** moments 1 et 2 refaits sur le site actuel, brouillon `.onetake/v2-brouillon4.mp4` à valider par Mathis ;
-  détail dans `docs/VIDEO-DEROULE-V2.md`. **Moment 3 :** 4 essais à comparer, `.onetake/m3-a.mp4` à `m3-d.mp4` (a le 212 double Lina et
-  trophée, b la course, c le trophée, d Qui a vu quoi) ; Mathis choisit, puis on l'intègre au film et on supprime les autres.
-  Fabrication : `outils/onetake/v2-m3.py`, `assemble-m3.py`, `film/comp-m3.html`. Ensuite moments 4 à 9, son et crédits.
+  détail dans `docs/VIDEO-DEROULE-V2.md`. **Nouvel ordre décidé par Mathis (31/10) :** ouverture ; carte, compteur à 199 ; Birdydex à
+  199, case du Martin-pêcheur grise ; vraie scène « espèce débloquée », 200 ; vraie scène « Palier atteint » Ornithologue chevronné
+  (seuil 200 d'`app.js`) ; classement version A sans sa carte Marco Polo, le 200 double Lina ; Qui a vu quoi (version D) ; clic sur une
+  espèce vue par les amis et pas par Alex, sa fiche avec carte et mois, puis le chant ; ensuite récent, quiz, logo, son, crédits.
+  199 s'obtient en retirant 13 espèces d'Alex au moment des prises seulement (la démo en ligne reste à 212), Martin-pêcheur compris,
+  donc la dernière photo du moment 2 change. Fabrication : `outils/onetake/v2-site.py`, `v2-m3.py`, `assemble-m3.py`, `film/comp-m3.html`.
+  **Prouvé :** `demo199.py` donne bien 199 sur le site ; `v2-scenes.py` ajoute le Martin-pêcheur par le vrai parcours (case grise, fiche,
+  formulaire) et prend les deux vraies scènes image par image, animations en pause (`--essai` testé, une image toutes les 0,5 s ; scène
+  espèce 7,1 s, scène trophée 9,5 s dont la fin fixe se coupe). Birdydex passe à 200, trophée « Ornithologue chevronné » joué.
+  **Reste, dans l'ordre :** 1. brancher `demo199.installe(ctx)` dans `v2-site.py` et `v2-m3.py`, TOTAL 199 dans `comp-v2.html`, Rougegorge
+  (Indre) à la place du Martin en dernière photo, Alex à 200 dans le classement ; 2. **licences :** le mur du Birdydex et les petites
+  photos du classement montrent des BY-SA, ND ou inconnues (34 cartes sur 212, plus 9 Wikimedia à vérifier) : les remplacer à la prise
+  par une photo libre de la même espèce, le film ne doit pas les montrer ; 3. composer le Birdydex (mur, caméra sur la case grise), une
+  variante A sans Marco Polo enchaînée à D, puis la fiche (clic sur une espèce non vue par Alex, carte et mois, chant) ; 4. rendre chaque
+  morceau et les coller avec ffmpeg, chaque fin raccordant au début suivant ; 5. faire valider, puis récent, quiz, logo, son, crédits.
 
 ## Décidé le 31/10
 - **Anneaux du classement, SUJET CLOS (v993, ticket 61) :** or, argent, bronze sur l'avatar des 3 premiers au nombre d'espèces.
