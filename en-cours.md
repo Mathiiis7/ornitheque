@@ -6,6 +6,8 @@ Ce fichier se remplace à chaque fin de tâche : quelques lignes, pas un journal
 
 ## Reste ouvert
 - **En attente de réponse :** Cornell (22/10), LPO (23/10). Effacer l'historique des deux dépôts attend Cornell.
+- **Vidéo (ticket 39) :** moments 1 et 2 refaits sur le site actuel, brouillon `.onetake/v2-brouillon2.mp4` à valider par Mathis ;
+  détail dans `docs/VIDEO-DEROULE-V2.md`. Ensuite moments 3 à 9, toujours depuis le site actuel, puis son et crédits.
 
 ## Décidé le 31/10
 - **Anneaux du classement, SUJET CLOS (v993, ticket 61) :** or, argent, bronze sur l'avatar des 3 premiers au nombre d'espèces.

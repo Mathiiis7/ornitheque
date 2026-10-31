@@ -34,6 +34,27 @@ s'écrit. Aucune image extérieure à créditer pour l'ouverture.
   chaque passage) reste à écrire moment par moment, comme pour la v1.
 - **Les phrases** : trois variantes par phrase à proposer à Mathis, il choisit.
 
+## Moments 1 et 2 refaits sur le site actuel (2026-10-31)
+
+Brouillon `.onetake/v2-brouillon2.mp4` : 15,8 s, 474 images, sans son, oracle PASS, 62 % d'images immobiles, plus long
+repos 3,6 s. Refaire : `v2-site.py`, `assemble-v2.py`, puis `render.py .onetake/film2/comp.html --workers 4 --samples-max 24
+--gap 16` (241 s). **Ne plus partir des prises du 01/10** (`composants.py`, `.onetake/film/assets/c/`) : Mathis veut le site actuel.
+
+- **Logo :** les tracés de `assets/logos/logo.svg`, dans leur ordre, l'image finale est le vrai logo. L'iris part de son œil.
+- **Police :** Source Serif 4 Bold, celle des titres du site, choisie parmi trois (`v2-polices.py`).
+- **Carte :** la couche « La ligue » sur la France, 50 anneaux pris un à un, 212 sur **467** (466 avant).
+- **Rythme :** trois salves d'anneaux séparées de vrais arrêts ; le compteur ne bouge que quand un anneau se pose.
+- **Cartes du Birdydex :** prises telles quelles, découpées à l'arrondi du site (12 px x 0,85 x 2 = 20,4).
+
+| Carte | Licence | Photo iNaturalist |
+|---|---|---|
+| Martin-pêcheur d'Europe | CC BY-NC-SA | lire `src` dans `.onetake/v2/site/cartes-gardees.json` |
+| Flamant rose, Guêpier d'Europe, Cigogne blanche, Rougegorge familier | CC BY-NC | idem |
+
+Le site montre aussi des licences interdites au film (BY-SA 17, BY-NC-ND 16, BY-ND 1, Wikimedia 9 à vérifier, inconnue 1
+sur 212) : `v2-site.py` écarte tout ce qui n'est pas cc0, pd, cc-by, cc-by-nc ou cc-by-nc-sa. Les auteurs et le fond
+OpenStreetMap restent à créditer à l'étape des crédits. Suite : moments 3 à 9, à reprendre aussi depuis le site actuel, puis son et crédits.
+
 ## Repris de la v1
 
 - Le compteur 0 → total de l'essai du 2026-10-02, sans sa caméra fixe ni l'absence de main.
