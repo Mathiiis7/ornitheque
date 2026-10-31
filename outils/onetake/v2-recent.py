@@ -90,10 +90,13 @@ with sync_playwright() as p:
       #mapEl > :not(.leaflet-pane):not(.leaflet-control-container), #mapEl > :not(.leaflet-pane):not(.leaflet-control-container) * {{ visibility: hidden !important; }}
     """)
     page.evaluate("window.dispatchEvent(new Event('resize'))")
-    # Sans le voile qui eclaircit l'exterieur : sur la carte agrandie il s'arrete net et dessine un rectangle
-    # pale, meme apres un deplacement. Le contour de la region suffit a la detacher.
-    page.add_style_tag(content=".leaflet-ctVoile-pane { display: none !important; }")
-    page.wait_for_timeout(8000)
+    # Un zoom avant puis arriere : les tuiles chargees avant l'agrandissement gardent un fin liseré clair a leur
+    # bord exterieur, qui dessinait un rectangle sur la carte (trouve en retirant les plans un par un, 2026-10-31).
+    page.wait_for_timeout(1000)
+    page.evaluate("document.querySelector('#mapEl .leaflet-control-zoom-in').click()")
+    page.wait_for_timeout(2000)
+    page.evaluate("document.querySelector('#mapEl .leaflet-control-zoom-out').click()")
+    page.wait_for_timeout(9000)
     points = page.evaluate("""() => [...document.querySelectorAll('#mapEl .leaflet-marker-icon')].map((e, i) => { e.dataset.film = i;
         const r = e.getBoundingClientRect(); return { i, x: r.x, y: r.y, w: r.width, h: r.height }; })""")
     clip_carte = {"x": 0, "y": 0, "width": CARTE["w"], "height": CARTE["h"]}
