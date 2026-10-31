@@ -298,19 +298,10 @@ function charge(cle, src) {
   });
 }
 window.__ready = (async () => {
-  const jobs = [charge('m199', 'mur-199.jpg'), charge('page', 'page-200.png'), charge('tro0', 'trophee-debut.jpg'), charge('rayons', 'debloque-rayons.jpg'), charge('carte', 'carte-nue.png'),
+  const jobs = [charge('m199', 'mur-199.jpg'), charge('page', 'page-200.png'), charge('tro0', 'trophee-debut.jpg'), charge('sceneSans', 'debloque-sans-carte.jpg'), charge('carte', 'carte-nue.png'),
     charge('logo', 'logo-nom.png'), charge('martin', 'carte-martin.png'), charge('scene', 'debloque-fin.jpg')];
   document.fonts.add(await new FontFace('Source Serif Film', 'url(' + window.POLICE_TITRE + ')', { weight: '700' }).load());
   await Promise.all(jobs);
-  // La scene sans sa carte, composee une fois pour toutes : la carte vole deja. Boucher sa place pendant le
-  // fondu ne suffit pas, le bouche-trou devient transparent lui aussi et la carte reapparait au travers.
-  const sans = document.createElement('canvas');
-  sans.width = W; sans.height = H;
-  const c2 = sans.getContext('2d');
-  c2.drawImage(IM.scene, 0, 0, W, H);
-  const SC = D.carteScene, ech = IM.rayons.width / W, m = 10;
-  c2.drawImage(IM.rayons, (SC.x - m) * ech, (SC.y - m) * ech, (SC.w + 2 * m) * ech, (SC.h + 2 * m) * ech, SC.x - m, SC.y - m, SC.w + 2 * m, SC.h + 2 * m);
-  IM.sceneSans = sans;
   if (window.LOOK.ready) await window.LOOK.ready;
   await document.fonts.ready;
   return seek(0);

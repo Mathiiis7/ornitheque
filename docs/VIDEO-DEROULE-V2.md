@@ -89,6 +89,10 @@ Classement et grille : variante e de `comp-m3.html`. Fiche et chant : variante f
 | Photo de l'Accenteur alpin, Alessandro | CC BY-NC | iNaturalist 59007262 |
 | Chant de l'Accenteur alpin, Benjamin Drillat | CC BY-NC-SA 4.0, lue sur sa page le 31/10 | xeno-canto XC982627 |
 
+Retours du même jour : pour le film seulement, à 200 Alex passe premier (`demo199.PLAFONDS` : Samir 199, Claire 187, Hugo 172, Lina 156) et il remonte du dernier rang à la tête ;
+la scène de la carte se fond sur une image où ses rayons sont reconstruits autour d'elle (`assemble-mur.py`). Observations récentes et quiz : variante g, `v2-recent.py`.
+Le quiz retenu est une manche tirée au hasard où le premier choix est le bon. Le chant et les noms changent donc à chaque prise, et la licence du chant se vérifie après la prise.
+
 Le site donne ce même enregistrement au chant et au cri : `v2-fiche.py` masque la rangée du cri à la prise, le film ne montre que le chant.
 
 ## Repris de la v1

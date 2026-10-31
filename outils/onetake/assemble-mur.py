@@ -32,14 +32,27 @@ shutil.copy2(SKILL / "lib" / "motion.js", OUT / "motion.js")
 shutil.copy2(".onetake/film2/police-v2.js", OUT / "police-v2.js")
 shutil.copy2(SCENES / "debloque" / f"{round(DEBLOQUE_FIN_S * 30):04d}.jpg", OUT / "debloque-fin.jpg")
 shutil.copy2(SCENES / "birdydex-200.png", OUT / "page-200.png")
-# a 2 s la scene ne montre que ses rayons : de quoi boucher la place de la carte
-shutil.copy2(SCENES / "debloque" / "0060.jpg", OUT / "debloque-rayons.jpg")
 shutil.copy2(SCENES / "trophee" / "0000.jpg", OUT / "trophee-debut.jpg")
 # La carte dans la derniere image de la scene : ses vrais bords, lus sur les pixels clairs du centre
 # (les rayons de la scene ne depassent pas 150). Le film la fait partir de la, au pixel pres.
 fin = Image.open(OUT / "debloque-fin.jpg").convert("L").resize((1920, 1080))
 x0, y0, x1, y1 = fin.crop((600, 200, 1320, 900)).point(lambda v: 255 if v > 225 else 0).getbbox()
 carte_scene = {"x": 600 + x0, "y": 200 + y0, "w": x1 - x0, "h": y1 - y0}
+# La scene sans sa carte, pour le fondu : les rayons partent en etoile du centre de la carte, chaque pixel
+# de sa place reprend donc la couleur du meme rayon, juste a l'exterieur. Un morceau pris a un autre instant
+# ne raccordait pas : les rayons tournent, un rectangle sombre se voyait autour de la carte (Mathis, 2026-10-31).
+sans = Image.open(OUT / "debloque-fin.jpg").convert("RGB").resize((1920, 1080), Image.LANCZOS)
+M = 12
+gx0, gy0 = carte_scene["x"] - M, carte_scene["y"] - M
+gx1, gy1 = carte_scene["x"] + carte_scene["w"] + M, carte_scene["y"] + carte_scene["h"] + M
+cx, cy = carte_scene["x"] + carte_scene["w"] / 2, carte_scene["y"] + carte_scene["h"] / 2
+source = sans.copy()
+for y in range(gy0, gy1):
+    for x in range(gx0, gx1):
+        dx, dy = x - cx, y - cy
+        f = min((gx1 + 1 - cx) / abs(dx) if dx else 1e9, (gy1 + 1 - cy) / abs(dy) if dy else 1e9)
+        sans.putpixel((x, y), source.getpixel((min(1919, round(cx + dx * f)), min(1079, round(cy + dy * f)))))
+sans.save(OUT / "debloque-sans-carte.jpg", quality=95)
 donnees = {**json.loads((MUR / "mur.json").read_text(encoding="utf-8")),
            **json.loads((SITE / "compte.json").read_text(encoding="utf-8")),
            "noirDebloque": couleur(SCENES / "debloque" / "0000.jpg"),

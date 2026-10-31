@@ -18,13 +18,14 @@
 //   b : la course : les cinq nombres et leurs barres montent, les lignes se doublent.
 //   c : le trophee : le classement passe, la camera plonge dans la page Trophees.
 //   d : Qui a vu quoi : la grille se remplit case par case, la colonne d'Alex ressort.
-//   e : le montage retenu : part de la fenetre du trophee, le 200 double Lina, puis la grille.
+//   e : le montage retenu : part de la fenetre du trophee, le 200 fait passer Alex premier, puis la grille.
 //   f : suit e : le clic sur une espece que les amis ont vue, sa fiche, les mois, le chant.
+//   g : suit f : les observations recentes de la Bretagne, puis une manche du quiz.
 // Chacun part de la derniere image du moment 2 : le logo et le nom restent, le 212 survit.
 // Tout vient du site (v2-m3.py). Tout est une fonction PURE du temps.
 // =============================================================================
 const V = '__VARIANTE__';
-const DUR = { a: 7.8, b: 8.2, c: 8.2, d: 8.2, e: 7.6, f: 9.5 }[V];
+const DUR = { a: 7.8, b: 8.2, c: 8.2, d: 8.2, e: 8.1, f: 9.5, g: 7.8 }[V];
 window.__meta = { dur: DUR, fps: 30, w: 1920, h: 1080 };
 const W = 1920, H = 1080;
 const { clamp, lerp, spring } = OM;
@@ -38,9 +39,6 @@ const IM = {};
 const TB = window.M3.table, GR = window.M3.grille, TA = window.M3.tropheeAvant;
 const ALEX = TB.lignes.findIndex(l => l.moi), LINA = TB.lignes.findIndex(l => l.nom === 'Lina');
 const MAX = TB.lignes[0].n, N_ALEX = TB.lignes[ALEX].n;   // 200, lu sur le site : le Martin-pecheur vient d'entrer
-// Dans la demo Lina a 156 : Alex serait deja devant elle a 199. Pour le film seulement, elle est a 199,
-// et le 200e la double pour de vrai (choix de Mathis, 2026-10-31).
-TB.lignes[LINA].n = 199;
 
 // --- Le raccord avec le moment 2 ------------------------------------------------------------
 const SORTIE = 0.5, SORTIE_FIN = 1.15;         // la carte s'efface vers le fond
@@ -387,8 +385,8 @@ function varD(t) {
 
 // --- e : le montage retenu par Mathis (2026-10-31) ----------------------------------------------
 // La fenetre du trophee s'efface, le logo du site glisse a la place de celui du film, le compteur
-// revient, vole dans la ligne d'Alex, qui double Lina ; le classement monte, la grille le remplace.
-const CAM_E = [{ t0: 0, t1: 0, s: 1.4, x: 87, y: 262 }, { t0: 1.75, t1: 2.25, s: 2.05, x: 60, y: 245 }, { t0: 3.2, t1: 3.6, s: 1.4, x: 87, y: 262 }];
+// revient, vole dans la ligne d'Alex, qui remonte jusqu'a la tete ; le classement monte, la grille le remplace.
+const CAM_E = [{ t0: 0, t1: 0, s: 1.4, x: 87, y: 262 }, { t0: 1.75, t1: 2.25, s: 2.05, x: 60, y: 245 }, { t0: 3.7, t1: 4.1, s: 1.4, x: 87, y: 262 }];
 const LOGO_SITE = { x: 317, y: 21, taille: 47 };
 function logoPorte(t) {
   const k = E.expoInOut(seg(0, 0.7, t));
@@ -401,8 +399,25 @@ function logoPorte(t) {
   ctx.drawImage(IM.logo, 0, 0, W, H);
   ctx.restore();
 }
+// Les lignes sont prises a leur place finale, Alex en tete : le fond et le numero de leur case de rang
+// se repeignent selon la place qu'elles occupent a l'instant.
+const AUTRES = TB.lignes.map((_, i) => i).filter(i => i !== ALEX);
+const PASSE = [0.6, 0.49, 0.425, 0.36];          // l'instant ou Alex depasse chacun, depuis le debut de sa montee
+function caseRang(i, y, place, op) {
+  const l = TB.lignes[i], r = l.rang, P = TB.lignes[place];
+  const x0 = l.moi ? r.x + 3 : r.x;
+  const fond = /, 0\)$|transparent/.test(P.fondRang) ? '#fff' : P.fondRang;
+  ctx.save();
+  ctx.globalAlpha = op;
+  ctx.fillStyle = fond; ctx.fillRect(x0, y + 0.5, r.w - (x0 - r.x) - 0.5, r.h - 1);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = texte(700, 13 * ZOOM);
+  ctx.fillStyle = P.coulRang;
+  ctx.fillText(P.rangTxt, r.x + r.w / 2, y + r.h / 2 + 0.5);
+  ctx.restore();
+}
 function varE(t) {
-  const VOL = 0.95, POSE = 1.6, DOUBLE = 2.45, MONTE = 3.6, MONTE1 = 4.3, V0 = 4.25, V1 = 6.2, HALO = 6.45;
+  const VOL = 0.95, POSE = 1.6, DOUBLE = 2.45, MONTE = 4.1, MONTE1 = 4.8, V0 = 4.75, V1 = 6.7, HALO = 6.95;
   const sort = E.cubicInOut(seg(0.05, 0.5, t));
   if (sort < 1) {
     ctx.save();
@@ -411,7 +426,7 @@ function varE(t) {
     ctx.drawImage(IM.tro, 0, 0, W, H);
     ctx.restore();
   }
-  const kD = spring(t - DOUBLE, 0.62, 14);
+  const kA = E.expoInOut(seg(DOUBLE, DOUBLE + 0.85, t));
   const m = E.expoInOut(seg(MONTE, MONTE1, t));
   if (t > 0.35 && m < 1) {
     const cam = camera(CAM_E, t);
@@ -420,19 +435,27 @@ function varE(t) {
     ctx.translate(cam.x, cam.y - m * 900); ctx.scale(cam.s, cam.s);
     const a0 = arrivee(t, 0.4, 0);
     ctx.save(); ctx.translate(0, a0.dy); entete(a0.op); ctx.restore();
-    [0, 1, 2].forEach(i => { const a = arrivee(t, 0.4, i + 1); ligne(i, slotY[i] + a.dy, TB.lignes[i].n, a.op); });
-    const a = arrivee(t, 0.4, 4);
-    ligne(LINA, lerp(slotY[3], slotY[4], kD) + a.dy, TB.lignes[LINA].n, a.op);
+    AUTRES.forEach((i, j) => {
+      const a = arrivee(t, 0.4, j + 1);
+      // poussee d'une place a l'instant ou la ligne d'Alex la depasse
+      const passe = t > DOUBLE + PASSE[j];
+      const y = (passe ? lerp(slotY[j], slotY[j + 1], spring(t - DOUBLE - PASSE[j], 0.5, 20)) : slotY[j]) + a.dy;
+      ligne(i, y, TB.lignes[i].n, a.op);
+      caseRang(i, y, passe ? j + 1 : j, a.op);
+    });
     if (t >= POSE) {
       const p = spring(t - POSE, 0.5, 26);
+      const op = clamp((t - POSE) / 0.08, 0, 1);
+      const y = lerp(slotY[4], slotY[0], kA);
       ctx.save();
-      ctx.shadowColor = t > DOUBLE && t < DOUBLE + 0.5 ? 'rgba(21,32,30,0.25)' : 'transparent';
+      ctx.shadowColor = t > DOUBLE && t < DOUBLE + 0.9 ? 'rgba(21,32,30,0.25)' : 'transparent';
       ctx.shadowBlur = 16;
       ctx.translate(0, (1 - p) * 8);
-      ligne(ALEX, lerp(slotY[4], slotY[3], kD), N_ALEX, clamp((t - POSE) / 0.08, 0, 1));
+      ligne(ALEX, y, N_ALEX, op);
+      ctx.shadowColor = 'transparent';
+      caseRang(ALEX, y, Math.round((y - slotY[0]) / (slotY[1] - slotY[0])), op);
       ctx.restore();
     }
-    if (t > 0.7) rangs(t >= POSE ? null : [0, 1, 2, 3]);
     ctx.restore();
   }
   if (t > MONTE) {
@@ -601,7 +624,120 @@ function varF(t) {
   curseur(cxc + 6, cyc + 6, presse, seg(0.02, 0.2, t) * (1 - seg(F.JOUE + 0.4, F.JOUE + 0.7, t)));
 }
 
-const VAR = { a: varA, b: varB, c: varC, d: varD, e: varE, f: varF }[V];
+// --- g : les observations recentes, puis le quiz -------------------------------------------------
+// Le tiroir sort. La carte de la Bretagne monte, ses points se posent, les oiseaux rares arrivent dans le panneau.
+// Puis une vraie manche du quiz : le chant joue, la fleche choisit, le site repond.
+const RE = window.M3.recent;
+const G = { MONTE: 0.3, POINTS: 1.05, POINTS_FIN: 2.4, SORT: 3.95, QUIZ: 4.0, QUIZ_FIN: 4.6, CLIC: 6.2 };
+const RS = W / RE.cadre.width, RY = 246;
+// du plus loin au plus pres de Rennes : ils arrivent depuis la pointe, dans le sens de la lecture
+const ORDRE_R = RE.points.map((_, i) => i).sort((a, b) => RE.points[a].x - RE.points[b].x);
+const QS = 1.34, QX = W - RE.cadreQuiz.width * QS - 40, QY = 48;
+function phraseUne(t, t0, texteP, debutAccent, sortie) {
+  if (t < t0) return;
+  const part = sortie === undefined ? 0 : E.expoIn(seg(sortie, sortie + 0.35, t));
+  if (part >= 1) return;
+  ctx.save();
+  ctx.font = titre(84); ctx.textBaseline = 'alphabetic';
+  for (let i = 0; i < texteP.length; i++) {
+    const g = OM.letterDrop(t, t0, i, { stagger: 0.02, dist: 50, squash: 0.0075 });
+    if (g.op <= 0.01) continue;
+    ctx.save();
+    ctx.globalAlpha = g.op * (1 - part);
+    ctx.translate(74 + ctx.measureText(texteP.slice(0, i)).width, 208 + g.y - 60 * part);
+    ctx.scale(g.sx, g.sy);
+    ctx.fillStyle = i >= debutAccent ? L.accent : L.ink;
+    ctx.fillText(texteP[i], 0, 0);
+    ctx.restore();
+  }
+  ctx.restore();
+}
+function varG(t) {
+  // le tiroir du chant s'en va
+  const dx = lerp(W - FI.w * FS, W + 60, E.expoIn(seg(0.05, 0.5, t)));
+  if (dx < W) {
+    ctx.save();
+    ctx.translate(dx, 0); ctx.scale(FS, FS);
+    ctx.drawImage(IM.ficheSons, 0, 0, FI.w, FI.h);
+    ctx.restore();
+  }
+  phraseBloc(t, -5, ['Reconnais-le', 'à son', 'chant.'], 0.02);
+  // la Bretagne
+  const sortie = E.expoIn(seg(G.SORT, G.SORT + 0.4, t));
+  if (t > G.MONTE && sortie < 1) {
+    const k = spring(t - G.MONTE, 0.6, 22);
+    ctx.save();
+    ctx.globalAlpha = clamp((t - G.MONTE) / 0.12, 0, 1) * (1 - sortie);
+    ctx.translate(0, RY + (1 - k) * 700 - sortie * 120);
+    ctx.scale(RS, RS);
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(IM.rFond, 0, 0, RE.cadre.width, RE.cadre.height);
+    ORDRE_R.forEach((i, n) => {
+      const q = RE.points[i];
+      const ts = G.POINTS + (G.POINTS_FIN - G.POINTS) * n / (ORDRE_R.length - 1);
+      if (t < ts) return;
+      const p = spring(t - ts, 0.5, 30);
+      const cx = q.x + q.w / 2, cy = q.y + q.h / 2;
+      ctx.save();
+      ctx.translate(cx, cy); ctx.scale(p, p);
+      ctx.drawImage(IM['p' + i], -q.w / 2, -q.h / 2, q.w, q.h);
+      ctx.restore();
+    });
+    // les oiseaux rares arrivent dans le panneau : le fond sans rangees est une case blanche, on les decouvre
+    const ech = IM.rPlein.width / RE.cadre.width;
+    RE.rangees.forEach((r, n) => {
+      const ts = G.POINTS + 0.25 + n * 0.17;
+      const a = E.cubicOut(seg(ts, ts + 0.22, t));
+      ctx.save();
+      ctx.fillStyle = '#fff'; ctx.fillRect(r.x, r.y, r.w, r.h);
+      if (a > 0) {
+        ctx.globalAlpha = a;
+        ctx.translate(14 * (1 - a), 0);
+        ctx.drawImage(IM.rPlein, r.x * ech, r.y * ech, r.w * ech, r.h * ech, r.x, r.y, r.w, r.h);
+      }
+      ctx.restore();
+    });
+    ctx.restore();
+  }
+  logo(t);
+  phraseUne(t, 0.6, 'Vois ce qui passe près de chez toi.', 22, G.SORT - 0.1);
+  phraseBloc(t, G.QUIZ + 0.35, ['Entraîne-toi', 'à les', 'reconnaître.']);
+  // le quiz
+  if (t > G.QUIZ) {
+    const x = lerp(W + 60, QX, E.expoOut(seg(G.QUIZ, G.QUIZ_FIN, t)));
+    const c = new Path2D(); c.roundRect(x - 14, QY - 14, RE.cadreQuiz.width * QS + 28, RE.cadreQuiz.height * QS + 28, 18);
+    ctx.save();
+    ctx.shadowColor = 'rgba(21,32,30,0.18)'; ctx.shadowBlur = 40; ctx.shadowOffsetY = 12;
+    ctx.fillStyle = '#fff'; ctx.fill(c);
+    ctx.restore();
+    ctx.save();
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(IM.qQuestion, x, QY, RE.cadreQuiz.width * QS, RE.cadreQuiz.height * QS);
+    const rep = seg(G.CLIC + 0.04, G.CLIC + 0.14, t);
+    if (rep > 0) { ctx.globalAlpha = rep; ctx.drawImage(IM.qReponse, x, QY, RE.cadreQuiz.width * QS, RE.cadreQuiz.height * QS); }
+    ctx.restore();
+    // le chant joue : une onde part du bouton de lecture, jusqu'a la reponse
+    const l = RE.quiz.lecture, lx = x + (l.x + l.w / 2) * QS, ly = QY + (l.y + l.h / 2) * QS;
+    if (t < G.CLIC) [0, 0.5, 1.0].forEach(d => {
+      const u = ((t - G.QUIZ_FIN - d) % 1.5 + 1.5) % 1.5 / 1.5;
+      if (t < G.QUIZ_FIN + d) return;
+      ctx.save();
+      ctx.globalAlpha = (1 - u) * 0.5;
+      ctx.strokeStyle = L.accent2; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(lx, ly, l.w * QS / 2 + u * 34, 0, Math.PI * 2); ctx.stroke();
+      ctx.restore();
+    });
+    // la fleche choisit la bonne reponse
+    if (t > 5.0) {
+      const b = RE.quiz.choix[0];
+      const k = E.expoInOut(seg(5.05, G.CLIC - 0.03, t));
+      const presse = t >= G.CLIC ? clamp(1 - Math.abs(t - G.CLIC - 0.06) / 0.08, 0, 1) : 0;
+      curseur(lerp(1500, x + (b.x + b.w * 0.45) * QS, k), lerp(1120, QY + (b.y + b.h * 0.6) * QS, k), presse, 1 - seg(G.CLIC + 0.5, G.CLIC + 0.8, t));
+    }
+  }
+}
+
+const VAR = { a: varA, b: varB, c: varC, d: varD, e: varE, f: varF, g: varG }[V];
 function seek(t) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.globalAlpha = 1;
@@ -616,8 +752,9 @@ const ACTIF = {
   b: [[0.5, 5.2, 40], [5.4, 6.2, 90]],
   c: [[0.5, 2.3, 90], [2.5, 4.7, 200], [5.45, 6.3, 120]],
   d: [[0.5, 2.3, 90], [2.55, 3.3, 120], [3.2, 6.0, 30]],
-  e: [[0, 1.0, 90], [0.95, 2.9, 90], [3.2, 4.4, 120], [4.25, 6.9, 30]],
+  e: [[0, 1.0, 90], [0.95, 3.4, 90], [3.7, 4.9, 120], [4.75, 7.4, 30]],
   f: [[0.1, 1.0, 60], [1.05, 1.6, 200], [2.15, 2.8, 120], [2.25, 5.75, 30], [5.75, 6.75, 60], [6.75, 7.5, 16]],
+  g: [[0, 1.0, 120], [1.05, 2.9, 20], [3.95, 4.7, 150], [4.7, 6.3, 40], [6.3, 7.1, 16]],
 }[V];
 window.__motion = (t0, t1) => {
   let px = 0;
@@ -641,6 +778,10 @@ window.__ready = (async () => {
     charge('grilleVide', 'grille-vide.png'), charge('grillePleine', 'grille-pleine.png'),
     charge('tro', 'trophee-fin.jpg'), charge('pageAvant', 'page-trophees-avant.png'), charge('mpAvant', 'carte-mp-avant.png'), charge('mpApres', 'carte-mp-apres.png')];
   TB.lignes.forEach((l, i) => jobs.push(charge('l' + i, 'ligne-' + i + '.png')));
+  if (V === 'g') {
+    jobs.push(charge('ficheSons', 'fiche-sons.png'), charge('rFond', 'recent-fond.png'), charge('rPlein', 'recent-plein.png'), charge('qQuestion', 'quiz-question.png'), charge('qReponse', 'quiz-reponse.png'));
+    window.M3.recent.points.forEach((_, i) => jobs.push(charge('p' + i, 'point-' + i + '.png')));
+  }
   if (V === 'f') {
     jobs.push(charge('ficheInfo', 'fiche-info.png'), charge('ficheSons', 'fiche-sons.png'));
     window.M3.fiche.pastilles.forEach((_, k) => jobs.push(charge('mois' + k, 'mois-' + String(k).padStart(2, '0') + '.png')));

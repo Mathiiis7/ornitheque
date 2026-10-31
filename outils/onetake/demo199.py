@@ -11,6 +11,9 @@ NOUVELLE = "alcedo atthis"
 # Les oiseaux que le film montre, a ne jamais retirer
 GARDEES = {"merops apiaster", "phoenicopterus roseus", "cygnus olor", "upupa epops", "erithacus rubecula"}
 RETIRER = 13
+# Pour le film : a 200 Alex passe en tete. Les plus grandes listes sont ramenees sous 200 (Mathis, 2026-10-31).
+# On retire la fin de l'alphabet : Qui a vu quoi ne montre que le debut, il reste le meme.
+PLAFONDS = {"Samir": 199, "Claire": 187, "Hugo": 172}
 
 
 def _fin_liste(texte, debut):
@@ -51,7 +54,14 @@ def reduit(corps, apres=False):
         # le classement juge la derniere acquisition sur la date d'observation, pas sur la date d'ajout
         martin["d"] = date.today().isoformat()
         reste.append(martin)
-        return corps[:d] + json.dumps(reste, ensure_ascii=False, separators=(",", ":")) + corps[f + 1:]
+        corps = corps[:d] + json.dumps(reste, ensure_ascii=False, separators=(",", ":")) + corps[f + 1:]
+        for nom, plafond in PLAFONDS.items():
+            cle = f'"name":"{nom}","species":'
+            d = corps.index(cle) + len(cle)
+            f = _fin_liste(corps, d)
+            liste = sorted(json.loads(corps[d:f + 1]), key=lambda e: e.get("c", ""))[:plafond]
+            corps = corps[:d] + json.dumps(liste, ensure_ascii=False, separators=(",", ":")) + corps[f + 1:]
+        return corps
     if len(reste) != 199:
         raise ValueError(f"{len(reste)} especes au lieu de 199")
     return corps[:d] + json.dumps(reste, ensure_ascii=False, separators=(",", ":")) + corps[f + 1:]

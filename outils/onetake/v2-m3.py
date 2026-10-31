@@ -59,7 +59,7 @@ with sync_playwright() as p:
         const r = t.getBoundingClientRect(), R = e => { const b = e.getBoundingClientRect(); return {x:b.x-r.x, y:b.y-r.y, w:b.width, h:b.height}; };
         return { x:r.x, y:r.y, w:r.width, h:r.height, entete:R(t.rows[0]), lignes:[...t.rows].slice(1).map((l,i) => { l.dataset.film=i;
             const sc=l.querySelector('.board-score'), ec=l.querySelector('.board-ecart'), g=ec.querySelector('i');
-            return { i, nom:l.querySelector('.who-name').textContent.trim(), n:parseInt(sc.textContent), moi:l.classList.contains('board-moi'), ...R(l), rang:R(l.cells[0]), rangTxt:l.cells[0].textContent.trim(), score:R(sc), ecart:R(ec), jauge:ec.querySelector('i').style.width,
+            return { i, nom:l.querySelector('.who-name').textContent.trim(), n:parseInt(sc.textContent), moi:l.classList.contains('board-moi'), ...R(l), rang:R(l.cells[0]), rangTxt:l.cells[0].textContent.trim(), fondRang:getComputedStyle(l.cells[0]).backgroundColor, coulRang:getComputedStyle(l.cells[0]).color, score:R(sc), ecart:R(ec), jauge:ec.querySelector('i').style.width,
               jaugeCoul:getComputedStyle(g).backgroundColor, fondEcart:getComputedStyle(ec).backgroundColor }; }),
           styleNb:(s=>[s.fontSize,s.fontWeight,s.color])(getComputedStyle(t.querySelector('.board-score'))), styleRang:(s=>[s.fontSize,s.fontWeight,s.color])(getComputedStyle(t.querySelector('.c-rank'))) }; }""")
     page.wait_for_timeout(1500)
