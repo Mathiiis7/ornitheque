@@ -16110,7 +16110,7 @@ const MORPHO_AXES = [
   { nom:'Poids', c:'ma', aide:'Masse corporelle moyenne (adulte).' },
   { nom:'Aile', c:'wi', long:'longues ailes', court:'ailes courtes', aide:'Aile pliée, du poignet à l\'extrémité de la plus grande rémige.' },
   { nom:'Bec', c:'bl', long:'long bec', court:'bec court', aide:'Culmen : arête supérieure du bec, du front à la pointe.' },
-  { nom:'Tarse', c:'ta', long:'longues pattes', court:'pattes courtes', aide:'Tarse : la partie de la patte entre le talon et les doigts.' },
+  { nom:'Patte', c:'ta', long:'longues pattes', court:'pattes courtes', aide:'Tarse : la partie de la patte entre le talon et les doigts.' },
   { nom:'Queue', c:'tail', long:'longue queue', court:'queue courte', aide:'De la base à l\'extrémité de la plus longue rectrice.' },
 ];
 const _morphoValeur = (t, c) => c === 'ma' ? t.ma : t[c] / Math.cbrt(t.ma);
