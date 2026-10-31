@@ -19480,6 +19480,12 @@ function _openSpeciesModalLiens(sci, key, modal, _wasOpen, _savedScroll){
   }
 }
 // Instance Leaflet dediee a la fiche espece + etat associe.
+// Leaflet garde en attente la fin d'une animation de zoom (250 ms) et map.remove() ne l'annule pas :
+// elle tombait sur une carte sans panneaux (« _leaflet_pos », 11 erreurs pour 12 fiches, 2026-10-31).
+if(typeof L !== 'undefined'){
+  const finZoom = L.Map.prototype._onZoomTransitionEnd;
+  L.Map.prototype._onZoomTransitionEnd = function(){ if(this._mapPane) finZoom.call(this); };
+}
 let _smMapInstance = null, _smMapLayer = null;
 let _smCurrentKey = '', _smMapMode = 'friends', _smMarkers = [];
 const _SM_MONTH_NAMES = ["toute l'année",'janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
@@ -20119,6 +20125,22 @@ function _ficheOuverte(modal){
   if(!_ficheRetours) _ficheEntreeAjoute();
   // Le guide garde le focus sur sa bulle, posee par-dessus la fiche.
   if(!_guide) modal.querySelector('.sm-box')?.focus({ preventScroll:true });
+  _ficheRepli(modal);
+}
+// Au telephone, l'en-tete prend le quart de l'ecran : il se replie sur le nom quand on descend, et
+// revient en haut. L'ecart entre les deux seuils, et le contenu assez long exige, evitent qu'il
+// clignote : le replier agrandit la zone de lecture (2026-10-31).
+function _ficheRepli(modal){
+  const boite = modal.querySelector('.sm-box'), zone = modal.querySelector('.sm-scroll');
+  if(!boite || !zone) return;
+  boite.classList.remove('sm-replie');
+  if(zone._repli) return;
+  zone._repli = true;
+  zone.addEventListener('scroll', () => {
+    if(!matchMedia('(max-width:640px)').matches){ boite.classList.remove('sm-replie'); return; }
+    if(zone.scrollTop > 80 && zone.scrollHeight - zone.clientHeight > 300) boite.classList.add('sm-replie');
+    else if(zone.scrollTop < 12) boite.classList.remove('sm-replie');
+  }, { passive:true });
 }
 window.addEventListener('popstate', () => {
   if(_ficheRetours){
@@ -24501,6 +24523,30 @@ function _pcPalierLu(sci, st){
   const n = _pcPalier(_pcSerie(sci, st)[1]);
   return n ? `<span class="visually-hidden">, palier ${esc(PC_PALIERS[n - 1].nom)}</span>` : '';
 }
+// Un chant qui ne vient pas se dit a l'ecran : sans cela, le bouton restait sur « pause » devant un
+// silence, sans un mot, si xeno-canto ne repondait pas (mesure le 2026-10-31).
+const PC_SON_ATTENTE = 12000;
+function _pcSonSurveille(box){
+  const msg = box.querySelector('#pcSonMsg');
+  if(!msg) return;
+  box.querySelectorAll('audio').forEach(a => {
+    let attente = 0;
+    const dire = () => {
+      clearTimeout(attente);
+      if(!a.isConnected) return;
+      if(!a.paused) a.pause();
+      msg.textContent = 'Ce chant ne se charge pas. Vérifie ta connexion, puis relance-le.';
+      msg.hidden = false;
+    };
+    a.addEventListener('error', dire);
+    a.addEventListener('play', () => {
+      clearTimeout(attente);
+      if(a.readyState < 3) attente = setTimeout(() => { if(a.readyState < 3 && !a.paused) dire(); }, PC_SON_ATTENTE);
+    });
+    a.addEventListener('playing', () => { clearTimeout(attente); msg.hidden = true; });
+    a.addEventListener('pause', () => clearTimeout(attente));
+  });
+}
 // La serie en cours et le record, sous le nom d'un oiseau.
 function _pcSerieTxt(sci, st){
   const [cur, rec] = _pcSerie(sci, st);
@@ -25284,6 +25330,7 @@ function _pcQuestion(){
         <span class="pc-son-t" id="pcTemps"></span>
       </div>
       <p class="pc-id">${_pcIdChant(rec)}</p>
+      <p class="pc-son-msg" id="pcSonMsg" role="status" hidden></p>
       <div class="pc-demande-ligne"><h3 class="bloc-titre pc-demande">Quel oiseau chante ?</h3>${cercles
         ? `<button type="button" class="pc-cercles-bascule" data-pc-cercles aria-pressed="${!_pcCerclesMasques()}">${_pcCerclesMasques() ? 'Afficher les indices' : 'Masquer les indices'}</button>` : ''}</div>
       ${reponses}
@@ -25300,6 +25347,7 @@ function _pcQuestion(){
         <div class="pc-q-oiseau-nom">${esc(_pcNomFr(q.cible))}</div>
       </div>
       <p class="qz-prompt">Lequel de ces chants est le sien ?</p>
+      <p class="pc-son-msg" id="pcSonMsg" role="status" hidden></p>
       <div class="pc-chants" id="pcChoix">
         ${q.choix.map((sci, k) => `
           <div class="pc-chant" data-pc-carte="${k}">
@@ -25311,6 +25359,7 @@ function _pcQuestion(){
       </div>`;
   }
   box.innerHTML = `<div class="pc-jeu">${tete}<div class="pc-question">${corps}</div><div id="pcVerdict"></div></div>`;
+  _pcSonSurveille(box);
   if(unSon){
     const audio = document.getElementById('pcAudio'), btn = document.getElementById('pcPlay'), fill = document.getElementById('pcProgression');
     const temps = document.getElementById('pcTemps');
@@ -25321,7 +25370,7 @@ function _pcQuestion(){
     const avancer = f => { fill.style.width = (f * 100) + '%'; if(anneau) anneau.style.strokeDashoffset = PC_ANNEAU * (1 - f); };
     const afficherTemps = () => { if(temps && audio.duration) temps.textContent = `${mmss(audio.currentTime)} / ${mmss(duree())}`; };
     audio.addEventListener('loadedmetadata', afficherTemps);
-    btn.addEventListener('click', () => { if(audio.paused) audio.play().catch(() => {}); else audio.pause(); });
+    btn.addEventListener('click', () => { if(audio.paused){ if(audio.error) audio.load(); audio.play().catch(() => {}); } else audio.pause(); });
     // La barre suit chaque image de l'ecran, et non timeupdate : celui-ci ne tombe que 4 fois
     // par seconde environ, et la barre avancait par a-coups (vu par Mathis le 2026-10-16).
     let anim = 0;
@@ -25373,7 +25422,7 @@ function _pcQuestion(){
 function _pcEcouter(k){
   const box = document.getElementById('pcParcours');
   box.querySelectorAll('[data-pc-audio]').forEach(a => {
-    if(a.dataset.pcAudio === String(k)){ if(a.paused) a.play().catch(() => {}); else a.pause(); }
+    if(a.dataset.pcAudio === String(k)){ if(a.paused){ if(a.error) a.load(); a.play().catch(() => {}); } else a.pause(); }
     // Les autres chants reviennent au debut, anneau vide. Un chant deja en pause ne declenche
     // plus d'evenement « pause » : on l'envoie a la main pour que son anneau se vide.
     else if(!a.paused || a.currentTime){ try{ a.pause(); a.currentTime = 0; }catch(_){} a.dispatchEvent(new Event('pause')); }

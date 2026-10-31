@@ -171,6 +171,8 @@ règles communes dans le bloc « Schémas communs », juste avant celui du doigt
   s'affiche 3 s. Les deux effets s'éteignent séparément (`DEBLOQUE_CARTE`, `DEBLOQUE_REVELATION`
   dans `app.js`). « Ajouter à ma liste », en blanc dans l'en-tête de la fiche, ouvre l'ajout déjà
   rempli.
+- **Carte de trophée** (2026-10-31) : à gagner, carte creuse à bord pointillé ; gagné, carte pleine teintée de son palier.
+- **En-tête de la fiche au téléphone** (2026-10-31) : il se replie sur le nom quand on descend, et revient en haut.
 - **Le trophée débloqué** (2026-10-30) : gagné, sa case reste sur le palier d'avant (une silhouette à
   toucher montrait déjà ce qu'on avait débloqué, refusée) ; sa scène se joue seule en arrivant sur la
   page Trophées : sur fond noir, l'ancienne coupe et la jauge, le flash,

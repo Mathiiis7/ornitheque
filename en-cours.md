@@ -1,6 +1,6 @@
 # Où on en est (2026-10-30)
 
-Dernière version : v991 / app.js?v=563. Prochaine : v992 / 564. Historique complet jusqu'à ce jour :
+Dernière version : v992 / app.js?v=564. Prochaine : v993 / 565. Historique complet jusqu'à ce jour :
 `archives/en-cours-jusqu-au-2026-10-30.md` (y chercher un mot plutôt que le lire en entier, 85 000 jetons).
 Ce fichier se remplace à chaque fin de tâche : quelques lignes, pas un journal.
 
@@ -9,8 +9,10 @@ Ce fichier se remplace à chaque fin de tâche : quelques lignes, pas un journal
 
 ## Décidé le 31/10
 - Essai de la méthode qa-only (sans gstack, trop lourd) et critique Impeccable : `notes-privees/essai-qa-only/`. Les 8 bugs
-  corrigés (v991). Non conclu : les sons du Quiz ne chargent pas dans le navigateur intégré, à revoir dans un vrai navigateur.
-  Reste de la critique, non demandé : en-tête de fiche haut au téléphone, 15 pictos d'indices, trophées gagnés peu distincts.
+  corrigés (v991). Suites (v992) : sons du Quiz vérifiés dans Chrome (ils marchent ; seul le navigateur intégré les bloque) et
+  message si un chant ne vient pas ; noms des listes plus faciles à toucher ; en-tête de fiche replié en descendant au téléphone ;
+  trophées à gagner en cartes creuses ; erreur « _leaflet_pos » réglée (0 sur 24 fiches, 11 sur 12 avant).
+  Indices du Quiz (15 pictos) : laissés affichés d'office, choix de Mathis, ne pas reproposer.
 - « Densité habitat » retirée de la carte Traits (v990).
 - Empreinte morphologique sur les fiches (carte Traits, v982) : radar arrondi choisi par Mathis, en proportions du
   poids. Autres radars (membres, quiz, présence, cycle de vie) maquettés dans `notes-privees/maquettes/radar/`, non retenus.
@@ -19,10 +21,6 @@ Ce fichier se remplace à chaque fin de tâche : quelques lignes, pas un journal
   (`outils/build/avonet-renommes.mjs`, même famille exigée) ; 657 oiseaux de plus, aucune mesure d'avant modifiée.
   v989 : 32 renommés de plus, chacun prouvé par GBIF (15) ou iNaturalist (17). SUJET CLOS par Mathis (31/10) : le reste
   (2 oiseaux de France, ~400 étrangers, surtout disparus ou séparés) ne se rouvre pas sans source nouvelle.
-- Vu, pas corrigé : erreur Leaflet « _leaflet_pos » en fermant des fiches, dans la console seulement. Elle existait
-  avant le radar (mesuré, `_essai-leaflet-pos.mjs` : 13 sur la version 6a098c43, 11 sur v988, 21 en laissant chaque
-  fiche 3 s). Pile : `_onZoomTransitionEnd`, une animation de zoom finit sur une carte déjà retirée. Elle fait échouer
-  `_essai-traits-monde.mjs` par moments.
 - Taille comparée par silhouettes : abandonnée, maquette dans `notes-privees/maquettes/taille-silhouettes/`.
 
 ## Décidé le 30/10
