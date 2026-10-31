@@ -1,6 +1,6 @@
 # Où on en est (2026-10-30)
 
-Dernière version : v984 / app.js?v=556. Prochaine : v985 / 557. Historique complet jusqu'à ce jour :
+Dernière version : v985 / app.js?v=557. Prochaine : v986 / 558. Historique complet jusqu'à ce jour :
 `archives/en-cours-jusqu-au-2026-10-30.md` (y chercher un mot plutôt que le lire en entier, 85 000 jetons).
 Ce fichier se remplace à chaque fin de tâche : quelques lignes, pas un journal.
 

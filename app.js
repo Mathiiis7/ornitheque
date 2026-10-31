@@ -16113,11 +16113,26 @@ const MORPHO_AXES = [
   { nom:'Patte', c:'ta', long:'longues pattes', court:'pattes courtes', aide:'Tarse : la partie de la patte entre le talon et les doigts.' },
   { nom:'Queue', c:'tail', long:'longue queue', court:'queue courte', aide:'De la base à l\'extrémité de la plus longue rectrice.' },
 ];
+// Oiseaux de France rangés dans un autre genre depuis Avonet 2022 : même espèce, seul le nom a changé. Sans cette
+// table, le Héron garde-bœufs n'avait aucune carte Traits (signalé par Mathis, 2026-10-31). Les espèces séparées
+// depuis (Goéland d'Amérique, Courlis hudsonien...) n'y sont pas : Avonet ne les a pas mesurées à part.
+const TRAITS_ALIAS = {
+  'ardea ibis':'bubulcus ibis', 'astur gentilis':'accipiter gentilis', 'coloeus monedula':'corvus monedula', 'tachymarptis melba':'apus melba',
+  'eudromias morinellus':'charadrius morinellus', 'thinornis dubius':'charadrius dubius', 'anarhynchus leschenaultii':'charadrius leschenaultii',
+  'anarhynchus alexandrinus':'charadrius alexandrinus', 'botaurus minutus':'ixobrychus minutus',
+};
+function _traitsDe(traits, k){
+  if(traits[k]) return traits[k];
+  // Fallback via alias si nom scientifique split apres compilation Avonet 2022
+  // (ex Cecropis rufula = Cecropis daurica pre-split).
+  const alt = TRAITS_ALIAS[k] || (typeof SCI_ALIAS === 'object' && SCI_ALIAS[k]) || (typeof GBIF_SCI_ALIAS === 'object' && GBIF_SCI_ALIAS[k]) || null;
+  return alt ? traits[alt.toLowerCase()] : undefined;
+}
 const _morphoValeur = (t, c) => c === 'ma' ? t.ma : t[c] / Math.cbrt(t.ma);
 let _morphoRef = null;
 function _morphoReference(traits){
   if(_morphoRef) return _morphoRef;
-  const oiseaux = [..._catalogueFR().keys()].map(s => traits[s]).filter(t => t && MORPHO_AXES.every(a => t[a.c] > 0));
+  const oiseaux = [..._catalogueFR().keys()].map(s => _traitsDe(traits, s)).filter(t => t && MORPHO_AXES.every(a => t[a.c] > 0));
   if(oiseaux.length < 100) return null;   // catalogue pas encore prêt : on réessaiera à la fiche suivante
   return (_morphoRef = Object.fromEntries(MORPHO_AXES.map(a => [a.c, oiseaux.map(t => _morphoValeur(t, a.c))])));
 }
@@ -16170,11 +16185,7 @@ async function _renderSpeciesTraitsCard(key){
   const traits = await _loadAvonetTraits();
   // Fallback via alias si nom scientifique split apres compilation Avonet 2022
   // (ex Cecropis rufula = Cecropis daurica pre-split).
-  let t = traits[k];
-  if(!t){
-    const alt = (typeof SCI_ALIAS === 'object' && SCI_ALIAS[k]) || (typeof GBIF_SCI_ALIAS === 'object' && GBIF_SCI_ALIAS[k]) || null;
-    if(alt) t = traits[alt.toLowerCase()];
-  }
+  const t = _traitsDe(traits, k);
   if(!t){ return; }
   // Labels courts pour les axes categoriels
   const MIG = { 1:'🏃 Sédentaire', 2:'🚶 Migration partielle', 3:'✈️ Migrateur total' };
