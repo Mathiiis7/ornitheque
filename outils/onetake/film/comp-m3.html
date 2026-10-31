@@ -25,12 +25,27 @@
 // Tout vient du site (v2-m3.py). Tout est une fonction PURE du temps.
 // =============================================================================
 const V = '__VARIANTE__';
-const DUR = { a: 7.8, b: 8.2, c: 8.2, d: 8.2, e: 8.1, f: 9.5, g: 7.8 }[V];
+const DUR = { a: 7.8, b: 8.2, c: 8.2, d: 8.2, e: 9.9, f: 11.77, g: 9.56 }[V];
 window.__meta = { dur: DUR, fps: 30, w: 1920, h: 1080 };
 const W = 1920, H = 1080;
 const { clamp, lerp, spring } = OM;
 const E = OM.ease;
 const seg = (a, b, t) => clamp((t - a) / (b - a), 0, 1);
+// Le rythme : Mathis trouvait que ca allait vite par moments (2026-11-01). Chaque rangee dit quel instant de la
+// composition montrer a quel instant du film : deux instants egaux font un arret, un ecart plus grand ralentit.
+const TEMPS = {
+  a: [[0, 0], [7.8, 7.8]], b: [[0, 0], [8.2, 8.2]], c: [[0, 0], [8.2, 8.2]], d: [[0, 0], [8.2, 8.2]],
+  e: [[0, 0], [0.95, 0.95], [1.73, 1.6], [2.43, 2.3], [2.73, 2.3], [2.88, 2.45], [4.155, 3.3], [4.455, 3.6], [4.955, 3.6], [5.055, 3.7], [6.105, 4.75], [8.745, 6.95], [9.9, 8.1]],
+  f: [[0, 0], [0.1, 0.1], [1.18, 1.0], [2.18, 2.0], [3.08, 2.0], [3.23, 2.15], [3.95, 2.75], [4.15, 2.95], [7.5, 5.53], [7.72, 5.75], [9.02, 6.75], [11.77, 9.5]],
+  g: [[0, 0], [1.05, 1.05], [2.94, 2.4], [4.39, 3.85], [4.89, 3.85], [5.64, 4.6], [7.56, 6.2], [8.46, 7.1], [8.86, 7.1], [9.56, 7.8]],
+}[V];
+function tempsComp(t) {
+  for (let i = 1; i < TEMPS.length; i++) {
+    const a = TEMPS[i - 1], b = TEMPS[i];
+    if (t <= b[0]) return lerp(a[1], b[1], seg(a[0], b[0], t));
+  }
+  return TEMPS[TEMPS.length - 1][1];
+}
 const L = window.LOOK.color;
 const titre = px => '700 ' + px + 'px "Source Serif Film"';
 const texte = (poids, px) => poids + ' ' + px + 'px "Segoe UI", sans-serif';
@@ -746,7 +761,7 @@ function seek(t) {
   ctx.globalAlpha = 1;
   ctx.fillStyle = L.ground;
   ctx.fillRect(0, 0, W, H);
-  VAR(t);
+  VAR(tempsComp(t));
   return true;
 }
 // les plages ou ca bouge, et de combien au plus : hors d'elles, les images sont de vrais repos
@@ -761,7 +776,8 @@ const ACTIF = {
 }[V];
 window.__motion = (t0, t1) => {
   let px = 0;
-  for (const [a, b, p] of ACTIF) if (t1 > a && t0 < b) px = Math.max(px, p);
+  const u0 = tempsComp(t0), u1 = tempsComp(t1);
+  for (const [a, b, p] of ACTIF) if (u1 > a && u0 < b) px = Math.max(px, p);
   return px;
 };
 window.__track = () => ({ logo: { x: 56, y: 28, w: 66, h: 66, op: 1 } });

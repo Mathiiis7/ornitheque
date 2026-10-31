@@ -27,7 +27,8 @@
 // seek(t) plusieurs fois autour de chaque image pour le flou de mouvement.
 // =============================================================================
 
-const FPS = 30, DUR = 15.8;
+const MODE_FIN = false;   // assemble-v2.py ecrit comp-fin.html avec true : l'ecran de fin, memes traces, meme police
+const FPS = 30, DUR = MODE_FIN ? 8.4 : 15.8;
 window.__meta = { dur: DUR, fps: FPS, w: 1920, h: 1080 };
 const W = 1920, H = 1080;
 const { clamp, lerp, ssstep, spring } = OM;
@@ -381,11 +382,49 @@ function dessineCompteur(t) {
 }
 
 // --- Une image -------------------------------------------------------------------------------
+// La fin : le quiz s'efface, le logo et le nom font en sens inverse le chemin de l'ouverture et reprennent leur
+// place au centre, un vrai repos, puis ils montent pour laisser la place aux credits.
+function ligneCentree(texte, y, px, couleur, op) {
+  ctx.save();
+  ctx.globalAlpha = op;
+  ctx.font = police('text', px);
+  ctx.textAlign = 'center';
+  ctx.fillStyle = couleur;
+  // coupe sur les espaces : les listes de noms prennent plusieurs lignes
+  const mots = texte.split(' ');
+  let ligne = '', yy = y;
+  for (const m of mots) {
+    const essai = ligne ? ligne + ' ' + m : m;
+    if (ctx.measureText(essai).width > 1500 && ligne) { ctx.fillText(ligne, W / 2, yy); ligne = m; yy += px * 1.4; } else ligne = essai;
+  }
+  ctx.fillText(ligne, W / 2, yy);
+  ctx.restore();
+  return yy + px * 1.4;
+}
+function seekFin(t) {
+  const sort = E.cubicInOut(seg(0.05, 0.55, t));
+  if (sort < 1 && IM.finG) { ctx.save(); ctx.globalAlpha = 1 - sort; ctx.drawImage(IM.finG, 0, 0, W, H); ctx.restore(); }
+  const tl = lerp(T.RANGE_FIN, T.RANGE, seg(0.35, 1.35, t));
+  const monte = E.expoInOut(seg(3.7, 4.4, t));
+  ctx.save();
+  ctx.translate(960 * 0, -230 * monte);
+  dessineLogo(tl);
+  dessineNom(tl);
+  ctx.restore();
+  const CR = window.V2.credits;
+  const op = k => E.cubicOut(seg(4.25 + k * 0.12, 4.65 + k * 0.12, t));
+  let y = 610;
+  y = ligneCentree('Photos : ' + CR.photos.join(', ') + ' et les photographes d\u2019iNaturalist', y, 30, L.ink, op(0)) + 14;
+  y = ligneCentree('Chants : ' + CR.chants.join(', ') + ' (xeno-canto, CC BY-NC-SA 4.0)', y, 30, L.ink, op(1)) + 14;
+  y = ligneCentree('Fond de carte : \u00a9 OpenStreetMap. Observations et fr\u00e9quences : eBird', y, 30, L.ink, op(2)) + 14;
+  ligneCentree('Toutes les photos sont cr\u00e9dit\u00e9es dans la description.', y, 28, L.mute, op(3));
+}
 function seek(t) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.globalAlpha = 1;
   ctx.fillStyle = L.ground;
   ctx.fillRect(0, 0, W, H);
+  if (MODE_FIN) { seekFin(t); return true; }
   dessineCarte(t);
   dessinePhrase(t);
   dessineCompteur(t);
@@ -397,6 +436,7 @@ function seek(t) {
 
 // --- Ce que l'oracle suit --------------------------------------------------------------------
 window.__track = t => {
+  if (MODE_FIN) return { logo: { x: 760, y: 325, w: 430, h: 430, op: 1 } };
   const out = {};
   if (t >= T.CADRE) { const P = poseLogo(t); out.logo = { x: P.x, y: P.y, w: P.taille, h: P.taille, op: 1 }; }
   if (t >= T.NOM) {
@@ -413,6 +453,7 @@ window.__track = t => {
   return out;
 };
 window.__motion = (t0, t1) => {
+  if (MODE_FIN) return (t1 > 0.05 && t0 < 1.4) || (t1 > 3.7 && t0 < 5.2) ? 120 : 0;
   const A = window.__track(t0), B = window.__track(t1);
   let px = 0;
   for (const k of Object.keys(A)) {
@@ -451,6 +492,7 @@ function charge(cle, src) {
 }
 window.__ready = (async () => {
   const jobs = [charge('carte', 'carte-fond.png')];
+  if (MODE_FIN) jobs.push(charge('finG', 'fin-g.png'));
   ANN.forEach((a, i) => jobs.push(charge('a' + i, a.fichier)));
   PHOTOS.forEach(ph => jobs.push(charge(ph.fichier, ph.fichier)));
   const f = new FontFace('Source Serif Film', 'url(' + window.POLICE_TITRE + ')', { weight: '700' });

@@ -61,15 +61,18 @@ for a in anneaux:
     shutil.copy2(SITE / a["fichier"], OUT / a["fichier"])
 gardees = {c["sci"]: c for c in json.loads((SITE / "cartes-gardees.json").read_text(encoding="utf-8"))}
 photos = [gardees[s] for s in PHOTOS]
+# les noms de l'ecran de fin (credits-v2.py)
+credits = json.loads(pathlib.Path(".onetake/v2/credits.json").read_text(encoding="utf-8"))
 for c in photos:
     shutil.copy2(SITE / c["fichier"], OUT / c["fichier"])
     print(c["nom"], "|", c["licence"], "|", c["src"])
 compte = json.loads((SITE / "compte.json").read_text(encoding="utf-8"))
-donnees = {"logo": lit_logo(), "anneaux": anneaux, "photos": [{"fichier": c["fichier"], "sci": c["sci"]} for c in photos], **compte}
+donnees = {"logo": lit_logo(), "anneaux": anneaux, "photos": [{"fichier": c["fichier"], "sci": c["sci"]} for c in photos], **compte, "credits": credits}
 print("logo :", len(donnees["logo"]["traces"]), "traces ;", len(anneaux), "anneaux")
 (OUT / "donnees-v2.js").write_text("window.V2 = " + json.dumps(donnees, separators=(",", ":")) + ";\n", encoding="utf-8")
 # Embarquee en base64 : un rendu en file:// ne charge pas une police par son adresse.
 b64 = base64.b64encode(POLICE.read_bytes()).decode()
+(OUT / "comp-fin.html").write_text(SRC.read_text(encoding="utf-8").replace("const MODE_FIN = false;", "const MODE_FIN = true;"), encoding="utf-8")
 (OUT / "police-v2.js").write_text("window.POLICE_TITRE = 'data:font/woff2;base64," + b64 + "';\n", encoding="utf-8")
 r = subprocess.run([sys.executable, str(SKILL / "scripts" / "look.py"), "apply", str(LOOK.resolve()), str((OUT / "comp.html").resolve())],
                    capture_output=True, text=True, encoding="utf-8", errors="replace",
