@@ -20,8 +20,8 @@
 //      eclatent en salve, l'oeil s'ouvre, le nom tombe, puis un vrai repos.
 //   2. Observer : un iris s'ouvre depuis l'oeil sur la carte du site ; le logo et le nom se
 //      rangent en haut a gauche et RESTENT (c'est ce qui survit au passage). Les anneaux de la
-//      demo arrivent par trois salves separees de vrais arrets, le compteur ne monte que quand
-//      un anneau se pose (la cause est visible), et s'arrete net sur 212.
+//      liste du visiteur arrivent par trois salves separees de vrais arrets, le compteur ajoute
+//      le nombre de chaque anneau qui se pose (la cause est visible), et s'arrete net sur 212.
 //
 // Tout vient du site actuel (v2-site.py). Tout est une fonction PURE du temps : le rendu rappelle
 // seek(t) plusieurs fois autour de chaque image pour le flou de mouvement.
@@ -62,19 +62,20 @@ const T = {
 };
 // Trois salves d'anneaux : une lente, une qui accelere, un deferlement. Entre elles, l'arret.
 const SALVES = [
-  { t0: 6.5,  t1: 8.1,  n: 5,  v: 8,   puiss: 1 },
-  { t0: 8.7,  t1: 10.0, n: 13, v: 61,  puiss: 0.8 },
-  { t0: 11.0, t1: 12.6, n: 0,  v: 212, puiss: 1.6 },   // n = 0 : tout le reste
+  { t0: 6.5,  t1: 8.1,  n: 5, puiss: 1 },
+  { t0: 8.7,  t1: 10.0, n: 7, puiss: 0.8 },
+  { t0: 11.0, t1: 12.6, n: 0, puiss: 0.7 },   // n = 0 : tout le reste
 ];
-const FIN = 12.65;                    // tout est pose ; repos jusqu'a la fin
+const MONTEE = 0.25;                  // le temps que le nombre d'un anneau s'ajoute au compteur
+const FIN = 12.6 + MONTEE;            // tout est pose ; repos jusqu'a la fin
 const TOTAL = 212, SUR = 467;         // « 212 espèces vues sur 467 », lu sur la demo le 2026-10-31
 const PHOTO_TENUE = 0.75, PHOTO_VOL = 0.5;
 const PHOTOS = [
   { t: 7.15,  n: 1 },
-  { t: 8.85,  n: 7 },
-  { t: 9.3,   n: 12 },
-  { t: 11.3,  n: 22 },
-  { t: 11.65, n: 34 },
+  { t: 8.85,  n: 6 },
+  { t: 9.3,   n: 10 },
+  { t: 11.3,  n: 14 },
+  { t: 11.65, n: 18 },
 ].map((p, i) => ({ ...p, fichier: window.V2.photos[i], tenue: i < 3 ? PHOTO_TENUE : 0.45 }));
 const COMPTEUR = { x: 80, base: 985 };
 
@@ -223,6 +224,12 @@ const versCarte = (x, y, z) => [FOCUS[0] + (x - FOCUS[0]) * z, FOCUS[1] + (y - F
 const rng = OM.rng(11);
 const ordre = ANN.map((_, i) => i);
 for (let i = NA - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [ordre[i], ordre[j]] = [ordre[j], ordre[i]]; }
+// le plus gros anneau arrive en dernier : c'est lui qui fait le coup final du compteur
+{
+  const gros = ordre.reduce((m, i) => (ANN[i].n > ANN[m].n ? i : m), ordre[0]);
+  ordre.splice(ordre.indexOf(gros), 1);
+  ordre.push(gros);
+}
 const tArrive = new Array(NA);
 {
   let pos = 0;
@@ -232,8 +239,6 @@ const tArrive = new Array(NA);
     for (let k = 0; k < n; k++, pos++) tArrive[ordre[pos]] = s.t0 + (s.t1 - s.t0) * Math.pow(n > 1 ? k / (n - 1) : 0, s.puiss);
   });
 }
-const tTries = tArrive.slice().sort((a, b) => a - b);
-const posesA = t => { let n = 0; while (n < NA && tTries[n] <= t) n++; return n; };
 
 function dessineCarte(t) {
   if (t < T.RANGE) return;
@@ -292,18 +297,20 @@ function dessinePhrase(t) {
 }
 
 // --- Les cartes du Birdydex qui surgissent puis vont dans le compteur -----------------------
-// Chaque carte sort de l'anneau qui vient de se poser. Elles sont prises a la taille exacte de
-// la carte du site, donc on decoupe a son arrondi : 12 px CSS x zoom 0,85 x 2 pixels par point.
-const RAYON_CARTE = 20.4;
+// Chaque carte sort de l'anneau qui vient de se poser. Elle est prise sur fond transparent
+// (v2-site.py) : son arrondi est celui du site, il n'y a rien a decouper ici.
 const ECHELLE_CARTE = 0.62;
-PHOTOS.forEach(ph => {
-  // l'anneau qui la porte : assez a droite pour ne pas couvrir la phrase
+PHOTOS.forEach((ph, p) => {
+  // l'anneau qui la porte : assez a droite pour ne pas couvrir la phrase, et assez loin de la
+  // photo d'avant, qui est peut-etre encore a l'ecran (une carte fait 170 x 220 px dans le film)
+  const avant = p > 0 ? ANN[PHOTOS[p - 1].anneau] : null;
+  const convient = i => ANN[i].x >= 1000 && !PHOTOS.slice(0, p).some(q => q.anneau === i) &&
+    (!avant || Math.hypot(ANN[i].x - avant.x, ANN[i].y - avant.y) > 240);
   let k = ph.n;
-  while (k < NA - 1 && ANN[ordre[k]].x < 1000) k++;
+  while (k < NA - 2 && !convient(ordre[k])) k++;   // jamais le dernier : le gros anneau final reste seul
   ph.anneau = ordre[k];
   tArrive[ph.anneau] = ph.t - 0.12;
 });
-tTries.splice(0, NA, ...tArrive.slice().sort((a, b) => a - b));
 function etatPhoto(ph, t) {
   const a = ANN[ph.anneau];
   const [px, py] = versCarte(a.x + a.w / 2, a.y + a.h / 2, zoomCarte(t));
@@ -323,32 +330,25 @@ function dessinePhotos(t) {
     const e = etatPhoto(ph, t);
     const im = IM[ph.fichier];
     if (!im || e.op <= 0.01 || e.s <= 0.005) continue;
-    const w = im.width * e.s, h = im.height * e.s, r = RAYON_CARTE * e.s;
-    const bord = new Path2D();
-    bord.roundRect(e.x - w / 2, e.y - h, w, h, r);
+    const w = im.width * e.s, h = im.height * e.s;
     ctx.save();
     ctx.globalAlpha = e.op;
-    // l'ombre se porte par le contour arrondi : sur l'image decoupee, elle serait coupee avec elle
-    ctx.save();
+    ctx.imageSmoothingQuality = 'high';
+    // l'ombre suit la transparence de l'image, donc l'arrondi de la carte
     ctx.shadowColor = 'rgba(21,32,30,0.35)'; ctx.shadowBlur = 40 * e.s; ctx.shadowOffsetY = 14 * e.s;
-    ctx.fillStyle = '#fff'; ctx.fill(bord);
-    ctx.restore();
-    ctx.clip(bord);
     ctx.drawImage(im, e.x - w / 2, e.y - h, w, h);
     ctx.restore();
   }
 }
 
 // --- Le compteur ----------------------------------------------------------------------------
-// Il ne bouge que quand un anneau se pose : pendant les arrets, il est immobile lui aussi.
+// La somme des nombres ecrits sur les anneaux poses : sur la carte de la seule liste du visiteur,
+// ils totalisent exactement 212 (mesure le 2026-10-31). Avec toute la ligue c'etait 1 200, et
+// le compteur ne correspondait plus a ce qu'on voyait.
 function valeurCompteur(t) {
-  const n = posesA(t);
-  let bas = 0, v0 = 0;
-  for (const s of SALVES) {
-    if (n <= s.fin) return Math.round(lerp(v0, s.v, (n - bas) / (s.fin - bas)));
-    bas = s.fin; v0 = s.v;
-  }
-  return TOTAL;
+  let v = 0;
+  for (let i = 0; i < NA; i++) v += ANN[i].n * E.cubicOut(seg(tArrive[i], tArrive[i] + MONTEE, t));
+  return Math.round(v);
 }
 function dessineCompteur(t) {
   const t0 = SALVES[0].t0;

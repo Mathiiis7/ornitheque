@@ -36,15 +36,18 @@ s'écrit. Aucune image extérieure à créditer pour l'ouverture.
 
 ## Moments 1 et 2 refaits sur le site actuel (2026-10-31)
 
-Brouillon `.onetake/v2-brouillon2.mp4` : 15,8 s, 474 images, sans son, oracle PASS, 62 % d'images immobiles, plus long
+Brouillon `.onetake/v2-brouillon3.mp4` : 15,8 s, 474 images, sans son, oracle PASS, 58 % d'images immobiles, plus long
 repos 3,6 s. Refaire : `v2-site.py`, `assemble-v2.py`, puis `render.py .onetake/film2/comp.html --workers 4 --samples-max 24
 --gap 16` (241 s). **Ne plus partir des prises du 01/10** (`composants.py`, `.onetake/film/assets/c/`) : Mathis veut le site actuel.
 
 - **Logo :** les tracés de `assets/logos/logo.svg`, dans leur ordre, l'image finale est le vrai logo. L'iris part de son œil.
 - **Police :** Source Serif 4 Bold, celle des titres du site, choisie parmi trois (`v2-polices.py`).
-- **Carte :** la couche « La ligue » sur la France, 50 anneaux pris un à un, 212 sur **467** (466 avant).
-- **Rythme :** trois salves d'anneaux séparées de vrais arrêts ; le compteur ne bouge que quand un anneau se pose.
-- **Cartes du Birdydex :** prises telles quelles, découpées à l'arrondi du site (12 px x 0,85 x 2 = 20,4).
+- **Carte :** la couche « La ligue » sur la France, filtre « Qui » sur le visiteur de la démo (`demo-visiteur`, Alex) : 23 anneaux
+  qui totalisent **exactement 212**, sur **467** (466 avant). Toute la ligue donnait 50 anneaux et 1 200 : Mathis a vu que le compteur
+  ne collait pas. Le filtre remet la carte en vue Europe : le choisir AVANT de cliquer la France.
+- **Rythme :** trois salves d'anneaux séparées de vrais arrêts ; le compteur additionne le nombre de chaque anneau qui se pose.
+- **Cartes du Birdydex :** prises seules sur fond transparent, le vrai arrondi vient du navigateur. Les recouper à la main laissait
+  un liseré. Même méthode pour les anneaux, en cachant TOUS les plans de la carte : le voile de l'étranger y restait collé en carré pâle.
 
 | Carte | Licence | Photo iNaturalist |
 |---|---|---|

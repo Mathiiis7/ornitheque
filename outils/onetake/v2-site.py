@@ -98,16 +98,26 @@ with sync_playwright() as p:
         page.wait_for_function("s => { const i = document.querySelector(`.pkdx-card[data-sci=\"${s}\"] img`); return i && i.complete && i.naturalWidth > 0; }", arg=sci, timeout=20000)
         page.wait_for_timeout(300)
         nom = "carte-" + sci.replace(" ", "-") + ".png"
-        loc.screenshot(path=str(OUT / nom))
+        # La carte seule sur fond transparent : son vrai arrondi et sa vraie bordure viennent du
+        # navigateur. La recouper apres coup laissait un liseré du fond de page (Mathis, 2026-10-31).
+        seule = page.add_style_tag(content=f"""
+          html, body {{ background: transparent !important; }}
+          body * {{ visibility: hidden !important; }}
+          .pkdx-card[data-sci="{sci}"], .pkdx-card[data-sci="{sci}"] * {{ visibility: visible !important; }}
+        """)
+        b = loc.bounding_box()
+        page.screenshot(path=str(OUT / nom), omit_background=True,
+                        clip={"x": b["x"] - 2, "y": b["y"] - 2, "width": b["width"] + 4, "height": b["height"] + 4})
+        seule.evaluate("e => e.remove()")
         gardees.append({**c, "fichier": nom})
     (OUT / "cartes-gardees.json").write_text(json.dumps(gardees, ensure_ascii=False, indent=1), encoding="utf-8")
-    ims = [Image.open(OUT / c["fichier"]).convert("RGB") for c in gardees]
+    ims = [Image.open(OUT / c["fichier"]).convert("RGBA") for c in gardees]
     if ims:
         print("taille d'une carte :", ims[0].size)
-        pl = Image.new("RGB", (sum(i.width + 10 for i in ims), ims[0].height), "#ffffff")
+        pl = Image.new("RGB", (sum(i.width + 10 for i in ims), ims[0].height), "#ff00ff")
         x = 0
         for i in ims:
-            pl.paste(i, (x, 0))
+            pl.paste(i, (x, 0), i)
             x += i.width + 10
         pl.save(OUT / "planche-cartes.png")
         print([(c["nom"], c["licence"]) for c in gardees])
@@ -119,9 +129,16 @@ with sync_playwright() as p:
     page.wait_for_timeout(1500)
     page.locator("button:visible", has_text=re.compile("^\\s*Ligue")).first.click()
     page.wait_for_timeout(1000)
-    page.evaluate("() => { const b = document.getElementById('mapMineShowAllObs'); if (b && !b.checked) b.click(); }")
-    page.wait_for_timeout(1500)
-    page.mouse.click(768, 557)   # la France, au milieu de la carte d'Europe
+    # Seulement « Vous » : le compteur annonce votre liste, la carte doit montrer la meme chose.
+    # Avec toute la ligue, les anneaux totalisaient 1 200 pour un compteur a 212 (Mathis, 2026-10-31).
+    print(page.evaluate("""() => { const s = document.getElementById('mapPlayerSel');
+        const opts = [...s.options].map(o => [o.value, o.textContent.trim()]);
+        const moi = [...s.options].find(o => o.value === 'demo-visiteur');   // le visiteur de la demo, 212 especes
+        s.value = moi.value; s.dispatchEvent(new Event('change', { bubbles: true }));
+        return { opts, choisi: moi.textContent.trim() }; }"""))
+    page.wait_for_timeout(2500)
+    # La France APRES le filtre : le filtre remet la carte en vue Europe, sans la France decoupee
+    page.mouse.click(768, 557)
     page.wait_for_timeout(4000)
     page.screenshot(path=str(OUT / "2-carte-france.png"))
 
@@ -160,7 +177,10 @@ with sync_playwright() as p:
     sans.evaluate("e => e.remove()")
     page.add_style_tag(content="""
       html, body, #mapEl, .leaflet-container { background: transparent !important; }
-      #mapEl .leaflet-tile-pane, #mapEl .leaflet-tile-pane *, #mapEl .leaflet-overlay-pane, #mapEl .leaflet-overlay-pane * { visibility: hidden !important; }
+      /* Tous les plans sauf celui des anneaux : le voile qui eclaircit l'etranger a son propre plan, et
+         il restait colle dans les images des anneaux de la cote, en carre pale (vu le 2026-10-31). */
+      #mapEl .leaflet-pane:not(.leaflet-map-pane):not(.leaflet-marker-pane),
+      #mapEl .leaflet-pane:not(.leaflet-map-pane):not(.leaflet-marker-pane) * { visibility: hidden !important; }
     """)
     for m in marqueurs:
         # l'opacite et non la visibilite : les enfants de l'icone ont leur propre « visible »
@@ -171,5 +191,10 @@ with sync_playwright() as p:
         page.screenshot(path=str(OUT / m["fichier"]), omit_background=True,
                         clip={"x": m["x"] - marge, "y": m["y"] - marge, "width": m["w"] + 2 * marge, "height": m["h"] + 2 * marge})
         m.update(x=m["x"] - marge, y=m["y"] - marge, w=m["w"] + 2 * marge, h=m["h"] + 2 * marge)
+        # un anneau est rond : ses quatre coins doivent etre vides, sinon un voile est reste colle
+        a = Image.open(OUT / m["fichier"]).convert("RGBA")
+        coins = [a.getpixel(c)[3] for c in [(1, 1), (a.width - 2, 1), (1, a.height - 2), (a.width - 2, a.height - 2)]]
+        if max(coins) > 0:
+            raise SystemExit(f"anneau {m['i']} : coins non transparents {coins}")
     (OUT / "anneaux.json").write_text(json.dumps(marqueurs, ensure_ascii=False, indent=1), encoding="utf-8")
     nav.close()
