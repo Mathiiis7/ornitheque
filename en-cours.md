@@ -21,8 +21,9 @@ Ce fichier se remplace à chaque fin de tâche : quelques lignes, pas un journal
   Licences réglées à la prise (`photos_libres.py`, au niveau du réseau) ; les photos que le film montre sont vérifiées à l'œil, pas les autres.
   **Reste, dans l'ordre :** ~~2. licences : le mur du Birdydex et les petites
   photos du classement montrent des BY-SA, ND ou inconnues (34 cartes sur 212, plus 9 Wikimedia à vérifier) : les remplacer à la prise
-  par une photo libre de la même espèce, le film ne doit pas les montrer~~ ; 3. composer le Birdydex (mur, caméra sur la case grise), une
-  variante A sans Marco Polo enchaînée à D, puis la fiche (clic sur une espèce non vue par Alex, carte et mois, chant) ; 4. rendre chaque
+  par une photo libre de la même espèce, le film ne doit pas les montrer~~ ; ~~3a. Birdydex, scène espèce débloquée, 200, scène trophée~~ fait :
+  `.onetake/v2-brouillon6.mp4`, 32 s, à valider (`v2-mur.py`, `assemble-mur.py`, `film/comp-mur.html`, `montage-v2.py`) ; les scènes sont prises en
+  1080p, à reprendre en double définition pour le rendu final ; 3b. une variante A sans Marco Polo enchaînée à D, partant de la fenêtre du trophée, puis la fiche (clic sur une espèce non vue par Alex, carte et mois, chant) ; 4. rendre chaque
   morceau et les coller avec ffmpeg, chaque fin raccordant au début suivant ; 5. faire valider, puis récent, quiz, logo, son, crédits.
 
 ## Décidé le 31/10

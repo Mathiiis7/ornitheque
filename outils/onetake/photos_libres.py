@@ -19,7 +19,7 @@ PHOTO_INAT = re.compile(r"/photos/(\d+)/")
 PREMIERE_ECARTEE = {"limosa lapponica", "sterna hirundo", "ardeola ralloides", "regulus regulus",
                     "coccothraustes coccothraustes", "corvus cornix", "falco peregrinus", "columba palumbus"}
 # Celles que le classement montre, choisies a l'oeil : le choix par votes donnait une silhouette minuscule et un plumage trop serre
-CHOISIES = {"anser serrirostris": "604440187", "falco peregrinus": "236986913"}
+CHOISIES = {"anser serrirostris": "604440187", "falco peregrinus": "236986913", "ardeola ralloides": "607168642"}
 
 
 def lit_cache():

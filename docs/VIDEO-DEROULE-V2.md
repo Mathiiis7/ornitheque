@@ -72,6 +72,14 @@ Le site montre aussi des licences interdites au film (BY-SA 17, BY-NC-ND 16, BY-
 sur 212) : `v2-site.py` écarte tout ce qui n'est pas cc0, pd, cc-by, cc-by-nc ou cc-by-nc-sa. Les auteurs et le fond
 OpenStreetMap restent à créditer à l'étape des crédits. Suite : moments 3 à 9, à reprendre aussi depuis le site actuel, puis son et crédits.
 
+## Birdydex, de 199 à 200 (2026-10-31)
+
+Brouillon `.onetake/v2-brouillon6.mp4` : 32 s avec les moments 1 et 2, sans son. Refaire : `v2-mur.py`, `v2-scenes.py`, `assemble-mur.py`, le
+rendu de `.onetake/film-mur/comp-a.html` et `comp-c.html` vers `.onetake/mur-a.mp4` et `mur-c.mp4`, puis `montage-v2.py`. Le mur défile et
+s'arrête sur la case grise, le clic coupe vers la vraie scène, sans le formulaire. Scène « espèce débloquée » : préambule accéléré 1,7 fois,
+carte à vitesse réelle, coupée avant « Continuer ». Scène du trophée : montée accélérée 1,4 fois, fenêtre à vitesse réelle. À ce rythme, le film
+complet viserait environ 72 s plutôt que les 60 s du déroulé (estimation : 32 s faites, environ 40 s pour le reste).
+
 ## Repris de la v1
 
 - Le compteur 0 → total de l'essai du 2026-10-02, sans sa caméra fixe ni l'absence de main.

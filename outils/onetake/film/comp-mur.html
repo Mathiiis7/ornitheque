@@ -1,0 +1,253 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>L'Ornitheque - le Birdydex, de 199 a 200</title>
+<style>
+  html,body{margin:0;background:#000;overflow:hidden}
+  #stage{position:fixed;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0}
+  canvas{display:block;width:1920px;height:1080px}
+</style>
+<div id="stage"><canvas id="cv" width="1920" height="1080"></canvas></div>
+<script src="motion.js"></script>
+<script src="donnees-mur.js"></script>
+<script src="police-v2.js"></script>
+<script src="look.js"></script>
+<script>
+// =============================================================================
+// L'Ornitheque - le Birdydex, deux morceaux autour de la vraie scene « espece debloquee » :
+//   a : la carte s'efface, le mur defile et s'arrete sur la case grise du Martin-pecheur, le clic
+//       l'ouvre, le noir de la scene du site s'etend depuis la case.
+//   c : au sortir de la scene, la carte revient se poser dans sa case, le compteur passe a 200,
+//       puis le noir de la scene du trophee.
+// Le logo, le nom et le compteur ne bougent jamais : c'est ce qui survit aux passages.
+// Tout vient du site (v2-m3.py, v2-mur.py, v2-scenes.py). Tout est une fonction PURE du temps.
+// =============================================================================
+const V = '__PARTIE__';
+const DUR = { a: 3.85, c: 2.4 }[V];
+window.__meta = { dur: DUR, fps: 30, w: 1920, h: 1080 };
+const W = 1920, H = 1080;
+const { clamp, lerp, spring } = OM;
+const E = OM.ease;
+const seg = (a, b, t) => clamp((t - a) / (b - a), 0, 1);
+const L = window.LOOK.color;
+const titre = px => '700 ' + px + 'px "Source Serif Film"';
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const IM = {};
+const D = window.MUR;
+const CASE = { x: D.carte.x + D.carte.w / 2, y: D.carte.y + D.carte.h / 2 };
+
+// --- La camera, en coordonnees du mur ---------------------------------------------------------
+// A 1,5 le panneau blanc du site remplit le cadre : plus de fond gris sur les cotes, et a l'arrivee la
+// case s'aligne sur le logo, a gauche, avec le blanc du site pour la phrase.
+const DEBUT_S = 1920 / 1284;
+const FIN_CAM = { s: 1.75, ax: 56 + 131.234 * 1.75 / 2, ay: 500 };
+function camera(t) {
+  if (V === 'c') return { s: FIN_CAM.s, x: FIN_CAM.ax - CASE.x * FIN_CAM.s, y: FIN_CAM.ay - CASE.y * FIN_CAM.s };
+  const fy = lerp(520, CASE.y, E.quartOut(seg(0.1, 2.1, t)));
+  const k = E.expoInOut(seg(1.45, 2.2, t));
+  const s = lerp(DEBUT_S, FIN_CAM.s, k);
+  const fx = lerp(D.w / 2, CASE.x, k), ax = lerp(W / 2, FIN_CAM.ax, k);
+  return { s, x: ax - fx * s, y: FIN_CAM.ay - fy * s };
+}
+function mur(t, im) {
+  const c = camera(t);
+  ctx.save();
+  ctx.imageSmoothingQuality = 'high';
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+  ctx.translate(c.x, c.y); ctx.scale(c.s, c.s);
+  ctx.drawImage(im, 0, 0, D.w, D.h);
+  ctx.restore();
+}
+const versEcran = (t, x, y) => { const c = camera(t); return [c.x + x * c.s, c.y + y * c.s]; };
+
+// --- Ce qui survit : le logo et le nom, le compteur ------------------------------------------
+function voiles() {
+  // le mur se fond dans le blanc en haut et en bas : le logo, le nom et le compteur se lisent sur les photos qui passent
+  const h = ctx.createLinearGradient(0, 0, 0, 160);
+  h.addColorStop(0, '#fff'); h.addColorStop(0.65, '#fff'); h.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = h; ctx.fillRect(0, 0, W, 160);
+  const b = ctx.createLinearGradient(0, 770, 0, 880);
+  b.addColorStop(0, 'rgba(255,255,255,0)'); b.addColorStop(1, '#fff');
+  ctx.fillStyle = b; ctx.fillRect(0, 770, W, H - 770);
+}
+// Dessine exactement comme le moment 2 (comp-v2.html), a la meme place.
+function compteur(v, pouls) {
+  const px = 150, base = 985, x = 80;
+  ctx.save();
+  ctx.textBaseline = 'alphabetic';
+  ctx.font = titre(px);
+  let cell = 0; for (let d = 0; d <= 9; d++) cell = Math.max(cell, ctx.measureText(String(d)).width);
+  const s = String(v), blocW = cell * 3;
+  ctx.translate(x, base);
+  ctx.translate(blocW / 2, -px * 0.3); ctx.scale(1 + pouls, 1 + pouls); ctx.translate(-blocW / 2, px * 0.3);
+  ctx.textAlign = 'center';
+  ctx.fillStyle = L.accent;
+  for (let i = 0; i < s.length; i++) ctx.fillText(s[i], blocW - (s.length - i - 0.5) * cell, 0);
+  ctx.font = titre(60);
+  ctx.textAlign = 'left';
+  ctx.fillStyle = L.mute;
+  ctx.fillText('/ ' + D.sur, blocW + 24, 0);
+  ctx.font = window.LOOK.font('text', 28);
+  ctx.fillText('espèces vues', 8, 52);
+  ctx.restore();
+}
+function anciennePhrase(t) {
+  const k = E.expoIn(seg(0.15, 0.5, t));
+  if (k >= 1) return;
+  ctx.save();
+  ctx.globalAlpha = 1 - k;
+  ctx.font = titre(104);
+  ['Note chaque', 'oiseau que', 'tu vois.'].forEach((s, i) => {
+    ctx.fillStyle = i === 2 ? L.accent : L.ink;
+    // lettre par lettre comme le moment 2 : la phrase entiere n'a pas le meme crenage, le raccord sautait
+    for (let c = 0; c < s.length; c++) ctx.fillText(s[c], 74 + ctx.measureText(s.slice(0, c)).width, 310 + i * 120 - 90 * k);
+  });
+  ctx.restore();
+}
+const PHRASE = ['Complète ton', 'Birdydex.'];
+const PH_X = 400, PH_Y = 480, PH_PAS = 120;
+function phrase(t, t0) {
+  if (t < t0) return;
+  ctx.save();
+  ctx.font = titre(104); ctx.textBaseline = 'alphabetic';
+  PHRASE.forEach((ligne, li) => {
+    for (let i = 0; i < ligne.length; i++) {
+      const g = OM.letterDrop(t, t0 + li * 0.08, i, { stagger: 0.022, dist: 60, squash: 0.0075 });
+      if (g.op <= 0.01) continue;
+      ctx.save();
+      ctx.globalAlpha = g.op;
+      ctx.translate(PH_X + ctx.measureText(ligne.slice(0, i)).width, PH_Y + li * PH_PAS + g.y);
+      ctx.scale(g.sx, g.sy);
+      ctx.fillStyle = li === 1 ? L.accent : L.ink;
+      ctx.fillText(ligne[i], 0, 0);
+      ctx.restore();
+    }
+  });
+  ctx.restore();
+}
+function iris(cx, cy, r, couleur) {
+  // tout le cadre sauf un disque, ou l'inverse selon qui s'etend
+  ctx.save();
+  ctx.fillStyle = couleur;
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+const FLECHE = new Path2D('M0 0 L0 34 L9 26 L15 40 L22 37 L16 23 L28 23 Z');
+function curseur(x, y, presse) {
+  ctx.save();
+  ctx.translate(x, y); ctx.scale(1.5 * (1 - 0.15 * presse), 1.5 * (1 - 0.15 * presse));
+  ctx.shadowColor = 'rgba(21,32,30,0.35)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 3;
+  ctx.fillStyle = '#fff'; ctx.fill(FLECHE);
+  ctx.shadowColor = 'transparent';
+  ctx.strokeStyle = L.ink; ctx.lineWidth = 1.6; ctx.lineJoin = 'round'; ctx.stroke(FLECHE);
+  ctx.restore();
+}
+function anneau(cx, cy, w, h, k, op) {
+  // un cadre arrondi qui s'ecarte de la case
+  const m = 6 + 34 * k;
+  const r = new Path2D(); r.roundRect(cx - w / 2 - m, cy - h / 2 - m, w + 2 * m, h + 2 * m, 18 + m / 3);
+  ctx.save(); ctx.globalAlpha = op; ctx.strokeStyle = L.accent; ctx.lineWidth = 5; ctx.stroke(r); ctx.restore();
+}
+
+// --- a : le mur, la case grise, le clic ------------------------------------------------------
+function partA(t) {
+  const CLIC = 3.2, NOIR = 3.35, NOIR_FIN = 3.8;
+  mur(t, IM.m199);
+  const f = E.cubicInOut(seg(0.15, 0.7, t));
+  if (f < 1) {
+    ctx.save();
+    ctx.globalAlpha = 1 - f;
+    const z = 1 + 0.06 * f;
+    ctx.translate(1180, 540); ctx.scale(z, z); ctx.translate(-1180, -540);
+    ctx.drawImage(IM.carte, 0, 0, W, H);
+    ctx.restore();
+  }
+  ctx.save(); ctx.globalAlpha = f; voiles(); ctx.restore();
+  anciennePhrase(t);
+  phrase(t, 1.85);
+  const [cx, cy] = versEcran(t, CASE.x, CASE.y);
+  const cw = D.carte.w * camera(t).s, ch = D.carte.h * camera(t).s;
+  // l'appel sur la case : une onde, puis la fleche qui vient cliquer
+  if (t > 2.35 && t < 3.0) anneau(cx, cy, cw, ch, E.expoOut(seg(2.35, 3.0, t)), 1 - seg(2.45, 3.0, t));
+  const presse = t >= CLIC ? clamp(1 - Math.abs(t - CLIC - 0.06) / 0.08, 0, 1) : 0;
+  if (t > 2.45) {
+    const k = E.expoInOut(seg(2.45, CLIC - 0.03, t));
+    curseur(lerp(1500, cx + 20, k), lerp(1150, cy + 20, k), presse);
+  }
+  ctx.drawImage(IM.logo, 0, 0, W, H);
+  compteur(D.total, 0);
+  if (t > NOIR) iris(cx, cy, E.expoIn(seg(NOIR, NOIR_FIN, t)) * 2400, D.noirDebloque);
+}
+
+// --- c : la carte revient, 200 ---------------------------------------------------------------
+function partC(t) {
+  const POSE = 0.8, FERME = 1.95, FERME_FIN = 2.35;
+  ctx.drawImage(IM.scene, 0, 0, W, H);
+  const [cx, cy] = versEcran(t, CASE.x, CASE.y);
+  // le mur s'ouvre autour de la carte
+  const R = E.expoIn(seg(0.1, 0.55, t)) * 2400;
+  ctx.save();
+  ctx.beginPath(); ctx.arc(960, 532, R, 0, Math.PI * 2); ctx.clip();
+  mur(t, t >= POSE ? IM.m200 : IM.m199);
+  voiles();
+  phrase(t, -5);
+  if (t > POSE && t < POSE + 0.6) anneau(cx, cy, D.carte.w * FIN_CAM.s, D.carte.h * FIN_CAM.s, E.expoOut(seg(POSE, POSE + 0.6, t)), 1 - seg(POSE + 0.1, POSE + 0.6, t));
+  ctx.drawImage(IM.logo, 0, 0, W, H);
+  const pouls = t > POSE ? 0.14 * Math.exp(-(t - POSE) * 9) * Math.cos((t - POSE) * 24) : 0;
+  compteur(t >= POSE ? D.total + 1 : D.total, Math.abs(pouls) < 0.0015 ? 0 : pouls);
+  ctx.restore();
+  // la carte en vol : de la place qu'elle a dans la scene du site jusqu'a sa case
+  if (t < POSE) {
+    const k = E.expoInOut(seg(0.12, POSE, t));
+    const w0 = 252, s = lerp(w0 / (D.carte.w + 4), FIN_CAM.s, k);
+    const x = lerp(960, cx, k), y = lerp(532, cy, k) - Math.sin(k * Math.PI) * 60;
+    const w = (D.carte.w + 4) * s, h = (D.carte.h + 4) * s;
+    ctx.save();
+    ctx.globalAlpha = clamp(t / 0.08, 0, 1);
+    ctx.imageSmoothingQuality = 'high';
+    ctx.shadowColor = 'rgba(0,0,0,0.4)'; ctx.shadowBlur = 40; ctx.shadowOffsetY = 14;
+    ctx.drawImage(IM.martin, x - w / 2, y - h / 2, w, h);
+    ctx.restore();
+  }
+  if (t > FERME) iris(cx, cy, E.expoIn(seg(FERME, FERME_FIN, t)) * 2400, D.noirTrophee);
+}
+
+function seek(t) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = L.ground;
+  ctx.fillRect(0, 0, W, H);
+  (V === 'a' ? partA : partC)(t);
+  return true;
+}
+const ACTIF = { a: [[0.15, 2.3, 200], [2.35, 3.35, 60], [3.35, 3.85, 200]], c: [[0, 1.0, 120], [1.95, 2.4, 200]] }[V];
+window.__motion = (t0, t1) => {
+  let px = 0;
+  for (const [a, b, p] of ACTIF) if (t1 > a && t0 < b) px = Math.max(px, p);
+  return px;
+};
+window.__track = () => ({ logo: { x: 56, y: 28, w: 66, h: 66, op: 1 } });
+window.__events = () => ({ T: DUR, events: [], silences: [] });
+window.__seek = async t => seek(t);
+
+function charge(cle, src) {
+  return new Promise(res => {
+    const im = new Image();
+    im.onload = () => { IM[cle] = im; res(); };
+    im.onerror = () => { console.warn('image absente : ' + src); res(); };
+    im.src = src;
+  });
+}
+window.__ready = (async () => {
+  const jobs = [charge('m199', 'mur-199.jpg'), charge('m200', 'mur-200.jpg'), charge('carte', 'carte-nue.png'),
+    charge('logo', 'logo-nom.png'), charge('martin', 'carte-martin.png'), charge('scene', 'debloque-fin.jpg')];
+  document.fonts.add(await new FontFace('Source Serif Film', 'url(' + window.POLICE_TITRE + ')', { weight: '700' }).load());
+  await Promise.all(jobs);
+  if (window.LOOK.ready) await window.LOOK.ready;
+  await document.fonts.ready;
+  return seek(0);
+})();
+const q = new URLSearchParams(location.search);
+if (q.has('t')) window.__ready.then(() => seek(parseFloat(q.get('t'))));
+function ajuste() { document.getElementById('stage').style.transform = 'scale(' + Math.min(innerWidth / W, innerHeight / H) + ')'; }
+addEventListener('resize', ajuste); ajuste();
+</script>
