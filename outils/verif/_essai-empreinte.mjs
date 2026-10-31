@@ -3,7 +3,7 @@
 // node outils/verif/_essai-empreinte.mjs [dossier des captures]
 import { chromium } from 'playwright';
 const SORTIE = process.argv[2] || '.';
-const ATTENDU = { 'Héron cendré':'Longues ailes, long bec, longues pattes pour son gabarit.', "Martin-pêcheur d'Europe":'Long bec, ailes courtes, pattes courtes, queue courte pour son gabarit.', 'Merle noir':'Bien dans la moyenne, rien qui dépasse.', 'Cygne tuberculé':'Ailes courtes, pattes courtes, queue courte pour son gabarit.' };
+const ATTENDU = { 'Héron cendré':'Longues ailes, long bec, longues pattes, queue courte pour son gabarit.', "Martin-pêcheur d'Europe":'Long bec, ailes courtes, pattes courtes, queue courte pour son gabarit.', 'Merle noir':'Bien dans la moyenne, rien qui dépasse.', 'Cygne tuberculé':'Bec court, pattes courtes, queue courte pour son gabarit.' };
 const nav = await chromium.launch();
 let defauts = 0; const ecart = m => { console.log('   ÉCART : ' + m); defauts++; };
 for(const [largeur, theme] of [[1300, 'light'], [375, 'light'], [1300, 'dark']]){
