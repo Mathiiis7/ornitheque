@@ -6,9 +6,11 @@ les cartes du Birdydex sont celles qu'un visiteur voit. Le serveur doit tourner 
 
 Sortie dans .onetake/v2/site/ : cartes-birdydex.json (espece, photo, licence), planche, prises.
 """
-import json, math, pathlib, re
+import json, math, pathlib, re, sys
 from PIL import Image
 from playwright.sync_api import sync_playwright
+sys.path.insert(0, str(pathlib.Path(__file__).parent))
+import demo199
 
 URL = "http://127.0.0.1:8765/demo/"   # pas localhost : http-server n'ecoute qu'en IPv4
 OUT = pathlib.Path(".onetake/v2/site")
@@ -60,6 +62,7 @@ with sync_playwright() as p:
     nav = p.chromium.launch()
     ctx = nav.new_context(viewport={"width": 1920, "height": 1080}, device_scale_factor=2,
                           user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36")
+    demo199.installe(ctx)   # le film part de 199 : le Martin-pecheur fera le 200e
     page = ctx.new_page()
     page.goto(URL)
     page.wait_for_timeout(6000)
@@ -70,7 +73,9 @@ with sync_playwright() as p:
     onglet(page, "Birdydex")
     ferme_guides(page)
     page.wait_for_timeout(1500)
-    print(page.evaluate("document.querySelector('#viewBirdydex, #pkdx, body').innerText.match(/\\d+ espèces vues sur \\d+/)?.[0]"))
+    compte = page.evaluate("document.querySelector('#viewBirdydex, #pkdx, body').innerText.match(/\\d+ espèces vues sur \\d+/)?.[0]")
+    print(compte)
+    total, sur = [int(v) for v in re.findall(r"\d+", compte)]
     cartes = page.evaluate("""() => [...document.querySelectorAll('.pkdx-card:not(.missing)')].map(c => ({
         sci: c.dataset.sci, nom: c.querySelector('.pkdx-name')?.textContent.trim(),
         num: c.querySelector('.pkdx-num')?.textContent.trim(), src: c.querySelector('img')?.src || null }))""")
@@ -171,6 +176,10 @@ with sync_playwright() as p:
         e.dataset.film = i; const r = e.getBoundingClientRect();
         return { i, x: r.x, y: r.y, w: r.width, h: r.height, n: parseInt(e.textContent) || 1 }; })""")
     print(len(marqueurs), "anneaux ; somme des nombres :", sum(m["n"] for m in marqueurs))
+    # Le compteur du film additionne les anneaux : ils doivent donner le nombre que le site annonce
+    if sum(m["n"] for m in marqueurs) != total or total != 199:
+        raise SystemExit(f"anneaux {sum(m['n'] for m in marqueurs)}, site {total} : attendu 199 partout")
+    (OUT / "compte.json").write_text(json.dumps({"total": total, "sur": sur}), encoding="utf-8")
 
     # Qui est dans quel anneau : une photo doit surgir la ou l'oiseau a ete note, pas ailleurs (un
     # Guepier dans le Nord, Mathis, 2026-10-31). Les tuiles donnent la projection exacte de la carte :

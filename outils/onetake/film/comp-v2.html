@@ -21,7 +21,7 @@
 //   2. Observer : un iris s'ouvre depuis l'oeil sur la carte du site ; le logo et le nom se
 //      rangent en haut a gauche et RESTENT (c'est ce qui survit au passage). Les anneaux de la
 //      liste du visiteur arrivent par trois salves separees de vrais arrets, le compteur ajoute
-//      le nombre de chaque anneau qui se pose (la cause est visible), et s'arrete net sur 212.
+//      le nombre de chaque anneau qui se pose (la cause est visible), et s'arrete net sur 199.
 //
 // Tout vient du site actuel (v2-site.py). Tout est une fonction PURE du temps : le rendu rappelle
 // seek(t) plusieurs fois autour de chaque image pour le flou de mouvement.
@@ -67,15 +67,15 @@ const SALVES = [
   { t0: 11.0, t1: 12.3, n: 0, puiss: 0.7 },   // n = 0 : tout le reste
 ];
 const MONTEE = 0.25;                  // le temps que le nombre d'un anneau s'ajoute au compteur
-const FIN = 12.3 + MONTEE;            // le compteur est a 212
-const TOTAL = 212, SUR = 467;         // « 212 espèces vues sur 467 », lu sur la demo le 2026-10-31
+const FIN = 12.3 + MONTEE;            // le compteur est a son total
+const TOTAL = window.V2.total, SUR = window.V2.sur;   // « 199 espèces vues sur 467 », lu sur le site par v2-site.py
 const PHOTO_VOL = 0.5;
 const PHOTOS = [
   { t: 7.15,  tenue: 0.75 },
   { t: 8.85,  tenue: 0.75 },
   { t: 9.3,   tenue: 0.75 },
   { t: 11.4,  tenue: 0.45 },
-  { t: 12.42, tenue: 0.35 },   // le martin-pecheur, depuis le dernier anneau, celui de l'Indre
+  { t: 12.42, tenue: 0.35 },   // le rougegorge, depuis le dernier anneau, celui de l'Indre
 ].map((p, i) => ({ ...p, ...window.V2.photos[i] }));
 const COMPTEUR = { x: 80, base: 985 };
 
@@ -338,8 +338,8 @@ function dessinePhotos(t) {
 
 // --- Le compteur ----------------------------------------------------------------------------
 // La somme des nombres ecrits sur les anneaux poses : sur la carte de la seule liste du visiteur,
-// ils totalisent exactement 212 (mesure le 2026-10-31). Avec toute la ligue c'etait 1 200, et
-// le compteur ne correspondait plus a ce qu'on voyait.
+// ils totalisent exactement le nombre du site, v2-site.py s'arrete sinon. Avec toute la ligue
+// c'etait 1 200, et le compteur ne correspondait plus a ce qu'on voyait.
 function valeurCompteur(t) {
   let v = 0;
   for (let i = 0; i < NA; i++) v += ANN[i].n * E.cubicOut(seg(tArrive[i], tArrive[i] + MONTEE, t));
@@ -355,7 +355,7 @@ function dessineCompteur(t) {
     const ta = ph.t + ph.tenue + PHOTO_VOL;
     if (t > ta) pouls = Math.max(pouls, 0.07 * Math.exp(-(t - ta) * 11) * Math.cos((t - ta) * 26));
   }
-  // l'arrivee sur 212 : le coup final
+  // l'arrivee sur le total : le coup final
   if (t > FIN) pouls = Math.max(pouls, 0.14 * Math.exp(-(t - FIN) * 9) * Math.cos((t - FIN) * 24));
   if (Math.abs(pouls) < 0.0015) pouls = 0;
   const px = 150, base = COMPTEUR.base;

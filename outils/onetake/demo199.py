@@ -35,7 +35,8 @@ def _fin_liste(texte, debut):
     raise ValueError("liste non fermee")
 
 
-def reduit(corps):
+def reduit(corps, apres=False):
+    """apres=True : la liste une fois le Martin-pecheur ajoute (200), avec lui en derniere acquisition."""
     cle = '"name":"Alex","species":'
     d = corps.index(cle) + len(cle)
     f = _fin_liste(corps, d)
@@ -43,13 +44,18 @@ def reduit(corps):
     # les plus anciennes d'abord : le classement du site montre la derniere acquisition, on n'y touche pas
     retenues = [NOUVELLE] + [e["k"] for e in sorted(especes, key=lambda e: e.get("a", 0)) if e["k"] not in GARDEES and e["k"] != NOUVELLE][:RETIRER - 1]
     reste = [e for e in especes if e["k"] not in retenues]
+    if apres:
+        martin = next(e for e in especes if e["k"] == NOUVELLE)
+        martin["a"] = max(e.get("a", 0) for e in especes) + 1
+        reste.append(martin)
+        return corps[:d] + json.dumps(reste, ensure_ascii=False, separators=(",", ":")) + corps[f + 1:]
     if len(reste) != 199:
         raise ValueError(f"{len(reste)} especes au lieu de 199")
     return corps[:d] + json.dumps(reste, ensure_ascii=False, separators=(",", ":")) + corps[f + 1:]
 
 
-def installe(ctx):
+def installe(ctx, apres=False):
     def route(r):
         reponse = r.fetch()
-        r.fulfill(response=reponse, body=reduit(reponse.text()))
+        r.fulfill(response=reponse, body=reduit(reponse.text(), apres))
     ctx.route("**/demo/donnees.js*", route)

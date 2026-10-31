@@ -35,7 +35,7 @@ const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
 const IM = {};
 const TB = window.M3.table, GR = window.M3.grille, TA = window.M3.tropheeAvant;
 const ALEX = TB.lignes.findIndex(l => l.moi), LINA = TB.lignes.findIndex(l => l.nom === 'Lina');
-const MAX = TB.lignes[0].n;
+const MAX = TB.lignes[0].n, N_ALEX = TB.lignes[ALEX].n;   // 200, lu sur le site : le Martin-pecheur vient d'entrer
 
 // --- Le raccord avec le moment 2 ------------------------------------------------------------
 const SORTIE = 0.5, SORTIE_FIN = 1.15;         // la carte s'efface vers le fond
@@ -158,7 +158,7 @@ function compteur(t, vol) {
   ctx.font = titre(px);
   ctx.fillStyle = L.accent;
   ctx.globalAlpha = vol.fondu ? 1 - seg(fin - 0.25, fin, t) : 1;
-  ctx.fillText('212', dx, dy);
+  ctx.fillText(String(N_ALEX), dx, dy);
   const rest = 1 - seg(vol.t0, vol.t0 + 0.2, t);
   if (rest > 0) {
     ctx.globalAlpha = rest;
@@ -219,7 +219,7 @@ function varA(t) {
       ctx.shadowColor = t > DOUBLE && t < DOUBLE + 0.5 ? 'rgba(21,32,30,0.25)' : 'transparent';
       ctx.shadowBlur = 16;
       ctx.translate(0, (1 - p) * 8);
-      ligne(ALEX, lerp(slotY[4], slotY[3], kD), 212, clamp((t - POSE) / 0.08, 0, 1));
+      ligne(ALEX, lerp(slotY[4], slotY[3], kD), N_ALEX, clamp((t - POSE) / 0.08, 0, 1));
       ctx.restore();
     }
     if (a.op > 0) rangs(t >= POSE ? null : [0, 1, 2, 3]);
@@ -313,7 +313,7 @@ function varC(t) {
     const a0 = arrivee(t, 0.75, 0);
     ctx.save(); ctx.translate(0, a0.dy); entete(a0.op); ctx.restore();
     [0, 1, 2, 4].forEach(i => { const a = arrivee(t, 0.75, i + 1); ligne(i, slotY[i] + a.dy, TB.lignes[i].n, a.op * (1 - plonge)); });
-    ligne(ALEX, slotY[3], 212, (t >= POSE ? 1 : 0) * (1 - plonge));
+    ligne(ALEX, slotY[3], N_ALEX, (t >= POSE ? 1 : 0) * (1 - plonge));
     rangs(null);
     ctx.restore();
   }
@@ -339,7 +339,7 @@ function varD(t) {
     const a0 = arrivee(t, 0.75, 0);
     ctx.save(); ctx.translate(0, a0.dy); entete(a0.op); ctx.restore();
     [0, 1, 2, 4].forEach(i => { const a = arrivee(t, 0.75, i + 1); ligne(i, slotY[i] + a.dy, TB.lignes[i].n, a.op); });
-    ligne(ALEX, slotY[3], 212, t >= POSE ? 1 : 0);
+    ligne(ALEX, slotY[3], N_ALEX, t >= POSE ? 1 : 0);
     rangs(null);
     ctx.restore();
   }

@@ -20,8 +20,9 @@ POLICE = pathlib.Path("assets/fonts/SourceSerif4-Bold.woff2")
 # Les cinq cartes qui surgissent : licences verifiees par v2-site.py (cartes-gardees.json)
 # Chaque oiseau sort de l'anneau ou la demo l'a note, et son lieu doit etre vraisemblable (Mathis,
 # 2026-10-31) : Guepier dans l'Herault, Flamant dans les Bouches-du-Rhone, Cygne en Mayenne,
-# Huppe dans le Vaucluse. Le Martin-pecheur, l'oiseau du logo, ferme le moment depuis l'Indre.
-PHOTOS = ["merops apiaster", "phoenicopterus roseus", "cygnus olor", "upupa epops", "alcedo atthis"]
+# Huppe dans le Vaucluse. Le Rougegorge ferme le moment depuis l'Indre : le Martin-pecheur n'est
+# pas encore dans la liste a 199, c'est lui qui fera le 200e.
+PHOTOS = ["merops apiaster", "phoenicopterus roseus", "cygnus olor", "upupa epops", "erithacus rubecula"]
 
 
 def lit_logo():
@@ -63,7 +64,8 @@ photos = [gardees[s] for s in PHOTOS]
 for c in photos:
     shutil.copy2(SITE / c["fichier"], OUT / c["fichier"])
     print(c["nom"], "|", c["licence"], "|", c["src"])
-donnees = {"logo": lit_logo(), "anneaux": anneaux, "photos": [{"fichier": c["fichier"], "sci": c["sci"]} for c in photos]}
+compte = json.loads((SITE / "compte.json").read_text(encoding="utf-8"))
+donnees = {"logo": lit_logo(), "anneaux": anneaux, "photos": [{"fichier": c["fichier"], "sci": c["sci"]} for c in photos], **compte}
 print("logo :", len(donnees["logo"]["traces"]), "traces ;", len(anneaux), "anneaux")
 (OUT / "donnees-v2.js").write_text("window.V2 = " + json.dumps(donnees, separators=(",", ":")) + ";\n", encoding="utf-8")
 # Embarquee en base64 : un rendu en file:// ne charge pas une police par son adresse.

@@ -36,6 +36,9 @@ s'écrit. Aucune image extérieure à créditer pour l'ouverture.
 
 ## Moments 1 et 2 refaits sur le site actuel (2026-10-31)
 
+Depuis le 31/10, le film part de 199 espèces (`demo199.py`, le temps des prises) : les chiffres 212 ci-dessous valent pour la liste
+complète de la démo. `v2-site.py` s'arrête si le site et la somme des anneaux ne donnent pas 199. Brouillon à 199 : `.onetake/v2-brouillon5.mp4`.
+
 Brouillon `.onetake/v2-brouillon4.mp4` : 15,8 s, 474 images, sans son, oracle PASS, 60 % d'images immobiles, dernier
 repos 2,5 s. Refaire : `v2-site.py`, `assemble-v2.py`, puis `render.py .onetake/film2/comp.html --workers 4 --samples-max 24
 --gap 16` (241 s). **Ne plus partir des prises du 01/10** (`composants.py`, `.onetake/film/assets/c/`) : Mathis veut le site actuel.
@@ -55,7 +58,7 @@ repos 2,5 s. Refaire : `v2-site.py`, `assemble-v2.py`, puis `render.py .onetake/
 | Flamant rose (Bouches-du-Rhône) | CC BY-NC | iNaturalist 187242272 |
 | Cygne tuberculé (Mayenne) | CC BY-NC | iNaturalist 482124381 |
 | Huppe fasciée (Vaucluse) | CC BY-NC-SA | iNaturalist 60494705 |
-| Martin-pêcheur d'Europe (Indre) | CC BY-NC-SA | iNaturalist 61266631 |
+| Rougegorge familier (Indre) | CC BY-NC | iNaturalist 104940884 |
 
 **Chaque oiseau sort de l'anneau où la démo l'a noté, et son lieu doit rester vraisemblable** : un Guêpier dans le Nord a choqué
 Mathis (31/10). `v2-site.py` rattache les 212 espèces à leur anneau par leur GPS et la projection lue sur une tuile ; contrôle : 21

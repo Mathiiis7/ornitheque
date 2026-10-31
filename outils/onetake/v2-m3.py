@@ -4,8 +4,10 @@ site actuel (la demo), plus la fin du moment 2 pour y raccorder. Le serveur doit
 
     .onetake/venv/Scripts/python.exe outils/onetake/v2-m3.py
 """
-import json, pathlib, re
+import json, pathlib, re, sys
 from playwright.sync_api import sync_playwright
+sys.path.insert(0, str(pathlib.Path(__file__).parent))
+import demo199
 
 URL = "http://127.0.0.1:8765/demo/"
 OUT = pathlib.Path(".onetake/v2/m3")
@@ -45,6 +47,8 @@ with sync_playwright() as p:
     nav = p.chromium.launch()
     ctx = nav.new_context(viewport={"width": 1920, "height": 1080}, device_scale_factor=2,
                           user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36")
+    # Le classement et Qui a vu quoi viennent apres l'ajout du Martin-pecheur dans le film : le site lui-meme montre 200
+    demo199.installe(ctx, apres=True)
     # --- 1. Le classement : l'entete et chaque ligne, sans rang ni nombre (la composition les ecrit)
     page = ouvre(ctx)
     onglet(page, "Classement")
