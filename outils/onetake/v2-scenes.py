@@ -50,7 +50,7 @@ def film(page, nom, max_s=14):
 
 with sync_playwright() as p:
     nav = p.chromium.launch()
-    ctx = nav.new_context(viewport={"width": 1920, "height": 1080},
+    ctx = nav.new_context(viewport={"width": 1920, "height": 1080}, device_scale_factor=2,
                           user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36")
     demo199.installe(ctx)
     journal = []
@@ -96,8 +96,18 @@ with sync_playwright() as p:
           page.evaluate(f"""document.querySelector('.pkdx-card[data-sci="{SCI}"]')?.className"""))
     info["revele"] = film(page, "revele", 5)
     page.evaluate(FINIT)
-    page.wait_for_timeout(1000)
+    # La vraie page a 200, sans le message passager : l'onglet Trophees y porte sa pastille. Le film recule jusqu'a elle.
+    page.wait_for_timeout(6000)
+    page.evaluate(f"""document.querySelector('.pkdx-card[data-sci="{SCI}"]').scrollIntoView({{block:'center'}})""")
+    page.mouse.move(960, 600)
+    page.mouse.wheel(0, 165)
+    page.wait_for_timeout(2500)
+    page.mouse.move(5, 5)
+    page.wait_for_timeout(300)
     page.screenshot(path=str(OUT / "birdydex-200.png"))
+    info["page200"] = page.evaluate(f"""(() => {{ const R = e => {{ const r = e.getBoundingClientRect(); return {{ x: r.x, y: r.y, w: r.width, h: r.height }}; }};
+        return {{ martin: R(document.querySelector('.pkdx-card[data-sci="{SCI}"]')),
+                  onglet: R([...document.querySelectorAll('button')].find(b => b.offsetParent && b.textContent.trim().startsWith('Trophées'))) }}; }})()""")
     # Le trophee : sa scene part a l'arrivee sur l'onglet
     # l'onglet porte une pastille depuis le nouveau palier : on le vise par son debut
     page.evaluate("[...document.querySelectorAll('button')].find(b => b.offsetParent && b.textContent.trim().startsWith('Trophées')).click()")

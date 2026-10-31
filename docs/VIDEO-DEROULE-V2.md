@@ -78,7 +78,18 @@ Brouillon `.onetake/v2-brouillon6.mp4` : 32 s avec les moments 1 et 2, sans son.
 rendu de `.onetake/film-mur/comp-a.html` et `comp-c.html` vers `.onetake/mur-a.mp4` et `mur-c.mp4`, puis `montage-v2.py`. Le mur défile et
 s'arrête sur la case grise, le clic coupe vers la vraie scène, sans le formulaire. Scène « espèce débloquée » : préambule accéléré 1,7 fois,
 carte à vitesse réelle, coupée avant « Continuer ». Scène du trophée : montée accélérée 1,4 fois, fenêtre à vitesse réelle. À ce rythme, le film
-complet viserait environ 72 s plutôt que les 60 s du déroulé (estimation : 32 s faites, environ 40 s pour le reste).
+complet viserait environ 67 s plutôt que les 60 s du déroulé (estimation : 50 s faites, environ 17 s pour récent, quiz et logo).
+
+Retours de Mathis (31/10) : au retour dans le Birdydex, la carte de la scène se fond dans celle du site pendant le vol et les rayons s'effacent ;
+une étape ajoutée : la caméra recule sur la vraie page, phrase « Collectionne les trophées. », l'onglet Trophées et sa pastille, le clic. La scène du trophée part de la vraie page.
+Classement et grille : variante e de `comp-m3.html`. Fiche et chant : variante f, `v2-fiche.py`, sur l'Accenteur alpin, vu par les trois amis et pas par Alex.
+
+| À créditer | Licence | Source |
+|---|---|---|
+| Photo de l'Accenteur alpin, Alessandro | CC BY-NC | iNaturalist 59007262 |
+| Chant de l'Accenteur alpin, Benjamin Drillat | CC BY-NC-SA 4.0, lue sur sa page le 31/10 | xeno-canto XC982627 |
+
+Le site donne ce même enregistrement au chant et au cri : `v2-fiche.py` masque la rangée du cri à la prise, le film ne montre que le chant.
 
 ## Repris de la v1
 

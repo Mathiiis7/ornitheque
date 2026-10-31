@@ -16,13 +16,14 @@
 // L'Ornitheque - le Birdydex, deux morceaux autour de la vraie scene « espece debloquee » :
 //   a : la carte s'efface, le mur defile et s'arrete sur la case grise du Martin-pecheur, le clic
 //       l'ouvre, le noir de la scene du site s'etend depuis la case.
-//   c : au sortir de la scene, la carte revient se poser dans sa case, le compteur passe a 200,
-//       puis le noir de la scene du trophee.
+//   c : au sortir de la scene, la carte revient se poser dans sa case, le compteur passe a 200 ; la
+//       camera recule jusqu'a la vraie page, l'onglet Trophees porte sa pastille, la fleche le clique,
+//       et la scene du trophee part de la vraie page des trophees.
 // Le logo, le nom et le compteur ne bougent jamais : c'est ce qui survit aux passages.
 // Tout vient du site (v2-m3.py, v2-mur.py, v2-scenes.py). Tout est une fonction PURE du temps.
 // =============================================================================
 const V = '__PARTIE__';
-const DUR = { a: 3.55, c: 2.4 }[V];
+const DUR = { a: 3.55, c: 3.5 }[V];
 window.__meta = { dur: DUR, fps: 30, w: 1920, h: 1080 };
 const W = 1920, H = 1080;
 const { clamp, lerp, spring } = OM;
@@ -60,14 +61,14 @@ function mur(t, im) {
 const versEcran = (t, x, y) => { const c = camera(t); return [c.x + x * c.s, c.y + y * c.s]; };
 
 // --- Ce qui survit : le logo et le nom, le compteur ------------------------------------------
-function voiles() {
+function voiles(haut = 1, bas = 1) {
   // le mur se fond dans le blanc en haut et en bas : le logo, le nom et le compteur se lisent sur les photos qui passent
   const h = ctx.createLinearGradient(0, 0, 0, 160);
   h.addColorStop(0, '#fff'); h.addColorStop(0.65, '#fff'); h.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = h; ctx.fillRect(0, 0, W, 160);
+  ctx.save(); ctx.globalAlpha *= haut; ctx.fillStyle = h; ctx.fillRect(0, 0, W, 160); ctx.restore();
   const b = ctx.createLinearGradient(0, 770, 0, 880);
   b.addColorStop(0, 'rgba(255,255,255,0)'); b.addColorStop(1, '#fff');
-  ctx.fillStyle = b; ctx.fillRect(0, 770, W, H - 770);
+  ctx.save(); ctx.globalAlpha *= bas; ctx.fillStyle = b; ctx.fillRect(0, 770, W, H - 770); ctx.restore();
 }
 // Dessine exactement comme le moment 2 (comp-v2.html), a la meme place.
 function compteur(v, pouls) {
@@ -105,19 +106,21 @@ function anciennePhrase(t) {
 }
 const PHRASE = ['Complète ton', 'Birdydex.'];
 const PH_X = 400, PH_Y = 480, PH_PAS = 120;
-function phrase(t, t0) {
+function phrase(t, t0, lignes = PHRASE, accent = 1, sortie = null, opacite = 1) {
   if (t < t0) return;
+  const part = sortie === null ? 0 : E.expoIn(seg(sortie, sortie + 0.35, t));
+  if (part >= 1) return;
   ctx.save();
   ctx.font = titre(104); ctx.textBaseline = 'alphabetic';
-  PHRASE.forEach((ligne, li) => {
+  lignes.forEach((ligne, li) => {
     for (let i = 0; i < ligne.length; i++) {
       const g = OM.letterDrop(t, t0 + li * 0.08, i, { stagger: 0.022, dist: 60, squash: 0.0075 });
       if (g.op <= 0.01) continue;
       ctx.save();
-      ctx.globalAlpha = g.op;
-      ctx.translate(PH_X + ctx.measureText(ligne.slice(0, i)).width, PH_Y + li * PH_PAS + g.y);
+      ctx.globalAlpha = g.op * (1 - part) * opacite;
+      ctx.translate(PH_X + ctx.measureText(ligne.slice(0, i)).width, PH_Y + li * PH_PAS + g.y - 70 * part);
       ctx.scale(g.sx, g.sy);
-      ctx.fillStyle = li === 1 ? L.accent : L.ink;
+      ctx.fillStyle = li === accent ? L.accent : L.ink;
       ctx.fillText(ligne[i], 0, 0);
       ctx.restore();
     }
@@ -178,37 +181,94 @@ function partA(t) {
   if (t > NOIR) iris(cx, cy, E.expoIn(seg(NOIR, NOIR_FIN, t)) * 2400, D.noirDebloque);
 }
 
-// --- c : la carte revient, 200 ---------------------------------------------------------------
+// --- c : la carte revient, 200, puis l'onglet Trophees --------------------------------------
+// La camera sur la vraie page a 200, en pixels de page. Elle part du cadrage du mur, recule jusqu'a ce que
+// le logo du site tombe exactement sur celui du film, qui lui passe la main, puis revient a la page entiere.
+const PG = D.page200;
+const MARTIN_PG = { x: PG.martin.x + PG.martin.w / 2, y: PG.martin.y + PG.martin.h / 2 };
+const POSE_MUR = { s: FIN_CAM.s, x: FIN_CAM.ax - MARTIN_PG.x * FIN_CAM.s, y: FIN_CAM.ay - MARTIN_PG.y * FIN_CAM.s };
+const S_ENTETE = 66 / 47;
+const POSE_ENTETE = { s: S_ENTETE, x: 56 - 317 * S_ENTETE, y: 28 - 21 * S_ENTETE };
+const POSE_PAGE = { s: 1, x: 0, y: 0 };
+const RECUL = 1.5, RECUL_FIN = 2.1, RETOUR = 3.05, RETOUR_FIN = 3.4;
+function camPage(t) {
+  const a = E.expoInOut(seg(RECUL, RECUL_FIN, t)), b = E.expoInOut(seg(RETOUR, RETOUR_FIN, t));
+  const m = (u, v, k) => ({ s: lerp(u.s, v.s, k), x: lerp(u.x, v.x, k), y: lerp(u.y, v.y, k) });
+  return m(m(POSE_MUR, POSE_ENTETE, a), POSE_PAGE, b);
+}
+const PHRASE2 = ['Collectionne', 'les trophées.'];
 function partC(t) {
-  const POSE = 0.8, FERME = 1.95, FERME_FIN = 2.35;
-  ctx.drawImage(IM.scene, 0, 0, W, H);
+  const POSE = 0.8, CLIC = 3.0;
   const [cx, cy] = versEcran(t, CASE.x, CASE.y);
-  // le mur s'ouvre autour de la carte
-  const R = E.expoIn(seg(0.1, 0.55, t)) * 2400;
-  ctx.save();
-  ctx.beginPath(); ctx.arc(960, 532, R, 0, Math.PI * 2); ctx.clip();
-  mur(t, t >= POSE ? IM.m200 : IM.m199);
-  voiles();
-  phrase(t, -5);
-  if (t > POSE && t < POSE + 0.6) anneau(cx, cy, D.carte.w * FIN_CAM.s, D.carte.h * FIN_CAM.s, E.expoOut(seg(POSE, POSE + 0.6, t)), 1 - seg(POSE + 0.1, POSE + 0.6, t));
-  ctx.drawImage(IM.logo, 0, 0, W, H);
-  const pouls = t > POSE ? 0.14 * Math.exp(-(t - POSE) * 9) * Math.cos((t - POSE) * 24) : 0;
-  compteur(t >= POSE ? D.total + 1 : D.total, Math.abs(pouls) < 0.0015 ? 0 : pouls);
-  ctx.restore();
-  // la carte en vol : de la place qu'elle a dans la scene du site jusqu'a sa case
+  const cam = camPage(t);
   if (t < POSE) {
-    const k = E.expoInOut(seg(0.12, POSE, t));
-    const w0 = 252, s = lerp(w0 / (D.carte.w + 4), FIN_CAM.s, k);
-    const x = lerp(960, cx, k), y = lerp(532, cy, k) - Math.sin(k * Math.PI) * 60;
-    const w = (D.carte.w + 4) * s, h = (D.carte.h + 4) * s;
+    mur(t, IM.m199);
+  } else {
     ctx.save();
-    ctx.globalAlpha = clamp(t / 0.08, 0, 1);
     ctx.imageSmoothingQuality = 'high';
-    ctx.shadowColor = 'rgba(0,0,0,0.4)'; ctx.shadowBlur = 40; ctx.shadowOffsetY = 14;
-    ctx.drawImage(IM.martin, x - w / 2, y - h / 2, w, h);
+    ctx.translate(cam.x, cam.y); ctx.scale(cam.s, cam.s);
+    ctx.drawImage(IM.page, 0, 0, W, H);
     ctx.restore();
   }
-  if (t > FERME) iris(cx, cy, E.expoIn(seg(FERME, FERME_FIN, t)) * 2400, D.noirTrophee);
+  // le logo du site remplace celui du film, le voile du haut s'efface pour laisser voir l'entete
+  const passe = E.cubicInOut(seg(1.96, 2.06, t));
+  voiles(1 - passe, 1 - seg(RETOUR, RETOUR + 0.25, t));
+  const estompe = 1 - seg(RETOUR, RETOUR + 0.25, t);
+  phrase(t, -5, PHRASE, 1, RECUL - 0.1);
+  phrase(t, 1.85, PHRASE2, 1, null, estompe);
+  if (t > POSE && t < POSE + 0.6) {
+    const P = POSE_MUR;
+    anneau(MARTIN_PG.x * P.s + P.x, MARTIN_PG.y * P.s + P.y, PG.martin.w * P.s, PG.martin.h * P.s, E.expoOut(seg(POSE, POSE + 0.6, t)), 1 - seg(POSE + 0.1, POSE + 0.6, t));
+  }
+  // l'appel sur l'onglet, qui porte la pastille du trophee a recuperer
+  const ox = cam.x + (PG.onglet.x + PG.onglet.w / 2) * cam.s, oy = cam.y + (PG.onglet.y + PG.onglet.h / 2) * cam.s;
+  [2.2, 2.6].forEach(t0 => {
+    if (t > t0 && t < t0 + 0.55) anneau(ox, oy, PG.onglet.w * cam.s, PG.onglet.h * cam.s, E.expoOut(seg(t0, t0 + 0.55, t)) * 0.5, 1 - seg(t0 + 0.1, t0 + 0.55, t));
+  });
+  if (t > 2.3) {
+    const k = E.expoInOut(seg(2.3, CLIC - 0.03, t));
+    const presse = t >= CLIC ? clamp(1 - Math.abs(t - CLIC - 0.06) / 0.08, 0, 1) : 0;
+    ctx.save();
+    ctx.globalAlpha = 1 - seg(RETOUR + 0.1, RETOUR + 0.3, t);
+    curseur(lerp(1300, ox + 8, k), lerp(1000, oy + 8, k), presse);
+    ctx.restore();
+  }
+  if (passe < 1) { ctx.save(); ctx.globalAlpha = 1 - passe; ctx.drawImage(IM.logo, 0, 0, W, H); ctx.restore(); }
+  const pouls = t > POSE ? 0.14 * Math.exp(-(t - POSE) * 9) * Math.cos((t - POSE) * 24) : 0;
+  ctx.save();
+  ctx.globalAlpha = estompe;
+  compteur(t >= POSE ? D.total + 1 : D.total, Math.abs(pouls) < 0.0015 ? 0 : pouls);
+  ctx.restore();
+  // la vraie page des trophees : la scene du site part d'elle
+  const page2 = seg(3.38, 3.48, t);
+  if (page2 > 0) { ctx.save(); ctx.globalAlpha = page2; ctx.drawImage(IM.tro0, 0, 0, W, H); ctx.restore(); }
+  // Les rayons de la scene s'effacent sur le mur. La carte de la scene et celle du site ne sont pas la
+  // meme image : l'une se fond dans l'autre pendant le vol, sinon la coupure saute aux yeux (Mathis, 2026-10-31).
+  const rayons = 1 - E.cubicInOut(seg(0.03, 0.5, t));
+  if (rayons > 0) { ctx.save(); ctx.globalAlpha = rayons; ctx.drawImage(IM.sceneSans, 0, 0, W, H); ctx.restore(); }
+  if (t < POSE) {
+    const SC = D.carteScene;
+    const k = E.expoInOut(seg(0.05, POSE, t));
+    const w = lerp(SC.w, D.carte.w * FIN_CAM.s, k), h = lerp(SC.h, D.carte.h * FIN_CAM.s, k);
+    const x = lerp(SC.x + SC.w / 2, cx, k), y = lerp(SC.y + SC.h / 2, cy, k) - Math.sin(k * Math.PI) * 50;
+    const r = new Path2D(); r.roundRect(x - w / 2, y - h / 2, w, h, lerp(16, 14, k));
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = 36; ctx.shadowOffsetY = 12;
+    ctx.fillStyle = '#fff'; ctx.fill(r);
+    ctx.restore();
+    ctx.save();
+    ctx.imageSmoothingQuality = 'high';
+    const mg = 2 * (w / D.carte.w) * (D.carte.w / (D.carte.w + 4));
+    ctx.drawImage(IM.martin, x - w / 2 - mg, y - h / 2 - mg, w + 2 * mg, h + 2 * mg);
+    const fondu = 1 - E.cubicInOut(seg(0.1, 0.4, k));
+    if (fondu > 0) {
+      ctx.clip(r);
+      ctx.globalAlpha = fondu;
+      const ech = IM.scene.width / W;
+      ctx.drawImage(IM.scene, SC.x * ech, SC.y * ech, SC.w * ech, SC.h * ech, x - w / 2, y - h / 2, w, h);
+    }
+    ctx.restore();
+  }
 }
 
 function seek(t) {
@@ -219,7 +279,7 @@ function seek(t) {
   (V === 'a' ? partA : partC)(t);
   return true;
 }
-const ACTIF = { a: [[0.15, 2.0, 200], [2.05, 3.05, 60], [3.05, 3.55, 200]], c: [[0, 1.0, 120], [1.95, 2.4, 200]] }[V];
+const ACTIF = { a: [[0.15, 2.0, 200], [2.05, 3.05, 60], [3.05, 3.55, 200]], c: [[0, 1.0, 120], [1.4, 2.15, 200], [2.2, 3.05, 40], [3.05, 3.5, 200]] }[V];
 window.__motion = (t0, t1) => {
   let px = 0;
   for (const [a, b, p] of ACTIF) if (t1 > a && t0 < b) px = Math.max(px, p);
@@ -238,10 +298,19 @@ function charge(cle, src) {
   });
 }
 window.__ready = (async () => {
-  const jobs = [charge('m199', 'mur-199.jpg'), charge('m200', 'mur-200.jpg'), charge('carte', 'carte-nue.png'),
+  const jobs = [charge('m199', 'mur-199.jpg'), charge('page', 'page-200.png'), charge('tro0', 'trophee-debut.jpg'), charge('rayons', 'debloque-rayons.jpg'), charge('carte', 'carte-nue.png'),
     charge('logo', 'logo-nom.png'), charge('martin', 'carte-martin.png'), charge('scene', 'debloque-fin.jpg')];
   document.fonts.add(await new FontFace('Source Serif Film', 'url(' + window.POLICE_TITRE + ')', { weight: '700' }).load());
   await Promise.all(jobs);
+  // La scene sans sa carte, composee une fois pour toutes : la carte vole deja. Boucher sa place pendant le
+  // fondu ne suffit pas, le bouche-trou devient transparent lui aussi et la carte reapparait au travers.
+  const sans = document.createElement('canvas');
+  sans.width = W; sans.height = H;
+  const c2 = sans.getContext('2d');
+  c2.drawImage(IM.scene, 0, 0, W, H);
+  const SC = D.carteScene, ech = IM.rayons.width / W, m = 10;
+  c2.drawImage(IM.rayons, (SC.x - m) * ech, (SC.y - m) * ech, (SC.w + 2 * m) * ech, (SC.h + 2 * m) * ech, SC.x - m, SC.y - m, SC.w + 2 * m, SC.h + 2 * m);
+  IM.sceneSans = sans;
   if (window.LOOK.ready) await window.LOOK.ready;
   await document.fonts.ready;
   return seek(0);

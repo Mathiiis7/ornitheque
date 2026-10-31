@@ -19,11 +19,12 @@
 //   c : le trophee : le classement passe, la camera plonge dans la page Trophees.
 //   d : Qui a vu quoi : la grille se remplit case par case, la colonne d'Alex ressort.
 //   e : le montage retenu : part de la fenetre du trophee, le 200 double Lina, puis la grille.
+//   f : suit e : le clic sur une espece que les amis ont vue, sa fiche, les mois, le chant.
 // Chacun part de la derniere image du moment 2 : le logo et le nom restent, le 212 survit.
 // Tout vient du site (v2-m3.py). Tout est une fonction PURE du temps.
 // =============================================================================
 const V = '__VARIANTE__';
-const DUR = { a: 7.8, b: 8.2, c: 8.2, d: 8.2, e: 7.6 }[V];
+const DUR = { a: 7.8, b: 8.2, c: 8.2, d: 8.2, e: 7.6, f: 9.5 }[V];
 window.__meta = { dur: DUR, fps: 30, w: 1920, h: 1080 };
 const W = 1920, H = 1080;
 const { clamp, lerp, spring } = OM;
@@ -469,7 +470,138 @@ function varE(t) {
   } });
 }
 
-const VAR = { a: varA, b: varB, c: varC, d: varD, e: varE }[V];
+// --- f : la fiche et le chant -------------------------------------------------------------------
+// Une espece que les amis ont vue et pas Alex : le clic ouvre la vraie fiche. Elle defile jusqu'a la carte, la
+// fleche passe sur les mois et la carte change avec eux ; l'onglet Sons, puis la lecture du chant.
+const FI = window.M3.fiche;
+const FS = 1.4, ENTETE_F = 203;                  // l'entete et les onglets de la fiche restent en place au defilement
+const FLECHE = new Path2D('M0 0 L0 34 L9 26 L15 40 L22 37 L16 23 L28 23 Z');
+function curseur(x, y, presse, op = 1) {
+  if (op <= 0) return;
+  ctx.save();
+  ctx.globalAlpha = op;
+  ctx.translate(x, y); ctx.scale(1.5 * (1 - 0.15 * presse), 1.5 * (1 - 0.15 * presse));
+  ctx.shadowColor = 'rgba(21,32,30,0.35)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 3;
+  ctx.fillStyle = '#fff'; ctx.fill(FLECHE);
+  ctx.shadowColor = 'transparent';
+  ctx.strokeStyle = L.ink; ctx.lineWidth = 1.6; ctx.lineJoin = 'round'; ctx.stroke(FLECHE);
+  ctx.restore();
+}
+function phraseBloc(t, t0, lignes, sortie) {
+  if (t < t0) return;
+  const part = sortie === undefined ? 0 : E.expoIn(seg(sortie, sortie + 0.35, t));
+  if (part >= 1) return;
+  ctx.save();
+  ctx.font = titre(104); ctx.textBaseline = 'alphabetic';
+  lignes.forEach((ligne, li) => {
+    for (let i = 0; i < ligne.length; i++) {
+      const g = OM.letterDrop(t, t0 + li * 0.08, i, { stagger: 0.022, dist: 60, squash: 0.0075 });
+      if (g.op <= 0.01) continue;
+      ctx.save();
+      ctx.globalAlpha = g.op * (1 - part);
+      ctx.translate(74 + ctx.measureText(ligne.slice(0, i)).width, 310 + li * 120 + g.y - 70 * part);
+      ctx.scale(g.sx, g.sy);
+      ctx.fillStyle = li === lignes.length - 1 ? L.accent : L.ink;
+      ctx.fillText(ligne[i], 0, 0);
+      ctx.restore();
+    }
+  });
+  ctx.restore();
+}
+const F = { CLIC: 1.0, OUVRE: 1.05, OUVRE_FIN: 1.55, DEFILE: 2.15, DEFILE_FIN: 2.75, MOIS: 2.95, PAS: 0.19, SONS: 5.75, JOUE: 6.75, JOUE_FIN: 9.2 };
+const MOIS_FIN = F.MOIS + 0.3 + 12 * F.PAS;
+function moisCourant(t) {
+  if (t < F.MOIS + 0.3) return 0;
+  return Math.min(12, 1 + Math.floor((t - F.MOIS - 0.3) / F.PAS));
+}
+function varF(t) {
+  const grille = E.cubicInOut(seg(F.OUVRE, F.OUVRE_FIN, t));
+  ctx.save();
+  ctx.globalAlpha = 1 - grille;   // entierement : son fantome genait la lecture de la phrase
+  ctx.translate(GX, 262); ctx.scale(GS, GS);
+  ctx.drawImage(IM.grillePleine, 0, 0, GR.w, GR.h);
+  const co = GR.cases.filter(c => c.c === COL_ALEX);
+  ctx.strokeStyle = L.accent; ctx.lineWidth = 2.2;
+  const r = new Path2D(); r.roundRect(co[0].x, 0, co[0].w, GR.h, 4); ctx.stroke(r);
+  // la ligne de l'espece : vue par les trois amis, la case d'Alex est vide
+  const ca = GR.cases.find(c => c.l === 0 && c.c === COL_ALEX);
+  const ap = seg(0.25, 0.5, t) * (1 - seg(F.OUVRE, F.OUVRE + 0.2, t));
+  if (ap > 0) {
+    ctx.save();
+    ctx.globalAlpha = (1 - grille) * ap;
+    ctx.fillStyle = 'rgba(11,124,119,0.14)'; ctx.fillRect(0, ca.y, GR.w, ca.h);
+    ctx.strokeStyle = L.accent; ctx.lineWidth = 2.4;
+    const k = new Path2D(); k.roundRect(ca.x + 1, ca.y + 1, ca.w - 2, ca.h - 2, 3); ctx.stroke(k);
+    ctx.restore();
+  }
+  ctx.restore();
+  logo(t);
+  phrase(t, -5, F.OUVRE);
+  phraseBloc(t, 1.45, ['Sache où', 'et quand', 'le trouver.'], F.SONS - 0.1);
+  phraseBloc(t, F.SONS + 0.2, ['Reconnais-le', 'à son', 'chant.']);
+  // le tiroir de la fiche
+  const dx = lerp(W + 40, W - FI.w * FS, E.expoOut(seg(F.OUVRE, F.OUVRE_FIN, t)));
+  const defile = t < F.SONS ? (FI.bloc.y - ENTETE_F - 10) * E.expoInOut(seg(F.DEFILE, F.DEFILE_FIN, t)) : 0;
+  const ecranX = x => dx + x * FS, ecranY = (y, fixe) => (y - (fixe ? 0 : defile)) * FS;
+  if (t > F.OUVRE) {
+    const im = t < F.SONS ? IM.ficheInfo : IM.ficheSons;
+    ctx.save();
+    ctx.translate(dx, 0); ctx.scale(FS, FS);
+    ctx.save();
+    ctx.shadowColor = 'rgba(21,32,30,0.35)'; ctx.shadowBlur = 50; ctx.shadowOffsetX = -10;
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, FI.w, H / FS);
+    ctx.restore();
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(im, 0, -defile, FI.w, FI.h);
+    if (t < F.SONS && t >= F.MOIS) ctx.drawImage(IM['mois' + moisCourant(t)], FI.bloc.x, FI.bloc.y - defile, FI.bloc.w, FI.bloc.h);
+    ctx.drawImage(im, 0, 0, FI.w * 2, ENTETE_F * 2, 0, 0, FI.w, ENTETE_F);
+    ctx.restore();
+  }
+  // la lecture du chant : le curseur de lecture parcourt le spectrogramme
+  const E0 = FI.enregistrements[0];
+  if (t >= F.JOUE) {
+    const b = E0.barre, l = E0.lecture;
+    const k = seg(F.JOUE, F.JOUE_FIN, t);
+    const bx = ecranX(b.x), by = ecranY(b.y, true), bw = b.w * FS, bh = b.h * FS;
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,255,255,0.14)'; ctx.fillRect(bx, by, bw * k, bh);
+    ctx.fillStyle = '#fff'; ctx.fillRect(bx + bw * k - 1.5, by, 3, bh);
+    // le bouton passe en pause, comme sur le site
+    const cx = ecranX(l.x + l.w / 2), cy = ecranY(l.y + l.h / 2, true);
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx, cy, l.w * FS / 2 - 2, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = L.ink; ctx.fillRect(cx - 9, cy - 11, 6, 22); ctx.fillRect(cx + 3, cy - 11, 6, 22);
+    ctx.restore();
+  }
+  // la fleche : la case, les mois, l'onglet Sons, la lecture
+  const nom = GR.cases.find(c => c.l === 0 && c.c === 1);
+  const chemin = [
+    { t0: 0.1, t1: F.CLIC - 0.03, x: GX + 90, y: 262 + (nom.y + nom.h / 2) * GS },
+  ];
+  const pa = FI.pastilles;
+  const surMois = k => [ecranX(pa[k].x + pa[k].w * 0.7), ecranY(pa[k].y + pa[k].h * 0.6)];
+  let cxc = lerp(1300, chemin[0].x, E.expoInOut(seg(chemin[0].t0, chemin[0].t1, t)));
+  let cyc = lerp(1000, chemin[0].y, E.expoInOut(seg(chemin[0].t0, chemin[0].t1, t)));
+  if (t > F.DEFILE + 0.1) {
+    const [mx, my] = surMois(moisCourant(t));
+    const k = E.cubicInOut(seg(F.DEFILE + 0.1, F.MOIS, t));
+    cxc = lerp(cxc, mx, k); cyc = lerp(cyc, my, k);
+  }
+  if (t > MOIS_FIN) {
+    const k = E.expoInOut(seg(MOIS_FIN + 0.05, F.SONS - 0.03, t));
+    cxc = lerp(cxc, ecranX(FI.sons.x + FI.sons.w / 2), k); cyc = lerp(cyc, ecranY(FI.sons.y + FI.sons.h / 2, true), k);
+  }
+  if (t > F.SONS + 0.3) {
+    const l = E0.lecture;
+    const k = E.expoInOut(seg(F.SONS + 0.3, F.JOUE - 0.03, t));
+    cxc = lerp(cxc, ecranX(l.x + l.w / 2), k); cyc = lerp(cyc, ecranY(l.y + l.h / 2, true), k);
+  }
+  const clics = [F.CLIC, F.SONS, F.JOUE];
+  let presse = 0;
+  clics.forEach(c => { if (t >= c) presse = Math.max(presse, clamp(1 - Math.abs(t - c - 0.06) / 0.08, 0, 1)); });
+  curseur(cxc + 6, cyc + 6, presse, seg(0.02, 0.2, t) * (1 - seg(F.JOUE + 0.4, F.JOUE + 0.7, t)));
+}
+
+const VAR = { a: varA, b: varB, c: varC, d: varD, e: varE, f: varF }[V];
 function seek(t) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.globalAlpha = 1;
@@ -485,6 +617,7 @@ const ACTIF = {
   c: [[0.5, 2.3, 90], [2.5, 4.7, 200], [5.45, 6.3, 120]],
   d: [[0.5, 2.3, 90], [2.55, 3.3, 120], [3.2, 6.0, 30]],
   e: [[0, 1.0, 90], [0.95, 2.9, 90], [3.2, 4.4, 120], [4.25, 6.9, 30]],
+  f: [[0.1, 1.0, 60], [1.05, 1.6, 200], [2.15, 2.8, 120], [2.25, 5.75, 30], [5.75, 6.75, 60], [6.75, 7.5, 16]],
 }[V];
 window.__motion = (t0, t1) => {
   let px = 0;
@@ -508,6 +641,10 @@ window.__ready = (async () => {
     charge('grilleVide', 'grille-vide.png'), charge('grillePleine', 'grille-pleine.png'),
     charge('tro', 'trophee-fin.jpg'), charge('pageAvant', 'page-trophees-avant.png'), charge('mpAvant', 'carte-mp-avant.png'), charge('mpApres', 'carte-mp-apres.png')];
   TB.lignes.forEach((l, i) => jobs.push(charge('l' + i, 'ligne-' + i + '.png')));
+  if (V === 'f') {
+    jobs.push(charge('ficheInfo', 'fiche-info.png'), charge('ficheSons', 'fiche-sons.png'));
+    window.M3.fiche.pastilles.forEach((_, k) => jobs.push(charge('mois' + k, 'mois-' + String(k).padStart(2, '0') + '.png')));
+  }
   document.fonts.add(await new FontFace('Source Serif Film', 'url(' + window.POLICE_TITRE + ')', { weight: '700' }).load());
   await Promise.all(jobs);
   if (window.LOOK.ready) await window.LOOK.ready;
