@@ -1404,7 +1404,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .sm-radar { margin-top:2px; }
   .sm-radar svg { display:block; width:100%; max-width:320px; height:auto; margin:0 auto; overflow:visible; }
   .sm-rd-phrase { margin:0 0 4px; font-size:14px; color:var(--ink-2); }
-  .sm-rd-note { margin:4px 0 0; font-size:14px; line-height:1.35; color:var(--ink-3); }
+  .sm-radar .sm-rd-note { margin:4px auto 0; max-width:320px; font-size:14px; line-height:1.35; color:var(--ink-3); text-align:center; }
   .sm-rd-fond { fill:var(--surface-2); }
   .sm-rd-median { fill:none; stroke:var(--line-2); stroke-width:1.5; stroke-dasharray:3 4; }
   .sm-rd-rayon { stroke:var(--line); }
