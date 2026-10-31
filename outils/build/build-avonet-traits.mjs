@@ -29,7 +29,7 @@
   Usage : node outils/build-avonet-traits.mjs
 */
 import XLSX from 'xlsx';
-import { writeFileSync } from 'node:fs';
+import { writeFileSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 const __dir = dirname(fileURLToPath(import.meta.url));
@@ -45,11 +45,9 @@ console.log(`    ${rows.length} lignes.`);
 console.log('\n[2] Extraction des traits...');
 const out = {};
 let n = 0;
-for (const r of rows) {
-  const sci = String(r.Species2 || '').trim().toLowerCase();
-  if (!sci) continue;
-  // Round numeric fields to 1 decimal to reduce size and cleaner display
-  const round1 = v => (v == null || isNaN(v)) ? null : Math.round(v * 10) / 10;
+// Round numeric fields to 1 decimal to reduce size and cleaner display
+const round1 = v => (v == null || isNaN(v)) ? null : Math.round(v * 10) / 10;
+const traitsDe = (r) => {
   const rec = {
     hd: Number(r['Habitat.Density']) || null,
     mi: Number(r.Migration) || null,
@@ -69,11 +67,51 @@ for (const r of rows) {
   };
   // Retire les cles null pour reduire la taille
   for (const k of Object.keys(rec)) if (rec[k] == null) delete rec[k];
+  return rec;
+};
+for (const r of rows) {
+  const sci = String(r.Species2 || '').trim().toLowerCase();
+  if (!sci) continue;
+  const rec = traitsDe(r);
   if (Object.keys(rec).length === 0) continue;
   out[sci] = rec;
   n++;
 }
 console.log(`    ${n} especes avec au moins 1 trait.`);
+
+// 2026-10-31 : un oiseau du site absent de la classification eBird d'Avonet a souvent ses propres mesures dans les
+// deux autres (BirdLife, BirdTree) : Goéland d'Amérique, Puffin cendré, 498 oiseaux en tout. On ne les ajoute que
+// pour les noms du site : ce fichier se télécharge à chaque première fiche.
+const FR_NAMES = JSON.parse(readFileSync(join(ROOT, 'app.js'), 'utf8').match(/const FR_NAMES = (\{.*?\});/)[1]);
+const autres = new Map();
+for (const [feuille, col] of [['AVONET1_BirdLife', 'Species1'], ['AVONET3_BirdTree', 'Species3']]) {
+  for (const r of XLSX.utils.sheet_to_json(wb.Sheets[feuille])) {
+    const sci = String(r[col] || '').trim().toLowerCase();
+    if (sci && !autres.has(sci)) autres.set(sci, r);
+  }
+}
+let nAutres = 0;
+for (const sci of Object.keys(FR_NAMES)) {
+  if (out[sci] || !autres.has(sci)) continue;
+  const rec = traitsDe(autres.get(sci));
+  if (Object.keys(rec).length) { out[sci] = rec; nAutres++; }
+}
+console.log(`    ${nAutres} ajoutees depuis BirdLife et BirdTree.`);
+
+// Les genres renommés (outils/build/avonet-renommes.mjs). Un ancien nom qui reste un oiseau du site est un AUTRE
+// oiseau : Akialoa stejnegeri, disparu, n'est pas Chlorodrepanis stejnegeri, l'amakihi de Kauai, de même famille.
+const renommes = JSON.parse(readFileSync(join(ROOT, 'outils', 'config', 'avonet-renommes.json'), 'utf8'));
+let nRen = 0;
+const refuses = [];
+for (const [sci, ancien] of Object.entries(renommes)) {
+  if (FR_NAMES[ancien]) { refuses.push(`${sci} / ${ancien}`); continue; }
+  if (out[sci]) continue;
+  const r = rows.find(x => String(x.Species2 || '').trim().toLowerCase() === ancien) || autres.get(ancien);
+  if (!r) continue;
+  const rec = traitsDe(r);
+  if (Object.keys(rec).length) { out[sci] = rec; nRen++; }
+}
+console.log(`    ${nRen} genres renommes rattaches, ${refuses.length} refuses :`, refuses.join(' ; '));
 
 console.log('\n[3] Ecriture data/avonet_traits.json...');
 writeFileSync(OUT_PATH, JSON.stringify(out));

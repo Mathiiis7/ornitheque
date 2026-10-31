@@ -10,7 +10,9 @@ const paires = [...bloc.matchAll(/'([a-z ]+)':'([a-z ]+)'/g)].map(m => [m[1], m[
 let defauts = 0;
 for(const [de, vers] of paires){ const t = av[vers]; if(!t || !['ma', 'wi', 'bl', 'ta', 'tail'].every(c => t[c] > 0)){ console.log('ÉCART table', de, vers); defauts++; } }
 console.log(paires.length, 'renommés contrôlés dans le fichier');
-const NOMS = ['Héron garde-bœufs', 'Autour des palombes', 'Choucas des tours', 'Petit Gravelot', 'Blongios nain'];
+const NOMS = ['Héron garde-bœufs', 'Autour des palombes', 'Choucas des tours', 'Petit Gravelot', 'Blongios nain', "Goéland d'Amérique", 'Puffin cendré', 'Faisan versicolore', 'Hirondelle rousseline'];
+// Fiches étrangères : le pays choisi change les cases du Birdydex. Seules comptent ici les cases avec des mesures.
+const PAYS = [];
 const nav = await chromium.launch();
 for(const largeur of [1300, 375]){
   const mobile = largeur < 700;
@@ -29,6 +31,25 @@ for(const largeur of [1300, 375]){
     console.log(largeur, nom, JSON.stringify(m));
     if(!m.phrase || !m.migration){ console.log('   ÉCART'); defauts++; }
     await p.keyboard.press('Escape'); await p.waitForTimeout(400);
+  }
+  for(const cc of PAYS){
+    await p.evaluate(cc => localStorage.setItem('mb-global-country', cc), cc);
+    await p.reload({ waitUntil:'load' }); await p.waitForTimeout(1500);
+    await p.keyboard.press('Escape'); await p.keyboard.press('Escape');
+    await p.evaluate(() => document.querySelector('.tab[data-view="pokedex"], .tab[data-view="birdydex"], .tab[data-view="dex"]')?.click()); await p.waitForTimeout(2500);
+    await p.keyboard.press('Escape');
+    const n = await p.evaluate(() => document.querySelectorAll('.pkdx-card').length);
+    let avec = 0, vus = 0, exemple = '';
+    for(const i of [0, 7, 23, 41, 66]){
+      if(i >= n) break;
+      await p.evaluate(i => document.querySelectorAll('.pkdx-card')[i].click(), i);
+      await p.waitForFunction(() => document.querySelector('#smTraitsCard .sm-radar'), null, { timeout:4000 }).catch(() => {});
+      const r = await p.evaluate(() => { const b = document.getElementById('smTraitsCard'); return { radar:!!b?.querySelector('.sm-radar'), phrase:b?.querySelector('.sm-rd-phrase')?.textContent, nom:document.querySelector('.species-modal h2, .species-modal .sm-name, .species-modal .sm-title')?.textContent }; });
+      vus++; if(r.radar){ avec++; exemple = `${r.nom} : ${r.phrase}`; }
+      await p.keyboard.press('Escape'); await p.waitForTimeout(300);
+    }
+    console.log(largeur, cc, 'cases', n, 'radars', avec, 'sur', vus, '|', exemple);
+    if(n && !avec){ console.log('   ÉCART'); defauts++; }
   }
   console.log('erreurs', erreurs.length ? erreurs.slice(0, 2) : 'aucune'); if(erreurs.length) defauts++;
   await ctx.close();

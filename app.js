@@ -7983,7 +7983,7 @@ async function _loadAvonetTraits(){
   if(_avonetTraitsPromise) return _avonetTraitsPromise;
   _avonetTraitsPromise = (async () => {
     try{
-      const d = await fetch('data/avonet_traits.json?v=20260828').then(r => {
+      const d = await fetch('data/avonet_traits.json?v=20261031').then(r => {
         if(!r.ok) throw new Error('HTTP '+r.status);
         return r.json();
       });
@@ -16114,8 +16114,8 @@ const MORPHO_AXES = [
   { nom:'Queue', c:'tail', long:'longue queue', court:'queue courte', aide:'De la base à l\'extrémité de la plus longue rectrice.' },
 ];
 // Oiseaux de France rangés dans un autre genre depuis Avonet 2022 : même espèce, seul le nom a changé. Sans cette
-// table, le Héron garde-bœufs n'avait aucune carte Traits (signalé par Mathis, 2026-10-31). Les espèces séparées
-// depuis (Goéland d'Amérique, Courlis hudsonien...) n'y sont pas : Avonet ne les a pas mesurées à part.
+// table, le Héron garde-bœufs n'avait aucune carte Traits (signalé par Mathis, 2026-10-31). Les autres noms du site
+// absents de la classification eBird d'Avonet sont déjà dans le fichier : outils/build/build-avonet-traits.mjs.
 const TRAITS_ALIAS = {
   'ardea ibis':'bubulcus ibis', 'astur gentilis':'accipiter gentilis', 'coloeus monedula':'corvus monedula', 'tachymarptis melba':'apus melba',
   'eudromias morinellus':'charadrius morinellus', 'thinornis dubius':'charadrius dubius', 'anarhynchus leschenaultii':'charadrius leschenaultii',
@@ -16242,7 +16242,8 @@ async function _renderSpeciesTraitsCard(key){
     '<span style="font-size:.82em; vertical-align:1px;">$1</span> ');
   const renderLine = ({k, v, hint}) => `<div style="display:flex; justify-content:space-between; gap:12px; padding:3px 0; font-size:13px;"><span style="color:var(--ink-3);${hint?' cursor:help;':''}"${hint?` data-tip="${esc(hint)}"`:''}>${esc(k)}</span><span style="color:var(--ink); font-weight:600; text-align:right;">${petitEmoji(v)}</span></div>`;
   // Le radar redit ces chiffres (Mathis, 2026-10-31) : les lignes ne restent que pour un oiseau sans radar.
-  const radarMorpho = _morphoRadarHtml(t, traits, c => c === 'ma' ? `${round(t.ma)} g` : `${cm(t[c])} cm`);
+  const poids = t.ma >= 1000 ? `${(t.ma / 1000).toLocaleString('fr-FR', { maximumFractionDigits:1 })} kg` : `${round(t.ma)} g`;   // « 111000 g » pour l'autruche
+  const radarMorpho = _morphoRadarHtml(t, traits, c => c === 'ma' ? poids : `${cm(t[c])} cm`);
   box.innerHTML = `
     <div class="sm-card-title" style="display:flex; align-items:center; gap:8px;">Traits <span style="font-size:10.5px; color:var(--ink-3); text-transform:none; font-weight:400; letter-spacing:0;">- Avonet (Tobias et al. 2022)</span></div>
     ${ecoLines.length ? `

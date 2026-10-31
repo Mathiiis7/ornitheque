@@ -1,6 +1,6 @@
 # Où on en est (2026-10-30)
 
-Dernière version : v985 / app.js?v=557. Prochaine : v986 / 558. Historique complet jusqu'à ce jour :
+Dernière version : v986 / app.js?v=558. Prochaine : v987 / 559. Historique complet jusqu'à ce jour :
 `archives/en-cours-jusqu-au-2026-10-30.md` (y chercher un mot plutôt que le lire en entier, 85 000 jetons).
 Ce fichier se remplace à chaque fin de tâche : quelques lignes, pas un journal.
 
@@ -10,7 +10,12 @@ Ce fichier se remplace à chaque fin de tâche : quelques lignes, pas un journal
 ## Décidé le 31/10
 - Empreinte morphologique sur les fiches (carte Traits, v982) : radar arrondi choisi par Mathis, en proportions du
   poids. Autres radars (membres, quiz, présence, cycle de vie) maquettés dans `notes-privees/maquettes/radar/`, non retenus.
-  Pas vu : une fiche d'oiseau hors de France.
+  Lignes de morphologie retirées (v983), « Patte » pour le tarse (v984).
+- Mesures Avonet complétées (v986) : feuilles BirdLife et BirdTree pour les noms du site, plus les genres renommés
+  (`outils/build/avonet-renommes.mjs`, même famille exigée) ; 657 oiseaux de plus, aucune mesure d'avant modifiée.
+  Restent sans : 2 oiseaux de France (Courlis hudsonien, Pipit de Sibérie) et ~430 étrangers, dont des espèces disparues.
+- Vu, pas corrigé : erreur Leaflet « _leaflet_pos » une fois en ouvrant et fermant des fiches très vite (essai
+  `_essai-traits-monde.mjs`), sans lien établi avec le radar.
 - Taille comparée par silhouettes : abandonnée, maquette dans `notes-privees/maquettes/taille-silhouettes/`.
 
 ## Décidé le 30/10
