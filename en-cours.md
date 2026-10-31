@@ -1,18 +1,16 @@
 # Où on en est (2026-10-30)
 
-Dernière version : v992 / app.js?v=564. Prochaine : v993 / 565. Historique complet jusqu'à ce jour :
+Dernière version : v993 / app.js?v=565. Prochaine : v994 / 566. Historique complet jusqu'à ce jour :
 `archives/en-cours-jusqu-au-2026-10-30.md` (y chercher un mot plutôt que le lire en entier, 85 000 jetons).
 Ce fichier se remplace à chaque fin de tâche : quelques lignes, pas un journal.
 
 ## Reste ouvert
 - **En attente de réponse :** Cornell (22/10), LPO (23/10). Effacer l'historique des deux dépôts attend Cornell.
 
-- **Anneaux du classement, ticket 61 de `qg`, essai privé, rien sur le site :** `notes-privees/maquettes/boutique/podium.html`.
-  Les 3 premiers au nombre d'espèces : or, argent, bronze (diamant et prismatique essayés puis écartés le 31/10). Boutique,
-  graines, missions, cadres d'espèces et spectaculaires abandonnés le 31/10 après essai sur la démo : ne pas reproposer. Les
-  avatars ne se voient que sur la page Profil et au Tchat (24 px). Reste : sa réponse sur l'essai, puis construire.
-
 ## Décidé le 31/10
+- **Anneaux du classement, SUJET CLOS (v993, ticket 61) :** or, argent, bronze sur l'avatar des 3 premiers au nombre d'espèces.
+  Avatar du Profil 96 px et centré, au-dessus du texte au téléphone. Emojis d'avatar retirés : image ou initiale. Boutique, graines,
+  missions et cadres dessinés abandonnés après essai sur la démo, ne pas reproposer (archives : `notes-privees/maquettes/boutique/`).
 - Essai de la méthode qa-only (sans gstack, trop lourd) et critique Impeccable : `notes-privees/essai-qa-only/`. Les 8 bugs
   corrigés (v991). Suites (v992) : sons du Quiz vérifiés dans Chrome (ils marchent ; seul le navigateur intégré les bloque) et
   message si un chant ne vient pas ; noms des listes plus faciles à toucher ; en-tête de fiche replié en descendant au téléphone ;

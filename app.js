@@ -2657,6 +2657,7 @@ function countryLabel(cc){ cc=(cc||'').toUpperCase(); if(COUNTRY_NAMES[cc]) retu
     const n = /^[A-Z]{2}$/.test(cc) && _nomsRegions.of(cc); if(n && n !== cc) return n; }catch(_){}
   return cc; }
 
+let _podiumDessine = '';
 function build(){
   const N = state.people.length;
   const universe = new Map();
@@ -2799,7 +2800,7 @@ function renderMembers(){
       ? `<div class="pcard-admin" title="${esc(p.id)}"><button class="pcard-admin-btn" data-adm-rename="${esc(p.id)}" data-adm-name="${esc(p.name)}" title="Renommer">✎</button><button class="pcard-admin-btn pcard-admin-del" data-adm-remove="${esc(p.id)}" data-adm-name="${esc(p.name)}" title="Retirer">✕</button></div>`
       : '';
     return `<div class="pcard${p.isMe?' is-me':''}${online?' is-online':''}" style="--series:var(--s${p.si})">
-      <div class="pcard-avatar-wrap">${_avatarHtml(p.avatar||'', p.name||'?', 44)}${online?'<span class="pcard-online-dot" title="en ligne"></span>':''}</div>
+      <div class="pcard-avatar-wrap">${_avatarHtml(p.avatar||'', p.name||'?', 44, p.id)}${online?'<span class="pcard-online-dot" title="en ligne"></span>':''}</div>
       <div class="pcard-body">
         <div class="pcard-name">${esc(p.name)}${p.isMe?'<span class="youtag">toi</span>':''}</div>
         ${statusLine}
@@ -2950,6 +2951,9 @@ function _renderResultsImpl(){
   // rebuild(), il passait AVANT build (differe d'une image) et trouvait des fiches neuves
   // sans liste : la page restait vide (2026-10-19).
   renderProfil();
+  // Le tchat se dessine avant ces calculs (rebuild) : il ne connait le podium qu'ici. Redessine seulement s'il a change.
+  const podium = [...state.people].sort((a,b)=>b.total-a.total).slice(0,3).filter(p=>p.total>0).map(p=>p.id).join();
+  if(podium !== _podiumDessine){ _podiumDessine = podium; if(lastChatMsgs.length) renderChat(lastChatMsgs); }
   // Rafraichit les cibles seulement si l'onglet est visible (evite compute inutile
 }
 // Appele au tab switch : si la view etait dirty, la rebuild maintenant.
@@ -6488,7 +6492,7 @@ function renderChat(msgs){
     const guestTag = authoritative ? '' : ' <span class="msg-guest">invité</span>';
     const statusText = statusById.get(m.uid) || '';
     const statusTag = statusText ? ` <span class="msg-status">${esc(statusText)}</span>` : '';
-    const avatarHtml = _avatarHtml(avatarById.get(m.uid) || '', nm, 32);
+    const avatarHtml = _avatarHtml(avatarById.get(m.uid) || '', nm, 32, m.uid);
     const t = m.createdAt && m.createdAt.toDate ? m.createdAt.toDate() : null;
     const time = t ? t.toLocaleString('fr-FR',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'}) : '…';
     // Message supprime : rendu special. Admin voit l'original en collapse ; les autres voient le tag.
@@ -12731,7 +12735,7 @@ function _profilTeteHtml(p){
     objectif > 0 ? ['Objectif', c.total + ' / ' + objectif + ' espèces'] : null
   ].filter(Boolean);
   return `<div class="prof-id">
-      <div class="prof-id-av"${admin ? ` title="UID : ${esc(p.id)}"` : ''}>${_avatarHtml(p.avatar || '', p.name || '?', 64)}</div>
+      <div class="prof-id-av"${admin ? ` title="UID : ${esc(p.id)}"` : ''}>${_avatarHtml(p.avatar || '', p.name || '?', 96, p.id)}</div>
       <div class="prof-id-txt">
         <div class="prof-nom"><span>${esc(p.name)}</span>${moi ? '<span class="youtag">toi</span>' : ''}${isOnline(p.id) ? '<span class="prof-enligne">en ligne</span>' : ''}</div>
         ${p.status ? `<div class="prof-statut">${esc(p.status)}</div>` : ''}
@@ -13681,7 +13685,8 @@ $('#profRare').addEventListener('change',e=>saveProfile({rare:e.target.value.tri
 $('#profStatus')?.addEventListener('change',e=>saveProfile({status:e.target.value.trim().slice(0,30)}));
 
 // ============ AVATAR ============
-// Avatar : soit un emoji, soit une image compressee en base64 (max ~50 KB).
+// Avatar : une image compressee en base64 (max ~50 KB), sinon l'initiale du prenom. Les emojis
+// sont retires le 2026-10-31 (choix de Mathis) : ceux deja enregistres sont simplement ignores.
 // Rendu dans la fiche profil + a cote du nom dans le chat.
 function _renderAvatarPreview(person){
   const el = $('#profAvatarPreview');
@@ -13689,19 +13694,24 @@ function _renderAvatarPreview(person){
   const av = person?.avatar || '';
   el.innerHTML = _avatarHtml(av, person?.name || '?', 64);
 }
-// Rend un avatar (emoji ou image) avec fallback initiale du prenom.
-function _avatarHtml(av, name, size){
+// Or, argent, bronze : les 3 premiers au nombre d'especes, quel que soit le tri affiche dans le
+// Classement. Meme cle et meme tri que le mode « count » de _joueursClasses, pour le meme ordre.
+function _metalClassement(uid){
+  const place = [...state.people].sort((a,b)=>b.total-a.total).slice(0,3).findIndex(p=>p.id===uid && p.total>0);
+  return ['or','argent','bronze'][place] || '';
+}
+// Rend un avatar (image, sinon initiale du prenom), cercle de son metal si on donne un uid sur le podium.
+function _avatarHtml(av, name, size, uid){
   const dim = size || 28;
+  let html;
   if(av && /^data:image\//.test(av)){
-    return `<img class="user-avatar" src="${av.replace(/"/g,'%22')}" alt="" style="width:${dim}px;height:${dim}px">`;
+    html = `<img class="user-avatar" src="${av.replace(/"/g,'%22')}" alt="" style="width:${dim}px;height:${dim}px">`;
+  } else {
+    const initial = (name||'?').trim().slice(0,1).toUpperCase();
+    html = `<span class="user-avatar user-avatar-initial" style="width:${dim}px;height:${dim}px;font-size:${Math.round(dim*.45)}px">${esc(initial)}</span>`;
   }
-  if(av && [...av].length <= 3 && !/\s/.test(av)){
-    // emoji ou 1-2 chars
-    return `<span class="user-avatar user-avatar-emoji" style="width:${dim}px;height:${dim}px;font-size:${Math.round(dim*.6)}px">${esc(av)}</span>`;
-  }
-  // Fallback initiale
-  const initial = (name||'?').trim().slice(0,1).toUpperCase();
-  return `<span class="user-avatar user-avatar-initial" style="width:${dim}px;height:${dim}px;font-size:${Math.round(dim*.45)}px">${esc(initial)}</span>`;
+  const metal = uid ? _metalClassement(uid) : '';
+  return metal ? `<span class="avatar-anneau anneau-${metal}">${html}</span>` : html;
 }
 $('#profAvatarInput')?.addEventListener('change', async e => {
   const f = e.target.files?.[0];
@@ -13713,9 +13723,6 @@ $('#profAvatarInput')?.addEventListener('change', async e => {
     const me = realPeople.find(p => p.id === myUid); if(me){ me.avatar = b64; _renderAvatarPreview(me); }
   }catch(err){ showError(new Error('Impossible de traiter l\'image : ' + err.message)); }
   e.target.value = '';
-});
-$('#profAvatarEmojiBtn')?.addEventListener('click', () => {
-  openEmojiPop({ type: 'avatar' });
 });
 $('#profAvatarReset')?.addEventListener('click', async () => {
   if(!confirm('Réinitialiser l\'avatar ?')) return;
@@ -14793,10 +14800,6 @@ $('#emojiPop')?.addEventListener('click', async e=>{
   const emoji=b.dataset.emoji;
   if(emojiContext?.type==='text'){ const ti=$('#chatText'); if(ti){ ti.value+=emoji; ti.focus(); } }
   else if(emojiContext?.type==='react'){ await toggleReaction(emojiContext.target, emoji); }
-  else if(emojiContext?.type==='avatar'){
-    await saveProfile({ avatar: emoji });
-    const me = realPeople.find(p => p.id === myUid); if(me){ me.avatar = emoji; _renderAvatarPreview(me); }
-  }
   closeEmojiPop();
 });
 // ---- Photos : upload + galerie ----
