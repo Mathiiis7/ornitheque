@@ -3,6 +3,7 @@
 Généré par `outils/onetake/credits-v2.py`. Ce film est diffusé sous licence CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/). Les photos sont recadrées et animées.
 
 Chants, xeno-canto, CC BY-NC-SA 4.0 : Benjamin Drillat (XC982627), Jerome Fischer (XC807845).
+Musique et fond sonore, CC0 : John Bartmann, *sweet-embrace-master* (Free Music Archive) ; Borgory, *Soft Wind in the Trees - Leaves rustle* (Freesound).
 Fond de carte : © OpenStreetMap, https://www.openstreetmap.org/copyright. Observations et fréquences : eBird.org.
 
 | Espèce | Auteur | Licence | Photo |
