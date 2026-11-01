@@ -132,6 +132,10 @@ le v869 (Classement) a réécrit la table des photos avec une version d'avant la
 
 ## Les pièges qui m'ont déjà fait perdre du temps
 
+**Une vidéo sur l'écran de connexion s'écrit avec `poster` et `preload="none"`, jamais une image de fond CSS** : le fond restait caché derrière un cercle d'attente. Ainsi, 12 Ko pour l'affiche et le film ne se télécharge qu'au clic (rien pour un membre connecté, vérifié le 2026-11-01). Le service worker laisse passer les `.mp4`, sinon il mettrait 10 Mo en cache.
+
+**Une capture de carte à zoom fractionnaire montre des joints de tuiles** : traits clairs de 1 px dessinant un rectangle très pâle (Bretagne du film, 2026-11-01). Agrandir les tuiles élargit les joints ; le remède est `recoud` dans `outils/onetake/v2-recent.py`, qui repeint ces pixels. Le juger au pixel sur une image 4K, pas à l'œil sur une petite.
+
 **WinZip tient des fichiers ouverts dans Documents.** Son outil d'arrière-plan (`WzBGTools64.exe`) a
 bloqué des images de `ornitheque-data/cartes` pendant des minutes : la génération des cartes est tombée
 deux fois sur `EBUSY` le 2026-10-22. Le générateur réessaie 20 fois, mais avant une génération longue,
