@@ -121,7 +121,8 @@ with sync_playwright() as p:
     # Le clic sur le plus gros point : la vraie liste du site, seule sur fond transparent. Ses plans sont caches par
     # la regle du dessus : le selecteur la repete pour peser plus lourd.
     page.evaluate("document.querySelectorAll('#mapEl .leaflet-marker-icon').forEach(e => e.style.setProperty('opacity', '0', 'important'))")
-    gros = max(points, key=lambda q: q["n"])
+    # assez bas sur la carte : la liste s'ouvre au-dessus du point, elle recouvrait la phrase depuis celui de Ouessant
+    gros = max((q for q in points if q["y"] >= 320), key=lambda q: q["n"])
     page.mouse.click(gros["x"] + gros["w"] / 2, gros["y"] + gros["h"] / 2)
     page.wait_for_timeout(2000)
     page.add_style_tag(content="""html #mapEl div.leaflet-pane.leaflet-popup-pane.leaflet-popup-pane.leaflet-popup-pane,
