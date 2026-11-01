@@ -26,7 +26,7 @@
 // Tout vient du site (v2-m3.py). Tout est une fonction PURE du temps.
 // =============================================================================
 const V = '__VARIANTE__';
-const DUR = { a: 7.8, b: 8.2, c: 8.2, d: 8.2, e: 9.9, f: 11.77, g: 9.56, m: 6.0 }[V];
+const DUR = { a: 7.8, b: 8.2, c: 8.2, d: 8.2, e: 9.9, f: 11.77, g: 11.96, m: 6.0 }[V];
 window.__meta = { dur: DUR, fps: 30, w: 1920, h: 1080 };
 const W = 1920, H = 1080;
 const { clamp, lerp, spring } = OM;
@@ -39,9 +39,11 @@ const TEMPS = {
   a: [[0, 0], [7.8, 7.8]], b: [[0, 0], [8.2, 8.2]], c: [[0, 0], [8.2, 8.2]], d: [[0, 0], [8.2, 8.2]],
   e: [[0, 0], [0.95, 0.95], [1.73, 1.6], [2.43, 2.3], [2.73, 2.3], [2.88, 2.45], [4.155, 3.3], [4.455, 3.6], [4.955, 3.6], [5.055, 3.7], [6.105, 4.75], [8.745, 6.95], [9.9, 8.1]],
   f: [[0, 0], [0.1, 0.1], [1.18, 1.0], [2.18, 2.0], [3.08, 2.0], [3.23, 2.15], [3.95, 2.75], [4.15, 2.95], [7.5, 5.53], [7.72, 5.75], [9.02, 6.75], [11.77, 9.5]],
-  g: [[0, 0], [1.05, 1.05], [2.94, 2.4], [4.39, 3.85], [4.89, 3.85], [5.64, 4.6], [7.56, 6.2], [8.46, 7.1], [8.86, 7.1], [9.56, 7.8]],
+  g: [[0, 0], [1.05, 1.05], [2.94, 2.4], [3.54, 3.0], [5.94, 3.0], [6.79, 3.85], [7.29, 3.85], [8.04, 4.6], [9.96, 6.2], [10.86, 7.1], [11.26, 7.1], [11.96, 7.8]],
 }[V];
+let TF = 0;   // l'instant du film : le clic sur un point se joue pendant un arret de la composition
 function tempsComp(t) {
+  TF = t;
   for (let i = 1; i < TEMPS.length; i++) {
     const a = TEMPS[i - 1], b = TEMPS[i];
     if (t <= b[0]) return lerp(a[1], b[1], seg(a[0], b[0], t));
@@ -721,6 +723,27 @@ function varG(t) {
   }
   logo(t);
   phraseUne(t, 0.6, 'Vois ce qui passe près de chez toi.', 22, G.SORT - 0.1);
+  // Le clic sur le plus gros point : sa vraie liste s'ouvre au-dessus de lui, le temps de la lire
+  if (TF > 3.54 && TF < 5.94) {
+    const q = RE.points[RE.spot.i], s = 1.05;
+    const mx = q.x + q.w / 2, my = RY + q.y + q.h / 2;
+    const CLIC_S = 4.25;
+    const k = E.expoInOut(seg(3.56, CLIC_S - 0.03, TF));
+    const presse = TF >= CLIC_S ? clamp(1 - Math.abs(TF - CLIC_S - 0.06) / 0.08, 0, 1) : 0;
+    const ouvre = TF > CLIC_S ? spring(TF - CLIC_S, 0.55, 26) : 0;
+    const op = clamp((TF - CLIC_S) / 0.1, 0, 1) * (1 - seg(5.65, 5.9, TF));
+    if (op > 0) {
+      const w = RE.spot.w * s, h = RE.spot.h * s;
+      ctx.save();
+      ctx.globalAlpha = op;
+      ctx.translate(mx, my - q.h / 2 + 2); ctx.scale(ouvre, ouvre); ctx.translate(-mx, -(my - q.h / 2 + 2));
+      ctx.imageSmoothingQuality = 'high';
+      ctx.shadowColor = 'rgba(21,32,30,0.25)'; ctx.shadowBlur = 24; ctx.shadowOffsetY = 8;
+      ctx.drawImage(IM.spot, mx - w / 2, my - q.h / 2 + 2 - h, w, h);
+      ctx.restore();
+    }
+    curseur(lerp(900, mx + 6, k), lerp(1120, my + 6, k), presse, 1 - seg(5.0, 5.3, TF));
+  }
   phraseBloc(t, G.QUIZ + 0.35, ['Entraîne-toi', 'à les', 'reconnaître.']);
   // le quiz
   if (t > G.QUIZ) {
@@ -840,6 +863,7 @@ const ACTIF = {
 window.__motion = (t0, t1) => {
   let px = 0;
   const u0 = tempsComp(t0), u1 = tempsComp(t1);
+  if (V === 'g' && t1 > 3.54 && t0 < 5.94) return 60;
   for (const [a, b, p] of ACTIF) if (u1 > a && u0 < b) px = Math.max(px, p);
   return px;
 };
@@ -862,7 +886,7 @@ window.__ready = (async () => {
   TB.lignes.forEach((l, i) => jobs.push(charge('l' + i, 'ligne-' + i + '.png')));
   if (V === 'm') jobs.push(charge('ficheSons', 'fiche-sons.png'), charge('mListe', 'monde-liste.png'), charge('mMur', 'monde-mur.png'));
   if (V === 'g') {
-    jobs.push(charge('mMur', 'monde-mur.png'), charge('rFond', 'recent-fond.png'), charge('rPlein', 'recent-panneau.png'), charge('qQuestion', 'quiz-question.png'), charge('qReponse', 'quiz-reponse.png'));
+    jobs.push(charge('mMur', 'monde-mur.png'), charge('rFond', 'recent-fond.png'), charge('rPlein', 'recent-panneau.png'), charge('spot', 'spot-liste.png'), charge('qQuestion', 'quiz-question.png'), charge('qReponse', 'quiz-reponse.png'));
     window.M3.recent.points.forEach((_, i) => jobs.push(charge('p' + i, 'point-' + i + '.png')));
   }
   if (V === 'f') {

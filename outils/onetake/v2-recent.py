@@ -1,7 +1,9 @@
 """Film v2 : les observations recentes de la Bretagne et une vraie manche du quiz, pris sur la demo.
 Le serveur doit tourner sur 8765.
 
-    .onetake/venv/Scripts/python.exe outils/onetake/v2-recent.py
+    .onetake/venv/Scripts/python.exe outils/onetake/v2-recent.py [--sans-quiz]
+
+--sans-quiz garde la manche deja prise : le quiz est tire au hasard, et son chant est dans les credits.
 
 Sortie dans .onetake/v2/recent/ : recent-panneau.png, recent-fond.png, point-*.png, quiz-question.png,
 quiz-reponse.png, recent.json.
@@ -98,7 +100,7 @@ with sync_playwright() as p:
     page.evaluate("document.querySelector('#mapEl .leaflet-control-zoom-out').click()")
     page.wait_for_timeout(9000)
     points = page.evaluate("""() => [...document.querySelectorAll('#mapEl .leaflet-marker-icon')].map((e, i) => { e.dataset.film = i;
-        const r = e.getBoundingClientRect(); return { i, x: r.x, y: r.y, w: r.width, h: r.height }; })""")
+        const r = e.getBoundingClientRect(); return { i, x: r.x, y: r.y, w: r.width, h: r.height, n: parseInt(e.textContent) || 0 }; })""")
     clip_carte = {"x": 0, "y": 0, "width": CARTE["w"], "height": CARTE["h"]}
     fond = page.add_style_tag(content="#mapEl .leaflet-marker-pane, #mapEl .leaflet-marker-pane * { visibility: hidden !important; }")
     page.wait_for_timeout(300)
@@ -116,12 +118,27 @@ with sync_playwright() as p:
                         clip={"x": q["x"] - m, "y": q["y"] - m, "width": q["w"] + 2 * m, "height": q["h"] + 2 * m})
         q.update(x=q["x"] - m, y=q["y"] - m, w=q["w"] + 2 * m, h=q["h"] + 2 * m)
     print(len(points), "points")
+    # Le clic sur le plus gros point : la vraie liste du site, seule sur fond transparent. Ses plans sont caches par
+    # la regle du dessus : le selecteur la repete pour peser plus lourd.
+    page.evaluate("document.querySelectorAll('#mapEl .leaflet-marker-icon').forEach(e => e.style.setProperty('opacity', '0', 'important'))")
+    gros = max(points, key=lambda q: q["n"])
+    page.mouse.click(gros["x"] + gros["w"] / 2, gros["y"] + gros["h"] / 2)
+    page.wait_for_timeout(2000)
+    page.add_style_tag(content="""html #mapEl div.leaflet-pane.leaflet-popup-pane.leaflet-popup-pane.leaflet-popup-pane,
+      html #mapEl div.leaflet-pane.leaflet-popup-pane.leaflet-popup-pane.leaflet-popup-pane * { visibility: visible !important; }
+      #mapEl .leaflet-tile-pane, .leaflet-ctVoile-pane, .leaflet-ctDeps-pane, .leaflet-ctPays-pane { display: none !important; }""")
+    page.mouse.move(5, 5)
+    page.wait_for_timeout(600)
+    b = page.locator("#mapEl .leaflet-popup").first.bounding_box()
+    print("liste du point", gros["n"], page.evaluate("document.querySelector('#mapEl .leaflet-popup').innerText.replace(/\\s+/g, ' ').slice(0, 120)"), b)
+    page.screenshot(path=str(OUT / "spot-liste.png"), omit_background=True, clip={"x": b["x"], "y": b["y"], "width": b["width"], "height": b["height"]})
+    spot = {"i": gros["i"], "w": b["width"], "h": b["height"]}
 
     # 2. Le quiz : une manche ou le premier choix est le bon, pour que la fleche clique juste. Le tirage est au
     # hasard et le site n'annonce la reponse qu'apres le clic : on recharge la page jusqu'a la tomber. Quitter
     # une manche pour en relancer une bloquait le site (2026-10-31).
-    quiz = None
-    for essai in range(40):
+    quiz = json.loads((OUT / "recent.json").read_text(encoding="utf-8"))["quiz"] if "--sans-quiz" in sys.argv else None
+    for essai in range(0 if quiz else 40):
         ouvre(page)
         onglet(page, "Quiz")
         page.locator("button:visible", has_text="Chant vers nom").first.click()
@@ -145,6 +162,6 @@ with sync_playwright() as p:
             break
     if not quiz:
         raise SystemExit("aucune manche ou le premier choix est le bon")
-    (OUT / "recent.json").write_text(json.dumps({"panneau": PANNEAU, "carte": CARTE, "points": points, "rangees": rangees, "cadreQuiz": CADRE_QUIZ, "quiz": quiz}, ensure_ascii=False, indent=1), encoding="utf-8")
+    (OUT / "recent.json").write_text(json.dumps({"panneau": PANNEAU, "carte": CARTE, "points": points, "rangees": rangees, "spot": spot, "cadreQuiz": CADRE_QUIZ, "quiz": quiz}, ensure_ascii=False, indent=1), encoding="utf-8")
     print("erreurs", erreurs, "bloquees", sorted({a for g, _, a in journal if g == "bloquee"})[:5])
     nav.close()
