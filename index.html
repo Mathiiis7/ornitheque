@@ -49,7 +49,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=565">
+<link rel="modulepreload" href="app.js?v=566">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -104,6 +104,13 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
       <h1>L’Ornithèque</h1>
       <p class="auth-gate-tag">Compare tes life lists entre birders</p>
     </div>
+    <!-- preload="none" : un membre connecte ne telecharge pas le film (l'affiche, 12 Ko, part meme dans un bloc masque ;
+         en fond CSS elle restait cachee sous le lecteur, avec un rond d'attente). La licence CC BY-NC-SA des chants exige
+         les credits a cote du lecteur. -->
+    <figure class="auth-gate-film">
+      <video src="assets/film/ornitheque-film.mp4" poster="assets/film/ornitheque-film.webp" controls preload="none" playsinline aria-label="Film de présentation de L’Ornithèque, 1 min 26, avec le son"></video>
+      <figcaption><a href="https://github.com/Mathiiis7/ornitheque/blob/main/docs/VIDEO-CREDITS-V2.md" target="_blank" rel="noopener">Crédits</a></figcaption>
+    </figure>
     <!-- role="tab" sur chaque bouton, pas seulement "tablist" sur la rangee : une rangee
          d'onglets sans onglet dedans ne s'annonce pas du tout. aria-selected est tenu a jour
          par _authGateSyncTab() dans app.js, en meme temps que la classe .on. -->
@@ -1616,4 +1623,4 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=565"></script>
+<script type="module" src="app.js?v=566"></script>

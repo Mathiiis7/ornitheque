@@ -21,6 +21,28 @@ CARTE = {"w": 1369, "h": 834}                                       # la carte t
 CADRE_QUIZ = {"x": 545, "y": 200, "width": 830, "height": 735}      # la manche, de sa barre a sa derniere reponse
 
 
+def recoud(fichier):
+    """Efface le rectangle pale autour de la Bretagne : un joint de 1 pixel entre deux blocs de tuiles (x=266, y=293 et
+    y=1511 ; 253 au lieu de 221), au zoom fractionnaire du site. Etirer les tuiles de 0,5 px l'elargissait a 3 pixels et
+    a toutes les tuiles (2026-11-01). Chaque pixel plus clair que ses deux voisins prend leur moyenne, seulement sur les
+    lignes ou c'est le cas sur plus de 5 % de la longueur : les routes de la carte font plusieurs pixels et ne bougent pas."""
+    import numpy as np
+    from PIL import Image
+    a = np.asarray(Image.open(fichier).convert("RGB")).astype(np.int32)
+    somme = 0
+    for axe in (0, 1):
+        b = a if axe == 0 else a.transpose(1, 0, 2)    # une ligne de pixels a la fois, en lignes puis en colonnes
+        g = b.sum(axis=2)
+        joint = (g[1:-1] > g[:-2] + 25) & (g[1:-1] > g[2:] + 25)
+        for i in np.where(joint.mean(axis=1) > 0.05)[0]:
+            m = joint[i]
+            b[i + 1, m] = (b[i, m] + b[i + 2, m]) // 2
+            somme += int(m.sum())
+            print(f"  joint {'horizontal' if axe == 0 else 'vertical'} a {i + 1} : {int(m.sum())} pixels")
+    Image.fromarray(a.astype(np.uint8)).save(fichier)
+    print("  recousu :", somme, "pixels")
+
+
 def ferme(page):
     page.evaluate("""() => { for (const b of document.querySelectorAll('button')) { const t = b.textContent.trim();
         if (b.offsetParent && (t === '✕' || t === '×')) b.click(); } }""")
@@ -92,8 +114,7 @@ with sync_playwright() as p:
       #mapEl > :not(.leaflet-pane):not(.leaflet-control-container), #mapEl > :not(.leaflet-pane):not(.leaflet-control-container) * {{ visibility: hidden !important; }}
     """)
     page.evaluate("window.dispatchEvent(new Event('resize'))")
-    # Un zoom avant puis arriere pour recharger les tuiles apres l'agrandissement. Un rectangle tres pale reste
-    # autour de la Bretagne, cause non trouvee : ni le voile (le retirer le rend plus net), ni ce rechargement.
+    # Un zoom avant puis arriere pour recharger les tuiles apres l'agrandissement.
     page.wait_for_timeout(1000)
     page.evaluate("document.querySelector('#mapEl .leaflet-control-zoom-in').click()")
     page.wait_for_timeout(2000)
@@ -105,6 +126,7 @@ with sync_playwright() as p:
     fond = page.add_style_tag(content="#mapEl .leaflet-marker-pane, #mapEl .leaflet-marker-pane * { visibility: hidden !important; }")
     page.wait_for_timeout(300)
     page.screenshot(path=str(OUT / "recent-fond.png"), clip=clip_carte)
+    recoud(OUT / "recent-fond.png")
     fond.evaluate("e => e.remove()")
     page.add_style_tag(content="""html, body, #mapEl, .leaflet-container { background: transparent !important; }
       #mapEl .leaflet-pane:not(.leaflet-map-pane):not(.leaflet-marker-pane), #mapEl .leaflet-pane:not(.leaflet-map-pane):not(.leaflet-marker-pane) * { visibility: hidden !important; }""")

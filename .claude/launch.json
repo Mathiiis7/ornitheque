@@ -12,6 +12,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["--yes", "http-server", "../ornitheque-carte", "-p", "8766", "-c-1"],
       "port": 8766
+    },
+    {
+      "name": "portfolio",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["--yes", "http-server", "../../2-Emploi/portfolio", "-p", "4173", "-c-1"],
+      "port": 4173
     }
   ]
 }

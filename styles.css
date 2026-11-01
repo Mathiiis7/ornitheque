@@ -214,6 +214,12 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   @keyframes auth-logo-bounce { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-6px); } }
   .auth-gate-brand h1 { font-size:30px; margin:0; color:var(--ink); font-weight:700; letter-spacing:-.02em; }
   .auth-gate-tag { margin:8px 0 0; font-size:15px; color:var(--ink-3); }
+  .auth-gate-film { margin:0 0 22px; }
+  .auth-gate-film video { display:block; width:100%; aspect-ratio:16/9; border-radius:12px; background:var(--surface-2); }
+  .auth-gate-film figcaption { margin-top:6px; text-align:right; font-size:15px; }
+  .auth-gate-film a { color:var(--accent-ink); font-weight:600; }
+  /* Sur un ecran bas, le film repoussait le formulaire hors de la carte : le logo cede sa place. */
+  @media (max-height:820px){ .auth-gate-logo { width:72px; height:72px; } }
   .auth-gate-tabs { display:flex; gap:4px; background:var(--surface-2); border-radius:10px; padding:4px; margin-bottom:22px; }
   .auth-gate-tab { flex:1; border:none; background:transparent; padding:11px 14px; font:600 15px var(--sans); color:var(--ink-2); cursor:pointer; border-radius:8px; transition:all .12s; }
   .auth-gate-tab:hover { color:var(--ink); }

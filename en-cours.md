@@ -6,6 +6,7 @@ Ce fichier se remplace à chaque fin de tâche : quelques lignes, pas un journal
 
 ## Reste ouvert
 - **En attente de réponse :** Cornell (22/10), LPO (23/10). Effacer l'historique des deux dépôts attend Cornell.
+- **Vidéo, 01/11 :** rendu 4K en cours, `outils/onetake/rendu-final.py --workers 2` (reprend seul s'il est relancé), sortie `.onetake/4k/`. Ensuite : `montage-v2.py .onetake/4k/film-sans-son.mp4 --final`, `partition-v2.py ENTREE SORTIE --final`, `film-web.py`, bancs, commits des deux dépôts. Son refait, à valider à l'écoute : `.onetake/v2-brouillon16.mp4`. Rectangle de la Bretagne réparé (joint de tuiles, `recoud`). Rien poussé : `assets/film/` et le portfolio attendent la version finale.
 - **Vidéo (ticket 39) :** moments 1 et 2 refaits sur le site actuel, brouillon `.onetake/v2-brouillon4.mp4` à valider par Mathis ;
   détail dans `docs/VIDEO-DEROULE-V2.md`. **Nouvel ordre décidé par Mathis (31/10) :** ouverture ; carte, compteur à 199 ; Birdydex à
   199, case du Martin-pêcheur grise ; vraie scène « espèce débloquée », 200 ; vraie scène « Palier atteint » Ornithologue chevronné

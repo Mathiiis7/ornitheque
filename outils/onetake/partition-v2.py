@@ -3,7 +3,7 @@
 Le film est monte en morceaux (montage-v2.py) : chaque instant s'ecrit dans le temps de son morceau, et
 le debut des morceaux se calcule sur leurs vraies durees. Si un morceau change de rythme, reprendre ses instants ici.
 
-    .onetake/venv/Scripts/python.exe outils/onetake/partition-v2.py VIDEO-ENTREE VIDEO-SORTIE
+    .onetake/venv/Scripts/python.exe outils/onetake/partition-v2.py VIDEO-ENTREE VIDEO-SORTIE [--final]
 
 Les chants : xeno-canto, CC BY-NC-SA 4.0, ceux que le film montre et que ses credits nomment.
 """
@@ -26,9 +26,10 @@ def duree(f):
                                 capture_output=True, text=True, check=True).stdout)
 
 SCENE = lambda tranches: sum((b - a) / v for a, b, v in tranches)
-DUREES = {"m2": 15.1, "mur": duree(".onetake/mur-a.mp4"), "debloque": SCENE([(0, 5.0, 1.2), (5.0, 6.5, 0.75)]), "retour": duree(".onetake/mur-c.mp4"),
-          "trophee": SCENE([(0, 0.45, 1), (0.45, 6.2, 1.2), (6.2, 7.6, 0.8)]), "classement": duree(".onetake/m3-e.mp4"), "fiche": duree(".onetake/m3-f.mp4"),
-          "monde": duree(".onetake/m3-m.mp4"), "recent": duree(".onetake/m3-g.mp4"), "fin": duree(".onetake/fin.mp4")}
+M = ".onetake/4k/" if "--final" in sys.argv else ".onetake/"    # --final : la video d'entree est faite des morceaux de rendu-final.py
+DUREES = {"m2": 15.1, "mur": duree(M + "mur-a.mp4"), "debloque": SCENE([(0, 5.0, 1.2), (5.0, 6.5, 0.75)]), "retour": duree(M + "mur-c.mp4"),
+          "trophee": SCENE([(0, 0.45, 1), (0.45, 6.2, 1.2), (6.2, 7.6, 0.8)]), "classement": duree(M + "m3-e.mp4"), "fiche": duree(M + "m3-f.mp4"),
+          "monde": duree(M + "m3-m.mp4"), "recent": duree(M + "m3-g.mp4"), "fin": duree(M + "fin.mp4")}
 DEBUT, t0 = {}, 0.0
 for nom, d in DUREES.items():
     DEBUT[nom] = t0
@@ -126,81 +127,36 @@ def main():
     s = P.Score(dur=TOTAL, T60=1.15)
     D = DEBUT
 
-    # Ouverture : le logo se dessine, le nom tombe, l'iris s'ouvre
+    # Mathis, 2026-11-01 : ni le bruit des clics « tout le temps », ni les souffles quand ca defile. Il ne reste que
+    # les moments qui comptent : le logo, le compteur, le 200, le trophee, la tete du classement, la bonne reponse.
+
+    # Ouverture : le logo se dessine, le nom tombe
     bois(s, 0.35, 0.4)
     verre(s, 1.9, 0.3)
     bois(s, 2.7, 0.55)
-    souffle(s, 4.9, 0.6, long=True)
-    bois(s, 5.35, 0.35)
-    # Les photos de la carte, sans insister ; le compteur qui s'arrete sur 199
-    for t, tenue in [(7.15, .75), (8.85, .75), (9.3, .75), (11.4, .45), (12.42, .35)]:
-        verre(s, t, 0.25, pan=0.3)
-        bulle(s, t + tenue + 0.5, 0.25, pan=-0.5)
+    # Le compteur qui s'arrete sur 199
     grave(s, 12.55, 0.55)
 
-    # Le mur, la case grise, le clic
-    souffle(s, D["mur"] + 0.15, 0.45)
-    clic(s, D["mur"] + 3.5, pan=-0.5)
-    souffle(s, D["mur"] + 3.65, 0.4)
-    # La vraie scene : pays, famille, rarete, la carte qui se revele
-    verre(s, D["debloque"] + 0.83, 0.25)
-    bois(s, D["debloque"] + 2.08, 0.35)
-    bois(s, D["debloque"] + 2.92, 0.4)
+    # La vraie scene : la carte qui se revele
     grave(s, D["debloque"] + 4.17, 0.7)
     verre(s, D["debloque"] + 4.17, 0.6)
-    # La carte se pose, le 200, le recul, le clic sur Trophees
-    souffle(s, D["retour"] + 0.15, 0.4)
-    bois(s, D["retour"] + 1.04, 0.7, f=170, pan=-0.5)
+    # La carte se pose, le 200
     verre(s, D["retour"] + 1.04, 0.5, pan=-0.5)
     grave(s, D["retour"] + 1.04, 0.45)
-    souffle(s, D["retour"] + 1.64, 0.4)
-    clic(s, D["retour"] + 3.86, pan=-0.2)
-    # Le trophee : les rayons, le palier, la fenetre
-    grave(s, D["trophee"] + 0.45, 0.45)
+    # Le trophee : le palier
     verre(s, D["trophee"] + 2.74, 0.6)
     grave(s, D["trophee"] + 2.74, 0.6)
-    bulle(s, D["trophee"] + 5.49, 0.4)
 
-    # Le classement : le compteur se pose, Alex remonte en poussant les autres, il arrive en tete
-    bois(s, D["classement"] + 1.73, 0.45, pan=-0.3)
-    souffle(s, D["classement"] + 2.88, 0.45)
-    for t, f in [(3.42, 170), (3.52, 195), (3.615, 220), (3.78, 250)]:
-        bois(s, D["classement"] + t, 0.3, f=f, pan=-0.3)
+    # Le classement : Alex arrive en tete
     grave(s, D["classement"] + 4.155, 0.6)
     verre(s, D["classement"] + 4.155, 0.55, pan=-0.3)
-    souffle(s, D["classement"] + 5.455, 0.4)
-    verre(s, D["classement"] + 8.745, 0.25, pan=-0.3)
 
-    # La fiche : le clic, le tiroir, le defilement, un mois sur deux, l'onglet Sons, la lecture
-    clic(s, D["fiche"] + 1.18, pan=-0.5)
-    souffle(s, D["fiche"] + 1.23, 0.45, pan=0.4)
-    souffle(s, D["fiche"] + 3.23, 0.3, pan=0.4)
-    for k in range(0, 12, 2):
-        bois(s, D["fiche"] + 4.54 + 0.247 * k, 0.12, f=230, pan=0.2)
-    clic(s, D["fiche"] + 7.72, pan=0.5)
-    clic(s, D["fiche"] + 9.02, pan=0.1)
-
-    # Le monde : le selecteur, le clic, le mur
-    souffle(s, D["monde"] + 0.39, 0.4, pan=0.4)
-    souffle(s, D["monde"] + 1.1, 0.25, long=True, pan=0.4)
-    clic(s, D["monde"] + 3.5, pan=0.4)
-    souffle(s, D["monde"] + 3.65, 0.4, pan=0.4)
-
-    # Le recent : la carte, quelques points, le clic sur un point, le quiz
-    souffle(s, D["recent"] + 0.3, 0.35)
-    for n in range(6):
-        bulle(s, D["recent"] + 1.05 + 1.89 * n / 5, 0.18, pan=-0.4 + 0.12 * n)
-    clic(s, D["recent"] + 4.25, pan=-0.6)
-    bulle(s, D["recent"] + 4.3, 0.3, pan=-0.6)
-    souffle(s, D["recent"] + 7.44, 0.4, pan=0.4)
-    clic(s, D["recent"] + 9.96, pan=0.2)
+    # Le quiz : la bonne reponse
     verre(s, D["recent"] + 10.0, 0.5, pan=0.2)
 
-    # La fin : le logo revient au centre, il se pose ; les credits montent
-    souffle(s, D["fin"] + 0.35, 0.5, long=True)
+    # La fin : le logo se pose
     bois(s, D["fin"] + 1.35, 0.5, f=170)
     grave(s, D["fin"] + 1.35, 0.5)
-    souffle(s, D["fin"] + 3.7, 0.25)
 
     bruitages = s.mix(peak_db=-8.0)
     n = bruitages.shape[0]
@@ -220,8 +176,9 @@ def main():
 
     # Le fond : memes reglages que le film precedent. Un vent a de hautes cretes pour une sonie basse : loudnorm, pas un gain
     filtre = "loudnorm=I=-24:TP=-9:LRA=7"
-    nappe = lit(NAPPE, 40, TOTAL, filtre)[:n] * 10 ** (-6 / 20)
-    feuilles = lit(FEUILLES, 15, TOTAL, filtre)[:n] * 10 ** (-15 / 20)
+    # 7 dB sous le reglage du 2026-11-01 matin : « la musique de fond est trop forte » (Mathis)
+    nappe = lit(NAPPE, 40, TOTAL, filtre)[:n] * 10 ** (-13 / 20)
+    feuilles = lit(FEUILLES, 15, TOTAL, filtre)[:n] * 10 ** (-22 / 20)
     fond = np.zeros((n, 2))
     fond[:len(nappe)] += nappe
     fond[:len(feuilles)] += feuilles
