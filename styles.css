@@ -216,6 +216,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .auth-gate-tag { margin:8px 0 0; font-size:15px; color:var(--ink-3); }
   .auth-gate-film { margin:0 0 22px; }
   .auth-gate-film video { display:block; width:100%; aspect-ratio:16/9; border-radius:12px; background:var(--surface-2); }
+  /* En plein ecran, le fond du lecteur remplit les bandes quand l'ecran n'est pas en 16/9. */
+  .auth-gate-film video:fullscreen { background:#000; border-radius:0; }
   .auth-gate-film figcaption { margin-top:6px; text-align:right; font-size:15px; }
   .auth-gate-film a { color:var(--accent-ink); font-weight:600; }
   /* Sur un ecran bas, le film repoussait le formulaire hors de la carte : le logo cede sa place. */
