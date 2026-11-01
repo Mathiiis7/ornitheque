@@ -64,6 +64,14 @@ def bulle(s, t, v=0.3, pan=0.0):
     s.place(P.bubble(f=560, dur=0.22), t, gain=v * 0.8, pan=pan, send=0.3)
 
 
+# Sol pentatonique : les suites d'evenements y montent, le verre du film sonne deja sur sol et re
+G = [392, 440, 494, 587, 659, 784, 880, 988, 1175]
+
+
+def note_verre(s, t, f, v=0.25, pan=0.0):
+    s.place(P.glass(f, 0.6, 0.7), t, gain=v * 0.6, pan=pan, send=0.5)
+
+
 def lit(fichier, debut=None, longueur=None, filtre=None):
     a = ["ffmpeg", "-v", "error"]
     if debut is not None:
@@ -127,31 +135,65 @@ def main():
     s = P.Score(dur=TOTAL, T60=1.15)
     D = DEBUT
 
-    # Mathis, 2026-11-01 : ni le bruit des clics « tout le temps », ni les souffles quand ca defile. Il ne reste que
-    # les moments qui comptent : le logo, le compteur, le 200, le trophee, la tete du classement, la bonne reponse.
+    # Mathis, 2026-11-01 : pas de souffles ; les clics ne doivent pas etre toujours le meme son, et il manquait du rythme.
+    # Chaque clic a donc sa matiere, et les suites d'evenements montent sur une meme gamme (sol pentatonique).
 
     # Ouverture : le logo se dessine, le nom tombe
     bois(s, 0.35, 0.4)
     verre(s, 1.9, 0.3)
     bois(s, 2.7, 0.55)
-    # Le compteur qui s'arrete sur 199
+    # Les photos de la carte montent la gamme ; le compteur s'arrete sur 199
+    for t, note in zip([7.15, 8.85, 9.3, 11.4, 12.42], [G[3], G[4], G[5], G[6], G[7]]):
+        note_verre(s, t, note, 0.22, pan=0.3)
     grave(s, 12.55, 0.55)
 
-    # La vraie scene : la carte qui se revele
+    # Le mur : le clic sur la case grise, sourd
+    s.place(P.wood(f=130, dur=0.12), D["mur"] + 3.5, gain=0.5, pan=-0.5, send=0.2)
+    s.place(P.bubble(f=420, dur=0.18), D["mur"] + 3.53, gain=0.2, pan=-0.5, send=0.25)
+    # La vraie scene : pays, famille, rarete montent jusqu'a la carte
+    note_verre(s, D["debloque"] + 0.83, G[3], 0.25)
+    note_verre(s, D["debloque"] + 2.08, G[4], 0.28)
+    note_verre(s, D["debloque"] + 2.92, G[5], 0.32)
     grave(s, D["debloque"] + 4.17, 0.7)
     verre(s, D["debloque"] + 4.17, 0.6)
-    # La carte se pose, le 200
+    # La carte se pose, le 200 ; le clic sur Trophees, sec et double
+    bois(s, D["retour"] + 1.04, 0.7, f=170, pan=-0.5)
     verre(s, D["retour"] + 1.04, 0.5, pan=-0.5)
     grave(s, D["retour"] + 1.04, 0.45)
-    # Le trophee : le palier
+    s.place(P.wood(f=300, dur=0.06), D["retour"] + 3.86, gain=0.32, pan=-0.2, send=0.15)
+    s.place(P.wood(f=340, dur=0.05), D["retour"] + 3.93, gain=0.2, pan=-0.2, send=0.15)
+    # Le trophee : le palier, la fenetre
+    grave(s, D["trophee"] + 0.45, 0.45)
     verre(s, D["trophee"] + 2.74, 0.6)
     grave(s, D["trophee"] + 2.74, 0.6)
+    bulle(s, D["trophee"] + 5.49, 0.4)
 
-    # Le classement : Alex arrive en tete
+    # Le classement : chaque rang gagne monte d'une marche, Alex arrive en tete
+    bois(s, D["classement"] + 1.73, 0.45, pan=-0.3)
+    for t, f in [(3.42, 170), (3.52, 200), (3.615, 235), (3.78, 280)]:
+        bois(s, D["classement"] + t, 0.32, f=f, pan=-0.3)
     grave(s, D["classement"] + 4.155, 0.6)
     verre(s, D["classement"] + 4.155, 0.55, pan=-0.3)
+    note_verre(s, D["classement"] + 8.745, G[7], 0.2, pan=-0.3)
 
-    # Le quiz : la bonne reponse
+    # La fiche : le clic sur l'espece, tinte ; les mois montent ; l'onglet Sons, une goutte ; la lecture, grave et rond
+    s.place(P.wood(f=210, dur=0.08), D["fiche"] + 1.18, gain=0.35, pan=-0.5, send=0.15)
+    note_verre(s, D["fiche"] + 1.2, G[6], 0.14, pan=-0.5)
+    for n, k in enumerate(range(0, 12, 2)):
+        s.place(P.bubble(f=G[n] * 1.5, dur=0.14), D["fiche"] + 4.54 + 0.247 * k, gain=0.14, pan=0.2, send=0.3)
+    s.place(P.bubble(f=760, dur=0.16), D["fiche"] + 7.72, gain=0.28, pan=0.5, send=0.25)
+    s.place(P.wood(f=115, dur=0.14), D["fiche"] + 9.02, gain=0.4, pan=0.1, send=0.2)
+    s.place(P.bubble(f=300, dur=0.2), D["fiche"] + 9.05, gain=0.18, pan=0.1, send=0.25)
+
+    # Le monde : le clic sur le selecteur, clair
+    s.place(P.wood(f=250, dur=0.07), D["monde"] + 3.5, gain=0.3, pan=0.4, send=0.15)
+    note_verre(s, D["monde"] + 3.52, G[5], 0.16, pan=0.4)
+
+    # Le recent : les points montent la gamme ; le clic sur un point, une goutte haute ; le quiz, la bonne reponse
+    for n in range(6):
+        s.place(P.bubble(f=G[n + 1], dur=0.18), D["recent"] + 1.05 + 1.89 * n / 5, gain=0.16, pan=-0.4 + 0.12 * n, send=0.3)
+    s.place(P.bubble(f=980, dur=0.14), D["recent"] + 4.25, gain=0.3, pan=-0.6, send=0.25)
+    s.place(P.wood(f=155, dur=0.09), D["recent"] + 9.96, gain=0.3, pan=0.2, send=0.15)
     verre(s, D["recent"] + 10.0, 0.5, pan=0.2)
 
     # La fin : le logo se pose
