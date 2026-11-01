@@ -59,8 +59,7 @@ chants = [c[0] for c in CHANTS] + [m.group(2).strip()]
 pathlib.Path(".onetake/v2/credits.json").write_text(json.dumps({"photos": sorted(set(photos), key=str.lower), "chants": chants}, ensure_ascii=False, indent=1), encoding="utf-8")
 texte = ["# Crédits du film de présentation", "",
          "Généré par `outils/onetake/credits-v2.py`. Ce film est diffusé sous licence CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/). Les photos sont recadrées et animées.", "",
-         f"Chants, xeno-canto, CC BY-NC-SA 4.0 : Benjamin Drillat (XC982627), {m.group(2).strip()} (XC{m.group(1)}).",
-         "Musique et fond sonore, CC0 : John Bartmann, *sweet-embrace-master* (Free Music Archive) ; Borgory, *Soft Wind in the Trees - Leaves rustle* (Freesound).",
+         f"Le film est muet (choix de Mathis, 2026-11-01). Enregistrements montrés à l'image, xeno-canto, CC BY-NC-SA 4.0 : Benjamin Drillat (XC982627), {m.group(2).strip()} (XC{m.group(1)}).",
          "Fond de carte : © OpenStreetMap, https://www.openstreetmap.org/copyright. Observations et fréquences : eBird.org.", "",
          "| Espèce | Auteur | Licence | Photo |", "|---|---|---|---|"]
 texte += [f"| {a} | {b} | {c} | {d} |" for a, b, c, d in lignes]

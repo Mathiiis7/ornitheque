@@ -13,7 +13,7 @@ PORTFOLIO = pathlib.Path("../../2-Emploi/portfolio")
 ICI.mkdir(parents=True, exist_ok=True)
 FILM, AFFICHE = ICI / "ornitheque-film.mp4", ICI / "ornitheque-film.webp"
 subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", ENTREE, "-vf", "scale=1920:1080:flags=lanczos", "-c:v", "libx264", "-preset", "slow", "-crf", "24",
-                "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", str(FILM)], check=True)
+                "-pix_fmt", "yuv420p", "-an", "-movflags", "+faststart", str(FILM)], check=True)    # muet : choix de Mathis, 2026-11-01
 # 4 s : le logo et le nom sont poses, l'iris n'a pas commence
 subprocess.run(["ffmpeg", "-y", "-v", "error", "-ss", "4", "-i", ENTREE, "-frames:v", "1", "-vf", "scale=1280:720:flags=lanczos", "-quality", "82", str(AFFICHE)], check=True)
 shutil.copy2(FILM, PORTFOLIO / "projet-ornitheque-film.mp4")

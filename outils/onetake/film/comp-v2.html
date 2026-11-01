@@ -420,7 +420,7 @@ function seekFin(t) {
   const op = k => E.cubicOut(seg(4.25 + k * 0.12, 4.65 + k * 0.12, t));
   let y = 600;
   y = ligneCentree('Photos : ' + CR.photos.join(', ') + ' et les photographes d\u2019iNaturalist (CC BY, BY-NC, BY-NC-SA), recadr\u00e9es et anim\u00e9es', y, 30, L.ink, op(0)) + 14;
-  y = ligneCentree('Chants : ' + CR.chants.join(', ') + ' (xeno-canto, CC BY-NC-SA 4.0)', y, 30, L.ink, op(1)) + 14;
+  y = ligneCentree('Enregistrements : ' + CR.chants.join(', ') + ' (xeno-canto, CC BY-NC-SA 4.0)', y, 30, L.ink, op(1)) + 14;
   y = ligneCentree('Fond de carte : \u00a9 OpenStreetMap, openstreetmap.org/copyright. Observations et fr\u00e9quences : eBird.org', y, 30, L.ink, op(2)) + 14;
   // le film n'a pas de case de description (portfolio, accueil du site) : l'adresse de la liste complete, a l'ecran
   ligneCentree('Ce film est diffus\u00e9 sous licence CC BY-NC-SA 4.0. Toutes les sources : github.com/Mathiiis7/ornitheque/blob/main/docs/VIDEO-CREDITS-V2.md', y, 28, L.mute, op(3));

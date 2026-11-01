@@ -5,7 +5,7 @@ Vérifié le 2026-11-01 sur les textes officiels, sauf mention contraire. Ce n'e
 | Ce que le film montre | Règle lue | Bilan |
 |---|---|---|
 | 212 photos iNaturalist (CC0 1, CC BY 26, CC BY-NC 172, CC BY-NC-SA 13) | Licence de chaque photo, lue dans les réponses iNaturalist gardées | Permis, à condition de créditer et de rester non commercial. Aucune ND ni « tous droits réservés » : `photos_libres.py` les remplace ou les bloque à la prise |
-| Chants et spectrogramme xeno-canto | CC BY-NC-SA 4.0, lue sur la page de chaque enregistrement. Synchroniser un son à une image est toujours une adaptation (legal code, section 1) | Permis, mais **le film doit être diffusé sous CC BY-NC-SA 4.0** : écrit dans les crédits |
+| Spectrogramme et nom des enregistrements xeno-canto (film muet depuis le 2026-11-01, plus aucun son) | CC BY-NC-SA 4.0, lue sur la page de chaque enregistrement | Permis, et **le film reste diffusé sous CC BY-NC-SA 4.0** à cause de ces images et des 13 photos BY-NC-SA : écrit dans les crédits |
 | Fond de carte OpenStreetMap | Attribution Guidelines, « TV, film, or video productions » : carte majeure, donc mention dans un coin de la carte, plus crédits avec l'adresse openstreetmap.org/copyright | Conforme depuis le 01/11 |
 | Drapeaux (flagcdn) | flagpedia.net : domaine public | Libre |
 | Observations récentes, rareté et fréquences (eBird) | API Terms : non commercial, « film » cité parmi les usages permis, citer eBird.org. Mais Data Access Terms (voir `carte-donnees.md`) : recherche et éducation seulement, pas de publication au format d'origine, copie à envoyer à eBird@cornell.edu | **Pas en règle clairement.** Décision de Mathis du 30/10 : ne rien changer et réagir en cas de problème ; le film rend ces données plus visibles |
