@@ -228,9 +228,9 @@ def main():
     env = np.ones(n)
     # Silence pendant que le logo se dessine : le fond n'arrive qu'avec l'iris qui ouvre la carte, et il repart
     # pendant les credits. Sans ces repos, le film n'etait jamais silencieux (oracle : 1,4 % d'images calmes).
-    entree, rampe = int(4.6 * SR), int(1.6 * SR)
-    env[:entree] = 0
-    env[entree:entree + rampe] = np.linspace(0, 1, rampe)
+    arrivee, rampe = int(4.6 * SR), int(1.6 * SR)
+    env[:arrivee] = 0
+    env[arrivee:arrivee + rampe] = np.linspace(0, 1, rampe)
     fin_fond = int(5 * SR)
     env[-fin_fond:] = np.linspace(1, 0, fin_fond)
     # le fond s'efface sous les chants : -9 dB, en 0,4 s
