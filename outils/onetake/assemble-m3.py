@@ -35,6 +35,10 @@ RECENT = pathlib.Path(".onetake/v2/recent")
 for f in RECENT.glob("*.png"):
     shutil.copy2(f, OUT / f.name)
 donnees["recent"] = json.loads((RECENT / "recent.json").read_text(encoding="utf-8"))
+MONDE = pathlib.Path(".onetake/v2/monde")
+for f in MONDE.glob("*.png"):
+    shutil.copy2(f, OUT / f.name)
+donnees["monde"] = json.loads((MONDE / "monde.json").read_text(encoding="utf-8"))
 print("tiroir a", X0)
 def rel(r):
     return {**r, "x": r["x"] - X0}
@@ -43,7 +47,7 @@ donnees["fiche"] = {"w": (3840 - x0) / 2, "h": hauteur / 2, "bloc": rel(fiche["b
                     "enregistrements": [{"barre": rel(e["barre"]), "lecture": rel(e["lecture"])} for e in fiche["enregistrements"][:1]]}
 (OUT / "donnees-m3.js").write_text("window.M3 = " + json.dumps(donnees, separators=(",", ":"), ensure_ascii=False) + ";\n", encoding="utf-8")
 src = SRC.read_text(encoding="utf-8")
-for v in "abcdefg":
+for v in "abcdefgm":
     (OUT / f"comp-{v}.html").write_text(src.replace("__VARIANTE__", v), encoding="utf-8")
 r = subprocess.run([sys.executable, str(SKILL / "scripts" / "look.py"), "apply", str(pathlib.Path(".onetake/look-ornitheque.json").resolve()), str((OUT / "comp-a.html").resolve())],
                    capture_output=True, text=True, encoding="utf-8", errors="replace",

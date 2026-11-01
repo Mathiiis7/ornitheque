@@ -11,6 +11,7 @@ import json, pathlib, re, time, urllib.request
 CACHE = pathlib.Path("notes-privees/choix-photos/cache-inat")
 OUT = pathlib.Path(".onetake/v2/libres")
 CARTES = pathlib.Path(".onetake/v2/site/cartes-birdydex.json")
+VUES = pathlib.Path(".onetake/v2/photos-vues.txt")
 # Licences compatibles avec le chant du film (CC BY-NC-SA) : ni BY-SA, ni ND. Voir VIDEO-PRESENTATION.md.
 LIBRES = {"cc0", "pd", "cc-by", "cc-by-nc", "cc-by-nc-sa"}
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36"
@@ -106,6 +107,13 @@ def fichier(r):
     return chemin
 
 
+def note_vue(identifiant):
+    """Garde la trace de chaque photo montree aux prises, pour les credits (credits-v2.py)."""
+    VUES.parent.mkdir(parents=True, exist_ok=True)
+    with VUES.open("a", encoding="utf-8") as f:
+        f.write(identifiant + "\n")
+
+
 def installe(ctx, journal=None):
     """A appeler avant d'ouvrir une page. journal : la liste ou noter ce qui a ete remplace ou bloque."""
     licences, rempl, _ = table()
@@ -114,6 +122,7 @@ def installe(ctx, journal=None):
     especes = especes_des_photos()
 
     def sert(route, r, adresse):
+        note_vue(r["id"])
         if journal is not None:
             journal.append(("remplacee", r["sci"], adresse))
         route.fulfill(path=str(fichier(r)), content_type="image/jpeg", headers={"Access-Control-Allow-Origin": "*"})
@@ -126,6 +135,7 @@ def installe(ctx, journal=None):
         if m and m.group(1) in par_id:
             return sert(rt, par_id[m.group(1)], adresse)
         if m and licences.get(m.group(1)) in LIBRES:
+            note_vue(m.group(1))
             return rt.continue_()
         # une photo d'un autre membre : l'espece vient des tables du site
         sci = especes.get(m.group(1) if m else adresse)

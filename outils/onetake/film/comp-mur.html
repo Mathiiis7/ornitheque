@@ -23,7 +23,7 @@
 // Tout vient du site (v2-m3.py, v2-mur.py, v2-scenes.py). Tout est une fonction PURE du temps.
 // =============================================================================
 const V = '__PARTIE__';
-const DUR = { a: 4.55, c: 4.38 }[V];
+const DUR = { a: 4.15, c: 4.38 }[V];
 window.__meta = { dur: DUR, fps: 30, w: 1920, h: 1080 };
 const W = 1920, H = 1080;
 const { clamp, lerp, spring } = OM;
@@ -32,7 +32,7 @@ const seg = (a, b, t) => clamp((t - a) / (b - a), 0, 1);
 // Le rythme : Mathis trouvait que ca allait vite par moments (2026-11-01). Chaque rangee dit quel instant de la
 // composition montrer a quel instant du film : deux instants egaux font un arret, un ecart plus grand ralentit.
 const TEMPS = {
-  a: [[0, 0], [2.2, 1.8], [2.45, 2.05], [3.05, 2.05], [4.55, 3.55]],
+  a: [[0, 0], [1.8, 1.8], [2.05, 2.05], [2.65, 2.05], [4.15, 3.55]],
   c: [[0, 0], [1.04, 0.8], [1.64, 1.4], [1.94, 1.4], [2.74, 2.2], [3.93, 3.05], [4.38, 3.5]],
 }[V];
 function tempsComp(t) {

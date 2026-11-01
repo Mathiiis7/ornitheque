@@ -28,7 +28,7 @@
 // =============================================================================
 
 const MODE_FIN = false;   // assemble-v2.py ecrit comp-fin.html avec true : l'ecran de fin, memes traces, meme police
-const FPS = 30, DUR = MODE_FIN ? 8.4 : 15.8;
+const FPS = 30, DUR = MODE_FIN ? 9.6 : 15.8;
 window.__meta = { dur: DUR, fps: FPS, w: 1920, h: 1080 };
 const W = 1920, H = 1080;
 const { clamp, lerp, ssstep, spring } = OM;
@@ -269,6 +269,11 @@ function dessineCarte(t) {
   const v = ctx.createLinearGradient(0, 0, 900, 0);
   v.addColorStop(0, 'rgba(238,242,241,0.72)'); v.addColorStop(0.6, 'rgba(238,242,241,0.45)'); v.addColorStop(1, 'rgba(238,242,241,0)');
   ctx.fillStyle = v; ctx.fillRect(0, 0, 900, H);
+  // OpenStreetMap : quand sa carte tient une grande place dans une video, la mention va dans un coin de la carte
+  ctx.font = police('text', 20); ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.fillRect(W - 186, H - 34, 186, 34);
+  ctx.fillStyle = L.ink; ctx.fillText('\u00a9 OpenStreetMap', W - 12, H - 10);
+  ctx.textAlign = 'left';
   ctx.restore();
 }
 
@@ -413,11 +418,11 @@ function seekFin(t) {
   ctx.restore();
   const CR = window.V2.credits;
   const op = k => E.cubicOut(seg(4.25 + k * 0.12, 4.65 + k * 0.12, t));
-  let y = 610;
-  y = ligneCentree('Photos : ' + CR.photos.join(', ') + ' et les photographes d\u2019iNaturalist', y, 30, L.ink, op(0)) + 14;
+  let y = 600;
+  y = ligneCentree('Photos : ' + CR.photos.join(', ') + ' et les photographes d\u2019iNaturalist (CC BY, BY-NC, BY-NC-SA), recadr\u00e9es et anim\u00e9es', y, 30, L.ink, op(0)) + 14;
   y = ligneCentree('Chants : ' + CR.chants.join(', ') + ' (xeno-canto, CC BY-NC-SA 4.0)', y, 30, L.ink, op(1)) + 14;
-  y = ligneCentree('Fond de carte : \u00a9 OpenStreetMap. Observations et fr\u00e9quences : eBird', y, 30, L.ink, op(2)) + 14;
-  ligneCentree('Toutes les photos sont cr\u00e9dit\u00e9es dans la description.', y, 28, L.mute, op(3));
+  y = ligneCentree('Fond de carte : \u00a9 OpenStreetMap, openstreetmap.org/copyright. Observations et fr\u00e9quences : eBird.org', y, 30, L.ink, op(2)) + 14;
+  ligneCentree('Ce film est diffus\u00e9 sous licence CC BY-NC-SA 4.0. Toutes les sources sont dans la description.', y, 28, L.mute, op(3));
 }
 function seek(t) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);

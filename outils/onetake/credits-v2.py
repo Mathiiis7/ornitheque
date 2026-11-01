@@ -23,6 +23,7 @@ licences, par_espece = P.lit_cache()
 _, rempl, _ = P.table()
 cartes = json.loads(P.CARTES.read_text(encoding="utf-8"))
 lignes, sans = [], []
+parId = {x["id"]: (sci, x) for sci, l in par_espece.items() for x in l}
 for c in cartes:
     r = rempl.get(c["src"])
     if not r:
@@ -32,6 +33,18 @@ for c in cartes:
         lignes.append((c["nom"], nom(r["auteur"]), r["licence"], "https://www.inaturalist.org/photos/" + r["id"]))
     else:
         sans.append(c["nom"])
+# Toutes les autres photos notees aux prises : classement, quiz, mur du pays lointain
+vues = set(P.VUES.read_text(encoding="utf-8").split()) if P.VUES.exists() else set()
+vues |= set(EN_GRAND.values())
+deja = {l[3].rsplit("/", 1)[1] for l in lignes}
+nomsF = {c["sci"]: c["nom"] for c in cartes}
+for i in sorted(vues - deja):
+    if i in parId:
+        sci, x = parId[i]
+        lignes.append((nomsF.get(sci, sci), nom(x["auteur"]), x["licence"], "https://www.inaturalist.org/photos/" + i))
+    else:
+        sans.append("photo " + i)
+lignes.sort(key=lambda l: l[0].lower())
 photos = []
 for sci, i in EN_GRAND.items():
     a = next((x for x in par_espece.get(sci, []) if x["id"] == i), None)
@@ -43,9 +56,9 @@ m = re.match(r"Chant n° XC (\d+) · (.+)", quiz)
 chants = [c[0] for c in CHANTS] + [m.group(2).strip()]
 pathlib.Path(".onetake/v2/credits.json").write_text(json.dumps({"photos": sorted(set(photos), key=str.lower), "chants": chants}, ensure_ascii=False, indent=1), encoding="utf-8")
 texte = ["# Crédits du film de présentation", "",
-         "Généré par `outils/onetake/credits-v2.py`. Photos iNaturalist du Birdydex montré dans le film, sous licence libre.", "",
+         "Généré par `outils/onetake/credits-v2.py`. Ce film est diffusé sous licence CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/). Les photos sont recadrées et animées.", "",
          f"Chants, xeno-canto, CC BY-NC-SA 4.0 : Benjamin Drillat (XC982627), {m.group(2).strip()} (XC{m.group(1)}).",
-         "Fond de carte : © OpenStreetMap. Observations et fréquences : eBird.", "",
+         "Fond de carte : © OpenStreetMap, https://www.openstreetmap.org/copyright. Observations et fréquences : eBird.org.", "",
          "| Espèce | Auteur | Licence | Photo |", "|---|---|---|---|"]
 texte += [f"| {a} | {b} | {c} | {d} |" for a, b, c, d in lignes]
 if sans:
