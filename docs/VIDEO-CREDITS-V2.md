@@ -219,5 +219,3 @@ Fond de carte : © OpenStreetMap, https://www.openstreetmap.org/copyright. Obser
 | Étourneau sansonnet | ildikorab | cc-by-nc | https://www.inaturalist.org/photos/262503685 |
 | Étourneau unicolore | Luca Ghiraldi | cc-by-nc | https://www.inaturalist.org/photos/202494131 |
 | Œdicnème criard | Maryse | cc-by-nc | https://www.inaturalist.org/photos/235775038 |
-
-Sans auteur retrouvé : Mésange nonnette.

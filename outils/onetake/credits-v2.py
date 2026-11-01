@@ -25,6 +25,8 @@ cartes = json.loads(P.CARTES.read_text(encoding="utf-8"))
 lignes, sans = [], []
 parId = {x["id"]: (sci, x) for sci, l in par_espece.items() for x in l}
 for c in cartes:
+    if not c["src"]:   # une carte sans photo : rien a crediter
+        continue
     r = rempl.get(c["src"])
     if not r:
         m = P.PHOTO_INAT.search(c["src"] or "")

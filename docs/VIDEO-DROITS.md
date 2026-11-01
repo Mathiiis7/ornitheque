@@ -9,10 +9,10 @@ Vérifié le 2026-11-01 sur les textes officiels, sauf mention contraire. Ce n'e
 | Fond de carte OpenStreetMap | Attribution Guidelines, « TV, film, or video productions » : carte majeure, donc mention dans un coin de la carte, plus crédits avec l'adresse openstreetmap.org/copyright | Conforme depuis le 01/11 |
 | Drapeaux (flagcdn) | flagpedia.net : domaine public | Libre |
 | Observations récentes, rareté et fréquences (eBird) | API Terms : non commercial, « film » cité parmi les usages permis, citer eBird.org. Mais Data Access Terms (voir `carte-donnees.md`) : recherche et éducation seulement, pas de publication au format d'origine, copie à envoyer à eBird@cornell.edu | **Pas en règle clairement.** Décision de Mathis du 30/10 : ne rien changer et réagir en cas de problème ; le film rend ces données plus visibles |
-| Images de trophées (`assets/trophies/`) | Origine non retrouvée dans le dépôt | **Non vérifié** : à confirmer par Mathis |
+| Images de trophées (`assets/trophies/`) | Faites par Mathis (dit le 2026-11-01) | Aucun tiers à créditer |
 
-**Non commercial :** la licence dit « not primarily intended for or directed towards commercial advantage or monetary compensation ». Un film sur un site gratuit entre amis y entre. Dans un portfolio qui sert à trouver un emploi, c'est une zone grise : le texte ne tranche pas ce cas.
+**Non commercial :** la licence dit « not primarily intended for or directed towards commercial advantage or monetary compensation ». Un film sur un site gratuit entre amis y entre. Dans un portfolio qui sert à trouver un emploi, le texte ne tranche pas ; Mathis le considère non commercial (décision du 2026-11-01).
 
-**Où créditer :** Creative Commons recommande à la fois dans la vidéo et dans sa description, et admet une page à part. Le film nomme les auteurs des photos montrées en grand ; la liste complète est dans `VIDEO-CREDITS-V2.md`, à mettre ou à lier dans la description.
+**Où créditer :** Creative Commons recommande à la fois dans la vidéo et dans sa description, et admet une page à part. Le film sera sur le portfolio et sur l'écran d'accueil du site, sans case de description : il nomme les auteurs des photos montrées en grand et donne l'adresse de la liste complète, `VIDEO-CREDITS-V2.md` sur GitHub. Quand il sera posé sur ces deux pages, ajouter près du lecteur un lien cliquable vers cette liste.
 
 **Non lu :** les conditions d'iNaturalist (page bloquée aux robots). Les licences viennent des réponses gardées de son service, pas d'une relecture en ligne.
