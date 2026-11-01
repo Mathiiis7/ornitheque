@@ -4,7 +4,7 @@ Le film montre le passage de 199 a 200 (Martin-pecheur, puis trophee au seuil 20
 retire 13 especes en interceptant demo/donnees.js dans le navigateur des prises : la carte, le
 Birdydex et le classement restent coherents entre eux, et aucun fichier du site n'est touche.
 """
-import json
+import json, pathlib
 from datetime import date
 
 NOUVELLE = "alcedo atthis"
@@ -15,18 +15,30 @@ RETIRER = 13
 # On retire la fin de l'alphabet : Qui a vu quoi ne montre que le debut, il reste le meme.
 PLAFONDS = {"Samir": 199, "Claire": 187, "Hugo": 172}
 # Qui a vu quoi : premier du classement, Alex doit avoir vu presque tout ce que montre le debut de la grille. Il ne
-# lui manque que l'Accenteur alpin, celui de la fiche, et l'Aigrette des recifs. Et pas que des drapeaux francais :
-# chaque oiseau est place dans un pays du site ou il vit vraiment (Mathis, 2026-11-01).
+# lui manque que l'Accenteur alpin, celui de la fiche, et l'Aigrette des recifs. Une majorite de France, et d'autres
+# pays pour montrer que le site ne s'arrete pas la (Mathis, 2026-11-01). Chaque couple est controle : l'oiseau doit
+# depasser SEUIL_PRESENCE des listes du pays dans les frequences du site, sinon le script s'arrete.
 AJOUTS_ALEX = ["Aigle botté", "Aigle criard", "Aigle de Bonelli", "Aigle impérial", "Alouette calandre", "Alouette calandrelle"]
+SEUIL_PRESENCE = 0.003
 PAYS = {
-    "Alex": {"Aigle botté": "ES", "Aigle criard": "GR", "Aigle de Bonelli": "ES", "Aigle impérial": "HU", "Aigle royal": "CH",
-             "Aigrette garzette": "PT", "Alouette calandre": "GR", "Alouette calandrelle": "ES"},
-    "Samir": {"Accenteur alpin": "CH", "Aigle de Bonelli": "ES", "Aigle impérial": "HU", "Aigle royal": "NO", "Aigrette des récifs": "LK",
-              "Alouette calandre": "GR", "Alouette calandrelle": "PT"},
-    "Claire": {"Accenteur alpin": "IT", "Aigle botté": "ES", "Aigle criard": "EE", "Aigle de Bonelli": "PT", "Aigrette garzette": "NA", "Alouette calandre": "ES"},
-    "Hugo": {"Accenteur alpin": "AT", "Aigle botté": "PT", "Aigle de Bonelli": "GR", "Aigle royal": "US", "Aigrette garzette": "LK"},
-    "Lina": {"Aigrette garzette": "IT", "Alouette des champs": "DE"},
+    "Alex": {"Accenteur mouchet": "FR", "Aigle botté": "ES", "Aigle criard": "GR", "Aigle de Bonelli": "FR", "Aigle impérial": "HU", "Aigle royal": "FR",
+             "Aigrette garzette": "FR", "Alouette calandre": "ES", "Alouette calandrelle": "FR", "Alouette des champs": "FR"},
+    "Samir": {"Accenteur alpin": "CH", "Accenteur mouchet": "FR", "Aigle de Bonelli": "ES", "Aigle impérial": "HU", "Aigle royal": "FR", "Aigrette des récifs": "LK",
+              "Aigrette garzette": "FR", "Alouette calandre": "GR", "Alouette calandrelle": "FR", "Alouette des champs": "FR"},
+    "Claire": {"Accenteur alpin": "FR", "Accenteur mouchet": "FR", "Aigle botté": "FR", "Aigle criard": "BG", "Aigle de Bonelli": "PT", "Aigle royal": "IT",
+               "Aigrette garzette": "NA", "Alouette calandre": "ES", "Alouette calandrelle": "FR", "Alouette des champs": "FR"},
+    "Hugo": {"Accenteur alpin": "AT", "Accenteur mouchet": "FR", "Aigle botté": "FR", "Aigle de Bonelli": "FR", "Aigle royal": "CH", "Aigrette garzette": "FR", "Alouette des champs": "FR"},
+    "Lina": {"Accenteur mouchet": "FR", "Aigrette garzette": "IT", "Alouette des champs": "FR"},
 }
+
+
+def controle_presence(sci, pays):
+    """Le pic de frequence de l'oiseau dans ce pays, d'apres les donnees du site."""
+    table = json.loads(pathlib.Path(f"data/countries/{pays.lower()}/freq_48.json").read_text(encoding="utf-8"))
+    pic = max(table.get(sci) or [0])
+    if pic < SEUIL_PRESENCE:
+        raise ValueError(f"{sci} trop rare en {pays} : {pic:.2%}")
+    return pic
 
 
 def _fin_liste(texte, debut):
@@ -93,6 +105,7 @@ def reduit(corps, apres=False):
             liste = json.loads(corps[d:f + 1])
             for e in liste:
                 if e.get("c") in pays:
+                    controle_presence(e["k"], pays[e["c"]])
                     e["co"] = pays[e["c"]]
             corps = corps[:d] + json.dumps(liste, ensure_ascii=False, separators=(",", ":")) + corps[f + 1:]
         return corps
