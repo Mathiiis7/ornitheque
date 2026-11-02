@@ -5,6 +5,10 @@ Dernière version : v995 / app.js?v=567. Prochaine : v996 / 568. Historique comp
 Ce fichier se remplace à chaque fin de tâche : quelques lignes, pas un journal.
 
 ## Reste ouvert
+- **Audit + critique Impeccable du 03/11, rien corrigé :** rapport `notes-privees/impeccable-2026-11-03.md`
+  (audit 13/20, critique 24/40, 4 P1 : Birdydex et Trophées hors clavier, verdict du Quiz muet, texte sous
+  4,5:1, structure pour lecteur d'écran). Attend l'arbitrage de Mathis : ordre des P1, gris pâles voulus ou
+  non, « Observer X ». Corriger à la main avec les bancs, jamais par les commandes Impeccable qui réécrivent.
 - **En attente de réponse :** Cornell (22/10), LPO (23/10). Effacer l'historique des deux dépôts attend Cornell.
 
 ## Décidé le 01/11
