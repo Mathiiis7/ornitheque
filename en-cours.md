@@ -7,8 +7,11 @@ Ce fichier se remplace à chaque fin de tâche : quelques lignes, pas un journal
 ## Reste ouvert
 - **Audit + critique Impeccable du 03/11, rien corrigé :** rapport `notes-privees/impeccable-2026-11-03.md`
   (audit 13/20, critique 24/40, 4 P1 : Birdydex et Trophées hors clavier, verdict du Quiz muet, texte sous
-  4,5:1, structure pour lecteur d'écran). Attend l'arbitrage de Mathis : ordre des P1, gris pâles voulus ou
-  non, « Observer X ». Corriger à la main avec les bancs, jamais par les commandes Impeccable qui réécrivent.
+  4,5:1, structure pour lecteur d'écran). **Arbitrage de Mathis (03/11)** : commencer par clavier (Birdydex,
+  Trophées) et Quiz (verdict annoncé, focus, sans bouton « Suivante ») ; puis contrastes, en fonçant les gris
+  pâles (Classement ET noms des non observées) juste au seuil, avant/après montré ; puis repères du lecteur
+  d'écran ; puis texte à 14 px dans la fiche et les Trophées. Téléphone, « Observer X » et finitions P3 : hors
+  périmètre, en ticket. Corriger à la main avec les bancs, jamais par les commandes Impeccable qui réécrivent.
 - **En attente de réponse :** Cornell (22/10), LPO (23/10). Effacer l'historique des deux dépôts attend Cornell.
 
 ## Décidé le 01/11
