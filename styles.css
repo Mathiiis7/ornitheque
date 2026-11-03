@@ -1419,6 +1419,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     /* En-tête serré au téléphone, puis replié sur le nom quand on descend (_ficheRepli dans app.js). */
     .species-modal .sm-header { padding:14px 18px 12px; }
     .species-modal .sm-info-chips, .species-modal .sm-geo { margin-top:8px; }
+    /* Etiquettes de l'en-tete : 14 px sur ordinateur, mais 11,5 ici. A 14 px elles prenaient 4
+       rangees au lieu de 2 et grandissaient l'en-tete ; exception choisie par Mathis le 2026-11-03,
+       comme les vignettes du Birdydex. */
+    .species-modal .sm-info-chips .chip { font-size:11.5px; }
     .species-modal .sm-tabs { padding:8px 12px; }
     .species-modal .sm-replie .sm-sci, .species-modal .sm-replie .sm-info-chips,
     .species-modal .sm-replie .sm-geo, .species-modal .sm-replie .sm-vu { display:none; }
@@ -2372,11 +2376,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .feed-l2 { margin-top:2px; font-size:14px; display:flex; flex-wrap:wrap; align-items:center; column-gap:14px; row-gap:2px; }
   .feed-l2 b { color:var(--ink); font-weight:600; }
   /* Le niveau dans sa couleur, comme avant la refonte (Mathis, 2026-10-14). */
-  /* Le mot de rarete etait ecrit dans la couleur de son palier : 2,2 a 3,3:1 sur blanc pour les
-     verts et les jaunes. La couleur passe dans un point, le mot dans l'encre du texte (audit du
-     2026-11-03). --rar vient du gabarit, dans app.js. */
-  .feed-rar { font-weight:600; color:var(--ink-2); }
-  .feed-rar::before { content:''; display:inline-block; width:9px; height:9px; margin-right:5px; border-radius:50%; background:var(--rar); vertical-align:1px; }
+  /* Garde sa couleur vive malgre 2,2 a 3,3:1 sur blanc pour les verts et les jaunes : un point de
+     couleur devant un mot neutre, puis le mot assombri, lui ont ete montres le 2026-11-03 et il a
+     garde l'original. Ne pas le reproposer. */
+  .feed-rar { font-weight:600; }
   /* Le pays de l'observation, en drapeau (Mathis, 2026-10-14). */
   .feed-pays .flag { vertical-align:-2px; }
   .feed-acts { display:flex; gap:2px; }

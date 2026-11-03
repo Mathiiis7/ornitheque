@@ -7061,7 +7061,7 @@ function renderFeed(){
       <span class="feed-pas" style="background:${tt.color}" title="${esc(tt.label)}">${niveau}</span>
       <div class="feed-body">
         <div class="feed-l1"><span class="sp-link feed-sp" data-sci="${esc(it.sci)}">${esc(it.bird)}</span> <span class="latin">${esc(it.sci)}</span></div>
-        <div class="feed-l2">${_nomProfil(it.uid, it.name)}${it.pays && flagImg(it.pays) ? `<span class="feed-pays" title="${esc(countryLabel(it.pays))}">${flagImg(it.pays)}</span>` : ''}<span class="feed-rar" style="--rar:${tt.color}">${esc(tt.label)}</span>${dateObs}</div>
+        <div class="feed-l2">${_nomProfil(it.uid, it.name)}${it.pays && flagImg(it.pays) ? `<span class="feed-pays" title="${esc(countryLabel(it.pays))}">${flagImg(it.pays)}</span>` : ''}<span class="feed-rar" style="color:${tt.color}">${esc(tt.label)}</span>${dateObs}</div>
       </div>
       <span class="feed-acts">${reagir}<button type="button" class="feed-act" data-feed-cmt="${esc(target)}" title="Commentaires" aria-label="Commentaires${nbCom?' ('+nbCom+')':''}">${IC_COMM}${nbCom?`<span class="feed-n">${nbCom}</span>`:''}</button></span>
       <div class="feed-suite">${_reactionsSeules(target)}${commentsBar(target).replace('<details class="cmt-wrap" open>', '<details class="cmt-wrap">').replace('<details class="cmt-wrap">', _feedCmtOuverts.has(target) ? '<details class="cmt-wrap" open>' : '<details class="cmt-wrap">')}</div>
