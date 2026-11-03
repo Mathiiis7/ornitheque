@@ -382,7 +382,8 @@ const INJECTION = `
      <base href="../"> fait pointer TOUS les chemins relatifs vers la racine du site : app.js,
      styles.css, data/ et les fetch qu app.js lance lui-meme (data/countries/..., etc.) sont
      donc les vrais, pas des copies. C est ce qui empeche la demo de prendre du retard.
-     index.html n a aucun href="#", donc <base> ne casse aucune ancre - verifie le 2026-09-28.
+     Un href="#..." y partirait vers la racine du site. Le seul d index.html, « Aller au contenu »
+     (2026-11-03), passe donc par app.js sans changer l adresse.
 
      L importmap doit venir avant tout module : elle detourne les trois URL Firebase de
      gstatic vers les bouchons, qui n ont pas une ligne de reseau.

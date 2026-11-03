@@ -5886,7 +5886,7 @@ function renderTrophies(data){
       order = familyBlocksByCategory[cat].length * 10;
     }
     familyBlocksByCategory[cat].push({ order, html: `
-      <div class="tro-family ${locked?'locked':'unlocked'} tier-${displayTier.tier} cat-${cat}"
+      <div class="tro-family ${locked?'locked':'unlocked'} tier-${displayTier.tier} cat-${cat}" role="button" tabindex="0"
            style="--tier-color:${displayMeta.color}"
            data-detail="${familyDataIdx}">
         <div class="tro-fam-cup">
@@ -5966,7 +5966,7 @@ function renderTrophies(data){
       }
     }
     const info = (ok && t.info) ? t.info(s) : '';
-    return `<div class="tro-oneshot ${ok?'on':'off'}${clic?' clic':''}"${clic?` data-detail="${dataIdx}"`:''}>
+    return `<div class="tro-oneshot ${ok?'on':'off'}${clic?' clic':''}"${clic?` data-detail="${dataIdx}" role="button" tabindex="0"`:''}>
       <div class="tro-os-ico">${t.icon}</div>
       <div class="tro-os-body">
         <div class="tro-os-name">${esc(t.name)}</div>
@@ -6008,7 +6008,7 @@ function renderTrophies(data){
       speciesFamilyKey: t.speciesFamilyKey || null,
       speciesOwnedSet,
     };
-    return `<div class="tro-family tro-exotic ${ok?'unlocked':'locked'} clic" data-detail="${dataIdx}">
+    return `<div class="tro-family tro-exotic ${ok?'unlocked':'locked'} clic" data-detail="${dataIdx}" role="button" tabindex="0">
       <div class="tro-fam-cup">
         <img src="${esc(imgSrc)}" alt="${esc(t.name)}" class="tro-cup${ok?'':' grayed'}" loading="lazy" decoding="async">
       </div>
@@ -7061,7 +7061,7 @@ function renderFeed(){
       <span class="feed-pas" style="background:${tt.color}" title="${esc(tt.label)}">${niveau}</span>
       <div class="feed-body">
         <div class="feed-l1"><span class="sp-link feed-sp" data-sci="${esc(it.sci)}">${esc(it.bird)}</span> <span class="latin">${esc(it.sci)}</span></div>
-        <div class="feed-l2">${_nomProfil(it.uid, it.name)}${it.pays && flagImg(it.pays) ? `<span class="feed-pays" title="${esc(countryLabel(it.pays))}">${flagImg(it.pays)}</span>` : ''}<span class="feed-rar" style="color:${tt.color}">${esc(tt.label)}</span>${dateObs}</div>
+        <div class="feed-l2">${_nomProfil(it.uid, it.name)}${it.pays && flagImg(it.pays) ? `<span class="feed-pays" title="${esc(countryLabel(it.pays))}">${flagImg(it.pays)}</span>` : ''}<span class="feed-rar" style="--rar:${tt.color}">${esc(tt.label)}</span>${dateObs}</div>
       </div>
       <span class="feed-acts">${reagir}<button type="button" class="feed-act" data-feed-cmt="${esc(target)}" title="Commentaires" aria-label="Commentaires${nbCom?' ('+nbCom+')':''}">${IC_COMM}${nbCom?`<span class="feed-n">${nbCom}</span>`:''}</button></span>
       <div class="feed-suite">${_reactionsSeules(target)}${commentsBar(target).replace('<details class="cmt-wrap" open>', '<details class="cmt-wrap">').replace('<details class="cmt-wrap">', _feedCmtOuverts.has(target) ? '<details class="cmt-wrap" open>' : '<details class="cmt-wrap">')}</div>
@@ -14138,10 +14138,28 @@ function _closeFabPanel(){
   document.querySelectorAll('#fabStack button').forEach(b => b.classList.remove('fab-active'));
   const bd = document.getElementById('fabBackdrop'); if(bd) bd.hidden = true;
 }
+// L'onglet ouvert se dit au lecteur d'ecran (aria-current) et dans le titre de l'onglet du
+// navigateur. Jusqu'a l'audit du 2026-11-03, seule la classe .on le montrait, a l'oeil.
+function _vueAnnoncee(v){
+  document.querySelectorAll('.tab[data-view], .ham-item[data-view]').forEach(x => {
+    if(x.dataset.view === v) x.setAttribute('aria-current', 'page'); else x.removeAttribute('aria-current');
+  });
+  const nom = document.querySelector('.tab[data-view="' + v + '"]')?.textContent.replace(/^[\p{Extended_Pictographic}️\s]+/u, '').trim();
+  // Ma liste, la page d'accueil, garde le nom seul : c'est aussi le titre de l'ecran de connexion.
+  document.title = nom && v !== 'load' ? nom + ' · L’Ornithèque' : 'L’Ornithèque';
+}
+_vueAnnoncee(document.querySelector('.tab.on[data-view]')?.dataset.view || 'load');
+// Lien « Aller au contenu » : le focus va au <main> sans toucher a l'adresse. Le vrai saut
+// d'ancre renvoyait la demo a la racine du site, a cause de son <base href="../">.
+document.querySelector('.aller-contenu')?.addEventListener('click', e => {
+  e.preventDefault();
+  document.getElementById('contenu')?.focus();
+});
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{
   // Skip les .tab sans data-view (hamburger btn), sinon on masque toutes les views
   // (le loop VIEWS ne match rien et met tout a display:none, ecran blanc).
   if(!b.dataset.view) return;
+  _vueAnnoncee(b.dataset.view);
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
   b.classList.add('on');
   Object.entries(VIEWS).forEach(([v,sel])=>{ const el=$(sel); if(el) el.style.display=(b.dataset.view===v)?'':'none'; });
@@ -16222,7 +16240,7 @@ async function _renderSpeciesTraitsCard(key){
   // Check async si l'espece a des cartes par semaine -> bouton anim plein ecran
   let hasMonthly = false;
   try{ hasMonthly = !!_carteEntry(await _loadSemIndex(), k); }catch(_){}
-  const animBtn = hasMonthly ? ` <button type="button" class="mig-fs-btn" data-sci="${esc(k)}" title="Animation migration en plein écran" style="margin-left:8px; padding:2px 8px; font-size:11px; border:none; background:var(--accent); color:var(--sur-accent); border-radius:4px; cursor:pointer; font-weight:600;">🎞️ Animation</button>` : '';
+  const animBtn = hasMonthly ? ` <button type="button" class="mig-fs-btn" data-sci="${esc(k)}" title="Animation migration en plein écran" style="margin-left:8px; padding:2px 8px; font-size:14px; border:none; background:var(--accent); color:var(--sur-accent); border-radius:4px; cursor:pointer; font-weight:600;">🎞️ Animation</button>` : '';
   if(t.mi && MIG[t.mi])   ecoLines.push({ k:'Migration',      v: MIG[t.mi] + animBtn });
   if(t.tl && TL[t.tl]){
     // Skip le doublon si t.tn (niche precise) == label de la categorie (ex : 'Omnivore').
@@ -16264,20 +16282,20 @@ async function _renderSpeciesTraitsCard(key){
   // le rend donc un cran plus petit, et les deux blocs se lisent enfin pareil.
   const petitEmoji = (v) => String(v).replace(/^(\p{Extended_Pictographic}️?)\s*/u,
     '<span style="font-size:.82em; vertical-align:1px;">$1</span> ');
-  const renderLine = ({k, v, hint}) => `<div style="display:flex; justify-content:space-between; gap:12px; padding:3px 0; font-size:13px;"><span style="color:var(--ink-3);${hint?' cursor:help;':''}"${hint?` data-tip="${esc(hint)}"`:''}>${esc(k)}</span><span style="color:var(--ink); font-weight:600; text-align:right;">${petitEmoji(v)}</span></div>`;
+  const renderLine = ({k, v, hint}) => `<div style="display:flex; justify-content:space-between; gap:12px; padding:3px 0; font-size:14px;"><span style="color:var(--ink-3);${hint?' cursor:help;':''}"${hint?` data-tip="${esc(hint)}"`:''}>${esc(k)}</span><span style="color:var(--ink); font-weight:600; text-align:right;">${petitEmoji(v)}</span></div>`;
   // Le radar redit ces chiffres (Mathis, 2026-10-31) : les lignes ne restent que pour un oiseau sans radar.
   const poids = t.ma >= 1000 ? `${(t.ma / 1000).toLocaleString('fr-FR', { maximumFractionDigits:1 })} kg` : `${round(t.ma)} g`;   // « 111000 g » pour l'autruche
   const radarMorpho = _morphoRadarHtml(t, traits, c => c === 'ma' ? poids : `${cm(t[c])} cm`);
   box.innerHTML = `
-    <div class="sm-card-title" style="display:flex; align-items:center; gap:8px;">Traits <span style="font-size:10.5px; color:var(--ink-3); text-transform:none; font-weight:400; letter-spacing:0;">- Avonet (Tobias et al. 2022)</span></div>
+    <div class="sm-card-title" style="display:flex; align-items:center; gap:8px;">Traits <span style="font-size:14px; color:var(--ink-3); text-transform:none; font-weight:400; letter-spacing:0;">- Avonet (Tobias et al. 2022)</span></div>
     ${ecoLines.length ? `
       <div style="margin-top:4px;">
-        <div style="font-size:10.5px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.5px; font-weight:700; margin-bottom:4px;">Écologie</div>
+        <div style="font-size:13px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.5px; font-weight:700; margin-bottom:4px;">Écologie</div>
         ${ecoLines.map(renderLine).join('')}
       </div>` : ''}
     ${morphLines.length ? `
       <div style="margin-top:${ecoLines.length ? '10px':'4px'};">
-        <div style="font-size:10.5px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.5px; font-weight:700; margin-bottom:4px;">Morphologie</div>
+        <div style="font-size:13px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.5px; font-weight:700; margin-bottom:4px;">Morphologie</div>
         ${radarMorpho || morphLines.map(renderLine).join('')}
       </div>` : ''}
   `;
@@ -16509,7 +16527,7 @@ async function _renderSpeciesRangeCard(sci){
   // Legende a 14 px : c'est le plancher de ce qui se lit (choix de Mathis), et la ligne gagne un libelle.
   const legendeTeinte = teinte ? `<span style="display:inline-flex; align-items:center; gap:6px;"><b style="display:inline-block; width:24px; height:12px; border-radius:3px; background:linear-gradient(rgba(${TEINTE_COULEUR}, ${TEINTE_ALPHA}), rgba(${TEINTE_COULEUR}, ${TEINTE_ALPHA})), #e9e9e9;"></b>Aire estimée (iNaturalist)</span>` : '';
   box.innerHTML = `
-    <div class="sm-card-title" style="display:flex; align-items:center; gap:8px;">Répartition <span style="font-size:10.5px; color:var(--ink-3); text-transform:none; font-weight:400; letter-spacing:0;">- ${entry.src !== 'e' ? 'GBIF, présence' : 'observations GBIF, moyenne annuelle'}</span></div>
+    <div class="sm-card-title" style="display:flex; align-items:center; gap:8px;">Répartition <span style="font-size:14px; color:var(--ink-3); text-transform:none; font-weight:400; letter-spacing:0;">- ${entry.src !== 'e' ? 'GBIF, présence' : 'observations GBIF, moyenne annuelle'}</span></div>
     <div id="${mapId}" class="sm-range-map" style="margin-top:6px; height:440px; border-radius:8px; overflow:hidden; background:var(--surface-3);"></div>
     <div style="margin-top:8px; display:flex; flex-wrap:wrap; align-items:center; gap:6px 16px; font-size:14px; color:var(--ink-2);">
       <span style="flex:1 1 260px; display:flex; align-items:center; gap:10px;">
@@ -16520,11 +16538,11 @@ async function _renderSpeciesRangeCard(sci){
       ${legendeTeinte}
     </div>
     <div style="margin-top:4px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
-      <div style="font-size:10.5px; color:var(--ink-3);">${entry.src !== 'e' ? 'Échelle relative à l\'espèce (percentiles du nombre d\'observations)' : 'Échelle relative à l\'espèce (percentiles de la fréquence de signalement)'}</div>
+      <div style="font-size:14px; color:var(--ink-3);">${entry.src !== 'e' ? 'Échelle relative à l\'espèce (percentiles du nombre d\'observations)' : 'Échelle relative à l\'espèce (percentiles de la fréquence de signalement)'}</div>
       <button type="button" data-map-render-toggle class="btn ghost tiny">${_libelleRendu()}</button>
     </div>
-    <div style="margin-top:6px; font-size:10.5px; color:var(--ink-3);">${_carteSourceHtml(entry)}</div>
-    ${teinte ? `<div style="margin-top:2px; font-size:10.5px; color:var(--ink-3);">Aire estimée : <a href="https://www.inaturalist.org/pages/range_maps" target="_blank" rel="noopener">iNaturalist Open Range Map</a>, modèle Geomodel ${TEINTES_GEOMODEL}, CC BY. Une estimation : l'oiseau n'y a pas forcément été vu.</div>` : ''}
+    <div style="margin-top:6px; font-size:14px; color:var(--ink-3);">${_carteSourceHtml(entry)}</div>
+    ${teinte ? `<div style="margin-top:2px; font-size:14px; color:var(--ink-3);">Aire estimée : <a href="https://www.inaturalist.org/pages/range_maps" target="_blank" rel="noopener">iNaturalist Open Range Map</a>, modèle Geomodel ${TEINTES_GEOMODEL}, CC BY. Une estimation : l'oiseau n'y a pas forcément été vu.</div>` : ''}
   `;
   box.hidden = false;
   const mapEl = box.querySelector('#' + mapId);
@@ -16758,8 +16776,8 @@ async function _openMigrationFullscreen(sci){
     <div id="migFsContent" style="position:fixed; inset:5vh 5vw; z-index:2147483501; background:var(--surface); border-radius:12px; display:flex; flex-direction:column; overflow:hidden auto; box-shadow:0 20px 60px rgba(0,0,0,.6);">
       <div style="padding:14px 20px; display:flex; align-items:center; justify-content:space-between; gap:12px; border-bottom:1px solid var(--line);">
         <div>
-          <div style="font-size:11px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.5px; font-weight:700;">🎞️ Migration semaine par semaine</div>
-          <div style="font-size:18px; font-weight:600; color:var(--ink); margin-top:2px;">${esc(spName)} <span class="latin" style="font-weight:400; color:var(--ink-3); font-size:13px;">${esc(sci)}</span></div>
+          <div style="font-size:13px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.5px; font-weight:700;">🎞️ Migration semaine par semaine</div>
+          <div style="font-size:18px; font-weight:600; color:var(--ink); margin-top:2px;">${esc(spName)} <span class="latin" style="font-weight:400; color:var(--ink-3); font-size:14px;">${esc(sci)}</span></div>
         </div>
         <button type="button" id="migFsClose" title="Fermer (Échap)" style="border:none; background:var(--surface-2); font-size:20px; width:36px; height:36px; border-radius:50%; cursor:pointer;">✕</button>
       </div>
@@ -16783,7 +16801,7 @@ async function _openMigrationFullscreen(sci){
         <button type="button" data-map-render-toggle class="btn ghost tiny">${_libelleRendu()}</button>
       </div>
       <div style="padding:0 20px; font-size:14px; color:var(--ink-2);">${entry.src === 'p' ? 'Couleurs : où l\'espèce est le plus notée ; ses données ne vont que mois par mois, chaque semaine montre son mois.' : 'Couleurs : où l\'espèce est la plus fréquente cette semaine ; là où il y a peu d\'observations, les semaines voisines comptent à moitié.'}</div>
-      <div style="padding:4px 20px 12px; font-size:10.5px; color:var(--ink-3);">${source}</div>
+      <div style="padding:4px 20px 12px; font-size:14px; color:var(--ink-3);">${source}</div>
     </div>`;
   document.body.appendChild(modal);
   const closeModal = () => {
@@ -17470,7 +17488,7 @@ function _pathZone(d, fill, titre, estSelectionnee, selectionActive, code, echel
   // source ne garantit rien. Resultat : Vaud remplissait le trou et le meme sol se
   // retrouvait colore dans deux regions. Evenodd perce quel que soit le sens.
   return `<path d="${d}" fill="${fill}" fill-rule="evenodd" stroke="${stroke}" stroke-width="${largeur}"` +
-         ` stroke-linejoin="round"${opacite}${cliquable} aria-label="${esc(titre)}"></path>`;
+         ` stroke-linejoin="round"${opacite}${cliquable} role="img" aria-label="${esc(titre)}"></path>`;
 }
 const _MOIS_COURTS = ['janv','févr','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'];
 // Valeur annuelle d'une zone : la moyenne de ses 12 mois ponderee par l'effort LOCAL,
@@ -17717,13 +17735,13 @@ function _majDetailsCalcul(k, cc, isExo, cat){
     // c'est la seule explication de la mesure que porte la fiche.
     const bloc = (titre, corps) => corps
       ? `<div style="margin-top:11px;">`
-        + `<div style="font:700 10px/1.3 var(--sans); letter-spacing:.6px; text-transform:uppercase; color:var(--ink-3); margin-bottom:4px;">${titre}</div>`
-        + `<div style="font-size:12px; color:var(--ink-2); line-height:1.5;">${corps}</div></div>`
+        + `<div style="font:700 13px/1.3 var(--sans); letter-spacing:.6px; text-transform:uppercase; color:var(--ink-3); margin-bottom:4px;">${titre}</div>`
+        + `<div style="font-size:14px; color:var(--ink-2); line-height:1.5;">${corps}</div></div>`
       : '';
 
     detailsHtml = `
       <details style="margin-top:6px;">
-        <summary style="cursor:pointer;font-size:12.5px;color:var(--ink-3);user-select:none;padding:2px 0;">▸ Détails du calcul</summary>
+        <summary style="cursor:pointer;font-size:14px;color:var(--ink-3);user-select:none;padding:2px 0;">▸ Détails du calcul</summary>
         <div style="padding:2px 0 6px 4px;border-left:2px solid var(--line);margin:4px 0 2px 6px;padding-left:11px;">
           ${bloc('Fréquence', note + concret)}
           ${bloc('Régularité', noteAnnees)}
@@ -17941,8 +17959,8 @@ async function _renderRarityMap(sci, cc){
     // haute - suivie d'un filet. Meme code couleur, mais on ne la confond plus avec un mois
     // en balayant la colonne.
     const forme = annuel
-      ? ' padding:4px 7px; border-radius:999px; font:' + (actif ? '800' : '700') + ' 9.5px/1.2 system-ui; letter-spacing:.7px; text-transform:uppercase;'
-      : ' padding:2px 6px; border-radius:5px; font:' + (actif ? '800' : '600') + ' 10.5px/1.5 system-ui;';
+      ? ' padding:4px 7px; border-radius:999px; font:' + (actif ? '800' : '700') + ' 13px/1.2 system-ui; letter-spacing:.7px; text-transform:uppercase;'
+      : ' padding:2px 6px; border-radius:5px; font:' + (actif ? '800' : '600') + ' 14px/1.3 system-ui;';
     // Pas de data-tip : l'infobulle repetait ce que la pastille montre deja, son mois et son
     // palier. aria-label reste, pour qui ne distingue pas la couleur.
     return '<button type="button" data-mois="' + val + '" aria-label="' + esc(tip) + '"'
@@ -18803,7 +18821,7 @@ function _renderSpeciesFreqChart(key, country){
   // Icone '?' pour expliquer ce que represente le %.
   const _freqPctHelp = ` <span class="freq-pct-help" style="position:relative;display:inline-block;margin-left:6px;vertical-align:middle;line-height:1;cursor:help;">
     <svg width="14" height="14" viewBox="0 0 14 14" style="vertical-align:-2px;"><circle cx="7" cy="7" r="6.5" fill="var(--surface-2)" stroke="var(--line)"/><text x="7" y="10.5" text-anchor="middle" font-size="10" font-weight="700" fill="var(--ink-3)">?</text></svg>
-    <span class="freq-pct-tip" style="position:absolute;top:20px;left:0;z-index:1000;width:300px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:11.5px;line-height:1.45;color:var(--ink-2);box-shadow:0 6px 20px rgba(0,0,0,0.15);display:none;font-weight:400;text-align:left;">
+    <span class="freq-pct-tip" style="position:absolute;top:20px;left:0;z-index:1000;width:300px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px;line-height:1.45;color:var(--ink-2);box-shadow:0 6px 20px rgba(0,0,0,0.15);display:none;font-weight:400;text-align:left;">
       <b>% checklists</b> = fraction des sorties birding eBird qui ont coché cette espèce. Ex : 23% en mars = <b>1 checklist sur 4</b> a vu l'espèce en mars. Reflète la probabilité de rencontre pour un birder en sortie.
     </span>
   </span>`;
@@ -19436,7 +19454,7 @@ function _renderSpeciesObs(key){
       const d = x.date ? esc(x.date) : '<span class="help">date inconnue</span>';
       const loc = x.loc ? ' · '+esc(x.loc) : '';
       const flag = x.country && x.country!=='FR' ? ' '+(flagImg(x.country)||'') : '';
-      const multi = x.obs > 1 ? ` <span class="chip" style="background:var(--surface-2); font-size:11px; padding:1px 6px;">×${x.obs}</span>` : '';
+      const multi = x.obs > 1 ? ` <span class="chip" style="background:var(--surface-2); font-size:14px; padding:1px 6px;">×${x.obs}</span>` : '';
       const clickHint = x.hasCoords ? ' style="cursor:pointer; padding:6px 8px; border-radius:6px; transition:background .1s;" onmouseover="this.style.background=\'var(--surface-2)\'" onmouseout="this.style.background=\'\'"' : ' style="padding:6px 8px;"';
       const dataUid = x.hasCoords ? ` data-sm-friend-uid="${esc(x.uid)}"` : '';
       const pin = x.hasCoords ? '📍 ' : '';
@@ -20001,12 +20019,12 @@ async function _renderSpeciesMap(key){
       if(p.behavior) parts.push(`🎯 ${esc(p.behavior)}`);
       const stageSex = [p.lifeStage, p.sex].filter(Boolean).join(' · ');
       if(stageSex) parts.push(`🐣 ${esc(stageSex)}`);
-      if(parts.length) extra += `<br><span style="font-size:11.5px;color:var(--ink-3)">${parts.join(' · ')}</span>`;
+      if(parts.length) extra += `<br><span style="font-size:14px;color:var(--ink-3)">${parts.join(' · ')}</span>`;
       const links = [];
       if(p.sourceUrl) links.push(`<a href="${esc(p.sourceUrl)}" target="_blank" rel="noopener">🔗 source</a>`);
       if(p.gbifId) links.push(`<a href="https://www.gbif.org/occurrence/${esc(p.gbifId)}" target="_blank" rel="noopener">🌍 GBIF</a>`);
       if(links.length) extra += `<br>${links.join(' · ')}`;
-      if(p.datasetName) extra += `<br><span style="font-size:10.5px;color:var(--ink-3);font-style:italic">${esc(p.datasetName)}</span>`;
+      if(p.datasetName) extra += `<br><span style="font-size:14px;color:var(--ink-3);font-style:italic">${esc(p.datasetName)}</span>`;
     }
     m.bindPopup(`<b>${esc(p.name)}</b><br><span>${esc(p.date||'')}${p.loc?' · '+esc(p.loc):''}${cntTxt}</span>${extra}<br>${gm}`);
     _smMapLayer.addLayer(m);
@@ -20160,7 +20178,10 @@ function closeSpeciesModal(){
   if(etaitOuverte){
     if(_ficheEntree){ _ficheEntree = false; _ficheRetours++; history.back(); }
     // Le focus revient d'ou il venait, sauf si une fenetre ou le guide le tient, ou si la liste a ete redessinee.
-    const f = _ficheFocusAvant; _ficheFocusAvant = null;
+    let f = _ficheFocusAvant; _ficheFocusAvant = null;
+    // Une case du Birdydex redessinee pendant que la fiche etait ouverte : on retrouve la nouvelle
+    // par son espece, sinon le clavier repartirait du haut de la page et des 467 cases.
+    if(f && !f.isConnected && f.dataset?.sci) f = document.querySelector('.pkdx-card[data-sci="' + CSS.escape(f.dataset.sci) + '"]');
     if(f?.isConnected && f !== document.body && f.getClientRects().length && !_guide && !document.querySelector('dialog[open]')) f.focus({ preventScroll:true });
   }
   _troReprend();
@@ -22097,7 +22118,9 @@ function _pkdxRender(){
     const photoConnue = r.owned ? _photoCarteConnue(r.sci) : '';
     // Absente de la zone choisie : la case reste, en retrait. La masquer ferait croire que
     // l'espece n'existe pas, alors qu'elle est seulement ailleurs.
-    return `<div class="pkdx-card${r.owned?'':' missing'}${r.owned && dec.has(r.sci) ? ' a-decouvrir' : ''}" data-sci="${esc(r.sci)}">
+    // role="button" et tabindex : la case s'ouvre au clavier (Entree, Espace), voir le gestionnaire
+    // keydown sous la delegation du clic. Hors de portee du clavier jusqu'a l'audit du 2026-11-03.
+    return `<div class="pkdx-card${r.owned?'':' missing'}${r.owned && dec.has(r.sci) ? ' a-decouvrir' : ''}" data-sci="${esc(r.sci)}" role="button" tabindex="0" aria-label="${esc(r.nm)}, ${r.owned ? 'observée' : 'non observée'}${r.owned && dec.has(r.sci) ? ', à découvrir' : ''}">
       <span class="pkdx-num">#${num}</span>
       ${r.saison ? `<span class="pkdx-saison" data-tip="Espèce nettement saisonnière : elle déserte une bonne partie de l'année. Viser le bon mois change tout.">◑</span>` : ''}
       ${cats.length ? `<span class="pkdx-exos">${exoChips}</span>` : ''}
@@ -22701,6 +22724,15 @@ function _troSuite(){
   if(prochain) _troJoue(prochain);
   else document.getElementById('troDialog')?.close();
 }
+// Cases du Birdydex et cartes de trophees : des div cliquables (role="button") que le clavier
+// ouvre comme un bouton, par Entree ou Espace. Avant l'audit du 2026-11-03, on ne les atteignait
+// qu'a la souris : l'ecran central du site etait ferme au clavier.
+document.addEventListener('keydown', e => {
+  if((e.key !== 'Enter' && e.key !== ' ') || e.repeat) return;
+  if(!e.target.matches?.('.pkdx-card[role="button"], .tro-family[role="button"], .tro-oneshot[role="button"]')) return;
+  e.preventDefault();
+  e.target.click();
+});
 // Delegation click : ouvre la fiche au clic sur une carte pokedex.
 document.addEventListener('click', e => {
   const card = e.target.closest('.pkdx-card[data-sci]');
@@ -24209,6 +24241,11 @@ const PC_DUREE_MAX = 20;   // secondes lues par chant, comme l'ancien quiz
 // Pause entre la reponse et la question suivante. 1 s (« tres legere ») passait trop vite pour
 // voir la bonne carte, dit Mathis le 2026-10-16 : 2 s.
 const PC_PAUSE_SUITE_MS = 2000;
+// Derniere facon d'agir : clavier ou pointeur. Une partie jouee au clavier garde son focus d'une
+// question a l'autre (_pcQuestion) ; a la souris ou au doigt, rien ne bouge.
+let _pcAuClavier = false;
+addEventListener('keydown', e => { if(!['Shift', 'Control', 'Alt', 'Meta'].includes(e.key)) _pcAuClavier = true; }, true);
+addEventListener('pointerdown', () => { _pcAuClavier = false; }, true);
 // vue : 'liste' (les parcours en cartes), 'chemin' (un parcours ouvert) ou 'entr' (la page d'un
 // mode d'entrainement, mode dans _pc.mode). selection : l'etape dont la bulle est ouverte sur le
 // chemin (null = celle du moment).
@@ -25362,6 +25399,9 @@ function _pcQuestion(){
       </div>`;
   }
   box.innerHTML = `<div class="pc-jeu">${tete}<div class="pc-question">${corps}</div><div id="pcVerdict"></div></div>`;
+  // Au clavier, la question suivante rend le focus a la premiere reponse : les reponses de la
+  // precedente etaient desactivees, et le focus retombait sur la page (audit du 2026-11-03).
+  if(_pcAuClavier && q.type !== 'ecrire') box.querySelector('[data-pc-choix], .pc-choisir')?.focus({ preventScroll: true });
   _pcSonSurveille(box);
   if(unSon){
     const audio = document.getElementById('pcAudio'), btn = document.getElementById('pcPlay'), fill = document.getElementById('pcProgression');
@@ -25392,7 +25432,7 @@ function _pcQuestion(){
     _pcPhotos(box);
     // Au doigt, le champ attend qu'on le touche : ouvert d'office, le clavier couvrirait le
     // bouton du chant avant qu'on l'ait entendu.
-    if(q.type === 'ecrire' && matchMedia('(pointer: fine)').matches) document.getElementById('pcEcrit')?.focus({ preventScroll: true });
+    if(q.type === 'ecrire' && (matchMedia('(pointer: fine)').matches || _pcAuClavier)) document.getElementById('pcEcrit')?.focus({ preventScroll: true });
   } else {
     if(typeof _fetchWikiPhoto === 'function'){
       const cible = q.cible;
@@ -25518,6 +25558,8 @@ function _pcVerdict(p, q, juste, sono, debut, fin){
       ${sono && _pcAvecSono() ? `<img class="pc-verdict-sono" src="${esc(sono)}" alt="Sonagramme du chant">` : ''}
     </div>`;
   const ent = box.querySelector('.pc-jeu-droite > span'); if(ent){ ent.textContent = '✓ ' + p.bonnes; ent.setAttribute('aria-label', p.bonnes + ' bonnes réponses'); }
+  // Le verdict ne se voyait qu'a l'ecran : un lecteur d'ecran n'apprenait pas s'il avait juste.
+  annonce(v?.querySelector('.pc-verdict-ligne')?.textContent.trim());
   // Plus de bouton « Suivante » ni « Réécouter » : la question suivante arrive seule apres une
   // courte pause, le temps de voir le verdict (demande de Mathis le 2026-10-16). Si la partie a
   // ete quittee entre-temps, on ne fait rien.

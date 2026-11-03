@@ -49,7 +49,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=567">
+<link rel="modulepreload" href="app.js?v=568">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -161,6 +161,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
 </div>
 
 <div class="wrap">
+  <a class="aller-contenu" href="#contenu">Aller au contenu</a>
   <!-- Logo, theme et onglets restent en haut de l'ecran quand on descend (Mathis, 2026-10-15). -->
   <div class="entete-fixe">
   <header class="top">
@@ -291,8 +292,8 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
     .ham-account-info { padding:6px 12px 4px; display:flex; flex-direction:column; gap:2px; }
     .ham-account-label { font-size:10px; font-weight:700; color:var(--ink-3); text-transform:uppercase; letter-spacing:.5px; }
     .ham-account-email { font-size:12.5px; color:var(--ink-2); word-break:break-all; }
-    .ham-signout { color:#c0392b; }
-    .ham-signout:hover { background:color-mix(in srgb, #c0392b 10%, transparent); color:#c0392b; }
+    .ham-signout { color:var(--rouge-sortie); }
+    .ham-signout:hover { background:color-mix(in srgb, var(--rouge-sortie) 10%, transparent); color:var(--rouge-sortie); }
     /* Pastille de notif : posee en top-right des FAB (position:absolute), en fin de ligne des items hamburger */
     .notif-badge { min-width:18px; height:18px; padding:0 5px; background:#d43a3a; color:#fff; font:700 11px/1 system-ui, -apple-system, sans-serif; border-radius:999px; display:grid; place-items:center; box-shadow:0 2px 4px rgba(0,0,0,.2); pointer-events:none; }
     /* Dans la barre, la pastille reste DANS le bouton : .tabs defile en largeur, donc coupe
@@ -349,6 +350,9 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
     }
   </style>
 
+  <!-- Toutes les pages du site, dans un <main> depuis l'audit du 2026-11-03 : le lecteur d'ecran
+       y saute directement, et le lien « Aller au contenu » y mene. -->
+  <main id="contenu" tabindex="-1">
   <div id="viewLoad">
   <section class="panel auth-box" id="authBox" style="display:none; padding:18px 20px; margin-bottom:16px;">
     <div id="authForm">
@@ -636,7 +640,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         <!-- De quel pays vient la rarete terrain, quand un pays est choisi (2026-10-23). -->
         <p class="rar-pays-note" id="rarPaysNote" hidden></p>
       </div>
-      <div class="tbl-scroll">
+      <div class="tbl-scroll" tabindex="0" role="region" aria-label="Tableau du classement">
         <table>
           <thead id="thead"></thead>
           <tbody id="tbody"></tbody>
@@ -1251,7 +1255,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         <p style="margin:0 0 8px;"><b>Combien de temps</b> : tant que tu es dans la ligue. Le bouton ci-dessous efface tout, définitivement.</p>
         <p style="margin:0 0 8px;"><b>Tes droits</b> : accès, rectification, effacement, portabilité. Demande à l'admin (Mathis) dans l'onglet 💡 Requêtes. Tu peux aussi adresser une réclamation à la CNIL (cnil.fr).</p>
         <p style="margin:0 0 8px;"><b>Sécurité</b> : connexion chiffrée, accès limité membre par membre, données de localisation retirées des photos.</p>
-        <p style="margin:12px 0 0;"><button type="button" class="linkbtn" id="rgpdDeleteAll" style="color:#c00; font-weight:600;">🗑️ Supprimer définitivement mon compte et toutes mes données</button></p>
+        <p style="margin:12px 0 0;"><button type="button" class="linkbtn" id="rgpdDeleteAll" style="color:var(--rouge-sortie); font-weight:600;">🗑️ Supprimer définitivement mon compte et toutes mes données</button></p>
 
         <h3>Mentions légales</h3>
         <p style="margin:0 0 8px;">Hébergeur : GitHub, Inc., 88 Colin P. Kelly Jr. St., San Francisco, CA 94107, États-Unis.</p>
@@ -1372,6 +1376,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
     </section>
   </div>
 
+  </main>
   <div id="emojiPop" class="emoji-pop"><div class="emoji-pop-inner"></div></div>
   <div id="gifPop" class="gif-pop">
     <div class="gif-pop-inner">
@@ -1428,7 +1433,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
                 <button type="button" data-map-mode="ebird">eBird 30 j</button>
                 <button type="button" data-map-mode="gbif">GBIF</button>
               </div>
-              <label id="smShowAllObsLbl" style="display:none;align-items:center;gap:4px;cursor:pointer;font-size:12px;margin-left:8px;" title="Affiche chaque cochage separement au lieu d'une seule obs par personne">
+              <label id="smShowAllObsLbl" style="display:none;align-items:center;gap:4px;cursor:pointer;font-size:14px;margin-left:8px;" title="Affiche chaque cochage separement au lieu d'une seule obs par personne">
                 <input type="checkbox" id="smShowAllObs" style="vertical-align:middle;"> Tous les cochages
               </label>
               <button type="button" id="smMapCountrySel" class="cp-btn" data-cc="FR" style="margin-left:8px;" title="Changer le pays (synchronise avec la fiche entière)">
@@ -1525,7 +1530,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
             <div class="sm-card-title">Liens</div>
             <div class="sm-links" id="smLinks"></div>
           </div>
-          <div class="sm-photo-credit" id="smPhotoCredit" style="text-align:center; font-size:11px; color:var(--ink-3); margin-top:6px;"></div>
+          <div class="sm-photo-credit" id="smPhotoCredit" style="text-align:center; font-size:14px; color:var(--ink-3); margin-top:6px;"></div>
           <img class="sm-photo" id="smPhoto" alt="" hidden style="display:none;">
         </div>
       </div>
@@ -1623,4 +1628,4 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=567"></script>
+<script type="module" src="app.js?v=568"></script>
