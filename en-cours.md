@@ -1,15 +1,21 @@
 # Où on en est (2026-11-03)
 
-Dernière version : v996 / app.js?v=568. Prochaine : v997 / 569. Historique complet jusqu'au 30/10 :
+Dernière version : v997 / app.js?v=569. Prochaine : v998 / 570. Historique complet jusqu'au 30/10 :
 `archives/en-cours-jusqu-au-2026-10-30.md` (y chercher un mot plutôt que le lire en entier, 85 000 jetons).
 Ce fichier se remplace à chaque fin de tâche : quelques lignes, pas un journal.
 
 ## Reste ouvert
-- **Suites de l'audit Impeccable du 03/11 : ticket [Mathiiis7/qg#74](https://github.com/Mathiiis7/qg/issues/74)**
-  (téléphone, « Observer X », bouton Retour, erreur de dépôt, finitions, objectif des Trophées à 4,35:1 en sombre).
+- **Tickets de l'Ornithèque encore ouverts : les deux du Quiz, « en réserve »** (qg#65 cris bonus, qg#57 quiz photo).
 - **En attente de réponse :** Cornell (22/10), LPO (23/10). Effacer l'historique des deux dépôts attend Cornell.
 
 ## Décidé le 03/11
+- **Ticket qg#74 fait et fermé (v997)** : Retour du navigateur entre onglets (entrées d'historique `{vue}`, seuls les
+  vrais clics en ajoutent ; la fiche garde son propre retour), remontée en haut à chaque onglet, objectifs des
+  trophées avec le vrai seuil (`_auSingulier` pour les seuils de 1), fenêtre `demander()` à la place de
+  confirm/prompt/alert pour les suppressions (pas pour les deux confirmations admin), flèche « › » dans le fondu
+  des onglets au téléphone (choix de Mathis : garder le défilement), « Toutes les régions », `latinAff()` pour
+  les noms latins affichés (les tables restent en minuscules), « Chercher une espèce » partout. Mois de la fiche
+  à 32 px écrits au doigt seulement (52 donnait une colonne plus haute que la carte).
 - **Audit + critique Impeccable, corrigés et en ligne (v996) :** rapport `notes-privees/impeccable-2026-11-03.md`,
   captures avant/après dans `notes-privees/audit-2026-11-03-captures/`. Birdydex et Trophées ouverts au clavier,
   verdict du Quiz annoncé et focus gardé au clavier (pas au doigt : le clavier du téléphone se rouvrirait),
