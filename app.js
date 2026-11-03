@@ -3518,7 +3518,7 @@ function renderMatrix({universe,N}){
       return `<td class="pcol is-seen${foreign?' is-foreign':''}${isMain?' is-main':''}" title="${esc(ttl)}">${flagImg(cc)?`<span class="case-drap">${flagImg(cc)}</span>`:'<i class="chk">✓</i>'}<span class="visually-hidden">${esc(ttl)}</span></td>`;
     }).join('');
     return `<tr class="${u.missing?'missing':''}">
-      <td class="sp"><span class="sp-link" data-sci="${esc(u.sci||u.common)}">${esc(u.common)}</span>${state.showSci && u.sci?`<span class="sci">${esc(u.sci)}</span>`:''}</td>
+      <td class="sp"><span class="sp-link" data-sci="${esc(u.sci||u.common)}">${esc(u.common)}</span>${state.showSci && u.sci?`<span class="sci">${esc(latinAff(u.sci))}</span>`:''}</td>
       ${avecRar ? `<td>${pastilleRar(u)}</td>` : ''}
       ${cells}</tr>`;
   }).join('');
@@ -3532,7 +3532,7 @@ function renderMatrix({universe,N}){
         return `<span class="mc-person${foreign?' is-foreign':''}" style="--series:var(--s${p.si})"${ttl?` title="${esc(ttl)}"`:''}><span class="dot"></span>${esc(p.name)}${abroad?'<span class="abroad-mark-inline">'+(flagImg(cc)||'🌍')+'</span>':''}</span>`; }).join('');
     return `<div class="mcard ${u.missing?'missing':''}"${avecRar ? ` style="border-left-color:${t.color}"` : ''}>
       <div class="mc-head">
-        <div class="mc-sp"><span class="sp-link" data-sci="${esc(u.sci||u.common)}">${esc(u.common)}</span>${state.showSci && u.sci?`<span class="mc-sci">${esc(u.sci)}</span>`:''}</div>
+        <div class="mc-sp"><span class="sp-link" data-sci="${esc(u.sci||u.common)}">${esc(u.common)}</span>${state.showSci && u.sci?`<span class="mc-sci">${esc(latinAff(u.sci))}</span>`:''}</div>
       </div>
       <div class="mc-row">
         ${avecRar ? pastilleRar(u) : ''}
@@ -3543,6 +3543,40 @@ function renderMatrix({universe,N}){
 }
 
 function esc(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+// Nom latin a l'affichage : le genre prend sa majuscule (« Anas platyrhynchos »). Les tables le
+// gardent en minuscules, c'est la cle de toutes les recherches : seul l'affichage change (2026-11-03).
+function latinAff(s){ s = s || ''; return s.charAt(0).toUpperCase() + s.slice(1); }
+// Fenetre de confirmation du site, a la place de confirm(), prompt() et alert() du navigateur
+// pour les suppressions : boites grises, hors charte, aux boutons dans la langue du systeme
+// (audit du 2026-11-03). Rend une promesse : true / false ; le texte tape si `saisie` est
+// demandee (null si on annule) ; `seul` ne garde que le bouton d'accord. Annuler a le focus :
+// une Entree trop rapide ne supprime rien.
+function demander(texte, { ok = 'Confirmer', saisie = null, seul = false } = {}){
+  return new Promise(resoudre => {
+    const d = document.createElement('dialog');
+    d.className = 'ml-dialog demander';
+    d.innerHTML = `<div class="ml-dialog-in">
+        <p class="demander-texte" id="demanderTexte">${esc(texte)}</p>
+        ${saisie ? `<input type="text" class="demander-saisie" autocomplete="off" spellcheck="false" aria-label="${esc(saisie)}" placeholder="${esc(saisie)}">` : ''}
+        <div class="decouvrir-actions">
+          ${seul ? '' : '<button type="button" class="btn ghost" data-non>Annuler</button>'}
+          <button type="button" class="btn" data-oui>${esc(ok)}</button>
+        </div>
+      </div>`;
+    d.setAttribute('aria-describedby', 'demanderTexte');
+    document.body.appendChild(d);
+    const champ = d.querySelector('.demander-saisie');
+    const non = saisie ? null : false;
+    let fait = false;
+    const fin = v => { if(fait) return; fait = true; d.close(); d.remove(); resoudre(v); };
+    d.querySelector('[data-non]')?.addEventListener('click', () => fin(non));
+    d.querySelector('[data-oui]').addEventListener('click', () => fin(saisie ? champ.value : true));
+    champ?.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); fin(champ.value); } });
+    d.addEventListener('cancel', e => { e.preventDefault(); fin(seul ? true : non); });
+    d.showModal();
+    (champ || d.querySelector('[data-non]') || d.querySelector('[data-oui]')).focus();
+  });
+}
 // Infobulle maison. Celle du navigateur n'est pas stylable - rectangle blanc a angles vifs,
 // police systeme, apparition lente - et on ne peut pas non plus la positionner. On garde le
 // meme principe : un texte porte par l'element, mais sous data-tip au lieu de title, et une
@@ -3742,6 +3776,13 @@ const TROPHY_TIERS = [
 // Genere 6 trophees d'une meme famille (un par palier). Chaque palier partage
 // le meme icone/theme/list/note mais adapte son nom, seuil et prog en fonction
 // du tier. `desc` sert de gabarit avec {n} qui devient le seuil.
+// Un seuil de 1 s'ecrit au singulier : « Observer 1 rapace nocturne différent » et non « 1 rapaces
+// nocturnes différents ». Seul le groupe qui suit le chiffre change, jusqu'a la parenthese ou a
+// « avec » (2026-11-03 : les cartes affichent le vrai seuil au lieu de « X »).
+function _auSingulier(phrase){
+  return phrase.replace(/\b1 ([^(]*?)(?=\s\(|\savec\s|$)/u, (_, groupe) => '1 ' + groupe.replace(/\p{L}+/gu,
+    m => m.endsWith('eaux') ? m.slice(0, -1) : (m.length > 3 && m.endsWith('s') ? m.slice(0, -1) : m)));
+}
 function makeTierFamily(cfg){
   // skipTiers : liste des cles de tiers a exclure (par defaut Emeraude, seul Gaulois l'utilise).
   const { theme, icon, baseName, metric, thresholds, descTpl, list, note, alwaysList=true, info, imgDir, category, tierNames, tierRefs, skipTiers = ['emeraude'] } = cfg;
@@ -3764,7 +3805,7 @@ function makeTierFamily(cfg){
       tierImg: imgDir ? `${imgDir}/${t.key === 'violet' ? 'violet' : t.key}.png` : null,
       name: tierName,
       tierRef,
-      desc: descTpl.replace('{n}', seuil),
+      desc: seuil === 1 ? _auSingulier(descTpl.replace('{n}', 1)) : descTpl.replace('{n}', seuil),
       // Template original conserve pour construire une phrase d'objectif unique au dessus de la gallerie (au lieu de repeter la phrase avec le seuil dans chaque case).
       descTpl,
       test: s => (metric(s) || 0) >= seuil,
@@ -5806,7 +5847,9 @@ function renderTrophies(data){
       familyName,
       cat: displayTier.category || 'progression',
       // Phrase d'objectif unique construite depuis le descTpl : '{n}' remplace par 'X' pour montrer la structure sans seuil precis. Affichee 1 fois au-dessus de la gallerie plutot que repetee dans chaque case.
-      objectivePhrase: (tiersSorted[0] && tiersSorted[0].descTpl) ? tiersSorted[0].descTpl.replace('{n}', 'X') : null,
+      // Le palier a viser, avec son vrai seuil : « Observer X especes » cachait le chiffre, donc
+      // l'objectif (audit du 2026-11-03). Tout debloque : le dernier palier.
+      objectivePhrase: (nextTier || currentTier || tiersSorted[0])?.desc || null,
       tiers: tiersSorted.map((t, i) => ({
         tier: t.tier,
         label: TROPHY_TIERS.find(x=>x.key===t.tier).label,
@@ -5911,7 +5954,8 @@ function renderTrophies(data){
               : '';
             if(familyHasCustomNames){
               const descTpl = displayTier.descTpl || '';
-              const objective = descTpl ? descTpl.replace('{n}', 'X') : familyName;
+              // Le seuil du prochain palier, pas « X » : voir objectivePhrase plus haut.
+              const objective = (nextTier || displayTier).desc || (descTpl ? descTpl.replace('{n}', '…') : familyName);
               const titleHtml = currentTier
                 ? `<span class="tro-fam-name">${esc(displayTier.name)}</span> ${starsHtml}`
                 : `<span class="tro-fam-name">${esc(familyName)}</span>
@@ -7060,7 +7104,7 @@ function renderFeed(){
     html += `<div class="feed-item">
       <span class="feed-pas" style="background:${tt.color}" title="${esc(tt.label)}">${niveau}</span>
       <div class="feed-body">
-        <div class="feed-l1"><span class="sp-link feed-sp" data-sci="${esc(it.sci)}">${esc(it.bird)}</span> <span class="latin">${esc(it.sci)}</span></div>
+        <div class="feed-l1"><span class="sp-link feed-sp" data-sci="${esc(it.sci)}">${esc(it.bird)}</span> <span class="latin">${esc(latinAff(it.sci))}</span></div>
         <div class="feed-l2">${_nomProfil(it.uid, it.name)}${it.pays && flagImg(it.pays) ? `<span class="feed-pays" title="${esc(countryLabel(it.pays))}">${flagImg(it.pays)}</span>` : ''}<span class="feed-rar" style="color:${tt.color}">${esc(tt.label)}</span>${dateObs}</div>
       </div>
       <span class="feed-acts">${reagir}<button type="button" class="feed-act" data-feed-cmt="${esc(target)}" title="Commentaires" aria-label="Commentaires${nbCom?' ('+nbCom+')':''}">${IC_COMM}${nbCom?`<span class="feed-n">${nbCom}</span>`:''}</button></span>
@@ -7551,7 +7595,7 @@ function _updateMapSuggest(){
       return `<div class="map-search-suggest-item" data-idx="${i}">`+
         `<span class="ss-dot" style="background:${sciColorForCountry(it.sci, (ebFilter && ebFilter.country) || 'FR')}"></span>`+
         `<span>${esc(it.name)}</span>`+
-        `<span class="ss-sci">${esc(it.sci)}</span>`+
+        `<span class="ss-sci">${esc(latinAff(it.sci))}</span>`+
         `<span class="ss-hint">→ filtrer les hotspots</span></div>`;
     }
     if(it && it.kind==='sp-missing-all'){
@@ -7564,7 +7608,7 @@ function _updateMapSuggest(){
       return `<div class="map-search-suggest-item${it.deja ? ' ss-deja' : ''}" data-idx="${i}">`+
         `<span class="ss-dot" style="background:${sciColorForCountry(it.sci, (ebFilter && ebFilter.country) || 'FR')}"></span>`+
         `<span>${esc(it.name)}</span>`+
-        `<span class="ss-sci">${esc(it.sci)}</span>`+
+        `<span class="ss-sci">${esc(latinAff(it.sci))}</span>`+
         `<span class="ss-hint">→ toutes les obs récentes</span></div>`;
     }
     const m = it;
@@ -7574,7 +7618,7 @@ function _updateMapSuggest(){
       return `<div class="map-search-suggest-item" data-idx="${i}">`+
         `<span class="ss-dot" style="background:${sciColorForCountry(m._sciName, (ebFilter && ebFilter.country) || 'FR')}"></span>`+
         `<span>${esc(nm)}</span>`+
-        `<span class="ss-sci">${esc(m._sciName)}</span>`+
+        `<span class="ss-sci">${esc(latinAff(m._sciName))}</span>`+
         `<span class="ss-hint">${hint}</span></div>`;
     } else {
       const pop = m.getPopup && m.getPopup();
@@ -12769,7 +12813,7 @@ function _carteEspeceHtml(sci, nom, avecPalier = true){
     ${tt && tt.ord ? `<span class="prof-fav-tier" style="background:${tt.color}" title="${esc(tt.label)}">${tt.ord}</span>` : ''}
     <div class="prof-fav-img"${!photo && sci ? ` data-prof-photo="${esc(sci)}"` : ''}>${photo ? `<img src="${esc(photo)}" alt="${esc(nom)}" loading="lazy">` : ''}</div>
     <div class="prof-fav-nom">${esc(nom)}</div>
-    ${sci ? `<div class="prof-fav-sci">${esc(sci)}</div>` : ''}
+    ${sci ? `<div class="prof-fav-sci">${esc(latinAff(sci))}</div>` : ''}
   </div>`;
 }
 // Les especes de France telles que le Birdydex les compte (meme filtre que _pkdxRender) :
@@ -12812,7 +12856,7 @@ function _profilOngletHtml(p){
         const date = String(pd.ord).replace(/^(\d{4})(\d\d)(\d\d)$/, '$3/$2/$1');
         const lieu = (v.country ? flagImg(v.country) : '') + esc(v.loc || '');
         return '<div class="mylist-row"><span class="mylist-sp"><a href="#" class="sp-link" data-sci="' + esc(v.sci) + '">' + esc(nom) + '</a>'
-          + (v.sci && v.sci !== nom ? '<span class="mylist-lat">' + esc(v.sci) + '</span>' : '') + '</span>'
+          + (v.sci && v.sci !== nom ? '<span class="mylist-lat">' + esc(latinAff(v.sci)) + '</span>' : '') + '</span>'
           + '<span class="mylist-date">' + date + '</span><span class="mylist-loc">' + (lieu || '-') + '</span></div>';
       }).join('');
       html += _profilPartie('Dernières coches', 'Les espèces arrivées le plus récemment dans ' + ton + ' liste, par date d\'observation.',
@@ -13169,7 +13213,7 @@ function renderMyList(me){
     const n1 = v.nonSpecies || !v.sci
       ? '<span>' + esc(nom) + '</span>'
       : '<a href="#" class="sp-link" data-sci="' + esc(v.sci) + '">' + esc(nom) + '</a>';
-    const lat = v.sci && v.sci !== nom ? '<span class="mylist-lat">' + esc(v.sci) + '</span>' : '';
+    const lat = v.sci && v.sci !== nom ? '<span class="mylist-lat">' + esc(latinAff(v.sci)) + '</span>' : '';
     const lieu = (v.country ? flagImg(v.country) : '') + esc(v.loc || '');
     return '<div class="mylist-row"><span class="mylist-sp">' + n1 + lat + '</span>'
       + '<span class="mylist-date">' + (date || '-') + '</span>'
@@ -13189,10 +13233,13 @@ async function handleFiles(fileList){
   // Lire puis analyser un export eBird prend plusieurs secondes sur une grosse liste, et
   // l'ecran ne bougeait pas d'un pixel pendant ce temps : rien ne disait que le fichier
   // avait ete pris. #myStatus porte role="status", donc cette ligne s'ecrit ET s'annonce.
+  // Les deux echecs du depot s'ecrivent en rouge (.err) : ils avaient la couleur des reussites
+  // (audit du 2026-11-03). Toute nouvelle analyse repart de la couleur ordinaire.
+  $('#myStatus').classList.remove('err');
   $('#myStatus').textContent = 'Analyse de ' + f.name + '…';
-  let text; try{ text=await f.text(); }catch(e){ $('#myStatus').textContent='Lecture du fichier impossible.'; return; }
+  let text; try{ text=await f.text(); }catch(e){ $('#myStatus').classList.add('err'); $('#myStatus').textContent='Lecture du fichier impossible.'; return; }
   const parsed=ingest(f.name, text);
-  if(!parsed){ $('#myStatus').textContent='Fichier non reconnu (est-ce bien un export eBird ?)'; return; }
+  if(!parsed){ $('#myStatus').classList.add('err'); $('#myStatus').textContent='Fichier non reconnu (est-ce bien un export eBird ?)'; return; }
   // Le prenom se DEMANDE plutot que de se remplacer par un avertissement. Le repli sur le
   // nom du fichier reste, c est lui qui sert le plus souvent ; mais quand il ne donne rien
   // non plus, « ⚠️ Sans nom » partait dans la base et s affichait au classement de tout le
@@ -13456,7 +13503,7 @@ document.querySelectorAll('#tutoDialog, #prenomDialog, #ajoutDialog, #debloqueDi
 // On ne pointe jamais un onglet cache (Profil, Tchat...) : sa boite fait zero pixel.
 const GUIDE_ETAPES = [
   { titre:'Bienvenue dans L’Ornithèque',
-    texte:"Un tour du site en une minute : chaque bulle montre une partie de l'écran. Tu peux le refaire quand tu veux depuis le menu ☰." },
+    texte:"Un tour du site en une minute : chaque bulle montre une partie de l'écran. Tu peux le refaire quand tu veux depuis le menu ⚙︎." },
   // Carte et Birdydex d'abord : ce que le portfolio met en avant (choix de Mathis le 2026-10-08).
   { vue:'map', cible:'.tab[data-view="map"]', titre:'Carte',
     texte:"Les observations de la ligue à leur place, pour les listes déposées avec le GPS. Deux autres modes : les espèces non observées signalées récemment sur eBird, et les meilleurs sites." },
@@ -13499,7 +13546,7 @@ const GUIDE_ETAPES = [
 ];
 // Apres le premier depot, la premiere bulle propose le tour au lieu de l'imposer.
 const GUIDE_ACCUEIL_DEPOT = { titre:'Ta liste est enregistrée',
-  texte:"Envie de faire le tour du site ? Une minute, une bulle par partie de l'écran. Tu le retrouves à tout moment dans le menu ☰." };
+  texte:"Envie de faire le tour du site ? Une minute, une bulle par partie de l'écran. Tu le retrouves à tout moment dans le menu ⚙︎." };
 let _guide = null;   // { etapes, i, vueAvant, focusAvant, apresDepot } tant que le guide est ouvert
 function _guideVue(v){
   const b = document.querySelector('.tab[data-view="' + v + '"]');
@@ -13725,7 +13772,7 @@ $('#profAvatarInput')?.addEventListener('change', async e => {
   e.target.value = '';
 });
 $('#profAvatarReset')?.addEventListener('click', async () => {
-  if(!confirm('Réinitialiser l\'avatar ?')) return;
+  if(!await demander('Réinitialiser l\'avatar ?', { ok:'Réinitialiser' })) return;
   await saveProfile({ avatar: '' });
   const me = realPeople.find(p => p.id === myUid); if(me){ me.avatar = ''; _renderAvatarPreview(me); }
 });
@@ -13743,7 +13790,7 @@ $('#removeMineBtn').addEventListener('click',async()=>{
   // L'avertissement n'est pas decoratif : retirer sa liste SUPPRIME la fiche, et y revenir
   // est donc une creation, qui exige un code depuis le 2026-09-28. Les membres entres avant
   // l'invitation n'en ont aucun : sans cette phrase, un clic les met dehors sans retour.
-  if(!confirm('Retirer ta liste de cette ligue ?\n\nAttention : l\'entrée dans la ligue se fait sur invitation. Pour revenir, il te faudra un nouveau code.')) return;
+  if(!await demander('Retirer ta liste de cette ligue ?\n\nAttention : l\'entrée dans la ligue se fait sur invitation. Pour revenir, il te faudra un nouveau code.', { ok:'Retirer ma liste' })) return;
   try{
     await deleteDoc(doc(db,'leagues',leagueId,'members',myUid));
     $('#myStatus').textContent='';
@@ -13759,10 +13806,11 @@ $('#removeMineBtn').addEventListener('click',async()=>{
 // + commentaires + reactions + votes + requetes + quiz stats). Double confirmation.
 $('#rgpdDeleteAll')?.addEventListener('click', async ()=>{
   if(!myUid || !leagueId){ alert('Connexion requise.'); return; }
-  if(!confirm('⚠️ SUPPRESSION DÉFINITIVE\n\nCela va supprimer :\n• Ta fiche membre + life list\n• Tous tes messages tchat\n• Toutes tes photos\n• Tous tes commentaires\n• Toutes tes réactions emoji\n• Tous tes votes trophées\n• Toutes tes stats quiz\n• Ta progression du quiz\n\nAction IRRÉVERSIBLE. Continuer ?')) return;
-  if(!confirm('Vraiment sûr ? Dernière chance. Tape OK sur la prochaine boîte pour confirmer.')) return;
-  const confirmTxt = prompt('Tape exactement "SUPPRIMER" pour confirmer la suppression définitive :');
-  if(confirmTxt !== 'SUPPRIMER'){ alert('Suppression annulée (texte incorrect).'); return; }
+  if(!await demander('⚠️ SUPPRESSION DÉFINITIVE\n\nCela va supprimer :\n• Ta fiche membre + life list\n• Tous tes messages tchat\n• Toutes tes photos\n• Tous tes commentaires\n• Toutes tes réactions emoji\n• Tous tes votes trophées\n• Toutes tes stats quiz\n• Ta progression du quiz\n\nAction IRRÉVERSIBLE. Continuer ?', { ok:'Continuer' })) return;
+  if(!await demander('Vraiment sûr ? Dernière chance.', { ok:'Oui, continuer' })) return;
+  const confirmTxt = await demander('Tape exactement « SUPPRIMER » pour confirmer la suppression définitive :', { ok:'Supprimer', saisie:'SUPPRIMER' });
+  if(confirmTxt === null) return;
+  if(confirmTxt !== 'SUPPRIMER'){ await demander('Suppression annulée (texte incorrect).', { ok:'Compris', seul:true }); return; }
 
   const btn = document.getElementById('rgpdDeleteAll');
   if(btn){ btn.disabled = true; btn.textContent = '⏳ Suppression en cours...'; }
@@ -13912,7 +13960,7 @@ function renderManualSuggestions(list){
     const already = mine.has(e.sci);
     return `<div class="manual-suggest-item" data-sci="${esc(e.sci)}">
       <span>${esc(e.fr)}</span>${already?'<span class="tag">déjà dans ta liste</span>':''}
-      <span class="sci">${esc(e.sci)}</span>
+      <span class="sci">${esc(latinAff(e.sci))}</span>
     </div>`;
   }).join('');
   box.classList.add('open');
@@ -13923,7 +13971,7 @@ function manualPick(sci){
   $('#manualSearch').value = e.fr;
   $('#manualSuggest').classList.remove('open');
   $('#manualPicked').style.display='';
-  $('#manualPicked').innerHTML = `Sélectionné : <b>${esc(e.fr)}</b><span class="sci">${esc(e.sci)}</span>`;
+  $('#manualPicked').innerHTML = `Sélectionné : <b>${esc(e.fr)}</b><span class="sci">${esc(latinAff(e.sci))}</span>`;
   $('#manualAddBtn').disabled = false;
   $('#manualMsg').textContent = '';
 }
@@ -14058,7 +14106,7 @@ document.addEventListener('click', e => {
     // « Profil » dans le menu ramene toujours au sien, meme apres avoir regarde celui d'un autre.
     if(item.dataset.view === 'profil'){ profilUid = null; _profilOnglet = 'apercu'; }
     const btn = [...document.querySelectorAll('.tab[data-view]')].find(b => b.dataset.view === item.dataset.view);
-    if(btn) btn.click();
+    if(btn){ _clicMenu = e.isTrusted; btn.click(); _clicMenu = false; }
     const m = document.getElementById('hamburgerMenu'); if(m) m.hidden = true;
     return;
   }
@@ -14077,7 +14125,7 @@ document.addEventListener('click', e => {
   // fiche espece) car ce sont des UI enfants qui s'ouvrent AU-DESSUS du panneau et leur
   // click ne doit pas etre interprete comme "hors panneau".
   const bd = document.getElementById('fabBackdrop');
-  const inPopup = e.target.closest('#emojiPop') || e.target.closest('#gifPop') || e.target.closest('.cp-modal-backdrop') || e.target.closest('#imgModal') || e.target.closest('#speciesModal');
+  const inPopup = e.target.closest('#emojiPop') || e.target.closest('#gifPop') || e.target.closest('.cp-modal-backdrop') || e.target.closest('#imgModal') || e.target.closest('#speciesModal') || e.target.closest('dialog.demander');
   // Un element redessine pendant son propre clic (le coeur de la fiche d'une photo relance
   // renderPhotos) n'est plus dans la page : closest() n'y trouve plus rien et le clic passait
   // pour exterieur, ce qui fermait le panneau (2026-10-14). Il venait forcement de dedans.
@@ -14149,17 +14197,35 @@ function _vueAnnoncee(v){
   document.title = nom && v !== 'load' ? nom + ' · L’Ornithèque' : 'L’Ornithèque';
 }
 _vueAnnoncee(document.querySelector('.tab.on[data-view]')?.dataset.view || 'load');
+// La premiere entree de l'historique dit elle aussi son onglet : sans elle, revenir dessus par
+// Retour ne changeait pas de page.
+if(!history.state?.vue) history.replaceState({ ...history.state, vue: document.querySelector('.tab.on[data-view]')?.dataset.view || 'load' }, '');
 // Lien « Aller au contenu » : le focus va au <main> sans toucher a l'adresse. Le vrai saut
 // d'ancre renvoyait la demo a la racine du site, a cause de son <base href="../">.
 document.querySelector('.aller-contenu')?.addEventListener('click', e => {
   e.preventDefault();
   document.getElementById('contenu')?.focus();
 });
-document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{
+// Vrai clic sur une ligne du menu : il passe par btn.click(), que le navigateur ne marque pas
+// comme venu de la personne (isTrusted faux). Voir l'historique ci-dessous.
+let _clicMenu = false;
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',e=>{
   // Skip les .tab sans data-view (hamburger btn), sinon on masque toutes les views
   // (le loop VIEWS ne match rien et met tout a display:none, ecran blanc).
   if(!b.dataset.view) return;
+  const avant = document.querySelector('.tab.on[data-view]')?.dataset.view;
   _vueAnnoncee(b.dataset.view);
+  if(avant !== b.dataset.view){
+    // Une autre page commence en haut : on arrivait sur le Quiz a 874 px, son titre hors de
+    // l'ecran (audit du 2026-11-03).
+    scrollTo(0, 0);
+    // Un vrai clic (souris, doigt, clavier, menu) ajoute une entree a l'historique : le bouton
+    // Retour ramene a l'onglet d'avant au lieu de quitter le site (audit du 2026-11-03). Les
+    // clics du code (onglet restaure au demarrage, guide, Retour lui-meme) corrigent seulement
+    // l'entree courante, pour qu'elle dise toujours l'onglet affiche.
+    if(e.isTrusted || _clicMenu) history.pushState({ vue: b.dataset.view }, '');
+    else history.replaceState({ ...history.state, vue: b.dataset.view }, '');
+  }
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
   b.classList.add('on');
   Object.entries(VIEWS).forEach(([v,sel])=>{ const el=$(sel); if(el) el.style.display=(b.dataset.view===v)?'':'none'; });
@@ -14689,7 +14755,7 @@ $('#chatMessages')?.addEventListener('click', async e=>{
     return;
   }
   const del=e.target.closest('.msg-del');
-  if(del){ const id=del.dataset.id; if(!id) return; if(!confirm('Supprimer ce message ?')) return;
+  if(del){ const id=del.dataset.id; if(!id) return; if(!await demander('Supprimer ce message ?', { ok:'Supprimer' })) return;
     // Soft delete : conserve le doc + snapshot pour l'audit admin, marque deleted=true.
     // Le rendu affiche "(message supprimé)" pour tout le monde, sauf admin qui voit l'original.
     const m = lastChatMsgs.find(x => x.id === id);
@@ -14761,7 +14827,7 @@ $('#reqList')?.addEventListener('click', async e=>{
   }
   const del=e.target.closest('button[data-del]');
   if(del){
-    if(!confirm('Supprimer cette requête ?')) return;
+    if(!await demander('Supprimer cette requête ?', { ok:'Supprimer' })) return;
     try{ await deleteDoc(doc(db,'leagues',leagueId,'requests', del.dataset.del)); }
     catch(err){ showError(err); }
   }
@@ -14879,9 +14945,9 @@ async function _clicPhoto(e){
   const heart=e.target.closest('.heart-btn'); if(heart){ if(heart.disabled) return; toggleReaction(heart.dataset.heartTarget, HEART_EMOJI); return; }
   const chip=e.target.closest('.react-chip'); if(chip){ toggleReaction(chip.dataset.target, chip.dataset.emoji); return; }
   const addb=e.target.closest('.react-add'); if(addb){ openEmojiPop({type:'react', target:addb.dataset.target, ancre:addb}); return; }
-  const cdel=e.target.closest('.cmt-del'); if(cdel){ if(!confirm('Supprimer ce commentaire ?')) return;
+  const cdel=e.target.closest('.cmt-del'); if(cdel){ if(!await demander('Supprimer ce commentaire ?', { ok:'Supprimer' })) return;
     try{ await deleteDoc(doc(db,'leagues',leagueId,'comments',cdel.dataset.cmtDel)); }catch(err){ showError(err); } return; }
-  const del=e.target.closest('.photo-del'); if(del){ if(!confirm('Supprimer cette photo ?')) return;
+  const del=e.target.closest('.photo-del'); if(del){ if(!await demander('Supprimer cette photo ?', { ok:'Supprimer' })) return;
     const pid=del.dataset.id;
     // Le document leger part en premier : c'est lui qui fait disparaitre la carte.
     // Les deux lourds suivent ; une photo d'avant la separation n'en a pas, d'ou le silence.
@@ -14898,7 +14964,7 @@ $('#photoGrid')?.addEventListener('click', _clicPhoto);
 $('#feedList')?.addEventListener('click', async e=>{
   const chip=e.target.closest('.react-chip'); if(chip){ toggleReaction(chip.dataset.target, chip.dataset.emoji); return; }
   const addb=e.target.closest('.react-add'); if(addb){ openEmojiPop({type:'react', target:addb.dataset.target, ancre:addb}); return; }
-  const cdel=e.target.closest('.cmt-del'); if(cdel){ if(!confirm('Supprimer ce commentaire ?')) return;
+  const cdel=e.target.closest('.cmt-del'); if(cdel){ if(!await demander('Supprimer ce commentaire ?', { ok:'Supprimer' })) return;
     try{ await deleteDoc(doc(db,'leagues',leagueId,'comments',cdel.dataset.cmtDel)); }catch(err){ showError(err); } return; }
 });
 // Envoi commentaire (photos + fil), meme handler via submit.
@@ -16777,7 +16843,7 @@ async function _openMigrationFullscreen(sci){
       <div style="padding:14px 20px; display:flex; align-items:center; justify-content:space-between; gap:12px; border-bottom:1px solid var(--line);">
         <div>
           <div style="font-size:13px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.5px; font-weight:700;">🎞️ Migration semaine par semaine</div>
-          <div style="font-size:18px; font-weight:600; color:var(--ink); margin-top:2px;">${esc(spName)} <span class="latin" style="font-weight:400; color:var(--ink-3); font-size:14px;">${esc(sci)}</span></div>
+          <div style="font-size:18px; font-weight:600; color:var(--ink); margin-top:2px;">${esc(spName)} <span class="latin" style="font-weight:400; color:var(--ink-3); font-size:14px;">${esc(latinAff(sci))}</span></div>
         </div>
         <button type="button" id="migFsClose" title="Fermer (Échap)" style="border:none; background:var(--surface-2); font-size:20px; width:36px; height:36px; border-radius:50%; cursor:pointer;">✕</button>
       </div>
@@ -18144,13 +18210,13 @@ function _renderSpeciesRarityCard(key){
   };
   // Trigger label : reflete la selection courante (utilise cc courant pour le label national)
   const getTriggerLabel = (cc) => {
-    const flag = FLAG_EMOJI[cc] || '';
-    const nationalLbl = (COUNTRIES_REG[cc] && COUNTRIES_REG[cc].name) || cc;
-    if(!_speciesRegion) return `${flag} ${nationalLbl}`;
+    // Pays entier : « Toutes les régions » et non le nom du pays, qui se lisait deux fois cote a
+    // cote avec le selecteur de pays (« France », « FR France »). Choix de Mathis, 2026-11-03.
+    if(!_speciesRegion) return 'Toutes les régions';
     // Cherche la region dans le pays courant
     const regList = zonesFichePourPays(cc);
     const r = regList.find(x => x.code === _speciesRegion);
-    return r ? '📍 ' + r.name : `${flag} ${nationalLbl}`;
+    return r ? '📍 ' + r.name : 'Toutes les régions';
   };
   // Pays initial : contexte (Ornidex, carte) ou 1er dispo. Doit etre calcule AVANT
   // le innerHTML car les templates referencent initCountry via getTriggerLabel/buildRegPanel.
@@ -20163,13 +20229,17 @@ function _ficheRepli(modal){
     else if(zone.scrollTop < 12) boite.classList.remove('sm-replie');
   }, { passive:true });
 }
-window.addEventListener('popstate', () => {
+window.addEventListener('popstate', e => {
   if(_ficheRetours){
     _ficheRetours--;
     if(!_ficheRetours && !$('#speciesModal').hidden) _ficheEntreeAjoute();
     return;
   }
-  if(_ficheEntree){ _ficheEntree = false; closeSpeciesModal(); }
+  if(_ficheEntree){ _ficheEntree = false; closeSpeciesModal(); return; }
+  // Retour entre les onglets (2026-11-03) : l'entree dit quel onglet etait affiche.
+  const v = e.state?.vue;
+  if(v && v !== document.querySelector('.tab.on[data-view]')?.dataset.view)
+    document.querySelector('.tab[data-view="' + v + '"]')?.click();
 });
 function closeSpeciesModal(){
   const modal = $('#speciesModal'); if(!modal) return;
@@ -22129,7 +22199,7 @@ function _pkdxRender(){
         ? `<img loading="lazy" src="${esc(photoConnue)}" alt="${esc(r.nm)}" onerror="this.parentElement.textContent='🐦'">`
         : (r.owned ? '🐦' : '')}</div>
       <div class="pkdx-name">${esc(r.nm)}</div>
-      <div class="pkdx-sci">${esc(r.sci)}</div>
+      <div class="pkdx-sci">${esc(latinAff(r.sci))}</div>
     </div>`;
   };
   if(tri === 'habitat'){
@@ -22191,7 +22261,7 @@ function _pkdxRender(){
       ordrePrec = o;
       const sci = (FAMILLE_INFO[l.fam] || [])[1];
       const savant = sci && sansAccent(sci) !== sansAccent(l.fam)
-        ? ' <span class="pkdx-groupe-n">·</span> <span class="pkdx-groupe-sci">' + esc(sci) + '</span>' : '';
+        ? ' <span class="pkdx-groupe-n">·</span> <span class="pkdx-groupe-sci">' + esc(latinAff(sci)) + '</span>' : '';
       return titreOrdre + '<div class="pkdx-groupe pkdx-groupe-fam"><span>' + esc(l.fam) + savant
       + ' <span class="pkdx-groupe-n">· ' + l.rows.filter(r => r.owned).length + ' sur ' + l.rows.length + '</span></span></div>'
       + l.rows.map(carte).join('');
@@ -22332,7 +22402,7 @@ function _futCarteHtml(sci, mini){
     + (num ? '<span class="fut-num">#' + String(num).padStart(3, '0') + '</span>' : '')
     + '<div class="fut-note">' + note + '</div>'
     + '<h3 class="fut-nom" id="debloqueTitre">' + esc(nom) + '</h3>'
-    + '<div class="fut-sci">' + esc(latin) + '</div>'
+    + '<div class="fut-sci">' + esc(latinAff(latin)) + '</div>'
     + '<div class="fut-puces">'
     + (tier ? '<span class="fut-puce fut-puce-palier">' + esc(REAL_LABELS[tier] || '') + '</span>' : '')
     + '<span class="fut-puce">' + _futDrapeau(cc, '') + esc(COUNTRY_NAMES[cc] || cc) + '</span>'
@@ -23140,7 +23210,7 @@ async function _quizStart(){
         </div>
         <p class="qz-prompt">Quelle espèce est-ce ?</p>
         <div class="qz-choices" id="quizChoices">
-          ${choices.map((c,i)=>`<button type="button" class="qz-choice" data-quiz-choice="${i}"><span class="qz-choice-fr">${esc(FR_NAMES[c]||c)}</span><span class="qz-choice-sci">${esc(c)}</span></button>`).join('')}
+          ${choices.map((c,i)=>`<button type="button" class="qz-choice" data-quiz-choice="${i}"><span class="qz-choice-fr">${esc(FR_NAMES[c]||c)}</span><span class="qz-choice-sci">${esc(latinAff(c))}</span></button>`).join('')}
         </div>
       </div>
       <audio id="quizAudio" style="display:none;"><source src="${esc(audioUrl)}"></audio>
@@ -23343,7 +23413,7 @@ async function _quizDailyRenderQuestion(){
       </div>
       <p class="qz-prompt">Quelle espèce est-ce ?</p>
       <div class="qz-choices" id="quizChoices">
-        ${q.choices.map((c,i)=>`<button type="button" class="qz-choice" data-quiz-daily-choice="${i}"><span class="qz-choice-fr">${esc(FR_NAMES[c]||c)}</span><span class="qz-choice-sci">${esc(c)}</span></button>`).join('')}
+        ${q.choices.map((c,i)=>`<button type="button" class="qz-choice" data-quiz-daily-choice="${i}"><span class="qz-choice-fr">${esc(FR_NAMES[c]||c)}</span><span class="qz-choice-sci">${esc(latinAff(c))}</span></button>`).join('')}
       </div>
     </div>
     <audio id="quizAudio" style="display:none;"><source src="${esc(src.file)}"></audio>
@@ -23393,7 +23463,7 @@ function _quizChallengeShowVerdict(sci, correct, kind){
   const html = `<div class="qz-verdict ${verdictClass}">
     ${badge}
     <div class="qz-verdict-species"><span class="sp-link" data-sci="${esc(sci)}" style="cursor:pointer; text-decoration:underline dotted;">${esc(nm)}</span></div>
-    <div class="qz-verdict-sci">${esc(sci)}</div>
+    <div class="qz-verdict-sci">${esc(latinAff(sci))}</div>
     <div id="quizVerdictPhoto"></div>
     <button type="button" class="qz-verdict-replay" id="quizReplayBtn" title="Réécouter (Espace)">🔁 Réécouter</button>
   </div>`;
@@ -23630,7 +23700,7 @@ async function _quizWeeklyRenderQuestion(){
       </div>
       <p class="qz-prompt">Quelle espèce est-ce ?</p>
       <div class="qz-choices" id="quizChoices">
-        ${q.choices.map((c,i)=>`<button type="button" class="qz-choice" data-quiz-weekly-choice="${i}"><span class="qz-choice-fr">${esc(FR_NAMES[c]||c)}</span><span class="qz-choice-sci">${esc(c)}</span></button>`).join('')}
+        ${q.choices.map((c,i)=>`<button type="button" class="qz-choice" data-quiz-weekly-choice="${i}"><span class="qz-choice-fr">${esc(FR_NAMES[c]||c)}</span><span class="qz-choice-sci">${esc(latinAff(c))}</span></button>`).join('')}
       </div>
     </div>
     <audio id="quizAudio" style="display:none;"><source src="${esc(src.file)}"></audio>
@@ -23835,7 +23905,7 @@ function _quizAnswerInverse(idx){
   const html = `<div class="qz-verdict ${verdictClass}">
     ${badge}
     <div class="qz-verdict-species"><span class="sp-link" data-sci="${esc(_quizCurrent.sci)}" style="cursor:pointer; text-decoration:underline dotted;">${esc(nm)}</span></div>
-    <div class="qz-verdict-sci">${esc(_quizCurrent.sci)} · Son ${correctLetter}</div>
+    <div class="qz-verdict-sci">${esc(latinAff(_quizCurrent.sci))} · Son ${correctLetter}</div>
   </div>`;
   if(stage) stage.insertAdjacentHTML('beforeend', html);
   const nextBtn = $('#quizNext');
@@ -23888,7 +23958,7 @@ function _quizAnswer(idx){
     const verdictHtml = `<div class="qz-verdict ${verdictClass}">
       ${badge}
       <div class="qz-verdict-species"><span class="sp-link" data-sci="${esc(_quizCurrent.sci)}" style="cursor:pointer; text-decoration:underline dotted;">${esc(nm)}</span></div>
-      <div class="qz-verdict-sci">${esc(_quizCurrent.sci)}</div>
+      <div class="qz-verdict-sci">${esc(latinAff(_quizCurrent.sci))}</div>
       <div id="quizVerdictPhoto"></div>
       <button type="button" class="qz-verdict-replay" id="quizReplayBtn" title="Réécouter (Espace)">🔁 Réécouter</button>
     </div>`;

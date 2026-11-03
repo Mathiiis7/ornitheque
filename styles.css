@@ -477,6 +477,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     border-radius:9px; padding:8px 11px; font:inherit; color:var(--ink); font-size:14px; font-weight:400; }
   .prof-grid input:focus, .prof-grid select:focus { outline:3px solid var(--accent); }
   .mystatus { font-size:14px; color:var(--accent-ink); font-weight:600; }
+  .mystatus.err { color:var(--rouge-sortie); }
   .join-row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:16px; }
   .join-row .search { max-width:280px; }
   .linkbtn { border:none; background:transparent; color:var(--accent-ink); cursor:pointer; font:inherit;
@@ -1380,6 +1381,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .species-modal .sm-hero-img, .species-modal .sm-hero-bg, .species-modal .sm-hero-fade, .species-modal .sm-hero-body { display:none !important; }
   .species-modal .sm-title { margin:0; font-family:var(--serif); font-weight:700; font-size:24px; color:#fff; letter-spacing:.2px; padding-right:40px; text-shadow:0 1px 2px rgba(0,0,0,.35), 0 2px 8px rgba(0,0,0,.25); }
   .species-modal .sm-sci { display:inline-block; font-size:14px; color:#fff; font-style:italic; margin-top:6px; padding:2px 10px; background:rgba(0,0,0,.28); backdrop-filter:blur(4px); border-radius:12px; }
+  /* Le genre en majuscule ici par la CSS et non dans le texte : app.js compare #smSci a la cle en
+     minuscules pour savoir si la fiche a change (2026-11-03). */
+  .species-modal .sm-sci::first-letter { text-transform:uppercase; }
   /* Contraste : fond clair (steppe, littoral, bocage...) -> texte fonce */
   .species-modal .sm-header.sm-header-dark-text .sm-title { color:#1a1a1a; text-shadow:0 1px 1px rgba(255,255,255,.3), 0 0 6px rgba(255,255,255,.4); }
   .species-modal .sm-header.sm-header-dark-text .sm-sci { color:#1a1a1a; background:rgba(255,255,255,.4); }
@@ -3319,6 +3323,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .tro-fam-body { flex:1 1 auto; min-width:0; width:100%; display:flex; flex-direction:column; gap:3px; align-items:center; }
   .tro-fam-title { font-size:14px; font-weight:700; color:var(--ink); display:flex; align-items:baseline; justify-content:center; gap:5px; flex-wrap:wrap; line-height:1.2; }
   .tro-fam-family { font-size:14px; font-weight:500; color:var(--ink-3); text-align:center; margin-top:3px; font-style:italic; line-height:1.25; }
+  /* En sombre, --ink-3 sur le fond teinte des cartes debloquees ne faisait que 4,35:1 (2026-11-03). */
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tro-fam-family { color:var(--ink-2); } }
+  :root[data-theme="dark"] .tro-fam-family { color:var(--ink-2); }
   .tro-fam-tier { font-size:14px; font-weight:600; color:var(--tier-color); }
   .tro-fam-tier-locked { color:var(--ink-3); font-style:italic; font-weight:500; }
   /* Etoiles de tier a la place du label 'Bronze/Argent/Or/Diamant/Prismatique'.
@@ -3864,6 +3871,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      d'être touchées, sur un fond teinté d'accent et un bord d'accent - légèrement à part. */
   .decouvrir-texte { margin:12px 0 0; font-size:15px; line-height:1.45; color:var(--ink-2); }
   .decouvrir-actions { display:flex; justify-content:flex-end; flex-wrap:wrap; gap:8px; margin-top:16px; }
+  /* Fenetre de confirmation (demander() dans app.js), a la place des boites du navigateur (2026-11-03).
+     pre-line garde les retours a la ligne des listes (« Cela va supprimer : • ... »). */
+  .demander-texte { margin:0; font-size:15px; line-height:1.5; color:var(--ink); white-space:pre-line; }
+  .demander-saisie { display:block; width:100%; box-sizing:border-box; margin-top:14px; padding:10px 12px; font:inherit; font-size:15px;
+    border:1px solid var(--line-2); border-radius:9px; background:var(--surface); color:var(--ink); }
   /* Pas de photo tant qu'on ne l'a pas touchee : le fond de base de la vignette et une aura
      doree. Le « ? » dore au milieu a ete retire, il ne lui plaisait pas (Mathis, 2026-10-15). Montree, la photo gachait la surprise ; l'aplat vert d'accent, l'aplat
      noir puis l'aura du palier ne lui plaisaient pas : version 8f (vignette legerement
@@ -4167,6 +4179,26 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .ct-gl-l .tier-chip.tier-rond { width:40px; min-width:40px; height:40px; margin:-10px; font-size:20px; padding:0 0 1px; min-height:0; }
     /* Le demi-pixel à gauche du N ne vaut qu'à la souris : à 300 %, il le poussait 0,8 px d'appareil trop à droite. */
     .ct-sv .pkdx-exo, .ct-rang .pkdx-exo, .ct-gl-l .pkdx-exo { padding:0 0 0.5px; }
+
+    /* Suites de l'audit du 2026-11-03. Commentaires du Fil et des Photos : le champ et l'envoi
+       (33 x 25 px ecrits) a la hauteur d'un doigt. */
+    .cmt-input, .cmt-send { min-height:52px; }
+    .cmt-send { min-width:52px; }
+    /* Noms des membres dans le Fil, le Tchat et les Photos : la zone de doigt grandit sans bouger le
+       texte, comme les noms du Classement (18 px de haut a la souris). */
+    .nom-profil { position:relative; }
+    .nom-profil::after { content:""; position:absolute; inset:-12px -4px; }
+    /* Mois de la fiche : 17 px de haut. 52 donnerait une colonne de 13 x 52 px, plus haute que la
+       carte voisine ; 32 ecrits font 27 px d'ecran, au-dessus du minimum de 24 (WCAG 2.5.8). */
+    .species-modal button[data-mois] { min-height:32px; }
+    @media (max-width:640px) {
+      /* La croix (37 px d'ecran) et les fleches (34) de la fiche passent a 44 ; les fleches et la
+         reserve du nom se decalent d'autant pour ne pas passer dessous. */
+      .species-modal .sm-close { width:52px; height:52px; }
+      .species-modal .sm-nav { right:70px !important; }
+      .species-modal .sm-nav-btn { width:52px !important; height:52px !important; }
+      .species-modal .sm-title { padding-right:190px; }
+    }
   }
 
   /* Une seule police pour TOUS les noms latins, partout : celle du texte, en italique (--sans).

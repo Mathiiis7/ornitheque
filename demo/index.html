@@ -125,7 +125,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=568">
+<link rel="modulepreload" href="app.js?v=569">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -367,7 +367,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
     .ham-signout { color:var(--rouge-sortie); }
     .ham-signout:hover { background:color-mix(in srgb, var(--rouge-sortie) 10%, transparent); color:var(--rouge-sortie); }
     /* Pastille de notif : posee en top-right des FAB (position:absolute), en fin de ligne des items hamburger */
-    .notif-badge { min-width:18px; height:18px; padding:0 5px; background:#d43a3a; color:#fff; font:700 11px/1 system-ui, -apple-system, sans-serif; border-radius:999px; display:grid; place-items:center; box-shadow:0 2px 4px rgba(0,0,0,.2); pointer-events:none; }
+    .notif-badge { min-width:18px; height:18px; padding:0 5px; background:#d43a3a; color:#fff; font:700 11px/1 var(--sans); border-radius:999px; display:grid; place-items:center; box-shadow:0 2px 4px rgba(0,0,0,.2); pointer-events:none; }
     /* Dans la barre, la pastille reste DANS le bouton : .tabs defile en largeur, donc coupe
        tout ce qui depasse en haut. */
     .fab-badge { position:absolute; top:1px; right:0; border:2px solid var(--surface, #fff); z-index:5; }
@@ -377,10 +377,16 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
       background:var(--bg); padding-left:4px; }
     /* Un fondu du cote ou il reste des onglets : rien d'autre ne disait qu'on pouvait glisser (2026-10-31).
        La marge de gauche compense le gap de la rangee : les onglets ne bougent pas. */
-    .tabs.a-suite .nav-droite::before { content:""; position:absolute; top:0; bottom:0; right:100%; width:40px;
-      background:linear-gradient(to right, transparent, var(--bg)); pointer-events:none; }
-    .tabs.a-avant::before { content:""; position:sticky; left:0; z-index:1; flex:0 0 40px; margin-right:-44px; align-self:stretch;
-      background:linear-gradient(to left, transparent, var(--bg)); pointer-events:none; }
+    /* Une fleche dans le fondu depuis le 2026-11-03 : le fondu seul ne suffisait pas, on ne voyait qu'un
+       onglet et demi sur six au telephone sans comprendre qu'il y en avait d'autres (audit Impeccable). */
+    .tabs.a-suite .nav-droite::before { content:"›"; position:absolute; top:0; bottom:0; right:100%; width:40px;
+      display:flex; align-items:center; justify-content:flex-end; padding-right:2px; box-sizing:border-box;
+      font:600 24px/1 var(--sans); color:var(--ink-3);
+      background:linear-gradient(to right, transparent, var(--bg) 60%); pointer-events:none; }
+    .tabs.a-avant::before { content:"‹"; position:sticky; left:0; z-index:1; flex:0 0 40px; margin-right:-44px; align-self:stretch;
+      display:flex; align-items:center; padding-left:2px; box-sizing:border-box;
+      font:600 24px/1 var(--sans); color:var(--ink-3);
+      background:linear-gradient(to left, transparent, var(--bg) 60%); pointer-events:none; }
     .nav-icos { display:flex; align-items:center; gap:2px; }
     .nav-ico { position:relative; width:42px; height:42px; padding:0; border:none; border-radius:10px; background:transparent;
       color:var(--ink-2); cursor:pointer; display:grid; place-items:center; flex:0 0 auto; }
@@ -674,7 +680,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         <!-- Barre principale : ce qu'on utilise le plus (recherche + tri) toujours visible. -->
         <div class="ctrl-main">
           <!-- La barre du Birdydex, a l'identique, sans suggestions (2026-10-22). -->
-          <input type="search" id="q" aria-label="Rechercher dans le tableau" placeholder="Rechercher (nom fr ou sci)…" style="flex:1; min-width:180px; padding:9px 12px; border:1px solid var(--line-2); border-radius:8px; background:var(--surface-2); color:var(--ink); font:14px system-ui;">
+          <input type="search" id="q" aria-label="Rechercher dans le tableau" placeholder="Chercher une espèce" style="flex:1; min-width:180px; padding:9px 12px; border:1px solid var(--line-2); border-radius:8px; background:var(--surface-2); color:var(--ink); font:14px system-ui;">
           <div class="seg" id="sortSeg">
             <button data-sort="rarity" class="on">Par rareté</button>
             <button data-sort="name">A → Z</button>
@@ -1182,7 +1188,7 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
            ordre que la Carte : Où, Afficher, puis Famille, Milieu, Trier par, Rareté en dernier. La
            recherche reste toujours visible. -->
       <div class="pkdx-barre">
-        <input type="search" id="pkdxSearch" aria-label="Rechercher dans le birdydex" placeholder="Rechercher (nom fr ou sci)…">
+        <input type="search" id="pkdxSearch" aria-label="Rechercher dans le birdydex" placeholder="Chercher une espèce">
         <button type="button" class="ct-pli-btn pkdx-pli-btn" id="pkdxPliBtn" aria-expanded="false" aria-controls="pkdxFiltres">Filtres</button>
       </div>
       <div class="ct-bloc pkdx-bloc" id="pkdxFiltres" hidden>
@@ -1490,9 +1496,9 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
       <!-- Meme remarque qu'a l'ecran de connexion : role="tab" sur chaque bouton, sinon la
            rangee ne s'annonce pas. aria-selected suit la classe .on dans _smSetTab(). -->
       <nav class="sm-tabs" role="tablist" aria-label="Sections de la fiche espèce">
-        <button type="button" class="sm-tab on" data-sm-tab="info" role="tab" id="smTabInfo" aria-selected="true" aria-controls="smPanelInfo">📝 Info</button>
-        <button type="button" class="sm-tab" data-sm-tab="map" role="tab" id="smTabMap" aria-selected="false" aria-controls="smPanelMap">📍 Carte & observations</button>
-        <button type="button" class="sm-tab" data-sm-tab="sound" role="tab" id="smTabSound" aria-selected="false" aria-controls="smPanelSound">🎵 Sons</button>
+        <button type="button" class="sm-tab on" data-sm-tab="info" role="tab" id="smTabInfo" aria-selected="true" aria-controls="smPanelInfo">Info</button>
+        <button type="button" class="sm-tab" data-sm-tab="map" role="tab" id="smTabMap" aria-selected="false" aria-controls="smPanelMap">Carte & observations</button>
+        <button type="button" class="sm-tab" data-sm-tab="sound" role="tab" id="smTabSound" aria-selected="false" aria-controls="smPanelSound">Sons</button>
       </nav>
       <div class="sm-scroll">
         <!-- Onglet Carte -->
@@ -1700,5 +1706,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=568"></script>
+<script type="module" src="app.js?v=569"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>
