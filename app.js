@@ -25432,7 +25432,7 @@ function _pcQuestion(){
     _pcPhotos(box);
     // Au doigt, le champ attend qu'on le touche : ouvert d'office, le clavier couvrirait le
     // bouton du chant avant qu'on l'ait entendu.
-    if(q.type === 'ecrire' && (matchMedia('(pointer: fine)').matches || _pcAuClavier)) document.getElementById('pcEcrit')?.focus({ preventScroll: true });
+    if(q.type === 'ecrire' && matchMedia('(pointer: fine)').matches) document.getElementById('pcEcrit')?.focus({ preventScroll: true });
   } else {
     if(typeof _fetchWikiPhoto === 'function'){
       const cible = q.cible;
