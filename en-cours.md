@@ -1,18 +1,25 @@
-# Où on en est (2026-11-01)
+# Où on en est (2026-11-03)
 
-Dernière version : v995 / app.js?v=567. Prochaine : v996 / 568. Historique complet jusqu'au 30/10 :
+Dernière version : v996 / app.js?v=568. Prochaine : v997 / 569. Historique complet jusqu'au 30/10 :
 `archives/en-cours-jusqu-au-2026-10-30.md` (y chercher un mot plutôt que le lire en entier, 85 000 jetons).
 Ce fichier se remplace à chaque fin de tâche : quelques lignes, pas un journal.
 
 ## Reste ouvert
-- **Audit + critique Impeccable du 03/11, rien corrigé :** rapport `notes-privees/impeccable-2026-11-03.md`
-  (audit 13/20, critique 24/40, 4 P1 : Birdydex et Trophées hors clavier, verdict du Quiz muet, texte sous
-  4,5:1, structure pour lecteur d'écran). **Arbitrage de Mathis (03/11)** : commencer par clavier (Birdydex,
-  Trophées) et Quiz (verdict annoncé, focus, sans bouton « Suivante ») ; puis contrastes, en fonçant les gris
-  pâles (Classement ET noms des non observées) juste au seuil, avant/après montré ; puis repères du lecteur
-  d'écran ; puis texte à 14 px dans la fiche et les Trophées. Téléphone, « Observer X » et finitions P3 : hors
-  périmètre, en ticket. Corriger à la main avec les bancs, jamais par les commandes Impeccable qui réécrivent.
+- **Suites de l'audit Impeccable du 03/11 : ticket [Mathiiis7/qg#74](https://github.com/Mathiiis7/qg/issues/74)**
+  (téléphone, « Observer X », bouton Retour, erreur de dépôt, finitions, objectif des Trophées à 4,35:1 en sombre).
 - **En attente de réponse :** Cornell (22/10), LPO (23/10). Effacer l'historique des deux dépôts attend Cornell.
+
+## Décidé le 03/11
+- **Audit + critique Impeccable, corrigés et en ligne (v996) :** rapport `notes-privees/impeccable-2026-11-03.md`,
+  captures avant/après dans `notes-privees/audit-2026-11-03-captures/`. Birdydex et Trophées ouverts au clavier,
+  verdict du Quiz annoncé et focus gardé au clavier (pas au doigt : le clavier du téléphone se rouvrirait),
+  gris pâles à 97 % de `--ink-3` (4,6:1 au pire), couleurs fixes du Quiz et des boutons rouges éclaircies en
+  sombre, `<main id="contenu">` + lien « Aller au contenu » (passe par app.js : la démo a un `<base href="../">`),
+  onglet annoncé et titre du navigateur, fiche et Trophées à 14 px (13 px en capitales).
+- **Choix de Mathis :** mot de rareté du Fil GARDÉ dans sa couleur vive (point de couleur et mot assombri refusés,
+  ne pas reproposer) ; étiquettes de l'en-tête de la fiche à 11,5 px au téléphone (14 px sur ordinateur).
+- Restent sous 14 px exprès : graduations du graphique en barres, étoiles, attribution Leaflet, icônes emoji,
+  pourcentage de l'en-tête de carte (13 px, le banc entete veut le même corps que le nom en capitales).
 
 ## Décidé le 01/11
 - **Film de présentation, SUJET CLOS (ticket 39) :** en ligne sur l'écran de connexion et sur la page L'Ornithèque du portfolio (à la place de la carte du monde), avec le lien « Crédits ». 86 s, **muet par choix de Mathis** après trois mélanges écoutés, ne pas reproposer de son. Version web 10,4 Mo (1080p), maître 4K `.onetake/4k/film.mp4` hors dépôt. Fabrication : `docs/VIDEO-DEROULE-V2.md`, puis `outils/onetake/rendu-final.py`, `montage-v2.py --final`, `film-web.py`. Ne pas relancer `v2-recent.py` ni `v2-scenes.py` sans raison : la première retire un autre chant au quiz et de nouvelles observations.
