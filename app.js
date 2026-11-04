@@ -1802,8 +1802,12 @@ function exoticCategoriesInCountry(sci, country){
 // Depuis migration S&T (26/08/2026) : rarityReal renvoie le tier apres merge S&T+bar chart
 // pour rester coherent avec le tier affiche sur les fiches.
 // Anciennement : REAL_RARITY[k] || 1 pur bar chart.
+// La cle des tables de rarete : nos tables gardent les anciens noms latins, eBird envoie ceux
+// d'octobre 2026. Sans alias, le Troglodyte mignon recu en « Nannus troglodytes » sortait
+// « Étranger » dans le Fil (Mathis, 2026-11-04).
+function _cleRef(sci){ const k = (sci||'').trim().toLowerCase(); return SCI_ALIAS[k] || k; }
 function rarityReal(sci){
-  const k = (sci||'').trim().toLowerCase();
+  const k = _cleRef(sci);
   return REAL_RARITY[k] || 1;
 }
 // Version category-aware pour les filtres et le tri : les exotiques renvoient leur vrai
@@ -1811,7 +1815,7 @@ function rarityReal(sci){
 // les suggests, MEGA_CATALOG, etc. rarityReal (ci-dessus) reste utilise pour les cas ou
 // on veut le tier "brut" du catalogue REAL_RARITY sans distinction exotique.
 function rarityForFilter(sci){
-  const k = (sci||'').trim().toLowerCase();
+  const k = _cleRef(sci);
   if(isExotic(sci)){
     // Exotiques : seules les N (Naturalized) ont un vrai tier - populations installees
     // qu'on voit vraiment en nature (Perruche a collier, Bernache du Canada, Ouette d'Egypte).
@@ -1831,7 +1835,7 @@ function rarityForFilter(sci){
 // hors-FR (Sittelle de Neumayer, Mesange lugubre, etc.) dont la rareté n'est pas connue
 // et qui doit etre affichee en gris "rareté inconnue" au lieu de vert "très commun".
 function hasRarityCalibration(sci){
-  const k = (sci||'').trim().toLowerCase();
+  const k = _cleRef(sci);
   return isExotic(sci) || !!REAL_RARITY[k];
 }
 // Version per-pays : retourne true si l'espece a une calibration rarete dans le catalogue
@@ -1884,7 +1888,7 @@ function _auPays(cc){
 }
 
 function hasRarityCalibrationInCountry(sci, country){
-  const k = (sci||'').trim().toLowerCase();
+  const k = _cleRef(sci);
   const cc = country || 'FR';
   // Une espece accidentelle n est pas une cible : elle sort des listes « a trouver ».
   // Les trois appelants de cette fonction ne listent que des especes NON vues, donc une
@@ -2553,7 +2557,7 @@ function activeInMonth(sci, m, region, subregion){
   return v >= Math.min(0.01, 0.3 * peak);
 }
 function realTier(sci, abroad){
-  const key=(sci||'').trim().toLowerCase();
+  const key=_cleRef(sci);
   // Espece hors avifaune FR (pas dans REAL_RARITY) ET pas exotique etablie FR : "Étranger".
   // Couvre les especes mondiales vues seulement a l'etranger (Tourterelle maillee en Namibie,
   // Souimanga au Sri Lanka, Toucan au Bresil...). Renvoie ord=0 donc peu de points au score
@@ -2600,7 +2604,7 @@ const FOREIGN_TIER = { id:'etr', ord:-1, label:'Étranger', color:'#8a7fb3' };
 // pas juste l'avifaune FR. Une tourterelle maillee vue en Namibie a un nom fr donc passait
 // comme "FR" et polluait le classement avec un label exotique-FR errone. Vraie ref FR :
 // bar chart REAL_RARITY + exotiques connues FR via isExotic().)
-const inRef = sci => { const k=(sci||'').trim().toLowerCase(); return (k in REAL_RARITY) || isExotic(k); };
+const inRef = sci => { const k=_cleRef(sci); return (k in REAL_RARITY) || isExotic(k); };
 // Vrai cochage étranger = vu SEULEMENT à l'étranger ET pas une espèce de France.
 // (Un oiseau français vu d'abord à l'étranger - ex. Pinson - reste compté : la life list
 //  eBird ne garde que la 1re obs, donc son lieu n'est pas fiable pour l'exclure.)
@@ -7026,6 +7030,18 @@ function renderFeed(){
     if(feedPerson !== 'any' && !realPeople.some(p=>p.id===feedPerson)) feedPerson = 'any';
   }
   _feedMajBoutons();
+  // La rarete d'une observation est celle du pays ou elle a ete faite, pas celle de la France :
+  // un Cassican flute vu en Australie y a son palier, au lieu de « Étranger » (Mathis,
+  // 2026-11-04). Une espece vue dans deux pays peut donc paraitre avec deux paliers : c'est voulu.
+  // Les paliers etrangers se chargent a la demande ; en attendant, et pour un pays dont l'appli
+  // n'a pas les listes eBird, on garde la rarete de France.
+  const paysPrets = _donneesPaysPretes();
+  let paysManquent = false;
+  const tierFil = (sci, pays, abroad) => {
+    if(!pays || pays === 'FR' || !_countryEntry(pays)) return realTier(sci, abroad);
+    if(!paysPrets){ paysManquent = true; return realTier(sci, abroad); }
+    return realTierPays(sci, pays);
+  };
   const items=[];
   // Espèces observées
   for(const p of realPeople){
@@ -7043,15 +7059,18 @@ function renderFeed(){
       }
       // Filtre rareté : un palier 1..10, ou un statut X / P / N comme au Birdydex (le palier 0
       // « exotique » est parti le 2026-10-22). Une exotique se range a son palier du pays.
+      // Le filtre suit le palier affiche, donc celui du pays de l'observation.
       const sci = (v.sci||'').toLowerCase();
+      const abroad = foreignTick(v), tt = tierFil(sci, v.country || '', abroad);
       if(feedTier !== 'any'){
-        if(/^[XPN]$/.test(feedTier)){ if(!(exoticCategoriesInCountry(sci, 'FR') || []).includes(feedTier)) continue; }
-        else if(rarityForCountry(sci, 'FR') !== +feedTier) continue;
+        const ccFiltre = v.country && v.country !== 'FR' && _countryEntry(v.country) && paysPrets ? v.country : 'FR';
+        if(/^[XPN]$/.test(feedTier)){ if(!(exoticCategoriesInCountry(sci, ccFiltre) || []).includes(feedTier)) continue; }
+        else if(tt.ord !== +feedTier) continue;
       }
       items.push({
-        kind:'obs',
+        kind:'obs', tt,
         name:p.name, uid:p.id, bird:frName(v.sci,v.common), sci:(v.sci||''),
-        abroad:foreignTick(v),
+        abroad,
         ord: pd?pd.ord:0, disp: pd?pd.disp:'date inconnue',
         addedAt, manual: !!v.manual, pays: v.country || ''
       });
@@ -7060,6 +7079,7 @@ function renderFeed(){
   // Les trophees ne sont plus verses dans le fil : ils arrivent par salves - un import de
   // liste en declenche plusieurs d un coup - et noyaient les observations, qui sont ce
   // qu on vient y lire. Ils restent sur leur propre page.
+  if(paysManquent) _chargerDonneesPays().then(() => { if(_donneesPaysPretes()) renderFeed(); });
   if(feedMode==='new') items.sort((a,b)=>(b.addedAt-a.addedAt) || (b.ord-a.ord));
   else                 items.sort((a,b)=>(b.ord-a.ord) || (b.addedAt-a.addedAt));
   const top=items.slice(0,60);
@@ -7095,7 +7115,7 @@ function renderFeed(){
     if(nbNeufs && i === nbNeufs) { html += '<div class="feed-depuis feed-depuis-fin">déjà vu</div>'; jourPrec = null; }
     const ordJour = feedMode==='new' ? (it.addedAt ? ordDe(new Date(it.addedAt)) : 0) : it.ord;
     if(ordJour !== jourPrec){ html += `<div class="feed-jour">${esc(titreJour(ordJour))}</div>`; jourPrec = ordJour; }
-    const tt=realTier(it.sci, it.abroad);
+    const tt=it.tt;
     const target='obs:'+it.uid+':'+it.sci.toLowerCase();
     const nbCom = (commentsMap.get(target) || []).length;
     const niveau = tt.ord >= 1 && tt.ord <= 10 ? tt.ord : '';
