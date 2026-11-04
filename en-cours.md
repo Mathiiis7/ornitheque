@@ -1,12 +1,20 @@
 # Où on en est (2026-11-03)
 
-Dernière version : v997 / app.js?v=569. Prochaine : v998 / 570. Historique complet jusqu'au 30/10 :
+Dernière version : v999 / app.js?v=571. Prochaine : v1000 / 572. Historique complet jusqu'au 30/10 :
 `archives/en-cours-jusqu-au-2026-10-30.md` (y chercher un mot plutôt que le lire en entier, 85 000 jetons).
 Ce fichier se remplace à chaque fin de tâche : quelques lignes, pas un journal.
 
 ## Reste ouvert
 - **Tickets de l'Ornithèque encore ouverts : les deux du Quiz, « en réserve »** (qg#65 cris bonus, qg#57 quiz photo).
 - **En attente de réponse :** Cornell (22/10), LPO (23/10). Effacer l'historique des deux dépôts attend Cornell.
+
+## Décidé le 04/11 (en ligne)
+- **v998** : les tables de rareté se lisent par `_cleRef` (alias des noms latins eBird d'octobre 2026) ;
+  le Troglodyte mignon reçu en « Nannus troglodytes » ne sort plus « Étranger ». Le Fil donne la
+  rareté du PAYS de chaque observation (`realTierPays`), le filtre de rareté suit ; une espèce vue
+  dans deux pays peut y paraître avec deux paliers, voulu par Mathis.
+- **v999** : ligne « Birdydex de » en tête des Filtres du Birdydex (placement et libellé choisis par
+  Mathis) ; non mémorisée, et une espèce ajoutée ramène à son propre Birdydex.
 
 ## Décidé le 03/11
 - **Ticket qg#74 fait et fermé (v997)** : Retour du navigateur entre onglets (entrées d'historique `{vue}`, seuls les
