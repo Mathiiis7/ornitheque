@@ -49,7 +49,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=570">
+<link rel="modulepreload" href="app.js?v=571">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -1123,6 +1123,14 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
         <!-- Pays du Birdydex : ne s'applique qu'au Birdydex mais est aussi utilise
              pour piloter le pays global (autres onglets suivent). Anciennement dans
              le header, deplace ici le 2026-09-21. -->
+        <!-- Le Birdydex d'un autre membre : ses especes vues a la place des siennes (Mathis,
+             2026-11-04). Garde en memoire de l'onglet seulement : on revient a soi au rechargement. -->
+        <div class="ct-ligne pkdx-pleine pkdx-qui"><span class="ct-k">Birdydex de</span>
+          <span class="ct-v ct-choix"><button type="button" id="pkdxQui" class="cp-btn">
+            <span class="cp-btn-label">Moi</span>
+            <span class="cp-btn-arrow">▾</span>
+          </button></span>
+        </div>
         <div class="ct-ligne"><span class="ct-k">Où</span>
           <span class="ct-v ct-choix"><button type="button" id="pkdxCountry" class="cp-btn" data-cc="FR" title="Pays du Birdydex (les autres onglets suivent aussi)">
             <span class="cp-btn-flag">🇫🇷</span>
@@ -1634,4 +1642,4 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=570"></script>
+<script type="module" src="app.js?v=571"></script>

@@ -21546,6 +21546,15 @@ function _quizAncienInit(){
 /* ---------------- Pokedex : grille de toutes les especes FR ---------------- */
 // Etat local pour les filtres. Persistant en localStorage pour retrouver la meme vue.
 var _pkdxFilters = { search:'', country:(_globalCountry||'FR'), zone:'', family:'', habitat:'', owned:'', sort:'famille' };
+// Le membre dont on regarde le Birdydex (null : soi). Pas dans localStorage : on revient a son
+// propre Birdydex au rechargement (Mathis, 2026-11-04).
+var _pkdxQui = null;
+// La personne affichee ; un membre parti de la ligue ramene a soi.
+function _pkdxPersonne(){
+  const p = _pkdxQui && realPeople.find(x => x.id === _pkdxQui);
+  if(!p) _pkdxQui = null;
+  return p || realPeople.find(x => x.id === myUid);
+}
 try{ Object.assign(_pkdxFilters, JSON.parse(localStorage.getItem('mb-pkdx-filters')||'{}')); }catch(_){}
 // Le pays global override le pays local Birdydex (le global est la source de verite).
 _pkdxFilters.country = _globalCountry || _pkdxFilters.country || 'FR';
@@ -21684,7 +21693,7 @@ function renderPokedex(){
     // Les lignes que la grille montrerait sans le filtre 'exclude', pour que le modal dise
     // « combien il resterait si j'active X » : les memes filtres que la grille, zone comprise.
     const _filteredPkdxRows = (exclude) => {
-      const me = realPeople.find(p => p.id === myUid);
+      const me = _pkdxPersonne();
       const mine = me ? new Set([...me.species.keys()]) : new Set();
       const rows = _pkdxLignes(mine, exclude);
       const zone = _pkdxFilters.zone || '';
@@ -21707,6 +21716,14 @@ function renderPokedex(){
       counts.__total = rows.length;
       return counts;
     };
+    // Birdydex de : soi en tete, puis les autres membres par ordre alphabetique.
+    document.getElementById('pkdxQui')?.addEventListener('click', async () => {
+      const autres = realPeople.filter(p => p.id !== myUid).sort((a,b) => a.name.localeCompare(b.name, 'fr'));
+      const opts = [{ value:'', label:'Moi' }].concat(autres.map(p => ({ value:p.id, label:p.name })));
+      const v = await _openFilterPicker(_pkdxQui || '', { title:'Le Birdydex de qui ?', options:opts, searchable: realPeople.length > 8 });
+      if(v == null) return;
+      _pkdxQui = v || null; _pkdxRender();
+    });
     // Famille : modal picker avec search + count par famille.
     const famBtn = document.getElementById('pkdxFamily');
     if(famBtn){
@@ -21935,8 +21952,9 @@ function _pkdxGardeZone(rows, vues, zone){
 function _pkdxRender(){
   const grid = $('#pkdxGrid'); const empty = $('#pkdxEmpty'); const counter = $('#pkdxCounter');
   if(!grid) return;
-  const me = realPeople.find(p => p.id === myUid);
+  const me = _pkdxPersonne();
   const mine = me ? new Set([...me.species.keys()]) : new Set();
+  { const l = $('#pkdxQui .cp-btn-label'); if(l) l.textContent = me && me.id !== myUid ? me.name : 'Moi'; }
   // Construit d'abord la liste COMPLETE triee (sans filtres) pour figer les numeros
   // #001..#N. Chaque oiseau garde son numero meme quand on filtre. Memoise dans
   // _pkdxAllSorted pour eviter de refaire le tri a chaque rendu.
@@ -22367,6 +22385,8 @@ function _debloque(scis, opts){
   // La grille porte les noms latins actuels : un depot eBird peut encore donner l'ancien.
   const liste = [...new Set((scis || []).map(s => SCI_ALIAS[s] || s))];
   if(!liste.length) return;
+  // Une espece qu'on vient d'ajouter se revele dans SON Birdydex, pas dans celui d'un autre.
+  if(_pkdxQui){ _pkdxQui = null; if(_vueBirdydex()) _pkdxRender(); }
   if(DEBLOQUE_REVELATION) liste.forEach(s => _revelationsEnAttente.add(s));
   annonce(liste.length === 1
     ? 'Nouvelle espèce : ' + (FR_NAMES[liste[0]] || liste[0]) + '.'

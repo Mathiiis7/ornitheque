@@ -2980,7 +2980,17 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .pkdx-bloc > .ct-ligne:nth-child(2) { border-top:0; }
     .pkdx-bloc > .ct-ligne:nth-child(odd):not(.pkdx-pleine) { border-right:1px solid var(--line); }
     .pkdx-bloc > .pkdx-pleine { grid-column:1 / -1; }
+    /* « Birdydex de » en tête, sur toute la largeur (2026-11-04) : les paires d'en dessous
+       commencent au 2e enfant, le filet vertical passe donc aux enfants pairs. */
+    .pkdx-bloc > .pkdx-qui ~ .ct-ligne:nth-child(2) { border-top:1px solid var(--line); }
+    .pkdx-bloc > .pkdx-qui ~ .ct-ligne:nth-child(odd):not(.pkdx-pleine) { border-right:0; }
+    .pkdx-bloc > .pkdx-qui ~ .ct-ligne:nth-child(even):not(.pkdx-pleine) { border-right:1px solid var(--line); }
   }
+  /* « Birdydex de » ne tient pas dans les 74 px des autres noms : sa colonne prend sa largeur,
+     et le choix garde celle d'une demi-ligne au lieu de traverser tout le bloc. */
+  .pkdx-bloc .pkdx-qui { grid-template-columns:max-content minmax(0, 1fr); }
+  .pkdx-bloc .pkdx-qui > .ct-k { white-space:nowrap; }
+  .pkdx-bloc .pkdx-qui .ct-choix { max-width:340px; }
   /* Sous le bloc gris, le compte ouvre la liste. */
   .ct-pli[open] + * { margin-top:14px; }
   /* D'où viennent les points : « (138 listes) » derrière la première phrase, le détail dans la bulle (2026-10-26). */
