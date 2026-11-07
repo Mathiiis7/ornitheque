@@ -7712,7 +7712,7 @@ $('#mapSearchSuggest')?.addEventListener('mousedown', e=>{
     // La carte s'ouvre sans couche (2026-10-23) : choisir une espèce de la ligue allume la Ligue.
     if(!carteCouches.has('ligue')) _ctAllume('ligue');
     _ctAppliqueCouches();
-    _fitLayer(_mapLayer);
+    _fitLayer(_mapLayer, true);
     return;
   }
   const s = $('#mapSearch'); s.value=''; mapSearch=''; _mapApplyFilter();
@@ -8758,7 +8758,7 @@ async function _showSpeciesDetailGbif(sciName){
     // Le nombre est dit en tête de la liste : la ligne d'état ne garde que la coupe éventuelle.
     if(cnt) cnt.textContent = trunc ? `Les ${obs.length} premières observations${trunc}` : '';
     if(monde) _ctCadreFait = true;
-    _fitLayer(_lyrDetail);
+    _fitLayer(_lyrDetail, true);
     _ctAppliqueCouches();
     return obs.length;
   }catch(err){
@@ -8834,7 +8834,7 @@ async function _showSpeciesDetail(sciName, speciesCode){
     // les points. Puis le voile, la liste et la légende, comme après tout dessin (_ctAppliqueCouches).
     // Le monde cadre sur ses points dès le premier coup : _ctCadre ramène sinon sur la France.
     if(monde) _ctCadreFait = true;
-    _fitLayer(_lyrDetail);
+    _fitLayer(_lyrDetail, true);
     const cnt = _ebCompteur();
     // Le nombre est dit en tête de la liste (_ctListeRecent) : la ligne d'état le redisait.
     if(cnt) cnt.textContent = '';
@@ -8842,11 +8842,12 @@ async function _showSpeciesDetail(sciName, speciesCode){
     return count;
   }catch(_){ return 0; }
 }
-function _fitLayer(lyr){
+// force : une espèce choisie, la carte va sur ses points ; sans, seulement au tout premier cadrage.
+function _fitLayer(lyr, force){
   const latlngs = []; lyr.eachLayer(l=>{ const ll=l.getLatLng?l.getLatLng():null; if(ll) latlngs.push([ll.lat, ll.lng]); });
   if(!latlngs.length) return;
   _allBounds = L.latLngBounds(latlngs);
-  _ctCadre(_allBounds, { padding:[30,30], maxZoom:12 });
+  _ctCadre(_allBounds, { padding:[30,30], maxZoom:12, force:!!force });
 }
 document.addEventListener('change', e=>{
   if(e.target.id==='mapPlayerSel'){ mapFilter.player=e.target.value; renderMap(); }
@@ -9768,7 +9769,13 @@ function _ctCadre(bounds, opts){
   if(!_ctCadreFait){
     _ctCadreFait = true;
     if(_ctFrance()){ _map.fitBounds(CARTE_FRANCE, _ctMarges()); return; }
+    _map.fitBounds(bounds, opts); return;
   }
+  // Cadrée une fois, la carte reste où on l'a mise : un filtre changé (membre, rareté, période,
+  // regroupement...) redessine les points sans bouger la vue, pour comparer au même endroit. Il
+  // recadrait sur tous les points de la ligue, donc le monde entier (Mathis, 2026-11-07). Seul le
+  // choix d'une espèce cadre encore sur ses points (force).
+  if(!(opts && opts.force)) return;
   _map.fitBounds(bounds, opts);
 }
 function _ctCadreZone(){
