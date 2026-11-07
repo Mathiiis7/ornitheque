@@ -1,8 +1,12 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1008 / app.js?v=580 (et styles.css?v=580). Prochaine : v1009 / 581.
+Dernière version : v1009 / app.js?v=581 (et styles.css?v=581). Prochaine : v1010 / 582.
 
 ## Décidé le 07/11
+- **v1009** : hauteur de la carte au téléphone en `svh` au lieu de `dvh`. En défilant sur iPhone, la carte
+  sautait puis se remettait : `dvh` suit la barre d'adresse de Safari, qui se replie et revient. Le doigt
+  qui déplace la carte en voulant défiler ne gêne PAS Mathis (deux doigts proposés, refusé). Non vérifiable
+  dans nos tests (pas de barre de Safari) : à confirmer par Mathis sur son iPhone.
 - **v1007** : thème JOUR par défaut partout (le site suivait l'appareil, donc nuit sur un téléphone en
   sombre) ; le choix du bouton est gardé (`mb-theme`), relu dans le script en tête d'index.html.
 - **« Tous les cochages » marche** (essai démo enrichie : 1 333 -> 3 999 points, ordinateur et doigt), mais

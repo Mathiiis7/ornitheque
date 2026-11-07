@@ -3070,9 +3070,12 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
        entière hors de l'écran (76 à 130 px de trop de 414 à 360 px de large), et Hotspots coupé. */
     .ct-couches { padding-top:8px; }
     .ct-couche { flex:none; }
-    /* La carte prend presque tout l'écran : 100dvh se lit avant le zoom 0,85 du corps, d'où la
-       division ; il reste la rangée des couches au-dessus quand on fait défiler jusqu'à elle. */
-    .ct-carte { height:calc(100dvh / 0.85 - 130px); min-height:420px; }
+    /* La carte prend presque tout l'écran : 100svh se lit avant le zoom 0,85 du corps, d'où la
+       division ; il reste la rangée des couches au-dessus quand on fait défiler jusqu'à elle.
+       svh et non dvh : dvh suit la barre d'adresse de Safari, qui se replie et revient pendant le
+       défilement ; le cadre changeait de hauteur et la carte sautait puis se remettait (Mathis sur
+       iPhone, 2026-11-07). svh est la hauteur barre affichée : elle ne bouge plus. */
+    .ct-carte { height:calc(100svh / 0.85 - 130px); min-height:420px; }
     .ct-bulle { display:none; }
     /* La hauteur fixe et la liste qui défile dans son cadre, c'est l'ordinateur : ici la page défile. */
     .ct-place-panneau { margin-top:12px; }
