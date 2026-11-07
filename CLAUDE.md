@@ -124,7 +124,8 @@ régénérer : refaire l'avant/après espèce par espèce (`notes-privees/essai-
 par RÉGION (`perdues-regions.mjs`), pas seulement sur les espèces d'essai.
 
 **Deux sessions dans le même dossier de travail** (2026-10-22, cartes et photos) : chacune commite
-seulement ses morceaux (`git apply --cached` d'un diff filtré), et elles se disent leurs numéros de
+seulement ses morceaux (`git apply --cached` d'un diff filtré, AVEC son contexte : sans contexte,
+`-U0` + `--unidiff-zero` a posé un bloc dans la mauvaise ligne d'`index.html`, v1000), et elles se disent leurs numéros de
 version, pris l'un au-dessus de l'autre. **Avant de commiter `app.js`, relire les zones du diff** :
 le v869 (Classement) a réécrit la table des photos avec une version d'avant la fusion et effacé
 185 choix de Mathis sans que personne le voie, jusqu'à la Linotte à bec jaune le lendemain
