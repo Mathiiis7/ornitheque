@@ -10401,6 +10401,7 @@ document.addEventListener('click', e => {
     return;
   }
   if(e.target.closest('#ctPoignee')){ carteTiroir = { bas:'mi', mi:'haut', haut:'bas' }[carteTiroir] || 'mi'; _ctDessinePanneau(); return; }
+  if(e.target.closest('#ctFiltresTel')){ _ctOuvreFiltresTel(); return; }
   if(e.target.closest('#ctFrance') || e.target.closest('#ctAriane [data-carte="monde"]')){ _ctRetourPays(true); return; }
   if(e.target.closest('#ctAriane [data-carte="pays"]')){ _ctRetourPays(false); return; }
   if(e.target.closest('#ctAriane [data-carte="region"]')){ _ctChoisirRegion(ebFilter.region); return; }
@@ -10409,6 +10410,22 @@ document.addEventListener('click', e => {
   if(e.target.closest('#mapDrawClear')){ _ctSurligne(); _ctAppliqueCouches(); }
   // Les lignes de la liste de la Ligue : même gestionnaire que le Récent (_ctRangHtml, plus bas).
 });
+// « Filtres » du tiroir replié (téléphone) : remonte le tiroir et déplie les filtres de l'onglet. Si sa
+// couche est éteinte et qu'une autre est allumée, on passe à l'onglet de celle-ci : ses filtres ne se
+// montrent qu'avec la couche. Aucune couche allumée : l'onglet propose « Afficher la couche », rien ne
+// s'allume tout seul (Mathis, 2026-10-30).
+function _ctOuvreFiltresTel(){
+  let onglet = CARTE_MODE_ONGLET[mapMode] || 'ligue';
+  if(!carteCouches.has(onglet)){
+    const k = ['recent', 'ligue', 'hot'].find(c => carteCouches.has(c));
+    if(k){ document.querySelector(`#ctOnglets [data-onglet="${k}"]`)?.click(); onglet = k; }
+  }
+  carteTiroir = 'mi'; _ctDessinePanneau();
+  const pli = document.querySelector(`#ctContenu [data-volet="${onglet}"] .ct-pli`);
+  if(pli && carteCouches.has(onglet)) pli.open = true;
+  // Les filtres sont en tête du volet : on remonte la liste si elle avait défilé.
+  const contenu = document.getElementById('ctContenu'); if(contenu) contenu.scrollTop = 0;
+}
 // Flèches gauche et droite entre les onglets du panneau, comme une vraie rangée d'onglets.
 document.addEventListener('keydown', e => {
   const t = e.target.closest && e.target.closest('#ctOnglets [data-onglet]');
