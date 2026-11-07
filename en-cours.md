@@ -1,13 +1,19 @@
-# Où on en est (2026-11-03)
+# Où on en est (2026-11-07)
 
-Dernière version : v1003 / app.js?v=575. Prochaine : v1004 / 576.
+Dernière version : v1004 / app.js?v=576. Prochaine : v1005 / 577.
 
 ## Décidé le 07/11
 - **v1003** : au téléphone, le tiroir replié de la Carte garde un bouton « Filtres » à droite du nom
   (choix de Mathis parmi trois) ; il remonte le tiroir à mi-hauteur et déplie les filtres. Sans lui, les
   filtres n'étaient trouvables qu'en touchant la poignée, introuvables sur iPhone. Essais :
   `outils/verif/_essai-filtres-tel*.mjs`. Non vérifié sur un vrai Safari (moteur WebKit pas installé).
-- v1000 à v1002 : « Regrouper les points » de la Ligue, par une autre session. Historique complet jusqu'au 30/10 :
+- **v1000 à v1004** : interrupteur « Regrouper les points » dans les Filtres de la Ligue. ÉTEINT par
+  défaut (tous les points, écartés en spirale au même lieu, comme avant le 23/10) ; le choix est gardé
+  par appareil (`localStorage` `mb-ligue-grappes`). Choix de Mathis : un ami qui préfère tous les points
+  n'a rien à toucher. v1000 avait glissé la ligne dans « Rareté » (correctif appliqué sans contexte
+  avec `git apply --unidiff-zero`) : pour commiter un diff filtré, garder le contexte.
+
+Historique complet jusqu'au 30/10 :
 `archives/en-cours-jusqu-au-2026-10-30.md` (y chercher un mot plutôt que le lire en entier, 85 000 jetons).
 Ce fichier se remplace à chaque fin de tâche : quelques lignes, pas un journal.
 
