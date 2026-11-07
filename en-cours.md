@@ -1,6 +1,6 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1009 / app.js?v=581 (et styles.css?v=581). Prochaine : v1010 / 582.
+Dernière version : v1010 / app.js?v=582 (et styles.css?v=582). Prochaine : v1011 / 583.
 
 ## Décidé le 07/11
 - **v1009** : hauteur de la carte au téléphone en `svh` au lieu de `dvh`. En défilant sur iPhone, la carte
@@ -9,10 +9,11 @@ Dernière version : v1009 / app.js?v=581 (et styles.css?v=581). Prochaine : v101
   dans nos tests (pas de barre de Safari) : à confirmer par Mathis sur son iPhone.
 - **v1007** : thème JOUR par défaut partout (le site suivait l'appareil, donc nuit sur un téléphone en
   sombre) ; le choix du bouton est gardé (`mb-theme`), relu dans le script en tête d'index.html.
-- **« Tous les cochages » marche** (essai démo enrichie : 1 333 -> 3 999 points, ordinateur et doigt), mais
+- **v1010 : « Tous les cochages » RETIRÉ de la Ligue (choix de Mathis).** Il marchait (essai démo enrichie : 1 333 -> 3 999 points, ordinateur et doigt), mais
   il n'a presque rien à montrer : sauvegarde du 04/10, 7 membres sur 11 sans aucune observation multiple
   (liste de vie eBird = une ligne par espèce) ; il faut l'export MyEBirdData complet, et 20 obs au plus
-  par espèce (`saveMyList`). Dit à Mathis, rien changé.
+  par espèce (`saveMyList`). « Regrouper les points » a repris la ligne « Afficher ». Celui de la carte
+  de la fiche espèce (`smShowAllObs`) reste : Mathis ne l'a pas mentionné.
 - **v1008** : `styles.css` porte le même `?v=` qu'app.js (voir CLAUDE.md, Déployer). Mathis a vu sur iPhone,
   juste après la v1006, le panneau de la Carte invisible et la Légende remontée : nouvel app.js avec
   l'ancien CSS gardé 10 min en cache. Rejoué avec `outils/verif/_essai-legende-tel.mjs` (ANCIEN_CSS=...).
