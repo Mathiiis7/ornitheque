@@ -181,6 +181,10 @@ cherche l'un ou l'autre échoue - c'est déjà arrivé deux fois. L'ancre fiable
 `\.` dans une expression régulière perd son antislash. Pour tout ce qui contient des
 échappements, passer par les outils Write / Edit, jamais par `cat <<'FIN'`.
 
+**Une copie `git worktree` ne reçoit jamais de jonction vers `node_modules`** : `git worktree remove --force`
+supprime à travers la jonction et vide le vrai `node_modules` (2026-11-07, `npm ci` pour réparer).
+Retirer d'abord la jonction (`cmd /c rmdir`), ou lancer les bancs depuis le dossier principal.
+
 **En PowerShell, `Set-Location` ne déplace pas `[IO.File]`.** Les méthodes .NET lisent et écrivent
 depuis le dossier de départ du processus, pas depuis celui de `Set-Location`. Le 2026-10-23, un
 remplacement « dans le dossier à part » (`ornitheque-carte`) a écrit dans l'`app.js` du dossier
