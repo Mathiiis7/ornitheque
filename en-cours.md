@@ -1,8 +1,14 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1012 / app.js?v=584 (et styles.css?v=584). Prochaine : v1013 / 585.
+Dernière version : v1013 / app.js?v=585 (et styles.css?v=585). Prochaine : v1014 / 586.
 
 ## Décidé le 07/11
+- **v1013** : en arrivant sur la Carte, une fenêtre « Que veux-tu voir sur la carte ? » propose Vu récemment,
+  La ligue ou Hotspots, avec un petit dessin et une phrase chacun (maquette B, trois lignes, choisie par
+  Mathis : `notes-privees/maquettes/choix-carte/`). Une fois par CHARGEMENT du site (simple variable
+  `_ctChoixFait`, pas de stockage : recharger la remontre, passer par le Birdydex non). Choisir = cliquer la
+  pastille de la couche ; fermer laisse la carte vide comme avant. Pas montrée par « Voir en grand » de la
+  fiche, ni pendant le guide (proposée à sa fermeture si on est sur la Carte).
 - **v1012** : au doigt, toucher la carte pour refermer la bulle d'un point (ou d'une grappe, d'un hotspot)
   ne choisit plus le pays, la région ou la réserve en dessous (Mathis sur iPhone). L'état se lit au
   `pointerdown` : au clic, Leaflet a déjà fermé l'infobulle (mouseout simulé). Essai :
