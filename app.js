@@ -7194,7 +7194,7 @@ let _lyrMissing=null, _lyrHotspots=null;
 let _loaded = { missing:'', hotspots:'' };   // clé de cache (région+jours)
 // Filtres propres au mode "mine"
 // La rareté de la ligue se règle comme celle du Récent (2026-10-26) : plusieurs paliers à la fois, ou un statut N.
-let mapFilter = { player:'all', rarities:new Set([1,2,3,4,5,6,7,8,9,10]), cats:new Set(), country:'any', showAllObs:false };
+let mapFilter = { player:'all', rarities:new Set([1,2,3,4,5,6,7,8,9,10]), cats:new Set(), country:'any', showAllObs:false, grappes:true };
 // Filtres propres aux modes eBird
 // `rarities` = Set des paliers sélectionnés (1-10). `cats` = statuts X / P / N cochés : non vide,
 // il prime sur les paliers, comme au Birdydex (voir _passeRarCarte).
@@ -7350,7 +7350,7 @@ function _updateLegend(){
     const anneau = `<span class="ct-gr ct-gr-sym" style="background:conic-gradient(${realColor(2)} 0deg 200deg, ${realColor(6)} 200deg 300deg, ${realColor(9)} 300deg 360deg)" aria-hidden="true"><span>5</span></span>`;
     const formes = '<div class="ct-leg-formes">' + [ligue ? `<span class="ml-row">${_ctSymbole('ligue')}<span class="ml-txt">La ligue : l'initiale de l'ami</span></span>` : '',
       recent ? `<span class="ml-row">${_ctSymbole('recent')}<span class="ml-txt">Vu récemment</span></span>` : '',
-      L.markerClusterGroup ? `<span class="ml-row">${anneau}<span class="ml-txt">Plusieurs points : ${_ctAuDoigt.matches ? 'touche' : 'clique'} pour ouvrir</span></span>` : ''].join('') + '</div>';
+      L.markerClusterGroup && (recent || mapFilter.grappes !== false) ? `<span class="ml-row">${anneau}<span class="ml-txt">Plusieurs points : ${_ctAuDoigt.matches ? 'touche' : 'clique'} pour ouvrir</span></span>` : ''].join('') + '</div>';
     const tiers=[1,2,3,4,5,6,7,8,9,10];
     // Les dix paliers sur deux colonnes : en une seule, la légende montait jusqu'au crayon. Chacun avec
     // la pastille ronde chiffrée de l'appli (tierChip), celle des points et du survol (Mathis, 2026-10-23 :
@@ -7870,7 +7870,8 @@ function _mapMarker(pt, groupSize){
   const m = _ctPastille([pt.dispLat, pt.dispLon], color, pt.w, _ctLettreDessinee(_ctInitiale(pt.who)));
   m._q = _ctCleLigue(pt);
   m._sciName = pt.sci; m._common = pt.common;   // pour l'autocomplétion (nom espèce dans le dropdown)
-  m._ligue = { who:pt.who, date:pt.date, loc:pt.loc || '', cc:pt.cc || '', statut:statutAuLieu(pt.sci, pt.cc || 'FR') };   // pour le survol et la fiche
+  // pos : le vrai lieu, le point pouvant être écarté de quelques mètres quand les grappes sont éteintes.
+  m._ligue = { who:pt.who, date:pt.date, loc:pt.loc || '', cc:pt.cc || '', pos:pt.lat.toFixed(5) + ',' + pt.lon.toFixed(5), statut:statutAuLieu(pt.sci, pt.cc || 'FR') };   // pour le survol et la fiche
   return m;
 }
 // Lazy-load des grosses donnees eBird, splitees par usage pour minimiser le boot :
@@ -8204,11 +8205,13 @@ function _renderModeMine(el){
   const groups = new Map();
   for(const p of pts){ const k = p.lat.toFixed(5)+','+p.lon.toFixed(5); if(!groups.has(k)) groups.set(k,[]); groups.get(k).push(p); }
   // En grappes, les points d'un même endroit restent à leur place : la grappe les liste au clic.
-  const grappes = !!L.markerClusterGroup;
+  // « Regrouper les points » éteint (Mathis, 2026-11-07) : l'affichage d'avant le 2026-10-23, chaque
+  // point visible, ceux d'un même endroit écartés en spirale (_spreadGroup).
+  const grappes = !!L.markerClusterGroup && mapFilter.grappes !== false;
   for(const g of groups.values()){ if(grappes) for(const p of g){ p.dispLat = p.lat; p.dispLon = p.lon; } else _spreadGroup(g); }
   const ordered = [...pts].sort((a,b)=> a.w - b.w);
   const markers = ordered.map(p=>_mapMarker(p, groups.get(p.lat.toFixed(5)+','+p.lon.toFixed(5)).length));
-  _mapLayer = _ctGrappes();
+  _mapLayer = grappes ? _ctGrappes() : _ctBrancheSurvol(L.featureGroup());
   _mapLayer._ctTous = markers;   // tous les points ; _mapApplyFilter n'en remet que les visibles
   if(_mapLayer.addLayers) _mapLayer.addLayers(markers); else markers.forEach(m => _mapLayer.addLayer(m));
   _mapLayer.addTo(_map);
@@ -8845,6 +8848,7 @@ document.addEventListener('change', e=>{
   if(e.target.id==='mapPlayerSel'){ mapFilter.player=e.target.value; renderMap(); }
   else if(e.target.id==='mapCountrySel'){ mapFilter.country=e.target.value; renderMap(); }
   else if(e.target.id==='mapMineShowAllObs'){ mapFilter.showAllObs = !!e.target.checked; renderMap(); }
+  else if(e.target.id==='mapLigueGrappes'){ mapFilter.grappes = !!e.target.checked; renderMap(); _updateLegend(); }
   else if(e.target.id==='mapEbShowObserved' || e.target.id==='ctRecManque' || e.target.id==='ctHotManque'){
     // Un seul réglage : « Seulement ce qui me manque » (Récent et Hotspots, allumé par défaut) et son
     // inverse, l'ancienne case cachée « Inclure déjà observés ».
@@ -10289,7 +10293,7 @@ function _ctObsLigue(sci, pts){
   const cle = (la, lo) => la.toFixed(5) + ',' + lo.toFixed(5);
   const obs = pts.filter(p => p.sci === sci).sort((a, b) => (b.dateOrd || 0) - (a.dateOrd || 0));
   return _ctObsHtml(obs.map(p => {
-    const m = tous.find(x => x._sciName === sci && x._ligue && x._ligue.who === p.who && x._ligue.date === p.date && cle(x.getLatLng().lat, x.getLatLng().lng) === cle(p.lat, p.lon));
+    const m = tous.find(x => x._sciName === sci && x._ligue && x._ligue.who === p.who && x._ligue.date === p.date && x._ligue.pos === cle(p.lat, p.lon));
     return { id:m ? L.stamp(m) : '', titre:p.who, detail:[_ctDateCourte(p.date) || p.date, p.loc].filter(Boolean).join(' · ') };
   }), 'lig');
 }
