@@ -2,6 +2,21 @@
 
 Dernière version : v1014 / app.js?v=586 (et styles.css?v=586). Prochaine : v1015 / 587.
 
+## PROCHAIN CHANTIER (demandé le 07/11) : le site au téléphone
+Mathis trouve l'affichage téléphone « pas adapté et pas très utilisable », sur **tout le site**. Ce qui
+gêne, ses trois réponses : **trop d'infos à l'écran** (serré, on ne sait pas où regarder, beaucoup de
+défilement), **des choses coupées** (textes tronqués, tableaux qui débordent, éléments hors écran), et
+**ça ressemble à un site d'ordi** (il voudrait que ça se manie comme une appli de téléphone). Pas cité :
+« difficile à toucher » (les cibles de 44 px sont déjà faites).
+Méthode prévue :
+1. Constat : chaque onglet en largeur téléphone (375 px, `isMobile:true`, démo locale), captures et liste
+   de ce qui est coupé ou débordant, mesuré (scrollWidth, textes tronqués), dans `notes-privees/`.
+2. Maquettes avant de toucher au code (CLAUDE.md global) : 2 ou 3 directions pour la navigation (barre
+   d'onglets en bas ? écrans plein écran ?) et pour alléger une page type. Il choisit.
+3. Puis page par page, vérifié au téléphone et à l'ordinateur (l'affichage souris ne doit pas bouger).
+Déjà fait au téléphone, à ne pas défaire : Carte sans tiroir, panneau dessous (v1006) ; carte en `svh`
+(v1009) ; ronds de rareté à 24 px (v1006) ; bloc `@media (pointer: coarse)` en fin de styles.css.
+
 ## Décidé le 07/11
 - **v1014** : rayon des grappes selon le zoom (40 px jusqu'au zoom 5, 34 jusqu'à 8, 28 jusqu'à 11, puis 24 ; 45 partout avant), Mathis : des points qui ne se touchaient pas étaient regroupés. Mesuré sur la démo (outils/verif/_essai-rayon-grappes.mjs, ANCIEN=45 pour comparer) : grappes de points séparés 63 -> 45 au zoom 7, 44 -> 26 au zoom 8, 6 -> 1 au zoom 9.
 - **v1013** : en arrivant sur la Carte, une fenêtre « Que veux-tu voir sur la carte ? » propose Vu récemment,
