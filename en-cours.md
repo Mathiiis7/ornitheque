@@ -1,6 +1,6 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1004 / app.js?v=576. Prochaine : v1005 / 577.
+Dernière version : v1005 / app.js?v=577. Prochaine : v1006 / 578.
 
 ## Décidé le 07/11
 - **v1003** : au téléphone, le tiroir replié de la Carte garde un bouton « Filtres » à droite du nom
@@ -12,6 +12,10 @@ Dernière version : v1004 / app.js?v=576. Prochaine : v1005 / 577.
   par appareil (`localStorage` `mb-ligue-grappes`). Choix de Mathis : un ami qui préfère tous les points
   n'a rien à toucher. v1000 avait glissé la ligne dans « Rareté » (correctif appliqué sans contexte
   avec `git apply --unidiff-zero`) : pour commiter un diff filtré, garder le contexte.
+- **v1005** : une fois cadrée, la Carte ne bouge plus quand un filtre change (elle recadrait sur tous
+  les points de la ligue, donc le monde) ; `_ctCadre` ne recadre qu'au premier cadrage ou avec
+  `force` (choix d'une espèce). La v1004 n'était pas en ligne avant : publication GitHub tombée en
+  délai dépassé après trois poussées rapprochées, repartie avec la v1005.
 
 Historique complet jusqu'au 30/10 :
 `archives/en-cours-jusqu-au-2026-10-30.md` (y chercher un mot plutôt que le lire en entier, 85 000 jetons).
