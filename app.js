@@ -6521,7 +6521,9 @@ function renderChat(msgs){
   const statusById = new Map(realPeople.map(p=>[p.id, p.status || '']));
   const avatarById = new Map(realPeople.map(p=>[p.id, p.avatar || '']));
   const msgById = new Map(msgs.map(m => [m.id, m]));
-  const nearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
+  // Au téléphone, la boîte ne défile plus (page à plat) : « en bas » se lit sur la page.
+  const nearBottom = _telBarre.matches ? document.documentElement.scrollHeight - scrollY - innerHeight < 160
+    : box.scrollHeight - box.scrollTop - box.clientHeight < 80;
   if(!msgs.length){ box.innerHTML='<div class="chat-empty">Aucun message. Lance la conversation ! 🐦</div>'; return; }
   const now = Date.now();
   const EDIT_WINDOW_MS = 5 * 60 * 1000;   // 5 min pour editer son propre message
@@ -6602,7 +6604,13 @@ function renderChat(msgs){
     </div>`;
   }).join('');
   watchThumbs(box);
-  if(nearBottom) box.scrollTop = box.scrollHeight;
+  if(nearBottom) _chatEnBas();
+}
+// Les derniers messages à l'écran : la boîte à l'ordinateur, la page au téléphone (Tchat à plat, 2026-11-08).
+function _chatEnBas(){
+  const box = document.getElementById('chatMessages'); if(!box) return;
+  if(_telBarre.matches) scrollTo(0, document.documentElement.scrollHeight);
+  else box.scrollTop = box.scrollHeight;
 }
 function myMemberName(){ const me=realPeople.find(p=>p.id===myUid); return me ? me.name : ''; }
 // Un message est "emoji seul" si, hors espaces, il ne contient QUE des emojis (pictographes + modifiers + ZWJ + variation selectors).
@@ -14453,7 +14461,7 @@ document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',e=>{
   if(b.dataset.view==='chat'){
     updateChatIdentity();
     renderOnline();
-    const box=$('#chatMessages'); if(box) box.scrollTop=box.scrollHeight;
+    _chatEnBas();
     // Au téléphone, pas de curseur d'emblée : le clavier s'ouvrirait et cacherait les messages.
     if(!_telBarre.matches) $('#chatText')?.focus();
     markSeen('chat');

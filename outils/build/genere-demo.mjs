@@ -455,6 +455,8 @@ const INJECTION = `
   @media (max-width:700px){
     #demoBandeau{ bottom:calc(var(--barre-h) + env(safe-area-inset-bottom)); box-shadow:none; }
     html .wrap{ padding-bottom:calc(var(--barre-h) + env(safe-area-inset-bottom) + 64px); }
+    /* La saisie du Tchat, collée au-dessus de la barre, passerait sous le bandeau. */
+    html #viewChat .chat-compose{ bottom:calc(var(--barre-h) + env(safe-area-inset-bottom) + var(--bandeau-h, 48px)); }
   }
 </style>
 <!-- ================= FIN DU BLOC DEMO ================= -->`;

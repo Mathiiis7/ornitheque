@@ -4320,6 +4320,52 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .plus-ligne[aria-checked="true"] .plus-interrupteur::after { left:21px; }
     .plus-compte { margin:18px 4px 0; color:var(--ink-3); font-size:15px; overflow-wrap:anywhere; }
     .plus-sortie { display:block; margin:6px 0 0; min-height:52px; padding:0 4px; border:0; background:none; color:#c0392b; font:600 17px var(--sans); cursor:pointer; }
+
+    /* ---- Les pages, une à une (choix de Mathis le 2026-11-08 sur notes-privees/maquettes/telephone-pages/) ---- */
+    /* Ma liste (A) : les quatre actions en une rangée, icône dans son carré teinté au-dessus du mot ;
+       la liste s'étale dans la page au lieu de défiler dans une boîte de 560 px (deux défilements). */
+    .ml-boxes { grid-template-columns:repeat(4, minmax(0,1fr)); gap:6px; }
+    .ml-box { flex-direction:column; justify-content:center; text-align:center; gap:6px; padding:10px 4px; min-height:88px; font-size:13px; line-height:1.2; }
+    .ml-box .ml-ic { flex:none; width:38px; height:38px; }
+    .mylist-body { max-height:none; overflow:visible; border:0; border-radius:0; }
+    /* L'en-tête de la liste se colle sous l'entête du site, plus en haut de la boîte. */
+    .mylist-row.mylist-th { top:53px; }
+
+    /* Classement (A) : rang, joueur, nombre ; les colonnes de photos et de raretés, qui faisaient défiler
+       le tableau de côté, restent à l'ordinateur. */
+    #boardList .board-sheet { width:100%; min-width:0; }
+    #boardList .board-sheet .c-esp, #boardList .board-sheet th.c-txt { display:none; }
+    /* « Qui a vu quoi » garde le tableau de l'ordinateur (Mathis), à la hauteur de l'écran, colonnes resserrées :
+       Espèce figée à gauche, les personnes défilent de côté. Les cartes d'avant ne servent plus ici. */
+    #matrix .tbl-scroll { display:block; max-height:calc(100svh - 53px - var(--barre-h) - 24px); }
+    #matrix .matrix-cards { display:none; }
+    #matrix .tbl-scroll thead th:first-child, #matrix .tbl-scroll tbody td.sp { width:150px; min-width:150px; max-width:150px; }
+    #matrix:not(.sans-rarete) .tbl-scroll thead th:nth-child(2), #matrix:not(.sans-rarete) .tbl-scroll tbody td:nth-child(2) { left:150px; }
+    #matrix.rar-ronds:not(.sans-rarete) .tbl-scroll thead th:nth-child(2), #matrix.rar-ronds:not(.sans-rarete) .tbl-scroll tbody tr td:nth-child(2) {
+      width:72px; min-width:72px; max-width:72px; }
+    #matrix .tbl-scroll th.pcol, #matrix .tbl-scroll td.pcol { min-width:76px; }
+
+    /* Trophées (A) : une ligne par trophée, la coupe à gauche, nom, palier et jauge à droite. Les cartes de
+       deux colonnes faisaient ~340 px de haut chacune. */
+    .tro-families { grid-template-columns:1fr; gap:6px; }
+    .tro-family { flex-direction:row; text-align:left; padding:8px 12px 8px 8px; gap:12px; align-items:center; }
+    .tro-fam-cup, .tro-fam-cup .tro-cup { width:68px; height:68px; flex:none; }
+    .tro-fam-body { align-items:stretch; }
+    .tro-fam-title { justify-content:flex-start; }
+    .tro-fam-family { text-align:left; margin-top:0; }
+
+    /* Carte (B) : les quatre couches en une rangée de cases égales, symbole au-dessus du mot (elles passaient
+       sur deux lignes). */
+    .ct-couches { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:6px; }
+    .ct-couche { flex-direction:column; justify-content:center; height:auto; min-height:60px; padding:6px 2px; border-radius:12px;
+      gap:4px; font-size:13px; text-align:center; line-height:1.15; white-space:normal; overflow-wrap:anywhere; }
+
+    /* Tchat (A) : plus de boîte grise qui défile dans la page ; les messages prennent la page et la saisie
+       reste collée au-dessus de la barre (_chatEnBas() fait descendre la page aux derniers messages). */
+    .chat-box { height:auto; max-height:none; overflow:visible; background:none; border:0; padding:0; }
+    .chat-compose { position:sticky; bottom:calc(var(--barre-h) + env(safe-area-inset-bottom)); z-index:5; background:var(--surface);
+      margin:8px -16px 0; padding:8px 16px; border-top:1px solid var(--line); }
+    .chat-compose .chat-name.locked { display:none; }
   }
   /* Au doigt, les ronds de rareté restent à 24 px d'écran (choix de Mathis, 2026-11-07) : sans le zoom
      0,85, leur boîte doublée de 56 px en ferait 28. Zone invisible de 7 px de chaque côté : 38 px. */
