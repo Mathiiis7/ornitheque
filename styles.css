@@ -4366,6 +4366,13 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .chat-compose { position:sticky; bottom:calc(var(--barre-h) + env(safe-area-inset-bottom)); z-index:5; background:var(--surface);
       margin:8px -16px 0; padding:8px 16px; border-top:1px solid var(--line); }
     .chat-compose .chat-name.locked { display:none; }
+
+    /* Birdydex (C) : la grille de trois colonnes reste ; le nom passe à 14 px (12,5 avant) et le nom latin
+       et le numéro, en 8 à 10 px, quittent la vignette (ils restent dans la fiche). */
+    .pkdx-card .pkdx-name { font-size:14px; }
+    /* Trois colonnes à toutes les largeurs de téléphone : à 360 px, la grille passait à deux. */
+    .pkdx-grid { grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px; }
+    .pkdx-card .pkdx-sci, .pkdx-card .pkdx-num { display:none; }
   }
   /* Au doigt, les ronds de rareté restent à 24 px d'écran (choix de Mathis, 2026-11-07) : sans le zoom
      0,85, leur boîte doublée de 56 px en ferait 28. Zone invisible de 7 px de chaque côté : 38 px. */

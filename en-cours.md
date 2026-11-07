@@ -1,6 +1,6 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1016 / app.js?v=588 (et styles.css?v=588). Prochaine : v1017 / 589.
+Dernière version : v1017 / app.js?v=589 (et styles.css?v=589). Prochaine : v1018 / 590.
 
 ## PROCHAIN CHANTIER (demandé le 07/11) : le site au téléphone
 Mathis trouve l'affichage téléphone « pas adapté et pas très utilisable », sur **tout le site**. Ce qui
@@ -30,7 +30,8 @@ Toujours pas de réponse sur ce qu'il a vu COUPÉ sur son iPhone.
 la page). Captures : `notes-privees/chantier-telephone/pages/` (outils/verif/_capture-maquette-pages.mjs).
 **v1016 (08/11) EN LIGNE**, choix de Mathis : Ma liste A (carré teinté des icônes GARDÉ, il l'a demandé), Classement A
 mais « Qui a vu quoi » en TABLEAU comme à l'ordinateur (pas les cartes), Trophées A, Carte B, Tchat A
-(_chatEnBas). Essai : outils/verif/_essai-pages-tel.mjs. **Birdydex en attente** : il a demandé si C = l'actuel.
+(_chatEnBas). Essai : outils/verif/_essai-pages-tel.mjs. **v1017** : Birdydex C (3 colonnes même à 360 px, nom 14 px, sans latin ni numéro). Chantier téléphone 3b FINI ;
+reste seulement ce que Mathis verra sur son iPhone (clavier, barre Safari, appli installée).
 Déjà fait au téléphone, à ne pas défaire : Carte sans tiroir, panneau dessous (v1006) ; carte en `svh`
 (v1009) ; ronds de rareté à 24 px (v1006) ; bloc `@media (pointer: coarse)` en fin de styles.css.
 
