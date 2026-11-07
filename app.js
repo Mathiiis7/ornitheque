@@ -20877,7 +20877,10 @@ $('#themeBtn').addEventListener('click',()=>{
   const cur=root.getAttribute('data-theme');
   const sysDark=matchMedia('(prefers-color-scheme: dark)').matches;
   const isDark = cur? cur==='dark' : sysDark;
-  root.setAttribute('data-theme', isDark?'light':'dark');
+  const nouveau = isDark ? 'light' : 'dark';
+  root.setAttribute('data-theme', nouveau);
+  // Gardé sur l'appareil : index.html le relit avant le premier affichage (jour par défaut).
+  try{ localStorage.setItem('mb-theme', nouveau); }catch(_){}
 });
 
 // Logo de l'entete : la tete sur vert pale en clair, sur sapin en sombre (choix du 2026-10-05).

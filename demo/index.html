@@ -125,7 +125,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=578">
+<link rel="modulepreload" href="app.js?v=579">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -155,7 +155,12 @@
 // data-splash tient l ecran d attente APRES que Firebase a repondu, le temps que les donnees
 // arrivent. C est app.js qui le retire, voir _retireSplash(). Pose ici et non dans app.js :
 // il doit exister des la premiere ligne, avant meme que le module soit telecharge.
-document.documentElement.setAttribute('data-splash', 'on');</script>
+document.documentElement.setAttribute('data-splash', 'on');
+// Thème : le jour par défaut, même sur un appareil réglé en sombre ; le choix fait avec le bouton
+// est gardé sur l'appareil (mb-theme). Posé ici, avant le premier affichage, pour ne pas voir la
+// page clignoter de nuit en jour (Mathis, 2026-11-07).
+var _theme = 'light'; try{ _theme = localStorage.getItem('mb-theme') === 'dark' ? 'dark' : 'light'; }catch(_){}
+document.documentElement.setAttribute('data-theme', _theme);</script>
 
 <!-- Region d'annonce pour les lecteurs d'ecran. Un seul point de passage pour tout ce que
      l'appli veut dire sans l'ecrire a l'ecran : arrivee d'un message, fin d'une analyse,
@@ -1716,5 +1721,5 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=578"></script>
+<script type="module" src="app.js?v=579"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>
