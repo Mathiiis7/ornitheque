@@ -32,6 +32,10 @@ export const titre = 'Lecteur d ecran et cibles tactiles';
 export const quoi = 'ce qu un lecteur d ecran annonce, et ce qu un doigt peut atteindre';
 
 const CIBLE_ECRAN = 44;   // Apple HIG, Material, WCAG 2.5.5
+// Les ronds de rarete font exception, par choix de Mathis (2026-11-07) : a 44 px ils etaient « bcp trop
+// gros ». Ils font 24 px a l'oeil, et une zone invisible (::after) les elargit : c'est elle que le doigt
+// touche et que le banc mesure, a 37 px d'ecran au moins.
+const ZONE_PASTILLE_ECRAN = 37;
 
 // Le temoin. Chaque bloc reprend le balisage reel, classes comprises : c'est ce qui fait que
 // les selecteurs de styles.css s'appliquent vraiment. visibility:hidden et non display:none,
@@ -174,9 +178,19 @@ export async function mesure({ navigateur, RACINE }){
         return { l: Math.round(b.width * 10) / 10, h: Math.round(b.height * 10) / 10,
                  opacite: parseFloat(getComputedStyle(el).opacity) };
       };
+      // La zone de toucher d'un rond : sa boite plus le debord de son ::after, ramene a l'echelle de
+      // l'ecran (le rond est dessine au double puis reduit, et le corps porte un zoom).
+      const lireZone = sel => { const el = document.querySelector('#bancA11y ' + sel);
+        if(!el) return null;
+        const b = el.getBoundingClientRect(), echelle = b.width / el.offsetWidth;
+        const a = getComputedStyle(el, '::after');
+        const deb = a.content && a.content !== 'none' && a.position === 'absolute' ? Math.max(0, -parseFloat(a.left) || 0) : 0;
+        const z = v => Math.round((v + 2 * deb * echelle) * 10) / 10;
+        return { l: z(b.width), h: z(b.height), oeil: Math.round(b.width * 10) / 10 };
+      };
       const res = {
-        pastille: lire('.rar-chip[data-rar="7"]'),
-        pastilleLarge: lire('.rar-chip[data-rar="10"]'),
+        pastille: lireZone('.rar-chip[data-rar="7"]'),
+        pastilleLarge: lireZone('.rar-chip[data-rar="10"]'),
         actionMsg: lire('.msg-act'),
         reaction: lire('.react-chip'),
         ajoutReaction: lire('.react-add'),
@@ -192,8 +206,12 @@ export async function mesure({ navigateur, RACINE }){
       const petit = Math.min(m.l, m.h);
       r.verif('  ' + libelle, m.l + ' x ' + m.h + ' px', petit >= CIBLE_ECRAN);
     };
-    mesureCible('pastille de rareté « 7 »', tailles.pastille);
-    mesureCible('pastille de rareté « 10 »', tailles.pastilleLarge);
+    const mesureZone = (libelle, m) => {
+      if(!m){ r.verif('  ' + libelle, 'INTROUVABLE', false); return; }
+      r.verif('  ' + libelle, m.l + ' x ' + m.h + ' px (rond ' + m.oeil + ')', Math.min(m.l, m.h) >= ZONE_PASTILLE_ECRAN);
+    };
+    mesureZone('zone du rond de rareté « 7 »', tailles.pastille);
+    mesureZone('zone du rond de rareté « 10 »', tailles.pastilleLarge);
     mesureCible('action d un message', tailles.actionMsg);
     mesureCible('pastille de réaction', tailles.reaction);
     mesureCible('bouton « réagir »', tailles.ajoutReaction);

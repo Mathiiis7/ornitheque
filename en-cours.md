@@ -1,12 +1,21 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1005 / app.js?v=577. Prochaine : v1006 / 578.
+Dernière version : v1006 / app.js?v=578. Prochaine : v1007 / 579.
 
 ## Décidé le 07/11
-- **v1003** : au téléphone, le tiroir replié de la Carte garde un bouton « Filtres » à droite du nom
-  (choix de Mathis parmi trois) ; il remonte le tiroir à mi-hauteur et déplie les filtres. Sans lui, les
-  filtres n'étaient trouvables qu'en touchant la poignée, introuvables sur iPhone. Essais :
-  `outils/verif/_essai-filtres-tel*.mjs`. Non vérifié sur un vrai Safari (moteur WebKit pas installé).
+- **v1006** : au téléphone, PLUS DE TIROIR sur la Carte (« pas trop utilisable », il passait sur la carte et
+  se refermait mal, Mathis sur iPhone). La carte garde sa pleine hauteur (choix de Mathis), le panneau
+  (onglets, Filtres, liste) vient DESSOUS dans la page, comme une colonne ; une observation ou un hotspot
+  touchés dans la liste ramènent la carte à l'écran (`_ctMontreCarteTel`). Le bouton « Filtres » du
+  tiroir (v1003) a disparu avec lui. Essai : `outils/verif/_essai-carte-tel.mjs`.
+- **v1006, ronds de rareté au doigt** : 24 px d'écran au lieu de 44 (« bcp trop gros »), partout (Carte,
+  Birdydex) ; une zone invisible (::after) les élargit à 37 px sous le doigt, 16 px d'écart entre eux. Le
+  banc accessibilite mesure cette zone, seuil 37 (choix de Mathis). Pas fait : les ronds du Classement
+  (#tierChips, dans un menu) gardent 6 px d'écart, zones qui se chevauchent un peu.
+- **Banc pastilles corrigé** : ses huit positions étaient des huitièmes de px CSS, jamais une période
+  entière de pixel d'appareil ; son verdict dépendait de la hauteur de ce qui est au-dessus. Il pose
+  maintenant des huitièmes de pixel d'appareil (`--pas`). Trois ronds décentrés qu'il cachait ont été
+  recentrés (filtres X/P/N à 20, `.feed-pas` 1,5 px, colonne Rareté au doigt).
 - **v1000 à v1004** : interrupteur « Regrouper les points » dans les Filtres de la Ligue. ÉTEINT par
   défaut (tous les points, écartés en spirale au même lieu, comme avant le 23/10) ; le choix est gardé
   par appareil (`localStorage` `mb-ligue-grappes`). Choix de Mathis : un ami qui préfère tous les points

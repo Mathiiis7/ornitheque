@@ -49,7 +49,7 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=577">
+<link rel="modulepreload" href="app.js?v=578">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). -->
 <link rel="preload" href="styles.css" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
@@ -694,10 +694,8 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
               <button type="button" class="ct-puce" id="ctBtnLegende" aria-expanded="true" aria-controls="ctLegende"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M2 4h12M2 8h12M2 12h8"/></svg>Légende</button>
             </div>
             <aside class="ct-zone" id="ctZone" aria-label="La zone choisie">
-              <button type="button" class="ct-poignee" id="ctPoignee" aria-label="Agrandir ou réduire le panneau"></button>
               <div class="ct-ariane" id="ctAriane"></div>
               <p class="ct-zone-nom" id="ctZoneNom">France</p>
-              <button type="button" class="ct-pli-btn ct-filtres-tel" id="ctFiltresTel" aria-controls="ctContenu">Filtres</button>
               <p class="ct-zone-meta" id="ctZoneMeta"></p>
               <div class="ct-onglets" id="ctOnglets" role="tablist" aria-label="Ce que montre le panneau">
                 <button type="button" role="tab" data-onglet="recent" id="ctOngletRecent" aria-controls="ctVoletRecent" aria-selected="false" tabindex="-1">Récent<span class="ct-nb" data-nb="recent"></span></button>
@@ -1646,4 +1644,4 @@ document.documentElement.setAttribute('data-splash', 'on');</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=577"></script>
+<script type="module" src="app.js?v=578"></script>

@@ -76,9 +76,15 @@ const SORTES = [
   // Le symbole œil est un seul dessin (app.js, _ctSymbole) : recopié ici, son bord blanc retiré.
   { nom: 'Carte, symbole récent (œil)', textes: ['oeil'], html: (_, c) => `<svg class="ct-sym-oeil" style="filter:none" width="18" height="18" viewBox="0 0 18 18"><circle cx="9" cy="9" r="8.25" fill="${c}"/><g transform="translate(3.5 3.5) scale(.6875)" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"><path d="M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8 12.1 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="1.9" fill="#fff" stroke="none"/></g></svg>` },
 ];
-// px CSS, pour voir le jeu sur la grille de pixels. Huit et non quatre : a quatre, la moyenne
-// des ronds non transformes variait de 0,3 px d'un passage a l'autre.
-const DECALAGES = [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875];
+// Huitiemes d'un pixel d'APPAREIL, pour voir le jeu sur la grille de pixels. Huit et non quatre : a
+// quatre, la moyenne des ronds non transformes variait de 0,3 px d'un passage a l'autre.
+// Jusqu'au 2026-11-07 c'etaient des huitiemes de px CSS (0 a 0,875) : avec le zoom 0,85 du corps, ils
+// couvraient 0,74 pixel d'appareil a 100 %, 0,93 a 125, 1,12 a 150 et 2,23 au doigt - jamais une periode
+// entiere. La moyenne dependait donc de la fraction de pixel ou tombait chaque sorte, c'est-a-dire de
+// la hauteur de tout ce qui est au-dessus : retrecir les ronds de rarete au doigt a fait passer
+// « Carte, symbole ligue », plus bas, de +0,52 a +0,73 sans toucher a son CSS. Le pas (--pas) se regle
+// pour chaque ecran apres le chargement : 1 / (8 x 0,85 x densite) px CSS.
+const DECALAGES = [0, 1, 2, 3, 4, 5, 6, 7];
 
 function corps(){
   // Le meme reglage d'ecran que index.html : sans lui, le telephone dessine une page de 980 px
@@ -87,7 +93,7 @@ function corps(){
   for(const s of SORTES){
     h += `<h3>${s.nom}</h3><div class="rangee">`;
     for(const t of s.textes) for(const c of [GRIS, TEAL]) for(const d of DECALAGES)
-      h += `<div class="case" style="margin-top:${d}px;margin-left:${d}px" data-sorte="${s.nom}" data-texte="${t}" data-m="${id++}">${s.html(t, c)}</div>`;
+      h += `<div class="case" style="margin-top:calc(${d} * var(--pas, .125px));margin-left:calc(${d} * var(--pas, .125px))" data-sorte="${s.nom}" data-texte="${t}" data-m="${id++}">${s.html(t, c)}</div>`;
     h += '</div>';
   }
   return h;
@@ -170,6 +176,8 @@ export async function mesure({ navigateur, RACINE }){
       const p = await ctx.newPage();
       await p.goto(base + '/verif-pastilles.html', { waitUntil: 'load' });
       await p.evaluate(() => document.fonts.ready);
+      await p.evaluate(() => { const z = parseFloat(getComputedStyle(document.body).zoom) || 1;
+        document.documentElement.style.setProperty('--pas', (1 / (8 * z * devicePixelRatio)) + 'px'); });
       // Pas de capture fullPage : Playwright y retire l'emulation mobile le temps de la photo,
       // et le contexte « doigt » se mesurait en affichage souris sans le dire (2026-10-22). Pas
       // non plus de fenetre agrandie a la hauteur de la page : a 300 %, la capture depassait la

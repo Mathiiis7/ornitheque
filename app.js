@@ -9178,7 +9178,8 @@ document.addEventListener('click', e=>{
 });
 // ---- Carte : la page refaite (direction A, 2026-10-23) ----
 // Maquette choisie par Mathis : notes-privees/maquettes/carte/finale.html. Une carte à couches, un
-// panneau de zone à onglets à droite, un tiroir posé sur la carte au téléphone. Le moteur d'avant
+// panneau de zone à onglets à droite, sous la carte au téléphone (un tiroir posé dessus jusqu'au
+// 2026-11-07). Le moteur d'avant
 // reste : ses trois modes sont devenus les onglets, et leurs couches peuvent s'afficher ensemble.
 // Règles : ouvrir un onglet allume sa couche ; allumer une couche jamais chargée ouvre son onglet ;
 // une zone choisie (département, région, ta zone) garde la carte cadrée sur elle.
@@ -9189,7 +9190,6 @@ const CARTE_MODE_ONGLET = { missing:'recent', hotspots:'hot', mine:'ligue' };
 // Les réserves en quatrième (Mathis, 2026-10-29) : elles s'ajoutent à la couche d'oiseaux (_ctAllume).
 const CARTE_COUCHES = [['recent', 'Vu récemment'], ['ligue', 'La ligue'], ['hot', 'Hotspots'], ['res', 'Réserves']];
 const CARTE_FRANCE = [[41.3, -5.2], [51.2, 9.7]];
-let carteTiroir = 'bas';            // téléphone : bas, mi, haut
 let _ctCadreFait = false;        // la première ouverture se cadre sur la France
 let _ctLegendeOuverte = null;    // ouverte sur ordinateur, fermée au téléphone (elle y cache la carte)
 let _lyrDeps = null, _ctDepsPromesse = null;
@@ -9755,10 +9755,10 @@ function _ctZoneChoisie(){
   return !!(ebFilter.dept || ebFilter.polygon || (ebFilter.region && ebFilter.region !== (ebFilter.country || 'FR')));
 }
 function _ctMarges(){
-  // Au téléphone, le tiroir à mi-hauteur couvre le bas : la zone se cadre dans le haut.
+  // Au téléphone, le panneau est sous la carte (2026-11-07) : seuls les boutons posés sur la carte, en haut à
+  // gauche et la Légende en bas, demandent de l'air.
   if(!_ctTel.matches) return { paddingTopLeft:[30, 30], paddingBottomRight:[30, 30] };
-  const h = document.getElementById('mapEl')?.clientHeight || 500;
-  return { paddingTopLeft:[12, 70], paddingBottomRight:[12, Math.round(h * (carteTiroir === 'bas' ? .25 : .58)) + 10] };
+  return { paddingTopLeft:[12, 70], paddingBottomRight:[12, 60] };
 }
 function _ctCadre(bounds, opts){
   if(!_map) return;
@@ -10019,7 +10019,6 @@ async function _ctOuvrePays(cc, zone = ''){
     const rs = document.getElementById('mapEbRegion'); if(rs) rs.value = zone || cc;
     if(cc === 'FR') _refreshDeptSel(); else _repopulateEbDeptsForRegion(cc);
   }
-  if(_ctTel.matches && carteTiroir === 'bas') carteTiroir = 'mi';
   _ctCadrePays(cc);
   _ctCadreFait = true;
   if(CT_PAYS_SANS_ZONES.has(cc)) _ctSurligne();
@@ -10064,7 +10063,6 @@ function _ctChoisirZone(code){
     const ds = document.getElementById('mapEbDept'); if(ds && ebFilter.dept) ds.value = ebFilter.dept;
     _ctSyncFiltres();
   });
-  if(_ctTel.matches && carteTiroir === 'bas') carteTiroir = 'mi';
   _ctSurligne(); _ctCadreZone();
   // L'onglet ouvert reste ouvert (Mathis, 2026-10-26).
   renderMap();
@@ -10086,7 +10084,6 @@ function _ctChoisirDep(code){
   const rs = document.getElementById('mapEbRegion'); if(rs) rs.value = ebFilter.region;
   _refreshDeptSel();
   const ds = document.getElementById('mapEbDept'); if(ds) ds.value = code;
-  if(_ctTel.matches && carteTiroir === 'bas') carteTiroir = 'mi';
   _ctSurligne(); _ctCadreZone();
   // L'onglet ouvert reste ouvert : choisir un département n'ouvre plus le Récent de lui-même
   // (Mathis, 2026-10-26, à la place de la maquette du 23/10).
@@ -10103,7 +10100,6 @@ function _ctChoisirRegion(region, ouvrir){
   const rs = document.getElementById('mapEbRegion'); if(rs) rs.value = region;
   _refreshDeptSel();
   _ctSurligne(); _ctCadreZone();
-  if(ouvrir && _ctTel.matches && carteTiroir === 'bas') carteTiroir = 'mi';
   renderMap();
   _reloadSpeciesForZone();
 }
@@ -10128,7 +10124,6 @@ function _ctRetourPays(monde){
   // Le pays entier, par son nom, ↺ ou « Tous les pays » : l'onglet ouvert reste ouvert (Mathis,
   // 2026-10-26 ; ↺ remettait la Ligue, couches éteintes, comme à l'arrivée).
   _ctGardeCoucheDuMode();
-  if(monde) carteTiroir = 'bas';
   _ctSurligne();
   if(_map) monde || cc === 'FR' ? _map.fitBounds(CARTE_FRANCE, _ctMarges()) : _ctCadrePays(cc);
   // Le rendu de la Ligue qui suit recadrait sur TOUS ses points : le monde entier pour qui a vu
@@ -10139,10 +10134,12 @@ function _ctRetourPays(monde){
   if(monde) carteCouches.delete('ligue');
   renderMap(); _reloadSpeciesForZone();
 }
-// Au téléphone, le panneau vit DANS la carte (le tiroir) ; sur ordinateur, à sa droite.
+// Le panneau vit à droite de la carte sur ordinateur, dessous au téléphone : le même emplacement, que la
+// mise en page range. Il vivait DANS la carte au téléphone (un tiroir) jusqu'au 2026-11-07 : il passait
+// par-dessus la carte et se refermait mal (Mathis, sur iPhone).
 function _ctPlacePanneau(){
   const zone = document.getElementById('ctZone'); if(!zone) return;
-  const cible = _ctTel.matches ? document.getElementById('ctCarte') : document.getElementById('ctPlacePanneau');
+  const cible = document.getElementById('ctPlacePanneau');
   if(cible && zone.parentElement !== cible) cible.appendChild(zone);
   if(_ctLegendeOuverte === null) _ctLegendeOuverte = !_ctTel.matches;
   _ctDessineLegendeOuverte();
@@ -10376,7 +10373,6 @@ function _ctDessinePanneau(){
   let nbHot = 0; if(_lyrHotspots) _lyrHotspots.eachLayer(m => { if(!q || (m._q && _mapTrouve(m._q, q))) nbHot++; });
   const nb = { ligue:ligue.especes || '', recent:especesRecent.size || '', hot:nbHot || '' };
   document.querySelectorAll('#ctOnglets [data-nb]').forEach(s => { s.textContent = nb[s.dataset.nb] ? String(nb[s.dataset.nb]) : ''; });
-  zone.dataset.tiroir = carteTiroir;
   const bulle = document.getElementById('ctBulle');
   if(bulle){
     bulle.hidden = _ctZoneChoisie() || CT_PAYS_SANS_ZONES.has(_ctPaysOuvert);
@@ -10388,7 +10384,6 @@ function _ctDessinePanneau(){
 document.addEventListener('click', e => {
   const t = e.target.closest('#ctOnglets [data-onglet]');
   if(t){
-    if(_ctTel.matches && carteTiroir === 'bas') carteTiroir = 'mi';
     const mode = CARTE_ONGLET_MODE[t.dataset.onglet];
     if(mode === mapMode) _ctDessinePanneau();
     else { _ctOngletSansCouche = true; try{ _ctModeBouton(mode)?.click(); } finally { _ctOngletSansCouche = false; } }
@@ -10415,8 +10410,6 @@ document.addEventListener('click', e => {
     else _ctAppliqueCouches();
     return;
   }
-  if(e.target.closest('#ctPoignee')){ carteTiroir = { bas:'mi', mi:'haut', haut:'bas' }[carteTiroir] || 'mi'; _ctDessinePanneau(); return; }
-  if(e.target.closest('#ctFiltresTel')){ _ctOuvreFiltresTel(); return; }
   if(e.target.closest('#ctFrance') || e.target.closest('#ctAriane [data-carte="monde"]')){ _ctRetourPays(true); return; }
   if(e.target.closest('#ctAriane [data-carte="pays"]')){ _ctRetourPays(false); return; }
   if(e.target.closest('#ctAriane [data-carte="region"]')){ _ctChoisirRegion(ebFilter.region); return; }
@@ -10425,22 +10418,6 @@ document.addEventListener('click', e => {
   if(e.target.closest('#mapDrawClear')){ _ctSurligne(); _ctAppliqueCouches(); }
   // Les lignes de la liste de la Ligue : même gestionnaire que le Récent (_ctRangHtml, plus bas).
 });
-// « Filtres » du tiroir replié (téléphone) : remonte le tiroir et déplie les filtres de l'onglet. Si sa
-// couche est éteinte et qu'une autre est allumée, on passe à l'onglet de celle-ci : ses filtres ne se
-// montrent qu'avec la couche. Aucune couche allumée : l'onglet propose « Afficher la couche », rien ne
-// s'allume tout seul (Mathis, 2026-10-30).
-function _ctOuvreFiltresTel(){
-  let onglet = CARTE_MODE_ONGLET[mapMode] || 'ligue';
-  if(!carteCouches.has(onglet)){
-    const k = ['recent', 'ligue', 'hot'].find(c => carteCouches.has(c));
-    if(k){ document.querySelector(`#ctOnglets [data-onglet="${k}"]`)?.click(); onglet = k; }
-  }
-  carteTiroir = 'mi'; _ctDessinePanneau();
-  const pli = document.querySelector(`#ctContenu [data-volet="${onglet}"] .ct-pli`);
-  if(pli && carteCouches.has(onglet)) pli.open = true;
-  // Les filtres sont en tête du volet : on remonte la liste si elle avait défilé.
-  const contenu = document.getElementById('ctContenu'); if(contenu) contenu.scrollTop = 0;
-}
 // Flèches gauche et droite entre les onglets du panneau, comme une vraie rangée d'onglets.
 document.addEventListener('keydown', e => {
   const t = e.target.closest && e.target.closest('#ctOnglets [data-onglet]');
@@ -11048,8 +11025,13 @@ function _ctPointObs(liste, id){
 // une grappe, la bulle se pose à sa place sans défaire la grappe : zoomToShowLayer zoomait au plus près
 // puis écartait les points en étoile, l'éventail que Mathis avait écarté le 2026-10-24.
 let _ctSurvolLibre = null;
+// Au téléphone, le panneau est sous la carte : une ligne qui mène à un point ramène la carte à l'écran.
+function _ctMontreCarteTel(){
+  if(_ctTel.matches) document.getElementById('ctCarte')?.scrollIntoView({ block:'end' });
+}
 function _ctVaSurObs(liste, id){
   const m = _ctPointObs(liste, id); if(!m || !_map) return;
+  _ctMontreCarteTel();
   const groupe = liste === 'lig' ? _mapLayer : liste === 'dep' ? _lyrDeplie : liste === 'cherche' ? _lyrDetail : _lyrMissing, couche = liste === 'lig' ? 'ligue' : 'recent';
   if(!_map.hasLayer(groupe) && liste !== 'cherche'){ _ctAllume(couche); _ctAppliqueCouches(); }
   const ll = m.getLatLng();
@@ -11095,8 +11077,8 @@ document.addEventListener('click', e => {
   let m = null; _lyrHotspots.eachLayer(x => { if(x._hotspotId === b.dataset.hs) m = x; });
   if(!m) return;
   if(!_map.hasLayer(_lyrHotspots)){ _ctAllume('hot'); _ctAppliqueCouches(); }
-  // Au téléphone, le tiroir redescend pour laisser voir le carré et sa bulle.
-  if(_ctTel.matches && carteTiroir !== 'bas'){ carteTiroir = 'bas'; _ctDessinePanneau(); }
+  // Au téléphone, la carte est au-dessus de la liste : on remonte jusqu'à elle pour voir le carré.
+  _ctMontreCarteTel();
   _map.setView(m.getLatLng(), Math.max(_map.getZoom(), 12), { animate:false });
   m.openPopup();
 });

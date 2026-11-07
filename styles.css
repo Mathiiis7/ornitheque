@@ -2369,7 +2369,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .feed-depuis-fin::before, .feed-depuis-fin::after { background:var(--line-2); opacity:1; }
   .feed-item { display:grid; grid-template-columns:auto 1fr auto; align-items:center; column-gap:12px; padding:9px 2px; border-bottom:1px solid var(--line); }
   /* Chiffre blanc sur toutes les pastilles, comme partout ailleurs (Mathis, 2026-10-14). */
-  .feed-pas { width:26px; height:26px; border-radius:50%; display:grid; place-items:center; font:700 13px/1 var(--sans); color:#fff; padding-bottom:1px; }
+  .feed-pas { width:26px; height:26px; border-radius:50%; display:grid; place-items:center; font:700 13px/1 var(--sans); color:#fff; padding-bottom:1.5px; }
+  /* 1,5 et non 1 px en bas : le chiffre tombait 0,66 px d'appareil trop bas a 150 % (banc pastilles, 2026-11-07). */
   .feed-body { min-width:0; font-size:15px; color:var(--ink-2); }
   .feed-l1 { color:var(--ink); }
   .feed-sp { font-weight:600; }
@@ -2535,7 +2536,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      peine lisibles (Mathis, 2026-10-22). On leur rend le corps du Birdydex, dont il veut la
      meme taille : rond de 20 px et corps 10 pour les paliers, 16 px et 9,5 pour X / P / N. */
   #tierChips .rar-chip[data-rar] { font-size:20px; }
-  #tierChips .rar-chip[data-cat] { font-size:19px; }
+  /* Les FILTRES X / P / N passent a 20 (lettre de 10 px, 9,5 sur les vignettes) : a 19, la lettre tombait
+     0,72 px d'appareil trop bas a 125 %, et aucun rembourrage ne corrigeait sans faire sauter 150 % d'un
+     pixel entier. Mesure par le banc pastilles, positions au huitieme de pixel d'appareil (2026-11-07). */
+  .rar-chip[data-cat], #tierChips .rar-chip[data-cat] { font-size:20px; }
   /* La colonne Rarete : le rond et les lettres cote a cote. Ils ne se touchent pas au doigt,
      ils gardent donc leur taille de souris sur ecran tactile, comme la vignette du Birdydex. */
   .rar-cell { display:inline-flex; align-items:center; gap:4px; vertical-align:middle; }
@@ -2639,8 +2643,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
 
   /* ---- Carte, refonte « direction A » (2026-10-23) ----
      Maquette choisie par Mathis : notes-privees/maquettes/carte/finale.html. Une grande carte à
-     couches, un panneau de zone à onglets à droite, qui devient un tiroir posé sur la carte au
-     téléphone. Les commandes d'avant sont rangées dans les onglets, sans changer leur style. */
+     couches, un panneau de zone à onglets à droite, qui passe sous la carte au téléphone (un tiroir
+     posé dessus jusqu'au 2026-11-07). Les commandes d'avant sont rangées dans les onglets, sans changer leur style. */
   .ct-phrase { font-size:14px; color:var(--ink-3); margin:2px 0 0; }
   .ct-page .map-search { margin:12px 0 0; }
   .ct-page .map-search input { height:34px; padding:0 12px 0 34px; font-size:14px;
@@ -2862,9 +2866,6 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-bulle[hidden] { display:none; }
   /* Le panneau de zone */
   .ct-zone { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:14px 16px 16px; height:640px; display:flex; flex-direction:column; min-height:0; }
-  .ct-poignee { display:none; }
-  /* Écrit avec .ct-zone devant : .ct-pli-btn, plus bas et de même poids, le rendait visible partout. */
-  .ct-zone .ct-filtres-tel { display:none; }
   .ct-ariane { font-size:14px; color:var(--ink-3); display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
   .ct-ariane:empty { display:none; }
   .ct-ariane button { background:none; border:0; padding:0; font:inherit; color:var(--accent-ink); text-decoration:underline; text-underline-offset:2px; cursor:pointer; }
@@ -3060,10 +3061,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .ct-obs-d { color:color-mix(in srgb, var(--ink-3) 97%, var(--surface)); }
   .ct-volet .import-guide { margin:14px 0 0; font-size:14px; color:var(--ink-2); background:var(--surface-2); border-radius:10px; padding:9px 12px; }
   .ct-volet .import-guide summary { cursor:pointer; font-weight:600; }
-  /* Téléphone et petite tablette : la carte prend la largeur, le panneau devient un tiroir */
+  /* Téléphone et petite tablette : la carte prend la largeur, le panneau vient dessous, dans la page.
+     C'était un tiroir posé sur la carte jusqu'au 2026-11-07 : il passait par-dessus la carte, s'ouvrait
+     sur elle et se refermait mal, « pas trop utilisable » sur iPhone (Mathis). La carte garde sa hauteur. */
   @media (max-width:900px) {
     .ct-corps { display:block; margin-top:8px; }
-    .ct-place-panneau { display:none; }
     /* À la ligne depuis la quatrième pastille (Réserves, 2026-10-29) : en rangée qui défile, elle restait
        entière hors de l'écran (76 à 130 px de trop de 414 à 360 px de large), et Hotspots coupé. */
     .ct-couches { padding-top:8px; }
@@ -3072,28 +3074,12 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
        division ; il reste la rangée des couches au-dessus quand on fait défiler jusqu'à elle. */
     .ct-carte { height:calc(100dvh / 0.85 - 130px); min-height:420px; }
     .ct-bulle { display:none; }
-    .ct-zone { position:absolute; left:0; right:0; bottom:0; z-index:800; height:118px; max-height:100%; border-radius:16px 16px 0 0; border:0; border-top:1px solid var(--line-2); box-shadow:0 -8px 24px rgba(0,0,0,.14); padding:6px 14px 10px; }
-    .ct-zone[data-tiroir="mi"] { height:58%; }
-    .ct-zone[data-tiroir="haut"] { height:calc(100% - 8px); }
-    .ct-zone[data-tiroir="bas"] .ct-onglets, .ct-zone[data-tiroir="bas"] .ct-contenu { display:none; }
-    /* Replié, le tiroir ne garde que la poignée et le nom : le fil d'Ariane et la ligne du dessous
-       reviennent en le tirant. */
-    .ct-zone[data-tiroir="bas"] .ct-ariane, .ct-zone[data-tiroir="bas"] .ct-zone-meta { display:none; }
-    /* Replié, le tiroir garde « Filtres » à droite du nom : sans lui, les filtres ne se trouvaient
-       qu'en touchant la poignée, et Mathis ne les a pas trouvés sur iPhone (2026-11-07). La rangée
-       passe en ligne : la poignée prend toute la largeur, le nom et le bouton se partagent la suivante. */
-    .ct-zone[data-tiroir="bas"] { flex-direction:row; flex-wrap:wrap; align-items:center; align-content:flex-start; column-gap:12px; }
-    .ct-zone[data-tiroir="bas"] .ct-zone-nom { flex:1; min-width:0; }
-    .ct-zone[data-tiroir="bas"] .ct-filtres-tel { display:inline-flex; margin-top:2px; cursor:pointer; }
-    .ct-poignee { display:block; width:100%; height:22px; border:0; background:none; cursor:pointer; padding:0; flex:none; }
-    .ct-poignee::before { content:""; display:block; width:46px; height:5px; border-radius:3px; background:var(--surface-3); margin:6px auto 0; }
+    /* La hauteur fixe et la liste qui défile dans son cadre, c'est l'ordinateur : ici la page défile. */
+    .ct-place-panneau { margin-top:12px; }
+    .ct-zone { height:auto; padding:12px 14px 14px; }
+    .ct-contenu { overflow:visible; flex:none; }
     .ct-zone-nom { font-size:19px; }
     .ct-carte .ct-legende { min-width:0; }
-    /* Les coins bas de Leaflet (légende, crédits) montent au-dessus du tiroir replié, et
-       disparaissent quand il s'ouvre : il les couvrirait à moitié. */
-    .ct-carte .leaflet-bottom { bottom:118px; }
-    .ct-carte:has(.ct-zone[data-tiroir="mi"]) .leaflet-bottom,
-    .ct-carte:has(.ct-zone[data-tiroir="haut"]) .leaflet-bottom { display:none; }
   }
   @media (max-width:560px) { .ct-phrase { display:none; } }
   .ex-empty { padding:12px; color:var(--ink-3); font-size:13px; text-align:center; }
@@ -4101,19 +4087,21 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .pc-lecture-petit { width:52px; height:52px; }
 
     /* Les pastilles de palier sont peintes dans une boite de taille double ramenee de
-       moitie (voir le bloc .rar-chip plus haut). Pour 52 px rendus : boite 104, marge
-       negative 26 pour rendre 52 a la mise en page, corps a l'avenant. Elles passent alors
-       sur deux rangees au telephone - inevitable : 13 cibles de 44 px demandent 572 px de
-       large, un telephone en fait 375. */
+       moitie (voir le bloc .rar-chip plus haut). Elles faisaient 44 px d'ecran au doigt (boite 104) :
+       « bcp trop gros », pas a la taille habituelle (Mathis, 2026-11-07). Elles font 24 px d'ecran a
+       l'oeil (boite 56, marge negative 14), et une zone invisible deborde de 8 px de chaque cote
+       (::after, -16 px dans la boite doublee) : 44 px de mise en page, 37 px d'ecran sous le doigt.
+       Les ecarts de 16 px entre pastilles laissent ces zones se toucher sans se chevaucher. */
     .rar-chip[data-tier], .rar-chip[data-rar], .tier-chip.tier-rond {
-      width:104px; min-width:104px; height:104px; margin:-26px; font-size:52px; padding:0 0 7px; }
-    /* Meme calcul pour les jetons ronds de statut exotique. */
-    /* Rembourrages et corps 64 (et non 62) : au doigt, le texte tombait 4 px d'appareil trop bas,
-       et la lettre ne se centrait qu'a ce corps, le calage sautant d'un cran entier entre deux
-       rembourrages. Mesure par le banc pastilles (2026-10-22). */
-    .rar-chip[data-cat], .pkdx-exo { width:104px; min-width:104px; height:104px; margin:-26px; font-size:64px; padding:0 1.5px 7px 0; }
-    #tierChips .rar-chip[data-rar] { font-size:52px; }
-    #tierChips .rar-chip[data-cat] { font-size:64px; }
+      width:56px; min-width:56px; height:56px; margin:-14px; font-size:28px; padding:0 0 2px; }
+    .rar-chip[data-cat], .pkdx-exo { width:56px; min-width:56px; height:56px; margin:-14px; font-size:34px; padding:0 0 3px; }
+    .rar-chip[data-tier], .rar-chip[data-rar], .rar-chip[data-cat] { position:relative; }
+    .rar-chip[data-tier]::after, .rar-chip[data-rar]::after, .rar-chip[data-cat]::after { content:""; position:absolute; inset:-16px; }
+    #tierChips .rar-chip[data-rar] { font-size:28px; }
+    #tierChips .rar-chip[data-cat] { font-size:34px; }
+    /* La colonne Rarete garde sa taille souris, mais son chiffre tombait 0,69 px d'appareil trop bas
+       au doigt : la moitie du rembourrage du haut (banc pastilles, 2026-11-07). */
+    #matrix .rar-cell .tier-chip.tier-rond { padding:0.05em 0 0; }
     /* Sauf sur les vignettes du Birdydex : on n'y touche pas le jeton, on touche la carte. A
        104 px, il faisait 52 px d'ecran et couvrait la photo (Mathis, 2026-10-22). Il garde la
        taille souris, et celle des cartes etroites sous 600 px. */
@@ -4126,7 +4114,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .tri-bulle .pkdx-exo { width:32px; min-width:32px; height:32px; margin:-8px; font-size:19px; padding:0; }
     /* « Tout » et « Vide » sont des mots, pas des jetons : ils grandissent par leur hauteur. */
     .rar-chip, .tier-chip { min-height:52px; }
-    .rar-chips { gap:6px; }
+    /* 16 px entre pastilles, en ligne comme en colonne : la place des zones de toucher (plus haut). */
+    .rar-chips, .ct-bloc .rar-chips, .pkdx-bloc .rar-chips, .rar-cats { gap:16px; }
 
     /* Les actions d'un message etaient en opacity:0 jusqu'au survol. Au doigt il n'y a pas
        de survol : repondre, editer, supprimer et meme lire l'heure etaient inatteignables.
@@ -4179,7 +4168,6 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .ct-rond { width:52px; height:52px; border-radius:12px; }
     .ct-onglets button { min-height:52px; padding:0; font-size:16px; }
     .ct-ariane button { min-height:52px; }
-    .ct-poignee { height:52px; margin:-6px 0 -10px; }
     .ct-page .map-search input { height:52px; }
     /* Les menus du Récent et de la Ligue, sa case et « Voir les autres ». */
     .ct-bloc .cp-btn, .ct-bloc .seg button, .ct-bloc .ct-bascule, .ct-annee input, .ct-pas, .ct-plus, .ct-pli-btn, .ct-obs { min-height:52px; }
