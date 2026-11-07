@@ -1,8 +1,9 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1013 / app.js?v=585 (et styles.css?v=585). Prochaine : v1014 / 586.
+Dernière version : v1014 / app.js?v=586 (et styles.css?v=586). Prochaine : v1015 / 587.
 
 ## Décidé le 07/11
+- **v1014** : rayon des grappes selon le zoom (40 px jusqu'au zoom 5, 34 jusqu'à 8, 28 jusqu'à 11, puis 24 ; 45 partout avant), Mathis : des points qui ne se touchaient pas étaient regroupés. Mesuré sur la démo (outils/verif/_essai-rayon-grappes.mjs, ANCIEN=45 pour comparer) : grappes de points séparés 63 -> 45 au zoom 7, 44 -> 26 au zoom 8, 6 -> 1 au zoom 9.
 - **v1013** : en arrivant sur la Carte, une fenêtre « Que veux-tu voir sur la carte ? » propose Vu récemment,
   La ligue ou Hotspots, avec un petit dessin et une phrase chacun (maquette B, trois lignes, choisie par
   Mathis : `notes-privees/maquettes/choix-carte/`). Une fois par CHARGEMENT du site (simple variable

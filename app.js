@@ -9503,11 +9503,16 @@ document.addEventListener('click', e => {
   if(_map && _ctPopGrappe) _map.closePopup(_ctPopGrappe);
   _ctOuvreFiche(l.dataset.sci, l.dataset.cc);
 });
+// Le rayon qui regroupe les points, en pixels de carte, selon le zoom (Mathis, 2026-11-07 : des points
+// qui ne se touchaient pas étaient regroupés ; 45 px à tous les zooms avant). Dézoomé, on regroupe encore
+// large pour ne pas couvrir un pays de pastilles ; zoomé, on ne regroupe plus que les pastilles (22 px)
+// qui se chevauchent.
+const _ctRayonGrappe = z => z <= 5 ? 40 : z <= 8 ? 34 : z <= 11 ? 28 : 24;
 // Une couche en grappes ; sans la bibliothèque (bloquée, hors ligne), une couche ordinaire (featureGroup,
 // pour que le survol des points marche quand même).
 function _ctGrappes(){
   if(!L.markerClusterGroup) return _ctBrancheSurvol(L.featureGroup());
-  return _ctBrancheSurvol(L.markerClusterGroup({ iconCreateFunction:_ctAnneau, showCoverageOnHover:false, maxClusterRadius:45,
+  return _ctBrancheSurvol(L.markerClusterGroup({ iconCreateFunction:_ctAnneau, showCoverageOnHover:false, maxClusterRadius:_ctRayonGrappe,
     // Pas de chargement par paquets (chunkedLoading) : renderMap retire la couche de la carte entre
     // deux paquets, et la bibliothèque plantait (« reading 'getMinZoom' », vu le 2026-10-23).
     // Une grappe cliquée ne zoome plus et ne s'éparpille plus en spirale : elle ouvre la liste de ses
