@@ -7194,7 +7194,11 @@ let _lyrMissing=null, _lyrHotspots=null;
 let _loaded = { missing:'', hotspots:'' };   // clé de cache (région+jours)
 // Filtres propres au mode "mine"
 // La rareté de la ligue se règle comme celle du Récent (2026-10-26) : plusieurs paliers à la fois, ou un statut N.
-let mapFilter = { player:'all', rarities:new Set([1,2,3,4,5,6,7,8,9,10]), cats:new Set(), country:'any', showAllObs:false, grappes:true };
+let mapFilter = { player:'all', rarities:new Set([1,2,3,4,5,6,7,8,9,10]), cats:new Set(), country:'any', showAllObs:false, grappes:false };
+// « Regrouper les points » : éteint par défaut, et chaque appareil garde son choix d'une visite à
+// l'autre (Mathis, 2026-11-07 : qui préfère les grappes les allume une fois).
+try{ mapFilter.grappes = localStorage.getItem('mb-ligue-grappes') === '1'; }catch(_){}
+{ const cb = document.getElementById('mapLigueGrappes'); if(cb) cb.checked = mapFilter.grappes; }   // module : la page est déjà lue
 // Filtres propres aux modes eBird
 // `rarities` = Set des paliers sélectionnés (1-10). `cats` = statuts X / P / N cochés : non vide,
 // il prime sur les paliers, comme au Birdydex (voir _passeRarCarte).
@@ -8848,7 +8852,11 @@ document.addEventListener('change', e=>{
   if(e.target.id==='mapPlayerSel'){ mapFilter.player=e.target.value; renderMap(); }
   else if(e.target.id==='mapCountrySel'){ mapFilter.country=e.target.value; renderMap(); }
   else if(e.target.id==='mapMineShowAllObs'){ mapFilter.showAllObs = !!e.target.checked; renderMap(); }
-  else if(e.target.id==='mapLigueGrappes'){ mapFilter.grappes = !!e.target.checked; renderMap(); _updateLegend(); }
+  else if(e.target.id==='mapLigueGrappes'){
+    mapFilter.grappes = !!e.target.checked;
+    try{ localStorage.setItem('mb-ligue-grappes', mapFilter.grappes ? '1' : '0'); }catch(_){}
+    renderMap(); _updateLegend();
+  }
   else if(e.target.id==='mapEbShowObserved' || e.target.id==='ctRecManque' || e.target.id==='ctHotManque'){
     // Un seul réglage : « Seulement ce qui me manque » (Récent et Hotspots, allumé par défaut) et son
     // inverse, l'ancienne case cachée « Inclure déjà observés ».
