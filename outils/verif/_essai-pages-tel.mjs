@@ -38,7 +38,8 @@ for(const [larg, haut] of [[390, 844], [360, 740]]){
 
   await va('ranking');
   const cl = await p.evaluate(() => {
-    const t = document.querySelector('#boardList .board-sheet').getBoundingClientRect();
+    // Depuis le 2026-11-08 le tableau défile de côté dans son cadre (choix de Mathis) : c'est le cadre qui doit tenir.
+    const t = document.querySelector('#boardList .sheet-scroll').getBoundingClientRect();
     const tbl = document.querySelector('#matrix .tbl-scroll'), cartes = document.getElementById('matrixCards');
     return { tableau:[Math.round(t.left), Math.round(t.right)], qui:getComputedStyle(tbl).display, cartes:getComputedStyle(cartes).display,
       quiH:Math.round(tbl.getBoundingClientRect().height), sp:Math.round(document.querySelector('#matrix .tbl-scroll tbody td.sp')?.getBoundingClientRect().width || 0) };

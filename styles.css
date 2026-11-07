@@ -4331,10 +4331,36 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     /* L'en-tête de la liste se colle sous l'entête du site, plus en haut de la boîte. */
     .mylist-row.mylist-th { top:53px; }
 
-    /* Classement (A) : rang, joueur, nombre ; les colonnes de photos et de raretés, qui faisaient défiler
-       le tableau de côté, restent à l'ordinateur. */
-    #boardList .board-sheet { width:100%; min-width:0; }
-    #boardList .board-sheet .c-esp, #boardList .board-sheet th.c-txt { display:none; }
+    /* Classement : les quatre colonnes de droite (espèces préférées, la plus rare, dernière acquisition,
+       espèce de rêve) défilent de côté ; rang, joueur et nombre restent figés à gauche (Mathis, 2026-11-08 :
+       les masquer en faisait perdre la vue). Cases collantes : border-collapse:separate et un trait par case,
+       comme « Qui a vu quoi » (en collapse, les traits partent en défilant, voir CLAUDE.md). */
+    #boardList .board-sheet { border-collapse:separate; border-spacing:0; width:max-content; min-width:100%; }
+    #boardList .board-sheet th, #boardList .board-sheet td { border-width:0 1px 1px 0; }
+    #boardList .board-sheet tr > :last-child { border-right:0; }
+    #boardList .board-sheet tbody tr:last-child td { border-bottom:0; }
+    #boardList .board-sheet .c-rank { position:sticky; left:0; z-index:1; width:36px; min-width:36px; max-width:36px;
+      padding-left:0; padding-right:0; text-align:center; }
+    #boardList .board-sheet thead th:nth-child(2), #boardList .board-sheet td.who-cell { position:sticky; left:36px; z-index:1;
+      width:118px; min-width:118px; max-width:118px; padding-left:10px; padding-right:8px; }
+    #boardList .board-sheet thead th:nth-child(3), #boardList .board-sheet tbody td:nth-child(3) { position:sticky; left:154px; z-index:1;
+      width:86px; min-width:86px; max-width:86px; padding-left:8px; padding-right:10px; border-right:2px solid var(--line-2); }
+    #boardList .board-sheet thead th:nth-child(-n+3) { z-index:3; }
+    /* Fond opaque sous les cases figées : sinon les colonnes qui défilent se lisent à travers. */
+    #boardList .board-sheet tbody td.c-rank, #boardList .board-sheet tbody td.who-cell, #boardList .board-sheet tbody td:nth-child(3) { background:var(--surface); }
+    #boardList .board-sheet tbody tr:nth-child(even) td.who-cell, #boardList .board-sheet tbody tr:nth-child(even) td.c-rank {
+      background:color-mix(in srgb, var(--surface-2) 45%, var(--surface)); }
+    #boardList .board-sheet td.c-esp { min-width:170px; }
+    /* Le barème des tris (Rareté ligue, Rareté terrain) : toute la largeur, 16 px de chaque côté. Il était
+       limité à l'écran moins 48 px et décalé sous son bouton : la colonne des points sortait du cadre
+       (Mathis, 2026-11-08). app.js le place par style.left, d'où !important. */
+    #results > .board-modes-row .tri-bulle { left:16px !important; right:16px; width:auto; max-width:none; }
+    .tb-grille { column-gap:8px; }
+    /* « ceux de son palier » passe à la ligne au lieu de pousser le cadre (360 px). */
+    .tb-pts { white-space:normal; }
+    /* Lignes resserrées : à 360 px, le barème de Rareté terrain descendait sous la barre du bas. */
+    #results > .board-modes-row .tri-bulle { line-height:1.35; max-height:calc(100svh - 150px - var(--barre-h)); overflow-y:auto; }
+    .tb-grille { row-gap:3px; }
     /* « Qui a vu quoi » garde le tableau de l'ordinateur (Mathis), à la hauteur de l'écran, colonnes resserrées :
        Espèce figée à gauche, les personnes défilent de côté. Les cartes d'avant ne servent plus ici. */
     #matrix .tbl-scroll { display:block; max-height:calc(100svh - 53px - var(--barre-h) - 24px); }
@@ -4344,6 +4370,28 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     #matrix.rar-ronds:not(.sans-rarete) .tbl-scroll thead th:nth-child(2), #matrix.rar-ronds:not(.sans-rarete) .tbl-scroll tbody tr td:nth-child(2) {
       width:72px; min-width:72px; max-width:72px; }
     #matrix .tbl-scroll th.pcol, #matrix .tbl-scroll td.pcol { min-width:76px; }
+    /* Les filtres de « Qui a vu quoi », rangés (Mathis, 2026-11-08 : « positionnés n'importe comment ») :
+       la recherche sur toute la largeur, les deux tris en dessous à parts égales ; Personnes sur sa ligne,
+       Familles et Affichage côte à côte. */
+    #matrix .ctrl-main { display:grid; grid-template-columns:1fr; gap:8px; }
+    #matrix .ctrl-main #q { min-width:0 !important; width:100%; }
+    #matrix .ctrl-main .seg { display:flex; }
+    #matrix .ctrl-main .seg button { flex:1; }
+    #matrix .fm-barre { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    #matrix .fm-barre > #personnesBtn, #matrix .fm-barre > .fm-tout { grid-column:1 / -1; }
+    #matrix .fm-barre .cp-btn, #matrix .fm-barre .fm { width:100%; min-width:0; }
+    #matrix .fm-barre .cp-btn { justify-content:space-between; }
+    #matrix .fm-barre .cp-btn-label { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    /* La rangée de rareté : le titre seul, les dix ronds sur UNE ligne (le 10 passait à la ligne), puis Tout,
+       Vide et X / P / N. Les paliers en mots de la Rareté ligue gardent leur rangée qui passe à la ligne. */
+    #tierChips:not(:has(.rar-mot)) { display:grid; grid-template-columns:repeat(10, minmax(0, 1fr)); column-gap:6px; row-gap:12px;
+      justify-items:center; align-items:center; padding:10px 8px; }
+    #tierChips:not(:has(.rar-mot)) > .rar-rangee-titre { grid-column:1 / -1; justify-self:start; margin:0; }
+    #tierChips:not(:has(.rar-mot)) > [data-tier-all], #tierChips:not(:has(.rar-mot)) > [data-tier-none] { grid-column:span 2; justify-self:stretch; }
+    /* Tout repart en début de ligne : en Rareté ligue (5 paliers), il remontait à côté des ronds. */
+    #tierChips:not(:has(.rar-mot)) > [data-tier-all] { grid-column:1 / span 2; }
+    #tierChips:not(:has(.rar-mot)) > .rar-cats { grid-column:span 6; justify-self:start; gap:16px; margin:0 0 0 8px; }
+    #tierChips .rar-chip:not([data-rar]):not([data-cat]) { min-height:44px; }
 
     /* Trophées (A) : une ligne par trophée, la coupe à gauche, nom, palier et jauge à droite. Les cartes de
        deux colonnes faisaient ~340 px de haut chacune. */
@@ -4383,15 +4431,21 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   @media (max-width:700px) and (pointer: coarse){
     .rar-chip[data-tier], .rar-chip[data-rar], .tier-chip.tier-rond {
       width:48px; min-width:48px; height:48px; margin:-12px; font-size:24px; padding:0 0 2px; }
-    .rar-chip[data-cat], .pkdx-exo { width:48px; min-width:48px; height:48px; margin:-12px; font-size:29px; padding:0 0 3px; }
+    /* X / P / N plus petits que les chiffres, comme à la souris (16 px contre 20) : 19 px contre 24 (Mathis,
+       2026-11-08 : « normalement ils sont plus petits »). Zone invisible de 9 px de chaque côté : 37 px. */
+    .rar-chip[data-cat], .pkdx-exo { width:38px; min-width:38px; height:38px; margin:-9.5px; font-size:24px; padding:0 0 3px; }
+    .rar-chip[data-cat]::after { inset:-18px !important; }
     .rar-chip[data-tier]::after, .rar-chip[data-rar]::after, .rar-chip[data-cat]::after { inset:-14px; }
     #tierChips .rar-chip[data-rar] { font-size:24px; }
-    #tierChips .rar-chip[data-cat] { font-size:29px; }
+    #tierChips .rar-chip[data-cat] { font-size:24px; }
     /* Le centrage de l'encre, recalé sans le zoom 0,85 : les rembourrages d'avant étaient réglés au
        pixel pour lui, et le banc pastilles (doigt, 300 %) mesurait jusqu'à 3,8 px d'appareil d'écart.
        Chaque valeur vient de sa mesure : décalage / 3 en px d'écran, doublé dans une boîte réduite de moitié. */
     .rar-chip[data-tier], .rar-chip[data-rar], .tier-chip.tier-rond { padding:0 0 4px; }
-    .rar-chip[data-cat], .pkdx-exo { padding:0 1.1px 2.15px 0; }
+    .rar-chip[data-cat] { padding:0 1.1px 2.15px 0; }
+    /* Le jeton X / P / N seul (fiche) : à 38 px, l'encre sautait de +1,06 à -1,18 px d'appareil selon le
+       rembourrage, sans valeur entre les deux (grille de pixels) ; à 39 px, -0,61 (banc pastilles). */
+    .pkdx-exo { padding:0 0 2.7px 0; width:39px; height:39px; min-width:39px; margin:-9.75px; }
     .pkdx-card .pkdx-tier { padding:0 0 4px; }
     #matrix .rar-cell .tier-chip.tier-rond { padding:0 0 1.1px; }
     #matrix .rar-cell .pkdx-exo { padding:0.64px 0 0; }

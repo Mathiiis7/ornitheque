@@ -1,9 +1,31 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1018 / app.js?v=590 (et styles.css?v=590). Prochaine : v1019 / 591.
+Dernière version : v1019 / app.js?v=591 (et styles.css?v=591). Prochaine : v1020 / 592.
+- **v1019** : Classement au téléphone : les 4 colonnes de droite REVIENNENT et défilent de côté, rang, joueur et nombre
+  figés (choix de Mathis) ; barème des tris sur toute la largeur ; filtres de Qui a vu quoi rangés, 10 ronds sur une
+  ligne ; X/P/N à 19 px (plus petits que les chiffres, 24). Essais : _essai-classement-tel.mjs, _essai-filtres-qui.mjs.
 - **v1018** : la pastille de version des admins (#adminBuildStamp) cachée au téléphone, gardée à l'ordinateur.
 
-## PROCHAIN CHANTIER (demandé le 07/11) : le site au téléphone
+## NOUVEAU CHANTIER (demandé le 08/11) : l'arbre de l'évolution des oiseaux
+Une page « arbre phylogénétique » : d'où vient chaque famille, ce qui la distingue, quels oiseaux
+elle contient, **monde entier**. Choix de Mathis : « purement scientifique », grands groupes au-dessus
+des ordres, **une phrase par branche** (sourcée), grands groupes et ordres d'abord (~60 phrases), les
+familles ensuite par lots relus.
+- Source retenue : **Stiller et al. 2024, Nature** (doi:10.1038/s41586-024-07323-1, CC BY 4.0), arbre
+  principal `63K.tre` (ASTRAL, 363 oiseaux, dit « main species tree » dans le README) téléchargé avec
+  son README dans `notes-privees/arbre/source/` (entrepôt doi:10.17894/ucph.85624f66-c8e5-4b89-8e8a-fe984ca89e4a).
+- Raccord : `outils/build/arbre-correspondance.mjs` -> `notes-privees/arbre/correspondance.txt`. Les 363
+  feuilles raccordées (7 genres renommés), **224 familles du site sur 250** ; les 26 absentes (surtout de
+  petites familles de passereaux, plus Huîtriers, Pluvian, Sarothruridés) s'accrochent à leur ordre,
+  marquées « placement non publié dans l'étude ». « Océanites » du site = deux familles (Océanitidés,
+  Hydrobatidés), que l'arbre sépare à juste titre.
+- Branches incertaines selon l'article (à MONTRER, pas cacher) : Hoazin (3 positions possibles),
+  Phaethontimorphes, Strisores, rapaces + chouettes, Nandous, Mirandornithes, Outardes/Coucous.
+- Reste : vérifier les noms français des espèces du monde ; maquette (2-3 directions, charte
+  `docs/charte-graphique.md`, page dans « Plus » à confirmer) ; phrases sourcées ; construire, données
+  dans un `data/arbre-*.json` chargé à l'ouverture.
+
+## CHANTIER EN PAUSE (demandé le 07/11) : le site au téléphone
 Mathis trouve l'affichage téléphone « pas adapté et pas très utilisable », sur **tout le site**. Ce qui
 gêne, ses trois réponses : **trop d'infos à l'écran** (serré, on ne sait pas où regarder, beaucoup de
 défilement), **des choses coupées** (textes tronqués, tableaux qui débordent, éléments hors écran), et
