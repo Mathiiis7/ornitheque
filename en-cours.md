@@ -1,6 +1,12 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1019 / app.js?v=591 (et styles.css?v=591). Prochaine : v1020 / 592.
+Dernière version : v1020 / app.js?v=592 (et styles.css?v=592). Prochaine : v1021 / 593.
+- **v1020 (conversation de l'arbre)** : familles calées sur **AviList v2026** (liste mondiale unique, CC BY 4.0,
+  doi:10.2173/avilist.v2026, 45 ordres / 250 familles / 2 379 genres, identiques à eBird v2026). « Océanites »
+  coupée en Océanites du Sud (Océanitidés) et Océanites du Nord (Hydrobatidés) ; Ictérie polyglotte rangée dans
+  les Icteridés (famille Ictériidés supprimée en 2026). Comparaison : `outils/build/_compare-avilist.mjs` sur
+  `notes-privees/arbre/avilist/AviList-v2026-extended.xlsx` -> 0 écart de famille ni d'ordre. Choix de Mathis :
+  groupes AviList partout, ESPÈCES eBird (les listes des membres viennent d'eBird ; 97,7 % d'accord seulement).
 - **v1019** : Classement au téléphone : les 4 colonnes de droite REVIENNENT et défilent de côté, rang, joueur et nombre
   figés (choix de Mathis) ; barème des tris sur toute la largeur ; filtres de Qui a vu quoi rangés, 10 ronds sur une
   ligne ; X/P/N à 19 px (plus petits que les chiffres, 24). Essais : _essai-classement-tel.mjs, _essai-filtres-qui.mjs.
@@ -25,7 +31,13 @@ familles ensuite par lots relus.
   `docs/charte-graphique.md`, page dans « Plus » à confirmer) ; phrases sourcées ; construire, données
   dans un `data/arbre-*.json` chargé à l'ouverture.
 
-## CHANTIER EN PAUSE (demandé le 07/11) : le site au téléphone
+- **Recherche du 08/11** (`notes-privees/arbre/BILAN-RECHERCHE.md`) : pas de fausse route. AviList ne définit rien
+  au-dessus de l'ordre : grands groupes = Stiller 2024, étage des passereaux = Oliveros 2019 (choisi par Mathis :
+  « plus un étage dans les passereaux »). L'arbre et la suite AviList ne divergent qu'aux 3 noeuds débattus.
+  Encore à trancher par Mathis : groupes maison des Trophées (« canards & grèbes », « rapaces diurnes »…) et
+  forme des noms (« Passereaux · Passériformes » ?). Puis maquettes.
+
+## CHANTIER EN COURS DANS UNE AUTRE CONVERSATION (demandé le 07/11) : le site au téléphone
 Mathis trouve l'affichage téléphone « pas adapté et pas très utilisable », sur **tout le site**. Ce qui
 gêne, ses trois réponses : **trop d'infos à l'écran** (serré, on ne sait pas où regarder, beaucoup de
 défilement), **des choses coupées** (textes tronqués, tableaux qui débordent, éléments hors écran), et

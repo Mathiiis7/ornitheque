@@ -14,8 +14,9 @@
 
   On croise GENUS_FAMILY et FAMILY_EN_TO_FR, tels qu'ils sont dans app.js, avec le champ
   familySciName de la taxonomie eBird. Mesure du 2026-10-12 : 249 intitules sur 251 ne
-  couvrent qu'une famille ; « Océanites » en couvre deux (Oceanitidae et Hydrobatidae),
-  « Autres » ramasse les hybrides et les « sp. », sans famille propre.
+  couvrent qu'une famille ; « Océanites » en couvrait deux (Oceanitidae et Hydrobatidae),
+  separees le 2026-11-08 pour suivre AviList v2026 ; « Autres » ramasse les hybrides et les
+  « sp. », sans famille propre.
 
   Usage :
     node outils/build/build-famille-sci.mjs

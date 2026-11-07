@@ -91,9 +91,10 @@ const FAM_FR = {
   'Loons': 'Plongeons',
   // Diomedeidae
   'Albatrosses': 'Albatros',
-  // Hydrobatidae + Oceanitidae
-  'Northern Storm-Petrels': 'Océanites',
-  'Southern Storm-Petrels': 'Océanites',
+  // Hydrobatidae et Oceanitidae : deux familles chez AviList v2026 comme chez eBird, que le
+  // site reunissait sous « Océanites » jusqu'au 2026-11-08. Les noms traduisent ceux d'AviList.
+  'Northern Storm-Petrels': 'Océanites du Nord',
+  'Southern Storm-Petrels': 'Océanites du Sud',
   // Procellariidae
   'Shearwaters and Petrels': 'Puffins, pétrels',
   // Ciconiidae
