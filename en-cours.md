@@ -1,6 +1,7 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1017 / app.js?v=589 (et styles.css?v=589). Prochaine : v1018 / 590.
+Dernière version : v1018 / app.js?v=590 (et styles.css?v=590). Prochaine : v1019 / 591.
+- **v1018** : la pastille de version des admins (#adminBuildStamp) cachée au téléphone, gardée à l'ordinateur.
 
 ## PROCHAIN CHANTIER (demandé le 07/11) : le site au téléphone
 Mathis trouve l'affichage téléphone « pas adapté et pas très utilisable », sur **tout le site**. Ce qui

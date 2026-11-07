@@ -4373,6 +4373,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     /* Trois colonnes à toutes les largeurs de téléphone : à 360 px, la grille passait à deux. */
     .pkdx-grid { grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px; }
     .pkdx-card .pkdx-sci, .pkdx-card .pkdx-num { display:none; }
+
+    /* La pastille de version des administrateurs, en bas à gauche : à l'ordinateur seulement (Mathis,
+       2026-11-08) ; au téléphone, elle couvrait la barre du bas. app.js l'affiche par .style.display, d'où !important. */
+    #adminBuildStamp { display:none !important; }
   }
   /* Au doigt, les ronds de rareté restent à 24 px d'écran (choix de Mathis, 2026-11-07) : sans le zoom
      0,85, leur boîte doublée de 56 px en ferait 28. Zone invisible de 7 px de chaque côté : 38 px. */
