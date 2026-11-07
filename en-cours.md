@@ -1,8 +1,12 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1011 / app.js?v=583 (et styles.css?v=583). Prochaine : v1012 / 584.
+Dernière version : v1012 / app.js?v=584 (et styles.css?v=584). Prochaine : v1013 / 585.
 
 ## Décidé le 07/11
+- **v1012** : au doigt, toucher la carte pour refermer la bulle d'un point (ou d'une grappe, d'un hotspot)
+  ne choisit plus le pays, la région ou la réserve en dessous (Mathis sur iPhone). L'état se lit au
+  `pointerdown` : au clic, Leaflet a déjà fermé l'infobulle (mouseout simulé). Essai :
+  `outils/verif/_essai-fermer-bulle-tel.mjs`.
 - **v1009** : hauteur de la carte au téléphone en `svh` au lieu de `dvh`. En défilant sur iPhone, la carte
   sautait puis se remettait : `dvh` suit la barre d'adresse de Safari, qui se replie et revient. Le doigt
   qui déplace la carte en voulant défiler ne gêne PAS Mathis (deux doigts proposés, refusé). Non vérifiable

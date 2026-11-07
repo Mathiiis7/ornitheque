@@ -8127,6 +8127,10 @@ function _ensureMapInit(el){
   // zoomSnap 0,25 : cadrer la France ou un département au plus juste. Au pas de 1, la France
   // tombait au cran du dessous et ne remplissait qu'un tiers de la carte au téléphone.
   _map = L.map(el, { zoomControl:true, minZoom:2, worldCopyJump:true, zoomSnap:0.25 }).setView([46.6, 2.5], 5);
+  // Au doigt, toucher la carte pour refermer une bulle (point, grappe, hotspot, réserve) ne choisit rien
+  // d'autre : ni pays, ni région, ni département, ni réserve (Mathis sur iPhone, 2026-11-07). Le toucher
+  // se juge quand le doigt se pose (phase de capture) : au clic, Leaflet a déjà refermé la bulle.
+  el.addEventListener('pointerdown', () => { _ctToucherFerme = _ctAuDoigt.matches && _ctBulleOuverte(); }, true);
   // ct-fond-plan : en sombre, seul le plan est inversé (styles.css), pas la vue satellite.
   const planLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution:'© <a href="https://openstreetmap.org/copyright">OpenStreetMap</a>', maxZoom:19, className:'ct-fond-plan' });
@@ -9339,6 +9343,13 @@ function _ctSensSurvol(latlng, demi){
 }
 // L'infobulle d'un point se crée à la première demande, pas pour les milliers de points posés.
 let _ctSurvolOuvert = null;
+// Vrai le temps d'un toucher qui a trouvé une bulle ouverte : les contours l'ignorent (voir _ensureMapInit).
+let _ctToucherFerme = false;
+function _ctBulleOuverte(){
+  if(_ctSurvolOuvert && _ctSurvolOuvert.isTooltipOpen && _ctSurvolOuvert.isTooltipOpen()) return true;
+  if(_ctSurvolLibre) return true;
+  return !!(_map && _map._popup && _map.hasLayer(_map._popup));
+}
 function _ctOuvreSurvol(m){
   // Le sens se choisit à chaque ouverture : la carte a pu bouger depuis.
   if(m.getTooltip()) m.unbindTooltip();
@@ -9551,7 +9562,7 @@ function _ctChargeReserves(){
         // Le périmètre de protection d'une réserve (19 sites) : en tirets, sans teinte.
         style:f => ({ className:`ct-res ct-res-${f.properties.t}${f.properties.p ? ' ct-res-p' : ''}`, weight:1.5 }),
                 // Pendant un dessin au crayon, le clic va à la carte : il pose un sommet, même sur une réserve.
-        onEachFeature:(f, l) => l.on('click', e => { if(_drawState.active) return; L.DomEvent.stopPropagation(e); _ctOuvreReserve(f, e.latlng); }) });
+        onEachFeature:(f, l) => l.on('click', e => { if(_drawState.active || _ctToucherFerme) return; L.DomEvent.stopPropagation(e); _ctOuvreReserve(f, e.latlng); }) });
       _ctAppliqueCouches();
     });
   return _ctReservesPromesse;
@@ -9911,7 +9922,7 @@ async function _ctChargeDeps(){
     onEachFeature:(f, l) => {
       eclaire(l, _ctStyleRepos, () => _ctDansZone(l));
       // En dessinant ta zone, un clic pose un sommet : il ne doit pas choisir le département.
-      l.on('click', () => { if(!_drawState.active) _ctChoisirDep(f.properties.ebird); });
+      l.on('click', () => { if(!_drawState.active && !_ctToucherFerme) _ctChoisirDep(f.properties.ebird); });
       if(!_ctAuDoigt.matches) l.bindTooltip(f.properties.nom, { sticky:true, direction:'top', offset:[0, -8] });
     },
   });
@@ -9920,7 +9931,7 @@ async function _ctChargeDeps(){
     style:_ctStyleRegion,
     onEachFeature:(f, l) => {
       eclaire(l, _ctStyleRegion, () => false);
-      l.on('click', () => { if(!_drawState.active) _ctChoisirRegion(f.properties.ebird, true); });
+      l.on('click', () => { if(!_drawState.active && !_ctToucherFerme) _ctChoisirRegion(f.properties.ebird, true); });
       if(!_ctAuDoigt.matches) l.bindTooltip(f.properties.nom, { sticky:true, direction:'top', offset:[0, -8] });
     },
   });
@@ -9941,7 +9952,7 @@ async function _ctChargePays(){
     onEachFeature:(f, l) => {
       const cc = f.properties.cc;
       _ctEclaire(l, _ctStylePays, () => cc === _ctPaysOuvert, _ctBordsCaches);
-      l.on('click', () => { if(!_drawState.active) _ctOuvrePays(cc); });
+      l.on('click', () => { if(!_drawState.active && !_ctToucherFerme) _ctOuvrePays(cc); });
       if(!_ctAuDoigt.matches) l.bindTooltip(countryLabel(cc) || f.properties.nom, { sticky:true, direction:'top', offset:[0, -8] });
     } });
   _ctAppliqueCouches();
@@ -10033,7 +10044,7 @@ function _ctPoseZones(cc, geo){
     _lyrZones = L.geoJSON(geo, { pane:'ctDeps', style:_ctStyleRegion,
       onEachFeature:(f, l) => {
         _ctEclaire(l, _ctStyleRegion, () => _ctDansZone(l));
-        l.on('click', () => { if(!_drawState.active) _ctChoisirZone(f.properties.ebird); });
+        l.on('click', () => { if(!_drawState.active && !_ctToucherFerme) _ctChoisirZone(f.properties.ebird); });
         if(!_ctAuDoigt.matches) l.bindTooltip(f.properties.nom, { sticky:true, direction:'top', offset:[0, -8] });
       } });
     _ctZonesCc = cc;
