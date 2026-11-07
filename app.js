@@ -19637,9 +19637,6 @@ function _persistGbifKeyCache(){
 function _smApplyFilterVisibility(){
   const gbifCtrl = document.getElementById('smMapGbifCtrl');
   if(gbifCtrl) gbifCtrl.hidden = (_smMapMode === 'friends');
-  // Checkbox "Tous les cochages" : visible uniquement en mode Mes amis.
-  const showAllLbl = document.getElementById('smShowAllObsLbl');
-  if(showAllLbl) showAllLbl.style.display = (_smMapMode === 'friends') ? 'inline-flex' : 'none';
   const isEb = _smMapMode === 'ebird', isGbif = _smMapMode === 'gbif';
   const setVis = (id, show) => { const el = document.getElementById(id); if(el) el.hidden = !show; };
   setVis('smEbDaysLbl', isEb);
@@ -20004,14 +20001,12 @@ async function _renderSpeciesMap(key){
   let points = [];
   let gbifTotal = 0, gbifMonth = 0, gbifYearMin = 0, gbifYearMax = 0, gbifScopeLabel = '';
   if(_smMapMode === 'friends'){
-    const showAll = !!document.getElementById('smShowAllObs')?.checked;
     for(const p of realPeople){
       const v = p.species && p.species.get(key);
       if(!v) continue;
-      // showAll : iter allObs (chaque cochage). Sinon : 1 obs par personne (lat/lon canoniques).
-      const list = showAll && Array.isArray(v.allObs) && v.allObs.length
-        ? v.allObs
-        : (typeof v.lat === 'number' && typeof v.lon === 'number' ? [{ lat:v.lat, lon:v.lon, date:v.date||'', loc:v.loc||'' }] : []);
+      // Une observation par personne : la première. « Tous les cochages » retiré le 2026-11-07 (Mathis),
+      // comme sur la Carte : la plupart des listes n'en gardent qu'une par espèce.
+      const list = typeof v.lat === 'number' && typeof v.lon === 'number' ? [{ lat:v.lat, lon:v.lon, date:v.date||'', loc:v.loc||'' }] : [];
       for(const o of list){
         if(typeof o.lat !== 'number' || typeof o.lon !== 'number') continue;
         points.push({ lat:o.lat, lon:o.lon, name:p.name, si:p.si, loc:o.loc||'', date:o.date||'', uid:p.id });
@@ -20223,9 +20218,6 @@ document.addEventListener('change', e=>{
   }
   if(t.id === 'smGbifMonth' || t.id === 'smGbifYearMin' || t.id === 'smGbifYearMax'){
     if(_smMapMode === 'gbif' && _smCurrentKey) _renderSpeciesMap(_smCurrentKey);
-  }
-  if(t.id === 'smShowAllObs'){
-    if(_smMapMode === 'friends' && _smCurrentKey) _renderSpeciesMap(_smCurrentKey);
   }
 });
 // Ouvrir une fiche ajoute une entree a l'historique, pour que le bouton Retour la ferme : au
