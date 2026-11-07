@@ -3878,6 +3878,37 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      d'être touchées, sur un fond teinté d'accent et un bord d'accent - légèrement à part. */
   .decouvrir-texte { margin:12px 0 0; font-size:15px; line-height:1.45; color:var(--ink-2); }
   .decouvrir-actions { display:flex; justify-content:flex-end; flex-wrap:wrap; gap:8px; margin-top:16px; }
+  /* Que veux-tu voir sur la carte ? (2026-11-07, maquette B) : trois lignes, le dessin à gauche. */
+  .ctc-dialog { width:min(620px, calc(100vw - 32px)); }
+  .ctc-intro { margin:4px 0 16px; font-size:15px; color:var(--ink-3); }
+  .ctc-liste { display:flex; flex-direction:column; gap:10px; }
+  .ctc-choix { display:grid; grid-template-columns:150px 1fr 24px; align-items:center; gap:16px; padding:10px 14px 10px 10px;
+    font:inherit; color:var(--ink); text-align:left; cursor:pointer; background:var(--surface);
+    border:1.5px solid var(--line-2); border-radius:14px; transition:border-color .12s, box-shadow .12s; }
+  .ctc-choix:hover { border-color:var(--accent); box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+  .ctc-dessin { display:block; width:100%; height:auto; border-radius:9px; }
+  .ctc-txt { display:flex; flex-direction:column; gap:6px; min-width:0; }
+  .ctc-nom { display:flex; align-items:center; gap:8px; font:600 17px/1.2 var(--titre); }
+  .ctc-quoi { font-size:14px; color:var(--ink-2); }
+  .ctc-fleche { font-size:22px; color:var(--ink-3); }
+  /* Les couleurs du dessin suivent le thème ; les pastilles gardent leur bord blanc, comme sur la carte. */
+  .ctc-eau { fill:color-mix(in srgb, #4fa3c0 26%, var(--surface)); }
+  .ctc-terre { fill:var(--surface-2); }
+  .ctc-cote { fill:none; stroke:color-mix(in srgb, #4fa3c0 45%, var(--surface)); stroke-width:1.5; }
+  .ctc-route { fill:none; stroke:var(--surface-3); stroke-width:5; stroke-linecap:round; }
+  .ctc-zone { fill:none; stroke:color-mix(in srgb, var(--accent) 35%, transparent); stroke-width:1.2; }
+  .ctc-lettre { font:700 16.5px var(--sans); fill:#fff; }
+  .ctc-hs rect { stroke:var(--accent); stroke-width:2.4; fill:var(--surface); }
+  .ctc-hs text { font:700 15.5px var(--sans); fill:var(--ink); }
+  .ctc-c1 rect { fill:color-mix(in srgb, var(--accent) 18%, var(--surface)); }
+  .ctc-c2 rect { fill:color-mix(in srgb, var(--accent) 40%, var(--surface)); }
+  .ctc-c3 rect { fill:var(--accent); }
+  .ctc-c4 rect { fill:var(--accent-ink); stroke:var(--accent-ink); }
+  .ctc-c3 text, .ctc-c4 text { fill:var(--surface); }
+  @media (max-width:560px){
+    .ctc-choix { grid-template-columns:104px 1fr; gap:12px; padding:8px 12px 8px 8px; }
+    .ctc-fleche { display:none; }
+  }
   /* Fenetre de confirmation (demander() dans app.js), a la place des boites du navigateur (2026-11-03).
      pre-line garde les retours a la ligne des listes (« Cela va supprimer : • ... »). */
   .demander-texte { margin:0; font-size:15px; line-height:1.5; color:var(--ink); white-space:pre-line; }

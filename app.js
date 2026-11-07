@@ -6219,7 +6219,7 @@ function _retireSplash(){
   if(_splashRetire) return;
   _splashRetire = true;
   const reste = Math.max(0, _SPLASH_PLANCHER - performance.now());
-  setTimeout(() => document.documentElement.removeAttribute('data-splash'), reste);
+  setTimeout(() => { document.documentElement.removeAttribute('data-splash'); _ctProposeChoix(); }, reste);
 }
 setTimeout(_retireSplash, _SPLASH_PLAFOND);
 
@@ -9530,6 +9530,63 @@ function _ctSymbole(k){
   // Le hotspot : un carré arrondi bordé de la couleur d'accent, comme sur la carte (maquette du 2026-10-23).
   return `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="3" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/></svg>`;
 }
+// La fenêtre « Que veux-tu voir sur la carte ? » (Mathis, 2026-11-07, maquette B de
+// notes-privees/maquettes/choix-carte/) : à l'arrivée sur la Carte, une fois par chargement du site.
+// Une simple variable et non le stockage du navigateur : recharger la page la remontre (voulu), passer
+// par le Birdydex puis revenir sur la Carte non. Choisir fait la même chose que la pastille de la couche ;
+// la fermer laisse la carte vide, comme avant.
+let _ctChoixFait = false;
+const CT_CHOIX = [
+  ['recent', 'Vu récemment', "Les espèces vues ces derniers jours que tu n'as pas encore observées."],
+  ['ligue', 'La ligue', 'Les observations de tes amis, chaque point marqué de leur initiale.'],
+  ['hot', 'Hotspots', "Les meilleurs coins eBird, classés par nombre d'espèces que tu n'as pas encore observées."],
+];
+// Le petit dessin de chaque choix : un bout de côte, et les vrais symboles de la couche (pastilles à
+// l'œil, pastilles à l'initiale, carrés chiffrés aux crans des hotspots). Couleurs du fond en CSS
+// (.ctc-*), pour suivre le thème.
+function _ctChoixDessin(k){
+  const oeil = '<g fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" transform="translate(-8.8 -8.8) scale(1.1)"><path d="M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8 12.1 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="1.9" fill="#fff" stroke="none"/></g>';
+  const lettre = l => `<text y="5.8" text-anchor="middle" class="ctc-lettre">${l}</text>`;
+  const pt = (x, y, w, dedans) => `<g transform="translate(${x} ${y})"><circle r="13.5" fill="${realColor(w)}" stroke="#fff" stroke-width="2.4"/>${dedans}</g>`;
+  const carre = (x, y, n, cran) => {
+    const larg = 18 + 11 * String(n).length;
+    return `<g transform="translate(${x} ${y})" class="ctc-hs ctc-c${cran}"><rect x="${-larg / 2}" y="-14" width="${larg}" height="28" rx="7"/><text y="5.6" text-anchor="middle">${n}</text></g>`;
+  };
+  const corps = {
+    recent: pt(62, 88, 3, oeil) + pt(118, 104, 6, oeil) + pt(150, 72, 9, oeil) + pt(196, 118, 2, oeil) + pt(236, 84, 5, oeil) + pt(272, 132, 8, oeil) + pt(92, 146, 4, oeil),
+    ligue: pt(70, 96, 4, lettre('S')) + pt(126, 82, 7, lettre('A')) + pt(138, 132, 2, lettre('L')) + pt(204, 98, 9, lettre('M')) + pt(250, 136, 5, lettre('S')) + pt(278, 78, 3, lettre('A')),
+    hot: carre(80, 98, 42, 4) + carre(150, 76, 27, 3) + carre(214, 120, 13, 1) + carre(264, 82, 21, 2) + carre(116, 146, 8, 0),
+  }[k];
+  const cote = 'M0 40 C40 30 70 52 96 44 S150 14 182 26 S236 58 262 40 S300 18 320 22';
+  return `<svg class="ctc-dessin" viewBox="0 0 320 180" aria-hidden="true"><rect width="320" height="180" class="ctc-eau"/>` +
+    `<path d="${cote} V180 H0 Z" class="ctc-terre"/><path d="${cote}" class="ctc-cote"/>` +
+    `<path d="M28 120 C70 104 96 140 140 128 S214 92 250 112 S300 150 320 140" class="ctc-route"/>` +
+    `<path d="M120 70 l40 18 l-10 40 l-46 6 l-14 -34 Z M210 76 l44 -6 l18 40 l-36 26 l-30 -22 Z" class="ctc-zone"/>${corps}</svg>`;
+}
+// Appelée à l'ouverture de l'onglet Carte, à la connexion et au retrait de l'écran d'attente : la Carte
+// peut être l'onglet rouvert au chargement, avant que le site soit montré. Rien tant que le guide tourne
+// (il passe par la Carte) ou qu'une autre fenêtre est ouverte : elle attend la prochaine arrivée.
+function _ctProposeChoix(){
+  if(_ctChoixFait || _guide) return;
+  const d = $('#ctChoixDialog'); if(!d) return;
+  if(document.querySelector('.tab.on')?.dataset.view !== 'map') return;
+  const h = document.documentElement;
+  if(h.getAttribute('data-auth') !== 'signed-in' || h.hasAttribute('data-splash')) return;
+  if(document.querySelector('dialog[open]')) return;
+  _ctChoixFait = true;
+  const liste = $('#ctChoixListe');
+  if(!liste.childElementCount) liste.innerHTML = CT_CHOIX.map(([k, nom, quoi]) =>
+    `<button type="button" class="ctc-choix" data-ctc="${k}">${_ctChoixDessin(k)}` +
+    `<span class="ctc-txt"><span class="ctc-nom">${_ctSymbole(k)}${nom}</span><span class="ctc-quoi">${quoi}</span></span>` +
+    `<span class="ctc-fleche" aria-hidden="true">›</span></button>`).join('');
+  d.showModal();
+}
+$('#ctChoixListe')?.addEventListener('click', e => {
+  const b = e.target.closest('[data-ctc]'); if(!b) return;
+  $('#ctChoixDialog').close();
+  const p = document.querySelector(`#ctCouches [data-couche="${b.dataset.ctc}"]`);
+  if(p && p.getAttribute('aria-pressed') !== 'true') p.click();
+});
 // Un hotspot sur la carte : un carré qui porte le nombre d'espèces à cocher (ou vues ici, en tri
 // « total »), celui de la liste du panneau. Les ronds bleus d'avant se confondaient avec les pastilles
 // de la ligue ; la maquette choisie le 2026-10-23 distingue les couches par la forme.
@@ -13529,7 +13586,7 @@ $('#ajoutDialog')?.addEventListener('cancel', e => {
 // Les trois fenetres : ✕ (et « Enregistrer ») portent data-ferme ; un clic sur le fond aussi.
 // La marge interieure est sur .ml-dialog-in et non sur la fenetre, sinon un clic dans la marge
 // viserait la fenetre elle-meme et la fermerait.
-document.querySelectorAll('#tutoDialog, #prenomDialog, #ajoutDialog, #debloqueDialog, #decouvrirDialog').forEach(d => {
+document.querySelectorAll('#tutoDialog, #prenomDialog, #ajoutDialog, #debloqueDialog, #decouvrirDialog, #ctChoixDialog').forEach(d => {
   d.addEventListener('click', e => {
     if(e.target === d || e.target.closest('[data-ferme]')) d.close();
   });
@@ -13621,6 +13678,8 @@ function guideFerme(){
   // refermes, ne peuvent plus le recevoir : il va alors au ☰, la ou le guide se rouvre.
   const f = g.focusAvant;
   (f && f !== document.body && f.isConnected && f.getClientRects().length ? f : $('#hamburgerBtn'))?.focus();
+  // Revenu sur la Carte : le choix de la couche, s'il n'a pas encore été proposé (le guide le retient).
+  _ctProposeChoix();
 }
 function _guideMontre(){
   const g = _guide, e = g.etapes[g.i], n = g.etapes.length;
@@ -14288,6 +14347,7 @@ document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',e=>{
     // Première ouverture : le Récent, sans allumer sa couche (la carte arrive vide, 2026-10-23).
     if(!_ctOngletDepart && mapMode === 'mine'){ _ctModeBouton('missing')?.click(); carteCouches.delete('recent'); }
     renderMap();
+    _ctProposeChoix();
   }
   // Flush les renders differes pour ranking/trophies (voir renderResults + _rankingDirty).
   if(b.dataset.view==='ranking' || b.dataset.view==='trophies') _flushDirtyForView(b.dataset.view);
@@ -20176,6 +20236,8 @@ document.addEventListener('click', e=>{
     }
   }
   closeSpeciesModal();
+  // « Voir en grand » a déjà choisi ce qu'on veut voir : pas de fenêtre de choix par-dessus.
+  _ctChoixFait = true;
   const mapTab = [...document.querySelectorAll('.tab')].find(t => t.dataset.view === 'map');
   if(mapTab) mapTab.click();
   // Choix du mode grande carte selon la mini-carte.
@@ -20936,6 +20998,7 @@ function updateAuthUI(user){
   // Compat classes (a retirer eventuellement)
   document.body.classList.toggle('auth-gated', !real);
   document.documentElement.classList.toggle('auth-gated', !real);
+  if(real) _ctProposeChoix();
   const gate = $('#authGate');
   if(gate){
     gate.hidden = !!real;
