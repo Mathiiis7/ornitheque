@@ -7194,7 +7194,7 @@ let _lyrMissing=null, _lyrHotspots=null;
 let _loaded = { missing:'', hotspots:'' };   // clé de cache (région+jours)
 // Filtres propres au mode "mine"
 // La rareté de la ligue se règle comme celle du Récent (2026-10-26) : plusieurs paliers à la fois, ou un statut N.
-let mapFilter = { player:'all', rarities:new Set([1,2,3,4,5,6,7,8,9,10]), cats:new Set(), country:'any', showAllObs:false, grappes:false };
+let mapFilter = { player:'all', rarities:new Set([1,2,3,4,5,6,7,8,9,10]), cats:new Set(), country:'any', grappes:false };
 // « Regrouper les points » : éteint par défaut, et chaque appareil garde son choix d'une visite à
 // l'autre (Mathis, 2026-11-07 : qui préfère les grappes les allume une fois).
 try{ mapFilter.grappes = localStorage.getItem('mb-ligue-grappes') === '1'; }catch(_){}
@@ -7747,19 +7747,13 @@ function _fillMapSelects(pts){
 }
 function _mapCollectPoints(){
   const pts=[];
-  const showAll = !!(mapFilter && mapFilter.showAllObs);
   for(const p of state.people){
     const active = p._active || p.species; if(!active) continue;
     for(const v of active.values()){
       const common = frName(v.sci, v.common);
-      // showAll = false (defaut) : 1 marker par espece par personne (l'obs canonique).
-      // showAll = true : 1 marker PAR obs (utilise allObs, jusqu'a 20 par espece).
-      let obsList;
-      if(showAll){
-        obsList = Array.isArray(v.allObs) && v.allObs.length ? v.allObs : (typeof v.lat==='number' && typeof v.lon==='number' ? [{ lat:v.lat, lon:v.lon, date:v.date, loc:v.loc, cc:v.country, locId:v.locId }] : []);
-      } else {
-        obsList = (typeof v.lat==='number' && typeof v.lon==='number') ? [{ lat:v.lat, lon:v.lon, date:v.date, loc:v.loc, cc:v.country, locId:v.locId }] : [];
-      }
+      // Un point par espèce et par personne : sa première observation. « Tous les cochages » (un point
+      // par observation gardée) a été retiré le 2026-11-07 : 7 listes sur 11 n'en ont qu'une par espèce.
+      const obsList = (typeof v.lat==='number' && typeof v.lon==='number') ? [{ lat:v.lat, lon:v.lon, date:v.date, loc:v.loc, cc:v.country, locId:v.locId }] : [];
       for(const o of obsList){
         if(typeof o.lat!=='number' || typeof o.lon!=='number') continue;
         if(o.lat<-90||o.lat>90||o.lon<-180||o.lon>180) continue;
@@ -8852,7 +8846,6 @@ function _fitLayer(lyr, force){
 document.addEventListener('change', e=>{
   if(e.target.id==='mapPlayerSel'){ mapFilter.player=e.target.value; renderMap(); }
   else if(e.target.id==='mapCountrySel'){ mapFilter.country=e.target.value; renderMap(); }
-  else if(e.target.id==='mapMineShowAllObs'){ mapFilter.showAllObs = !!e.target.checked; renderMap(); }
   else if(e.target.id==='mapLigueGrappes'){
     mapFilter.grappes = !!e.target.checked;
     try{ localStorage.setItem('mb-ligue-grappes', mapFilter.grappes ? '1' : '0'); }catch(_){}
