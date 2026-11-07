@@ -1,6 +1,6 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1010 / app.js?v=582 (et styles.css?v=582). Prochaine : v1011 / 583.
+Dernière version : v1011 / app.js?v=583 (et styles.css?v=583). Prochaine : v1012 / 584.
 
 ## Décidé le 07/11
 - **v1009** : hauteur de la carte au téléphone en `svh` au lieu de `dvh`. En défilant sur iPhone, la carte
@@ -13,7 +13,7 @@ Dernière version : v1010 / app.js?v=582 (et styles.css?v=582). Prochaine : v101
   il n'a presque rien à montrer : sauvegarde du 04/10, 7 membres sur 11 sans aucune observation multiple
   (liste de vie eBird = une ligne par espèce) ; il faut l'export MyEBirdData complet, et 20 obs au plus
   par espèce (`saveMyList`). « Regrouper les points » a repris la ligne « Afficher ». Celui de la carte
-  de la fiche espèce (`smShowAllObs`) reste : Mathis ne l'a pas mentionné.
+  de la fiche espèce (`smShowAllObs`) retiré aussi en v1011, à sa demande.
 - **v1008** : `styles.css` porte le même `?v=` qu'app.js (voir CLAUDE.md, Déployer). Mathis a vu sur iPhone,
   juste après la v1006, le panneau de la Carte invisible et la Légende remontée : nouvel app.js avec
   l'ancien CSS gardé 10 min en cache. Rejoué avec `outils/verif/_essai-legende-tel.mjs` (ANCIEN_CSS=...).
