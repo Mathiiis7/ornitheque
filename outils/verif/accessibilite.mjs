@@ -218,10 +218,20 @@ export async function mesure({ navigateur, RACINE }){
     mesureCible('onglet de la fiche espèce', tailles.ongletFiche);
     // Sur les vrais boutons de la barre, pas sur un temoin : leur style vit dans index.html, lu
     // apres styles.css, et annulait en silence la regle du doigt (36 px, trouve le 2026-10-31).
-    mesureCible('icône de la barre (Fil)', await tel.evaluate(() => {
+    // Depuis le 2026-11-07, a 700 px et moins, la barre du bas remplace la rangee d'onglets et ses
+    // icones : a 390 px on mesure la plus petite case de la barre, puis les icones a 768 px (tablette).
+    mesureCible('case de la barre du bas (390 px)', await tel.evaluate(() => {
+      const bs = [...document.querySelectorAll('#barreBas button')].map(b => b.getBoundingClientRect());
+      if(!bs.length || !bs[0].width) return null;
+      return { l: Math.round(Math.min(...bs.map(b => b.width)) * 10) / 10, h: Math.round(Math.min(...bs.map(b => b.height)) * 10) / 10 };
+    }));
+    await tel.setViewportSize({ width: 768, height: 1024 });
+    await tel.waitForTimeout(300);
+    mesureCible('icône de la rangée (Fil, 768 px)', await tel.evaluate(() => {
       const b = document.querySelector('#fabFeed').getBoundingClientRect();
       return { l: Math.round(b.width * 10) / 10, h: Math.round(b.height * 10) / 10 };
     }));
+    await tel.setViewportSize({ width: 390, height: 844 });
 
     // Une cible de 44 px qu'on ne voit pas reste inatteignable : c'etait le vrai defaut du
     // tchat, ou tout attendait un survol que le doigt ne produit jamais.

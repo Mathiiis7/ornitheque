@@ -1,6 +1,6 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1014 / app.js?v=586 (et styles.css?v=586). Prochaine : v1015 / 587.
+Dernière version : v1015 / app.js?v=587 (et styles.css?v=587). Prochaine : v1016 / 588.
 
 ## PROCHAIN CHANTIER (demandé le 07/11) : le site au téléphone
 Mathis trouve l'affichage téléphone « pas adapté et pas très utilisable », sur **tout le site**. Ce qui
@@ -14,6 +14,17 @@ Méthode prévue :
 2. Maquettes avant de toucher au code (CLAUDE.md global) : 2 ou 3 directions pour la navigation (barre
    d'onglets en bas ? écrans plein écran ?) et pour alléger une page type. Il choisit.
 3. Puis page par page, vérifié au téléphone et à l'ordinateur (l'affichage souris ne doit pas bouger).
+**Avancement 07/11** : étape 1 faite (`notes-privees/chantier-telephone/CONSTAT.md`). Barre du bas choisie
+par Mathis : **Classement, Birdydex, Carte, Quiz, Plus** (Plus : Ma liste, Trophées, Fil, Photos, Tchat,
+Profil, Requêtes, À propos, guide, thème, déconnexion ; ses pastilles additionnent celles qu'il contient).
+**v1015 (08/11) : étape 3a EN LIGNE** : choix de Mathis sur la maquette : haut A (logo fin collé), texte à
+100 % (zoom 1 sous 700 px), pages à plat. Barre du bas + page Plus, Fil/Photos/Tchat en pages, guide redirigé,
+ronds recentrés au doigt (banc pastilles), ordinateur identique au pixel (_ref-ordi.mjs, bruit des photos et
+tuiles mis à part). Essai : outils/verif/_essai-barre-tel.mjs (390/360, clair/sombre). À faire vérifier par
+Mathis sur iPhone : clavier (barre cachée, pas de zoom), barre Safari, appli installée. Reste 3b, page par
+page : tableau du Classement (défile de côté, « Qui a vu quoi » 40 écrans), grille du Birdydex, cartes des
+Trophées, liste de Ma liste dans sa boîte, boutons de couche de la Carte sur 2 lignes, boîte du Tchat.
+Toujours pas de réponse sur ce qu'il a vu COUPÉ sur son iPhone.
 Déjà fait au téléphone, à ne pas défaire : Carte sans tiroir, panneau dessous (v1006) ; carte en `svh`
 (v1009) ; ronds de rareté à 24 px (v1006) ; bloc `@media (pointer: coarse)` en fin de styles.css.
 

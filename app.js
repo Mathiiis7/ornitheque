@@ -13656,6 +13656,23 @@ function _guideVue(v){
   const b = document.querySelector('.tab[data-view="' + v + '"]');
   if(b && !b.classList.contains('on')) b.click();
 }
+// Au téléphone (barre du bas, chantier du 2026-11-07), les cibles de l'ordinateur sont cachées : la rangée
+// d'onglets, les icônes Fil, Photos, Tchat et le menu ⚙. Le guide montre à la place la case de la barre, ou
+// « Plus » pour ce qui y est rangé, et les lignes de la page Plus.
+function _guideSel(e){
+  const c = e.cible;
+  if(!c || !_telBarre.matches) return c;
+  const plus = '#barreBas [data-view="plus"]';
+  const onglet = c.match(/^\.tab\[data-view="(\w+)"\]$/);
+  if(onglet) return BARRE_VUES.includes(onglet[1]) ? `#barreBas [data-view="${onglet[1]}"]` : plus;
+  if(['#fabFeed', '#fabPhotos', '#fabChat', '#hamburgerBtn'].includes(c)) return plus;
+  const ligne = c.match(/^\.ham-item\[data-view="(\w+)"\]$/);
+  if(ligne) return `#plusListe [data-view="${ligne[1]}"]`;
+  if(c === '#hamInvite' || c === '#hamGuide') return `#plusListe [data-clic="${c.slice(1)}"]`;
+  // Le pays du Birdydex est rangé dans ses Filtres repliés : le guide montre le bouton qui les ouvre.
+  if(c === '#pkdxCountry' && !$(c)?.getClientRects().length) return '#pkdxPliBtn';
+  return c;
+}
 function guideOuvre(apresDepot){
   if(_guide) return;
   // Un panneau flottant ouvert (Fil, Photos, Tchat) se refermerait au premier clic dans la bulle.
@@ -13664,7 +13681,7 @@ function guideOuvre(apresDepot){
   // voient qu'une fois la vue ouverte : on les garde.
   const etapes = GUIDE_ETAPES.filter(e => {
     if(!e.cible || e.vue || e.menu) return true;
-    const el = $(e.cible); return !!el && el.getClientRects().length > 0;
+    const el = $(_guideSel(e)); return !!el && el.getClientRects().length > 0;
   });
   _guide = { etapes, i:0, apresDepot:!!apresDepot, focusAvant:document.activeElement,
     vueAvant:document.querySelector('.tab.on')?.dataset.view || 'load' };
@@ -13695,10 +13712,12 @@ function _guideMontre(){
     g.fiche = true;
   } else if(!e.fiche && g.fiche){ closeSpeciesModal(); g.fiche = false; }
   const menu = $('#hamburgerMenu');
-  if(e.menu && menu?.hidden) $('#hamburgerBtn').click();
+  // Au téléphone, le menu ⚙ est la page Plus : le guide l'ouvre et pointe ses lignes.
+  if(e.menu && _telBarre.matches) _guideVue('plus');
+  else if(e.menu && menu?.hidden) $('#hamburgerBtn').click();
   else if(!e.menu && menu) menu.hidden = true;
   $('#guideTitre').textContent = (accueil || e).titre;
-  $('#guideTexte').textContent = (accueil || e).texte;
+  $('#guideTexte').textContent = _telBarre.matches ? (accueil || e).texte.replace(/le menu ⚙︎?/g, '« Plus »') : (accueil || e).texte;
   $('#guideEtape').textContent = g.i ? 'Étape ' + g.i + ' sur ' + (n - 1) : '';
   const retour = $('#guideRetour'), suivant = $('#guideSuivant');
   retour.hidden = g.i === 0 && !accueil;
@@ -13717,7 +13736,7 @@ function _guideMontre(){
 // descendue), puis place la bulle.
 function _guideCadre(){
   if(!_guide) return;
-  const e = _guide.etapes[_guide.i], cible = e.cible && $(e.cible);
+  const e = _guide.etapes[_guide.i], cible = e.cible && $(_guideSel(e));
   if(cible && cible.getClientRects().length){
     const r = cible.getBoundingClientRect();
     if(r.top < 0 || r.bottom > innerHeight || r.left < 0 || r.right > innerWidth)
@@ -13733,7 +13752,7 @@ function _guidePlace(){
   const e = _guide.etapes[_guide.i];
   const z = parseFloat(getComputedStyle(document.body).zoom) || 1;
   const racine = $('#guide'), trou = $('#guideTrou'), bulle = $('#guideBulle');
-  const cible = e.cible && $(e.cible);
+  const cible = e.cible && $(_guideSel(e));
   // Une cible sortie de l'ecran (page defilee a la main) : la bulle revient au centre.
   const rc = cible && cible.getClientRects().length ? cible.getBoundingClientRect() : null;
   const visible = !!rc && rc.bottom > 0 && rc.top < innerHeight && rc.right > 0 && rc.left < innerWidth;
@@ -14188,7 +14207,7 @@ $('#manualAddBtn')?.addEventListener('click', async ()=>{
   btn.disabled=false;
 });
 
-const VIEWS = { load:'#viewLoad', profil:'#viewProfil', ranking:'#viewRanking', map:'#viewMap', trophies:'#viewTrophies', chat:'#viewChat', photos:'#viewPhotos', feed:'#viewFeed', requests:'#viewRequests', quiz:'#viewQuiz', pokedex:'#viewPokedex', about:'#viewAbout' };
+const VIEWS = { load:'#viewLoad', profil:'#viewProfil', ranking:'#viewRanking', map:'#viewMap', trophies:'#viewTrophies', chat:'#viewChat', photos:'#viewPhotos', feed:'#viewFeed', requests:'#viewRequests', quiz:'#viewQuiz', pokedex:'#viewPokedex', about:'#viewAbout', plus:'#viewPlus' };
 // Hamburger menu + FABs Chat/Photos : delegate vers les tabs caches.
 document.addEventListener('click', e => {
   const ham = e.target.closest('#hamburgerBtn');
@@ -14242,6 +14261,8 @@ document.addEventListener('click', e => {
 });
 // Ouvre / ferme un panneau flottant (chat ou photos). Re-clic sur le meme FAB ferme.
 function _toggleFabPanel(view, fabBtn){
+  // Au téléphone, Fil, Photos et Tchat sont des pages (Plus), plus des fenêtres flottantes.
+  if(_telBarre.matches){ _closeFabPanel(); _ouvreVue(view); return; }
   const targetId = view === 'chat' ? 'viewChat' : view === 'photos' ? 'viewPhotos' : view === 'feed' ? 'viewFeed' : null;
   if(!targetId) return;
   const target = document.getElementById(targetId);
@@ -14315,6 +14336,100 @@ document.querySelector('.aller-contenu')?.addEventListener('click', e => {
 // Vrai clic sur une ligne du menu : il passe par btn.click(), que le navigateur ne marque pas
 // comme venu de la personne (isTrusted faux). Voir l'historique ci-dessous.
 let _clicMenu = false;
+// ---------------- Le téléphone : barre du bas et page Plus ----------------
+// Chantier du 2026-11-07 (notes-privees/chantier-telephone/, maquette choisie par Mathis) : à 700 px et
+// moins, la rangée d'onglets laisse place à une barre en bas (Classement, Birdydex, Carte, Quiz, Plus).
+// Le même point de rupture que la CSS (bloc « Le téléphone » de styles.css).
+const _telBarre = window.matchMedia('(max-width:700px)');
+// Les pages de la barre ; tout le reste se range dans Plus, qui s'allume quand l'une d'elles est ouverte.
+const BARRE_VUES = ['ranking', 'pokedex', 'map', 'quiz'];
+function _barreBasSuit(){
+  const v = document.querySelector('.tab.on[data-view]')?.dataset.view || 'load';
+  document.querySelectorAll('#barreBas [data-view]').forEach(b => {
+    const on = b.dataset.view === v || (b.dataset.view === 'plus' && !BARRE_VUES.includes(v));
+    b.classList.toggle('on', on);
+    if(on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+  });
+}
+// Les pastilles : celles des onglets cachés (rouges : Fil, Tchat, Photos, Requêtes ; or : Birdydex,
+// Trophées), recopiées. Plus additionne les rouges de ce qu'il range ; sans rouge, l'or des Trophées.
+const _nbPastille = sel => parseInt(document.querySelector(sel)?.textContent) || 0;
+function _barreBasPastilles(){
+  const barre = $('#barreBas'); if(!barre) return;
+  const pose = (v, n, or) => {
+    const b = barre.querySelector(`[data-view="${v}"]`); if(!b) return;
+    let p = b.querySelector('.barre-pastille');
+    if(!n){ p?.remove(); return; }
+    if(!p){ p = document.createElement('span'); p.setAttribute('aria-hidden', 'true'); b.appendChild(p); }
+    p.className = 'barre-pastille' + (or ? ' or' : '');
+    p.textContent = n > 99 ? '99+' : String(n);
+  };
+  pose('pokedex', _nbPastille('.tab[data-view="pokedex"] .tab-count-or'), true);
+  const rouges = ['feed', 'chat', 'photos', 'requests'].reduce((s, v) => s + _nbPastille(`.tab[data-view="${v}"] .tab-count`), 0);
+  pose('plus', rouges || _nbPastille('.tab[data-view="trophies"] .tab-count-or'), !rouges);
+  if(document.querySelector('.tab.on')?.dataset.view === 'plus') _plusDessine();
+}
+// Un clic de la barre ou de Plus est un vrai clic : il entre dans l'historique (bouton Retour).
+function _ouvreVue(v, e){
+  const t = document.querySelector(`.tab[data-view="${v}"]`); if(!t) return;
+  _clicMenu = !!(e && e.isTrusted); t.click(); _clicMenu = false;
+}
+$('#barreBas')?.addEventListener('click', e => {
+  const b = e.target.closest('[data-view]'); if(b) _ouvreVue(b.dataset.view, e);
+});
+// Les lignes de Plus. Les pages (data-view) et les actions du menu ⚙ (data-clic) cliquent les vrais
+// éléments ; on relit le menu à chaque fois pour suivre ce qu'il cache (connexion, admin…).
+const PLUS_ICONES = {
+  load:'<path d="M5 4h14v16H5zM8.5 8.5h7M8.5 12h7M8.5 15.5h4"/>',
+  trophies:'<path d="M7 4h10v4a5 5 0 0 1-10 0zM7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8"/>',
+  feed:'<path d="M4 5h16M4 10h16M4 15h10M4 20h7"/>',
+  photos:'<path d="M3 8a2 2 0 0 1 2-2h2.5l1.5-2h6l1.5 2H19a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/>',
+  chat:'<path d="M4 5h16v11H9l-5 4z"/>',
+  profil:'<circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/>',
+  requests:'<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9V16h7v-2.1A6 6 0 0 0 12 3z"/>',
+  about:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>',
+  hamInvite:'<path d="M3 6h18v12H3z"/><path d="m3 7 9 6 9-6"/>',
+  hamGuide:'<circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/>',
+  theme:'<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+};
+const _plusIcone = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${PLUS_ICONES[k] || '<circle cx="12" cy="12" r="2"/>'}</svg>`;
+// Le texte d'une ligne du menu ⚙, sans son emoji ni sa pastille.
+const _plusNom = el => [...el.childNodes].filter(n => n.nodeType === 3 || (n.nodeType === 1 && !n.classList.contains('notif-badge'))).map(n => n.textContent).join('')
+  .replace(/^[\p{Extended_Pictographic}️\s]+/u, '').trim();
+function _plusDessine(){
+  const box = $('#plusListe'); if(!box) return;
+  const ligne = (attr, k, nom, n, or) => `<button type="button" class="plus-ligne" ${attr}>${_plusIcone(k)}<span class="plus-nom">${esc(nom)}</span>` +
+    (n ? `<span class="plus-pastille${or ? ' or' : ''}">${n > 99 ? '99+' : n}</span>` : '') + '<span class="plus-fl" aria-hidden="true">›</span></button>';
+  const pages = [['load', 'Ma liste'], ['trophies', 'Trophées'], ['feed', 'Fil'], ['photos', 'Photos'], ['chat', 'Tchat']]
+    .map(([v, nom]) => ligne(`data-view="${v}"`, v, nom, _nbPastille(`.tab[data-view="${v}"] ${v === 'trophies' ? '.tab-count-or' : '.tab-count'}`), v === 'trophies')).join('');
+  const menu = [...document.querySelectorAll('#hamburgerMenu > .ham-item')].filter(el => !el.hidden).map(el => el.dataset.view
+    ? ligne(`data-view="${el.dataset.view}"`, el.dataset.view, _plusNom(el), _nbPastille(`#hamburgerMenu .ham-item[data-view="${el.dataset.view}"] .notif-badge`))
+    : ligne(`data-clic="${el.id}"`, el.id, _plusNom(el))).join('');
+  const sombre = document.documentElement.getAttribute('data-theme') === 'dark'
+    || (!document.documentElement.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches);
+  const theme = `<button type="button" class="plus-ligne" data-clic="themeBtn" role="switch" aria-checked="${sombre}">${_plusIcone('theme')}<span class="plus-nom">Mode sombre</span><span class="plus-interrupteur" aria-hidden="true"></span></button>`;
+  const compte = $('#hamAccountInfo') && !$('#hamAccountInfo').hidden ? `<p class="plus-compte">Connecté : ${esc($('#hamAccountEmail')?.textContent || '')}</p>` : '';
+  const sortie = [...document.querySelectorAll('#hamAccount .ham-item')].filter(el => !el.hidden)
+    .map(el => `<button type="button" class="plus-sortie" data-clic="${el.id}">${esc(_plusNom(el))}</button>`).join('');
+  box.innerHTML = `<div class="plus-groupe">${pages}</div><div class="plus-groupe">${menu}${theme}</div>${compte}${sortie}`;
+}
+$('#plusListe')?.addEventListener('click', e => {
+  const b = e.target.closest('.plus-ligne, .plus-sortie'); if(!b) return;
+  if(b.dataset.view){
+    if(b.dataset.view === 'profil'){ profilUid = null; _profilOnglet = 'apercu'; }
+    _ouvreVue(b.dataset.view, e); return;
+  }
+  document.getElementById(b.dataset.clic)?.click();
+  if(b.dataset.clic === 'themeBtn') _plusDessine();
+});
+// Les pastilles changent dans la rangée cachée (updateTabDots, trophées, Birdydex) : la barre suit.
+if($('nav.tabs')) new MutationObserver(_barreBasPastilles).observe($('nav.tabs'), { subtree:true, childList:true, characterData:true });
+// Le menu ⚙ change (connexion, admin) : Plus suit s'il est ouvert.
+if($('#hamburgerMenu')) new MutationObserver(() => { if(document.querySelector('.tab.on')?.dataset.view === 'plus') _plusDessine(); })
+  .observe($('#hamburgerMenu'), { subtree:true, attributes:true, attributeFilter:['hidden'], childList:true, characterData:true });
+_barreBasSuit();
+_barreBasPastilles();
+_telBarre.addEventListener('change', () => { if(!_telBarre.matches && document.querySelector('.tab.on')?.dataset.view === 'plus') document.querySelector('.tab[data-view="load"]')?.click(); });
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',e=>{
   // Skip les .tab sans data-view (hamburger btn), sinon on masque toutes les views
   // (le loop VIEWS ne match rien et met tout a display:none, ecran blanc).
@@ -14339,9 +14454,12 @@ document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',e=>{
     updateChatIdentity();
     renderOnline();
     const box=$('#chatMessages'); if(box) box.scrollTop=box.scrollHeight;
-    $('#chatText')?.focus();
+    // Au téléphone, pas de curseur d'emblée : le clavier s'ouvrirait et cacherait les messages.
+    if(!_telBarre.matches) $('#chatText')?.focus();
     markSeen('chat');
   }
+  if(b.dataset.view==='plus') _plusDessine();
+  _barreBasSuit();
   if(b.dataset.view==='photos'){ renderPhotos(); markSeen('photos'); }
   if(b.dataset.view==='feed'){ renderFeed(); markSeen('feed'); }
   if(b.dataset.view==='profil') renderProfil();
@@ -14356,7 +14474,8 @@ document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',e=>{
   }
   // Flush les renders differes pour ranking/trophies (voir renderResults + _rankingDirty).
   if(b.dataset.view==='ranking' || b.dataset.view==='trophies') _flushDirtyForView(b.dataset.view);
-  try{ localStorage.setItem('mb-last-tab', b.dataset.view); }catch(_){ }
+  // Plus n'existe qu'au téléphone : rouvert à l'ordinateur, il laisserait une page sans onglet pour en sortir.
+  if(b.dataset.view !== 'plus'){ try{ localStorage.setItem('mb-last-tab', b.dataset.view); }catch(_){ } }
   _barreOnglets(true);
 }));
 // Au telephone, les icones restent par-dessus la rangee d'onglets : quatre onglets sur six etaient
@@ -14386,7 +14505,10 @@ if($('.tabs')) new ResizeObserver(() => _barreOnglets(true)).observe($('.tabs'))
 setTimeout(() => {
   try{
     const last = localStorage.getItem('mb-last-tab');
-    if(last && last!=='load'){
+    // Fil, Photos et Tchat sont des pages au téléphone, des panneaux flottants à l'ordinateur : ouverts
+    // au téléphone puis rouverts ici, ils s'afficheraient en page sans onglet allumé.
+    const pageTel = ['feed', 'photos', 'chat'].includes(last) && !_telBarre.matches;
+    if(last && last!=='load' && !pageTel){
       const btn = [...document.querySelectorAll('.tab')].find(x=>x.dataset.view===last);
       if(btn) btn.click();
     }

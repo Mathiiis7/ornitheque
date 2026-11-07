@@ -76,9 +76,15 @@
      le bandeau fixe recouvre la derniere ligne. Ce bloc passe AVANT styles.css, d ou le
      html devant, qui le fait gagner. */
   html .wrap{ padding-bottom:80px; }
+  /* Au telephone, la barre d onglets occupe le bas (2026-11-07) : le bandeau se pose juste
+     au-dessus, et la page garde la place des deux. */
+  @media (max-width:700px){
+    #demoBandeau{ bottom:calc(var(--barre-h) + env(safe-area-inset-bottom)); box-shadow:none; }
+    html .wrap{ padding-bottom:calc(var(--barre-h) + env(safe-area-inset-bottom) + 64px); }
+  }
 </style>
 <!-- ================= FIN DU BLOC DEMO ================= -->
-<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, viewport-fit=cover">
 <!-- Content Security Policy : restreint quels scripts/styles/images/connexions
      sont autorises. Bloque les injections XSS externes (si un attaquant reussit
      a injecter du code, il ne peut pas exfiltrer vers un domaine hors liste).
@@ -125,11 +131,11 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=586">
+<link rel="modulepreload" href="app.js?v=587">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). Il porte le MEME ?v= qu'app.js :
      sans numero, GitHub Pages le laisse 10 min en cache (max-age=600) et un telephone a garde l'ancien CSS
      avec le nouvel app.js - panneau de la Carte invisible (Mathis sur iPhone, 2026-11-07). -->
-<link rel="preload" href="styles.css?v=586" as="style">
+<link rel="preload" href="styles.css?v=587" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
 <link rel="preconnect" href="https://unpkg.com" crossorigin>
 <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
@@ -148,7 +154,7 @@
 <!-- Les grappes de la Carte (choix de Mathis, 2026-10-23) : 34 Ko, après Leaflet dont elles ont besoin.
      Leur petite feuille de style (les animations) est réécrite dans styles.css, sans requête de plus. -->
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" integrity="sha256-Hk4dIpcqOSb0hZjgyvFOP+cEmDXUKKNE/tT542ZbNQg=" crossorigin="" defer></script>
-<link rel="stylesheet" href="styles.css?v=586">
+<link rel="stylesheet" href="styles.css?v=587">
 
 <!-- Etat d'auth : au chargement, on ne sait pas encore si l'utilisateur est connecte.
      data-auth="pending" par defaut -> affiche un splash neutre (pas l'ecran de connexion).
@@ -289,6 +295,8 @@ document.documentElement.setAttribute('data-theme', _theme);</script>
     <button class="tab" data-view="feed" hidden>🆕 Fil</button>
     <button class="tab" data-view="requests" hidden>💡 Requêtes</button>
     <button class="tab" data-view="about" hidden>ℹ️ À propos</button>
+    <!-- La page Plus n'existe qu'au telephone, ouverte par la barre du bas (#barreBas). -->
+    <button class="tab" data-view="plus" hidden>Plus</button>
     <div class="nav-droite">
       <!-- Fil, Photos, Tchat : dans la barre depuis le 2026-10-14. Ils flottaient en bas a
            droite et couvraient la page selon la largeur (Mathis). Les identifiants n'ont pas
@@ -1470,6 +1478,15 @@ document.documentElement.setAttribute('data-theme', _theme);</script>
     </section>
   </div>
 
+  <!-- Au telephone : ce qui n'a pas sa case dans la barre du bas (Ma liste, Trophees, Fil, Photos,
+       Tchat) et le menu ⚙. Les lignes sont posees par _plusDessine() dans app.js. -->
+  <div id="viewPlus" style="display:none;">
+    <section class="panel" style="padding:20px; margin-top:22px;">
+      <div class="section-head"><div><h2 class="page-title">Plus</h2></div></div>
+      <div id="plusListe"></div>
+    </section>
+  </div>
+
   </main>
   <div id="emojiPop" class="emoji-pop"><div class="emoji-pop-inner"></div></div>
   <div id="gifPop" class="gif-pop">
@@ -1726,11 +1743,22 @@ document.documentElement.setAttribute('data-theme', _theme);</script>
     <div class="fut-scene" id="debloqueScene" tabindex="-1"></div>
   </dialog>
 
+  <!-- Au telephone (700 px et moins), la barre du bas remplace la rangee d'onglets (chantier du
+       2026-11-07, maquette notes-privees/maquettes/telephone/). Chaque case ouvre le vrai onglet ;
+       « Plus » ouvre la page Plus (#viewPlus), qui reprend le menu ⚙, Fil, Photos et Tchat. -->
+  <nav class="barre-bas" id="barreBas" aria-label="Pages">
+    <button type="button" data-view="ranking"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V13h5v7M9.5 20V8h5v12M15 20v-5h5v5M3 20h18"/></svg>Classement</button>
+    <button type="button" data-view="pokedex"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>Birdydex</button>
+    <button type="button" data-view="map"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6z"/><path d="M9 4v14M15 6v14"/></svg>Carte</button>
+    <button type="button" data-view="quiz"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/></svg>Quiz</button>
+    <button type="button" data-view="plus"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18.5" cy="12" r="1.6"/></svg>Plus</button>
+  </nav>
+
   <footer>
     L’Ornithèque · rareté mesurée sur les observations eBird 2019-2026 · données <b>Merlin / eBird</b>, propriété du Cornell Lab of Ornithology ; cartes tirées des observations d'oiseaux publiées sur GBIF, toutes bases (CC BY-NC 4.0).<br>
     Compte réservé aux membres · tes listes ne sont partagées qu'au sein de la ligue.
   </footer>
 </div>
 
-<script type="module" src="app.js?v=586"></script>
+<script type="module" src="app.js?v=587"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>

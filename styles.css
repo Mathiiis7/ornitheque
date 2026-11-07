@@ -4248,3 +4248,110 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      Écrite en dernier pour passer devant ces règles à spécificité égale ; les tailles restent les leurs. */
   .sci, .mc-sci, .sm-sci, .p-sci, .ss-sci, .qz-choice-sci, .qz-verdict-sci, .mylist-lat, .latin,
   .pkdx-card .pkdx-sci { font-family:var(--sans); font-style:italic; }
+
+  /* ================= Le téléphone (chantier du 2026-11-07) =================
+     Constat : notes-privees/chantier-telephone/CONSTAT.md ; maquette choisie par Mathis :
+     notes-privees/maquettes/telephone/ (haut A, texte à 100 %, pages à plat ; barre du bas
+     Classement, Birdydex, Carte, Quiz, Plus). Un seul point de rupture, 700 px, le même que
+     _telBarre dans app.js. Au-dessus, rien ne bouge : l'ordinateur est comparé au pixel
+     (outils/verif/_ref-ordi.mjs). */
+  .barre-bas { display:none; }
+  @media (max-width:700px){
+    /* Le texte à sa vraie taille : le zoom 0,85 est pensé pour l'ordinateur ; au téléphone, le
+       texte courant tombait à 11,9 px d'écran (Apple conseille 17, 11 au plus petit). */
+    body { zoom:1; }
+    :root { --barre-h:66px; }
+    /* Les pages à plat : plus de marge autour ni de panneau bordé, le contenu prend la largeur
+       (315 px sur 390 avant). Les panneaux restent blancs sur le fond, séparés de 8 px. */
+    .wrap { padding:0 0 calc(var(--barre-h) + env(safe-area-inset-bottom) + 16px); }
+    .panel { border:0 !important; border-radius:0 !important; box-shadow:none !important;
+      margin-top:8px !important; padding-left:16px !important; padding-right:16px !important; }
+    /* L'entête : un logo fin, collé en haut (A). Les onglets passent en bas. */
+    .entete-fixe { margin:0; padding:9px 16px; border-bottom:1px solid var(--line); }
+    header.top { align-items:center; flex-wrap:nowrap; }
+    .brand { gap:10px; }
+    .mark { width:34px; height:34px; border-radius:8px; }
+    h1 { font-size:21px; }
+    .entete-fixe .theme-sw, nav.tabs { display:none !important; }
+
+    /* La barre du bas : icône et mot entier, la page ouverte en couleur d'accent. */
+    .barre-bas { display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); position:fixed; left:0; right:0; bottom:0;
+      z-index:1300; background:var(--surface); border-top:1px solid var(--line-2);
+      padding:0 2px env(safe-area-inset-bottom); }
+    .barre-bas button { position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+      min-height:calc(var(--barre-h) - 1px); padding:4px 0; border:0; background:none; color:var(--ink-3); font:600 12.5px var(--sans);
+      cursor:pointer; -webkit-tap-highlight-color:transparent; }
+    .barre-bas svg { width:27px; height:27px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+    .barre-bas button.on { color:var(--accent-ink); }
+    .barre-bas button.on svg { stroke-width:2.3; }
+    .barre-bas .barre-pastille { position:absolute; top:4px; left:calc(50% + 5px); min-width:20px; height:20px; padding:0 6px;
+      border-radius:10px; background:#d33; color:#fff; font:700 12px/20px var(--sans); text-align:center; }
+    .barre-bas .barre-pastille.or { background:var(--gold); color:#15201e; }
+    /* Le clavier ouvert : la barre remonterait au-dessus de lui et prendrait la place du champ. */
+    body:has(:is(input:not([type=checkbox], [type=radio], [type=range]), textarea, select):focus) .barre-bas { display:none; }
+    /* iOS agrandit la page sur un champ de moins de 16 px, et ne la remet pas après. */
+    input:not([type=checkbox], [type=radio], [type=range]), textarea, select { font-size:16px !important; }
+
+    /* La Carte : elle remplit ce qui reste entre l'entête collé et la barre du bas. Le calcul d'avant
+       (100svh / 0,85 - 130 px) supposait le zoom et l'entête de 122 px. */
+    .ct-carte { height:calc(100svh - 53px - var(--barre-h) - env(safe-area-inset-bottom) - 12px); min-height:380px; }
+
+    /* Les tris collés du Classement débordaient sur les marges de 24 px de .wrap, qui n'existent plus ici :
+       la page faisait 414 px pour 390. */
+    #results > .board-modes-row { margin:0; padding:10px 16px 11px;
+      background:linear-gradient(var(--line), var(--line)) 16px 100% / calc(100% - 32px) 1px no-repeat, var(--bg); }
+
+    /* Ce qui était posé en bas de l'écran passe au-dessus de la barre. */
+    .debloque-bandeau { bottom:calc(var(--barre-h) + env(safe-area-inset-bottom) + 12px); }
+
+    /* La page Plus : deux groupes de lignes, comme les réglages d'un téléphone. */
+    .plus-groupe { background:var(--surface); border:1px solid var(--line); border-radius:14px; overflow:hidden; margin:12px 0 0; }
+    .plus-ligne { display:flex; align-items:center; gap:14px; width:100%; min-height:56px; padding:0 14px; border:0;
+      border-bottom:1px solid var(--line); background:none; color:var(--ink); font:400 17px var(--sans); text-align:left; cursor:pointer; }
+    .plus-groupe .plus-ligne:last-child { border-bottom:0; }
+    .plus-ligne svg { width:25px; height:25px; flex:none; fill:none; stroke:var(--accent-ink); stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+    .plus-nom { flex:1; min-width:0; }
+    .plus-fl { color:var(--ink-3); font-size:22px; line-height:1; }
+    .plus-pastille { min-width:22px; height:22px; padding:0 7px; border-radius:11px; background:#d33; color:#fff; font:700 13px/22px var(--sans); text-align:center; }
+    .plus-pastille.or { background:var(--gold); color:#15201e; }
+    .plus-interrupteur { width:44px; height:26px; border-radius:13px; background:var(--surface-3); position:relative; flex:none; transition:background .15s; }
+    .plus-interrupteur::after { content:""; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.3); transition:left .15s; }
+    .plus-ligne[aria-checked="true"] .plus-interrupteur { background:var(--accent); }
+    .plus-ligne[aria-checked="true"] .plus-interrupteur::after { left:21px; }
+    .plus-compte { margin:18px 4px 0; color:var(--ink-3); font-size:15px; overflow-wrap:anywhere; }
+    .plus-sortie { display:block; margin:6px 0 0; min-height:52px; padding:0 4px; border:0; background:none; color:#c0392b; font:600 17px var(--sans); cursor:pointer; }
+  }
+  /* Au doigt, les ronds de rareté restent à 24 px d'écran (choix de Mathis, 2026-11-07) : sans le zoom
+     0,85, leur boîte doublée de 56 px en ferait 28. Zone invisible de 7 px de chaque côté : 38 px. */
+  @media (max-width:700px) and (pointer: coarse){
+    .rar-chip[data-tier], .rar-chip[data-rar], .tier-chip.tier-rond {
+      width:48px; min-width:48px; height:48px; margin:-12px; font-size:24px; padding:0 0 2px; }
+    .rar-chip[data-cat], .pkdx-exo { width:48px; min-width:48px; height:48px; margin:-12px; font-size:29px; padding:0 0 3px; }
+    .rar-chip[data-tier]::after, .rar-chip[data-rar]::after, .rar-chip[data-cat]::after { inset:-14px; }
+    #tierChips .rar-chip[data-rar] { font-size:24px; }
+    #tierChips .rar-chip[data-cat] { font-size:29px; }
+    /* Le centrage de l'encre, recalé sans le zoom 0,85 : les rembourrages d'avant étaient réglés au
+       pixel pour lui, et le banc pastilles (doigt, 300 %) mesurait jusqu'à 3,8 px d'appareil d'écart.
+       Chaque valeur vient de sa mesure : décalage / 3 en px d'écran, doublé dans une boîte réduite de moitié. */
+    .rar-chip[data-tier], .rar-chip[data-rar], .tier-chip.tier-rond { padding:0 0 4px; }
+    .rar-chip[data-cat], .pkdx-exo { padding:0 1.1px 2.15px 0; }
+    .pkdx-card .pkdx-tier { padding:0 0 4px; }
+    #matrix .rar-cell .tier-chip.tier-rond { padding:0 0 1.1px; }
+    #matrix .rar-cell .pkdx-exo { padding:0.64px 0 0; }
+    .board-pal i { padding-top:0; padding-bottom:1.05px; }
+    .cp-item-chip { padding-bottom:1.7px; }
+    .prof-fav-tier { padding-bottom:1.3px; }
+    /* L'œil saute de 2 px d'appareil entre 0 et 0,27 px de rembourrage (calage sur la grille) : un
+       déplacement en transform, lui, se pose au sous-pixel. */
+    .ct-pt { padding:0 0.24px 0 0; }
+    .ct-pt:not(.ct-pt-lettre) > svg { transform:translateY(-0.3px); }
+    .ct-pt.ct-pt-lettre { padding:0 0 1.73px; }
+    .ct-pt.ct-pt-lettre.ct-pt-sym { padding:0 0.4px 1.05px 0; }
+    .ct-gr span { padding-bottom:2.37px; }
+    .ct-sv .pkdx-exo, .ct-gl-l .pkdx-exo { padding:0.63px 0 0; }
+    .ct-rang .pkdx-exo { padding:0.63px 0.64px 0 0; }
+  }
+  /* L'encoche d'un téléphone couché (viewport-fit=cover dans index.html) : la page s'en écarte.
+     À l'ordinateur, env() vaut 0 et la marge reste 24 px. */
+  .wrap { padding-left:max(24px, env(safe-area-inset-left)); padding-right:max(24px, env(safe-area-inset-right)); }
+  @media (max-width:700px){ .wrap { padding-left:env(safe-area-inset-left); padding-right:env(safe-area-inset-right); } }

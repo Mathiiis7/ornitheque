@@ -205,6 +205,11 @@ positions sont fausses sans erreur. Fixer une taille avec `resize_window` avant 
 **`body { zoom: 0.85 }`.** `getBoundingClientRect` renvoie donc des pixels ÉCRAN, alors que
 les styles calculés et les métriques du canvas parlent en pixels CSS. Mélanger les deux m'a
 fait produire trois mesures fausses d'affilée. Mesurer tout dans un seul repère.
+**Sauf au téléphone (700 px et moins) depuis le 2026-11-07 : `zoom:1`**, avec la barre d'onglets en
+bas (`#barreBas`), la page Plus, l'entête fin et les pages à plat (bloc « Le téléphone » en fin de
+`styles.css`, `_telBarre` dans app.js, même point de rupture). Tout réglage au pixel calé pour 0,85
+est faux là-dessous : les ronds ont dû être recentrés à part (banc pastilles, doigt). L'ordinateur
+n'a pas bougé d'un pixel : `outils/verif/_ref-ordi.mjs` le compare à une capture de référence.
 
 **Centrer un texte, c'est centrer son ENCRE, pas sa boîte.** Pour une capitale ou un chiffre,
 l'encre va de la ligne de base à la hauteur de capitale ; la boîte, elle, descend jusqu'à la
@@ -334,7 +339,9 @@ bancs (requêtes eBird comprises) et son `process.exit` a coupé le lanceur. Le 
 photos, en écrire un) : skill `bancs-de-mesure`.
 
 **Une cible tactile s'écrit 52 px pour en faire 44.** `body` porte `zoom:0.85`, donc le seuil
-de 44 px d'écran (Apple, Material, WCAG 2.5.5) se traduit par 52 px dans la CSS. Tout ce qui
+de 44 px d'écran (Apple, Material, WCAG 2.5.5) se traduit par 52 px dans la CSS (au téléphone,
+sans le zoom, ces 52 px en font 52 : plus grand, sans danger ; seuls les ronds de rareté, voulus à
+24 px par Mathis, sont redessinés à part). Tout ce qui
 concerne le doigt vit dans un `@media (pointer: coarse)` en fin de `styles.css` - l'affichage
 à la souris ne bouge pas. **`pointer: coarse` ne se simule pas avec `hasTouch`** : il faut
 `isMobile: true`, sinon on mesure l'affichage souris en croyant mesurer le doigt. Le banc

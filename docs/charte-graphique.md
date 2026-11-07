@@ -98,6 +98,13 @@ textes en 800 y sont descendus. Seules les pastilles rondes chiffrées (rareté,
 
 ## Mise en page
 
+- **Au téléphone (700 px et moins), depuis le 2026-11-07** (maquette choisie par Mathis,
+  `notes-privees/maquettes/telephone/`) : texte à sa vraie taille (pas de zoom 0,85) ; entête fin collé
+  en haut (logo de 34 px et nom, 53 px en tout) ; **barre d'onglets en bas** : Classement, Birdydex,
+  Carte, Quiz, Plus (icône au trait et mot entier, la page ouverte en accent) ; **Plus** est une page
+  qui range Ma liste, Trophées, Fil, Photos, Tchat, le menu ⚙ et le thème, ses pastilles additionnent
+  celles qu'il contient ; **pages à plat** : plus de marge ni de panneau bordé, panneaux blancs séparés
+  de 8 px. Fil, Photos et Tchat y sont des pages, jamais des fenêtres flottantes.
 - Page centrée, 1 560 px au plus (`.wrap`), marges de 24 px.
 - En haut : le logo et le nom, le bouton « Thème » à droite, puis la rangée d'onglets.
 - **Onglets** : du texte seul, sans emoji, 17 px écrits (15 avant le 2026-10-05). Au repos en graisse normale, l'actif seul en gras (600),

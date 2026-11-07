@@ -450,6 +450,12 @@ const INJECTION = `
      le bandeau fixe recouvre la derniere ligne. Ce bloc passe AVANT styles.css, d ou le
      html devant, qui le fait gagner. */
   html .wrap{ padding-bottom:80px; }
+  /* Au telephone, la barre d onglets occupe le bas (2026-11-07) : le bandeau se pose juste
+     au-dessus, et la page garde la place des deux. */
+  @media (max-width:700px){
+    #demoBandeau{ bottom:calc(var(--barre-h) + env(safe-area-inset-bottom)); box-shadow:none; }
+    html .wrap{ padding-bottom:calc(var(--barre-h) + env(safe-area-inset-bottom) + 64px); }
+  }
 </style>
 <!-- ================= FIN DU BLOC DEMO ================= -->`;
 
