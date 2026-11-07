@@ -1,8 +1,11 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1006 / app.js?v=578. Prochaine : v1007 / 579.
+Dernière version : v1008 / app.js?v=580 (et styles.css?v=580). Prochaine : v1009 / 581.
 
 ## Décidé le 07/11
+- **v1008** : `styles.css` porte le même `?v=` qu'app.js (voir CLAUDE.md, Déployer). Mathis a vu sur iPhone,
+  juste après la v1006, le panneau de la Carte invisible et la Légende remontée : nouvel app.js avec
+  l'ancien CSS gardé 10 min en cache. Rejoué avec `outils/verif/_essai-legende-tel.mjs` (ANCIEN_CSS=...).
 - **v1006** : au téléphone, PLUS DE TIROIR sur la Carte (« pas trop utilisable », il passait sur la carte et
   se refermait mal, Mathis sur iPhone). La carte garde sa pleine hauteur (choix de Mathis), le panneau
   (onglets, Filtres, liste) vient DESSOUS dans la page, comme une colonne ; une observation ou un hotspot

@@ -91,6 +91,10 @@ sinon les visiteurs gardent l'ancienne version en cache :
 1. `CACHE_VERSION` dans `service-worker.js`
 2. `app.js?v=NNN` dans `index.html` - **il y a DEUX occurrences**, le `modulepreload` et le
    `<script>`. En oublier une ne casse rien tout de suite, ce qui est pire.
+3. `styles.css?v=NNN`, **le même numéro**, deux occurrences aussi (le `preload` et le `stylesheet`).
+   Sans numéro, GitHub Pages le garde 10 min en cache (`max-age=600`) et le service worker le laisse
+   passer : le 2026-11-07, un iPhone a pris le nouvel app.js avec l'ancien CSS, panneau de la Carte
+   invisible. Un seul remplacement de `(app\.js|styles\.css)\?v=\d+` fait les quatre.
 
 **Le poids publié se mesure avec `node outils/build/poids-publie.mjs`, jamais avec `du`.**
 `du -sh` compte ce que `.gitignore` exclut : il annonçait 469 Mo le 2026-09-28 et m'a fait
