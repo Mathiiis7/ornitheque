@@ -133,11 +133,11 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=599">
+<link rel="modulepreload" href="app.js?v=600">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). Il porte le MEME ?v= qu'app.js :
      sans numero, GitHub Pages le laisse 10 min en cache (max-age=600) et un telephone a garde l'ancien CSS
      avec le nouvel app.js - panneau de la Carte invisible (Mathis sur iPhone, 2026-11-07). -->
-<link rel="preload" href="styles.css?v=599" as="style">
+<link rel="preload" href="styles.css?v=600" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
 <link rel="preconnect" href="https://unpkg.com" crossorigin>
 <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
@@ -156,7 +156,7 @@
 <!-- Les grappes de la Carte (choix de Mathis, 2026-10-23) : 34 Ko, après Leaflet dont elles ont besoin.
      Leur petite feuille de style (les animations) est réécrite dans styles.css, sans requête de plus. -->
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" integrity="sha256-Hk4dIpcqOSb0hZjgyvFOP+cEmDXUKKNE/tT542ZbNQg=" crossorigin="" defer></script>
-<link rel="stylesheet" href="styles.css?v=599">
+<link rel="stylesheet" href="styles.css?v=600">
 
 <!-- Etat d'auth : au chargement, on ne sait pas encore si l'utilisateur est connecte.
      data-auth="pending" par defaut -> affiche un splash neutre (pas l'ecran de connexion).
@@ -1203,8 +1203,9 @@ document.documentElement.setAttribute('data-theme', _theme);</script>
       </div>
       <!-- Les filtres dans le bloc gris de la Carte, repliés sous « Filtres », les réglages par deux sur
            ordinateur (version B de notes-privees/maquettes/filtres-birdydex/, Mathis 2026-10-29). Même
-           ordre que la Carte : Où, Afficher, puis Famille, Milieu, Trier par, Rareté en dernier. La
-           recherche reste toujours visible. -->
+           ordre que la Carte : Où, Afficher, puis Famille, Trier par, Rareté en dernier. La
+           recherche reste toujours visible. Le filtre « Milieu » est retiré (Mathis, 2026-11-08) ; le
+           tri par milieu reste. -->
       <div class="pkdx-barre">
         <input type="search" id="pkdxSearch" aria-label="Rechercher dans le birdydex" placeholder="Chercher une espèce">
         <button type="button" class="ct-pli-btn pkdx-pli-btn" id="pkdxPliBtn" aria-expanded="false" aria-controls="pkdxFiltres">Filtres</button>
@@ -1238,12 +1239,6 @@ document.documentElement.setAttribute('data-theme', _theme);</script>
         <div class="ct-ligne"><span class="ct-k">Famille</span>
           <span class="ct-v ct-choix"><button type="button" id="pkdxFamily" class="cp-btn" data-value="">
             <span class="cp-btn-label">Toutes familles</span>
-            <span class="cp-btn-arrow">▾</span>
-          </button></span>
-        </div>
-        <div class="ct-ligne"><span class="ct-k">Milieu</span>
-          <span class="ct-v ct-choix"><button type="button" id="pkdxHabitat" class="cp-btn" data-value="">
-            <span class="cp-btn-label">Tous milieux</span>
             <span class="cp-btn-arrow">▾</span>
           </button></span>
         </div>
@@ -1762,5 +1757,5 @@ document.documentElement.setAttribute('data-theme', _theme);</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=599"></script>
+<script type="module" src="app.js?v=600"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>

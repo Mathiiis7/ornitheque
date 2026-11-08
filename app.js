@@ -21771,7 +21771,7 @@ function _quizAncienInit(){
 
 /* ---------------- Pokedex : grille de toutes les especes FR ---------------- */
 // Etat local pour les filtres. Persistant en localStorage pour retrouver la meme vue.
-var _pkdxFilters = { search:'', country:(_globalCountry||'FR'), zone:'', family:'', habitat:'', owned:'', sort:'famille' };
+var _pkdxFilters = { search:'', country:(_globalCountry||'FR'), zone:'', family:'', owned:'', sort:'famille' };
 // Le membre dont on regarde le Birdydex (null : soi). Pas dans localStorage : on revient a son
 // propre Birdydex au rechargement (Mathis, 2026-11-04).
 var _pkdxQui = null;
@@ -21784,9 +21784,9 @@ function _pkdxPersonne(){
 try{ Object.assign(_pkdxFilters, JSON.parse(localStorage.getItem('mb-pkdx-filters')||'{}')); }catch(_){}
 // Le pays global override le pays local Birdydex (le global est la source de verite).
 _pkdxFilters.country = _globalCountry || _pkdxFilters.country || 'FR';
-// Purge les vieilles valeurs habitat (mapping famille) qui ne correspondent plus aux
-// nouvelles categories Avonet (migration 2026-08). Reset si non valide.
-if(_pkdxFilters.habitat && typeof HABITAT_CATS !== 'undefined' && !HABITAT_CATS.includes(_pkdxFilters.habitat)) _pkdxFilters.habitat = '';
+// Le filtre « Milieu » est retire (Mathis, 2026-11-08) : un milieu reste enregistre sur l'appareil
+// cacherait des especes sans bouton pour l'annuler.
+delete _pkdxFilters.habitat;
 // Rarete filtree via chips (Set des tiers EXCLUS). Coche = affiche, decoche = cache.
 var _pkdxTierExcl = new Set();
 try{ const s = localStorage.getItem('mb-pkdx-tier-excl'); if(s) _pkdxTierExcl = new Set(JSON.parse(s)); }catch(_){}
@@ -21843,7 +21843,7 @@ function renderPokedex(){
   // Garde defensive : si render est appele avant que le module ait initialise les vars
   // (ex : boot restore last-tab + race conditions), init avec defaults et continue.
   if(typeof _pkdxFilters === 'undefined' || !_pkdxFilters){
-    _pkdxFilters = { search:'', country:(typeof _globalCountry !== 'undefined' && _globalCountry) || 'FR', zone:'', sort:'famille', family:'', habitat:'', owned:'' };
+    _pkdxFilters = { search:'', country:(typeof _globalCountry !== 'undefined' && _globalCountry) || 'FR', zone:'', sort:'famille', family:'', owned:'' };
   }
   if(typeof _pkdxTierExcl === 'undefined' || !_pkdxTierExcl) _pkdxTierExcl = new Set();
   if(!_pkdxInit){
@@ -21992,28 +21992,6 @@ function renderPokedex(){
         try{ localStorage.setItem('mb-pkdx-filtres-ouverts', on ? '1' : '0'); }catch(_){}
       });
     }
-    // Habitat : modal picker.
-    const habBtn = document.getElementById('pkdxHabitat');
-    if(habBtn){
-      const initLabel = _pkdxFilters.habitat
-        ? (HABITAT_LABELS[_pkdxFilters.habitat] || _pkdxFilters.habitat)
-        : 'Tous milieux';
-      _syncPkdxFilterBtn('pkdxHabitat', initLabel);
-      habBtn.addEventListener('click', async () => {
-        const counts = _countPkdxByField('habitat', r => habitatsOf(r.sci));
-        const opts = [{ value:'', label:'Tous milieux', count: counts.__total }].concat(
-          HABITAT_CATS.map(h => ({ value:h, label:(HABITAT_LABELS[h] || h), count: counts[h] || 0 }))
-        );
-        const chosen = await _openFilterPicker(_pkdxFilters.habitat || '', {
-          title: 'Choisir un milieu', options: opts, searchable: false
-        });
-        if(chosen == null) return;
-        _pkdxFilters.habitat = chosen;
-        _pkdxSaveFilters();
-        _syncPkdxFilterBtn('pkdxHabitat', chosen ? (HABITAT_LABELS[chosen] || chosen) : 'Tous milieux');
-        _pkdxRender();
-      });
-    }
     // Country picker : bouton qui ouvre le modal reutilisable.
     // Depuis 2026-09-21, ce bouton pilote AUSSI le pays global (les autres onglets suivent).
     const ccBtn = document.getElementById('pkdxCountry');
@@ -22126,7 +22104,6 @@ function _pkdxLignes(mine, exclude){
   // Filtres UI (appliques sur la liste triee, sans jamais recalculer les numeros).
   const q = _mapNorm(_pkdxFilters.search || '');
   const famF = exclude === 'family' ? '' : (_pkdxFilters.family || '');
-  const habF = exclude === 'habitat' ? '' : (_pkdxFilters.habitat || '');
   const ownedF = exclude === 'owned' ? '' : (_pkdxFilters.owned || '');
   const rows = [];
   for(const r of _pkdxAllSorted || []){
@@ -22139,8 +22116,6 @@ function _pkdxLignes(mine, exclude){
     if(accidentelle && !mine.has(sci)) continue;
     if(q && !_mapNorm(nm).includes(q) && !sci.includes(q)) continue;
     if(famF && !passeFamille(fam, famF)) continue;
-    const habs = habitatsOf(sci) || [];
-    if(habF && !habs.includes(habF)) continue;
     // Mode filtre : si des cats N/P/X sont selectionnees, on affiche UNIQUEMENT les
     // especes matchant une de ces cats (les tier chips sont ignores). Sinon, filtre tier.
     if(_pkdxCatSelected.size > 0){
