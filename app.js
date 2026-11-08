@@ -13833,7 +13833,13 @@ document.querySelectorAll('#boardModes button').forEach(b => {
     const rangee = bulle.parentElement;
     bulle.style.left = Math.max(0, Math.min(b.offsetLeft, rangee.clientWidth - bulle.offsetWidth)) + 'px';
   };
-  const cache = () => { clearTimeout(_triBulleMinuteur); const bulle = $('#triBulle'); if(bulle) bulle.hidden = true; };
+  // Un passage du bouton vers la bulle elle-même ne la ferme pas : au téléphone, le barème de Rareté
+  // terrain dépasse l'écran et défile ; le toucher pour le faire défiler la refermait, X / P et N restaient
+  // hors de vue (Mathis, 2026-11-08).
+  const cache = e => {
+    if(e?.relatedTarget?.closest?.('#triBulle')) return;
+    clearTimeout(_triBulleMinuteur); const bulle = $('#triBulle'); if(bulle) bulle.hidden = true;
+  };
   b.addEventListener('mouseenter', montre); b.addEventListener('focus', montre);
   b.addEventListener('mouseleave', cache); b.addEventListener('blur', cache);
   b.addEventListener('keydown', e => { if(e.key === 'Escape') cache(); });
@@ -13841,7 +13847,7 @@ document.querySelectorAll('#boardModes button').forEach(b => {
 // Au doigt, rien ne garantit un mouseleave : un toucher ailleurs que sur les tris la referme.
 document.addEventListener('pointerdown', e => {
   const bulle = $('#triBulle');
-  if(bulle && !bulle.hidden && !e.target.closest('#boardModes')) bulle.hidden = true;
+  if(bulle && !bulle.hidden && !e.target.closest('#boardModes, #triBulle')) bulle.hidden = true;
 });
 // H : désactive visuellement écriture chat + upload photo pour les non-membres.
 function _refreshChatWriteAccess(){
