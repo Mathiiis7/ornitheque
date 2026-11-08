@@ -3351,6 +3351,9 @@ function renderMatrix({universe,N}){
       + '<button type="button" class="rar-chip" data-tier-all title="Cocher toutes les raretés">Tout</button>'
       + '<button type="button" class="rar-chip" data-tier-none title="Décocher toutes les raretés">Vide</button>'
       + '<span class="rar-cats"><span class="rar-sep" aria-hidden="true"></span>' + catChipsHtml + '</span>';
+    // Au telephone, autant de colonnes que de ronds (10 au moins) : le rond « – » de la rarete
+    // terrain ou le 11e membre de la ligue passaient seuls a la ligne (Mathis, 2026-11-08).
+    box.style.setProperty('--nrar', Math.max(10, box.querySelectorAll(':scope > [data-rar]').length));
   }
 
   // Ré-écriture différée (après le calcul de displayPeople plus bas), stockée pour évaluation.

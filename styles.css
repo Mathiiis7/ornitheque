@@ -4384,7 +4384,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     #matrix .fm-barre .cp-btn-label { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     /* La rangée de rareté : le titre seul, les dix ronds sur UNE ligne (le 10 passait à la ligne), puis Tout,
        Vide et X / P / N. Les paliers en mots de la Rareté ligue gardent leur rangée qui passe à la ligne. */
-    #tierChips:not(:has(.rar-mot)) { display:grid; grid-template-columns:repeat(10, minmax(0, 1fr)); column-gap:6px; row-gap:12px;
+    /* --nrar : le nombre de ronds (10 au moins), posé par app.js ; au-delà de 10, ils se resserrent. */
+    #tierChips:not(:has(.rar-mot)) { display:grid; grid-template-columns:repeat(var(--nrar, 10), minmax(0, 1fr)); column-gap:6px; row-gap:12px;
       justify-items:center; align-items:center; padding:10px 8px; }
     #tierChips:not(:has(.rar-mot)) > .rar-rangee-titre { grid-column:1 / -1; justify-self:start; margin:0; }
     #tierChips:not(:has(.rar-mot)) > [data-tier-all], #tierChips:not(:has(.rar-mot)) > [data-tier-none] { grid-column:span 2; justify-self:stretch; }
