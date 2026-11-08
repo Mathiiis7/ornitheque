@@ -1,6 +1,6 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1042 / app.js?v=614 (et styles.css?v=614). Prochaine : v1043 / 615.
+Dernière version : v1046 / app.js?v=618 (et styles.css?v=618). Prochaine : v1047 / 619.
 
 - **v1040 (08/11, conversation de l'arbre) : page « L'arbre des oiseaux » EN LIGNE**, menu ⚙ (Plus au téléphone,
   choix de Mathis). Cladogramme des 45 ordres de la maquette D : `renderArbre()` dans app.js (avant renderPokedex),
@@ -17,6 +17,11 @@ Dernière version : v1042 / app.js?v=614 (et styles.css?v=614). Prochaine : v104
   sources `notes-privees/arbre/wiki-familles/` (`_wiki-familles.mjs`, 20 titres par demande). Famille seule dans son
   ordre = phrase de l'ordre. **La page s'appelle désormais « Arbre phylogénétique »** (choix de Mathis, menu, titre,
   Plus ; `data-view="arbre"` inchangé). data/arbre.json?v=20261108b. Prochaine demande de Mathis : l'arbre doit se PROLONGER À DROITE (familles, puis genres, espèces) au lieu du panneau, déplié seulement au clic.
+- **v1046 (conversation de l'arbre) : glisser + style « arrondi », traits dans les bulles.** Glisser l'arbre à la
+  souris en tenant le fond (box.onpointerdown, zoom 0,85 compensé : 350 px de souris = 412 px de défilement). Mathis a
+  comparé trois styles en local et choisi « arrondi » (coudes adoucis, noms en pastilles grises) et les traits
+  SEULEMENT dans les bulles : plus de traits écrits sur les branches ni de numéros (32 branches sur 44 ne font qu'un
+  étage ; il aurait fallu ~3 000 px). Sélecteur d'essai, _arbreStyle, foreignObject et liste numérotée retirés.
 - **v1042 EN LIGNE (conversation de l'arbre) : l'arbre pousse à droite.** Validé par Mathis en local : plus de panneau ; ordre -> familles avec les VRAIES branches de Stiller (_familles-arbres.mjs
   -> familles-arbres.json -> o.arbre dans data/arbre.json ; 43 familles absentes en pointillé, « place non
   publiée »), famille -> genres -> espèces en râteau, chaque étage au clic (_arbreOuverts). Le nom reste EN HAUT de

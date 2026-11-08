@@ -21360,13 +21360,16 @@ function renderArbre(garde){
   const tel = _telBarre.matches, D = _arbreDonnees;
   // Au téléphone : 11 px par embranchement et 54 px par ligne, pour qu'un nom long tienne sur
   // deux lignes à 375 px sans toucher la suivante (mesuré sur la maquette le 2026-11-08).
-  // À l'ordinateur, jusqu'à 60 px par embranchement (à 44, celui de la maquette, 27 traits sur 44
-  // ne tenaient pas sur leur branche une fois écrits à 14 px), moins si la page est étroite : à
-  // 1 024 px de fenêtre, 60 px faisaient déborder la page de 220 px (mesuré le 2026-11-08).
-  const LIGNE = tel ? 54 : 46, ETQ = !tel;
+  // À l'ordinateur, jusqu'à 60 px par embranchement, moins si la page est étroite : à 1 024 px de
+  // fenêtre, 60 px faisaient déborder la page de 220 px (mesuré le 2026-11-08). Les 670 px retirés
+  // de la largeur sont ceux de l'arbre que Mathis a choisi ce jour-là.
+  // Les traits ne s'écrivent plus sur les branches (choix de Mathis, 2026-11-08) : 32 branches sur
+  // 44 ne font qu'un étage et il aurait fallu près de 3 000 px de large pour tout écrire ; numérotés,
+  // ils obligeaient à lire une liste sous l'arbre. Le trait s'ouvre dans la bulle du point.
+  const LIGNE = tel ? 54 : 46;
   const hO = _arbreHauteur(D.arbre);
-  const PAS = tel ? 11 : Math.max(30, Math.min(60, Math.floor((box.clientWidth - 170 - 500) / hO)));
-  const X0 = ETQ ? 170 : 14, xF = X0 + hO * PAS + 10;
+  const PAS = tel ? 11 : Math.max(30, Math.min(60, Math.floor((box.clientWidth - 670) / hO)));
+  const X0 = 14, xF = X0 + hO * PAS + 10;
   // Largeurs des étiquettes de chaque étage, et pas des branches au-delà des ordres
   const LO = tel ? 170 : 440, LF = tel ? 190 : 330, LG = tel ? 150 : 220, LS = tel ? 230 : 380;
   const PASF = tel ? 8 : 16, RATEAU = tel ? 14 : 24, LPH = tel ? 250 : 520;
@@ -21374,9 +21377,20 @@ function renderArbre(garde){
   const especes = _arbreEspeces(), vues = _arbreVues();
   const yDe = r => r * LIGNE + LIGNE / 2;
   let ligne = 0, larg = xF + LO;
-  const chemins = [], zones = [], points = [], etiqs = [], html = [];
+  const chemins = [], zones = [], points = [], html = [];
   const noeuds = [];
   const trait = (cls, d) => chemins.push(`<path class="${cls}" d="${d}"/>`);
+  // Les branches aux coudes arrondis (style « arrondi », choisi par Mathis le 2026-11-08 face aux
+  // angles droits et aux branches en biais). Chaque enfant reçoit sa branche depuis le point du parent.
+  function branches(cls, x, y, enfants){
+    for(const e of enfants){
+      const c = e.cls || cls;
+      if(Math.abs(e.y - y) > 1){
+        const r = Math.min(12, Math.abs(e.y - y), Math.max(0, e.xIn - x)), s = Math.sign(e.y - y);
+        trait(c, `M${x},${y} V${e.y - s * r} Q${x},${e.y} ${x + r},${e.y} H${e.xIn}`);
+      } else trait(c, `M${x},${y} H${e.xIn}`);
+    }
+  }
   const etend = x => { if(x > larg) larg = x; };
   const nbVues = scis => scis.filter(s => vues.has(s)).length;
   const compte = (nv, n) => `<span class="arb-n">${nv ? `<b class="arb-vu">${nv}</b> / ` : ''}${n.toLocaleString('fr-FR')}</span>`;
@@ -21402,9 +21416,9 @@ function renderArbre(garde){
   }
   // Le trait qui relie un nom déplié à ce qui pousse : du bout du nom (ordinateur) ou de dessous
   // le nom (téléphone) jusqu'au premier nœud de l'étage suivant.
-  function relie(cls, xNom, lNom, y0, xA, sous){
-    if(tel) trait(cls, `M${xA},${y0 + 20} V${sous.y} H${sous.xIn}`);
-    else trait(cls, `M${xNom + lNom},${y0} H${xA} V${sous.y} H${sous.xIn}`);
+  function relie(cls, xNom, lNom, y0, xA, enfants){
+    if(!tel) trait(cls, `M${xNom + lNom},${y0} H${xA}`);
+    branches(cls, xA, tel ? y0 + 20 : y0, enfants);
   }
   // --- Étage des espèces et des genres
   function poseGenre(f, g, xG){
@@ -21415,12 +21429,11 @@ function renderArbre(garde){
     if(!ouvert){ const y = yDe(ligne++); lab(y); return { xIn: xG, y }; }
     const { y0, xDep } = ouvreBloc(xG, LG), xS = xDep + RATEAU, ys = [];
     for(const s of scis){
-      const y = yDe(ligne++); ys.push(y);
-      trait('arb-l3', `M${xDep},${y} H${xS}`);
+      const y = yDe(ligne++); ys.push({ y, xIn: xS });
       html.push(`<button type="button" class="arb-esp${vues.has(s) ? ' vu' : ''}" data-sci="${esc(s)}" style="left:${xS}px;top:${y - LIGNE / 2 + 1}px;width:${LS}px">${vues.has(s) ? '<span class="arb-coche" aria-label="vue">✓</span>' : ''}${esc(frName(s))} <i class="arb-lat">${esc(latinAff(s))}</i></button>`);
     }
     etend(xS + LS);
-    relie('arb-l3', xG, LG, y0, xDep, { y: ys[ys.length - 1], xIn: xDep });
+    relie('arb-l3', xG, LG, y0, xDep, ys);
     lab(y0);
     return { xIn: xG, y: y0 };
   }
@@ -21438,8 +21451,7 @@ function renderArbre(garde){
     const ordre = f.genres.map(g => g.toLowerCase());
     const genres = [...lots.keys()].sort((a, b) => (ordre.indexOf(a) + 1 || 1e4) - (ordre.indexOf(b) + 1 || 1e4) || a.localeCompare(b));
     const enf = genres.map(g => poseGenre(f, g, xG));
-    for(const e of enf) trait('arb-l3', `M${xDep},${e.y} H${e.xIn}`);
-    relie('arb-l3', xFam, LF, y0, xDep, { y: enf[enf.length - 1].y, xIn: xDep });
+    relie('arb-l3', xFam, LF, y0, xDep, enf);
     lab(y0);
     return { xIn: xFam, y: y0 };
   }
@@ -21450,8 +21462,7 @@ function renderArbre(garde){
     const enf = n.e.map(c => poseArbreFam(c, o, hF, xO2));
     const x = xO2 + (hF - _arbreHauteurF(n)) * PASF;
     const y = (enf[0].y + enf[enf.length - 1].y) / 2;
-    trait('arb-l2', `M${x},${enf[0].y} V${enf[enf.length - 1].y}`);
-    n.e.forEach((c, j) => trait('arb-l2' + (c.np ? ' np' : ''), `M${x},${enf[j].y} H${enf[j].xIn}`));
+    branches('arb-l2', x, y, enf.map((e, j) => ({ ...e, cls: n.e[j].np ? 'arb-l2 np' : '' })));
     return { xIn: x, y };
   }
   // --- Les ordres : feuilles du cladogramme, qui deviennent des nœuds une fois dépliés
@@ -21464,33 +21475,26 @@ function renderArbre(garde){
     const { y0, xDep: xO2 } = ouvreBloc(xF + 4, LO - 4);
     phrase(o.phrase, 'https://en.wikipedia.org/wiki/' + encodeURIComponent(o.lat), xO2 + 10);
     const sous = o.familles.length > 1 ? poseArbreFam(o.arbre, o, _arbreHauteurF(o.arbre), xO2) : poseFamille(o, 0, xO2 + 8);
-    relie('arb-l2', xF + 4, LO - 4, y0, xO2, sous);
+    relie('arb-l2', xF + 4, LO - 4, y0, xO2, [sous]);
     lab(y0);
     return { xIn: xF, y: y0 };
   }
   // --- Le cladogramme des ordres
-  function poseNiveau(n, xParent){
+  function poseNiveau(n){
     if(n.o) return poseOrdre(n);
     const x = X0 + (hO - _arbreHauteur(n)) * PAS;
-    const enf = n.e.map(c => poseNiveau(c, x));
+    const enf = n.e.map(c => poseNiveau(c));
     const y = (enf[0].y + enf[enf.length - 1].y) / 2;
     const disc = c => c.s != null && c.s < ARBRE_SEUIL;
-    trait('arb-l', `M${x},${enf[0].y} V${enf[enf.length - 1].y}`);
-    n.e.forEach((c, j) => trait('arb-l' + (disc(c) ? ' discute' : ''), `M${x},${enf[j].y} H${enf[j].xIn}`));
+    branches('arb-l', x, y, enf.map((e, j) => ({ ...e, cls: disc(n.e[j]) ? 'arb-l discute' : '' })));
     const t = D.traits[n.id] || {};
     noeuds.push({ id: n.id, x, y, s: n.s, ordres: _arbreOrdresDe(n) });
     // Une zone invisible de 36 px (44 au doigt) autour du point : le point seul en fait 12-14
     zones.push(`<circle class="arb-zone" data-id="${n.id}" cx="${x}" cy="${y}" r="${tel ? 22 : 18}"/>`);
     points.push(`<circle class="arb-pt${disc(n) ? ' discute' : ''}" data-id="${n.id}" cx="${x}" cy="${y}" r="${tel ? 6 : 7}" tabindex="0" role="button" aria-label="${esc(t.g || '')} : ${esc(t.t || '')}"/>`);
-    // Le trait s'écrit au-dessus de la branche qui ARRIVE au point : elle n'appartient qu'à lui.
-    // S'il n'y tient pas sur deux lignes, le point prend un numéro et le trait va dans la liste.
-    if(ETQ){
-      const gx = xParent != null ? xParent + 8 : 0, lg = x - gx - 8;
-      etiqs.push(`<foreignObject x="${gx}" y="${y - 40}" width="${Math.max(lg, 20)}" height="36" data-id="${n.id}"><div xmlns="http://www.w3.org/1999/xhtml" class="arb-etiq${t.st === 'adn' ? ' adn' : ''}">${esc(t.st === 'adn' ? 'ADN' : (t.t || ''))}</div></foreignObject>`);
-    }
     return { xIn: x, y };
   }
-  const racine = poseNiveau(D.arbre, null);
+  const racine = poseNiveau(D.arbre);
   trait('arb-l', `M0,${racine.y} H${racine.xIn}`);
   const H = ligne * LIGNE;
   const credits = Object.entries(D.credits).filter(([, c]) => !/publicdomain/.test(c.l))
@@ -21505,7 +21509,7 @@ function renderArbre(garde){
       <span>Touche un ordre, une famille ou un genre pour faire pousser l’arbre.</span>
     </div>
     <div class="arb-clado" style="height:${H}px;width:${larg + 16}px">
-      <svg width="${larg + 16}" height="${H}" viewBox="0 0 ${larg + 16} ${H}">${chemins.join('')}${zones.join('')}${points.join('')}${etiqs.join('')}</svg>
+      <svg width="${larg + 16}" height="${H}" viewBox="0 0 ${larg + 16} ${H}">${chemins.join('')}${zones.join('')}${points.join('')}</svg>
       ${html.join('')}
     </div>
     <p class="arb-credits">Arbre : Stiller et al. 2024, <i>Nature</i>, réduit aux ordres et aux familles, dans le même ordre que la liste mondiale AviList 2026.
@@ -21513,16 +21517,6 @@ function renderArbre(garde){
       Silhouettes : PhyloPic, domaine public sauf ${credits}.</p>`;
   box.scrollLeft = scrollX;
   const clado = box.querySelector('.arb-clado');
-  if(ETQ){
-    const trop = [...clado.querySelectorAll('foreignObject')].filter(fo => { const d = fo.firstElementChild; return d.scrollHeight > d.clientHeight + 1 || d.scrollWidth > d.clientWidth + 1; })
-      .sort((a, b) => (+a.getAttribute('y')) - (+b.getAttribute('y')) || (+a.getAttribute('x')) - (+b.getAttribute('x')));
-    const liste = trop.map((fo, i) => {
-      const t = D.traits[fo.dataset.id] || {};
-      fo.firstElementChild.textContent = String(i + 1); fo.firstElementChild.classList.add('num');
-      return `<li><b>${i + 1}.</b> ${t.st === 'adn' ? '<i>ADN</i>' : esc(t.t)} <span class="arb-n">(${esc(t.g)})</span></li>`;
-    });
-    if(liste.length) clado.insertAdjacentHTML('afterend', `<ol class="arb-liste">${liste.join('')}</ol>`);
-  }
   // Après un dépliage : l'étiquette touchée reste à la même hauteur à l'écran, et la page glisse
   // vers la droite pour montrer ce qui vient de pousser.
   if(garde){
@@ -21537,6 +21531,35 @@ function renderArbre(garde){
       }
     }
   }
+  // Faire glisser l'arbre à la souris en tenant le fond (Mathis, 2026-11-08) : de côté dans son
+  // cadre, de haut en bas avec la page. Au doigt, le défilement natif le fait déjà. Un glisser ne
+  // déclenche pas de clic en relâchant. Le zoom 0,85 de l'ordinateur : les déplacements de la
+  // souris sont en px d'écran, le défilement du cadre en px CSS.
+  // Tout le cadre de l'arbre se tient, marges comprises (un appui à côté des branches ne prenait pas)
+  box.onpointerdown = e => {
+    if(e.pointerType !== 'mouse' || e.button !== 0) return;
+    if(e.target.closest('button, a, .arb-pt, .arb-zone, .arb-bulle, .arb-ph')) return;
+    const zoom = parseFloat(getComputedStyle(document.body).zoom) || 1;
+    const x0 = e.clientX, y0 = e.clientY, g0 = box.scrollLeft, h0 = window.scrollY;
+    let bouge = false;
+    box.setPointerCapture(e.pointerId);
+    clado.classList.add('glisse');
+    const suit = ev => {
+      const dx = ev.clientX - x0, dy = ev.clientY - y0;
+      if(Math.abs(dx) + Math.abs(dy) > 4) bouge = true;
+      box.scrollLeft = g0 - dx / zoom;
+      window.scrollTo(window.scrollX, h0 - dy);
+    };
+    const fin = () => {
+      box.removeEventListener('pointermove', suit);
+      clado.classList.remove('glisse');
+      if(bouge) box.addEventListener('click', ev => { ev.stopPropagation(); ev.preventDefault(); }, { capture:true, once:true });
+    };
+    box.addEventListener('pointermove', suit);
+    box.addEventListener('pointerup', fin, { once:true });
+    box.addEventListener('pointercancel', fin, { once:true });
+    e.preventDefault();
+  };
   clado.onclick = e => _arbreClic(e, clado, noeuds);
   clado.onkeydown = e => { if((e.key === 'Enter' || e.key === ' ') && e.target.closest('.arb-pt')){ e.preventDefault(); _arbreClic(e, clado, noeuds); } };
 }
