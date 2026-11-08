@@ -21345,6 +21345,10 @@ let _arbreDonnees = null, _arbreCharge = null, _arbreEsp = null;
 // Le zoom de l'arbre lui-même (Mathis, 2026-11-08) : Ctrl + molette ou pincer zoomaient tout le navigateur.
 // Il s'applique en CSS zoom sur .arb-clado, qui garde les défilements justes ; gardé d'un redessin à l'autre.
 let _arbreZoom = 1;
+// Les sources de l'arbre, repliées sous un lien (Mathis, 2026-11-08) : les licences (CC BY de Stiller 2024,
+// d'AviList, des silhouettes PhyloPic) demandent de citer, pas d'afficher en permanence. Ouvertes, elles le
+// restent d'un redessin à l'autre.
+let _arbreSources = false;
 const ARBRE_ZOOM_MIN = 0.4, ARBRE_ZOOM_MAX = 2;
 // Zoomer en gardant sous le curseur (ou entre les deux doigts) le point qu'on regardait : de côté, le cadre
 // défile (en px CSS du cadre, d'où le zoom de body) ; de haut en bas, c'est la page.
@@ -21664,11 +21668,12 @@ function renderArbre(garde){
       <svg width="${larg + 16}" height="${H}" viewBox="0 0 ${larg + 16} ${H}">${chemins.join('')}${zones.join('')}${points.join('')}</svg>
       ${html.join('')}
     </div>
-    <p class="arb-credits">Arbre : Stiller et al. 2024, <i>Nature</i>, réduit aux ordres et aux familles, dans le même ordre que la liste mondiale AviList 2026.
+    <details class="arb-credits"${_arbreSources ? ' open' : ''}><summary>Sources</summary><p>Arbre : Stiller et al. 2024, <i>Nature</i>, réduit aux ordres et aux familles, dans le même ordre que la liste mondiale AviList 2026.
       Traits : Sangster et al. 2022, Chen &amp; Field 2020 et Wikipédia (source dans la bulle de chaque point) ; phrases : Wikipédia.
-      Photos : celles des fiches espèces (iNaturalist, Wikimédia Commons) ; en attendant la photo, silhouettes PhyloPic, domaine public sauf ${credits}.</p>`;
+      Photos : celles des fiches espèces (iNaturalist, Wikimédia Commons) ; en attendant la photo, silhouettes PhyloPic, domaine public sauf ${credits}.</p></details>`;
   box.scrollLeft = scrollX;
   const clado = box.querySelector('.arb-clado');
+  box.querySelector('.arb-credits').ontoggle = e => { _arbreSources = e.target.open; };
   if(_arbreZoom !== 1) clado.style.zoom = _arbreZoom;
   _arbrePhotos(box);
   // Ctrl + molette (et le pincement d'un pavé tactile, que le navigateur envoie ainsi) : zoom de l'arbre
@@ -21716,7 +21721,7 @@ function renderArbre(garde){
   // Tout le cadre de l'arbre se tient, marges comprises (un appui à côté des branches ne prenait pas)
   box.onpointerdown = e => {
     if(e.pointerType !== 'mouse' || e.button !== 0) return;
-    if(e.target.closest('button, a, .arb-pt, .arb-zone, .arb-bulle, .arb-ph')) return;
+    if(e.target.closest('button, a, .arb-pt, .arb-zone, .arb-bulle, .arb-ph, .arb-credits')) return;
     const zoom = parseFloat(getComputedStyle(document.body).zoom) || 1;
     const x0 = e.clientX, y0 = e.clientY, g0 = box.scrollLeft, h0 = window.scrollY;
     let bouge = false;

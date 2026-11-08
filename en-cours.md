@@ -1,6 +1,8 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1053 / app.js?v=625 (et styles.css?v=625). Prochaine : v1054 / 626.
+Dernière version : v1054 / app.js?v=626 (et styles.css?v=626). Prochaine : v1055 / 627.
+
+- **v1054 (08/11)** : sources de l'arbre repliées sous un lien « Sources » (`<details class="arb-credits">`).
 
 - **ARBRE PHYLOGÉNÉTIQUE : FINI (Mathis, 08/11), ne pas rouvrir sans nouvelle demande.** v1053 : « 0 / N » quand on n'a vu aucune espèce d'un groupe (pas pour qui n'a
   pas de liste) ; familles à 330 px et genres à 280 pour que ce nombre tienne. Zoom de l'arbre seul (`_arbreZoom`,
