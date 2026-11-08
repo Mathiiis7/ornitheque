@@ -1,6 +1,17 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1030 / app.js?v=602 (et styles.css?v=602). Prochaine : v1031 / 603.
+Dernière version : v1032 / app.js?v=604 (et styles.css?v=604). Prochaine : v1033 / 605.
+
+## PROCHAIN CHANTIER (demandé le 08/11) : la fiche espèce au téléphone
+Mathis : « pas totalement adaptée au téléphone, et il manque des fonctions ». Choix : **constat d'abord**. Ouvrir une
+fiche (démo locale, 390 px, `isMobile:true`) et la même à l'ordinateur (1440), onglet par onglet, captures dans
+`notes-privees/chantier-telephone/fiche/` ; lister ce qui est coupé, mal placé, trop petit, et SURTOUT les fonctions
+présentes à l'ordinateur et absentes ou inatteignables au téléphone (comparer les boutons visibles des deux). Lui
+donner la liste courte à trier, ne rien corriger avant son tri.
+
+- **v1031-v1032 (08/11)** : croix des trophées hors écran sur iPhone (fenêtre en 90vh -> svh, au-dessus de la barre
+  d'onglets) ; en-tête des Dernières coches du profil posé sur une ligne (sticky + top:53px dans un cadre
+  overflow:hidden -> static) ; Qui mène la Ligue resserré (lignes 69 -> 56 px, photos 44 px, textes 14 px gardés).
 - **v1026 à v1030 (08/11, confirmés par Mathis sur iPhone)** : rareté au téléphone sur UN modèle partout (Qui a vu
   quoi, Birdydex, Carte Récent et Ligue) : ronds sur une ligne (`--nrar` si plus de 10), Tout / Aucun (Vide dans
   Qui a vu quoi) en boutons, filet, X/P/N à 16 px comme le tableau ; HTML de l'ordinateur ouvert par display:contents.
