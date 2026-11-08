@@ -97,7 +97,11 @@ familles ensuite par lots relus.
   déclarés sans trait par Sangster (n20, n21, n25, n36), 5 noeuds propres à Stiller 2024 que personne ne traite
   (n9, n15, n17, n19, n23), et Columbaves, Otidimorphes, outardes+coucous (rien trouvé ; le livre de Mayr
   « Paleogene Fossil Birds » a un chapitre Columbaves, payant). MDPI (Chen et al. 2019) bloque les robots.
-  Reste : avis de Mathis, puis phrases des ordres.
+  **Phrases des 45 ordres écrites** (`notes-privees/maquettes/arbre/phrases-ordres.json`, relecture dans
+  `notes-privees/arbre/PHRASES-ORDRES.md`), tirées de l'intro Wikipedia EN de chaque ordre (`_wiki-ordres.mjs`,
+  textes dans `notes-privees/arbre/wiki-ordres/`), reformulées ; affichées au clic sur un ordre dans la maquette D.
+  Reste : relecture des phrases par Mathis ; puis décider la suite (phrases des 250 familles par lots ? construire
+  la vraie page dans le site : données dans `data/arbre-*.json`, page dans « Plus », clair/sombre, crédits PhyloPic).
 
 ## CHANTIER EN COURS DANS UNE AUTRE CONVERSATION (demandé le 07/11) : le site au téléphone
 Mathis trouve l'affichage téléphone « pas adapté et pas très utilisable », sur **tout le site**. Ce qui
