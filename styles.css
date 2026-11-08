@@ -4458,6 +4458,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .rar-chip[data-tier]::after, .rar-chip[data-rar]::after, .rar-chip[data-cat]::after { inset:-14px; }
     #tierChips .rar-chip[data-rar] { font-size:24px; }
     #tierChips .rar-chip[data-cat] { font-size:24px; }
+    /* « Qui a vu quoi » : X / P / N à la taille du tableau juste dessous, 16 px d'écran et lettre de 9,5 px
+       (Mathis, 2026-11-08), boîte doublée réduite de moitié comme les autres. Zone de toucher gardée à 37 px. */
+    #tierChips .rar-chip[data-cat] { width:32px; min-width:32px; height:32px; min-height:32px; margin:-8px; font-size:19px;
+      padding:1.28px 0 0; }
+    #tierChips .rar-chip[data-cat]::after { inset:-21px !important; }
     /* Le centrage de l'encre, recalé sans le zoom 0,85 : les rembourrages d'avant étaient réglés au
        pixel pour lui, et le banc pastilles (doigt, 300 %) mesurait jusqu'à 3,8 px d'appareil d'écart.
        Chaque valeur vient de sa mesure : décalage / 3 en px d'écran, doublé dans une boîte réduite de moitié. */
