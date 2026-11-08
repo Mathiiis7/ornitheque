@@ -52,8 +52,14 @@ familles ensuite par lots relus.
   **Revu le 08/11 (Mathis) : « on fait juste comme AviList » pour l'instant** : la page montre Ordres -> Familles
   -> Genres -> Espèces, dans l'ordre d'AviList v2026, SANS grands groupes ni étage des passereaux (noms gardés
   pour plus tard). **Maquettes faites** : `notes-privees/maquettes/arbre/` (A liste dépliable, B colonnes, C arbre
-  dessiné ; données réelles par `outils/build/_arbre-donnees.mjs`), en attente du choix de Mathis. Puis phrases
-  sourcées (45 ordres d'abord, familles par lots).
+  dessiné ; données réelles par `outils/build/_arbre-donnees.mjs`). Mathis a montré un CLADOGRAMME de manuel
+  (branches dessinées, un trait par embranchement, une image par feuille) : **maquette D** ajoutée. Arbre de
+  Stiller réduit aux 45 ordres (`_cladogramme-ordres.mjs`, 44 noeuds, tout binaire) : ses feuilles tombent
+  EXACTEMENT dans l'ordre AviList. Choix de Mathis : un trait sur CHAQUE noeud, « même approximatif » (marqué
+  discuté quand la source hésite) ; silhouettes **PhyloPic** (`_phylopic-ordres.mjs`, 45/45, espèces vivantes
+  seulement, domaine public sauf 3 CC BY et 1 CC BY-SA, crédits dans `silhouettes/credits.json`). Branches
+  discutées : soutien < 0,95 dans 63K.tre (Hoazin 0,88 ; Strisores 0,90). Reste : avis de Mathis sur D, puis
+  rechercher les 44 traits sourcés, puis phrases des ordres.
 
 ## CHANTIER EN COURS DANS UNE AUTRE CONVERSATION (demandé le 07/11) : le site au téléphone
 Mathis trouve l'affichage téléphone « pas adapté et pas très utilisable », sur **tout le site**. Ce qui
