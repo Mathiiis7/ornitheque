@@ -3146,9 +3146,11 @@ function renderBoard(){
       : espece(sci, p.dream, {cls:'reve'}); };
   // Une seule colonne score selon le mode (comme le layout du mode count qui a des cellules
   // moins hautes car les colonnes textuelles ont plus de place). Uniformise les 3 modes.
+  // « Rareté » tout court, quel que soit le tri : le bouton du haut dit deja lequel, et au telephone
+  // « Rareté terrain » debordait sur l'entete voisine (Mathis, 2026-11-08).
   const scoreCols=[];
-  if(mode==='league') scoreCols.push({h:'Rareté ligue', v:p=>fmt(p.score), n:p=>p.score||0, active:true});
-  else if(mode==='real') scoreCols.push({h:'Rareté terrain', v:p=>fmt(p.scoreReal||0), n:p=>p.scoreReal||0, active:true});
+  if(mode==='league') scoreCols.push({h:'Rareté', v:p=>fmt(p.score), n:p=>p.score||0, active:true});
+  else if(mode==='real') scoreCols.push({h:'Rareté', v:p=>fmt(p.scoreReal||0), n:p=>p.scoreReal||0, active:true});
   else scoreCols.push({h:'Espèces', v:p=>p.total, n:p=>p.total||0, active:true});
   const scoreTh=scoreCols.map(c=>`<th class="c-num${c.active?' on-metric':''}">${c.h}</th>`).join('');
   // Sous le score, sa part de celui du premier : l'ecart se lit sans faire la soustraction.
