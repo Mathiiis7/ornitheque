@@ -4492,6 +4492,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     #mapEbRarityLbl .ct-portee, #ctLigRarete .ct-portee { order:3; grid-column:1 / -1; justify-self:start; }
     #mapEbRarityLbl .ct-portee-note, #ctLigRarete .ct-portee-note { order:4; grid-column:1 / -1; justify-self:start; margin-top:0; }
   }
+  /* Graphique des mois de la fiche : le pincement à deux doigts y change l'échelle (app.js), pas le zoom de la
+     page ; un doigt continue de faire défiler. */
+  .species-modal .sm-freq-chart-wrap { touch-action:pan-x pan-y; }
   /* Fiche espèce, Répartition, au téléphone : la hauteur suit la largeur (0,7), la proportion du monde que la
      carte montre (latitudes -60 à 85 en Mercator : 0,71 fois sa largeur). En 440 px fixes, le monde vu sur 302 px
      de large laissait plus de 200 px de gris (Mathis, 2026-11-08). Hauteur écrite en ligne par app.js. */

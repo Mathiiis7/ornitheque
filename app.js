@@ -19411,6 +19411,30 @@ function _renderSpeciesFreqChart(key, country){
     };
     if(svg) svg.onwheel = wheelHandler;
     if(chartWrap) chartWrap.onwheel = wheelHandler;
+    // Au telephone, pas de molette : pincer a deux doigts change l'echelle, ecarter agrandit les barres
+    // comme la molette vers le haut (choix de Mathis, 2026-11-08, plutot que des boutons + / -). Le
+    // pincement de la page est coupe sur le graphique par touch-action (styles.css) ; un doigt defile
+    // toujours la fiche. L'etat du geste vit hors du rendu, que chaque pas redessine.
+    if(chartWrap){
+      const ecart = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+      chartWrap.ontouchstart = (e) => {
+        if(e.touches.length !== 2) return;
+        window._smPincement = { d0: ecart(e.touches) || 1, z0: window._smFreqZoomState[zoomKey] || _freqZoom || 1.0 };
+      };
+      chartWrap.ontouchmove = (e) => {
+        const p = window._smPincement;
+        if(!p || e.touches.length !== 2) return;
+        const z = Math.max(0.01, Math.min(500, p.z0 * ecart(e.touches) / p.d0));
+        window._smFreqZoomState[zoomKey] = z;
+        if(_wheelRAF) return;
+        _wheelRAF = requestAnimationFrame(() => { _wheelRAF = null; _renderSpeciesFreqChart(key, country); });
+      };
+      chartWrap.ontouchend = chartWrap.ontouchcancel = (e) => {
+        if(e.touches.length >= 2 || !window._smPincement) return;
+        window._smPincement = null;
+        try { localStorage.setItem(zoomKey, String(window._smFreqZoomState[zoomKey])); } catch(_){}
+      };
+    }
   }
 }
 // Extrait la couleur "vive" dominante d'une image (echantillonnage canvas). Retourne
