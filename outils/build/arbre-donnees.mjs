@@ -45,6 +45,27 @@ for(const o of ordres){
   const absentes = o.familles.map((f, k) => k).filter(k => !presentes.has(k)).map(k => ({ f: k, np: 1 }));
   o.arbre = t.e && absentes.length ? { e: [...(t.f != null ? [t] : t.e), ...absentes] } : t;
 }
+// Le trait de chaque embranchement ENTRE FAMILLES (_traits-familles.mjs, relu par Mathis le 2026-11-08).
+// La clé est la liste triée des familles sous le nœud, familles « np » exclues (elles pendent à la racine
+// de l'ordre sans faire partie de l'étude) : elle ne dépend pas de l'ordre des branches. Un nœud reçoit
+// tr (trait sourcé) ou adn: 1 (connu seulement par la génétique).
+const traitsFam = fs.existsSync(M + 'traits-familles.json') ? lire('traits-familles.json') : {};
+let nTF = 0, nADN = 0;
+for(const o of ordres){
+  if(!o.arbre) continue;
+  const fams = n => n.f != null ? [o.familles[n.f].lat] : n.e.flatMap(fams);
+  (function v(n){
+    if(n.f != null) return;
+    const enf = n.e.filter(c => !c.np);
+    if(enf.length >= 2){
+      const t = traitsFam[enf.flatMap(fams).sort().join('+')];
+      if(!t) throw new Error('embranchement sans décision dans ' + o.lat + ' : ' + enf.flatMap(fams).join('+'));
+      if(t.st === 'adn'){ n.adn = 1; nADN++; } else { n.tr = { t: t.t, d: t.d, src: t.src }; nTF++; }
+    }
+    n.e.forEach(v);
+  })(o.arbre);
+}
+console.log('embranchements entre familles :', nTF, 'traits,', nADN, 'ADN');
 const manque = ordres.filter(o => !o.phrase).map(o => o.lat);
 if(manque.length) throw new Error('phrases manquantes : ' + manque.join(', '));
 const sortie = {

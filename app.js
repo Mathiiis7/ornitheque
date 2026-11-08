@@ -21345,6 +21345,54 @@ let _arbreDonnees = null, _arbreCharge = null, _arbreEsp = null;
 const _arbreOuverts = new Set();   // ce qui est déplié : 'o:<ordre>', 'f:<famille>', 'g:<famille>/<genre>'
 const ARBRE_SEUIL = 0.95;   // sous ce soutien (probabilité a posteriori de l'étude), branche « discutée »
 const ARBRE_STATUT = { source:'trait donné par la source', approx:'trait approximatif', adn:'connu seulement par l’ADN' };
+// La photo de chaque ordre, à la place de sa silhouette PhyloPic : l'espèce la plus connue de l'ordre
+// (choix de Mathis, 2026-11-08). La photo est celle de la fiche espèce (_fetchWikiPhoto), remplacements
+// compris. outils/build/_photos-ordres.mjs vérifie que chaque espèce existe et appartient à son ordre.
+const ARBRE_PHOTOS = {
+  Struthioniformes:'struthio camelus', Rheiformes:'rhea americana', Tinamiformes:'eudromia elegans',
+  Casuariiformes:'casuarius casuarius', Apterygiformes:'apteryx mantelli', Galliformes:'phasianus colchicus',
+  Anseriformes:'anas platyrhynchos', Phoenicopteriformes:'phoenicopterus roseus', Podicipediformes:'podiceps cristatus',
+  Columbiformes:'columba palumbus', Mesitornithiformes:'mesitornis variegatus', Pterocliformes:'pterocles alchata',
+  Otidiformes:'otis tarda', Musophagiformes:'tauraco persa', Cuculiformes:'cuculus canorus',
+  Caprimulgiformes:'caprimulgus europaeus', Nyctibiiformes:'nyctibius griseus', Steatornithiformes:'steatornis caripensis',
+  Podargiformes:'podargus strigoides', Aegotheliformes:'aegotheles cristatus', Apodiformes:'apus apus',
+  Opisthocomiformes:'opisthocomus hoazin', Gruiformes:'grus grus', Charadriiformes:'vanellus vanellus',
+  Phaethontiformes:'phaethon aethereus', Eurypygiformes:'eurypyga helias', Gaviiformes:'gavia immer',
+  Sphenisciformes:'aptenodytes forsteri', Procellariiformes:'diomedea exulans', Ciconiiformes:'ciconia ciconia',
+  Suliformes:'morus bassanus', Pelecaniformes:'ardea cinerea', Cathartiformes:'cathartes aura',
+  Accipitriformes:'aquila chrysaetos', Strigiformes:'tyto alba', Coliiformes:'colius striatus',
+  Leptosomiformes:'leptosomus discolor', Trogoniformes:'pharomachrus mocinno', Bucerotiformes:'upupa epops',
+  Coraciiformes:'alcedo atthis', Piciformes:'dendrocopos major', Cariamiformes:'cariama cristata',
+  Falconiformes:'falco peregrinus', Psittaciformes:'ara macao', Passeriformes:'erithacus rubecula',
+};
+// La vignette la plus petite que la source sache servir : la photo s'affiche en 40 px, la vignette de la
+// fiche en fait 320 à 500. iNaturalist sert small.jpg (240 px), Wikimédia redimensionne ses vignettes
+// d'après le « NNNpx- » de l'adresse.
+// La photo de l'ordre si le site la connaît déjà, sinon la silhouette, que _arbrePhotos() remplace
+// une fois la photo trouvée (première visite, ou espèce jamais ouverte).
+function _arbreImage(o){
+  const sci = ARBRE_PHOTOS[o.lat], vue = sci && _photoCarteConnue(sci);
+  return vue ? `<img class="arb-photo" src="${esc(_arbreVignette(vue))}" alt="${esc(FR_NAMES[sci] || '')}" title="${esc(FR_NAMES[sci] || '')}" loading="lazy">`
+    : `<img class="arb-sil" src="assets/silhouettes/${esc(o.lat)}.svg" alt="" loading="lazy"${sci ? ` data-photo="${esc(sci)}"` : ''}>`;
+}
+function _arbrePhotos(box){
+  for(const img of box.querySelectorAll('img.arb-sil[data-photo]')){
+    const sci = img.dataset.photo;
+    _fetchWikiPhoto(sci).then(p => {
+      const src = _arbreVignette(p?.thumb || p?.url);
+      if(!src || !img.isConnected) return;
+      const ph = new Image();
+      ph.onload = () => { if(!img.isConnected) return; img.className = 'arb-photo'; img.src = src; img.alt = img.title = FR_NAMES[sci] || ''; img.removeAttribute('data-photo'); };
+      ph.src = src;
+    }).catch(() => {});
+  }
+}
+function _arbreVignette(u){
+  if(!u) return '';
+  if(/inaturalist/.test(u)) return u.replace(/\/(medium|original|large)\.(jpe?g|png)$/i, '/small.$2');
+  if(/upload\.wikimedia\.org\/.*\/thumb\//.test(u)) return u.replace(/\/\d+px-([^/]+)$/, '/120px-$1');
+  return u;
+}
 function _arbreHauteur(n){ return n.o ? 0 : 1 + Math.max(...n.e.map(_arbreHauteur)); }
 function _arbreHauteurF(n){ return n.f != null ? 0 : 1 + Math.max(...n.e.map(_arbreHauteurF)); }
 function renderArbre(garde){
@@ -21352,7 +21400,7 @@ function renderArbre(garde){
   if(!_arbreDonnees){
     // ?v= à monter quand on régénère le fichier : le service worker garde data/ d'un déploiement
     // à l'autre et ne le renouvelle que si l'adresse change.
-    _arbreCharge ||= fetch('data/arbre.json?v=20261108c').then(r => r.json()).then(d => { _arbreDonnees = d; })
+    _arbreCharge ||= fetch('data/arbre.json?v=20261108d').then(r => r.json()).then(d => { _arbreDonnees = d; })
       .catch(() => { box.innerHTML = '<p class="help" style="margin:12px 0 0;">L’arbre n’a pas pu être chargé. Recharge la page pour réessayer.</p>'; });
     _arbreCharge.then(() => { if(_arbreDonnees && $('#viewArbre')?.style.display !== 'none') renderArbre(); });
     return;
@@ -21380,15 +21428,15 @@ function renderArbre(garde){
   const chemins = [], zones = [], points = [], html = [];
   const noeuds = [];
   const trait = (cls, d) => chemins.push(`<path class="${cls}" d="${d}"/>`);
-  // Les branches aux coudes arrondis (style « arrondi », choisi par Mathis le 2026-11-08 face aux
-  // angles droits et aux branches en biais). Chaque enfant reçoit sa branche depuis le point du parent.
+  // Les branches aux coudes arrondis (style « arrondi », choisi par Mathis le 2026-11-08, gardé face à
+  // quatre styles très différents essayés le même jour : métro, organique, encre, nuit).
+  // Chaque enfant reçoit sa branche depuis le point du parent.
   function branches(cls, x, y, enfants){
     for(const e of enfants){
-      const c = e.cls || cls;
-      if(Math.abs(e.y - y) > 1){
-        const r = Math.min(12, Math.abs(e.y - y), Math.max(0, e.xIn - x)), s = Math.sign(e.y - y);
-        trait(c, `M${x},${y} V${e.y - s * r} Q${x},${e.y} ${x + r},${e.y} H${e.xIn}`);
-      } else trait(c, `M${x},${y} H${e.xIn}`);
+      const c = e.cls || cls, dy = Math.abs(e.y - y), s = Math.sign(e.y - y);
+      if(dy <= 1){ trait(c, `M${x},${y} H${e.xIn}`); continue; }
+      const r = Math.min(12, dy, Math.max(0, e.xIn - x));
+      trait(c, `M${x},${y} V${e.y - s * r} Q${x},${e.y} ${x + r},${e.y} H${e.xIn}`);
     }
   }
   const etend = x => { if(x > larg) larg = x; };
@@ -21463,13 +21511,22 @@ function renderArbre(garde){
     const x = xO2 + (hF - _arbreHauteurF(n)) * PASF;
     const y = (enf[0].y + enf[enf.length - 1].y) / 2;
     branches('arb-l2', x, y, enf.map((e, j) => ({ ...e, cls: n.e[j].np ? 'arb-l2 np' : '' })));
+    // Un point par embranchement de l'étude (2026-11-08) : trait sourcé, ou gris si seul l'ADN le connaît
+    // (165 sur 180). Pas de point quand seules des familles « np » pendent à côté d'une autre.
+    if(n.tr || n.adn){
+      const id = 'F' + noeuds.length, fams = [];
+      (function v(c){ if(c.f != null){ if(!c.np) fams.push(o.familles[c.f].courant); } else c.e.forEach(v); })(n);
+      noeuds.push({ id, x, y, s: null, tr: n.tr || null, familles: fams });
+      zones.push(`<circle class="arb-zone" data-id="${id}" cx="${x}" cy="${y}" r="${tel ? 22 : 18}"/>`);
+      points.push(`<circle class="arb-pt arb-pt-f${n.adn ? ' adn' : ''}" data-id="${id}" cx="${x}" cy="${y}" r="5" tabindex="0" role="button" aria-label="${esc(n.tr ? n.tr.t : 'Connu seulement par l’ADN')}"/>`);
+    }
     return { xIn: x, y };
   }
   // --- Les ordres : feuilles du cladogramme, qui deviennent des nœuds une fois dépliés
   function poseOrdre(n){
     const o = parOrdre[n.o], cle = 'o:' + o.lat, ouvert = _arbreOuverts.has(cle);
     const lab = (y) => html.push(`<button type="button" class="arb-feuille" data-cle="${esc(cle)}" data-o="${esc(o.lat)}" aria-expanded="${ouvert}" style="left:${xF + 4}px;top:${y - LIGNE / 2 + 1}px;width:${LO - 4}px">
-      <img src="assets/silhouettes/${esc(o.lat)}.svg" alt="" loading="lazy">
+      ${_arbreImage(o)}
       <span><span class="arb-nom">${esc(o.courant)}</span>${tel ? '' : ` · <i class="arb-lat">${esc(o.savant)}</i>`}<span class="arb-n">${o.n.toLocaleString('fr-FR')}</span></span>${chevron(ouvert)}</button>`);
     if(!ouvert){ const y = yDe(ligne++); lab(y); return { xIn: xF, y }; }
     const { y0, xDep: xO2 } = ouvreBloc(xF + 4, LO - 4);
@@ -21491,7 +21548,7 @@ function renderArbre(garde){
     noeuds.push({ id: n.id, x, y, s: n.s, ordres: _arbreOrdresDe(n) });
     // Une zone invisible de 36 px (44 au doigt) autour du point : le point seul en fait 12-14
     zones.push(`<circle class="arb-zone" data-id="${n.id}" cx="${x}" cy="${y}" r="${tel ? 22 : 18}"/>`);
-    points.push(`<circle class="arb-pt${disc(n) ? ' discute' : ''}" data-id="${n.id}" cx="${x}" cy="${y}" r="${tel ? 6 : 7}" tabindex="0" role="button" aria-label="${esc(t.g || '')} : ${esc(t.t || '')}"/>`);
+    points.push(`<circle class="arb-pt${disc(n) ? ' discute' : ''}${t.st === 'adn' ? ' adn' : ''}" data-id="${n.id}" cx="${x}" cy="${y}" r="${tel ? 6 : 7}" tabindex="0" role="button" aria-label="${esc(t.g || '')} : ${esc(t.t || '')}"/>`);
     return { xIn: x, y };
   }
   const racine = poseNiveau(D.arbre);
@@ -21505,7 +21562,7 @@ function renderArbre(garde){
       <span><svg width="18" height="18" aria-hidden="true"><circle class="arb-pt" cx="9" cy="9" r="6"/></svg> un embranchement : ce qui apparaît à ce moment-là</span>
       <span><svg width="38" height="18" aria-hidden="true"><path class="arb-l discute" d="M2,9 H36"/></svg> branche discutée par les chercheurs</span>
       <span><svg width="38" height="18" aria-hidden="true"><path class="arb-l2 np" d="M2,9 H36"/></svg> famille dont l’étude ne donne pas la place</span>
-      <span><i>ADN</i> : groupe connu seulement par la génétique, sans trait visible commun</span>
+      <span><svg width="18" height="18" aria-hidden="true"><circle class="arb-pt adn" cx="9" cy="9" r="6"/></svg> groupe connu seulement par l’ADN, sans trait visible commun</span>
       <span>Touche un ordre, une famille ou un genre pour faire pousser l’arbre.</span>
     </div>
     <div class="arb-clado" style="height:${H}px;width:${larg + 16}px">
@@ -21514,9 +21571,10 @@ function renderArbre(garde){
     </div>
     <p class="arb-credits">Arbre : Stiller et al. 2024, <i>Nature</i>, réduit aux ordres et aux familles, dans le même ordre que la liste mondiale AviList 2026.
       Traits : Sangster et al. 2022, Chen &amp; Field 2020 et Wikipédia (source dans la bulle de chaque point) ; phrases : Wikipédia.
-      Silhouettes : PhyloPic, domaine public sauf ${credits}.</p>`;
+      Photos : celles des fiches espèces (iNaturalist, Wikimédia Commons) ; en attendant la photo, silhouettes PhyloPic, domaine public sauf ${credits}.</p>`;
   box.scrollLeft = scrollX;
   const clado = box.querySelector('.arb-clado');
+  _arbrePhotos(box);
   // Après un dépliage : l'étiquette touchée reste à la même hauteur à l'écran, et la page glisse
   // vers la droite pour montrer ce qui vient de pousser.
   if(garde){
@@ -21603,13 +21661,18 @@ function _arbreClic(e, clado, noeuds){
   const cible = e.target.closest('.arb-pt, .arb-zone');
   const pt = cible && clado.querySelector(`.arb-pt[data-id="${cible.dataset.id}"]`);
   if(!pt) return;
-  const n = noeuds.find(x => x.id === pt.dataset.id), t = D.traits[n.id] || {};
+  const n = noeuds.find(x => x.id === pt.dataset.id);
+  // Entre familles : le trait sourcé, ou à défaut le lien que seule la génétique établit
+  const t = n.familles ? (n.tr ? { ...n.tr, st: 'source' }
+    : { t: 'Lien tiré de l’ADN', d: 'Aucun trait visible connu : ce regroupement vient de l’analyse des génomes (Stiller 2024).', st: 'adn', src: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC11111414/' })
+    : D.traits[n.id] || {};
   pt.classList.add('sel');
-  const noms = n.ordres.map(o => D.ordres.find(x => x.lat === o).courant);
+  const noms = n.familles || n.ordres.map(o => D.ordres.find(x => x.lat === o).courant);
+  const quoi = n.familles ? 'familles' : 'ordres';
   const disc = n.s != null && n.s < ARBRE_SEUIL;
-  clado.insertAdjacentHTML('beforeend', `<div class="arb-bulle" style="top:${n.y + 12}px;left:${Math.max(0, n.x - 20)}px"><b>${esc(t.g || '')}</b>
+  clado.insertAdjacentHTML('beforeend', `<div class="arb-bulle" style="top:${n.y + 12}px;left:${Math.max(0, n.x - 20)}px">${t.g ? `<b>${esc(t.g)}</b>` : ''}
     <span class="arb-tr">${esc(t.t || '')}</span><br>${esc(t.d || '')}
-    <span class="arb-meta">${noms.length} ordres : ${esc(noms.slice(0, 4).join(', '))}${noms.length > 4 ? '…' : ''}<br>${ARBRE_STATUT[t.st] || ''}${disc ? ` · branche discutée (soutien ${String(n.s).replace('.', ',')})` : ''}${t.src ? ` · <a href="${esc(t.src)}" target="_blank" rel="noopener">source</a>` : ''}</span></div>`);
+    <span class="arb-meta">${noms.length} ${quoi} : ${esc(noms.slice(0, 4).join(n.familles ? ' · ' : ', '))}${noms.length > 4 ? '…' : ''}<br>${ARBRE_STATUT[t.st] || ''}${disc ? ` · branche discutée (soutien ${String(n.s).replace('.', ',')})` : ''}${t.src ? ` · <a href="${esc(t.src)}" target="_blank" rel="noopener">source</a>` : ''}</span></div>`);
 }
 // Passer de l'ordinateur au téléphone (rotation, fenêtre) redessine l'arbre s'il est affiché
 _telBarre.addEventListener?.('change', () => { if(_arbreDonnees && $('#viewArbre')?.style.display !== 'none') renderArbre(); });

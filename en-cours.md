@@ -1,6 +1,6 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1046 / app.js?v=618 (et styles.css?v=618). Prochaine : v1047 / 619.
+Dernière version : v1047 / app.js?v=619 (et styles.css?v=619). Prochaine : v1048 / 620.
 
 - **v1040 (08/11, conversation de l'arbre) : page « L'arbre des oiseaux » EN LIGNE**, menu ⚙ (Plus au téléphone,
   choix de Mathis). Cladogramme des 45 ordres de la maquette D : `renderArbre()` dans app.js (avant renderPokedex),
@@ -17,6 +17,13 @@ Dernière version : v1046 / app.js?v=618 (et styles.css?v=618). Prochaine : v104
   sources `notes-privees/arbre/wiki-familles/` (`_wiki-familles.mjs`, 20 titres par demande). Famille seule dans son
   ordre = phrase de l'ordre. **La page s'appelle désormais « Arbre phylogénétique »** (choix de Mathis, menu, titre,
   Plus ; `data-view="arbre"` inchangé). data/arbre.json?v=20261108b. Prochaine demande de Mathis : l'arbre doit se PROLONGER À DROITE (familles, puis genres, espèces) au lieu du panneau, déplié seulement au clic.
+- **v1047 (conversation de l'arbre) : points entre familles + photos des ordres.** 180 embranchements entre familles
+  recherchés (_noeuds-familles, _wiki-pages, _phrases-traits, _traits-familles -> traits-familles.json, relecture
+  notes-privees/arbre/TRAITS-FAMILLES.md) : 15 traits sourcés, 165 ADN (Mathis : « tout en ADN » pour les 5 douteux).
+  Point gris = ADN, aussi sur les 12 nœuds ADN entre ordres. data/arbre.json?v=20261108d. Photo ronde de « l'espèce
+  la plus connue » de chaque ordre à la place de la silhouette (ARBRE_PHOTOS, vérifiée par _photos-ordres.mjs ; la
+  silhouette reste en attendant). Styles d'essai (métro, organique, encre, nuit) essayés puis retirés : arrondi gardé.
+  Étude à télécharger si Mathis veut aller plus loin : Mayr 2011 (limicoles, doi 10.1111/j.1096-3642.2010.00654.x).
 - **v1046 (conversation de l'arbre) : glisser + style « arrondi », traits dans les bulles.** Glisser l'arbre à la
   souris en tenant le fond (box.onpointerdown, zoom 0,85 compensé : 350 px de souris = 412 px de défilement). Mathis a
   comparé trois styles en local et choisi « arrondi » (coudes adoucis, noms en pastilles grises) et les traits

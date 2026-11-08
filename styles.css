@@ -4011,6 +4011,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .arb-l2.np { stroke:var(--ink-3); stroke-dasharray:4 4; }
   .arb-pt { fill:var(--accent-2); stroke:var(--surface); stroke-width:2; cursor:pointer; r:5.5; }
   .arb-pt.discute { fill:var(--surface); stroke:var(--accent-2); stroke-width:2.5; }
+  /* Gris : embranchement connu seulement par l'ADN (demande de Mathis, 2026-11-08) */
+  .arb-pt.adn { fill:var(--ink-3); }
+  .arb-pt.adn.discute { fill:var(--surface); stroke:var(--ink-3); }
   .arb-pt:hover, .arb-pt.sel, .arb-pt:focus-visible { stroke:var(--ink); outline:none; }
   .arb-zone { fill:transparent; cursor:pointer; }
   /* Étiquettes des quatre étages : un bouton posé au bout de sa branche */
@@ -4024,6 +4027,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .arb-feuille:hover, .arb-fam:hover, .arb-gen:hover { background:color-mix(in srgb, var(--accent) 14%, var(--surface)); }
   .arb-feuille { gap:10px; padding-left:4px; }
   .arb-feuille img { width:40px; height:34px; object-fit:contain; flex:0 0 40px; }
+  /* La photo de l'ordre (2026-11-08) : un rond dans la pastille, à la place de la silhouette */
+  .arb-feuille img.arb-photo { width:34px; height:34px; flex-basis:34px; margin:0 4px 0 2px; object-fit:cover; border-radius:50%; }
   .arb-feuille > span, .arb-fam > span:first-child { overflow:hidden; text-overflow:ellipsis; }
   .arb-fam.np { color:var(--ink-2); }
   .arb-gen i { font-weight:600; color:var(--ink-2); }
@@ -4050,8 +4055,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* Glisser l'arbre à la souris en tenant le fond (2026-11-08) */
   @media (pointer:fine){ #arbreCorps { cursor:grab; } .arb-clado.glisse { cursor:grabbing; user-select:none; } }
   /* Les silhouettes PhyloPic sont noires : en sombre, on les éclaircit */
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .arb-feuille img { filter:invert(.88); } }
-  :root[data-theme="dark"] .arb-feuille img { filter:invert(.88); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .arb-feuille img.arb-sil { filter:invert(.88); } }
+  :root[data-theme="dark"] .arb-feuille img.arb-sil { filter:invert(.88); }
   /* Au téléphone : pas de traits écrits (bulle au toucher), noms sur deux lignes */
   @media (max-width:700px), (max-height:500px) and (orientation:landscape) and (pointer:coarse){
     .arb-feuille, .arb-fam, .arb-gen, .arb-esp { height:52px; white-space:normal; line-height:1.2; }
@@ -4059,6 +4064,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .arb-feuille, .arb-fam, .arb-gen { height:46px; }
     .arb-feuille { gap:6px; }
     .arb-feuille img { width:30px; flex-basis:30px; }
+    .arb-feuille img.arb-photo { width:30px; height:30px; flex-basis:30px; margin:0; }
     .arb-esp { display:block; padding-top:6px; }
     .arb-ph { font-size:14px; }
   }
