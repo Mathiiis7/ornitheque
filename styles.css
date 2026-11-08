@@ -4305,6 +4305,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
        on pouvait la faire glisser de côté pour rien (Mathis, 2026-11-08). L'image suit la largeur, carrée. */
     .tmodal-tier-gallery.single .tmodal-tier { max-width:100%; box-sizing:border-box; }
     .tmodal-tier-gallery.single .tmodal-tier-img { width:100%; max-width:340px; height:auto; aspect-ratio:1; }
+    /* Sons de la fiche : lieu · durée · auteur d'un enregistrement en entier, sur sa propre ligne sous l'étiquette,
+       les pictos et le lien xeno-canto ; sur une seule ligne, il tombait à « Fran… » (Mathis, 2026-11-08). */
+    .xa-hdr { flex-wrap:wrap; row-gap:6px; }
+    .xa-hdr-link { margin-left:auto; }
+    .xa-hdr-meta { order:9; flex:1 1 100%; white-space:normal; overflow:visible; }
     /* Le clavier ouvert : la barre remonterait au-dessus de lui et prendrait la place du champ. */
     body:has(:is(input:not([type=checkbox], [type=radio], [type=range]), textarea, select):focus) .barre-bas { display:none; }
     /* iOS agrandit la page sur un champ de moins de 16 px, et ne la remet pas après. */

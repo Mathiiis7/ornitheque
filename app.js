@@ -3610,6 +3610,8 @@ function _initInfobulle(){
   box.id = 'tipbox';
   document.body.appendChild(box);
   let cible = null, minuteur = null, dernier = { clientX: 0, clientY: 0 };
+  // parDoigt : la bulle affichee a ete ouverte par un toucher (voir le pointerup plus bas) ; toucheA : quand.
+  let parDoigt = false, toucheA = 0;
   // Delai avant apparition, comme le fait le navigateur : sans lui, un simple passage de la
   // souris sur une rangee de boutons fait clignoter une infobulle par bouton.
   // 450 -> 250 ms le 2026-10-05 : la regle de toute explication au survol, decidee par Mathis
@@ -3675,6 +3677,9 @@ function _initInfobulle(){
     if(coupe) _bulleSiCoupe(coupe);
     const el = e.target && e.target.closest ? e.target.closest('[data-tip], [title]') : null;
     if(!el || el === cible) return;
+    // Le faux survol qui suit un toucher ne remplace pas la bulle ouverte au doigt.
+    if(parDoigt && performance.now() - toucheA < 1000) return;
+    parDoigt = false;
     // Reprise a la volee de title : plutot que de convertir a la main les cent trente
     // attributs disperses dans l'appli - et de devoir y penser pour chaque nouveau - on
     // deplace le texte au premier survol. title doit partir, sinon les deux infobulles se
@@ -3704,13 +3709,41 @@ function _initInfobulle(){
   });
   document.addEventListener('mouseout', (e) => {
     if(!cible) return;
+    // Une bulle ouverte au doigt ne part qu'au toucher suivant ou au defilement : apres un toucher, le
+    // navigateur imite un survol puis un depart de la souris, qui la refermait aussitot (essai du 2026-11-08).
+    if(parDoigt) return;
     const vers = e.relatedTarget;
     if(vers && vers.closest && vers.closest('[data-tip]') === cible) return;
     clearTimeout(minuteur);
     cible = null; box.classList.remove('on');
   });
   // Le defilement laisse la boite orpheline : on la ferme.
-  window.addEventListener('scroll', () => { if(cible){ clearTimeout(minuteur); cible = null; box.classList.remove('on'); } }, true);
+  window.addEventListener('scroll', () => { if(cible){ clearTimeout(minuteur); cible = null; parDoigt = false; box.classList.remove('on'); } }, true);
+  // Au doigt, dans la fiche espece : toucher ce qui porte une explication l'affiche, toucher ailleurs la
+  // ferme. Sur iPhone, toucher un element qui n'est ni bouton ni lien n'envoie pas de survol : les reperes
+  // du graphique des mois et le sens des pictos du chant etaient illisibles au telephone (Mathis,
+  // 2026-11-08). Les boutons et liens gardent leur clic ; leur explication reste celle du survol.
+  document.addEventListener('pointerup', (e) => {
+    if(e.pointerType === 'mouse') return;
+    toucheA = performance.now();
+    const el = e.target && e.target.closest ? e.target.closest('[data-tip], [title]') : null;
+    const dansFiche = el && el.closest('.sm-box') && !el.closest('button, a[href], select, input, summary, label, [role=button]');
+    if(!dansFiche){
+      if(cible){ clearTimeout(minuteur); cible = null; parDoigt = false; box.classList.remove('on'); }
+      return;
+    }
+    if(!el.hasAttribute('data-tip')){
+      const t = el.getAttribute('title'); if(!t) return;
+      el.setAttribute('data-tip', t); el.removeAttribute('title');
+    }
+    const txt = el.getAttribute('data-tip') || ''; if(!txt) return;
+    clearTimeout(minuteur);
+    cible = el; parDoigt = true;
+    dernier = { clientX: e.clientX, clientY: e.clientY };
+    box.textContent = txt;
+    box.classList.add('on');
+    placer();
+  });
 }
 if(document.body) _initInfobulle();
 else document.addEventListener('DOMContentLoaded', _initInfobulle);
@@ -19319,11 +19352,18 @@ function _renderSpeciesFreqChart(key, country){
   // de leur colonne est donc a PL-12,5. En y : les mois ont leur ligne de base a H-8, dont
   // le milieu optique est 3,2 px plus haut.
   const xAide = PL - 12.5, yAide = H - 11.2;
-  out += `<g data-tip="% checklists = fraction des sorties eBird qui ont coché l'espèce. Ex : 23% en mars = 1 sortie sur 4 a vu l'espèce en mars.">
+  // Le cercle transparent de 14 est la zone de toucher : au telephone, le « ? » ne fait que 6 px d'ecran et
+  // le doigt tombait sur une barre voisine (Mathis, 2026-11-08). Meme rayon que les points du radar.
+  out += `<g class="sm-freq-aide" data-tip="% checklists = fraction des sorties eBird qui ont coché l'espèce. Ex : 23% en mars = 1 sortie sur 4 a vu l'espèce en mars.">
+    <circle cx="${xAide}" cy="${yAide.toFixed(1)}" r="14" fill="transparent"/>
     <circle cx="${xAide}" cy="${yAide.toFixed(1)}" r="5.5" fill="var(--surface-2)" stroke="var(--line)"/>
     <text x="${xAide}" y="${(yAide + 2.8).toFixed(1)}" text-anchor="middle" font-size="8" font-weight="700" fill="var(--ink-3)">?</text>
   </g>`;
   svg.innerHTML = out;
+  // Un ecouteur de clic sur le « ? », meme vide : le navigateur aimante le toucher vers ce qui reagit au clic,
+  // et sans lui il choisissait la barre voisine (mesure au doigt le 2026-11-08 : la souris tombait bien sur
+  // le « ? », le doigt jamais). L'explication elle-meme vient de l'infobulle (_initInfobulle).
+  svg.querySelector('.sm-freq-aide')?.addEventListener('click', () => {});
   // Cliquer une barre choisit son mois, exactement comme la colonne a cote de la carte -
   // et la carte se redessine avec. Recliquer le mois deja choisi revient a l'annee.
   svg.onclick = (ev) => {
