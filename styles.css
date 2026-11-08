@@ -4416,11 +4416,12 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .chat-compose .chat-name.locked { display:none; }
 
     /* Birdydex (C) : la grille de trois colonnes reste ; le nom passe à 14 px (12,5 avant) et le nom latin
-       et le numéro, en 8 à 10 px, quittent la vignette (ils restent dans la fiche). */
+       quitte la vignette (il reste dans la fiche). Le numéro, lui, est revenu comme à l'ordinateur
+       (Mathis, 2026-11-08). */
     .pkdx-card .pkdx-name { font-size:14px; }
     /* Trois colonnes à toutes les largeurs de téléphone : à 360 px, la grille passait à deux. */
     .pkdx-grid { grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px; }
-    .pkdx-card .pkdx-sci, .pkdx-card .pkdx-num { display:none; }
+    .pkdx-card .pkdx-sci { display:none; }
 
     /* La pastille de version des administrateurs, en bas à gauche : à l'ordinateur seulement (Mathis,
        2026-11-08) ; au téléphone, elle couvrait la barre du bas. app.js l'affiche par .style.display, d'où !important. */
@@ -4436,6 +4437,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      couché, le téléphone dépasse 700 px, d'où une règle hors du bloc du téléphone). */
   @media (pointer: coarse){
     #matrix .tbl-scroll { overscroll-behavior:none; }
+    /* Même chose pour « Qui mène la Ligue ? », qui ne défile que de côté. */
+    #boardList .sheet-scroll { overscroll-behavior-x:none; }
   }
   /* Au doigt, les ronds de rareté restent à 24 px d'écran (choix de Mathis, 2026-11-07) : sans le zoom
      0,85, leur boîte doublée de 56 px en ferait 28. Zone invisible de 7 px de chaque côté : 38 px. */
@@ -4445,6 +4448,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     /* X / P / N plus petits que les chiffres, comme à la souris (16 px contre 20) : 19 px contre 24 (Mathis,
        2026-11-08 : « normalement ils sont plus petits »). Zone invisible de 9 px de chaque côté : 37 px. */
     .rar-chip[data-cat], .pkdx-exo { width:38px; min-width:38px; height:38px; margin:-9.5px; font-size:24px; padding:0 0 3px; }
+    /* Hauteur égale à la largeur : la règle des 52 px des jetons (.rar-chip, .tier-chip { min-height:52px })
+       étirait les ronds en ovales, 24 × 26 px pour les chiffres, 19 × 26 pour X / P / N (Mathis, 2026-11-08).
+       Le centrage de l'encre ne bouge pas : il ne dépend que du rembourrage du bas, pas de la hauteur. */
+    .rar-chip[data-tier], .rar-chip[data-rar], .tier-chip.tier-rond { min-height:48px; }
+    .rar-chip[data-cat] { min-height:38px; }
     .rar-chip[data-cat]::after { inset:-18px !important; }
     .rar-chip[data-tier]::after, .rar-chip[data-rar]::after, .rar-chip[data-cat]::after { inset:-14px; }
     #tierChips .rar-chip[data-rar] { font-size:24px; }
