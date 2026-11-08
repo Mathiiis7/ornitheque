@@ -2272,6 +2272,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   @media (max-width:560px){ .prof-favs { grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px; } }
   /* Dernieres coches : le tableau de Ma liste, sans sa hauteur maximale. */
   .prof-table { border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+  /* L'en-tête des Dernières coches ne colle pas : le cadre (overflow:hidden) devient la boîte de référence du
+     collant, et le top:53px de Ma liste au téléphone le posait 53 px plus bas, sur une observation
+     (Mathis, 2026-11-08). Dix lignes au plus : rien à garder en vue en défilant. */
+  .prof-table .mylist-row.mylist-th { position:static; }
   .prof-table .mylist-loc img { width:20px; height:auto; vertical-align:-3px; margin-right:6px; border-radius:2px; }
   /* Pays et familles : une barre par ligne. */
   .prof-barres { display:flex; flex-direction:column; gap:10px; max-width:720px; }
@@ -4286,6 +4290,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .barre-bas .barre-pastille.or { background:var(--gold); color:#15201e; }
     /* « 99+ » sur « Plus », le dernier onglet : à 360 px, la pastille sortait de 2 px à droite de l'écran. */
     .barre-bas button:last-child .barre-pastille { left:auto; right:2px; }
+    /* La fenêtre d'un trophée : sa hauteur se règle sur l'écran VISIBLE (svh, barres de Safari affichées) ; en
+       90vh, elle dépassait l'écran sur iPhone et, centrée, sortait sa croix par le haut (Mathis, 2026-11-08 :
+       « je peux plus le fermer »). Au-dessus de la barre d'onglets (z-index 1300), qui couvrait son bas. */
+    .tmodal { z-index:1400; padding:12px; padding-top:max(12px, env(safe-area-inset-top)); padding-bottom:max(12px, env(safe-area-inset-bottom)); }
+    .tmodal-box { max-height:calc(100svh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
     /* Le clavier ouvert : la barre remonterait au-dessus de lui et prendrait la place du champ. */
     body:has(:is(input:not([type=checkbox], [type=radio], [type=range]), textarea, select):focus) .barre-bas { display:none; }
     /* iOS agrandit la page sur un champ de moins de 16 px, et ne la remet pas après. */
