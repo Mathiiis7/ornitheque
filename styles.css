@@ -4251,6 +4251,12 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     /* Le texte à sa vraie taille : le zoom 0,85 est pensé pour l'ordinateur ; au téléphone, le
        texte courant tombait à 11,9 px d'écran (Apple conseille 17, 11 au plus petit). */
     body { zoom:1; }
+    /* La page ne glisse jamais de côté : sur iPhone, on pouvait la décaler à droite ou à gauche sur toutes les
+       pages, sur un fond gris qui n'apporte rien (Mathis, 2026-11-08). La démo ne dépasse de l'écran nulle part
+       (mesuré de 360 à 430 px) : ce qui dépasse sur le vrai site n'est pas reproduit, d'où cette garde générale.
+       clip et non hidden : hidden ferait de body une boîte de défilement, et les en-têtes collants (sticky) ne
+       colleraient plus. Les tableaux qui défilent de côté gardent leur propre ascenseur. */
+    html, body { overflow-x:clip; overscroll-behavior-x:none; }
     :root { --barre-h:66px; }
     /* Les pages à plat : plus de marge autour ni de panneau bordé, le contenu prend la largeur
        (315 px sur 390 avant). Les panneaux restent blancs sur le fond, séparés de 8 px. */
@@ -4278,6 +4284,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .barre-bas .barre-pastille { position:absolute; top:4px; left:calc(50% + 5px); min-width:20px; height:20px; padding:0 6px;
       border-radius:10px; background:#d33; color:#fff; font:700 12px/20px var(--sans); text-align:center; }
     .barre-bas .barre-pastille.or { background:var(--gold); color:#15201e; }
+    /* « 99+ » sur « Plus », le dernier onglet : à 360 px, la pastille sortait de 2 px à droite de l'écran. */
+    .barre-bas button:last-child .barre-pastille { left:auto; right:2px; }
     /* Le clavier ouvert : la barre remonterait au-dessus de lui et prendrait la place du champ. */
     body:has(:is(input:not([type=checkbox], [type=radio], [type=range]), textarea, select):focus) .barre-bas { display:none; }
     /* iOS agrandit la page sur un champ de moins de 16 px, et ne la remet pas après. */
