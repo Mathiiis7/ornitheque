@@ -4027,8 +4027,13 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .arb-feuille:hover, .arb-fam:hover, .arb-gen:hover { background:color-mix(in srgb, var(--accent) 14%, var(--surface)); }
   .arb-feuille { gap:10px; padding-left:4px; }
   .arb-feuille img { width:40px; height:34px; object-fit:contain; flex:0 0 40px; }
-  /* La photo de l'ordre (2026-11-08) : un rond dans la pastille, à la place de la silhouette */
-  .arb-feuille img.arb-photo { width:34px; height:34px; flex-basis:34px; margin:0 4px 0 2px; object-fit:cover; border-radius:50%; }
+  /* La photo de l'ordre, et celle de la famille (2026-11-08) : un rond dans la pastille ; gris en attendant */
+  .arb-feuille .arb-photo, .arb-fam .arb-photo { width:34px; height:34px; flex:0 0 34px; margin:0 4px 0 2px; object-fit:cover; border-radius:50%; }
+  .arb-fam .arb-photo { margin:0 2px 0 0; }
+  .arb-fam:has(.arb-photo) { padding-left:4px; }
+  .arb-attente { background:var(--line-2); }
+  /* Rien dans le pays choisi (2026-11-08) : la case et sa branche s'effacent à demi */
+  #arbreCorps .absent { opacity:.32; }
   .arb-feuille > span, .arb-fam > span:first-child { overflow:hidden; text-overflow:ellipsis; }
   .arb-fam.np { color:var(--ink-2); }
   .arb-gen i { font-weight:600; color:var(--ink-2); }
@@ -4064,7 +4069,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .arb-feuille, .arb-fam, .arb-gen { height:46px; }
     .arb-feuille { gap:6px; }
     .arb-feuille img { width:30px; flex-basis:30px; }
-    .arb-feuille img.arb-photo { width:30px; height:30px; flex-basis:30px; margin:0; }
+    .arb-feuille .arb-photo, .arb-fam .arb-photo { width:30px; height:30px; flex-basis:30px; margin:0; }
     .arb-esp { display:block; padding-top:6px; }
     .arb-ph { font-size:14px; }
   }

@@ -25,11 +25,16 @@ for(const [id, t] of Object.entries(traits)) if(!id.startsWith('_')) T[id] = { g
 // Phrases des familles (phrases-familles.json, par lots relus par Mathis). Une famille seule dans
 // son ordre n'en a pas besoin : la phrase de l'ordre la dit deja.
 const phrasesFam = fs.existsSync(M + 'phrases-familles.json') ? lire('phrases-familles.json') : {};
+// La photo de chaque famille (_photos-familles.mjs, 2026-11-08) : l'espèce de son ordre si elle en fait
+// partie, sinon la plus observée sur iNaturalist. ph = nom scientifique, en minuscules comme FR_NAMES.
+const photosFam = fs.existsSync(M + 'photos-familles.json') ? lire('photos-familles.json') : {};
 const ordres = donnees.map(o => ({
   lat: o.lat, savant: o.savant, courant: o.courant, n: o.n, phrase: phrases[o.lat] || '',
   familles: o.familles.map(f => ({ lat: f.lat, savant: f.savant, courant: f.courant, n: f.n, genres: f.genres.map(g => g.lat),
-    ...(o.familles.length > 1 && phrasesFam[f.lat] ? { phrase: phrasesFam[f.lat] } : {}) })),
+    ...(o.familles.length > 1 && phrasesFam[f.lat] ? { phrase: phrasesFam[f.lat] } : {}),
+    ...(photosFam[f.lat] ? { ph: photosFam[f.lat] } : {}) })),
 }));
+console.log('familles avec photo :', ordres.reduce((s, o) => s + o.familles.filter(f => f.ph).length, 0));
 console.log('familles avec phrase :', ordres.reduce((s, o) => s + o.familles.filter(f => f.phrase).length, 0),
   'sur', ordres.reduce((s, o) => s + (o.familles.length > 1 ? o.familles.length : 0), 0), 'dans des ordres a plusieurs familles');
 // L'arbre des familles de chaque ordre (_familles-arbres.mjs, d'apres Stiller 2024). Les familles

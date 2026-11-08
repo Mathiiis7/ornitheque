@@ -21343,6 +21343,40 @@ if(/^FR-[A-Z]+$/.test(_speciesRegion)){
 // ouverture seulement (111 Ko).
 let _arbreDonnees = null, _arbreCharge = null, _arbreEsp = null;
 const _arbreOuverts = new Set();   // ce qui est déplié : 'o:<ordre>', 'f:<famille>', 'g:<famille>/<genre>'
+// Le pays de l'arbre (Mathis, 2026-11-08) : ce qui n'y a aucune espèce est grisé, cases et branches.
+// '' = tous les pays, rien de grisé : l'arbre reste mondial par défaut. Choix propre à cette page,
+// gardé d'une visite à l'autre ; il ne change pas le pays des autres onglets.
+let _arbrePays = '';
+try{ _arbrePays = localStorage.getItem('mb-arbre-pays') || ''; }catch(_){}
+const _arbrePres = new Map();
+// Les espèces présentes dans le pays, avec la règle du Birdydex (_countryHasSpecies : palier dans le
+// bar chart eBird du pays, échappés isolés exclus). null = pas de pays, ou données pas encore là.
+function _arbrePresentes(){
+  const cc = _arbrePays;
+  if(!cc) return null;
+  if(cc !== 'FR' && !_donneesPaysPretes()) return null;
+  if(!_arbrePres.has(cc)){
+    const s = new Set();
+    for(const sci in FR_NAMES) if(_countryHasSpecies(cc, sci)) s.add(sci);
+    _arbrePres.set(cc, s);
+  }
+  return _arbrePres.get(cc);
+}
+function _arbreBoutonPays(){
+  const btn = $('#arbrePays'); if(!btn) return;
+  if(_arbrePays) _syncCountryButton(btn, _arbrePays);
+  else { btn.dataset.cc = ''; btn.querySelector('.cp-btn-flag').textContent = '🌍'; btn.querySelector('.cp-btn-label').textContent = 'Tous les pays'; }
+}
+$('#arbrePays')?.addEventListener('click', async () => {
+  const v = await _openCountryPicker(_arbrePays, { titre: 'Griser ce qui ne vit pas dans…', tous: { label: 'Tous les pays', count: null } });
+  if(v == null || v === _arbrePays) return;
+  _arbrePays = v;
+  try{ localStorage.setItem('mb-arbre-pays', v); }catch(_){}
+  _arbreBoutonPays();
+  if(v && v !== 'FR') try{ await _chargerDonneesPays(); }catch(_){}
+  renderArbre();
+});
+_arbreBoutonPays();
 const ARBRE_SEUIL = 0.95;   // sous ce soutien (probabilité a posteriori de l'étude), branche « discutée »
 const ARBRE_STATUT = { source:'trait donné par la source', approx:'trait approximatif', adn:'connu seulement par l’ADN' };
 // La photo de chaque ordre, à la place de sa silhouette PhyloPic : l'espèce la plus connue de l'ordre
@@ -21368,24 +21402,41 @@ const ARBRE_PHOTOS = {
 // La vignette la plus petite que la source sache servir : la photo s'affiche en 40 px, la vignette de la
 // fiche en fait 320 à 500. iNaturalist sert small.jpg (240 px), Wikimédia redimensionne ses vignettes
 // d'après le « NNNpx- » de l'adresse.
-// La photo de l'ordre si le site la connaît déjà, sinon la silhouette, que _arbrePhotos() remplace
-// une fois la photo trouvée (première visite, ou espèce jamais ouverte).
-function _arbreImage(o){
-  const sci = ARBRE_PHOTOS[o.lat], vue = sci && _photoCarteConnue(sci);
-  return vue ? `<img class="arb-photo" src="${esc(_arbreVignette(vue))}" alt="${esc(FR_NAMES[sci] || '')}" title="${esc(FR_NAMES[sci] || '')}" loading="lazy">`
-    : `<img class="arb-sil" src="assets/silhouettes/${esc(o.lat)}.svg" alt="" loading="lazy"${sci ? ` data-photo="${esc(sci)}"` : ''}>`;
+// La photo d'un ordre ou d'une famille si le site la connaît déjà ; sinon la silhouette de l'ordre, ou
+// un rond gris pour une famille, que _arbrePhotos() remplace une fois la photo trouvée.
+function _arbreImage(sci, sil){
+  const vue = sci && _photoCarteConnue(sci);
+  if(vue) return `<img class="arb-photo" src="${esc(_arbreVignette(vue))}" alt="${esc(FR_NAMES[sci] || '')}" title="${esc(FR_NAMES[sci] || '')}" loading="lazy">`;
+  if(sil) return `<img class="arb-sil" src="${esc(sil)}" alt="" loading="lazy"${sci ? ` data-photo="${esc(sci)}"` : ''}>`;
+  return sci ? `<span class="arb-photo arb-attente" data-photo="${esc(sci)}" aria-hidden="true"></span>` : '';
 }
+// Les photos ne se cherchent qu'à l'approche de l'écran : déplier les Passereaux pose 143 familles,
+// soit 143 demandes à la fois sinon.
+let _arbreVoit = null;
 function _arbrePhotos(box){
-  for(const img of box.querySelectorAll('img.arb-sil[data-photo]')){
-    const sci = img.dataset.photo;
-    _fetchWikiPhoto(sci).then(p => {
-      const src = _arbreVignette(p?.thumb || p?.url);
-      if(!src || !img.isConnected) return;
-      const ph = new Image();
-      ph.onload = () => { if(!img.isConnected) return; img.className = 'arb-photo'; img.src = src; img.alt = img.title = FR_NAMES[sci] || ''; img.removeAttribute('data-photo'); };
-      ph.src = src;
-    }).catch(() => {});
-  }
+  _arbreVoit?.disconnect();
+  _arbreVoit = new IntersectionObserver(vus => {
+    for(const v of vus){
+      if(!v.isIntersecting) continue;
+      _arbreVoit.unobserve(v.target);
+      _arbrePhoto(v.target);
+    }
+  }, { rootMargin: '300px' });
+  for(const el of box.querySelectorAll('[data-photo]')) _arbreVoit.observe(el);
+}
+function _arbrePhoto(el){
+  const sci = el.dataset.photo;
+  _fetchWikiPhoto(sci).then(p => {
+    const src = _arbreVignette(p?.thumb || p?.url);
+    if(!src || !el.isConnected) return;
+    const ph = new Image();
+    ph.onload = () => {
+      if(!el.isConnected) return;
+      ph.className = 'arb-photo'; ph.alt = ph.title = FR_NAMES[sci] || '';
+      el.replaceWith(ph);
+    };
+    ph.src = src;
+  }).catch(() => {});
 }
 function _arbreVignette(u){
   if(!u) return '';
@@ -21400,10 +21451,15 @@ function renderArbre(garde){
   if(!_arbreDonnees){
     // ?v= à monter quand on régénère le fichier : le service worker garde data/ d'un déploiement
     // à l'autre et ne le renouvelle que si l'adresse change.
-    _arbreCharge ||= fetch('data/arbre.json?v=20261108d').then(r => r.json()).then(d => { _arbreDonnees = d; })
+    _arbreCharge ||= fetch('data/arbre.json?v=20261108e').then(r => r.json()).then(d => { _arbreDonnees = d; })
       .catch(() => { box.innerHTML = '<p class="help" style="margin:12px 0 0;">L’arbre n’a pas pu être chargé. Recharge la page pour réessayer.</p>'; });
     _arbreCharge.then(() => { if(_arbreDonnees && $('#viewArbre')?.style.display !== 'none') renderArbre(); });
     return;
+  }
+  // Un pays étranger gardé d'une visite précédente : ses données arrivent à la demande
+  if(_arbrePays && !_arbrePresentes() && !renderArbre.attend){
+    renderArbre.attend = true;   // une seule fois : si le fichier manque, l'arbre reste sans gris
+    _chargerDonneesPays().then(() => { if($('#viewArbre')?.style.display !== 'none') renderArbre(); }).catch(() => {});
   }
   const tel = _telBarre.matches, D = _arbreDonnees;
   // Au téléphone : 11 px par embranchement et 54 px par ligne, pour qu'un nom long tienne sur
@@ -21423,6 +21479,11 @@ function renderArbre(garde){
   const PASF = tel ? 8 : 16, RATEAU = tel ? 14 : 24, LPH = tel ? 250 : 520;
   const parOrdre = Object.fromEntries(D.ordres.map(o => [o.lat, o]));
   const especes = _arbreEspeces(), vues = _arbreVues();
+  // Absent du pays choisi : aucune de ses espèces n'y vit. La case et la branche qui y mène passent
+  // en pâle (classe « absent ») ; un embranchement l'est quand tout ce qui en part l'est.
+  const pres = _arbrePresentes();
+  const absent = scis => !!pres && !scis.some(s => pres.has(s));
+  const ab = a => a ? ' absent' : '';
   const yDe = r => r * LIGNE + LIGNE / 2;
   let ligne = 0, larg = xF + LO;
   const chemins = [], zones = [], points = [], html = [];
@@ -21433,7 +21494,7 @@ function renderArbre(garde){
   // Chaque enfant reçoit sa branche depuis le point du parent.
   function branches(cls, x, y, enfants){
     for(const e of enfants){
-      const c = e.cls || cls, dy = Math.abs(e.y - y), s = Math.sign(e.y - y);
+      const c = (e.cls || cls) + ab(e.abs), dy = Math.abs(e.y - y), s = Math.sign(e.y - y);
       if(dy <= 1){ trait(c, `M${x},${y} H${e.xIn}`); continue; }
       const r = Math.min(12, dy, Math.max(0, e.xIn - x));
       trait(c, `M${x},${y} V${e.y - s * r} Q${x},${e.y} ${x + r},${e.y} H${e.xIn}`);
@@ -21465,34 +21526,34 @@ function renderArbre(garde){
   // Le trait qui relie un nom déplié à ce qui pousse : du bout du nom (ordinateur) ou de dessous
   // le nom (téléphone) jusqu'au premier nœud de l'étage suivant.
   function relie(cls, xNom, lNom, y0, xA, enfants){
-    if(!tel) trait(cls, `M${xNom + lNom},${y0} H${xA}`);
+    if(!tel) trait(cls + ab(enfants.every(e => e.abs)), `M${xNom + lNom},${y0} H${xA}`);
     branches(cls, xA, tel ? y0 + 20 : y0, enfants);
   }
   // --- Étage des espèces et des genres
   function poseGenre(f, g, xG){
     const cle = 'g:' + f.lat + '/' + g, ouvert = _arbreOuverts.has(cle);
-    const scis = (especes.get(f.courant)?.get(g) || []).slice().sort();
-    const lab = (y) => html.push(`<button type="button" class="arb-gen" data-cle="${esc(cle)}" aria-expanded="${ouvert}" style="left:${xG}px;top:${y - LIGNE / 2 + 1}px;width:${LG}px"><i>${esc(latinAff(g))}</i>${compte(nbVues(scis), scis.length)}${chevron(ouvert)}</button>`);
+    const scis = (especes.get(f.courant)?.get(g) || []).slice().sort(), abs = absent(scis);
+    const lab = (y) => html.push(`<button type="button" class="arb-gen${ab(abs)}" data-cle="${esc(cle)}" aria-expanded="${ouvert}" style="left:${xG}px;top:${y - LIGNE / 2 + 1}px;width:${LG}px"><i>${esc(latinAff(g))}</i>${compte(nbVues(scis), scis.length)}${chevron(ouvert)}</button>`);
     etend(xG + LG);
-    if(!ouvert){ const y = yDe(ligne++); lab(y); return { xIn: xG, y }; }
+    if(!ouvert){ const y = yDe(ligne++); lab(y); return { xIn: xG, y, abs }; }
     const { y0, xDep } = ouvreBloc(xG, LG), xS = xDep + RATEAU, ys = [];
     for(const s of scis){
-      const y = yDe(ligne++); ys.push({ y, xIn: xS });
-      html.push(`<button type="button" class="arb-esp${vues.has(s) ? ' vu' : ''}" data-sci="${esc(s)}" style="left:${xS}px;top:${y - LIGNE / 2 + 1}px;width:${LS}px">${vues.has(s) ? '<span class="arb-coche" aria-label="vue">✓</span>' : ''}${esc(frName(s))} <i class="arb-lat">${esc(latinAff(s))}</i></button>`);
+      const y = yDe(ligne++), absE = !!pres && !pres.has(s); ys.push({ y, xIn: xS, abs: absE });
+      html.push(`<button type="button" class="arb-esp${vues.has(s) ? ' vu' : ''}${ab(absE)}" data-sci="${esc(s)}" style="left:${xS}px;top:${y - LIGNE / 2 + 1}px;width:${LS}px">${vues.has(s) ? '<span class="arb-coche" aria-label="vue">✓</span>' : ''}${esc(frName(s))} <i class="arb-lat">${esc(latinAff(s))}</i></button>`);
     }
     etend(xS + LS);
     relie('arb-l3', xG, LG, y0, xDep, ys);
     lab(y0);
-    return { xIn: xG, y: y0 };
+    return { xIn: xG, y: y0, abs };
   }
   // --- Étage des familles : la famille, puis ses genres en râteau
   function poseFamille(o, k, xFam, np){
     const f = o.familles[k], cle = 'f:' + f.lat, ouvert = _arbreOuverts.has(cle);
     const lots = especes.get(f.courant) || new Map();
-    const tout = [...lots.values()].flat();
-    const lab = (y) => html.push(`<button type="button" class="arb-fam${np ? ' np' : ''}" data-cle="${esc(cle)}" aria-expanded="${ouvert}" style="left:${xFam}px;top:${y - LIGNE / 2 + 1}px;width:${LF}px"${np ? ' title="Place dans l’arbre non publiée par l’étude de 2024"' : ''}><span><b>${esc(f.courant)}</b>${tel ? '' : ` · <i class="arb-lat">${esc(f.savant)}</i>`}</span>${compte(nbVues(tout), f.n)}${chevron(ouvert)}</button>`);
+    const tout = [...lots.values()].flat(), abs = absent(tout);
+    const lab = (y) => html.push(`<button type="button" class="arb-fam${np ? ' np' : ''}${ab(abs)}" data-cle="${esc(cle)}" aria-expanded="${ouvert}" style="left:${xFam}px;top:${y - LIGNE / 2 + 1}px;width:${LF}px"${np ? ' title="Place dans l’arbre non publiée par l’étude de 2024"' : ''}>${_arbreImage(f.ph)}<span><b>${esc(f.courant)}</b>${tel ? '' : ` · <i class="arb-lat">${esc(f.savant)}</i>`}</span>${compte(nbVues(tout), f.n)}${chevron(ouvert)}</button>`);
     etend(xFam + LF);
-    if(!ouvert){ const y = yDe(ligne++); lab(y); return { xIn: xFam, y }; }
+    if(!ouvert){ const y = yDe(ligne++); lab(y); return { xIn: xFam, y, abs }; }
     const { y0, xDep } = ouvreBloc(xFam, LF), xG = xDep + RATEAU;
     if(f.phrase) phrase(f.phrase, 'https://en.wikipedia.org/wiki/' + encodeURIComponent(f.lat), xDep + 10);
     // Genres dans l'ordre d'AviList ; ceux que le site nomme autrement (eBird 2025) à la fin
@@ -21501,7 +21562,7 @@ function renderArbre(garde){
     const enf = genres.map(g => poseGenre(f, g, xG));
     relie('arb-l3', xFam, LF, y0, xDep, enf);
     lab(y0);
-    return { xIn: xFam, y: y0 };
+    return { xIn: xFam, y: y0, abs };
   }
   // --- Les branches entre familles d'un ordre (Stiller 2024)
   function poseArbreFam(n, o, hF, xO2){
@@ -21509,7 +21570,7 @@ function renderArbre(garde){
     if(n.f != null) return poseFamille(o, n.f, xFam, n.np);
     const enf = n.e.map(c => poseArbreFam(c, o, hF, xO2));
     const x = xO2 + (hF - _arbreHauteurF(n)) * PASF;
-    const y = (enf[0].y + enf[enf.length - 1].y) / 2;
+    const y = (enf[0].y + enf[enf.length - 1].y) / 2, abs = enf.every(e => e.abs);
     branches('arb-l2', x, y, enf.map((e, j) => ({ ...e, cls: n.e[j].np ? 'arb-l2 np' : '' })));
     // Un point par embranchement de l'étude (2026-11-08) : trait sourcé, ou gris si seul l'ADN le connaît
     // (165 sur 180). Pas de point quand seules des familles « np » pendent à côté d'une autre.
@@ -21518,41 +21579,42 @@ function renderArbre(garde){
       (function v(c){ if(c.f != null){ if(!c.np) fams.push(o.familles[c.f].courant); } else c.e.forEach(v); })(n);
       noeuds.push({ id, x, y, s: null, tr: n.tr || null, familles: fams });
       zones.push(`<circle class="arb-zone" data-id="${id}" cx="${x}" cy="${y}" r="${tel ? 22 : 18}"/>`);
-      points.push(`<circle class="arb-pt arb-pt-f${n.adn ? ' adn' : ''}" data-id="${id}" cx="${x}" cy="${y}" r="5" tabindex="0" role="button" aria-label="${esc(n.tr ? n.tr.t : 'Connu seulement par l’ADN')}"/>`);
+      points.push(`<circle class="arb-pt arb-pt-f${n.adn ? ' adn' : ''}${ab(abs)}" data-id="${id}" cx="${x}" cy="${y}" r="5" tabindex="0" role="button" aria-label="${esc(n.tr ? n.tr.t : 'Connu seulement par l’ADN')}"/>`);
     }
-    return { xIn: x, y };
+    return { xIn: x, y, abs };
   }
   // --- Les ordres : feuilles du cladogramme, qui deviennent des nœuds une fois dépliés
   function poseOrdre(n){
     const o = parOrdre[n.o], cle = 'o:' + o.lat, ouvert = _arbreOuverts.has(cle);
-    const lab = (y) => html.push(`<button type="button" class="arb-feuille" data-cle="${esc(cle)}" data-o="${esc(o.lat)}" aria-expanded="${ouvert}" style="left:${xF + 4}px;top:${y - LIGNE / 2 + 1}px;width:${LO - 4}px">
-      ${_arbreImage(o)}
+    const abs = absent(o.familles.flatMap(f => [...(especes.get(f.courant)?.values() || [])].flat()));
+    const lab = (y) => html.push(`<button type="button" class="arb-feuille${ab(abs)}" data-cle="${esc(cle)}" data-o="${esc(o.lat)}" aria-expanded="${ouvert}" style="left:${xF + 4}px;top:${y - LIGNE / 2 + 1}px;width:${LO - 4}px">
+      ${_arbreImage(ARBRE_PHOTOS[o.lat], 'assets/silhouettes/' + o.lat + '.svg')}
       <span><span class="arb-nom">${esc(o.courant)}</span>${tel ? '' : ` · <i class="arb-lat">${esc(o.savant)}</i>`}<span class="arb-n">${o.n.toLocaleString('fr-FR')}</span></span>${chevron(ouvert)}</button>`);
-    if(!ouvert){ const y = yDe(ligne++); lab(y); return { xIn: xF, y }; }
+    if(!ouvert){ const y = yDe(ligne++); lab(y); return { xIn: xF, y, abs }; }
     const { y0, xDep: xO2 } = ouvreBloc(xF + 4, LO - 4);
     phrase(o.phrase, 'https://en.wikipedia.org/wiki/' + encodeURIComponent(o.lat), xO2 + 10);
     const sous = o.familles.length > 1 ? poseArbreFam(o.arbre, o, _arbreHauteurF(o.arbre), xO2) : poseFamille(o, 0, xO2 + 8);
     relie('arb-l2', xF + 4, LO - 4, y0, xO2, [sous]);
     lab(y0);
-    return { xIn: xF, y: y0 };
+    return { xIn: xF, y: y0, abs };
   }
   // --- Le cladogramme des ordres
   function poseNiveau(n){
     if(n.o) return poseOrdre(n);
     const x = X0 + (hO - _arbreHauteur(n)) * PAS;
     const enf = n.e.map(c => poseNiveau(c));
-    const y = (enf[0].y + enf[enf.length - 1].y) / 2;
+    const y = (enf[0].y + enf[enf.length - 1].y) / 2, abs = enf.every(e => e.abs);
     const disc = c => c.s != null && c.s < ARBRE_SEUIL;
     branches('arb-l', x, y, enf.map((e, j) => ({ ...e, cls: disc(n.e[j]) ? 'arb-l discute' : '' })));
     const t = D.traits[n.id] || {};
     noeuds.push({ id: n.id, x, y, s: n.s, ordres: _arbreOrdresDe(n) });
     // Une zone invisible de 36 px (44 au doigt) autour du point : le point seul en fait 12-14
     zones.push(`<circle class="arb-zone" data-id="${n.id}" cx="${x}" cy="${y}" r="${tel ? 22 : 18}"/>`);
-    points.push(`<circle class="arb-pt${disc(n) ? ' discute' : ''}${t.st === 'adn' ? ' adn' : ''}" data-id="${n.id}" cx="${x}" cy="${y}" r="${tel ? 6 : 7}" tabindex="0" role="button" aria-label="${esc(t.g || '')} : ${esc(t.t || '')}"/>`);
-    return { xIn: x, y };
+    points.push(`<circle class="arb-pt${disc(n) ? ' discute' : ''}${t.st === 'adn' ? ' adn' : ''}${ab(abs)}" data-id="${n.id}" cx="${x}" cy="${y}" r="${tel ? 6 : 7}" tabindex="0" role="button" aria-label="${esc(t.g || '')} : ${esc(t.t || '')}"/>`);
+    return { xIn: x, y, abs };
   }
   const racine = poseNiveau(D.arbre);
-  trait('arb-l', `M0,${racine.y} H${racine.xIn}`);
+  trait('arb-l' + ab(racine.abs), `M0,${racine.y} H${racine.xIn}`);
   const H = ligne * LIGNE;
   const credits = Object.entries(D.credits).filter(([, c]) => !/publicdomain/.test(c.l))
     .map(([, c]) => `${esc(c.s)} : ${esc(c.a)} (${c.l.includes('by-sa') ? 'CC BY-SA' : 'CC BY'})`).join(' ; ');
@@ -21563,6 +21625,7 @@ function renderArbre(garde){
       <span><svg width="38" height="18" aria-hidden="true"><path class="arb-l discute" d="M2,9 H36"/></svg> branche discutée par les chercheurs</span>
       <span><svg width="38" height="18" aria-hidden="true"><path class="arb-l2 np" d="M2,9 H36"/></svg> famille dont l’étude ne donne pas la place</span>
       <span><svg width="18" height="18" aria-hidden="true"><circle class="arb-pt adn" cx="9" cy="9" r="6"/></svg> groupe connu seulement par l’ADN, sans trait visible commun</span>
+      ${pres ? `<span><svg width="38" height="18" aria-hidden="true"><path class="arb-l absent" d="M2,9 H36"/></svg> pâle : aucune espèce dans le pays choisi</span>` : ''}
       <span>Touche un ordre, une famille ou un genre pour faire pousser l’arbre.</span>
     </div>
     <div class="arb-clado" style="height:${H}px;width:${larg + 16}px">

@@ -1,6 +1,13 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1047 / app.js?v=619 (et styles.css?v=619). Prochaine : v1048 / 620.
+Dernière version : v1048 / app.js?v=620 (et styles.css?v=620). Prochaine : v1049 / 621.
+
+- **v1048 (08/11, conversation de l'arbre) : photos des familles + pays de l'arbre.** Chaque famille a la photo
+  de l'espèce de son ordre si elle la contient, sinon de sa plus observée sur iNaturalist
+  (`outils/build/_photos-familles.mjs` → `notes-privees/maquettes/arbre/photos-familles.json` → `ph` dans
+  `data/arbre.json?v=20261108e` ; 249/250, Mohoidae sans espèce). Les photos ne se cherchent qu'à l'approche de
+  l'écran. Bouton pays (`#arbrePays`, propre à la page, « Tous les pays » par défaut, `mb-arbre-pays`) : ce qui n'a
+  aucune espèce dans le pays (règle du Birdydex, `_countryHasSpecies`) passe à 32 % d'opacité, case et branche.
 
 - **v1040 (08/11, conversation de l'arbre) : page « L'arbre des oiseaux » EN LIGNE**, menu ⚙ (Plus au téléphone,
   choix de Mathis). Cladogramme des 45 ordres de la maquette D : `renderArbre()` dans app.js (avant renderPokedex),
