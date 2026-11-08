@@ -14380,8 +14380,9 @@ let _clicMenu = false;
 // ---------------- Le téléphone : barre du bas et page Plus ----------------
 // Chantier du 2026-11-07 (notes-privees/chantier-telephone/, maquette choisie par Mathis) : à 700 px et
 // moins, la rangée d'onglets laisse place à une barre en bas (Classement, Birdydex, Carte, Quiz, Plus).
-// Le même point de rupture que la CSS (bloc « Le téléphone » de styles.css).
-const _telBarre = window.matchMedia('(max-width:700px)');
+// Le même point de rupture que la CSS (bloc « Le téléphone » de styles.css). Le téléphone couché en fait partie
+// (500 px de haut au plus, au doigt : 2026-11-08) ; sa barre devient un bandeau fin en haut (CSS seule).
+const _telBarre = window.matchMedia('(max-width:700px), (max-height:500px) and (orientation:landscape) and (pointer:coarse)');
 // Les pages de la barre ; tout le reste se range dans Plus, qui s'allume quand l'une d'elles est ouverte.
 const BARRE_VUES = ['ranking', 'pokedex', 'map', 'quiz'];
 function _barreBasSuit(){

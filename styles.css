@@ -364,7 +364,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   #leaguebar:not(.est-membre) .ml-box-charger .ml-ic { background:color-mix(in srgb, #fff 18%, transparent); color:#fff; }
   #leaguebar:not(.est-membre) .ml-box-charger:hover { filter:brightness(1.06); }
   .ml-accueil { margin:4px 0 0; color:var(--ink-2); font-size:15px; }
-  @media (max-width:700px){
+  @media (max-width:700px), (max-height:500px) and (orientation:landscape) and (pointer:coarse){
     .ml-boxes { grid-template-columns:repeat(2, minmax(0,1fr)); }
   }
 
@@ -4304,7 +4304,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      _telBarre dans app.js. Au-dessus, rien ne bouge : l'ordinateur est comparé au pixel
      (outils/verif/_ref-ordi.mjs). */
   .barre-bas { display:none; }
-  @media (max-width:700px){
+  @media (max-width:700px), (max-height:500px) and (orientation:landscape) and (pointer:coarse){
     /* Le texte à sa vraie taille : le zoom 0,85 est pensé pour l'ordinateur ; au téléphone, le
        texte courant tombait à 11,9 px d'écran (Apple conseille 17, 11 au plus petit). */
     body { zoom:1; }
@@ -4529,7 +4529,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      l'ordinateur ; ici, sans zoom, ils faisaient vraiment 52 px. La zone de toucher reste à 44 px par une
      marge invisible de 5 px, et 10 px entre deux boutons pour que deux zones ne se chevauchent pas.
      .msg devant : les mêmes réactions servent au Fil et aux Photos, qui ne changent pas. */
-  @media (max-width:700px) and (pointer: coarse){
+  @media (max-width:700px) and (pointer: coarse), (max-height:500px) and (orientation:landscape) and (pointer: coarse){
     .msg .msg-act, .msg .react-add { position:relative; width:34px; height:34px; min-width:34px; min-height:34px;
       padding:0; font-size:17px; line-height:1; }
     /* Hauteur fixe et non minimale : l'émoji, selon la police, poussait la pastille de 33,9 à 46,8 px. */
@@ -4542,7 +4542,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      et Aucun en boutons, le filet et N ; le choix France / Zone dessous. Le HTML reste celui de l'ordinateur :
      ses boîtes s'ouvrent (display:contents) dans une seule grille de dix colonnes, et order range les morceaux.
      (Avant, N passait seul à la ligne et la barre qui le précédait était cachée en portrait.) */
-  @media (max-width:700px){
+  @media (max-width:700px), (max-height:500px) and (orientation:landscape) and (pointer:coarse){
     #mapEbRarityLbl, #ctLigRarete { grid-template-columns:minmax(0, 1fr); gap:6px; }
     #mapEbRarityLbl > .ct-v, #ctLigRarete > .ct-v { display:grid; grid-template-columns:repeat(10, minmax(0, 1fr));
       column-gap:6px; row-gap:12px; justify-items:center; align-items:center; }
@@ -4567,7 +4567,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* Fiche espèce, Répartition, au téléphone : la hauteur suit la largeur (0,7), la proportion du monde que la
      carte montre (latitudes -60 à 85 en Mercator : 0,71 fois sa largeur). En 440 px fixes, le monde vu sur 302 px
      de large laissait plus de 200 px de gris (Mathis, 2026-11-08). Hauteur écrite en ligne par app.js. */
-  @media (max-width:700px){
+  @media (max-width:700px), (max-height:500px) and (orientation:landscape) and (pointer:coarse){
     .species-modal .sm-range-map { height:auto !important; aspect-ratio:10 / 7; }
   }
   /* Fiche espèce, « Où et quand la trouver », téléphone debout : les mois passent AU-DESSUS de la carte, en
@@ -4595,7 +4595,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   }
   /* Au doigt, les ronds de rareté restent à 24 px d'écran (choix de Mathis, 2026-11-07) : sans le zoom
      0,85, leur boîte doublée de 56 px en ferait 28. Zone invisible de 7 px de chaque côté : 38 px. */
-  @media (max-width:700px) and (pointer: coarse){
+  @media (max-width:700px) and (pointer: coarse), (max-height:500px) and (orientation:landscape) and (pointer: coarse){
     .rar-chip[data-tier], .rar-chip[data-rar], .tier-chip.tier-rond {
       width:48px; min-width:48px; height:48px; margin:-12px; font-size:24px; padding:0 0 2px; }
     /* X / P / N plus petits que les chiffres, comme à la souris (16 px contre 20) : 19 px contre 24 (Mathis,
@@ -4650,4 +4650,41 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* L'encoche d'un téléphone couché (viewport-fit=cover dans index.html) : la page s'en écarte.
      À l'ordinateur, env() vaut 0 et la marge reste 24 px. */
   .wrap { padding-left:max(24px, env(safe-area-inset-left)); padding-right:max(24px, env(safe-area-inset-right)); }
-  @media (max-width:700px){ .wrap { padding-left:env(safe-area-inset-left); padding-right:env(safe-area-inset-right); } }
+  @media (max-width:700px), (max-height:500px) and (orientation:landscape) and (pointer:coarse){ .wrap { padding-left:env(safe-area-inset-left); padding-right:env(safe-area-inset-right); } }
+
+  /* ================= Le téléphone couché (2026-11-08) =================
+     Constat : notes-privees/chantier-telephone/paysage/CONSTAT.md ; maquette B choisie par Mathis :
+     notes-privees/maquettes/telephone-paysage/. Il reçoit tout l'affichage du téléphone (règles « 700 px et
+     moins » étendues à « 500 px de haut au plus, au doigt »), sauf le haut : plus de logo, et la barre
+     d'onglets devient un bandeau fin EN HAUT, icône et mot côte à côte. Avant : 120 px pris sur 390 (logo et
+     onglets de l'ordinateur) ; maintenant 44. Fil, Photos et Tchat sont des pages, donc en plein écran. */
+  @media (max-height:500px) and (orientation:landscape) and (pointer:coarse){
+    .entete-fixe { display:none !important; }
+    :root { --barre-h:44px; }
+    .barre-bas { top:0; bottom:auto; border-top:0; border-bottom:1px solid var(--line-2);
+      padding:0 env(safe-area-inset-right) 0 env(safe-area-inset-left); }
+    .barre-bas button { flex-direction:row; gap:8px; padding:0; font-size:14.5px; }
+    .barre-bas svg { width:24px; height:24px; }
+    .barre-bas button.on::after { content:""; position:absolute; left:14%; right:14%; bottom:0; height:2px; border-radius:2px; background:var(--accent); }
+    .barre-bas .barre-pastille, .barre-bas button:last-child .barre-pastille { top:3px; left:auto; right:10%; }
+    /* La place du bandeau en haut ; en bas, plus de barre à laisser libre. */
+    .wrap { padding-top:var(--barre-h); padding-bottom:16px; }
+    /* Ce qui se collait sous l'entête de 53 px, ou au-dessus de la barre du bas, se cale sur le bandeau. */
+    #results > .board-modes-row { top:var(--barre-h); }
+    .mylist-row.mylist-th { top:var(--barre-h); }
+    .ct-carte { height:calc(100svh - var(--barre-h) - 12px); min-height:0; }
+    #matrix .tbl-scroll { max-height:calc(100svh - var(--barre-h) - 24px); }
+    #results > .board-modes-row .tri-bulle { max-height:calc(100svh - 110px); }
+    .chat-compose { bottom:0; }
+    .debloque-bandeau { bottom:12px; }
+    /* La fiche espèce prend tout l'écran (elle s'arrêtait à 792 px, coins arrondis à gauche). */
+    .species-modal .sm-box { width:100vw; border-radius:0; box-shadow:none; }
+    .species-modal .sm-header { border-radius:0; }
+    /* Entête et onglets resserrés, rien de retiré : 138 + 77 px laissaient 175 px pour lire sur 390. Les onglets
+       gardent 44 px de haut, le seuil du doigt (52 écrits, pensés pour le zoom 0,85, en faisaient 52 ici). */
+    .species-modal .sm-header { padding:10px 18px 10px; }
+    .species-modal .sm-sci { margin-top:4px; }
+    .species-modal .sm-info-chips { margin-top:6px; }
+    .species-modal .sm-tabs { padding:6px 16px; }
+    .species-modal .sm-tab { min-height:44px; padding-top:6px; padding-bottom:6px; }
+  }
