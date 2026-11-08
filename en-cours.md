@@ -49,8 +49,11 @@ familles ensuite par lots relus.
   les grands groupes et l'étage des passereaux. **Noms VALIDÉS le 08/11** : `notes-privees/arbre/NOMS-VALIDES.md`
   (45 ordres, grands groupes, sous-branches, passereaux ; seul changement de Mathis : Charadriiformes = « Limicoles et
   laridés »). Les grands groupes récents n'ont pas de nom français établi : noms descriptifs, à présenter comme tels.
-  Prochaine étape : quelles sous-branches afficher (Columbimorphes, Strisores, Afroaves… liste dans le fichier),
-  puis maquettes (2-3 directions, `docs/charte-graphique.md`), puis les ~60 phrases sourcées.
+  **Revu le 08/11 (Mathis) : « on fait juste comme AviList » pour l'instant** : la page montre Ordres -> Familles
+  -> Genres -> Espèces, dans l'ordre d'AviList v2026, SANS grands groupes ni étage des passereaux (noms gardés
+  pour plus tard). **Maquettes faites** : `notes-privees/maquettes/arbre/` (A liste dépliable, B colonnes, C arbre
+  dessiné ; données réelles par `outils/build/_arbre-donnees.mjs`), en attente du choix de Mathis. Puis phrases
+  sourcées (45 ordres d'abord, familles par lots).
 
 ## CHANTIER EN COURS DANS UNE AUTRE CONVERSATION (demandé le 07/11) : le site au téléphone
 Mathis trouve l'affichage téléphone « pas adapté et pas très utilisable », sur **tout le site**. Ce qui
