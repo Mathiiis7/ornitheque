@@ -7174,7 +7174,7 @@ function renderFeed(){
     html += `<div class="feed-item">
       <span class="feed-pas" style="background:${tt.color}" title="${esc(tt.label)}">${niveau}</span>
       <div class="feed-body">
-        <div class="feed-l1"><span class="sp-link feed-sp" data-sci="${esc(it.sci)}">${esc(it.bird)}</span> <span class="latin">${esc(latinAff(it.sci))}</span></div>
+        <div class="feed-l1"><span class="sp-link feed-sp" data-sci="${esc(it.sci)}"${it.pays ? ` data-pays="${esc(it.pays)}"` : ''}>${esc(it.bird)}</span> <span class="latin">${esc(latinAff(it.sci))}</span></div>
         <div class="feed-l2">${_nomProfil(it.uid, it.name)}${it.pays && flagImg(it.pays) ? `<span class="feed-pays" title="${esc(countryLabel(it.pays))}">${flagImg(it.pays)}</span>` : ''}<span class="feed-rar" style="color:${tt.color}">${esc(tt.label)}</span>${dateObs}</div>
       </div>
       <span class="feed-acts">${reagir}<button type="button" class="feed-act" data-feed-cmt="${esc(target)}" title="Commentaires" aria-label="Commentaires${nbCom?' ('+nbCom+')':''}">${IC_COMM}${nbCom?`<span class="feed-n">${nbCom}</span>`:''}</button></span>
@@ -20056,6 +20056,13 @@ document.addEventListener('click', e=>{
     if(state.countryExcl.size && sp.closest('#tbody, #matrixCards')){
       _speciesCountry = _paysChoisi();
       try{ localStorage.setItem('mb-species-country', _speciesCountry); }catch(_){}
+    }
+    // Depuis le Fil : la fiche s'ouvre sur le pays où l'oiseau a été vu, comme depuis un point de la
+    // Carte (Mathis, 2026-11-08). Un pays sans données dans l'appli laisse la fiche sur son dernier pays.
+    const paysObs = sp.dataset.pays;
+    if(paysObs && COUNTRIES_REG[paysObs]){
+      _speciesCountry = paysObs;
+      try{ localStorage.setItem('mb-species-country', paysObs); }catch(_){}
     }
     openSpeciesModal(sp.dataset.sci);
   }

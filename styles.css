@@ -4523,6 +4523,22 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     /* La pastille de version des administrateurs, en bas à gauche : à l'ordinateur seulement (Mathis,
        2026-11-08) ; au téléphone, elle couvrait la barre du bas. app.js l'affiche par .style.display, d'où !important. */
     #adminBuildStamp { display:none !important; }
+    /* Le bas de page (sources, « compte réservé aux membres ») : à l'ordinateur seulement (Mathis, 2026-11-08) ;
+       au téléphone, il coupait le bas de chaque page, sous la Carte surtout. Tout ce qu'il dit est dans À propos. */
+    .wrap > footer { display:none; }
+  }
+  /* Tchat, au doigt sur téléphone : réagir, répondre, éditer, supprimer et les réactions posées dessinés à 34 px
+     (Mathis, 2026-11-08 : « trop gros »). Les 52 px du bloc du doigt sont pensés pour le zoom 0,85 de
+     l'ordinateur ; ici, sans zoom, ils faisaient vraiment 52 px. La zone de toucher reste à 44 px par une
+     marge invisible de 5 px, et 10 px entre deux boutons pour que deux zones ne se chevauchent pas.
+     .msg devant : les mêmes réactions servent au Fil et aux Photos, qui ne changent pas. */
+  @media (max-width:700px) and (pointer: coarse){
+    .msg .msg-act, .msg .react-add { position:relative; width:34px; height:34px; min-width:34px; min-height:34px;
+      padding:0; font-size:17px; line-height:1; }
+    /* Hauteur fixe et non minimale : l'émoji, selon la police, poussait la pastille de 33,9 à 46,8 px. */
+    .msg .react-chip { position:relative; height:34px; min-height:34px; padding:0 10px; font-size:14px; line-height:1; border-radius:17px; }
+    .msg .msg-act::after, .msg .react-add::after, .msg .react-chip::after { content:""; position:absolute; inset:-5px; }
+    .msg .msg-actions, .msg .react-bar { gap:10px; }
   }
   /* Carte, au téléphone : la rangée de rareté de « Vu récemment » et de « La ligue » reprend celle du Birdydex
      et de « Qui a vu quoi » (Mathis, 2026-11-08) : « Rareté » au-dessus, les dix ronds sur une ligne, puis Tout

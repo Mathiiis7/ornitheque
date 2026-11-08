@@ -133,11 +133,11 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=614">
+<link rel="modulepreload" href="app.js?v=615">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). Il porte le MEME ?v= qu'app.js :
      sans numero, GitHub Pages le laisse 10 min en cache (max-age=600) et un telephone a garde l'ancien CSS
      avec le nouvel app.js - panneau de la Carte invisible (Mathis sur iPhone, 2026-11-07). -->
-<link rel="preload" href="styles.css?v=614" as="style">
+<link rel="preload" href="styles.css?v=615" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
 <link rel="preconnect" href="https://unpkg.com" crossorigin>
 <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
@@ -156,7 +156,7 @@
 <!-- Les grappes de la Carte (choix de Mathis, 2026-10-23) : 34 Ko, après Leaflet dont elles ont besoin.
      Leur petite feuille de style (les animations) est réécrite dans styles.css, sans requête de plus. -->
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" integrity="sha256-Hk4dIpcqOSb0hZjgyvFOP+cEmDXUKKNE/tT542ZbNQg=" crossorigin="" defer></script>
-<link rel="stylesheet" href="styles.css?v=614">
+<link rel="stylesheet" href="styles.css?v=615">
 
 <!-- Etat d'auth : au chargement, on ne sait pas encore si l'utilisateur est connecte.
      data-auth="pending" par defaut -> affiche un splash neutre (pas l'ecran de connexion).
@@ -1293,7 +1293,7 @@ document.documentElement.setAttribute('data-theme', _theme);</script>
 
         <h3>📚 Sources des données</h3>
         <ul style="margin:0 0 10px 0; padding-left:22px;">
-          <li><b>eBird</b> (Cornell Lab of Ornithology) - la life list, les bar charts par pays et par zone, la taxonomie</li>
+          <li><b>Merlin / eBird</b>, données propriété du Cornell Lab of Ornithology - la life list, les bar charts par pays et par zone, la taxonomie</li>
           <li><b>Observations d'oiseaux publiées sur GBIF, toutes bases</b> (<a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a>) - les cartes de répartition : listes eBird et atlas d'Afrique (SABAP2, Kenya, Nigeria), complétées là où elles manquent par les observations isolées (iNaturalist, Observation.org...). En France, une partie vient de la <b>LPO</b> : <a href="https://www.faune-france.org/" target="_blank" rel="noopener">Faune-France</a>, Faune-Occitanie et les réserves qu'elle gère, republiés par PatriNat (OFB-MNHN-CNRS-IRD). GBIF.org (21 octobre 2026), <a href="https://doi.org/10.15468/dl.vnrtqk" target="_blank" rel="noopener">doi:10.15468/dl.vnrtqk</a> ; l'animation semaine par semaine, du même ensemble daté au jour : GBIF.org (26 octobre 2026), <a href="https://doi.org/10.15468/dl.wa632u" target="_blank" rel="noopener">doi:10.15468/dl.wa632u</a> ; pour les 236 espèces sans donnée eBird, observations de toutes les sources GBIF (<a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a>), <a href="https://doi.org/10.15468/dl.rb9sut" target="_blank" rel="noopener">doi:10.15468/dl.rb9sut</a>.</li>
           <li><b>iNaturalist Open Range Map</b> (<a href="https://www.inaturalist.org/pages/range_maps" target="_blank" rel="noopener">CC BY</a>) - l'aire estimée, en teinte pâle sous les cartes de répartition. Modèle Geomodel 2.34, téléchargé le 21 octobre 2026.</li>
           <li><b>GBIF</b> - la carte d'observations de la fiche espèce</li>
@@ -1718,5 +1718,5 @@ document.documentElement.setAttribute('data-theme', _theme);</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=614"></script>
+<script type="module" src="app.js?v=615"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>

@@ -182,18 +182,23 @@ export async function mesure({ navigateur, RACINE }){
       // l'ecran (le rond est dessine au double puis reduit, et le corps porte un zoom).
       const lireZone = sel => { const el = document.querySelector('#bancA11y ' + sel);
         if(!el) return null;
-        const b = el.getBoundingClientRect(), echelle = b.width / el.offsetWidth;
+        // L'echelle se lit sur la largeur calculee, pas sur offsetWidth, qui est arrondi a l'entier : une
+        // pastille de 52,6 px donnait 0,992 et sa zone de 44 px tombait a 43,9 (2026-11-08).
+        const b = el.getBoundingClientRect(), echelle = b.width / (parseFloat(getComputedStyle(el).width) || el.offsetWidth);
         const a = getComputedStyle(el, '::after');
         const deb = a.content && a.content !== 'none' && a.position === 'absolute' ? Math.max(0, -parseFloat(a.left) || 0) : 0;
         const z = v => Math.round((v + 2 * deb * echelle) * 10) / 10;
-        return { l: z(b.width), h: z(b.height), oeil: Math.round(b.width * 10) / 10 };
+        return { l: z(b.width), h: z(b.height), oeil: Math.round(b.width * 10) / 10,
+                 opacite: parseFloat(getComputedStyle(el).opacity) };
       };
       const res = {
         pastille: lireZone('.rar-chip[data-rar="7"]'),
         pastilleLarge: lireZone('.rar-chip[data-rar="10"]'),
-        actionMsg: lire('.msg-act'),
-        reaction: lire('.react-chip'),
-        ajoutReaction: lire('.react-add'),
+        // Les boutons du tchat sont dessines a 34 px au telephone (Mathis, 2026-11-08 : « trop gros ») ;
+        // leur ::after les porte a 44 : c'est cette zone qu'on mesure, au seuil ordinaire de 44.
+        actionMsg: lireZone('.msg-act'),
+        reaction: lireZone('.react-chip'),
+        ajoutReaction: lireZone('.react-add'),
         heureMsg: lire('.msg-time'),
         ongletFiche: lire('.sm-tab'),
       };
@@ -212,9 +217,13 @@ export async function mesure({ navigateur, RACINE }){
     };
     mesureZone('zone du rond de rareté « 7 »', tailles.pastille);
     mesureZone('zone du rond de rareté « 10 »', tailles.pastilleLarge);
-    mesureCible('action d un message', tailles.actionMsg);
-    mesureCible('pastille de réaction', tailles.reaction);
-    mesureCible('bouton « réagir »', tailles.ajoutReaction);
+    const mesureZoneCible = (libelle, m) => {
+      if(!m){ r.verif('  ' + libelle, 'INTROUVABLE', false); return; }
+      r.verif('  ' + libelle, m.l + ' x ' + m.h + ' px (dessin ' + m.oeil + ')', Math.min(m.l, m.h) >= CIBLE_ECRAN);
+    };
+    mesureZoneCible('zone d une action de message', tailles.actionMsg);
+    mesureZoneCible('zone d une pastille de réaction', tailles.reaction);
+    mesureZoneCible('zone du bouton « réagir »', tailles.ajoutReaction);
     mesureCible('onglet de la fiche espèce', tailles.ongletFiche);
     // Sur les vrais boutons de la barre, pas sur un temoin : leur style vit dans index.html, lu
     // apres styles.css, et annulait en silence la regle du doigt (36 px, trouve le 2026-10-31).
