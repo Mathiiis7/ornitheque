@@ -4426,6 +4426,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
        2026-11-08) ; au téléphone, elle couvrait la barre du bas. app.js l'affiche par .style.display, d'où !important. */
     #adminBuildStamp { display:none !important; }
   }
+  /* Carte, téléphone debout : X / P / N passent à la ligne sous Tout et Vide, la barre qui les sépare
+     ouvrait alors la ligne sans rien séparer (Mathis, 2026-11-08). Couché, ils restent à côté : elle reste. */
+  @media (max-width:700px) and (orientation:portrait){
+    #mapEbRarityChips .rar-sep, #ctLigRarChips .rar-sep { display:none; }
+  }
   /* Au doigt, les ronds de rareté restent à 24 px d'écran (choix de Mathis, 2026-11-07) : sans le zoom
      0,85, leur boîte doublée de 56 px en ferait 28. Zone invisible de 7 px de chaque côté : 38 px. */
   @media (max-width:700px) and (pointer: coarse){
