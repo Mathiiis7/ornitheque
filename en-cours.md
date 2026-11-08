@@ -1,6 +1,12 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1025 / app.js?v=597 (et styles.css?v=597). Prochaine : v1026 / 598.
+Dernière version : v1030 / app.js?v=602 (et styles.css?v=602). Prochaine : v1031 / 603.
+- **v1026 à v1030 (08/11, confirmés par Mathis sur iPhone)** : rareté au téléphone sur UN modèle partout (Qui a vu
+  quoi, Birdydex, Carte Récent et Ligue) : ronds sur une ligne (`--nrar` si plus de 10), Tout / Aucun (Vide dans
+  Qui a vu quoi) en boutons, filet, X/P/N à 16 px comme le tableau ; HTML de l'ordinateur ouvert par display:contents.
+  Retirés partout : filtre « Milieu » du Birdydex (le tri par milieu reste), « Cacher sous N non observées » des
+  hotspots. Page fixe de côté au téléphone (`html, body { overflow-x:clip }`). Échappés X/P : laissés tels quels
+  dans Qui a vu quoi, 0 point en rareté terrain, ils comptent en ligue et en nombre : choix de Mathis, rien à changer.
 - **v1021 à v1025 (08/11, retours de Mathis sur iPhone, tous confirmés)** : Carte, barre avant X/P/N cachée au
   téléphone debout ; barème des tris qui défile sans se fermer ; Qui mène la Ligue : entête « Rareté » ou « Espèces »,
   seul le NOM figé (rang et score défilent, il l'a demandé), pas de rebond de côté ; Qui a vu quoi sans rebond
