@@ -1,6 +1,11 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1034 / app.js?v=606 (et styles.css?v=606). Prochaine : v1035 / 607.
+Dernière version : v1037 / app.js?v=609 (et styles.css?v=609). Prochaine : v1038 / 610.
+
+- **v1035-v1037 (08/11)** : fiche au téléphone : flèches et croix 44 px alignées ; « Où et quand », debout, mois
+  en grille AU-DESSUS de la carte, carte pleine largeur ; Répartition en aspect-ratio 10/7 (plus de gris) ;
+  échelle du graphique des mois au PINCEMENT à deux doigts (choix de Mathis, pas de boutons). Carte : suggestions
+  de recherche en rond chiffré + X/P/N du pays ouvert, rien sans pays, et sans pays tous les oiseaux du monde.
 
 - **Fiche espèce au téléphone (08/11, v1034)** : constat dans `notes-privees/chantier-telephone/fiche/CONSTAT.md`
   (mêmes commandes qu'à l'ordinateur ; manquaient les explications au seul survol). Corrigé, choix de Mathis :
