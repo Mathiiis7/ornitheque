@@ -1420,7 +1420,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     /* Le nom s'arrête avant les flèches et la croix (150 px écrits depuis le bord) : il passait
        dessous pour 4 fiches sur 10 à 375 px (2026-10-31). */
     .species-modal .sm-title { padding-right:150px; text-wrap:balance; font-size:21px; }
-    /* En-tête serré au téléphone, puis replié sur le nom quand on descend (_ficheRepli dans app.js). */
+    /* En-tête serré au téléphone. Il ne se replie plus en descendant (2026-11-08) : il emportait le choix du pays. */
     .species-modal .sm-header { padding:14px 18px 12px; }
     .species-modal .sm-info-chips, .species-modal .sm-geo { margin-top:8px; }
     /* Etiquettes de l'en-tete : 14 px sur ordinateur, mais 11,5 ici. A 14 px elles prenaient 4
@@ -1428,9 +1428,6 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
        comme les vignettes du Birdydex. */
     .species-modal .sm-info-chips .chip { font-size:11.5px; }
     .species-modal .sm-tabs { padding:8px 12px; }
-    .species-modal .sm-replie .sm-sci, .species-modal .sm-replie .sm-info-chips,
-    .species-modal .sm-replie .sm-geo, .species-modal .sm-replie .sm-vu { display:none; }
-    .species-modal .sm-replie .sm-header { min-height:62px; box-sizing:border-box; display:flex; align-items:center; }
   }
   /* La fiche reçoit le focus à son ouverture : le panneau entier, sans anneau autour. */
   .species-modal .sm-box:focus { outline:none; }

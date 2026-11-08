@@ -19956,22 +19956,8 @@ function _ficheOuverte(modal){
   if(!_ficheRetours) _ficheEntreeAjoute();
   // Le guide garde le focus sur sa bulle, posee par-dessus la fiche.
   if(!_guide) modal.querySelector('.sm-box')?.focus({ preventScroll:true });
-  _ficheRepli(modal);
-}
-// Au telephone, l'en-tete prend le quart de l'ecran : il se replie sur le nom quand on descend, et
-// revient en haut. L'ecart entre les deux seuils, et le contenu assez long exige, evitent qu'il
-// clignote : le replier agrandit la zone de lecture (2026-10-31).
-function _ficheRepli(modal){
-  const boite = modal.querySelector('.sm-box'), zone = modal.querySelector('.sm-scroll');
-  if(!boite || !zone) return;
-  boite.classList.remove('sm-replie');
-  if(zone._repli) return;
-  zone._repli = true;
-  zone.addEventListener('scroll', () => {
-    if(!matchMedia('(max-width:640px)').matches){ boite.classList.remove('sm-replie'); return; }
-    if(zone.scrollTop > 80 && zone.scrollHeight - zone.clientHeight > 300) boite.classList.add('sm-replie');
-    else if(zone.scrollTop < 12) boite.classList.remove('sm-replie');
-  }, { passive:true });
+  // L'en-tete ne se replie plus quand on descend (il le faisait au telephone depuis le 2026-10-31) :
+  // il emportait le choix du pays, que Mathis veut garder sous la main (2026-11-08).
 }
 window.addEventListener('popstate', e => {
   if(_ficheRetours){
