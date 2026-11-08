@@ -21451,7 +21451,7 @@ function renderArbre(garde){
   if(!_arbreDonnees){
     // ?v= à monter quand on régénère le fichier : le service worker garde data/ d'un déploiement
     // à l'autre et ne le renouvelle que si l'adresse change.
-    _arbreCharge ||= fetch('data/arbre.json?v=20261108e').then(r => r.json()).then(d => { _arbreDonnees = d; })
+    _arbreCharge ||= fetch('data/arbre.json?v=20261108f').then(r => r.json()).then(d => { _arbreDonnees = d; })
       .catch(() => { box.innerHTML = '<p class="help" style="margin:12px 0 0;">L’arbre n’a pas pu être chargé. Recharge la page pour réessayer.</p>'; });
     _arbreCharge.then(() => { if(_arbreDonnees && $('#viewArbre')?.style.display !== 'none') renderArbre(); });
     return;
@@ -21573,7 +21573,7 @@ function renderArbre(garde){
     const y = (enf[0].y + enf[enf.length - 1].y) / 2, abs = enf.every(e => e.abs);
     branches('arb-l2', x, y, enf.map((e, j) => ({ ...e, cls: n.e[j].np ? 'arb-l2 np' : '' })));
     // Un point par embranchement de l'étude (2026-11-08) : trait sourcé, ou gris si seul l'ADN le connaît
-    // (165 sur 180). Pas de point quand seules des familles « np » pendent à côté d'une autre.
+    // (156 sur 164). Pas de point à la racine de l'ordre (sa phrase le dit), ni quand seules des familles « np » pendent à côté d'une autre.
     if(n.tr || n.adn){
       const id = 'F' + noeuds.length, fams = [];
       (function v(c){ if(c.f != null){ if(!c.np) fams.push(o.familles[c.f].courant); } else c.e.forEach(v); })(n);

@@ -62,7 +62,10 @@ for(const o of ordres){
   (function v(n){
     if(n.f != null) return;
     const enf = n.e.filter(c => !c.np);
-    if(enf.length >= 2){
+    // La racine de l'ordre n'a pas de point : la phrase de l'ordre, dans son bloc juste au-dessus, dit
+    // déjà ce qui le distingue (Mathis, 2026-11-08 : « garder seulement la description »). Les traits
+    // de 2 racines absents de leur phrase y ont été ajoutés (Martinets et colibris, Chouettes).
+    if(enf.length >= 2 && n !== o.arbre){
       const t = traitsFam[enf.flatMap(fams).sort().join('+')];
       if(!t) throw new Error('embranchement sans décision dans ' + o.lat + ' : ' + enf.flatMap(fams).join('+'));
       if(t.st === 'adn'){ n.adn = 1; nADN++; } else { n.tr = { t: t.t, d: t.d, src: t.src }; nTF++; }

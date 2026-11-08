@@ -1,6 +1,10 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1048 / app.js?v=620 (et styles.css?v=620). Prochaine : v1049 / 621.
+Dernière version : v1049 / app.js?v=621 (et styles.css?v=621). Prochaine : v1050 / 622.
+
+- **v1049 (08/11, conversation de l'arbre)** : plus de point à la racine des familles d'un ordre (la phrase de
+  l'ordre le dit déjà, choix de Mathis) ; traits ajoutés aux phrases des Martinets et colibris et des Chouettes.
+  Reste 8 points à trait, 156 ADN. `data/arbre.json?v=20261108f`.
 
 - **v1048 (08/11, conversation de l'arbre) : photos des familles + pays de l'arbre.** Chaque famille a la photo
   de l'espèce de son ordre si elle la contient, sinon de sa plus observée sur iNaturalist
