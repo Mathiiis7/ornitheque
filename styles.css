@@ -2556,8 +2556,6 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      a part et bloquait l'affichage des centaines de lignes. */
   #matrix .rar-cell .tier-chip.tier-rond { width:20px; min-width:20px; height:20px; margin:0; transform:none; font-size:10px; min-height:0; padding:0.1em 0 0; }
   #matrix .rar-cell .pkdx-exo { width:16px; min-width:16px; height:16px; margin:0; transform:none; font-size:9.5px; padding:0 0 0.5px; }
-  /* Retire les flèches spinner natives sur #mapEbMinTodo (on a nos propres boutons +/-) */
-  #mapEbMinTodo::-webkit-outer-spin-button, #mapEbMinTodo::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
   .map-count { margin-left:auto; font-size:12.5px; color:var(--ink-3); font-weight:600; }
   .map-el { height:min(760px, 78vh); min-height:520px; width:100%; border-radius:12px; overflow:hidden; border:1px solid var(--line); background:var(--surface-2); }
   .map-el .leaflet-popup-content { font:inherit; font-size:13px; line-height:1.45; color:var(--ink); margin:8px 12px; }
@@ -2949,12 +2947,6 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      14 px, le plancher de ce qui se lit. */
   .ct-bloc .ct-portee .seg button { font-size:14px; padding:2px 8px; max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .ct-bloc .ct-portee-note { display:block; margin-top:6px; }
-  .ct-cacher { display:flex; align-items:center; flex-wrap:wrap; gap:8px; font-size:14px; color:var(--ink-2); }
-  .ct-pas { display:inline-flex; align-items:stretch; height:34px; box-sizing:border-box; border:1px solid var(--line-2); border-radius:9px; overflow:hidden; background:var(--surface); }
-  .ct-pas button { width:32px; border:0; background:none; font:700 16px var(--sans); color:var(--ink-2); cursor:pointer; }
-  .ct-pas button:hover { background:var(--surface-3); }
-  .ct-pas input { width:44px; border:0; border-left:1px solid var(--line-2); border-right:1px solid var(--line-2); text-align:center; font:600 14px var(--sans); color:var(--ink); background:none; -moz-appearance:textfield; }
-  .ct-pas input::-webkit-inner-spin-button, .ct-pas input::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
   /* Le Birdydex reprend ce bloc (version B, 2026-10-29) : la recherche toujours visible à côté de
      « Filtres », et sur ordinateur les réglages par deux (Où | Afficher, Famille | Milieu), le tri et
      la rareté sur toute la largeur. */
@@ -4204,8 +4196,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .ct-ariane button { min-height:52px; }
     .ct-page .map-search input { height:52px; }
     /* Les menus du Récent et de la Ligue, sa case et « Voir les autres ». */
-    .ct-bloc .cp-btn, .ct-bloc .seg button, .ct-bloc .ct-bascule, .ct-annee input, .ct-pas, .ct-plus, .ct-pli-btn, .ct-obs { min-height:52px; }
-    .ct-pas button { width:52px; }
+    .ct-bloc .cp-btn, .ct-bloc .seg button, .ct-bloc .ct-bascule, .ct-annee input, .ct-plus, .ct-pli-btn, .ct-obs { min-height:52px; }
     .ct-lien { min-height:52px; padding:0 4px; }
     /* Au doigt, les pastilles font 44 px d'écran : elles passent à la ligne au lieu de sortir du bloc,
        et les choix collés écrivent leur libellé sur deux lignes plutôt que de le couper (375 px, 2026-10-28). */
@@ -4441,10 +4432,29 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
        2026-11-08) ; au téléphone, elle couvrait la barre du bas. app.js l'affiche par .style.display, d'où !important. */
     #adminBuildStamp { display:none !important; }
   }
-  /* Carte, téléphone debout : X / P / N passent à la ligne sous Tout et Vide, la barre qui les sépare
-     ouvrait alors la ligne sans rien séparer (Mathis, 2026-11-08). Couché, ils restent à côté : elle reste. */
-  @media (max-width:700px) and (orientation:portrait){
-    #mapEbRarityChips .rar-sep, #ctLigRarChips .rar-sep { display:none; }
+  /* Carte, au téléphone : la rangée de rareté de « Vu récemment » et de « La ligue » reprend celle du Birdydex
+     et de « Qui a vu quoi » (Mathis, 2026-11-08) : « Rareté » au-dessus, les dix ronds sur une ligne, puis Tout
+     et Aucun en boutons, le filet et N ; le choix France / Zone dessous. Le HTML reste celui de l'ordinateur :
+     ses boîtes s'ouvrent (display:contents) dans une seule grille de dix colonnes, et order range les morceaux.
+     (Avant, N passait seul à la ligne et la barre qui le précédait était cachée en portrait.) */
+  @media (max-width:700px){
+    #mapEbRarityLbl, #ctLigRarete { grid-template-columns:minmax(0, 1fr); gap:6px; }
+    #mapEbRarityLbl > .ct-v, #ctLigRarete > .ct-v { display:grid; grid-template-columns:repeat(10, minmax(0, 1fr));
+      column-gap:6px; row-gap:12px; justify-items:center; align-items:center; }
+    #mapEbRarityChips, #ctLigRarChips, #mapEbRarityLbl .ct-rar-sous, #ctLigRarete .ct-rar-sous,
+    #mapEbRarityLbl .ct-rar-liens, #ctLigRarete .ct-rar-liens { display:contents; }
+    /* app.js pose display:inline-flex sur #mapEbRarityChips (style en ligne), d'où !important ; quand il la
+       cache, il cache aussi toute la ligne #mapEbRarityLbl, qui l'emporte. */
+    #mapEbRarityChips { display:contents !important; }
+    #mapEbRarityLbl .ct-rar-liens > span, #ctLigRarete .ct-rar-liens > span { display:none; }
+    #mapEbRarityLbl [data-rar-all], #mapEbRarityLbl [data-rar-none], #ctLigRarete [data-rar-all], #ctLigRarete [data-rar-none] {
+      order:1; grid-column:span 2; justify-self:stretch; min-height:44px; margin:0; padding:6px 10px; border-radius:6px;
+      background:var(--surface-2); color:var(--ink-3); box-shadow:inset 0 0 0 1px var(--line-2); font:600 14px/1.2 var(--sans);
+      text-decoration:none; }
+    #mapEbRarityLbl [data-rar-all], #ctLigRarete [data-rar-all] { grid-column:1 / span 2; }
+    #mapEbRarityChips .rar-cats, #ctLigRarChips .rar-cats { order:2; grid-column:span 6; justify-self:start; gap:16px; margin:0 0 0 8px; }
+    #mapEbRarityLbl .ct-portee, #ctLigRarete .ct-portee { order:3; grid-column:1 / -1; justify-self:start; }
+    #mapEbRarityLbl .ct-portee-note, #ctLigRarete .ct-portee-note { order:4; grid-column:1 / -1; justify-self:start; margin-top:0; }
   }
   /* « Qui a vu quoi », au doigt, debout comme couché : arrivé au bord, le tableau ne « rebondit » plus
      au-delà en montrant du blanc (Mathis, 2026-11-08 : il se décalait alors qu'il était déjà en butée ;
@@ -4473,9 +4483,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     #tierChips .rar-chip[data-cat] { font-size:24px; }
     /* « Qui a vu quoi » : X / P / N à la taille du tableau juste dessous, 16 px d'écran et lettre de 9,5 px
        (Mathis, 2026-11-08), boîte doublée réduite de moitié comme les autres. Zone de toucher gardée à 37 px. */
-    #tierChips .rar-chip[data-cat], #pkdxTierChips .rar-chip[data-cat] { width:32px; min-width:32px; height:32px; min-height:32px;
-      margin:-8px; font-size:19px; padding:1.28px 0 0; }
-    #tierChips .rar-chip[data-cat]::after, #pkdxTierChips .rar-chip[data-cat]::after { inset:-21px !important; }
+    #tierChips .rar-chip[data-cat], #pkdxTierChips .rar-chip[data-cat], #mapEbRarityChips .rar-chip[data-cat], #ctLigRarChips .rar-chip[data-cat] {
+      width:32px; min-width:32px; height:32px; min-height:32px; margin:-8px; font-size:19px; padding:1.28px 0 0; }
+    #tierChips .rar-chip[data-cat]::after, #pkdxTierChips .rar-chip[data-cat]::after,
+    #mapEbRarityChips .rar-chip[data-cat]::after, #ctLigRarChips .rar-chip[data-cat]::after { inset:-21px !important; }
     /* Le centrage de l'encre, recalé sans le zoom 0,85 : les rembourrages d'avant étaient réglés au
        pixel pour lui, et le banc pastilles (doigt, 300 %) mesurait jusqu'à 3,8 px d'appareil d'écart.
        Chaque valeur vient de sa mesure : décalage / 3 en px d'écran, doublé dans une boîte réduite de moitié. */

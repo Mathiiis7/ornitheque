@@ -7215,7 +7215,7 @@ try{ mapFilter.grappes = localStorage.getItem('mb-ligue-grappes') === '1'; }catc
 // Filtres propres aux modes eBird
 // `rarities` = Set des paliers sélectionnés (1-10). `cats` = statuts X / P / N cochés : non vide,
 // il prime sur les paliers, comme au Birdydex (voir _passeRarCarte).
-let ebFilter = { country:(typeof _globalCountry !== 'undefined' ? _globalCountry : 'FR'), region:(typeof _globalCountry !== 'undefined' ? _globalCountry : 'FR'), days:14, rarities:new Set([1,2,3,4,5,6,7,8,9,10]), cats:new Set(), month:0, dept:'', minTodo:0, source:'ebird', yearMin:2024, yearMax:2025, polygon:null, showObserved:false };
+let ebFilter = { country:(typeof _globalCountry !== 'undefined' ? _globalCountry : 'FR'), region:(typeof _globalCountry !== 'undefined' ? _globalCountry : 'FR'), days:14, rarities:new Set([1,2,3,4,5,6,7,8,9,10]), cats:new Set(), month:0, dept:'', source:'ebird', yearMin:2024, yearMax:2025, polygon:null, showObserved:false };
 // Cache pays -> [{code, name}] pour ne pas re-fetcher a chaque changement de pays.
 const _ebRegionsCache = new Map();  // countryCode -> [{code, name}, ...]
 const _ebSubregionsCache = new Map();   // regionCode -> [{code, name}, ...]
@@ -8903,14 +8903,6 @@ document.addEventListener('change', e=>{
   }
   else if(e.target.id==='mapEbMonth'){ ebFilter.month=+e.target.value||0; _loaded.hotspots=''; renderMap(); _reloadSpeciesForZone(); }
 });
-// Slider "min à cocher" + champ "contient espèce" (event input pour réponse live).
-// Ces filtres sont client-side mais nécessitent un re-render de la couche → on invalide le cache.
-document.addEventListener('input', e=>{
-  if(e.target.id==='mapEbMinTodo'){
-    ebFilter.minTodo = Math.max(0, +e.target.value || 0);
-    _loaded.hotspots=''; renderMap();
-  }
-});
 // Filtre de rarete de la carte, en un seul endroit. Un statut X / P / N coche prime, comme au
 // Birdydex : seuls les oiseaux qui le portent dans ce pays passent. Sinon le palier, exotiques
 // comprises a leur palier du pays (le palier 0 « exotique » n'existe plus dans les filtres,
@@ -9072,14 +9064,6 @@ document.addEventListener('click', e=>{
   _paintRarChip(c, val, set.has(val));
   relance();
 });
-// Boutons +/- pour le champ "min à cocher" (arrondi natif trop petit).
-document.addEventListener('click', e=>{
-  const delta = e.target.id==='mapEbMinTodoInc' ? 1 : e.target.id==='mapEbMinTodoDec' ? -1 : 0;
-  if(!delta) return;
-  const input = document.getElementById('mapEbMinTodo'); if(!input) return;
-  input.value = Math.max(0, (+input.value||0) + delta);
-  input.dispatchEvent(new Event('input', {bubbles:true}));
-});
 // Toggle favori dans les popups hotspots. Optimistic update local + Firestore en fond.
 // On met à jour la couleur du marqueur DIRECTEMENT plutôt que de re-render toute la couche
 // (ce qui fermerait le popup et donnerait un feeling "bug").
@@ -9173,12 +9157,6 @@ document.addEventListener('click', e=>{
   const showMon = mapMode==='hotspots';
   if(monLbl) monLbl.style.display = showMon ? '' : 'none';
   if(monSel) monSel.style.display = showMon ? '' : 'none';
-  // Filtres hotspot-only (min à cocher, contient espèce, favoris, géoloc) : visibles uniquement en mode hotspots.
-  const showMinTodo = mapMode==='hotspots';
-  const boxDisp = { mapEbMinTodoBox:'inline-flex' };
-  ['mapEbMinTodoLbl','mapEbMinTodoBox','mapEbMinTodoSuffix'].forEach(id=>{
-    const el = document.getElementById(id); if(el) el.style.display = showMinTodo ? (boxDisp[id]||'') : 'none';
-  });
   _refreshDeptSel();
   _updateLegend();
   renderMap();
@@ -12166,8 +12144,6 @@ async function _loadHotspotsLayer(region){
       })();
       // Skip les hotspots sans données OU sans espèce à montrer (compte tenu du filtre mois).
       if(n===0 || montrees.length===0) return;
-      // Filtre "min à cocher".
-      if(ebFilter.minTodo>0 && toDoShown < ebFilter.minTodo) return;
       // Favori : rendu en jaune (marker doré + bord blanc épais pour le distinguer visuellement).
       const isFavHs = myFavHotspots.has(h.locId);
       // Le carré porte le nombre d'espèces à cocher (après le filtre du mois).

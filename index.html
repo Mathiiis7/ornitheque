@@ -49,11 +49,11 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=600">
+<link rel="modulepreload" href="app.js?v=601">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). Il porte le MEME ?v= qu'app.js :
      sans numero, GitHub Pages le laisse 10 min en cache (max-age=600) et un telephone a garde l'ancien CSS
      avec le nouvel app.js - panneau de la Carte invisible (Mathis sur iPhone, 2026-11-07). -->
-<link rel="preload" href="styles.css?v=600" as="style">
+<link rel="preload" href="styles.css?v=601" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
 <link rel="preconnect" href="https://unpkg.com" crossorigin>
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
@@ -76,7 +76,7 @@
 <!-- Les grappes de la Carte (choix de Mathis, 2026-10-23) : 34 Ko, après Leaflet dont elles ont besoin.
      Leur petite feuille de style (les animations) est réécrite dans styles.css, sans requête de plus. -->
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" integrity="sha256-Hk4dIpcqOSb0hZjgyvFOP+cEmDXUKKNE/tT542ZbNQg=" crossorigin="" defer></script>
-<link rel="stylesheet" href="styles.css?v=600">
+<link rel="stylesheet" href="styles.css?v=601">
 
 <!-- Etat d'auth : au chargement, on ne sait pas encore si l'utilisateur est connecte.
      data-auth="pending" par defaut -> affiche un splash neutre (pas l'ecran de connexion).
@@ -827,15 +827,7 @@ document.documentElement.setAttribute('data-theme', _theme);</script>
                         <button type="button" role="radio" data-ct-compte="30">Ces 30 jours</button>
                       </div>
                     </div>
-                    <div class="ct-ligne" id="mapEbMinTodoLbl" title="N'affiche que les hotspots qui ont au moins N espèces non observées"><span class="ct-k">Cacher</span>
-                      <span class="ct-v ct-cacher">sous
-                      <span class="ct-pas" id="mapEbMinTodoBox" role="group" aria-label="Nombre minimum d'espèces non observées">
-                        <button type="button" id="mapEbMinTodoDec" title="−1" aria-label="Un de moins">−</button>
-                        <input type="number" id="mapEbMinTodo" min="0" max="500" value="0" step="1" title="Espèces non observées, au minimum">
-                        <button type="button" id="mapEbMinTodoInc" title="+1" aria-label="Un de plus">+</button>
-                      </span>
-                      <span id="mapEbMinTodoSuffix">non observées</span></span>
-                    </div>
+                    <!-- « Cacher sous N non observées » retiré (Mathis, 2026-11-08), ordinateur et téléphone. -->
                     <!-- Rareté en dernier, comme au Récent et à la Ligue : le même réglage (_ctRarZone) colore les
                          espèces de la bulle d'un hotspot (Mathis, 2026-10-29). Pas de pastilles : ici on ne filtre pas. -->
                     <div class="ct-ligne"><span class="ct-k">Rareté</span>
@@ -1677,4 +1669,4 @@ document.documentElement.setAttribute('data-theme', _theme);</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=600"></script>
+<script type="module" src="app.js?v=601"></script>
