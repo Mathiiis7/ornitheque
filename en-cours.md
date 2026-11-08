@@ -1,6 +1,12 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1050 / app.js?v=622 (et styles.css?v=622). Prochaine : v1051 / 623.
+Dernière version : v1052 / app.js?v=624 (et styles.css?v=624). Prochaine : v1053 / 625.
+(v1051 = menu sans émojis, conversation voisine.)
+
+- **v1052 (08/11, conversation de l'arbre)** : avec un pays choisi, chaque case de l'arbre compte les espèces de
+  ce pays (vues / présentes), la bulle du nombre garde le chiffre mondial. Réparé au passage : depuis la photo des
+  familles (v1048), le nom ne se raccourcissait plus et poussait le nombre hors de la case ; familles à 280 px au
+  téléphone (à 190, 58 noms sur 179 étaient coupés).
 
 - **v1050 (08/11, conversation de l'arbre)** : photos des genres et des espèces. Genre : l'espèce de sa famille
   s'il la contient, sinon sa plus observée sur iNaturalist (`outils/build/_photos-genres.mjs`, un classement par

@@ -21475,8 +21475,8 @@ function renderArbre(garde){
   const hO = _arbreHauteur(D.arbre);
   const PAS = tel ? 11 : Math.max(30, Math.min(60, Math.floor((box.clientWidth - 670) / hO)));
   const X0 = 14, xF = X0 + hO * PAS + 10;
-  // Largeurs des étiquettes de chaque étage, et pas des branches au-delà des ordres ; genres à 250 px depuis leur photo : le plus long (Sylviorthorhynchus) tient, mesuré le 2026-11-08
-  const LO = tel ? 170 : 440, LF = tel ? 190 : 330, LG = 250, LS = tel ? 230 : 380;
+  // Largeurs des étiquettes de chaque étage, et pas des branches au-delà des ordres ; genres à 250 px et familles à 280 au téléphone depuis leur photo : à 190, 58 noms de familles sur 179 étaient coupés ; le plus long genre (Sylviorthorhynchus) tient, mesuré le 2026-11-08
+  const LO = tel ? 170 : 440, LF = tel ? 280 : 330, LG = 250, LS = tel ? 230 : 380;
   const PASF = tel ? 8 : 16, RATEAU = tel ? 14 : 24, LPH = tel ? 250 : 520;
   const parOrdre = Object.fromEntries(D.ordres.map(o => [o.lat, o]));
   const especes = _arbreEspeces(), vues = _arbreVues();
@@ -21503,7 +21503,13 @@ function renderArbre(garde){
   }
   const etend = x => { if(x > larg) larg = x; };
   const nbVues = scis => scis.filter(s => vues.has(s)).length;
-  const compte = (nv, n) => `<span class="arb-n">${nv ? `<b class="arb-vu">${nv}</b> / ` : ''}${n.toLocaleString('fr-FR')}</span>`;
+  // Le nombre d'espèces derrière chaque case : celles du monde, ou celles du pays choisi (Mathis, 2026-11-08 :
+  // le lire sans déplier). « vues » ne compte que parmi elles. La bulle garde le chiffre mondial.
+  const fr = n => n.toLocaleString('fr-FR');
+  const compte = (scis, nMonde, sansVues) => {
+    const l = pres ? scis.filter(s => pres.has(s)) : scis, n = pres ? l.length : nMonde, nv = sansVues ? 0 : nbVues(l);
+    return `<span class="arb-n"${pres ? ` title="${fr(n)} dans le pays choisi, ${fr(nMonde)} dans le monde"` : ''}>${nv ? `<b class="arb-vu">${nv}</b> / ` : ''}${fr(n)}</span>`;
+  };
   const chevron = ouvert => `<span class="arb-chev${ouvert ? ' ouvert' : ''}" aria-hidden="true">›</span>`;
   // La phrase prend autant de lignes de l'arbre que son texte en demande : à hauteur fixe, une
   // phrase courte laissait un grand cadre vide (téléphone, 2026-11-08). Estimation : 7,3 px par
@@ -21538,7 +21544,7 @@ function renderArbre(garde){
     // (f.gph, épithètes dans l'ordre de f.genres, _photos-genres.mjs) ; à défaut, sa première espèce.
     const ep = f.gph?.[f.genres.findIndex(x => x.toLowerCase() === g)], choix = ep && g + ' ' + ep;
     const phG = scis.includes(choix) ? choix : scis[0];
-    const lab = (y) => html.push(`<button type="button" class="arb-gen${ab(abs)}" data-cle="${esc(cle)}" aria-expanded="${ouvert}" style="left:${xG}px;top:${y - LIGNE / 2 + 1}px;width:${LG}px">${_arbreImage(phG)}<i>${esc(latinAff(g))}</i>${compte(nbVues(scis), scis.length)}${chevron(ouvert)}</button>`);
+    const lab = (y) => html.push(`<button type="button" class="arb-gen${ab(abs)}" data-cle="${esc(cle)}" aria-expanded="${ouvert}" style="left:${xG}px;top:${y - LIGNE / 2 + 1}px;width:${LG}px">${_arbreImage(phG)}<i>${esc(latinAff(g))}</i>${compte(scis, scis.length)}${chevron(ouvert)}</button>`);
     etend(xG + LG);
     if(!ouvert){ const y = yDe(ligne++); lab(y); return { xIn: xG, y, abs }; }
     const { y0, xDep } = ouvreBloc(xG, LG), xS = xDep + RATEAU, ys = [];
@@ -21556,7 +21562,7 @@ function renderArbre(garde){
     const f = o.familles[k], cle = 'f:' + f.lat, ouvert = _arbreOuverts.has(cle);
     const lots = especes.get(f.courant) || new Map();
     const tout = [...lots.values()].flat(), abs = absent(tout);
-    const lab = (y) => html.push(`<button type="button" class="arb-fam${np ? ' np' : ''}${ab(abs)}" data-cle="${esc(cle)}" aria-expanded="${ouvert}" style="left:${xFam}px;top:${y - LIGNE / 2 + 1}px;width:${LF}px"${np ? ' title="Place dans l’arbre non publiée par l’étude de 2024"' : ''}>${_arbreImage(f.ph)}<span><b>${esc(f.courant)}</b>${tel ? '' : ` · <i class="arb-lat">${esc(f.savant)}</i>`}</span>${compte(nbVues(tout), f.n)}${chevron(ouvert)}</button>`);
+    const lab = (y) => html.push(`<button type="button" class="arb-fam${np ? ' np' : ''}${ab(abs)}" data-cle="${esc(cle)}" aria-expanded="${ouvert}" style="left:${xFam}px;top:${y - LIGNE / 2 + 1}px;width:${LF}px"${np ? ' title="Place dans l’arbre non publiée par l’étude de 2024"' : ''}>${_arbreImage(f.ph)}<span><b>${esc(f.courant)}</b>${tel ? '' : ` · <i class="arb-lat">${esc(f.savant)}</i>`}</span>${compte(tout, f.n)}${chevron(ouvert)}</button>`);
     etend(xFam + LF);
     if(!ouvert){ const y = yDe(ligne++); lab(y); return { xIn: xFam, y, abs }; }
     const { y0, xDep } = ouvreBloc(xFam, LF), xG = xDep + RATEAU;
@@ -21591,10 +21597,10 @@ function renderArbre(garde){
   // --- Les ordres : feuilles du cladogramme, qui deviennent des nœuds une fois dépliés
   function poseOrdre(n){
     const o = parOrdre[n.o], cle = 'o:' + o.lat, ouvert = _arbreOuverts.has(cle);
-    const abs = absent(o.familles.flatMap(f => [...(especes.get(f.courant)?.values() || [])].flat()));
+    const tout = o.familles.flatMap(f => [...(especes.get(f.courant)?.values() || [])].flat()), abs = absent(tout);
     const lab = (y) => html.push(`<button type="button" class="arb-feuille${ab(abs)}" data-cle="${esc(cle)}" data-o="${esc(o.lat)}" aria-expanded="${ouvert}" style="left:${xF + 4}px;top:${y - LIGNE / 2 + 1}px;width:${LO - 4}px">
       ${_arbreImage(ARBRE_PHOTOS[o.lat], 'assets/silhouettes/' + o.lat + '.svg')}
-      <span><span class="arb-nom">${esc(o.courant)}</span>${tel ? '' : ` · <i class="arb-lat">${esc(o.savant)}</i>`}<span class="arb-n">${o.n.toLocaleString('fr-FR')}</span></span>${chevron(ouvert)}</button>`);
+      <span><span class="arb-nom">${esc(o.courant)}</span>${tel ? '' : ` · <i class="arb-lat">${esc(o.savant)}</i>`}${compte(tout, o.n, true)}</span>${chevron(ouvert)}</button>`);
     if(!ouvert){ const y = yDe(ligne++); lab(y); return { xIn: xF, y, abs }; }
     const { y0, xDep: xO2 } = ouvreBloc(xF + 4, LO - 4);
     phrase(o.phrase, 'https://en.wikipedia.org/wiki/' + encodeURIComponent(o.lat), xO2 + 10);

@@ -4036,7 +4036,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .arb-photo, .arb-attente { background:var(--line-2); }   /* le rond gris le temps que la photo arrive */
   /* Rien dans le pays choisi (2026-11-08) : la case et sa branche s'effacent à demi */
   #arbreCorps .absent { opacity:.32; }
-  .arb-feuille > span, .arb-fam > span:first-child { overflow:hidden; text-overflow:ellipsis; }
+  /* Le nom se raccourcit (…) pour laisser le nombre et le chevron dans la case ; la photo passe avant lui depuis
+     le 2026-11-08, d'où :not() plutôt que :first-child */
+  .arb-feuille > span, .arb-fam > span:not(.arb-photo, .arb-n, .arb-chev) { overflow:hidden; text-overflow:ellipsis; }
   .arb-fam.np { color:var(--ink-2); }
   .arb-gen i { font-weight:600; color:var(--ink-2); }
   .arb-esp.vu { font-weight:600; }
