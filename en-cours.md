@@ -7,6 +7,11 @@ Dernière version : v1020 / app.js?v=592 (et styles.css?v=592). Prochaine : v102
   les Icteridés (famille Ictériidés supprimée en 2026). Comparaison : `outils/build/_compare-avilist.mjs` sur
   `notes-privees/arbre/avilist/AviList-v2026-extended.xlsx` -> 0 écart de famille ni d'ordre. Choix de Mathis :
   groupes AviList partout, ESPÈCES eBird (les listes des membres viennent d'eBird ; 97,7 % d'accord seulement).
+- **À GLISSER DANS LA PROCHAINE MISE EN LIGNE (accord de Mathis, 08/11)** : deux lignes dans `SCI_ALIAS` d'app.js,
+  `'neochen jubata': 'oressochen jubatus'` (Ouette de l'Orénoque) et `'chloephaga melanoptera': 'oressochen melanopterus'`
+  (Ouette des Andes). AviList v2026 les nomme ainsi, l'API eBird dit encore Oressochen le 08/11
+  (`outils/build/_ouettes-ebird.mjs`) ; sans alias, le jour où eBird suit, elles sortiraient en anglais au palier 10.
+  Les 3 autres renommées (brachycope, humblotia, thryorchilus) y sont déjà.
 - **v1019** : Classement au téléphone : les 4 colonnes de droite REVIENNENT et défilent de côté, rang, joueur et nombre
   figés (choix de Mathis) ; barème des tris sur toute la largeur ; filtres de Qui a vu quoi rangés, 10 ronds sur une
   ligne ; X/P/N à 19 px (plus petits que les chiffres, 24). Essais : _essai-classement-tel.mjs, _essai-filtres-qui.mjs.
