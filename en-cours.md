@@ -1,6 +1,11 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1020 / app.js?v=592 (et styles.css?v=592). Prochaine : v1021 / 593.
+Dernière version : v1025 / app.js?v=597 (et styles.css?v=597). Prochaine : v1026 / 598.
+- **v1021 à v1025 (08/11, retours de Mathis sur iPhone, tous confirmés)** : Carte, barre avant X/P/N cachée au
+  téléphone debout ; barème des tris qui défile sans se fermer ; Qui mène la Ligue : entête « Rareté » ou « Espèces »,
+  seul le NOM figé (rang et score défilent, il l'a demandé), pas de rebond de côté ; Qui a vu quoi sans rebond
+  (`@media (pointer: coarse)`, debout et couché) ; ronds de rareté vraiment ronds au doigt (le min-height:52px des
+  jetons les étirait) ; numéro des vignettes du Birdydex revenu (se colle aux lettres N/X sous 360 px, laissé).
 - **v1020 (conversation de l'arbre)** : familles calées sur **AviList v2026** (liste mondiale unique, CC BY 4.0,
   doi:10.2173/avilist.v2026, 45 ordres / 250 familles / 2 379 genres, identiques à eBird v2026). « Océanites »
   coupée en Océanites du Sud (Océanitidés) et Océanites du Nord (Hydrobatidés) ; Ictérie polyglotte rangée dans
