@@ -1954,6 +1954,10 @@ const SCI_ALIAS = {
   'nannus hiemalis': 'troglodytes hiemalis',   // Troglodyte des forêts
   'muscicapa flavirostris': 'humblotia flavirostris',   // Gobemouche des Comores
   'euplectes anomalus': 'brachycope anomala',   // Brachycope du Congo
+  // AviList v2026 nomme ainsi les deux ouettes ; l'API eBird dit encore Oressochen (08/11/2026).
+  // Ces deux lignes attendent le jour où eBird suivra AviList (accord de Mathis).
+  'neochen jubata': 'oressochen jubatus',   // Ouette de l'Orénoque
+  'chloephaga melanoptera': 'oressochen melanopterus',   // Ouette des Andes
   'melophus lathami': 'emberiza lathami',   // Bruant huppé
   'melophus melanocephalus': 'emberiza melanocephala',   // Bruant mélanocéphale
   'melophus bruniceps': 'emberiza bruniceps',   // Bruant à tête rousse
@@ -14244,7 +14248,7 @@ $('#manualAddBtn')?.addEventListener('click', async ()=>{
   btn.disabled=false;
 });
 
-const VIEWS = { load:'#viewLoad', profil:'#viewProfil', ranking:'#viewRanking', map:'#viewMap', trophies:'#viewTrophies', chat:'#viewChat', photos:'#viewPhotos', feed:'#viewFeed', requests:'#viewRequests', quiz:'#viewQuiz', pokedex:'#viewPokedex', about:'#viewAbout', plus:'#viewPlus' };
+const VIEWS = { load:'#viewLoad', profil:'#viewProfil', ranking:'#viewRanking', map:'#viewMap', trophies:'#viewTrophies', chat:'#viewChat', photos:'#viewPhotos', feed:'#viewFeed', requests:'#viewRequests', quiz:'#viewQuiz', pokedex:'#viewPokedex', about:'#viewAbout', arbre:'#viewArbre', plus:'#viewPlus' };
 // Hamburger menu + FABs Chat/Photos : delegate vers les tabs caches.
 document.addEventListener('click', e => {
   const ham = e.target.closest('#hamburgerBtn');
@@ -14425,6 +14429,7 @@ const PLUS_ICONES = {
   profil:'<circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/>',
   requests:'<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9V16h7v-2.1A6 6 0 0 0 12 3z"/>',
   about:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>',
+  arbre:'<path d="M4 12h4M8 6v12M8 6h5M8 18h5M13 3v6M13 3h7M13 9h7M13 15h7"/>',
   hamInvite:'<path d="M3 6h18v12H3z"/><path d="m3 7 9 6 9-6"/>',
   hamGuide:'<circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/>',
   theme:'<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
@@ -14503,6 +14508,7 @@ document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',e=>{
   if(b.dataset.view==='requests'){ renderRequests(); markSeen('requests'); }
   if(b.dataset.view==='quiz') renderQuizInit();
   if(b.dataset.view==='pokedex') renderPokedex();
+  if(b.dataset.view==='arbre') renderArbre();
   if(b.dataset.view==='map'){
     // Première ouverture : le Récent, sans allumer sa couche (la carte arrive vide, 2026-10-23).
     if(!_ctOngletDepart && mapMode === 'mine'){ _ctModeBouton('missing')?.click(); carteCouches.delete('recent'); }
@@ -21332,6 +21338,180 @@ if(/^FR-[A-Z]+$/.test(_speciesRegion)){
    consommateur du Status & Trends, dont il exigeait la presence : faute de table S&T il
    affichait "Donnees eBird Status & Trends indisponibles", ce qui etait le cas dans 10
    pays sur 16. */
+// ===== L'arbre des oiseaux (menu ⚙, 2026-11-08) =====
+// Le cladogramme des 45 ordres : l'arbre principal de Stiller et al. 2024 (Nature) réduit aux
+// ordres, dont les feuilles tombent exactement dans l'ordre d'AviList v2026. Un trait par
+// embranchement, une silhouette PhyloPic par ordre ; toucher un ordre ouvre sa phrase et ses
+// familles, une famille ses genres et ses espèces (celles de la personne connectée en évidence).
+// Maquette choisie par Mathis : notes-privees/maquettes/arbre/ (direction D, comme un cladogramme
+// de manuel). Données : data/arbre.json, fabriqué par outils/build/arbre-donnees.mjs, chargé à la
+// première ouverture seulement (85 Ko, 27 Ko compressés).
+let _arbreDonnees = null, _arbreCharge = null, _arbreEsp = null;
+const ARBRE_SEUIL = 0.95;   // sous ce soutien (probabilité a posteriori de l'étude), branche « discutée »
+const ARBRE_STATUT = { source:'trait donné par la source', approx:'trait approximatif', adn:'connu seulement par l’ADN' };
+function renderArbre(){
+  const box = $('#arbreCorps'); if(!box) return;
+  if(!_arbreDonnees){
+    // ?v= à monter quand on régénère le fichier : le service worker garde data/ d'un déploiement
+    // à l'autre et ne le renouvelle que si l'adresse change.
+    _arbreCharge ||= fetch('data/arbre.json?v=20261108').then(r => r.json()).then(d => { _arbreDonnees = d; })
+      .catch(() => { box.innerHTML = '<p class="help" style="margin:12px 0 0;">L’arbre n’a pas pu être chargé. Recharge la page pour réessayer.</p>'; });
+    _arbreCharge.then(() => { if(_arbreDonnees && $('#viewArbre')?.style.display !== 'none') renderArbre(); });
+    return;
+  }
+  const tel = _telBarre.matches, D = _arbreDonnees;
+  // Au téléphone : 11 px par embranchement et 54 px par ligne, pour qu'un nom long tienne sur
+  // deux lignes à 375 px sans toucher la suivante (mesuré sur la maquette le 2026-11-08).
+  // À l'ordinateur, jusqu'à 60 px par embranchement (à 44, celui de la maquette, 27 traits sur 44
+  // ne tenaient pas sur leur branche une fois écrits à 14 px), moins si la page est étroite : à
+  // 1 024 px de fenêtre, 60 px faisaient déborder la page de 220 px (mesuré le 2026-11-08). Il
+  // faut garder 470 px à droite pour les noms des ordres et 170 px à gauche pour la racine.
+  const LIGNE = tel ? 54 : 46, ETQ = !tel;
+  const PAS = tel ? 11 : Math.max(30, Math.min(60, Math.floor((box.clientWidth - 170 - 500) / _arbreHauteur(_arbreDonnees.arbre))));
+  const parOrdre = Object.fromEntries(D.ordres.map(o => [o.lat, o]));
+  const feuilles = [], noeuds = [];
+  (function prep(n, parent){
+    n.parent = parent;
+    if(n.o){ n.y = feuilles.length * LIGNE + LIGNE / 2; n.h = 0; feuilles.push(n); return; }
+    n.e.forEach(x => prep(x, n));
+    n.y = (n.e[0].y + n.e[n.e.length - 1].y) / 2;
+    n.h = 1 + Math.max(...n.e.map(x => x.h));
+    n.ordres = n.e.flatMap(x => x.o ? [x.o] : x.ordres);
+    noeuds.push(n);
+  })(D.arbre, null);
+  // Chaque nœud est placé selon sa HAUTEUR (étages jusqu'à ses feuilles) : les branches des nœuds
+  // anciens deviennent longues, assez pour y écrire leur trait. Placé par profondeur, les traits
+  // se chevauchaient (maquette, 2026-11-08). À l'ordinateur, 170 px pour le trait de la racine.
+  const X0 = ETQ ? 170 : 14, xF = X0 + D.arbre.h * PAS + 10;
+  const xDe = n => n.o ? xF : X0 + (D.arbre.h - n.h) * PAS;
+  const H = feuilles.length * LIGNE;
+  const discute = n => n.s != null && n.s < ARBRE_SEUIL;
+  // Les zones de toucher sous TOUS les points : dessinées entre deux points, une zone couvrait le
+  // point d'à côté.
+  let traits = `<path class="arb-l" d="M0,${D.arbre.y} H${xDe(D.arbre)}"/>`, zones = '', points = '', etiqs = '';
+  for(const n of noeuds){
+    const x = xDe(n), t = D.traits[n.id] || {};
+    traits += `<path class="arb-l" d="M${x},${n.e[0].y} V${n.e[n.e.length - 1].y}"/>`;
+    for(const e of n.e) traits += `<path class="arb-l${discute(e) ? ' discute' : ''}" d="M${x},${e.y} H${xDe(e)}"/>`;
+    // Une zone invisible de 36 px (44 au doigt) autour du point : le point seul en fait 12-14,
+    // trop petit pour un doigt (règle des 44 px, CLAUDE.md « Les bancs de mesure »).
+    zones += `<circle class="arb-zone" data-id="${n.id}" cx="${x}" cy="${n.y}" r="${tel ? 22 : 18}"/>`;
+    points += `<circle class="arb-pt${discute(n) ? ' discute' : ''}" data-id="${n.id}" cx="${x}" cy="${n.y}" r="${tel ? 6 : 7}" tabindex="0" role="button" aria-label="${esc(t.g || '')} : ${esc(t.t || '')}"/>`;
+    // Le trait s'écrit au-dessus de la branche qui ARRIVE au point : elle n'appartient qu'à lui,
+    // deux traits ne peuvent pas tomber au même endroit. S'il n'y tient pas sur deux lignes, le
+    // point prend un numéro et le trait va dans la liste sous l'arbre (mesuré plus bas).
+    if(ETQ){
+      const gx = n.parent ? xDe(n.parent) + 8 : 0, larg = x - gx - 8;
+      etiqs += `<foreignObject x="${gx}" y="${n.y - 40}" width="${Math.max(larg, 20)}" height="36" data-id="${n.id}"><div xmlns="http://www.w3.org/1999/xhtml" class="arb-etiq${t.st === 'adn' ? ' adn' : ''}">${esc(t.st === 'adn' ? 'ADN' : (t.t || ''))}</div></foreignObject>`;
+    }
+  }
+  const credits = Object.entries(D.credits).filter(([, c]) => !/publicdomain/.test(c.l))
+    .map(([, c]) => `${esc(c.s)} : ${esc(c.a)} (${c.l.includes('by-sa') ? 'CC BY-SA' : 'CC BY'})`).join(' ; ');
+  box.innerHTML = `
+    <div class="arb-legende">
+      <span><svg width="18" height="18" aria-hidden="true"><circle class="arb-pt" cx="9" cy="9" r="6"/></svg> un embranchement : ce qui apparaît à ce moment-là</span>
+      <span><svg width="38" height="18" aria-hidden="true"><path class="arb-l discute" d="M2,9 H36"/></svg> branche discutée par les chercheurs</span>
+      <span><i>ADN</i> : groupe connu seulement par la génétique, sans trait visible commun</span>
+    </div>
+    <div class="arb-clado" style="height:${H}px;min-width:${xF + (tel ? 0 : 480)}px">
+      <svg width="${xF}" height="${H}" viewBox="0 0 ${xF} ${H}">${traits}${zones}${points}${etiqs}</svg>
+      ${feuilles.map((f, k) => { const o = parOrdre[f.o]; return `<button type="button" class="arb-feuille" data-o="${esc(f.o)}" style="top:${k * LIGNE + 1}px;left:${xF + 4}px">
+        <img src="assets/silhouettes/${esc(f.o)}.svg" alt="" loading="lazy">
+        <span><span class="arb-nom">${esc(o.courant)}</span>${tel ? '' : ` · <i class="arb-lat">${esc(o.savant)}</i>`}<span class="arb-n">${o.n.toLocaleString('fr-FR')}</span></span></button>`; }).join('')}
+    </div>
+    <p class="arb-credits">Arbre : Stiller et al. 2024, <i>Nature</i>, réduit aux 45 ordres, dans le même ordre que la liste mondiale AviList 2026.
+      Traits : Sangster et al. 2022, Chen &amp; Field 2020 et Wikipédia (source dans la bulle de chaque point).
+      Silhouettes : PhyloPic, domaine public sauf ${credits}.</p>`;
+  const clado = box.querySelector('.arb-clado');
+  // Les traits qui ne tiennent pas sur leur branche : numéro sur le point, texte dans la liste
+  if(ETQ){
+    const trop = [...clado.querySelectorAll('foreignObject')].filter(fo => { const d = fo.firstElementChild; return d.scrollHeight > d.clientHeight + 1 || d.scrollWidth > d.clientWidth + 1; })
+      .sort((a, b) => (+a.getAttribute('y')) - (+b.getAttribute('y')) || (+a.getAttribute('x')) - (+b.getAttribute('x')));
+    const liste = trop.map((fo, i) => {
+      const t = D.traits[fo.dataset.id] || {};
+      fo.firstElementChild.textContent = String(i + 1); fo.firstElementChild.classList.add('num');
+      return `<li><b>${i + 1}.</b> ${t.st === 'adn' ? '<i>ADN</i>' : esc(t.t)} <span class="arb-n">(${esc(t.g)})</span></li>`;
+    });
+    if(liste.length) clado.insertAdjacentHTML('afterend', `<ol class="arb-liste">${liste.join('')}</ol>`);
+  }
+  clado.onclick = e => _arbreClic(e, clado, noeuds, feuilles, LIGNE, H, xF, xDe, tel);
+  clado.onkeydown = e => { if((e.key === 'Enter' || e.key === ' ') && e.target.closest('.arb-pt')){ e.preventDefault(); _arbreClic(e, clado, noeuds, feuilles, LIGNE, H, xF, xDe, tel); } };
+}
+function _arbreHauteur(n){ return n.o ? 0 : 1 + Math.max(..._arbreDonnees ? n.e.map(_arbreHauteur) : [0]); }
+// Les espèces du site, rangées par famille (intitulé) puis par genre : tirées de FR_NAMES une fois.
+function _arbreEspeces(){
+  if(_arbreEsp) return _arbreEsp;
+  _arbreEsp = new Map();
+  for(const sci in FR_NAMES){
+    if(_isSciAliasSource(sci)) continue;
+    const f = familyOf(sci), g = sci.split(' ')[0];
+    if(!_arbreEsp.has(f)) _arbreEsp.set(f, new Map());
+    const m = _arbreEsp.get(f);
+    if(!m.has(g)) m.set(g, []);
+    m.get(g).push(sci);
+  }
+  return _arbreEsp;
+}
+function _arbreVues(){
+  const me = realPeople.find(x => x.id === myUid);
+  const s = new Set();
+  if(me) for(const k of me.species.keys()){ s.add(k); s.add(_cleRef(k)); }
+  return s;
+}
+function _arbreClic(e, clado, noeuds, feuilles, LIGNE, H, xF, xDe, tel){
+  const D = _arbreDonnees;
+  // Dans le panneau des familles : déplier une famille, ouvrir la fiche d'une espèce
+  const fam = e.target.closest('.arb-fam-tete');
+  if(fam){ _arbreFamille(fam); return; }
+  const esp = e.target.closest('.arb-esp[data-sci]');
+  if(esp){ openSpeciesModal(esp.dataset.sci); return; }
+  if(e.target.closest('.arb-panneau')) return;
+  clado.querySelectorAll('.arb-bulle, .arb-panneau').forEach(x => x.remove());
+  clado.querySelectorAll('.arb-pt.sel').forEach(x => x.classList.remove('sel'));
+  const cible = e.target.closest('.arb-pt, .arb-zone');
+  const pt = cible && clado.querySelector(`.arb-pt[data-id="${cible.dataset.id}"]`);
+  if(pt){
+    const n = noeuds.find(x => x.id === pt.dataset.id), t = D.traits[n.id] || {};
+    pt.classList.add('sel');
+    const noms = n.ordres.map(o => D.ordres.find(x => x.lat === o).courant);
+    const disc = n.s != null && n.s < ARBRE_SEUIL;
+    clado.insertAdjacentHTML('beforeend', `<div class="arb-bulle" style="top:${n.y + 12}px;left:${Math.max(0, xDe(n) - 20)}px"><b>${esc(t.g || '')}</b>
+      <span class="arb-tr">${esc(t.t || '')}</span><br>${esc(t.d || '')}
+      <span class="arb-meta">${noms.length} ordres : ${esc(noms.slice(0, 4).join(', '))}${noms.length > 4 ? '…' : ''}<br>${ARBRE_STATUT[t.st] || ''}${disc ? ` · branche discutée (soutien ${String(n.s).replace('.', ',')})` : ''}${t.src ? ` · <a href="${esc(t.src)}" target="_blank" rel="noopener">source</a>` : ''}</span></div>`);
+    return;
+  }
+  const fe = e.target.closest('.arb-feuille');
+  if(!fe) return;
+  const o = D.ordres.find(x => x.lat === fe.dataset.o), k = feuilles.findIndex(f => f.o === fe.dataset.o);
+  const especes = _arbreEspeces(), vues = _arbreVues();
+  const familles = o.familles.map((f, j) => {
+    const lots = especes.get(f.courant);
+    const nv = lots ? [...lots.values()].flat().filter(s => vues.has(s)).length : 0;
+    return `<div class="arb-fam" data-j="${j}"><button type="button" class="arb-fam-tete" aria-expanded="false"><span><b>${esc(f.courant)}</b> · <i class="arb-lat">${esc(f.savant)}</i></span><span class="arb-n">${nv ? `<b class="arb-vu">${nv}</b> / ` : ''}${f.n}</span></button></div>`;
+  }).join('');
+  clado.insertAdjacentHTML('beforeend', `<div class="arb-panneau" data-o="${esc(o.lat)}" style="top:${Math.min(k * LIGNE + 44, Math.max(0, H - 420))}px;left:${tel ? 0 : xF + 40}px">
+    <h3>${esc(o.courant)} · <i class="arb-lat">${esc(o.savant)}</i></h3>
+    <p class="arb-phrase">${esc(o.phrase)} <a href="https://en.wikipedia.org/wiki/${encodeURIComponent(o.lat)}" target="_blank" rel="noopener">source</a></p>
+    ${familles}</div>`);
+}
+// Déplier une famille : ses genres dans l'ordre d'AviList, puis ses espèces ; les tiennes en évidence.
+function _arbreFamille(tete){
+  const bloc = tete.parentElement, ouvert = tete.getAttribute('aria-expanded') === 'true';
+  tete.setAttribute('aria-expanded', String(!ouvert));
+  bloc.querySelector('.arb-genres')?.remove();
+  if(ouvert) return;
+  const o = _arbreDonnees.ordres.find(x => x.lat === bloc.closest('.arb-panneau').dataset.o);
+  const f = o.familles[+bloc.dataset.j];
+  const lots = _arbreEspeces().get(f.courant) || new Map(), vues = _arbreVues();
+  // Genres dans l'ordre d'AviList ; ceux que le site nomme autrement (eBird 2025) à la fin
+  const ordre = f.genres.map(g => g.toLowerCase());
+  const genres = [...lots.keys()].sort((a, b) => (ordre.indexOf(a) + 1 || 1e4) - (ordre.indexOf(b) + 1 || 1e4) || a.localeCompare(b));
+  bloc.insertAdjacentHTML('beforeend', `<div class="arb-genres">${genres.map(g => `<div class="arb-genre"><i>${esc(latinAff(g))}</i>
+    ${lots.get(g).sort().map(s => `<button type="button" class="arb-esp${vues.has(s) ? ' vu' : ''}" data-sci="${esc(s)}">${vues.has(s) ? '<span class="arb-coche" aria-label="vue">✓</span>' : ''}${esc(frName(s))} <i class="arb-lat">${esc(latinAff(s))}</i></button>`).join('')}</div>`).join('')}</div>`);
+}
+// Passer de l'ordinateur au téléphone (rotation, fenêtre) redessine l'arbre s'il est affiché
+_telBarre.addEventListener?.('change', () => { if(_arbreDonnees && $('#viewArbre')?.style.display !== 'none') renderArbre(); });
+
 function renderPokedex(){
   const grid = $('#pkdxGrid'); if(!grid) return;
   // Garde defensive : si render est appele avant que le module ait initialise les vars

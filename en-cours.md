@@ -1,6 +1,16 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1037 / app.js?v=609 (et styles.css?v=609). Prochaine : v1038 / 610.
+Dernière version : v1040 / app.js?v=612 (et styles.css?v=612). Prochaine : v1041 / 613.
+
+- **v1040 (08/11, conversation de l'arbre) : page « L'arbre des oiseaux » EN LIGNE**, menu ⚙ (Plus au téléphone,
+  choix de Mathis). Cladogramme des 45 ordres de la maquette D : `renderArbre()` dans app.js (avant renderPokedex),
+  bloc « L'arbre des oiseaux » de styles.css (avant les schémas communs), `#viewArbre` dans index.html. Données
+  `data/arbre.json?v=20261108` (85 Ko, chargé à l'ouverture seulement ; MONTER le ?v= après régénération par
+  `outils/build/arbre-donnees.mjs`), silhouettes `assets/silhouettes/` (235 Ko). Un ordre touché : phrase + familles
+  (vues/total) ; une famille : genres (ordre AviList) puis espèces de FR_NAMES, les siennes cochées, fiche au toucher.
+  Branches : jusqu'à 60 px, moins si la page est étroite (1 024 px débordait) ; traits écrits sur leur branche
+  d'arrivée, sinon numéro + liste ; zones de toucher de 44 px. Points orange : exception notée dans la charte.
+  Alias des deux ouettes ajoutés dans SCI_ALIAS (la note « à glisser » est faite). Reste : phrases des 250 familles ?
 
 - **v1035-v1037 (08/11)** : fiche au téléphone : flèches et croix 44 px alignées ; « Où et quand », debout, mois
   en grille AU-DESSUS de la carte, carte pleine largeur ; Répartition en aspect-ratio 10/7 (plus de gris) ;
@@ -33,7 +43,7 @@ Dernière version : v1037 / app.js?v=609 (et styles.css?v=609). Prochaine : v103
   les Icteridés (famille Ictériidés supprimée en 2026). Comparaison : `outils/build/_compare-avilist.mjs` sur
   `notes-privees/arbre/avilist/AviList-v2026-extended.xlsx` -> 0 écart de famille ni d'ordre. Choix de Mathis :
   groupes AviList partout, ESPÈCES eBird (les listes des membres viennent d'eBird ; 97,7 % d'accord seulement).
-- **À GLISSER DANS LA PROCHAINE MISE EN LIGNE (accord de Mathis, 08/11)** : deux lignes dans `SCI_ALIAS` d'app.js,
+- **FAIT en v1040 (accord de Mathis, 08/11)** : deux lignes dans `SCI_ALIAS` d'app.js,
   `'neochen jubata': 'oressochen jubatus'` (Ouette de l'Orénoque) et `'chloephaga melanoptera': 'oressochen melanopterus'`
   (Ouette des Andes). AviList v2026 les nomme ainsi, l'API eBird dit encore Oressochen le 08/11
   (`outils/build/_ouettes-ebird.mjs`) ; sans alias, le jour où eBird suit, elles sortiraient en anglais au palier 10.
