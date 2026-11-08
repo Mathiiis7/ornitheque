@@ -85,8 +85,14 @@ familles ensuite par lots relus.
   extraits par `_sangster-apomorphies.mjs`, reportés par `_traits-sangster.mjs` (19 traits revus : Néoaves = mâles
   sans pénis, casoars+kiwis = aile sans pouce, manchots+pétrels = narines en tube chez l'embryon…). Bilan : 12
   source, 16 approx, **16 ADN** dont 4 que la revue déclare sans aucun trait connu ; les 12 autres sont des noeuds
-  qu'elle ne traite pas (sous-groupes des engoulevents/martinets, noeuds sans nom). Piste restante pour eux :
-  Chen et al. 2019 (Vanescaves, morphologie). Reste : avis de Mathis, puis phrases des ordres.
+  qu'elle ne traite pas (sous-groupes des engoulevents/martinets, noeuds sans nom). **Puis (« continue les
+  recherches »)** : Chen & Field 2020 (Vertebrate Zoology, CC BY, PDF via le dépôt de Cambridge,
+  `notes-privees/arbre/sources/chen-field-2020.*`) pour Vanescaves, Sedentaves, Letornithes, et Wikipédia
+  (Owlet-nightjar) pour Daedalornithes (`_traits-chen.mjs`). Bilan final : 12 source, 20 approx, **12 ADN** = 4
+  déclarés sans trait par Sangster (n20, n21, n25, n36), 5 noeuds propres à Stiller 2024 que personne ne traite
+  (n9, n15, n17, n19, n23), et Columbaves, Otidimorphes, outardes+coucous (rien trouvé ; le livre de Mayr
+  « Paleogene Fossil Birds » a un chapitre Columbaves, payant). MDPI (Chen et al. 2019) bloque les robots.
+  Reste : avis de Mathis, puis phrases des ordres.
 
 ## CHANTIER EN COURS DANS UNE AUTRE CONVERSATION (demandé le 07/11) : le site au téléphone
 Mathis trouve l'affichage téléphone « pas adapté et pas très utilisable », sur **tout le site**. Ce qui
