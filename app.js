@@ -19908,7 +19908,7 @@ function _bboxOfRegion(regionCode){
   }
   return [latMin, latMax, lonMin, lonMax];
 }
-// « Vu récemment ↗ », dans l'en-tete de « Où et quand la trouver » : ferme la fiche et ouvre la Carte sur
+// « Carte ↗ » (libelle choisi par Mathis), dans l'en-tete de « Où et quand la trouver » : ferme la fiche et ouvre la Carte sur
 // « Vu récemment » (eBird), l'espece chargee. Il remplace l'onglet « Carte & observations » et sa
 // mini-carte, retires a la demande de Mathis (2026-11-08) ; c'est l'ancien chemin eBird de « Voir en grand ».
 document.addEventListener('click', e => {
