@@ -7611,8 +7611,9 @@ function _updateMapSuggest(){
       if(_isSciAliasSource(sci)) continue;
       const fr = FR_NAMES[sci], enFr = !q || _mapTrouve(_mapNorm(fr), q);
       if(!enFr && !_mapTrouve(sci, q)) continue;
-      const ici = hasRarityCalibrationInCountry(sci, _ccMiss);
-      if(!q && !ici) continue;
+      // Sans pays ouvert, tous les oiseaux se choisissent, sans passe-droit pour la France (Mathis, 2026-11-08).
+      const ici = !!_ctPaysOuvert && hasRarityCalibrationInCountry(sci, _ccMiss);
+      if(!q && _ctPaysOuvert && !ici) continue;
       // Pas d'échappés sur la Carte, pays ouvert (Mathis, 2026-10-23). Sans pays, on ne sait pas où ils seront vus.
       if(_ctPaysOuvert && estEchappeDansPays(sci, _ccMiss)) continue;
       // 9 espèces de nos tables n'ont plus de code eBird (regroupées, mesuré le 2026-10-30) : GBIF les lit encore.
@@ -7660,10 +7661,20 @@ function _updateMapSuggest(){
     box.classList.remove('open'); box.innerHTML=''; return;
   }
   _mapSuggestItems = top;
+  // La rareté d'une suggestion : le rond chiffré et les lettres X / P / N des listes de la Carte, au lieu
+  // d'un simple point de couleur ; et rien du tout sans pays ouvert, puisqu'on ne sait pas où l'oiseau sera
+  // cherché (Mathis, 2026-11-08).
+  const rarSuggest = sci => {
+    if(!_ctPaysOuvert || !sci) return '';
+    const n = rarityForCountry(sci, _ctPaysOuvert);
+    const cat = typeof exoticCategoryInCountry === 'function' ? exoticCategoryInCountry(sci, _ctPaysOuvert) : '';
+    return (n > 0 ? tierChip(n, realColor(n), { cls:'tier-rond', title:'palier ' + n + ' - ' + (REAL_LABELS[n] || '') })
+      : tierChip('–', 'var(--line-2)', { cls:'tier-rond', title:'pas de palier dans ce pays' })) + (cat ? jetonExo(cat) : '');
+  };
   box.innerHTML = top.map((it, i) => {
     if(it && it.kind==='sp-hotspot'){
       return `<div class="map-search-suggest-item" data-idx="${i}">`+
-        `<span class="ss-dot" style="background:${sciColorForCountry(it.sci, (ebFilter && ebFilter.country) || 'FR')}"></span>`+
+        rarSuggest(it.sci)+
         `<span>${esc(it.name)}</span>`+
         `<span class="ss-sci">${esc(latinAff(it.sci))}</span>`+
         `<span class="ss-hint">→ filtrer les hotspots</span></div>`;
@@ -7676,7 +7687,7 @@ function _updateMapSuggest(){
     }
     if(it && it.kind==='sp-missing'){
       return `<div class="map-search-suggest-item${it.deja ? ' ss-deja' : ''}" data-idx="${i}">`+
-        `<span class="ss-dot" style="background:${sciColorForCountry(it.sci, (ebFilter && ebFilter.country) || 'FR')}"></span>`+
+        rarSuggest(it.sci)+
         `<span>${esc(it.name)}</span>`+
         `<span class="ss-sci">${esc(latinAff(it.sci))}</span>`+
         `<span class="ss-hint">→ toutes les obs récentes</span></div>`;
@@ -7686,7 +7697,7 @@ function _updateMapSuggest(){
       const nm = FR_NAMES[(m._sciName||'').toLowerCase()] || m._sciName;
       const hint = m._speciesCode ? '→ toutes les obs' : '→ voir sur la carte';
       return `<div class="map-search-suggest-item" data-idx="${i}">`+
-        `<span class="ss-dot" style="background:${sciColorForCountry(m._sciName, (ebFilter && ebFilter.country) || 'FR')}"></span>`+
+        rarSuggest(m._sciName)+
         `<span>${esc(nm)}</span>`+
         `<span class="ss-sci">${esc(latinAff(m._sciName))}</span>`+
         `<span class="ss-hint">${hint}</span></div>`;
