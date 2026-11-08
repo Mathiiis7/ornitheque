@@ -4062,6 +4062,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .arb-bulle a { color:var(--accent-ink); white-space:nowrap; }
   /* Glisser l'arbre à la souris en tenant le fond (2026-11-08) */
   @media (pointer:fine){ #arbreCorps { cursor:grab; } .arb-clado.glisse { cursor:grabbing; user-select:none; } }
+  /* Pincer zoome l'arbre (renderArbre), pas la page : le navigateur garde le défilement, pas le zoom */
+  #arbreCorps { touch-action:pan-x pan-y; }
   /* Les silhouettes PhyloPic sont noires : en sombre, on les éclaircit */
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .arb-feuille img.arb-sil { filter:invert(.88); } }
   :root[data-theme="dark"] .arb-feuille img.arb-sil { filter:invert(.88); }

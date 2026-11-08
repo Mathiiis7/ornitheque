@@ -21342,6 +21342,25 @@ if(/^FR-[A-Z]+$/.test(_speciesRegion)){
 // Données : data/arbre.json, fabriqué par outils/build/arbre-donnees.mjs, chargé à la première
 // ouverture seulement (111 Ko).
 let _arbreDonnees = null, _arbreCharge = null, _arbreEsp = null;
+// Le zoom de l'arbre lui-même (Mathis, 2026-11-08) : Ctrl + molette ou pincer zoomaient tout le navigateur.
+// Il s'applique en CSS zoom sur .arb-clado, qui garde les défilements justes ; gardé d'un redessin à l'autre.
+let _arbreZoom = 1;
+const ARBRE_ZOOM_MIN = 0.4, ARBRE_ZOOM_MAX = 2;
+// Zoomer en gardant sous le curseur (ou entre les deux doigts) le point qu'on regardait : de côté, le cadre
+// défile (en px CSS du cadre, d'où le zoom de body) ; de haut en bas, c'est la page.
+function _arbreZoomer(box, z, cx, cy){
+  const clado = box.querySelector('.arb-clado'); if(!clado) return;
+  z = Math.min(ARBRE_ZOOM_MAX, Math.max(ARBRE_ZOOM_MIN, z));
+  const ratio = z / _arbreZoom; if(Math.abs(ratio - 1) < 0.001) return;
+  const bz = parseFloat(getComputedStyle(document.body).zoom) || 1;
+  // On relit le cadre APRÈS le zoom : ses marges grandissent avec lui, et le prévoir décalait de 10 px.
+  const rc = clado.getBoundingClientRect(), dx = cx - rc.left, dy = cy - rc.top;
+  _arbreZoom = z;
+  clado.style.zoom = z;
+  const rn = clado.getBoundingClientRect();
+  box.scrollLeft += (rn.left + dx * ratio - cx) / bz;
+  window.scrollBy(0, rn.top + dy * ratio - cy);
+}
 const _arbreOuverts = new Set();   // ce qui est déplié : 'o:<ordre>', 'f:<famille>', 'g:<famille>/<genre>'
 // Le pays de l'arbre (Mathis, 2026-11-08) : ce qui n'y a aucune espèce est grisé, cases et branches.
 // '' = tous les pays, rien de grisé : l'arbre reste mondial par défaut. Choix propre à cette page,
@@ -21475,8 +21494,8 @@ function renderArbre(garde){
   const hO = _arbreHauteur(D.arbre);
   const PAS = tel ? 11 : Math.max(30, Math.min(60, Math.floor((box.clientWidth - 670) / hO)));
   const X0 = 14, xF = X0 + hO * PAS + 10;
-  // Largeurs des étiquettes de chaque étage, et pas des branches au-delà des ordres ; genres à 250 px et familles à 280 au téléphone depuis leur photo : à 190, 58 noms de familles sur 179 étaient coupés ; le plus long genre (Sylviorthorhynchus) tient, mesuré le 2026-11-08
-  const LO = tel ? 170 : 440, LF = tel ? 280 : 330, LG = 250, LS = tel ? 230 : 380;
+  // Largeurs des étiquettes de chaque étage, et pas des branches au-delà des ordres ; genres à 280 px et familles à 330 au téléphone depuis leurs photos et le « 0 / N » : à 190, 58 noms de familles sur 179 étaient coupés ; avec « 0 / », il faut 320 et 270, marge pour les listes plus longues (mesuré le 2026-11-08)
+  const LO = tel ? 170 : 440, LF = 330, LG = 280, LS = tel ? 230 : 380;
   const PASF = tel ? 8 : 16, RATEAU = tel ? 14 : 24, LPH = tel ? 250 : 520;
   const parOrdre = Object.fromEntries(D.ordres.map(o => [o.lat, o]));
   const especes = _arbreEspeces(), vues = _arbreVues();
@@ -21508,7 +21527,9 @@ function renderArbre(garde){
   const fr = n => n.toLocaleString('fr-FR');
   const compte = (scis, nMonde, sansVues) => {
     const l = pres ? scis.filter(s => pres.has(s)) : scis, n = pres ? l.length : nMonde, nv = sansVues ? 0 : nbVues(l);
-    return `<span class="arb-n"${pres ? ` title="${fr(n)} dans le pays choisi, ${fr(nMonde)} dans le monde"` : ''}>${nv ? `<b class="arb-vu">${nv}</b> / ` : ''}${fr(n)}</span>`;
+    // « 0 / N » quand on n'en a vu aucune (Mathis, 2026-11-08), sauf pour qui n'a pas de liste, et pas « 0 / 0 »
+    const vu = nv ? `<b class="arb-vu">${nv}</b> / ` : !sansVues && vues.size && n ? '0 / ' : '';
+    return `<span class="arb-n"${pres ? ` title="${fr(n)} dans le pays choisi, ${fr(nMonde)} dans le monde"` : ''}>${vu}${fr(n)}</span>`;
   };
   const chevron = ouvert => `<span class="arb-chev${ouvert ? ' ouvert' : ''}" aria-hidden="true">›</span>`;
   // La phrase prend autant de lignes de l'arbre que son texte en demande : à hauteur fixe, une
@@ -21637,7 +21658,7 @@ function renderArbre(garde){
       <span><svg width="38" height="18" aria-hidden="true"><path class="arb-l2 np" d="M2,9 H36"/></svg> famille dont l’étude ne donne pas la place</span>
       <span><svg width="18" height="18" aria-hidden="true"><circle class="arb-pt adn" cx="9" cy="9" r="6"/></svg> groupe connu seulement par l’ADN, sans trait visible commun</span>
       ${pres ? `<span><svg width="38" height="18" aria-hidden="true"><path class="arb-l absent" d="M2,9 H36"/></svg> pâle : aucune espèce dans le pays choisi</span>` : ''}
-      <span>Touche un ordre, une famille ou un genre pour faire pousser l’arbre.</span>
+      <span>Touche un ordre, une famille ou un genre pour faire pousser l’arbre. ${tel ? 'Pince à deux doigts pour zoomer.' : 'Ctrl + molette pour zoomer.'}</span>
     </div>
     <div class="arb-clado" style="height:${H}px;width:${larg + 16}px">
       <svg width="${larg + 16}" height="${H}" viewBox="0 0 ${larg + 16} ${H}">${chemins.join('')}${zones.join('')}${points.join('')}</svg>
@@ -21648,7 +21669,32 @@ function renderArbre(garde){
       Photos : celles des fiches espèces (iNaturalist, Wikimédia Commons) ; en attendant la photo, silhouettes PhyloPic, domaine public sauf ${credits}.</p>`;
   box.scrollLeft = scrollX;
   const clado = box.querySelector('.arb-clado');
+  if(_arbreZoom !== 1) clado.style.zoom = _arbreZoom;
   _arbrePhotos(box);
+  // Ctrl + molette (et le pincement d'un pavé tactile, que le navigateur envoie ainsi) : zoom de l'arbre
+  // seul. Un écouteur posé sur un élément n'est pas passif : preventDefault() retient le zoom du navigateur.
+  box.onwheel = e => {
+    if(!e.ctrlKey) return;
+    e.preventDefault();
+    _arbreZoomer(box, _arbreZoom * Math.exp(-e.deltaY * 0.002), e.clientX, e.clientY);
+  };
+  // Pincer à deux doigts : touchmove non passif, sinon le navigateur zoome la page. Un seul doigt défile
+  // comme avant. Posé une fois : box survit aux redessins, seul son contenu change.
+  if(!box.dataset.pince){
+    box.dataset.pince = '1';
+    let d0 = 0, z0 = 1;
+    const ecart = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+    box.addEventListener('touchstart', e => { if(e.touches.length === 2){ d0 = ecart(e.touches); z0 = _arbreZoom; } }, { passive: true });
+    box.addEventListener('touchmove', e => {
+      if(e.touches.length !== 2 || !d0) return;
+      e.preventDefault();
+      const t = e.touches;
+      _arbreZoomer(box, z0 * ecart(t) / d0, (t[0].clientX + t[1].clientX) / 2, (t[0].clientY + t[1].clientY) / 2);
+    }, { passive: false });
+    box.addEventListener('touchend', e => { if(e.touches.length < 2) d0 = 0; }, { passive: true });
+    // Safari (iPhone) zoome la page sur ses propres événements de geste
+    box.addEventListener('gesturestart', e => e.preventDefault());
+  }
   // Après un dépliage : l'étiquette touchée reste à la même hauteur à l'écran, et la page glisse
   // vers la droite pour montrer ce qui vient de pousser.
   if(garde){

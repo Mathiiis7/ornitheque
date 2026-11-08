@@ -1,6 +1,10 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1052 / app.js?v=624 (et styles.css?v=624). Prochaine : v1053 / 625.
+Dernière version : v1053 / app.js?v=625 (et styles.css?v=625). Prochaine : v1054 / 626.
+
+- **v1053 (08/11, conversation de l'arbre)** : « 0 / N » quand on n'a vu aucune espèce d'un groupe (pas pour qui n'a
+  pas de liste) ; familles à 330 px et genres à 280 pour que ce nombre tienne. Zoom de l'arbre seul (`_arbreZoom`,
+  CSS zoom sur `.arb-clado`, 0,4 à 2) : Ctrl + molette, pincer à deux doigts ; le point visé reste sous le curseur.
 (v1051 = menu sans émojis, conversation voisine.)
 
 - **v1052 (08/11, conversation de l'arbre)** : avec un pays choisi, chaque case de l'arbre compte les espèces de
