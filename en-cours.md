@@ -1,13 +1,12 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1032 / app.js?v=604 (et styles.css?v=604). Prochaine : v1033 / 605.
+Dernière version : v1034 / app.js?v=606 (et styles.css?v=606). Prochaine : v1035 / 607.
 
-## PROCHAIN CHANTIER (demandé le 08/11) : la fiche espèce au téléphone
-Mathis : « pas totalement adaptée au téléphone, et il manque des fonctions ». Choix : **constat d'abord**. Ouvrir une
-fiche (démo locale, 390 px, `isMobile:true`) et la même à l'ordinateur (1440), onglet par onglet, captures dans
-`notes-privees/chantier-telephone/fiche/` ; lister ce qui est coupé, mal placé, trop petit, et SURTOUT les fonctions
-présentes à l'ordinateur et absentes ou inatteignables au téléphone (comparer les boutons visibles des deux). Lui
-donner la liste courte à trier, ne rien corriger avant son tri.
+- **Fiche espèce au téléphone (08/11, v1034)** : constat dans `notes-privees/chantier-telephone/fiche/CONSTAT.md`
+  (mêmes commandes qu'à l'ordinateur ; manquaient les explications au seul survol). Corrigé, choix de Mathis :
+  explications au toucher DANS LA FICHE (pointerup dans `_initInfobulle`, `parDoigt` ignore le faux survol qui suit),
+  ligne lieu · durée · auteur des Sons entière. REFUSÉ par Mathis : agrandir les petits boutons (Détails du calcul,
+  Animation, zoom, Voir en grand, liens xeno-canto), ne pas reproposer. v1033 : trophée seul qui glissait de côté.
 
 - **v1031-v1032 (08/11)** : croix des trophées hors écran sur iPhone (fenêtre en 90vh -> svh, au-dessus de la barre
   d'onglets) ; en-tête des Dernières coches du profil posé sur une ligne (sticky + top:53px dans un cadre
