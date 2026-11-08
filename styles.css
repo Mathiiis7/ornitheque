@@ -2107,6 +2107,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      configurations tombent alors au meme pixel. */
   .species-modal .sm-oq-entete { display:flex; align-items:center; gap:8px; margin-bottom:8px;
     min-height:23px; }
+  /* Le lien vers « Vu récemment » de la Carte, au bout de l'en-tête, en lien d'accent comme ceux de la Carte. */
+  .species-modal .sm-oq-recent { margin-left:auto; padding:0 2px; border:0; background:none; color:var(--accent-ink);
+    font:600 14px/23px var(--sans); cursor:pointer; white-space:nowrap; }
+  .species-modal .sm-oq-recent:hover { text-decoration:underline; }
   /* Le chiffre de l'entete : meme graisse que le nom de zone mais en encre normale, pour
      qu'il se lise comme sa valeur et non comme un second titre. */
   /* 13 px comme le nom en capitales qu'il suit : le banc entete veut le nom et le chiffre du meme
@@ -2162,24 +2166,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .species-modal .sm-audio-lbl { font-size:11.5px; font-weight:700; color:var(--ink-2); text-transform:uppercase; letter-spacing:.03em; }
   .species-modal .sm-audio { width:100%; }
   .species-modal .sm-audio-hint { font-size:12px; color:var(--ink-3); }
-  .species-modal .sm-obs h3 { font-size:13px; color:var(--ink-2); text-transform:uppercase; letter-spacing:.4px; margin:14px 0 6px; }
-  .species-modal .sm-map-wrap { margin-top:14px; }
   /* Range map : filtre grayscale sur les tuiles OSM pour ne pas voler la vedette a la heatmap */
   .sm-range-map .leaflet-tile-pane { filter: grayscale(1) contrast(0.85) brightness(1.05); }
-  .species-modal .sm-map-header { display:flex; align-items:center; justify-content:space-between; gap:8px; margin:0 0 6px; flex-wrap:wrap; }
-  .species-modal .sm-map-title { font-size:13px; color:var(--ink-2); text-transform:uppercase; letter-spacing:.4px; font-weight:700; }
-  .species-modal .sm-map-seg { font-size:14px; }
-  .species-modal .sm-map-seg button { padding:4px 10px; font-size:14px; }
-  .species-modal .sm-map { width:100%; height:340px; border-radius:10px; overflow:hidden; border:1px solid var(--line); background:var(--surface-2); }
-  .species-modal .sm-map-hint { font-size:14px; color:var(--ink-3); margin-top:4px; }
-  .species-modal .sm-map-gbif-ctrl { display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-size:12px; color:var(--ink-2); margin:0 0 6px; }
-  .species-modal .sm-map-gbif-ctrl[hidden] { display:none; }
-  .species-modal .sm-map-gbif-ctrl label { display:inline-flex; align-items:center; gap:4px; }
-  .species-modal .sm-map-gbif-ctrl label[hidden] { display:none; }
-  .species-modal .sm-map-gbif-ctrl select, .species-modal .sm-map-gbif-ctrl input { font-size:12px; padding:2px 6px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink-2); }
-  .species-modal .sm-map-gbif-ctrl input[type=number] { width:64px; }
-  .species-modal .sm-obs ul { margin:0; padding-left:18px; font-size:14px; color:var(--ink-2); line-height:1.55; }
-  .species-modal .sm-obs .help { margin:6px 0; font-size:13px; color:var(--ink-3); }
   .species-modal .sm-links { display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; }
   .species-modal .sm-links a { padding:6px 12px; background:var(--surface-2); border:1px solid var(--line); border-radius:9px; color:var(--ink); font-size:14px; text-decoration:none; }
   .species-modal .sm-links a:hover { background:color-mix(in srgb,var(--accent) 12%,var(--surface-2)); border-color:var(--accent); }
@@ -4544,7 +4532,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     /* « Qui a vu quoi » : X / P / N à la taille du tableau juste dessous, 16 px d'écran et lettre de 9,5 px
        (Mathis, 2026-11-08), boîte doublée réduite de moitié comme les autres. Zone de toucher gardée à 37 px. */
     #tierChips .rar-chip[data-cat], #pkdxTierChips .rar-chip[data-cat], #mapEbRarityChips .rar-chip[data-cat], #ctLigRarChips .rar-chip[data-cat] {
-      width:32px; min-width:32px; height:32px; min-height:32px; margin:-8px; font-size:19px; padding:1.28px 0 0; }
+      width:32px; min-width:32px; height:32px; min-height:32px; margin:-8px; font-size:19px; padding:0 0.92px 0.86px 0; }
     /* Fiche espèce : flèches et croix à 44 px (52, pensés pour le zoom 0,85 de l'ordinateur, en faisaient 52
        ici), alignées sur la même ligne, 6 px entre elles ; les flèches tombaient 6 px plus bas que la croix
        (Mathis, 2026-11-08 : « grosses et mal alignées »). Le nom s'arrête avant elles. */

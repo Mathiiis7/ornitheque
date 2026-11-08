@@ -133,11 +133,11 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=609">
+<link rel="modulepreload" href="app.js?v=610">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). Il porte le MEME ?v= qu'app.js :
      sans numero, GitHub Pages le laisse 10 min en cache (max-age=600) et un telephone a garde l'ancien CSS
      avec le nouvel app.js - panneau de la Carte invisible (Mathis sur iPhone, 2026-11-07). -->
-<link rel="preload" href="styles.css?v=609" as="style">
+<link rel="preload" href="styles.css?v=610" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
 <link rel="preconnect" href="https://unpkg.com" crossorigin>
 <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
@@ -156,7 +156,7 @@
 <!-- Les grappes de la Carte (choix de Mathis, 2026-10-23) : 34 Ko, après Leaflet dont elles ont besoin.
      Leur petite feuille de style (les animations) est réécrite dans styles.css, sans requête de plus. -->
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" integrity="sha256-Hk4dIpcqOSb0hZjgyvFOP+cEmDXUKKNE/tT542ZbNQg=" crossorigin="" defer></script>
-<link rel="stylesheet" href="styles.css?v=609">
+<link rel="stylesheet" href="styles.css?v=610">
 
 <!-- Etat d'auth : au chargement, on ne sait pas encore si l'utilisateur est connecte.
      data-auth="pending" par defaut -> affiche un splash neutre (pas l'ecran de connexion).
@@ -1519,56 +1519,9 @@ document.documentElement.setAttribute('data-theme', _theme);</script>
            rangee ne s'annonce pas. aria-selected suit la classe .on dans _smSetTab(). -->
       <nav class="sm-tabs" role="tablist" aria-label="Sections de la fiche espèce">
         <button type="button" class="sm-tab on" data-sm-tab="info" role="tab" id="smTabInfo" aria-selected="true" aria-controls="smPanelInfo">Info</button>
-        <button type="button" class="sm-tab" data-sm-tab="map" role="tab" id="smTabMap" aria-selected="false" aria-controls="smPanelMap">Carte & observations</button>
         <button type="button" class="sm-tab" data-sm-tab="sound" role="tab" id="smTabSound" aria-selected="false" aria-controls="smPanelSound">Sons</button>
       </nav>
       <div class="sm-scroll">
-        <!-- Onglet Carte -->
-        <div class="sm-panel" id="smPanelMap" data-sm-panel="map" role="tabpanel" tabindex="0" aria-labelledby="smTabMap" hidden>
-          <div class="sm-card" style="padding:12px;">
-          <div class="sm-map-wrap" id="smMapWrap" hidden style="margin:0;">
-            <div class="sm-map-header" style="margin-bottom:8px;">
-              <div class="seg sm-map-seg" id="smMapSeg">
-                <button type="button" data-map-mode="friends" class="on">Observations de la ligue</button>
-                <button type="button" data-map-mode="ebird">eBird 30 j</button>
-                <button type="button" data-map-mode="gbif">GBIF</button>
-              </div>
-              <button type="button" id="smMapCountrySel" class="cp-btn" data-cc="FR" style="margin-left:8px;" title="Changer le pays (synchronise avec la fiche entière)">
-                <span class="cp-btn-flag"></span>
-                <span class="cp-btn-label">France</span>
-                <span class="cp-btn-arrow">▾</span>
-              </button>
-              <button type="button" id="smOpenBigMap" class="btn tiny" style="margin-left:auto;" title="Ouvrir cette espèce sur la grande carte (plus de points, tous les filtres)">↗ Voir en grand</button>
-            </div>
-            <div class="sm-map-gbif-ctrl" id="smMapGbifCtrl" hidden>
-          <label id="smEbDaysLbl" hidden>Derniers <select id="smEbDays">
-            <option value="7">7 jours</option>
-            <option value="14">14 jours</option>
-            <option value="30" selected>30 jours</option>
-          </select></label>
-          <label id="smGbifMonthLbl">Mois <select id="smGbifMonth">
-            <option value="0" selected>Tous</option>
-            <option value="1">janvier</option><option value="2">février</option>
-            <option value="3">mars</option><option value="4">avril</option>
-            <option value="5">mai</option><option value="6">juin</option>
-            <option value="7">juillet</option><option value="8">août</option>
-            <option value="9">septembre</option><option value="10">octobre</option>
-            <option value="11">novembre</option><option value="12">décembre</option>
-          </select></label>
-          <label id="smGbifYearMinLbl">De <input id="smGbifYearMin" type="number" min="1970" max="2026" value="2023" step="1"></label>
-          <label id="smGbifYearMaxLbl">à <input id="smGbifYearMax" type="number" min="1970" max="2026" value="2025" step="1"></label>
-          <label>Région <select id="smGbifRegion"><option value="">toute la France</option></select></label>
-          <label id="smGbifDeptLbl" hidden>Dépt <select id="smGbifDept"><option value="">tous</option></select></label>
-        </div>
-            <div id="smMap" class="sm-map" style="min-height:340px; height:min(55vh, calc(100vh - 380px)); border-radius:10px;"></div>
-            <div class="sm-map-hint" id="smMapHint"></div>
-          </div>
-          </div>
-          <!-- Liste des amis qui ont vu cette espece, sous la carte. Clic sur un nom = pan+zoom sur son marker. -->
-          <div class="sm-card">
-            <div class="sm-obs" id="smObs"></div>
-          </div>
-        </div>
         <!-- Onglet Sons -->
         <div class="sm-panel" id="smPanelSound" data-sm-panel="sound" role="tabpanel" tabindex="0" aria-labelledby="smTabSound" hidden>
           <div class="sm-card">
@@ -1607,6 +1560,9 @@ document.documentElement.setAttribute('data-theme', _theme);</script>
               <div class="sm-oq-entete">
                 <span class="sm-oq-zone" id="smOqZone"></span>
                 <span class="sm-oq-onglets" id="smOqOnglets"></span>
+                <!-- Les observations récentes de l'espèce sur la Carte : remplace l'onglet « Carte & observations »
+                     (Mathis, 2026-11-08). -->
+                <button type="button" class="sm-oq-recent" id="smVoirRecent">Vu récemment ↗</button>
               </div>
               <div id="smRarityMap"></div>
               <div id="smExoticMap" hidden></div>
@@ -1749,5 +1705,5 @@ document.documentElement.setAttribute('data-theme', _theme);</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=609"></script>
+<script type="module" src="app.js?v=610"></script>
 <div id="demoBandeau">🎬 Démonstration <span>- ligue, membres et listes entièrement inventés. Tout reste dans ton navigateur.</span></div>

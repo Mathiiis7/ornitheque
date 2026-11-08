@@ -20,7 +20,7 @@ for (const [nom, w, h, tel] of [['ordi', 1440, 900, false], ['tel', 390, 844, tr
     document.querySelector('main, body').appendChild(a); a.click(); a.remove(); }, SCI);
   await page.waitForTimeout(3000);
   resultat[nom] = {};
-  for (const onglet of ['info', 'map', 'sound']) {
+  for (const onglet of ['info', 'sound']) {
     await page.evaluate(o => document.querySelector('.sm-tab[data-sm-tab="' + o + '"]').click(), onglet);
     await page.waitForTimeout(onglet === 'sound' ? 4000 : 2500);
     const r = await page.evaluate(() => {
@@ -54,7 +54,7 @@ for (const [nom, w, h, tel] of [['ordi', 1440, 900, false], ['tel', 390, 844, tr
 await navigateur.close();
 fs.writeFileSync(dossier + 'mesures.json', JSON.stringify(resultat, null, 1));
 // Ce qui est à l'ordinateur et pas au téléphone, onglet par onglet.
-for (const o of ['info', 'map', 'sound']) {
+for (const o of ['info', 'sound']) {
   const ordi = new Set(resultat.ordi[o].commandes), tel = new Set(resultat.tel[o].commandes);
   console.log('== ' + o + ' : ' + ordi.size + ' commandes ordi, ' + tel.size + ' tel');
   console.log('  seulement ordi :', [...ordi].filter(x => !tel.has(x)).join(' | ') || '-');

@@ -14233,8 +14233,6 @@ $('#manualAddBtn')?.addEventListener('click', async ()=>{
     if(depuisFiche){
       msg.textContent = '';
       $('#ajoutDialog').close();
-      _renderSpeciesObs(key);
-      _renderSpeciesMap(key);
       _majBoutonVu(key);
     }
     _debloque([key], { depuisFiche });
@@ -18656,23 +18654,13 @@ function _renderSpeciesRarityCard(key){
   });
   _renderSpeciesFreqChart(k, initCountry);
   const sel = $('#smRarityCountrySel');
-  // #smMapCountrySel est un noeud statique d'index.html (partage entre toutes les fiches).
-  // On le clone-and-replace pour dropper les handlers des ouvertures precedentes,
-  // sinon chaque clic empile N pickers avec N closures stales sur d'anciennes especes.
-  let mapSel = $('#smMapCountrySel');
-  if(mapSel && mapSel.parentNode){
-    const cloned = mapSel.cloneNode(true);
-    mapSel.parentNode.replaceChild(cloned, mapSel);
-    mapSel = cloned;
-  }
-  // Fonction commune : appliquer un changement de pays (source de verite = smRarityCountrySel).
-  // Utilisee par les 2 pickers (Rarete dans l'onglet Info + Carte & amis) pour rester sync.
+  // Appliquer un changement de pays (source de verite = smRarityCountrySel). Le second selecteur, celui de
+  // l'onglet « Carte & observations », est parti avec l'onglet (Mathis, 2026-11-08).
   const applyCountryChange = (chosen) => {
     if(!chosen) return;
     _speciesCountry = chosen;
     try{ localStorage.setItem('mb-species-country', chosen); }catch(_){}
     _syncCountryButton(sel, chosen);
-    if(mapSel) _syncCountryButton(mapSel, chosen);
     renderLine(chosen);
     updateRegVisibility(chosen);
     if(_speciesRegion){
@@ -18687,7 +18675,6 @@ function _renderSpeciesRarityCard(key){
       if(lbl) lbl.textContent = getTriggerLabel(chosen);
       _renderSpeciesFreqChart(k, chosen);
     });
-    try{ _renderSpeciesMap(k); }catch(_){}
   };
   // Selectionner une zone : depuis le selecteur, ou depuis la carte via _appliquerZoneFiche.
   const appliquer = (code) => {
@@ -18722,10 +18709,7 @@ function _renderSpeciesRarityCard(key){
     });
     if(res && res.type === 'zone') appliquer(res.code);
   };
-  // Sync initial de #smMapCountrySel
-  if(mapSel) _syncCountryButton(mapSel, initCountry);
   if(sel) sel.addEventListener('click', () => ouvrirGeo('pays'));
-  if(mapSel) mapSel.addEventListener('click', () => ouvrirGeo('pays'));
   if(regPick){
     // Le bouton de zone ouvre le meme modal que le bouton pays, sur son onglet zones.
     // Il ouvrait avant un panneau deroulant ancre sous lui, qu il fallait repositionner a
@@ -19491,8 +19475,9 @@ async function _extractDominantColor(url, existingImg){
 }
 // Bascule d'onglet du drawer fiche espece. Persiste le choix en localStorage.
 function _smSetTab(tab){
-  const validTabs = ['map','sound','info'];
-  if(!validTabs.includes(tab)) tab = 'map';
+  // Plus d'onglet « Carte & observations » (Mathis, 2026-11-08) : un ancien 'map' mémorisé ramène à Info.
+  const validTabs = ['sound','info'];
+  if(!validTabs.includes(tab)) tab = 'info';
   // aria-selected suit la classe .on : sans lui, les trois onglets s'annoncent identiques et
   // rien ne dit lequel est ouvert.
   document.querySelectorAll('.sm-tab').forEach(b => {
@@ -19502,18 +19487,15 @@ function _smSetTab(tab){
   });
   document.querySelectorAll('.sm-panel').forEach(p => p.hidden = (p.dataset.smPanel !== tab));
   try{ localStorage.setItem('mb-sm-tab', tab); }catch(_){}
-  // Refresh la carte quand on retourne sur l'onglet Carte (Leaflet a besoin de recalculer
-  // sa taille apres reveal, sinon carte grise 50% visible).
-  if(tab === 'map' && _smMapInstance){ setTimeout(() => { try{ _smMapInstance.invalidateSize(); }catch(_){} }, 60); }
 }
 document.addEventListener('click', e => {
   const b = e.target.closest('.sm-tab[data-sm-tab]'); if(!b) return;
   _smSetTab(b.dataset.smTab);
 });
 // Swipe gauche/droite sur le body du modal pour naviguer entre onglets (mobile).
-// Ordre des tabs : info -> map -> sound.
+// Ordre des tabs : info -> sound.
 (function(){
-  const SM_TAB_ORDER = ['info', 'map', 'sound'];
+  const SM_TAB_ORDER = ['info', 'sound'];
   let touchStartX = 0, touchStartY = 0, touchStartT = 0;
   const isModalOpen = () => { const m = document.getElementById('speciesModal'); return m && !m.hidden; };
   document.addEventListener('touchstart', e => {
@@ -19543,34 +19525,6 @@ document.addEventListener('click', e => {
     }
   }, { passive: true });
 })();
-// Clic sur un ami dans la liste sous la carte : bascule sur mode "Mes amis" si necessaire,
-// pan+zoom sur ses marker(s), et ouvre le popup s'il n'y en a qu'un.
-document.addEventListener('click', e => {
-  const li = e.target.closest('[data-sm-friend-uid]'); if(!li) return;
-  const uid = li.dataset.smFriendUid;
-  if(!_smMapInstance || !_smMarkers) return;
-  if(_smMapMode !== 'friends'){
-    _smMapMode = 'friends';
-    document.querySelectorAll('#smMapSeg button').forEach(b => b.classList.toggle('on', b.dataset.mapMode === 'friends'));
-    if(_smCurrentKey){ _renderSpeciesMap(_smCurrentKey); }
-    // On attend la fin du render pour pan, sinon les markers n'existent pas encore.
-    setTimeout(() => _smPanToFriend(uid), 350);
-    return;
-  }
-  _smPanToFriend(uid);
-});
-function _smPanToFriend(uid){
-  if(!_smMapInstance || !Array.isArray(_smMarkers)) return;
-  const mine = _smMarkers.filter(m => m._uid === uid);
-  if(!mine.length) return;
-  const latlngs = mine.map(m => m.getLatLng());
-  if(mine.length === 1){
-    _smMapInstance.setView(latlngs[0], 13, { animate:true });
-    setTimeout(() => mine[0].openPopup?.(), 250);
-  } else {
-    _smMapInstance.fitBounds(L.latLngBounds(latlngs), { padding:[40,40], maxZoom:13 });
-  }
-}
 // Pool de navigation entre fiches especes : liste ordonnee des sci names.
 // Mise a jour au clic sur une espece dans Birdydex/Classement/Carte. Les boutons
 // ‹ › naviguent dans ce pool. Fallback : pool = juste l'espece courante.
@@ -19664,6 +19618,9 @@ function openSpeciesModal(sci){
   if(prev){ prev.disabled = !canNav || _speciesNavIdx <= 0; prev.style.opacity = prev.disabled ? '.35' : '1'; }
   if(next){ next.disabled = !canNav || _speciesNavIdx >= _speciesNavPool.length - 1; next.style.opacity = next.disabled ? '.35' : '1'; }
   const key = sci.toLowerCase();
+  // L'espece ouverte : le lien « Vu récemment ↗ » et le rechargement de la carte de rarete s'y fient.
+  // Elle etait posee par la mini-carte de l'onglet « Carte & observations », partie avec lui (2026-11-08).
+  _smCurrentKey = key;
   const modal = $('#speciesModal'); if(!modal) return;
   const nm = FR_NAMES[key] || sci;
   $('#smTitle').textContent = nm;
@@ -19781,9 +19738,6 @@ function _openSpeciesModalSuite(sci, key, modal, _wasOpen, _savedScroll){
     else { hint.hidden = true; }
     // Mutex audio wrapper-level (voir IIFE en bas) : couvre auto les nouveaux <audio>.
   });
-  _renderSpeciesObs(key);
-  // Mini carte des observations du groupe pour cette espece (marqueurs par membre avec coords).
-  _renderSpeciesMap(key);
   _majBoutonVu(key);
   _openSpeciesModalLiens(sci, key, modal, _wasOpen, _savedScroll);
 }
@@ -19802,30 +19756,6 @@ function _majBoutonVu(key){
   const cle = _cleAjoutable(key);
   b.hidden = !me || !cle || _mineHasStrict(new Set(me.species.keys()), key);
   b.dataset.sci = cle || '';
-}
-// Observations dans la ligue. A part pour etre redessinee apres un ajout depuis la fiche.
-function _renderSpeciesObs(key){
-  const obsBox = $('#smObs'); if(!obsBox) return;
-  const items = [];
-  for(const p of realPeople){
-    const v = p.species && p.species.get(key);
-    if(v) items.push({ uid:p.id, name:p.name, date:v.date||'', loc:v.loc||'', country:v.country||'FR', isMe:p.isMe, obs: v.obs||1, hasCoords: typeof v.lat === 'number' });
-  }
-  if(!items.length){
-    obsBox.innerHTML = '<div class="sm-card-title">Amis</div><p class="help" style="margin:0;">Personne ne l\'a encore observée dans la ligue.</p>';
-  } else {
-    items.sort((a,b)=> (a.date||'').localeCompare(b.date||''));
-    obsBox.innerHTML = '<div class="sm-card-title">Amis qui l\'ont observée</div><ul style="list-style:none; padding:0; margin:0;">' + items.map(x => {
-      const d = x.date ? esc(x.date) : '<span class="help">date inconnue</span>';
-      const loc = x.loc ? ' · '+esc(x.loc) : '';
-      const flag = x.country && x.country!=='FR' ? ' '+(flagImg(x.country)||'') : '';
-      const multi = x.obs > 1 ? ` <span class="chip" style="background:var(--surface-2); font-size:14px; padding:1px 6px;">×${x.obs}</span>` : '';
-      const clickHint = x.hasCoords ? ' style="cursor:pointer; padding:6px 8px; border-radius:6px; transition:background .1s;" onmouseover="this.style.background=\'var(--surface-2)\'" onmouseout="this.style.background=\'\'"' : ' style="padding:6px 8px;"';
-      const dataUid = x.hasCoords ? ` data-sm-friend-uid="${esc(x.uid)}"` : '';
-      const pin = x.hasCoords ? '📍 ' : '';
-      return `<li${clickHint}${dataUid}>${pin}<b>${esc(x.name)}${x.isMe?' (toi)':''}</b>${flag}${multi} · ${d}${loc}</li>`;
-    }).join('') + '</ul>';
-  }
 }
 function _openSpeciesModalLiens(sci, key, modal, _wasOpen, _savedScroll){
   // Liens externes
@@ -19856,7 +19786,7 @@ function _openSpeciesModalLiens(sci, key, modal, _wasOpen, _savedScroll){
       // liste deroulante des regions. Sans ce dernier cas, arriver en butee de la liste
       // faisait defiler la fiche derriere le panneau : le handler du panneau ne bloquait
       // la propagation que tant qu'il restait du scroll disponible.
-      if(e.target.closest('.sm-map, audio, .sm-panel[data-sm-panel=map]')) return;
+      if(e.target.closest('audio')) return;
       e.preventDefault();
       // Facteur 1.5 : compense l'absence d'acceleration/momentum sur scrollTop manuel,
       // sans donner l'impression de scroll trop rapide (on etait a 2 avant).
@@ -19872,11 +19802,8 @@ if(typeof L !== 'undefined'){
   const finZoom = L.Map.prototype._onZoomTransitionEnd;
   L.Map.prototype._onZoomTransitionEnd = function(){ if(this._mapPane) finZoom.call(this); };
 }
-let _smMapInstance = null, _smMapLayer = null;
-let _smCurrentKey = '', _smMapMode = 'friends', _smMarkers = [];
-const _SM_MONTH_NAMES = ["toute l'année",'janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+let _smCurrentKey = '';
 const _gbifKeyBySci = new Map();
-let _smGbifSelectsInit = false;
 // Restaure le cache GBIF taxonKey depuis localStorage (persistant entre sessions).
 // Sans persistance, chaque nouvelle session paierait ~500 lookups /species/match a l'ouverture
 // du mode missing GBIF (~1 min de resolution la 1re fois).
@@ -19897,138 +19824,6 @@ function _persistGbifKeyCache(){
       localStorage.setItem('gbifKeyBySci-v2', JSON.stringify(obj));
     }catch(_){}
   }, 500);
-}
-// Peuple les dropdowns Region et Departement une seule fois.
-// Applique la visibilite des filtres selon le mode courant + presence d'une region.
-// Appele depuis _renderSpeciesMap ET le click handler du selecteur mode (pour repondre
-// instantanement sans attendre la fin du fetch).
-function _smApplyFilterVisibility(){
-  const gbifCtrl = document.getElementById('smMapGbifCtrl');
-  if(gbifCtrl) gbifCtrl.hidden = (_smMapMode === 'friends');
-  const isEb = _smMapMode === 'ebird', isGbif = _smMapMode === 'gbif';
-  const setVis = (id, show) => { const el = document.getElementById(id); if(el) el.hidden = !show; };
-  setVis('smEbDaysLbl', isEb);
-  setVis('smGbifMonthLbl', isGbif);
-  setVis('smGbifYearMinLbl', isGbif);
-  setVis('smGbifYearMaxLbl', isGbif);
-  // Dept visible uniquement si une region est selectionnee ET pays = FR (autres pays
-  // n'ont pas la granularite dept). Evite d'avoir un dropdown vide sur ES/IT/etc.
-  const region = document.getElementById('smGbifRegion')?.value || '';
-  const cc = document.getElementById('smRarityCountrySel')?.dataset?.cc || _globalCountry || 'FR';
-  setVis('smGbifDeptLbl', (isEb || isGbif) && !!region && cc === 'FR');
-}
-// Fait country-aware : reinitialise le dropdown region selon le pays selectionne dans
-// la fiche (via #smRarityCountrySel.dataset.cc). Depts uniquement pour la France.
-let _smLastGbifCountry = '';
-function _smInitGbifSelects(cc){
-  cc = cc || 'FR';
-  const regSel = $('#smGbifRegion');
-  // Re-init si pays change ou pas encore init
-  if(regSel && (!_smGbifSelectsInit || _smLastGbifCountry !== cc)){
-    const prev = regSel.value;
-    regSel.innerHTML = `<option value="">tout le pays</option>`;
-    const regList = (typeof REGIONS_BY_COUNTRY === 'object' && REGIONS_BY_COUNTRY[cc]) || [];
-    for(const r of regList){
-      const opt = document.createElement('option');
-      opt.value = r.code; opt.textContent = r.name;
-      regSel.appendChild(opt);
-    }
-    // Garde ancienne selection si encore valide
-    if(prev && regList.some(r => r.code === prev)) regSel.value = prev; else regSel.value = '';
-  }
-  // Depts : uniquement pour FR (seul pays avec FR_DEPTS)
-  const deptLbl = $('#smGbifDeptLbl');
-  if(deptLbl) deptLbl.hidden = (cc !== 'FR');
-  if(cc === 'FR') _smPopulateGbifDepts('');
-  else { const sel = $('#smGbifDept'); if(sel) sel.innerHTML = '<option value="">tous</option>'; }
-  _smLastGbifCountry = cc;
-  _smGbifSelectsInit = true;
-}
-// Peuple le dropdown Departement, filtre par region (vide = tous les depts). FR only.
-function _smPopulateGbifDepts(regionCode){
-  const sel = $('#smGbifDept'); if(!sel) return;
-  const prev = sel.value;
-  sel.innerHTML = '<option value="">tous</option>';
-  const list = regionCode ? FR_DEPTS.filter(d => d[2] === regionCode) : FR_DEPTS;
-  for(const d of list){
-    const opt = document.createElement('option');
-    opt.value = d[0]; opt.textContent = `${d[0]} - ${d[1]}`;
-    sel.appendChild(opt);
-  }
-  // Si l'ancien dept selectionne est encore dans la liste, on le garde. Sinon reset.
-  if(prev && list.some(d => d[0] === prev)) sel.value = prev; else sel.value = '';
-}
-const _SM_SERIES_COLORS = ['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e67e22','#34495e','#16a085','#c0392b'];
-function _smSetHint(txt){ const el=$('#smMapHint'); if(el) el.textContent = txt||''; }
-// Ré-etale les marqueurs qui se CHEVAUCHENT visuellement au zoom courant, en PIXELS.
-// Deux points sont "trop proches" si leurs cercles se touchent (distance < OVERLAP_PX).
-// Clustering transitif (BFS) pour que 3 points a la file se retrouvent tous dans le meme cluster.
-function _smSpreadMarkers(){
-  if(!_smMapInstance || !_smMarkers.length) return;
-  const OVERLAP_PX = 12;   // seuil de detection resserre : seuls les points vraiment colles clusterisent
-  // Reset a la position d'origine + calcul des pixels courants
-  const pts = _smMarkers.map(mk => {
-    mk.setLatLng([mk._baseLat, mk._baseLon]);
-    const p = _smMapInstance.latLngToLayerPoint([mk._baseLat, mk._baseLon]);
-    return { mk, x:p.x, y:p.y };
-  });
-  const OV2 = OVERLAP_PX * OVERLAP_PX;
-  const assigned = new Array(pts.length).fill(-1);
-  const clusters = [];
-  for(let i=0;i<pts.length;i++){
-    if(assigned[i] !== -1) continue;
-    const idxs = [i]; assigned[i] = clusters.length;
-    let head = 0;
-    while(head < idxs.length){
-      const cur = idxs[head++];
-      for(let j=0;j<pts.length;j++){
-        if(assigned[j] !== -1) continue;
-        const dx = pts[j].x - pts[cur].x, dy = pts[j].y - pts[cur].y;
-        if(dx*dx + dy*dy < OV2){ assigned[j] = clusters.length; idxs.push(j); }
-      }
-    }
-    clusters.push(idxs.map(k => pts[k]));
-  }
-  // Spirale en pixels pour chaque cluster > 1 (Fibonacci "sunflower" a partir du centroide)
-  const GOLDEN = Math.PI * (3 - Math.sqrt(5));
-  const R_PER = 7;
-  for(const cluster of clusters){
-    if(cluster.length <= 1 || cluster.length > SPREAD_MAX) continue;
-    let cx=0, cy=0; for(const p of cluster){ cx += p.x; cy += p.y; }
-    cx /= cluster.length; cy /= cluster.length;
-    const maxR = R_PER * Math.sqrt(cluster.length);
-    for(let i=0;i<cluster.length;i++){
-      const r = maxR * Math.sqrt((i+0.5)/cluster.length);
-      const th = i * GOLDEN;
-      const p = L.point(cx + r*Math.cos(th), cy + r*Math.sin(th));
-      const ll = _smMapInstance.layerPointToLatLng(p);
-      cluster[i].mk.setLatLng([ll.lat, ll.lng]);
-    }
-  }
-}
-// Recupere les obs eBird 30j pour cette espece. Recupere d'abord la taxonomie eBird si elle
-// n'est pas encore chargee (sinon _sciToCode retourne null). Retourne {points, error} pour
-// permettre a l'UI de differencier "pas de code trouve" vs "pas de rec ent" vs erreur.
-async function _smFetchEbirdRecent(sci, days, zone){
-  if(!_taxMap){ try{ await _loadTaxonomy(); }catch(_){} }
-  const code = _sciToCode(sci);
-  if(!code){ return { points:[], error:'taxonomy' }; }
-  const d = days || 30;
-  const z = zone || 'FR';
-  try{
-    // La fiche propose les groupes de zones des 8 pays regroupés : eBird ne les connaît pas, on lit
-    // chacune de leurs zones (la table est lue ici si la Carte ne l'a pas encore demandée).
-    await _ctChargeRegroupees();
-    const lus = await _ctParLots(_ctZonesEbird(z), zz => _ebFetch(`https://api.ebird.org/v2/data/obs/${zz}/recent/${code}?back=${d}&maxResults=10000&locale=fr`));
-    if(!lus.some(Array.isArray)){ return { points:[], error:'network' }; }
-    const data = lus.flatMap(r => Array.isArray(r) ? r : []);
-    const points = data.filter(o => typeof o.lat==='number' && typeof o.lng==='number').map(o => ({
-      lat:o.lat, lon:o.lng, name:o.locName||'lieu', si:0, loc:o.locName||'', date:(o.obsDt||'').slice(0,10),
-      count: (typeof o.howMany==='number'&&o.howMany>0)?o.howMany:null,
-      isEbird:true
-    }));
-    return { points, error:null };
-  }catch(_){ return { points:[], error:'network' }; }
 }
 // Resolution du nom scientifique vers un taxonKey GBIF (cache en memoire + localStorage).
 // Alias eBird->GBIF pour especes ou les 2 taxonomies divergent (GBIF garde parfois un
@@ -20113,382 +19908,32 @@ function _bboxOfRegion(regionCode){
   }
   return [latMin, latMax, lonMin, lonMax];
 }
-// Detecte les "localities" bidons (codes postaux, coordonnees, chaines vides) qu'on
-// prefere ignorer au profit de gadm.level3 (nom de commune propre, present a 100%).
-// Exemples rejetes : "24350, Grand-Brassac FR-Aquitaine 45.29139, 0.52765" (coordonnees),
-// "" (vide), "34567" (postal seul), "N/A" / "inconnu".
-function _gbifLocalityLooksReal(s){
-  if(!s) return false;
-  const t = s.trim();
-  if(t.length < 3) return false;
-  // Coordonnees embarquees (lat/lon en fin de chaine)
-  if(/-?\d+\.\d+\s*,\s*-?\d+\.\d+/.test(t)) return false;
-  // Postal seul, ou "n/a"
-  if(/^\d{4,5}$/.test(t)) return false;
-  if(/^(n\/a|na|inconnu|unknown)$/i.test(t)) return false;
-  return true;
-}
-// Recupere les obs GBIF pour cette espece, sur un mois donne, sur une plage d'annees.
-// bbox optionnelle = [latMin, latMax, lonMin, lonMax] pour filtrer geographiquement (region ou dept).
-// Limite a 300 points (une seule page) : GBIF renvoie count total en meta, utilise pour afficher un warning.
-// Extrait des champs riches (heure, observateur, comportement, lien source) pour les popups.
-// NB : on n'exclut PAS les records eBird EOD ici (contrairement a une version anterieure). Le mode
-// "eBird 30 j" couvre les 30 derniers jours en live ; le mode GBIF regarde l'historique
-// (annees precises), et les records eBird historiques sont de la donnee legitime. Les exclure
-// eliminait ~90% des points visibles sur les periodes recentes.
-// Cas special : especes splittees ou GBIF backbone n'a pas suivi eBird. On query PLUSIEURS
-// taxonKeys en meme temps (GBIF supporte taxonKey multiples). Ex : Cecropis rufula (eBird)
-// est classee au niveau genre Cecropis (6085729) pour les obs iNaturalist recentes 2023+,
-// et au niveau espece Cecropis daurica (9717283) pour les obs plus anciennes / eBird.
-const GBIF_EXTRA_TAXONKEYS = {
-  'cecropis rufula': [6085729],   // genre Cecropis (attrape les obs iNat 2023+ mal typees)
-};
-async function _smFetchGbif(sci, month, yearMin, yearMax, bbox, cc, onProgress){
-  const key = await _sciToGbifKey(sci);
-  if(!key) return { points:[], total:0, error:'taxonomy' };
-  const yearParam = (yearMin===yearMax) ? String(yearMin) : `${yearMin},${yearMax}`;
-  // month=0 = toute l'annee (aucun filtre GBIF month).
-  const monthParam = month > 0 ? `&month=${month}` : '';
-  // Multi-taxonKey si l'espece a des cles secondaires connues (splits taxonomiques).
-  const extraKeys = GBIF_EXTRA_TAXONKEYS[(sci||'').toLowerCase()] || [];
-  const keysParam = [key, ...extraKeys].map(k => `taxonKey=${k}`).join('&');
-  const bboxParam = bbox ? `&decimalLatitude=${bbox[0]},${bbox[1]}&decimalLongitude=${bbox[2]},${bbox[3]}` : '';
-  // Country param dynamique selon pays selectionne (FR, ES, IT, GB, PT, ME, ...).
-  const countryParam = cc ? `&country=${encodeURIComponent(cc)}` : '';
-  const mkUrl = (page) => `https://api.gbif.org/v1/occurrence/search?${keysParam}${countryParam}&hasCoordinate=true&year=${encodeURIComponent(yearParam)}${monthParam}${bboxParam}&limit=300&offset=${page*300}`;
-  // Pagination parallele : 1er appel donne count, on lance les pages restantes en parallele.
-  // Cap MAX_PAGES = 10 (3000 obs max). safeFetch tolere echec reseau isole.
-  const MAX_PAGES = 10;
-  const safeFetch = async (url) => {
-    for(let attempt = 0; attempt < 2; attempt++){
-      try{ const r = await fetch(url); if(r.ok) return await r.json(); }catch(_){}
-    }
-    return { results:[], _err:true };
-  };
-  try{
-    const j0 = await safeFetch(mkUrl(0));
-    if(j0._err) throw new Error('network');
-    const totalCount = j0.count || 0;
-    let allResults = j0.results || [];
-    // Callback progress : 1er lot done
-    const nPagesTotal = Math.min(MAX_PAGES, Math.max(1, Math.ceil(totalCount / 300)));
-    let pagesDone = 1;
-    if(typeof onProgress === 'function') onProgress(pagesDone, nPagesTotal, allResults.length, totalCount);
-    if(!j0.endOfRecords && allResults.length === 300 && totalCount > 300){
-      const pages = Array.from({length: nPagesTotal - 1}, (_, i) => i + 1);
-      const POOL = 3;
-      let cursor = 0;
-      async function worker(){
-        while(cursor < pages.length){
-          const p = pages[cursor++];
-          const j = await safeFetch(mkUrl(p));
-          if(!j._err) allResults.push(...(j.results || []));
-          pagesDone++;
-          if(typeof onProgress === 'function') onProgress(pagesDone, nPagesTotal, allResults.length, totalCount);
-        }
-      }
-      await Promise.all(Array.from({length: Math.min(POOL, pages.length)}, worker));
-    }
-    const j = { count: totalCount, results: allResults };
-    const rawResults = (j.results||[]).filter(o => typeof o.decimalLatitude==='number' && typeof o.decimalLongitude==='number');
-    const points = rawResults.map(o => {
-      // Localisation : gadm.level3 (commune, 100% populated) est la source la plus fiable.
-      // On ajoute locality en complement si elle a l'air propre (pas coords, pas code postal seul).
-      const commune = o.gadm && o.gadm.level3 && o.gadm.level3.name || '';
-      const dept = o.gadm && o.gadm.level2 && o.gadm.level2.name || '';
-      const localityClean = _gbifLocalityLooksReal(o.locality) ? o.locality.trim() : '';
-      // Nom affiche : locality precise si utile > commune > dept > 'lieu'.
-      const name = localityClean || commune || dept || 'lieu';
-      // Ligne meta secondaire : commune (+ dept) si on a deja affiche locality en titre.
-      const subloc = localityClean && commune ? (dept ? `${commune}, ${dept}` : commune) : (localityClean ? '' : dept);
-      // Le nom de l'observateur (recordedBy) n'est plus repris, comme sur la Carte
-      // (docs/carte-donnees.md, « À l'affichage » ; Mathis, 2026-10-23).
-      return {
-        lat:o.decimalLatitude, lon:o.decimalLongitude,
-        name, loc: subloc,
-        commune, dept,
-        date: (o.eventDate||'').slice(0,10),
-        time: o.eventTime || '',
-        count: (typeof o.individualCount==='number' && o.individualCount>0) ? o.individualCount : null,
-        behavior: o.behavior || '',
-        lifeStage: o.lifeStage || '',
-        sex: o.sex || '',
-        datasetName: o.datasetName || '',
-        sourceUrl: o.references || '',
-        gbifId: o.gbifID || o.key || '',
-        isGbif:true
-      };
-    });
-    return { points, total: j.count||0, error:null };
-  }catch(_){ return { points:[], total:0, error:'network' }; }
-}
-// Bounds approximatifs par pays [minLat, minLon, maxLat, maxLon] pour zoom auto quand
-// pas d'obs a fitBounds. Ajoute 2026-09-21 pour eviter que la carte reste sur le pays
-// precedent quand on change de pays vers un pays sans obs.
-const _SM_COUNTRY_BOUNDS = {
-  FR:[41,-5,51.1,10.5], ME:[41.85,18.4,43.55,20.4], ES:[35.9,-9.4,43.9,4.4],
-  IT:[36.5,6.6,47.1,18.6], GB:[49.9,-8.2,60.9,1.8], PT:[36.9,-9.6,42.2,-6.1],
-  CH:[45.8,5.9,47.9,10.6], NO:[57.9,4.6,71.3,31.2], GR:[34.7,19.4,41.8,28.3],
-  IS:[63.3,-24.6,66.6,-13.4], LK:[5.9,79.6,9.9,81.9], NA:[-28.9,11.6,-16.9,25.3],
-  AU:[-43.7,113.1,-10.6,153.7], NZ:[-47.3,166.4,-34.4,178.6],
-  US:[24.5,-125,49.4,-66.9], CA:[41.7,-141,83.1,-52.6],
-};
-function _smFitCountryBounds(cc){
-  if(!_smMapInstance) return;
-  const b = _SM_COUNTRY_BOUNDS[cc];
-  if(!b) return;
-  try{
-    _smMapInstance.invalidateSize();
-    _smMapInstance.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding:[20,20] });
-  }catch(_){}
-}
-async function _renderSpeciesMap(key){
-  _smCurrentKey = key;
-  const wrap = $('#smMapWrap'), el = $('#smMap'); if(!wrap || !el || !window.L){ if(wrap) wrap.hidden=true; return; }
-  // Init du selecteur mode (mes amis / eBird)
-  document.querySelectorAll('#smMapSeg button').forEach(b => b.classList.toggle('on', b.dataset.mapMode === _smMapMode));
-  // Init de la carte si necessaire
-  if(!_smMapInstance){
-    _smMapInstance = L.map(el, { zoomControl:true, attributionControl:false });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:18 }).addTo(_smMapInstance);
-    _smMapLayer = L.layerGroup().addTo(_smMapInstance);
-    // Re-spread des marqueurs a chaque fin de zoom pour eviter la superposition en zoom-out.
-    _smMapInstance.on('zoomend', _smSpreadMarkers);
-  } else {
-    _smMapLayer.clearLayers();
-  }
-  _smMarkers = [];
-  // Affiche / masque les controles selon le mode. Region+Dept visibles pour eBird ET GBIF,
-  // Mois+Annee uniquement GBIF, Derniers uniquement eBird. Dept visible seulement si region.
-  _smApplyFilterVisibility();
-  // Pays courant = celui selectionne dans la fiche (via picker rarete), fallback global.
-  const smCC = $('#smRarityCountrySel')?.dataset.cc || _globalCountry || 'FR';
-  if(_smMapMode === 'ebird' || _smMapMode === 'gbif') _smInitGbifSelects(smCC);
-  _smSetHint('… chargement');
-  // Recolte les points selon le mode
-  let points = [];
-  let gbifTotal = 0, gbifMonth = 0, gbifYearMin = 0, gbifYearMax = 0, gbifScopeLabel = '';
-  if(_smMapMode === 'friends'){
-    for(const p of realPeople){
-      const v = p.species && p.species.get(key);
-      if(!v) continue;
-      // Une observation par personne : la première. « Tous les cochages » retiré le 2026-11-07 (Mathis),
-      // comme sur la Carte : la plupart des listes n'en gardent qu'une par espèce.
-      const list = typeof v.lat === 'number' && typeof v.lon === 'number' ? [{ lat:v.lat, lon:v.lon, date:v.date||'', loc:v.loc||'' }] : [];
-      for(const o of list){
-        if(typeof o.lat !== 'number' || typeof o.lon !== 'number') continue;
-        points.push({ lat:o.lat, lon:o.lon, name:p.name, si:p.si, loc:o.loc||'', date:o.date||'', uid:p.id });
-      }
-    }
-  } else if(_smMapMode === 'ebird'){
-    const days = parseInt($('#smEbDays')?.value, 10) || 30;
-    const regionCode = $('#smGbifRegion')?.value || '';
-    const deptCode = $('#smGbifDept')?.value || '';
-    // Format eBird zone : selon pays courant. FR + dept possible, autres pays region seule.
-    const cc = smCC;
-    const ccReg = COUNTRIES_REG?.[cc];
-    const ccName = ccReg?.name || cc;
-    let zone = cc, zoneLbl = ccName;
-    if(deptCode && cc === 'FR'){
-      const d = FR_DEPTS.find(x => x[0] === deptCode);
-      if(d){ zone = `${d[2]}-${d[0]}`; zoneLbl = d[1]; }
-    } else if(regionCode){
-      zone = regionCode;
-      const regList = (typeof REGIONS_BY_COUNTRY === 'object' && REGIONS_BY_COUNTRY[cc]) || [];
-      const r = regList.find(x => x.code === regionCode);
-      if(r) zoneLbl = r.name;
-    }
-    const res = await _smFetchEbirdRecent(key, days, zone);
-    if(_smCurrentKey !== key || _smMapMode !== 'ebird') return;
-    points = res.points;
-    if(!points.length){
-      wrap.hidden = false;
-      _smSetHint(res.error==='taxonomy' ? 'Espece introuvable dans la taxonomie eBird.' : res.error==='network' ? 'Erreur reseau lors de la requete eBird.' : `Pas d'obs eBird recente (${days}j) dans ${zoneLbl} pour cette espece.`);
-      _smFitCountryBounds(smCC);
-      return;
-    }
-  } else if(_smMapMode === 'gbif'){
-    gbifMonth = parseInt($('#smGbifMonth')?.value, 10) || 0;
-    const yMinRaw = parseInt($('#smGbifYearMin')?.value, 10) || 2023;
-    const yMaxRaw = parseInt($('#smGbifYearMax')?.value, 10) || 2025;
-    gbifYearMin = Math.min(yMinRaw, yMaxRaw);
-    gbifYearMax = Math.max(yMinRaw, yMaxRaw);
-    // Portee geographique : dept > region > pays entier.
-    const regionCode = $('#smGbifRegion')?.value || '';
-    const deptCode = $('#smGbifDept')?.value || '';
-    const cc = smCC;
-    const ccReg = COUNTRIES_REG?.[cc];
-    const ccName = ccReg?.name || cc;
-    let bbox = null;
-    if(deptCode && cc === 'FR'){
-      const d = FR_DEPTS.find(x => x[0] === deptCode);
-      if(d){ bbox = [d[3], d[4], d[5], d[6]]; gbifScopeLabel = `dépt ${d[0]} ${d[1]}`; }
-    } else if(regionCode){
-      bbox = _bboxOfRegion(regionCode);
-      const regList = (typeof REGIONS_BY_COUNTRY === 'object' && REGIONS_BY_COUNTRY[cc]) || [];
-      const r = regList.find(x => x.code === regionCode);
-      gbifScopeLabel = r ? r.name : regionCode;
-    } else {
-      // Pas de region : GBIF sans bbox (le pays est indicatif dans le label,
-      // pas de restriction bbox faute de bboxes pays definies)
-      gbifScopeLabel = ccName;
-    }
-    const rangeTxt = gbifYearMin===gbifYearMax ? gbifYearMin : `${gbifYearMin} → ${gbifYearMax}`;
-    _smSetHint(`… chargement GBIF (${_SM_MONTH_NAMES[gbifMonth]} ${rangeTxt}, ${gbifScopeLabel})`);
-    const onProg = (done, total, gotObs, totalCount) => {
-      // Aborter si l'user a change de mode/espece entre-temps
-      if(_smCurrentKey !== key || _smMapMode !== 'gbif') return;
-      const pct = Math.round(done / total * 100);
-      _smSetHint(`… chargement GBIF ${done}/${total} lots (${pct}${_PCT}) · ${gotObs}/${totalCount} obs · ${gbifScopeLabel}`);
-    };
-    const res = await _smFetchGbif(key, gbifMonth, gbifYearMin, gbifYearMax, bbox, cc, onProg);
-    if(_smCurrentKey !== key || _smMapMode !== 'gbif') return;
-    points = res.points;
-    gbifTotal = res.total;
-    if(!points.length){
-      wrap.hidden = false;
-      _smSetHint(res.error==='taxonomy' ? 'Espèce introuvable dans la base GBIF.' : res.error==='network' ? 'Erreur réseau lors de la requête GBIF.' : `Aucune obs GBIF pour ${_SM_MONTH_NAMES[gbifMonth]} ${rangeTxt} (${gbifScopeLabel}).`);
-      _smFitCountryBounds(smCC);
-      return;
-    }
-  }
-  if(!points.length){
-    wrap.hidden = false;
-    _smSetHint('Aucune obs de la ligue avec coordonnees pour cette espece.');
-    _smFitCountryBounds(smCC);
-    return;
-  }
-  wrap.hidden = false;
-  const bounds = [];
-  // Couleur = rareté DANS LE PAYS de la fiche (smCC). Bug corrige 2026-09-21 :
-  // sciColor(key) etait FR-only, ce qui donnait la mauvaise couleur des lors qu'on
-  // regardait des obs eBird/GBIF dans un autre pays (ex : Grebe esclavon en ME
-  // s'affichait avec couleur FR au lieu de couleur ME).
-  const col = sciColorForCountry(key, smCC);
-  for(const p of points){
-    const m = L.circleMarker([p.lat, p.lon], { radius:7, weight:2, color:'#fff', fillColor:col, fillOpacity:0.9, opacity:1 });
-    m._baseLat = p.lat; m._baseLon = p.lon;
-    if(p.uid) m._uid = p.uid;   // pour lier click friend list -> pan marker
-    const gm = `<a href="https://www.google.com/maps?q=${p.lat},${p.lon}" target="_blank" rel="noopener">🗺️ Google Maps</a>`;
-    const cntTxt = p.count ? ` · ${p.count} individu${p.count>1?'s':''}` : '';
-    // Popup enrichi pour GBIF : heure, comportement, stage / sexe, source lien.
-    let extra = '';
-    if(p.isGbif){
-      const parts = [];
-      if(p.time) parts.push(`🕐 ${esc(p.time)}`);
-      if(p.behavior) parts.push(`🎯 ${esc(p.behavior)}`);
-      const stageSex = [p.lifeStage, p.sex].filter(Boolean).join(' · ');
-      if(stageSex) parts.push(`🐣 ${esc(stageSex)}`);
-      if(parts.length) extra += `<br><span style="font-size:14px;color:var(--ink-3)">${parts.join(' · ')}</span>`;
-      const links = [];
-      if(p.sourceUrl) links.push(`<a href="${esc(p.sourceUrl)}" target="_blank" rel="noopener">🔗 source</a>`);
-      if(p.gbifId) links.push(`<a href="https://www.gbif.org/occurrence/${esc(p.gbifId)}" target="_blank" rel="noopener">🌍 GBIF</a>`);
-      if(links.length) extra += `<br>${links.join(' · ')}`;
-      if(p.datasetName) extra += `<br><span style="font-size:14px;color:var(--ink-3);font-style:italic">${esc(p.datasetName)}</span>`;
-    }
-    m.bindPopup(`<b>${esc(p.name)}</b><br><span>${esc(p.date||'')}${p.loc?' · '+esc(p.loc):''}${cntTxt}</span>${extra}<br>${gm}`);
-    _smMapLayer.addLayer(m);
-    _smMarkers.push(m);
-    bounds.push([p.lat, p.lon]);
-  }
-  if(_smMapMode==='friends'){
-    _smSetHint(`${points.length} obs de la ligue`);
-  } else if(_smMapMode==='ebird'){
-    const ccLbl = (COUNTRIES_REG?.[smCC]?.name) || smCC || 'France';
-    const days = parseInt($('#smEbDays')?.value, 10) || 30;
-    _smSetHint(`${points.length} obs eBird (${days} derniers jours, ${ccLbl})`);
-  } else {
-    const rangeTxt = gbifYearMin===gbifYearMax ? gbifYearMin : `${gbifYearMin} → ${gbifYearMax}`;
-    const truncTxt = (gbifTotal > points.length) ? ` sur ${gbifTotal.toLocaleString('fr-FR')} au total (tronqué)` : '';
-    _smSetHint(`${points.length} obs GBIF · ${_SM_MONTH_NAMES[gbifMonth]} ${rangeTxt} · ${gbifScopeLabel}${truncTxt}`);
-  }
-  requestAnimationFrame(()=>{
-    try{
-      _smMapInstance.invalidateSize();
-      if(bounds.length === 1){ _smMapInstance.setView(bounds[0], 10); }
-      else { _smMapInstance.fitBounds(L.latLngBounds(bounds), { padding:[24,24], maxZoom:10 }); }
-      _smSpreadMarkers();
-    }catch(_){}
-  });
-}
-// Clic sur le selecteur mode : switch + rechargement.
-// On cache immediatement la barre de controles GBIF (region / dept / mois / annees) hors mode
-// GBIF, sans attendre le render : garantit qu'elle n'apparait pas sur "Mes amis" ou "eBird 30 j".
-// Bouton "Voir en grand" : ferme le modal fiche et ouvre la grande carte pour cette
-// espece. Selon le mode courant de la mini-carte fiche :
-//  - "Mes amis" -> onglet Carte, mode "Mes observations" (toutes les obs de la ligue),
-//    filtre sur l'espece via la barre de recherche (filtre substring des markers).
-//  - "eBird" / "GBIF" -> onglet Carte, mode "A cocher", source alignee, refetch cible.
-document.addEventListener('click', e=>{
-  const btn = e.target.closest('#smOpenBigMap'); if(!btn) return;
+// « Vu récemment ↗ », dans l'en-tete de « Où et quand la trouver » : ferme la fiche et ouvre la Carte sur
+// « Vu récemment » (eBird), l'espece chargee. Il remplace l'onglet « Carte & observations » et sa
+// mini-carte, retires a la demande de Mathis (2026-11-08) ; c'est l'ancien chemin eBird de « Voir en grand ».
+document.addEventListener('click', e => {
+  if(!e.target.closest('#smVoirRecent')) return;
   const sci = _smCurrentKey; if(!sci) return;
   const nm = FR_NAMES[(sci||'').toLowerCase()] || sci;
-  const fromMode = _smMapMode;
-  // Reporte la source (eBird / GBIF) sur la grande carte si applicable.
-  if(fromMode === 'gbif' || fromMode === 'ebird'){
-    if(typeof ebFilter !== 'undefined'){
-      ebFilter.source = fromMode === 'gbif' ? 'gbif' : 'ebird';
-      const srcSel = document.getElementById('mapEbSource'); if(srcSel) srcSel.value = ebFilter.source;
-      _loaded.missing = '';
-    }
+  if(typeof ebFilter !== 'undefined' && ebFilter.source !== 'ebird'){
+    ebFilter.source = 'ebird';
+    const srcSel = document.getElementById('mapEbSource'); if(srcSel) srcSel.value = 'ebird';
+    _loaded.missing = '';
   }
   closeSpeciesModal();
-  // « Voir en grand » a déjà choisi ce qu'on veut voir : pas de fenêtre de choix par-dessus.
+  // Le lien a deja dit ce qu'on veut voir : pas de fenetre de choix par-dessus.
   _ctChoixFait = true;
   const mapTab = [...document.querySelectorAll('.tab')].find(t => t.dataset.view === 'map');
   if(mapTab) mapTab.click();
-  // Choix du mode grande carte selon la mini-carte.
-  const targetMode = fromMode === 'friends' ? 'mine' : 'missing';
-  const modeBtn = document.querySelector(`#mapModes button[data-mode="${targetMode}"]`);
-  if(modeBtn && mapMode !== targetMode) modeBtn.click();
+  const modeBtn = document.querySelector('#mapModes button[data-mode="missing"]');
+  if(modeBtn && mapMode !== 'missing') modeBtn.click();
   setTimeout(() => {
     const s = document.getElementById('mapSearch');
     if(s){ s.value = nm; mapSearch = nm; }
-    if(fromMode === 'friends'){
-      // Mode "Mes observations" : la barre de recherche filtre les markers existants par
-      // substring _q. On declenche _mapApplyFilter pour appliquer immediatement, et on fit
-      // sur les points visibles de cette espece.
-      _mapApplyFilter();
-      if(_mapLayer){
-        const target = (sci||'').toLowerCase();
-        const latlngs = [];
-        _mapLayer.eachLayer(x => { if((x._sciName||'').toLowerCase() === target && x.getLatLng){ const ll = x.getLatLng(); latlngs.push([ll.lat, ll.lng]); } });
-        if(latlngs.length) _map.fitBounds(L.latLngBounds(latlngs), { padding:[40,40], maxZoom:12 });
-      }
-    } else {
-      const code = _sciToCode ? _sciToCode(sci) : null;
-      if(ebFilter.source === 'gbif'){ _showSpeciesDetailGbif(sci); }
-      else if(code){ _showSpeciesDetail(sci, code); }
-    }
+    const code = _sciToCode ? _sciToCode(sci) : null;
+    if(code) _showSpeciesDetail(sci, code);
     const mapEl = document.getElementById('mapEl'); if(mapEl) mapEl.scrollIntoView({ behavior:'smooth', block:'start' });
   }, 100);
-});
-document.addEventListener('click', e=>{
-  const b = e.target.closest('#smMapSeg button[data-map-mode]'); if(!b) return;
-  _smMapMode = b.dataset.mapMode;
-  document.querySelectorAll('#smMapSeg button').forEach(x => x.classList.toggle('on', x===b));
-  _smApplyFilterVisibility();
-  if(_smCurrentKey) _renderSpeciesMap(_smCurrentKey);
-});
-// Changement des selecteurs : reload la carte si on est en mode eBird ou GBIF.
-// Region change : repeuple d'abord le dropdown Dept, puis relance le rendu.
-document.addEventListener('change', e=>{
-  const t = e.target; if(!t) return;
-  if(t.id === 'smGbifRegion'){
-    // Depts uniquement pour FR (autres pays n'ont pas la granularite dept)
-    const cc = $('#smRarityCountrySel')?.dataset.cc || _globalCountry || 'FR';
-    if(cc === 'FR') _smPopulateGbifDepts(t.value);
-    _smApplyFilterVisibility();   // dept visible / hidden selon si region choisie
-    if((_smMapMode === 'gbif' || _smMapMode === 'ebird') && _smCurrentKey) _renderSpeciesMap(_smCurrentKey);
-    return;
-  }
-  if(t.id === 'smGbifDept' || t.id === 'smEbDays'){
-    if((_smMapMode === 'gbif' || _smMapMode === 'ebird') && _smCurrentKey) _renderSpeciesMap(_smCurrentKey);
-    return;
-  }
-  if(t.id === 'smGbifMonth' || t.id === 'smGbifYearMin' || t.id === 'smGbifYearMax'){
-    if(_smMapMode === 'gbif' && _smCurrentKey) _renderSpeciesMap(_smCurrentKey);
-  }
 });
 // Ouvrir une fiche ajoute une entree a l'historique, pour que le bouton Retour la ferme : au
 // telephone, il quittait le site (2026-10-31). _ficheEntree : cette entree existe encore.
@@ -20555,8 +20000,6 @@ function closeSpeciesModal(){
     for(const a of _xaAudios){ try{ a.pause(); a.src = ''; }catch(_){} }
     _xaAudios.clear();
   }
-  // On garde _smMapInstance en memoire (recycle plus rapide), on vide juste la couche marqueurs.
-  if(_smMapLayer) _smMapLayer.clearLayers();
   // Une espece ajoutee depuis la fiche attendait que la grille redevienne visible.
   _jouerRevelations();
 }

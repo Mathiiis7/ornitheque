@@ -328,7 +328,9 @@ sessions après la disparition de la bulle qu'il annonçait.
 ## Les bancs de mesure
 
 Après toute retouche de l'entête du panneau, des sélecteurs, des pastilles ou des cartes :
-`node outils/verif/tous.mjs`, chaque banc finit par `CONFORME` ou `DÉFAUT`. **Un crochet le fait
+`node outils/verif/tous.mjs`, chaque banc finit par `CONFORME` ou `DÉFAUT`. **Juger sur la dernière ligne**
+(« Les 11 bancs sont conformes » ou « N banc(s) en défaut »), jamais sur un `grep DÉFAUT` : le banc pastilles
+écrit `DEFAUT` sans accent, et un défaut des filtres X / P / N est passé inaperçu de la v1027 à la v1037 (2026-11-08). **Un crochet le fait
 tout seul** : `.claude/hooks/verif-avant-fin.mjs`, branché sur l'événement `Stop`, rejoue tous les
 bancs et refuse de laisser une réponse finir tant qu'un banc est en défaut, dès qu'`app.js`,
 `index.html` ou `styles.css` sont modifiés et pas encore commités. Après une retouche

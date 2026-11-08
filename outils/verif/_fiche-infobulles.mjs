@@ -11,7 +11,7 @@ await page.evaluate(() => { document.querySelectorAll('dialog[open]').forEach(d 
   const a = document.createElement('a'); a.href = '#'; a.className = 'sp-link'; a.dataset.sci = 'parus major'; a.textContent = 'x';
   document.body.appendChild(a); a.click(); a.remove(); });
 await page.waitForTimeout(3000);
-for (const onglet of ['info', 'map', 'sound']) {
+for (const onglet of ['info', 'sound']) {
   await page.evaluate(o => document.querySelector('.sm-tab[data-sm-tab="' + o + '"]').click(), onglet);
   await page.waitForTimeout(2500);
   const r = await page.evaluate(() => {
