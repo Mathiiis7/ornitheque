@@ -4363,9 +4363,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .tb-grille { row-gap:3px; }
     /* « Qui a vu quoi » garde le tableau de l'ordinateur (Mathis), à la hauteur de l'écran, colonnes resserrées :
        Espèce figée à gauche, les personnes défilent de côté. Les cartes d'avant ne servent plus ici. */
-    /* overscroll-behavior:none : arrivé au bord, le tableau ne « rebondit » plus au-delà en montrant du blanc
-       (Mathis, 2026-11-08 : il se décalait vers la droite ou le bas alors qu'il était déjà en butée). */
-    #matrix .tbl-scroll { display:block; max-height:calc(100svh - 53px - var(--barre-h) - 24px); overscroll-behavior:none; }
+    #matrix .tbl-scroll { display:block; max-height:calc(100svh - 53px - var(--barre-h) - 24px); }
     #matrix .matrix-cards { display:none; }
     #matrix .tbl-scroll thead th:first-child, #matrix .tbl-scroll tbody td.sp { width:150px; min-width:150px; max-width:150px; }
     #matrix:not(.sans-rarete) .tbl-scroll thead th:nth-child(2), #matrix:not(.sans-rarete) .tbl-scroll tbody td:nth-child(2) { left:150px; }
@@ -4432,6 +4430,12 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      ouvrait alors la ligne sans rien séparer (Mathis, 2026-11-08). Couché, ils restent à côté : elle reste. */
   @media (max-width:700px) and (orientation:portrait){
     #mapEbRarityChips .rar-sep, #ctLigRarChips .rar-sep { display:none; }
+  }
+  /* « Qui a vu quoi », au doigt, debout comme couché : arrivé au bord, le tableau ne « rebondit » plus
+     au-delà en montrant du blanc (Mathis, 2026-11-08 : il se décalait alors qu'il était déjà en butée ;
+     couché, le téléphone dépasse 700 px, d'où une règle hors du bloc du téléphone). */
+  @media (pointer: coarse){
+    #matrix .tbl-scroll { overscroll-behavior:none; }
   }
   /* Au doigt, les ronds de rareté restent à 24 px d'écran (choix de Mathis, 2026-11-07) : sans le zoom
      0,85, leur boîte doublée de 56 px en ferait 28. Zone invisible de 7 px de chaque côté : 38 px. */
