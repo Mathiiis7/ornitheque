@@ -32,6 +32,19 @@ const ordres = donnees.map(o => ({
 }));
 console.log('familles avec phrase :', ordres.reduce((s, o) => s + o.familles.filter(f => f.phrase).length, 0),
   'sur', ordres.reduce((s, o) => s + (o.familles.length > 1 ? o.familles.length : 0), 0), 'dans des ordres a plusieurs familles');
+// L'arbre des familles de chaque ordre (_familles-arbres.mjs, d'apres Stiller 2024). Les familles
+// absentes de l'etude partent de la racine de leur ordre, marquees « np » (place non publiee).
+// Feuille : { f: index de la famille dans o.familles } ; noeud : { e: [...] }.
+const famArbres = fs.existsSync(M + 'familles-arbres.json') ? lire('familles-arbres.json') : {};
+for(const o of ordres){
+  if(o.familles.length < 2) continue;
+  const idx = Object.fromEntries(o.familles.map((f, k) => [f.lat, k]));
+  const conv = n => n.f ? { f: idx[n.f] } : { e: n.e.map(conv) };
+  const t = famArbres[o.lat] ? conv(famArbres[o.lat]) : { e: [] };
+  const presentes = new Set(); (function v(n){ if(n.f != null) presentes.add(n.f); else n.e.forEach(v); })(t);
+  const absentes = o.familles.map((f, k) => k).filter(k => !presentes.has(k)).map(k => ({ f: k, np: 1 }));
+  o.arbre = t.e && absentes.length ? { e: [...(t.f != null ? [t] : t.e), ...absentes] } : t;
+}
 const manque = ordres.filter(o => !o.phrase).map(o => o.lat);
 if(manque.length) throw new Error('phrases manquantes : ' + manque.join(', '));
 const sortie = {

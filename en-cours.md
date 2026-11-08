@@ -1,6 +1,6 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1041 / app.js?v=613 (et styles.css?v=613). Prochaine : v1042 / 614.
+Dernière version : v1042 / app.js?v=614 (et styles.css?v=614). Prochaine : v1043 / 615.
 
 - **v1040 (08/11, conversation de l'arbre) : page « L'arbre des oiseaux » EN LIGNE**, menu ⚙ (Plus au téléphone,
   choix de Mathis). Cladogramme des 45 ordres de la maquette D : `renderArbre()` dans app.js (avant renderPokedex),
@@ -17,6 +17,14 @@ Dernière version : v1041 / app.js?v=613 (et styles.css?v=613). Prochaine : v104
   sources `notes-privees/arbre/wiki-familles/` (`_wiki-familles.mjs`, 20 titres par demande). Famille seule dans son
   ordre = phrase de l'ordre. **La page s'appelle désormais « Arbre phylogénétique »** (choix de Mathis, menu, titre,
   Plus ; `data-view="arbre"` inchangé). data/arbre.json?v=20261108b. Prochaine demande de Mathis : l'arbre doit se PROLONGER À DROITE (familles, puis genres, espèces) au lieu du panneau, déplié seulement au clic.
+- **v1042 EN LIGNE (conversation de l'arbre) : l'arbre pousse à droite.** Validé par Mathis en local : plus de panneau ; ordre -> familles avec les VRAIES branches de Stiller (_familles-arbres.mjs
+  -> familles-arbres.json -> o.arbre dans data/arbre.json ; 43 familles absentes en pointillé, « place non
+  publiée »), famille -> genres -> espèces en râteau, chaque étage au clic (_arbreOuverts). Le nom reste EN HAUT de
+  son bloc (centré, les Passereaux tombaient au milieu de 143 familles) ; ordinateur : ce qui pousse part à droite du
+  nom ; téléphone : en retrait dessous. Phrase au-dessus des branches, hauteur selon le texte. À MOI dans le diff :
+  app.js (bloc « Arbre phylogénétique »), bloc CSS de l'arbre dans styles.css (PAS le hunk tchat/bas de page vers
+  la ligne 4526, ni « Merlin / eBird » dans index.html et demo : autre conversation), data/arbre.json (?v=20261108c),
+  outils/build/arbre-donnees.mjs, outils/build/_familles-arbres.mjs.
 
 - **v1035-v1037 (08/11)** : fiche au téléphone : flèches et croix 44 px alignées ; « Où et quand », debout, mois
   en grille AU-DESSUS de la carte, carte pleine largeur ; Répartition en aspect-ratio 10/7 (plus de gris) ;

@@ -3996,18 +3996,22 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .tro-sc-fini .tro-sc-coupe, .tro-sc-fini .tro-sc-jauge { display:none; }
   .tro-sc-fini .tro-sc-page { animation:fut-fondu .25s ease both; }
 
-  /* ===== L'arbre des oiseaux (menu ⚙, 2026-11-08) =====
-     Cladogramme de la maquette D (notes-privees/maquettes/arbre/). Traits bleu-vert, points en
-     orange --accent-2 comme le cladogramme de manuel montré par Mathis : exception à la charte,
-     notée dans docs/charte-graphique.md. */
+  /* ===== Arbre phylogénétique (menu ⚙, 2026-11-08) =====
+     Cladogramme de la maquette D (notes-privees/maquettes/arbre/), qui pousse vers la droite au clic :
+     ordres, puis familles, genres, espèces. Traits bleu-vert, de plus en plus fins à chaque étage ;
+     points en orange --accent-2 comme le cladogramme de manuel montré par Mathis : exception à la
+     charte, notée dans docs/charte-graphique.md. */
   .arb-legende { display:flex; flex-wrap:wrap; gap:6px 18px; align-items:center; color:var(--ink-3); margin-top:12px; }
   .arb-legende svg { display:inline-block; vertical-align:middle; }
-  /* En dernier recours (fenêtre très étroite), l'arbre défile de côté dans son cadre, pas la page */
+  /* L'arbre déplié dépasse la largeur de la page : il défile de côté dans son cadre, pas la page */
   #arbreCorps { overflow-x:auto; }
   .arb-clado { position:relative; margin-top:14px; }
   .arb-clado svg { display:block; overflow:visible; }
   .arb-l { stroke:var(--accent); stroke-width:3; fill:none; stroke-linecap:round; }
   .arb-l.discute { stroke-dasharray:6 5; }
+  .arb-l2 { stroke:var(--accent); stroke-width:2; fill:none; stroke-linecap:round; }
+  .arb-l3 { stroke:color-mix(in srgb, var(--accent) 70%, var(--surface)); stroke-width:1.5; fill:none; }
+  .arb-l2.np { stroke:var(--ink-3); stroke-dasharray:4 4; }
   .arb-pt { fill:var(--accent-2); stroke:var(--surface); stroke-width:2; cursor:pointer; }
   .arb-pt.discute { fill:var(--surface); stroke:var(--accent-2); stroke-width:2.5; }
   .arb-pt:hover, .arb-pt.sel, .arb-pt:focus-visible { stroke:var(--ink); outline:none; }
@@ -4016,50 +4020,48 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     padding-top:4px; text-align:right; font:600 14px/1.15 var(--sans); color:var(--ink-2); }
   .arb-etiq.adn { font-style:italic; font-weight:400; color:var(--ink-3); }
   .arb-etiq.num { font-weight:700; color:var(--accent-2); font-style:normal; }
-  .arb-feuille { position:absolute; display:flex; align-items:center; gap:10px; height:44px; padding:0 8px 0 0; border:0;
-    border-radius:8px; background:none; color:var(--ink); font:inherit; text-align:left; cursor:pointer; }
-  .arb-feuille:hover { background:var(--surface-2); }
+  /* Étiquettes des quatre étages : un bouton posé au bout de sa branche */
+  .arb-feuille, .arb-fam, .arb-gen, .arb-esp { position:absolute; display:flex; align-items:center; gap:8px; height:44px;
+    padding:0 6px; border:0; border-radius:8px; background:none; color:var(--ink); font:inherit; text-align:left; cursor:pointer;
+    overflow:hidden; white-space:nowrap; }
+  .arb-feuille:hover, .arb-fam:hover, .arb-gen:hover, .arb-esp:hover { background:var(--surface-2); }
+  .arb-feuille { gap:10px; padding-left:0; }
   .arb-feuille img { width:40px; height:34px; object-fit:contain; flex:0 0 40px; }
-  .arb-feuille > span { white-space:nowrap; }
+  .arb-feuille > span, .arb-fam > span:first-child { overflow:hidden; text-overflow:ellipsis; }
+  .arb-fam.np { color:var(--ink-2); }
+  .arb-gen i { font-weight:600; color:var(--ink-2); }
+  .arb-esp.vu { font-weight:600; }
+  .arb-esp > .arb-lat { overflow:hidden; text-overflow:ellipsis; }
+  .arb-chev { margin-left:auto; padding-left:6px; color:var(--ink-3); font-size:18px; line-height:1; transition:transform .15s; }
+  .arb-chev.ouvert { transform:rotate(180deg); }
   .arb-nom { font-weight:600; }
   .arb-lat { font-style:italic; color:var(--ink-3); font-weight:400; }
-  .arb-n { color:var(--ink-3); margin-left:6px; font-variant-numeric:tabular-nums; }
+  .arb-n { color:var(--ink-3); margin-left:6px; font-variant-numeric:tabular-nums; flex:none; }
   .arb-vu { color:var(--accent-ink); }
+  .arb-coche { color:var(--accent-ink); margin-right:2px; }
+  /* La phrase d'un ordre ou d'une famille déplié, au-dessus de ses branches */
+  .arb-ph { position:absolute; margin:0; padding:6px 10px; border-radius:9px; background:var(--surface-2); color:var(--ink-2);
+    overflow:hidden; line-height:1.3; }
+  .arb-ph a { color:var(--accent-ink); white-space:nowrap; }
   .arb-liste { list-style:none; padding:0; margin:14px 0 0; columns:2 320px; column-gap:28px; }
   .arb-liste li { break-inside:avoid; padding:3px 0; }
   .arb-credits { color:var(--ink-3); margin:16px 0 0; }
-  .arb-bulle, .arb-panneau { position:absolute; z-index:3; background:var(--surface); border:1px solid var(--line-2);
+  .arb-bulle { position:absolute; z-index:3; max-width:300px; padding:10px 13px; background:var(--surface); border:1px solid var(--line-2);
     border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,.16); }
-  .arb-bulle { max-width:300px; padding:10px 13px; }
   .arb-bulle b { display:block; margin-bottom:2px; }
   .arb-tr { font-weight:600; color:var(--accent-ink); }
   .arb-meta { display:block; margin-top:6px; color:var(--ink-3); }
-  .arb-bulle a, .arb-phrase a { color:var(--accent-ink); white-space:nowrap; }
-  .arb-panneau { width:min(440px, 100%); max-height:420px; overflow:auto; padding:12px 14px; }
-  .arb-panneau h3 { margin:0 0 6px; font:600 17px/1.3 var(--titre); }
-  .arb-phrase { margin:0 0 8px; padding:8px 11px; border-radius:9px; background:var(--surface-2); color:var(--ink-2); }
-  .arb-fam { border-bottom:1px solid var(--line); }
-  .arb-fam-tete { display:flex; justify-content:space-between; align-items:baseline; gap:8px; width:100%; padding:7px 2px;
-    border:0; background:none; color:var(--ink); font:inherit; text-align:left; cursor:pointer; }
-  .arb-fam-tete:hover { background:var(--surface-2); }
-  .arb-genres { padding:2px 0 8px 12px; }
-  .arb-genre { padding:4px 0; }
-  .arb-genre > i { display:block; color:var(--ink-2); font-weight:600; margin-bottom:2px; }
-  .arb-esp { display:block; width:100%; padding:3px 4px; border:0; border-radius:6px; background:none; color:var(--ink);
-    font:inherit; text-align:left; cursor:pointer; }
-  .arb-esp:hover { background:var(--surface-2); }
-  .arb-esp.vu { font-weight:600; }
-  .arb-coche { color:var(--accent-ink); margin-right:5px; }
+  .arb-bulle a { color:var(--accent-ink); white-space:nowrap; }
   /* Les silhouettes PhyloPic sont noires : en sombre, on les éclaircit */
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .arb-feuille img { filter:invert(.88); } }
   :root[data-theme="dark"] .arb-feuille img { filter:invert(.88); }
-  /* Au téléphone : pas de traits écrits (bulle au toucher), noms sur deux lignes, panneau pleine largeur */
+  /* Au téléphone : pas de traits écrits (bulle au toucher), noms sur deux lignes */
   @media (max-width:700px){
-    .arb-feuille { right:0; height:52px; gap:6px; }
+    .arb-feuille, .arb-fam, .arb-gen, .arb-esp { height:52px; white-space:normal; line-height:1.2; }
+    .arb-feuille { gap:6px; }
     .arb-feuille img { width:30px; flex-basis:30px; }
-    .arb-feuille > span { white-space:normal; line-height:1.2; }
-    .arb-panneau { width:100%; }
-    .arb-esp, .arb-fam-tete { min-height:44px; }
+    .arb-esp { display:block; padding-top:6px; }
+    .arb-ph { font-size:14px; }
   }
 
   /* ===== Schémas communs (2026-10-06) - voir docs/charte-graphique.md, « Schémas récurrents » =====
