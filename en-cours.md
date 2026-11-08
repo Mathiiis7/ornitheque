@@ -79,8 +79,14 @@ familles ensuite par lots relus.
   `_wiki-clades.mjs` dans `notes-privees/arbre/wiki-clades/`) : 12 donnés par la source, 11 approximatifs, **21
   « ADN » sans aucun trait visible dans les sources lues** (Columbaves, Otidimorphes, Pélécanimorphes…). Placement
   des traits : sur la branche d'ARRIVÉE de chaque point (3e règle ; les deux premières faisaient chevaucher), numéro
-  + liste sous l'arbre quand ça ne tient pas (16 sur 44), bulle au toucher au téléphone. Reste : avis de Mathis
-  sur les traits (creuser les 21 « ADN » dans la littérature d'anatomie, Mayr ?), puis phrases des ordres.
+  + liste sous l'arbre quand ça ne tient pas, bulle au toucher au téléphone. **Creusé (Mathis : « creuse »)** avec
+  **Sangster et al. 2022** (Avian Research 13:100027, cosigné par Mayr, CC BY-NC-ND : résumer, ne pas recopier),
+  PDF téléchargé par Mathis (ScienceDirect et core.ac.uk bloquent les robots), dans `notes-privees/arbre/sources/` ;
+  extraits par `_sangster-apomorphies.mjs`, reportés par `_traits-sangster.mjs` (19 traits revus : Néoaves = mâles
+  sans pénis, casoars+kiwis = aile sans pouce, manchots+pétrels = narines en tube chez l'embryon…). Bilan : 12
+  source, 16 approx, **16 ADN** dont 4 que la revue déclare sans aucun trait connu ; les 12 autres sont des noeuds
+  qu'elle ne traite pas (sous-groupes des engoulevents/martinets, noeuds sans nom). Piste restante pour eux :
+  Chen et al. 2019 (Vanescaves, morphologie). Reste : avis de Mathis, puis phrases des ordres.
 
 ## CHANTIER EN COURS DANS UNE AUTRE CONVERSATION (demandé le 07/11) : le site au téléphone
 Mathis trouve l'affichage téléphone « pas adapté et pas très utilisable », sur **tout le site**. Ce qui
