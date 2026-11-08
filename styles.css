@@ -4492,6 +4492,27 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     #mapEbRarityLbl .ct-portee, #ctLigRarete .ct-portee { order:3; grid-column:1 / -1; justify-self:start; }
     #mapEbRarityLbl .ct-portee-note, #ctLigRarete .ct-portee-note { order:4; grid-column:1 / -1; justify-self:start; margin-top:0; }
   }
+  /* Fiche espèce, Répartition, au téléphone : la hauteur suit la largeur (0,7), la proportion du monde que la
+     carte montre (latitudes -60 à 85 en Mercator : 0,71 fois sa largeur). En 440 px fixes, le monde vu sur 302 px
+     de large laissait plus de 200 px de gris (Mathis, 2026-11-08). Hauteur écrite en ligne par app.js. */
+  @media (max-width:700px){
+    .species-modal .sm-range-map { height:auto !important; aspect-ratio:10 / 7; }
+  }
+  /* Fiche espèce, « Où et quand la trouver », téléphone debout : les mois passent AU-DESSUS de la carte, en
+     grille (« Année » centrée, puis six mois par ligne, le palier sous le nom) ; la carte prend toute la largeur,
+     centrée. En colonne à gauche, ils laissaient à la carte 162 × 124 px dans un coin (Mathis, 2026-11-08).
+     app.js écrit ces réglages en style en ligne, d'où les !important. Couché, la colonne reste. */
+  @media (max-width:700px) and (orientation:portrait){
+    #smRarityMap > div { flex-direction:column !important; align-items:stretch !important; gap:12px !important; }
+    #smRarityMapMois { display:grid !important; grid-template-columns:repeat(6, minmax(0, 1fr)); gap:4px !important; width:auto !important; }
+    #smRarityMapMois > span { display:none !important; }
+    #smRarityMapMois > [data-mois="an"] { grid-column:1 / -1; justify-self:center; width:auto !important; gap:8px !important; margin-bottom:4px; }
+    #smRarityMapMois > [data-mois]:not([data-mois="an"]) { flex-direction:column; justify-content:center !important; gap:0 !important;
+      padding:3px 0 !important; line-height:1.2 !important; }
+    #smRarityMap > div > div:nth-child(2) { flex:none !important; width:100% !important; max-width:none !important; margin:0 !important; }
+    #smRarityMap > div > div:nth-child(2) > svg { max-width:none !important; }
+    #smRarityMap > div > div[aria-hidden] { display:none !important; }
+  }
   /* « Qui a vu quoi », au doigt, debout comme couché : arrivé au bord, le tableau ne « rebondit » plus
      au-delà en montrant du blanc (Mathis, 2026-11-08 : il se décalait alors qu'il était déjà en butée ;
      couché, le téléphone dépasse 700 px, d'où une règle hors du bloc du téléphone). */
@@ -4521,6 +4542,13 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
        (Mathis, 2026-11-08), boîte doublée réduite de moitié comme les autres. Zone de toucher gardée à 37 px. */
     #tierChips .rar-chip[data-cat], #pkdxTierChips .rar-chip[data-cat], #mapEbRarityChips .rar-chip[data-cat], #ctLigRarChips .rar-chip[data-cat] {
       width:32px; min-width:32px; height:32px; min-height:32px; margin:-8px; font-size:19px; padding:1.28px 0 0; }
+    /* Fiche espèce : flèches et croix à 44 px (52, pensés pour le zoom 0,85 de l'ordinateur, en faisaient 52
+       ici), alignées sur la même ligne, 6 px entre elles ; les flèches tombaient 6 px plus bas que la croix
+       (Mathis, 2026-11-08 : « grosses et mal alignées »). Le nom s'arrête avant elles. */
+    .species-modal .sm-close { width:44px; height:44px; top:10px; right:10px; }
+    .species-modal .sm-nav { top:10px !important; right:60px !important; gap:6px !important; }
+    .species-modal .sm-nav-btn { width:44px !important; height:44px !important; }
+    .species-modal .sm-title { padding-right:160px; }
     #tierChips .rar-chip[data-cat]::after, #pkdxTierChips .rar-chip[data-cat]::after,
     #mapEbRarityChips .rar-chip[data-cat]::after, #ctLigRarChips .rar-chip[data-cat]::after { inset:-21px !important; }
     /* Le centrage de l'encre, recalé sans le zoom 0,85 : les rembourrages d'avant étaient réglés au
