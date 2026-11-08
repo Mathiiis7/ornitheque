@@ -1,6 +1,11 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1049 / app.js?v=621 (et styles.css?v=621). Prochaine : v1050 / 622.
+Dernière version : v1050 / app.js?v=622 (et styles.css?v=622). Prochaine : v1051 / 623.
+
+- **v1050 (08/11, conversation de l'arbre)** : photos des genres et des espèces. Genre : l'espèce de sa famille
+  s'il la contient, sinon sa plus observée sur iNaturalist (`outils/build/_photos-genres.mjs`, un classement par
+  famille, `gph` dans `data/arbre.json?v=20261108g`, 2 329/2 379), sinon sa première espèce. Espèce : sa propre
+  photo (décorative pour le lecteur d'écran). Genres à 250 px pour que le plus long nom tienne avec la photo.
 
 - **v1049 (08/11, conversation de l'arbre)** : plus de point à la racine des familles d'un ordre (la phrase de
   l'ordre le dit déjà, choix de Mathis) ; traits ajoutés aux phrases des Martinets et colibris et des Chouettes.

@@ -21402,13 +21402,14 @@ const ARBRE_PHOTOS = {
 // La vignette la plus petite que la source sache servir : la photo s'affiche en 40 px, la vignette de la
 // fiche en fait 320 à 500. iNaturalist sert small.jpg (240 px), Wikimédia redimensionne ses vignettes
 // d'après le « NNNpx- » de l'adresse.
-// La photo d'un ordre ou d'une famille si le site la connaît déjà ; sinon la silhouette de l'ordre, ou
-// un rond gris pour une famille, que _arbrePhotos() remplace une fois la photo trouvée.
-function _arbreImage(sci, sil){
-  const vue = sci && _photoCarteConnue(sci);
-  if(vue) return `<img class="arb-photo" src="${esc(_arbreVignette(vue))}" alt="${esc(FR_NAMES[sci] || '')}" title="${esc(FR_NAMES[sci] || '')}" loading="lazy">`;
+// La photo d'un ordre, d'une famille, d'un genre ou d'une espèce si le site la connaît déjà ; sinon la
+// silhouette de l'ordre, ou un rond gris, que _arbrePhotos() remplace une fois la photo trouvée.
+// deco : la photo d'une espèce, dont le nom est écrit juste à côté - un lecteur d'écran le dirait deux fois.
+function _arbreImage(sci, sil, deco){
+  const vue = sci && _photoCarteConnue(sci), nom = deco ? '' : esc(FR_NAMES[sci] || '');
+  if(vue) return `<img class="arb-photo" src="${esc(_arbreVignette(vue))}" alt="${nom}"${nom ? ` title="${nom}"` : ''} loading="lazy">`;
   if(sil) return `<img class="arb-sil" src="${esc(sil)}" alt="" loading="lazy"${sci ? ` data-photo="${esc(sci)}"` : ''}>`;
-  return sci ? `<span class="arb-photo arb-attente" data-photo="${esc(sci)}" aria-hidden="true"></span>` : '';
+  return sci ? `<span class="arb-photo arb-attente" data-photo="${esc(sci)}"${deco ? ' data-deco="1"' : ''} aria-hidden="true"></span>` : '';
 }
 // Les photos ne se cherchent qu'à l'approche de l'écran : déplier les Passereaux pose 143 familles,
 // soit 143 demandes à la fois sinon.
@@ -21432,7 +21433,7 @@ function _arbrePhoto(el){
     const ph = new Image();
     ph.onload = () => {
       if(!el.isConnected) return;
-      ph.className = 'arb-photo'; ph.alt = ph.title = FR_NAMES[sci] || '';
+      ph.className = 'arb-photo'; ph.alt = el.dataset.deco ? '' : FR_NAMES[sci] || ''; if(ph.alt) ph.title = ph.alt;
       el.replaceWith(ph);
     };
     ph.src = src;
@@ -21451,7 +21452,7 @@ function renderArbre(garde){
   if(!_arbreDonnees){
     // ?v= à monter quand on régénère le fichier : le service worker garde data/ d'un déploiement
     // à l'autre et ne le renouvelle que si l'adresse change.
-    _arbreCharge ||= fetch('data/arbre.json?v=20261108f').then(r => r.json()).then(d => { _arbreDonnees = d; })
+    _arbreCharge ||= fetch('data/arbre.json?v=20261108g').then(r => r.json()).then(d => { _arbreDonnees = d; })
       .catch(() => { box.innerHTML = '<p class="help" style="margin:12px 0 0;">L’arbre n’a pas pu être chargé. Recharge la page pour réessayer.</p>'; });
     _arbreCharge.then(() => { if(_arbreDonnees && $('#viewArbre')?.style.display !== 'none') renderArbre(); });
     return;
@@ -21474,8 +21475,8 @@ function renderArbre(garde){
   const hO = _arbreHauteur(D.arbre);
   const PAS = tel ? 11 : Math.max(30, Math.min(60, Math.floor((box.clientWidth - 670) / hO)));
   const X0 = 14, xF = X0 + hO * PAS + 10;
-  // Largeurs des étiquettes de chaque étage, et pas des branches au-delà des ordres
-  const LO = tel ? 170 : 440, LF = tel ? 190 : 330, LG = tel ? 150 : 220, LS = tel ? 230 : 380;
+  // Largeurs des étiquettes de chaque étage, et pas des branches au-delà des ordres ; genres à 250 px depuis leur photo : le plus long (Sylviorthorhynchus) tient, mesuré le 2026-11-08
+  const LO = tel ? 170 : 440, LF = tel ? 190 : 330, LG = 250, LS = tel ? 230 : 380;
   const PASF = tel ? 8 : 16, RATEAU = tel ? 14 : 24, LPH = tel ? 250 : 520;
   const parOrdre = Object.fromEntries(D.ordres.map(o => [o.lat, o]));
   const especes = _arbreEspeces(), vues = _arbreVues();
@@ -21533,13 +21534,17 @@ function renderArbre(garde){
   function poseGenre(f, g, xG){
     const cle = 'g:' + f.lat + '/' + g, ouvert = _arbreOuverts.has(cle);
     const scis = (especes.get(f.courant)?.get(g) || []).slice().sort(), abs = absent(scis);
-    const lab = (y) => html.push(`<button type="button" class="arb-gen${ab(abs)}" data-cle="${esc(cle)}" aria-expanded="${ouvert}" style="left:${xG}px;top:${y - LIGNE / 2 + 1}px;width:${LG}px"><i>${esc(latinAff(g))}</i>${compte(nbVues(scis), scis.length)}${chevron(ouvert)}</button>`);
+    // La photo du genre : l'espèce de sa famille s'il la contient, sinon sa plus observée sur iNaturalist
+    // (f.gph, épithètes dans l'ordre de f.genres, _photos-genres.mjs) ; à défaut, sa première espèce.
+    const ep = f.gph?.[f.genres.findIndex(x => x.toLowerCase() === g)], choix = ep && g + ' ' + ep;
+    const phG = scis.includes(choix) ? choix : scis[0];
+    const lab = (y) => html.push(`<button type="button" class="arb-gen${ab(abs)}" data-cle="${esc(cle)}" aria-expanded="${ouvert}" style="left:${xG}px;top:${y - LIGNE / 2 + 1}px;width:${LG}px">${_arbreImage(phG)}<i>${esc(latinAff(g))}</i>${compte(nbVues(scis), scis.length)}${chevron(ouvert)}</button>`);
     etend(xG + LG);
     if(!ouvert){ const y = yDe(ligne++); lab(y); return { xIn: xG, y, abs }; }
     const { y0, xDep } = ouvreBloc(xG, LG), xS = xDep + RATEAU, ys = [];
     for(const s of scis){
       const y = yDe(ligne++), absE = !!pres && !pres.has(s); ys.push({ y, xIn: xS, abs: absE });
-      html.push(`<button type="button" class="arb-esp${vues.has(s) ? ' vu' : ''}${ab(absE)}" data-sci="${esc(s)}" style="left:${xS}px;top:${y - LIGNE / 2 + 1}px;width:${LS}px">${vues.has(s) ? '<span class="arb-coche" aria-label="vue">✓</span>' : ''}${esc(frName(s))} <i class="arb-lat">${esc(latinAff(s))}</i></button>`);
+      html.push(`<button type="button" class="arb-esp${vues.has(s) ? ' vu' : ''}${ab(absE)}" data-sci="${esc(s)}" style="left:${xS}px;top:${y - LIGNE / 2 + 1}px;width:${LS}px">${_arbreImage(s, null, true)}<span class="arb-esp-t">${vues.has(s) ? '<span class="arb-coche" aria-label="vue">✓</span>' : ''}${esc(frName(s))} <i class="arb-lat">${esc(latinAff(s))}</i></span></button>`);
     }
     etend(xS + LS);
     relie('arb-l3', xG, LG, y0, xDep, ys);

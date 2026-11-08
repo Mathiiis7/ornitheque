@@ -28,13 +28,17 @@ const phrasesFam = fs.existsSync(M + 'phrases-familles.json') ? lire('phrases-fa
 // La photo de chaque famille (_photos-familles.mjs, 2026-11-08) : l'espèce de son ordre si elle en fait
 // partie, sinon la plus observée sur iNaturalist. ph = nom scientifique, en minuscules comme FR_NAMES.
 const photosFam = fs.existsSync(M + 'photos-familles.json') ? lire('photos-familles.json') : {};
+const photosGen = fs.existsSync(M + 'photos-genres.json') ? lire('photos-genres.json') : {};
 const ordres = donnees.map(o => ({
   lat: o.lat, savant: o.savant, courant: o.courant, n: o.n, phrase: phrases[o.lat] || '',
   familles: o.familles.map(f => ({ lat: f.lat, savant: f.savant, courant: f.courant, n: f.n, genres: f.genres.map(g => g.lat),
     ...(o.familles.length > 1 && phrasesFam[f.lat] ? { phrase: phrasesFam[f.lat] } : {}),
-    ...(photosFam[f.lat] ? { ph: photosFam[f.lat] } : {}) })),
+    ...(photosFam[f.lat] ? { ph: photosFam[f.lat] } : {}),
+    // Et de chaque genre (_photos-genres.mjs) : épithètes dans l'ordre de genres, '' quand rien n'est classé
+    ...(photosGen[f.lat]?.some(Boolean) ? { gph: photosGen[f.lat] } : {}) })),
 }));
-console.log('familles avec photo :', ordres.reduce((s, o) => s + o.familles.filter(f => f.ph).length, 0));
+console.log('familles avec photo :', ordres.reduce((s, o) => s + o.familles.filter(f => f.ph).length, 0),
+  '; genres avec photo :', ordres.reduce((s, o) => s + o.familles.reduce((t, f) => t + (f.gph || []).filter(Boolean).length, 0), 0));
 console.log('familles avec phrase :', ordres.reduce((s, o) => s + o.familles.filter(f => f.phrase).length, 0),
   'sur', ordres.reduce((s, o) => s + (o.familles.length > 1 ? o.familles.length : 0), 0), 'dans des ordres a plusieurs familles');
 // L'arbre des familles de chaque ordre (_familles-arbres.mjs, d'apres Stiller 2024). Les familles
