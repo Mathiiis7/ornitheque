@@ -4301,6 +4301,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
        « je peux plus le fermer »). Au-dessus de la barre d'onglets (z-index 1300), qui couvrait son bas. */
     .tmodal { z-index:1400; padding:12px; padding-top:max(12px, env(safe-area-inset-top)); padding-bottom:max(12px, env(safe-area-inset-bottom)); }
     .tmodal-box { max-height:calc(100svh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+    /* Le trophée seul (une image de 340 px plus 14 px de marge de chaque côté) dépassait la fenêtre de 2 à 3 px :
+       on pouvait la faire glisser de côté pour rien (Mathis, 2026-11-08). L'image suit la largeur, carrée. */
+    .tmodal-tier-gallery.single .tmodal-tier { max-width:100%; box-sizing:border-box; }
+    .tmodal-tier-gallery.single .tmodal-tier-img { width:100%; max-width:340px; height:auto; aspect-ratio:1; }
     /* Le clavier ouvert : la barre remonterait au-dessus de lui et prendrait la place du champ. */
     body:has(:is(input:not([type=checkbox], [type=radio], [type=range]), textarea, select):focus) .barre-bas { display:none; }
     /* iOS agrandit la page sur un champ de moins de 16 px, et ne la remet pas après. */
