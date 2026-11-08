@@ -4290,6 +4290,12 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .barre-bas .barre-pastille.or { background:var(--gold); color:#15201e; }
     /* « 99+ » sur « Plus », le dernier onglet : à 360 px, la pastille sortait de 2 px à droite de l'écran. */
     .barre-bas button:last-child .barre-pastille { left:auto; right:2px; }
+    /* Classement : les photos d'espèces à 44 px, le seuil du doigt. Les 52 px du bloc (pointer: coarse) sont
+       pensés pour le zoom 0,85 de l'ordinateur ; au téléphone (zoom 1), ils faisaient vraiment 52 px. */
+    @media (pointer: coarse){
+      #boardList .board-pile .board-rond { width:44px; height:44px; }
+      #boardList .board-sp { min-height:44px; }
+    }
     /* La fenêtre d'un trophée : sa hauteur se règle sur l'écran VISIBLE (svh, barres de Safari affichées) ; en
        90vh, elle dépassait l'écran sur iPhone et, centrée, sortait sa croix par le haut (Mathis, 2026-11-08 :
        « je peux plus le fermer »). Au-dessus de la barre d'onglets (z-index 1300), qui couvrait son bas. */
@@ -4347,10 +4353,14 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     #boardList .board-sheet th, #boardList .board-sheet td { border-width:0 1px 1px 0; }
     #boardList .board-sheet tr > :last-child { border-right:0; }
     #boardList .board-sheet tbody tr:last-child td { border-bottom:0; }
-    #boardList .board-sheet .c-rank { width:36px; min-width:36px; max-width:36px;
+    /* Un peu plus serré partout, pour voir plus de lignes et de colonnes d'un coup (Mathis, 2026-11-08) :
+       rang 30 px (36), joueur 104 (118), colonnes d'oiseaux 150 (170), 5 px au-dessus et au-dessous des cases (8).
+       Les textes gardent 14 px ; les photos passent à 44 px dans le bloc du doigt, plus bas. */
+    #boardList .board-sheet tbody td { padding-top:5px; padding-bottom:5px; }
+    #boardList .board-sheet .c-rank { width:30px; min-width:30px; max-width:30px;
       padding-left:0; padding-right:0; text-align:center; }
     #boardList .board-sheet thead th:nth-child(2), #boardList .board-sheet td.who-cell { position:sticky; left:0; z-index:1;
-      width:118px; min-width:118px; max-width:118px; padding-left:10px; padding-right:8px; border-right:2px solid var(--line-2); }
+      width:104px; min-width:104px; max-width:104px; padding-left:8px; padding-right:6px; border-right:2px solid var(--line-2); }
     #boardList .board-sheet thead th:nth-child(3), #boardList .board-sheet tbody td:nth-child(3) {
       padding-left:8px; padding-right:10px; }
     #boardList .board-sheet thead th:nth-child(2) { z-index:3; }
@@ -4358,7 +4368,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     #boardList .board-sheet tbody td.who-cell { background:var(--surface); }
     #boardList .board-sheet tbody tr:nth-child(even) td.who-cell {
       background:color-mix(in srgb, var(--surface-2) 45%, var(--surface)); }
-    #boardList .board-sheet td.c-esp { min-width:170px; }
+    #boardList .board-sheet td.c-esp { min-width:150px; }
     /* Le barème des tris (Rareté ligue, Rareté terrain) : toute la largeur, 16 px de chaque côté. Il était
        limité à l'écran moins 48 px et décalé sous son bouton : la colonne des points sortait du cadre
        (Mathis, 2026-11-08). app.js le place par style.left, d'où !important. */
