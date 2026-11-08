@@ -75,8 +75,13 @@ familles ensuite par lots relus.
   EXACTEMENT dans l'ordre AviList. Choix de Mathis : un trait sur CHAQUE noeud, « même approximatif » (marqué
   discuté quand la source hésite) ; silhouettes **PhyloPic** (`_phylopic-ordres.mjs`, 45/45, espèces vivantes
   seulement, domaine public sauf 3 CC BY et 1 CC BY-SA, crédits dans `silhouettes/credits.json`). Branches
-  discutées : soutien < 0,95 dans 63K.tre (Hoazin 0,88 ; Strisores 0,90). Reste : avis de Mathis sur D, puis
-  rechercher les 44 traits sourcés, puis phrases des ordres.
+  discutées : soutien < 0,95 dans 63K.tre (Hoazin 0,88 ; Strisores 0,90). D validé par Mathis (« cherche les traits »).
+  **44 traits écrits** (`notes-privees/maquettes/arbre/traits.json`, sources Wikipedia EN téléchargées par
+  `_wiki-clades.mjs` dans `notes-privees/arbre/wiki-clades/`) : 12 donnés par la source, 11 approximatifs, **21
+  « ADN » sans aucun trait visible dans les sources lues** (Columbaves, Otidimorphes, Pélécanimorphes…). Placement
+  des traits : sur la branche d'ARRIVÉE de chaque point (3e règle ; les deux premières faisaient chevaucher), numéro
+  + liste sous l'arbre quand ça ne tient pas (16 sur 44), bulle au toucher au téléphone. Reste : avis de Mathis
+  sur les traits (creuser les 21 « ADN » dans la littérature d'anatomie, Mayr ?), puis phrases des ordres.
 
 ## CHANTIER EN COURS DANS UNE AUTRE CONVERSATION (demandé le 07/11) : le site au téléphone
 Mathis trouve l'affichage téléphone « pas adapté et pas très utilisable », sur **tout le site**. Ce qui
