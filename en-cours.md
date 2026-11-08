@@ -39,8 +39,10 @@ familles ensuite par lots relus.
 - **Recherche du 08/11** (`notes-privees/arbre/BILAN-RECHERCHE.md`) : pas de fausse route. AviList ne définit rien
   au-dessus de l'ordre : grands groupes = Stiller 2024, étage des passereaux = Oliveros 2019 (choisi par Mathis :
   « plus un étage dans les passereaux »). L'arbre et la suite AviList ne divergent qu'aux 3 noeuds débattus.
-  Encore à trancher par Mathis : groupes maison des Trophées (« canards & grèbes », « rapaces diurnes »…) et
-  forme des noms (« Passereaux · Passériformes » ?). Puis maquettes.
+  **Tranché le 08/11** : groupes maison des Trophées NE PAS Y TOUCHER (ne pas reproposer) ; noms affichés partout
+  en « nom courant · nom savant français » (« Passereaux · Passériformes », « Mésanges · Paridés »), même forme pour
+  les grands groupes et l'étage des passereaux. Prochaine étape : liste des 45 ordres (nom courant + nom savant
+  français, sourcés) à faire valider, puis maquettes.
 
 ## CHANTIER EN COURS DANS UNE AUTRE CONVERSATION (demandé le 07/11) : le site au téléphone
 Mathis trouve l'affichage téléphone « pas adapté et pas très utilisable », sur **tout le site**. Ce qui
