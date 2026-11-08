@@ -22,10 +22,16 @@ function nettoie(n){
 }
 const T = {};
 for(const [id, t] of Object.entries(traits)) if(!id.startsWith('_')) T[id] = { g: t.groupe, t: t.trait, d: t.detail, st: t.statut, src: t.src };
+// Phrases des familles (phrases-familles.json, par lots relus par Mathis). Une famille seule dans
+// son ordre n'en a pas besoin : la phrase de l'ordre la dit deja.
+const phrasesFam = fs.existsSync(M + 'phrases-familles.json') ? lire('phrases-familles.json') : {};
 const ordres = donnees.map(o => ({
   lat: o.lat, savant: o.savant, courant: o.courant, n: o.n, phrase: phrases[o.lat] || '',
-  familles: o.familles.map(f => ({ lat: f.lat, savant: f.savant, courant: f.courant, n: f.n, genres: f.genres.map(g => g.lat) })),
+  familles: o.familles.map(f => ({ lat: f.lat, savant: f.savant, courant: f.courant, n: f.n, genres: f.genres.map(g => g.lat),
+    ...(o.familles.length > 1 && phrasesFam[f.lat] ? { phrase: phrasesFam[f.lat] } : {}) })),
 }));
+console.log('familles avec phrase :', ordres.reduce((s, o) => s + o.familles.filter(f => f.phrase).length, 0),
+  'sur', ordres.reduce((s, o) => s + (o.familles.length > 1 ? o.familles.length : 0), 0), 'dans des ordres a plusieurs familles');
 const manque = ordres.filter(o => !o.phrase).map(o => o.lat);
 if(manque.length) throw new Error('phrases manquantes : ' + manque.join(', '));
 const sortie = {

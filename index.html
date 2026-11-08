@@ -49,11 +49,11 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=612">
+<link rel="modulepreload" href="app.js?v=613">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). Il porte le MEME ?v= qu'app.js :
      sans numero, GitHub Pages le laisse 10 min en cache (max-age=600) et un telephone a garde l'ancien CSS
      avec le nouvel app.js - panneau de la Carte invisible (Mathis sur iPhone, 2026-11-07). -->
-<link rel="preload" href="styles.css?v=612" as="style">
+<link rel="preload" href="styles.css?v=613" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
 <link rel="preconnect" href="https://unpkg.com" crossorigin>
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
@@ -76,7 +76,7 @@
 <!-- Les grappes de la Carte (choix de Mathis, 2026-10-23) : 34 Ko, après Leaflet dont elles ont besoin.
      Leur petite feuille de style (les animations) est réécrite dans styles.css, sans requête de plus. -->
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" integrity="sha256-Hk4dIpcqOSb0hZjgyvFOP+cEmDXUKKNE/tT542ZbNQg=" crossorigin="" defer></script>
-<link rel="stylesheet" href="styles.css?v=612">
+<link rel="stylesheet" href="styles.css?v=613">
 
 <!-- Etat d'auth : au chargement, on ne sait pas encore si l'utilisateur est connecte.
      data-auth="pending" par defaut -> affiche un splash neutre (pas l'ecran de connexion).
@@ -217,8 +217,8 @@ document.documentElement.setAttribute('data-theme', _theme);</script>
     <button class="tab" data-view="feed" hidden>🆕 Fil</button>
     <button class="tab" data-view="requests" hidden>💡 Requêtes</button>
     <button class="tab" data-view="about" hidden>ℹ️ À propos</button>
-    <!-- L'arbre des oiseaux : dans le menu ⚙ (choix de Mathis, 2026-11-08), donc Plus au telephone. -->
-    <button class="tab" data-view="arbre" hidden>🌳 Arbre des oiseaux</button>
+    <!-- Arbre phylogénétique (nom choisi par Mathis le 2026-11-08, d'abord « L'arbre des oiseaux ») : dans le menu ⚙, donc Plus au telephone. -->
+    <button class="tab" data-view="arbre" hidden>🌳 Arbre phylogénétique</button>
     <!-- La page Plus n'existe qu'au telephone, ouverte par la barre du bas (#barreBas). -->
     <button class="tab" data-view="plus" hidden>Plus</button>
     <div class="nav-droite">
@@ -239,7 +239,7 @@ document.documentElement.setAttribute('data-theme', _theme);</script>
   <div id="hamburgerMenu" hidden style="position:fixed; background:var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,.15); min-width:220px; padding:6px; z-index:1700;">
     <button type="button" class="ham-item" data-view="profil">👤 Profil</button>
     <button type="button" class="ham-item" data-view="requests">💡 Requêtes</button>
-    <button type="button" class="ham-item" data-view="arbre">🌳 Arbre des oiseaux</button>
+    <button type="button" class="ham-item" data-view="arbre">🌳 Arbre phylogénétique</button>
     <button type="button" class="ham-item" data-view="about">ℹ️ À propos</button>
     <!-- Sans data-view : ce n'est pas une page, il ouvre la fenetre #inviteDialog -->
     <button type="button" class="ham-item" id="hamInvite">📨 Inviter des amis</button>
@@ -1395,7 +1395,7 @@ document.documentElement.setAttribute('data-theme', _theme);</script>
   <div id="viewArbre" style="display:none;">
     <section class="panel" style="padding:20px; margin-top:22px;">
       <div class="section-head">
-        <div><h2 class="page-title">L’arbre des oiseaux</h2>
+        <div><h2 class="page-title">Arbre phylogénétique</h2>
           <p class="help">D’où vient chaque ordre d’oiseaux, ce qui le distingue, et quels oiseaux il contient.</p></div>
       </div>
       <div id="arbreCorps"><p class="help" style="margin:12px 0 0;">Chargement…</p></div>
@@ -1638,4 +1638,4 @@ document.documentElement.setAttribute('data-theme', _theme);</script>
   </footer>
 </div>
 
-<script type="module" src="app.js?v=612"></script>
+<script type="module" src="app.js?v=613"></script>

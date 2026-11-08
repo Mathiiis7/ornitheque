@@ -21338,7 +21338,7 @@ if(/^FR-[A-Z]+$/.test(_speciesRegion)){
    consommateur du Status & Trends, dont il exigeait la presence : faute de table S&T il
    affichait "Donnees eBird Status & Trends indisponibles", ce qui etait le cas dans 10
    pays sur 16. */
-// ===== L'arbre des oiseaux (menu ⚙, 2026-11-08) =====
+// ===== Arbre phylogénétique (menu ⚙, 2026-11-08 ; d'abord nommé « L'arbre des oiseaux ») =====
 // Le cladogramme des 45 ordres : l'arbre principal de Stiller et al. 2024 (Nature) réduit aux
 // ordres, dont les feuilles tombent exactement dans l'ordre d'AviList v2026. Un trait par
 // embranchement, une silhouette PhyloPic par ordre ; toucher un ordre ouvre sa phrase et ses
@@ -21354,7 +21354,7 @@ function renderArbre(){
   if(!_arbreDonnees){
     // ?v= à monter quand on régénère le fichier : le service worker garde data/ d'un déploiement
     // à l'autre et ne le renouvelle que si l'adresse change.
-    _arbreCharge ||= fetch('data/arbre.json?v=20261108').then(r => r.json()).then(d => { _arbreDonnees = d; })
+    _arbreCharge ||= fetch('data/arbre.json?v=20261108b').then(r => r.json()).then(d => { _arbreDonnees = d; })
       .catch(() => { box.innerHTML = '<p class="help" style="margin:12px 0 0;">L’arbre n’a pas pu être chargé. Recharge la page pour réessayer.</p>'; });
     _arbreCharge.then(() => { if(_arbreDonnees && $('#viewArbre')?.style.display !== 'none') renderArbre(); });
     return;
@@ -21506,7 +21506,8 @@ function _arbreFamille(tete){
   // Genres dans l'ordre d'AviList ; ceux que le site nomme autrement (eBird 2025) à la fin
   const ordre = f.genres.map(g => g.toLowerCase());
   const genres = [...lots.keys()].sort((a, b) => (ordre.indexOf(a) + 1 || 1e4) - (ordre.indexOf(b) + 1 || 1e4) || a.localeCompare(b));
-  bloc.insertAdjacentHTML('beforeend', `<div class="arb-genres">${genres.map(g => `<div class="arb-genre"><i>${esc(latinAff(g))}</i>
+  const ph = f.phrase ? `<p class="arb-phrase">${esc(f.phrase)} <a href="https://en.wikipedia.org/wiki/${encodeURIComponent(f.lat)}" target="_blank" rel="noopener">source</a></p>` : '';
+  bloc.insertAdjacentHTML('beforeend', `<div class="arb-genres">${ph}${genres.map(g => `<div class="arb-genre"><i>${esc(latinAff(g))}</i>
     ${lots.get(g).sort().map(s => `<button type="button" class="arb-esp${vues.has(s) ? ' vu' : ''}" data-sci="${esc(s)}">${vues.has(s) ? '<span class="arb-coche" aria-label="vue">✓</span>' : ''}${esc(frName(s))} <i class="arb-lat">${esc(latinAff(s))}</i></button>`).join('')}</div>`).join('')}</div>`);
 }
 // Passer de l'ordinateur au téléphone (rotation, fenêtre) redessine l'arbre s'il est affiché

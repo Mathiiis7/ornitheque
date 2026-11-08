@@ -1,6 +1,6 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1040 / app.js?v=612 (et styles.css?v=612). Prochaine : v1041 / 613.
+Dernière version : v1041 / app.js?v=613 (et styles.css?v=613). Prochaine : v1042 / 614.
 
 - **v1040 (08/11, conversation de l'arbre) : page « L'arbre des oiseaux » EN LIGNE**, menu ⚙ (Plus au téléphone,
   choix de Mathis). Cladogramme des 45 ordres de la maquette D : `renderArbre()` dans app.js (avant renderPokedex),
@@ -10,7 +10,13 @@ Dernière version : v1040 / app.js?v=612 (et styles.css?v=612). Prochaine : v104
   (vues/total) ; une famille : genres (ordre AviList) puis espèces de FR_NAMES, les siennes cochées, fiche au toucher.
   Branches : jusqu'à 60 px, moins si la page est étroite (1 024 px débordait) ; traits écrits sur leur branche
   d'arrivée, sinon numéro + liste ; zones de toucher de 44 px. Points orange : exception notée dans la charte.
-  Alias des deux ouettes ajoutés dans SCI_ALIAS (la note « à glisser » est faite). Reste : phrases des 250 familles ?
+  Alias des deux ouettes ajoutés dans SCI_ALIAS (la note « à glisser » est faite).
+- **v1041 EN LIGNE (conversation de l'arbre) : phrases des familles + nouveau nom.** Relu et validé par Mathis. Les 221 familles des ordres à
+  plusieurs familles ont leur phrase (`notes-privees/maquettes/arbre/phrases-familles.json`), relecture en deux
+  fichiers : `notes-privees/arbre/PHRASES-FAMILLES-LOT1.md` (78 hors passereaux) et `-LOT2.md` (143 passereaux) ;
+  sources `notes-privees/arbre/wiki-familles/` (`_wiki-familles.mjs`, 20 titres par demande). Famille seule dans son
+  ordre = phrase de l'ordre. **La page s'appelle désormais « Arbre phylogénétique »** (choix de Mathis, menu, titre,
+  Plus ; `data-view="arbre"` inchangé). data/arbre.json?v=20261108b. Prochaine demande de Mathis : l'arbre doit se PROLONGER À DROITE (familles, puis genres, espèces) au lieu du panneau, déplié seulement au clic.
 
 - **v1035-v1037 (08/11)** : fiche au téléphone : flèches et croix 44 px alignées ; « Où et quand », debout, mois
   en grille AU-DESSUS de la carte, carte pleine largeur ; Répartition en aspect-ratio 10/7 (plus de gris) ;
