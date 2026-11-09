@@ -277,6 +277,12 @@ const NAMES = {
   'CA-NB':'Nouveau-Brunswick','CA-NL':'Terre-Neuve-et-Labrador','CA-NT':'Territoires du Nord-Ouest',
   'CA-NS':'Nouvelle-Écosse','CA-PE':"Île-du-Prince-Édouard",'CA-QC':'Québec',
   'NA-CA':'Zambèze','NA-KA':'ǁKaras','NA-OK':'Kavango',
+  // Maroc : les noms d'eBird en français, ceux de Natural Earth ont des espaces autour des tirets.
+  'MA-01':'Tanger-Tétouan','MA-02':'Gharb-Chrarda-Beni Hssen','MA-03':'Taza-Al Hoceima-Taounate',
+  'MA-04':"L'Oriental",'MA-05':'Fès-Boulemane','MA-06':'Meknès-Tafilalet','MA-07':'Rabat-Salé-Zemmour-Zaer',
+  'MA-08':'Grand Casablanca','MA-09':'Chaouia-Ouardigha','MA-10':'Doukkala-Abda',
+  'MA-11':'Marrakech-Tensift-Al Haouz','MA-12':'Tadla-Azilal','MA-13':'Sous-Massa-Draa',
+  'MA-14':'Guelmim-Es Smara','MA-15':'Laâyoune-Boujdour-Sakia el Hamra','MA-16':'Oued ed Dahab-Lagouira',
 };
 
 // Liste stricte des codes eBird par pays : tout ce qui n'y est pas est ignore.
@@ -399,6 +405,10 @@ const EBIRD_REGIONS = {
        'LK-72','LK-81','LK-82','LK-91','LK-92'],
   NA: ['NA-CA','NA-ER','NA-HA','NA-KA','NA-KH','NA-KU','NA-OD','NA-OH','NA-OK','NA-ON',
        'NA-OS','NA-OT','NA-OW'],
+  // Maroc : les 16 anciennes regions, memes codes chez eBird et Natural Earth. MA-16 n'a
+  // aucune liste chez eBird (2026-11-09) : tracee pour fermer le contour du pays, grise.
+  MA: ['MA-01','MA-02','MA-03','MA-04','MA-05','MA-06','MA-07','MA-08','MA-09','MA-10',
+       'MA-11','MA-12','MA-13','MA-14','MA-15','MA-16'],
   AU: ['AU-ACT','AU-NSW','AU-NT','AU-QLD','AU-SA','AU-TAS','AU-VIC','AU-WA'],
   NZ: ['NZ-AUK','NZ-BOP','NZ-CAN','NZ-CI','NZ-GIS','NZ-HKB','NZ-MWT','NZ-MBH','NZ-NSN',
        'NZ-NTL','NZ-OTA','NZ-STL','NZ-TKI','NZ-TAS','NZ-WKO','NZ-WGN','NZ-WTC'],
@@ -913,6 +923,8 @@ const ADM0 = {
   RO:'ROU', BG:'BGR', HR:'HRV', RS:'SRB', BA:'BIH', AL:'ALB', SI:'SVN',
   DK:'DNK', SE:'SWE', FI:'FIN', EE:'EST', LT:'LTU', LV:'LVA', BY:'BLR',
   UA:'UKR', RU:'RUS', IE:'IRL', CY:'CYP', LV:'LVA', ME:'MNE', MK:'MKD', LU:'LUX', MD:'MDA',
+  // Hors d'Europe, a partir du 2026-11-09.
+  MA:'MAR',
 };
 // --carte : au lieu des tracés projetés de la fiche espèce, les régions de chaque pays en GeoJSON
 // (lon/lat) pour la Carte du site, une fois un pays cliqué : data/carte-zones/<cc>.json (2026-10-24).

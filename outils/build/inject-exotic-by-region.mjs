@@ -27,7 +27,9 @@ const CCS = ['FR','GB','ES','IT','PT','CH','NO','GR','IS','LK','NA','AU','NZ','U
   // Ajoutes le 2026-09-28. Ils etaient dans le scraper depuis le 2026-09-28 mais pas ici :
   // leurs 135 zones etaient recoltees et absentes d'app.js, cartes de statut vides a l'ecran
   // sans le moindre signal. Completer le scraper sans completer cette liste ne sert a rien.
-  'LU','MD','ME','MK'];
+  'LU','MD','ME','MK',
+  // Hors d'Europe, a partir du 2026-11-09 (docs/ajouter-un-pays.md).
+  'MA'];
 
 // Pays dont les zones de la fiche sont des REGROUPEMENTS de zones eBird. Le scraping se
 // fait forcement a la maille eBird ; la carte, elle, affiche les regroupements. Sans cette

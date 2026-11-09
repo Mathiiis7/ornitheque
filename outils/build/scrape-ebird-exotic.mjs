@@ -11,7 +11,7 @@
 */
 import { EBIRD_API_KEY } from './cle-ebird.mjs';
 import { chromium } from 'playwright';
-import { writeFileSync } from 'node:fs';
+import { writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -24,7 +24,8 @@ const OUT = join(__dir, 'exotic-per-country-scraped.generated.js');
 const COUNTRIES = ['FR', 'ME', 'ES', 'IT', 'GB', 'PT', 'CH', 'NO', 'GR', 'IS', 'LK', 'NA', 'AU', 'NZ', 'US', 'CA',
   'AL', 'AT', 'BA', 'BE', 'BG', 'BY', 'CY', 'CZ', 'DE', 'DK', 'EE', 'FI', 'FO', 'GG', 'GI',
   'HR', 'HU', 'IE', 'IM', 'JE', 'LT', 'LU', 'LV', 'MD', 'MK', 'MT', 'NL', 'PL', 'RO', 'RS',
-  'RU', 'SE', 'SI', 'SJ', 'SK', 'UA', 'XK'];
+  'RU', 'SE', 'SI', 'SJ', 'SK', 'UA', 'XK',
+  'MA'];
 // Sous-set pour un run cible : CLI arg 1 en CSV, sinon tous. Ex: node scrape... AU,NZ
 const CLI_COUNTRIES = (process.argv[2] || '').split(',').map(s => s.trim()).filter(Boolean);
 const RUN_COUNTRIES = CLI_COUNTRIES.length > 0 ? CLI_COUNTRIES : COUNTRIES;
@@ -154,7 +155,13 @@ for(const t of tax) codeToSci[t.speciesCode] = (t.sciName || '').toLowerCase();
 console.log(`  Loaded ${Object.keys(codeToSci).length} taxonomy entries`);
 
 // Convertit les resultats: speciesCode -> sciName
+// Un run cible (« ... MA ») repart du fichier existant : sans cela il reecrivait le fichier
+// avec le seul pays demande et effacait les 53 autres (vu le 2026-11-09, avant l'ajout du Maroc).
 const bySci = {};
+if(existsSync(OUT)){
+  const m = readFileSync(OUT, 'utf8').match(/EXOTIQUES_EBIRD_SCRAPED = (\{.*\});/);
+  if(m) Object.assign(bySci, JSON.parse(m[1]));
+}
 for(const [cc, m] of Object.entries(results)) {
   bySci[cc] = {};
   for(const [code, cat] of Object.entries(m)) {

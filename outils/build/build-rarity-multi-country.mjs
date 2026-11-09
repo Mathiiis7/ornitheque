@@ -27,7 +27,9 @@ const __dir = dirname(fileURLToPath(import.meta.url));
 const COUNTRIES = ['FR', 'ES', 'IT', 'GB', 'PT', 'CH', 'NO', 'GR', 'IS', 'LK', 'NA', 'AU', 'NZ', 'US', 'CA',
   'AL', 'AT', 'BA', 'BE', 'BG', 'BY', 'CY', 'CZ', 'DE', 'DK', 'EE', 'FI', 'FO', 'GG', 'GI',
   'HR', 'HU', 'IE', 'IM', 'JE', 'LT', 'LU', 'LV', 'MD', 'MK', 'MT', 'NL', 'PL', 'RO', 'RS',
-  'RU', 'SE', 'SI', 'SJ', 'SK', 'UA', 'XK'];
+  'RU', 'SE', 'SI', 'SJ', 'SK', 'UA', 'XK',
+  // Hors d'Europe, ajoutes a partir du 2026-11-09 (docs/ajouter-un-pays.md).
+  'MA'];
 
 // La France est passee sur ce generateur le 2026-09-23. Elle dependait jusque-la de
 // build-rarity-ebird.mjs, devenu obsolete : il lisait FR_NAMES depuis index.html (la table
@@ -163,6 +165,11 @@ const REGIONS = {
   NA: ['NA-CA','NA-ER','NA-HA','NA-KA','NA-KH','NA-KU','NA-OD','NA-OH',
        'NA-OK','NA-ON','NA-OS','NA-OT','NA-OW'],
   AU: ['AU-ACT','AU-NSW','AU-NT','AU-QLD','AU-SA','AU-TAS','AU-VIC','AU-WA'],
+  // MA : les 16 anciennes regions (avant 2015), codes identiques chez eBird et Natural Earth.
+  // MA-16 (Oued ed Dahab) : eBird rend une erreur 500, aucune liste ; le national egale
+  // pile la somme des 15 autres (41 923 listes, mesure le 2026-11-09).
+  MA: ['MA-01','MA-02','MA-03','MA-04','MA-05','MA-06','MA-07','MA-08',
+       'MA-09','MA-10','MA-11','MA-12','MA-13','MA-14','MA-15'],
   NZ: ['NZ-AUK','NZ-BOP','NZ-CAN','NZ-CI','NZ-GIS','NZ-HKB','NZ-MWT','NZ-MBH',
        'NZ-NSN','NZ-NTL','NZ-OTA','NZ-STL','NZ-TKI','NZ-TAS','NZ-WKO','NZ-WGN',
        'NZ-WTC'],

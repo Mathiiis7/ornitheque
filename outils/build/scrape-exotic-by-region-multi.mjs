@@ -153,6 +153,9 @@ const REGIONS = {
        'US-VT','US-VA','US-WA','US-WV','US-WI','US-WY'],
   CA: ['CA-AB','CA-BC','CA-MB','CA-NB','CA-NL','CA-NT','CA-NS','CA-NU','CA-ON',
        'CA-PE','CA-QC','CA-SK','CA-YT'],
+  // Hors d'Europe, a partir du 2026-11-09 : memes zones que build-rarity-multi-country.mjs.
+  MA: ['MA-01','MA-02','MA-03','MA-04','MA-05','MA-06','MA-07','MA-08',
+       'MA-09','MA-10','MA-11','MA-12','MA-13','MA-14','MA-15'],
 };
 
 // Args CLI : [countries] [--force]

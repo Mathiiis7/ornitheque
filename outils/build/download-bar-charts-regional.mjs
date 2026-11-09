@@ -26,7 +26,7 @@
   Sans argument, tous les pays de REGIONS sont parcourus (les fichiers deja presents sont
   ignores, donc un rerun complet ne retelecharge rien inutilement).
 */
-import { writeFileSync, existsSync } from 'node:fs';
+import { writeFileSync, existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -101,7 +101,11 @@ const REGIONS = {
        'CA-PE','CA-QC','CA-SK','CA-YT'],
 };
 
-const COOKIE = process.env.EBIRD_COOKIE;
+// Le cookie se lit aussi dans le fichier écrit par cookie-ebird.mjs (EBIRD_COOKIE_FILE), pour ne
+// plus le coller à la main dans la ligne de commande (2026-11-09).
+const COOKIE = process.env.EBIRD_COOKIE
+  || (process.env.EBIRD_COOKIE_FILE && existsSync(process.env.EBIRD_COOKIE_FILE)
+      ? readFileSync(process.env.EBIRD_COOKIE_FILE, 'utf8').trim() : '');
 if (!COOKIE) {
   console.error('ERREUR : variable EBIRD_COOKIE non set.');
   console.error('Usage : EBIRD_COOKIE="valeur..." node outils/download-bar-charts-regional.mjs');
@@ -128,8 +132,9 @@ function urlFor(region) {
 const cookieJar = {};
 // Init avec le cookie initial (format 'name=value; name2=value2').
 (COOKIE.includes('=') ? COOKIE : `EBIRD_SESSIONID=${COOKIE}`).split(';').forEach(kv => {
-  const [k, v] = kv.trim().split('=');
-  if (k && v) cookieJar[k] = v;
+  // Une valeur peut contenir « = » (jetons en base64) : split('=') seul la tronquait.
+  const [k, ...reste] = kv.trim().split('=');
+  if (k && reste.length) cookieJar[k] = reste.join('=');
 });
 function cookieHeader() {
   return Object.entries(cookieJar).map(([k,v]) => `${k}=${v}`).join('; ');
@@ -139,8 +144,8 @@ function updateJarFromSetCookie(headers) {
   const arr = headers.getSetCookie ? headers.getSetCookie() : [];
   for (const raw of arr) {
     const first = raw.split(';')[0];   // "name=value"
-    const [k, v] = first.split('=');
-    if (k && v !== undefined) cookieJar[k.trim()] = v.trim();
+    const [k, ...reste] = first.split('=');
+    if (k && reste.length) cookieJar[k.trim()] = reste.join('=').trim();
   }
 }
 
@@ -196,6 +201,18 @@ async function main() {
   const totalCalls = Object.entries(REGIONS).reduce((a, [c, r]) => a + 1 + r.length, 0);
   console.log('Total : ' + Object.keys(REGIONS).length + ' pays + ' + Object.values(REGIONS).flat().length + ' regions = ' + totalCalls + ' requetes');
   console.log('Delai entre requetes : ' + SLEEP_MS + 'ms\n');
+
+  // Un pays demandé mais absent de REGIONS : ses zones viennent de l'API eBird, jamais d'une
+  // liste locale (skill donnees-ebird : la Lettonie a perdu ses 5 plus grosses zones ainsi).
+  for (const cc of PAYS_DEMANDES) {
+    if (REGIONS[cc]) continue;
+    const env = existsSync('C:/Users/mathi/Documents/.Renviron') ? readFileSync('C:/Users/mathi/Documents/.Renviron', 'utf8') : '';
+    const cle = process.env.EBIRD_API_KEY || (env.match(/^EBIRD_API_KEY=(.*)$/m) || [])[1]?.trim().replace(/^"|"$/g, '');
+    const r = await fetch(`https://api.ebird.org/v2/ref/region/list/subnational1/${cc}.json`, { headers: { 'X-eBirdApiToken': cle } });
+    if (!r.ok) { console.error(`ERREUR : zones de ${cc} introuvables (HTTP ${r.status})`); process.exit(1); }
+    REGIONS[cc] = (await r.json()).map(z => z.code);
+    console.log(`${cc} : ${REGIONS[cc].length} zones lues chez eBird`);
+  }
 
   const results = [];
   // Note : la page HTML nationale eBird echoue "Oups!" pour AU/US (trop gros),

@@ -55,28 +55,40 @@ const ancien = JSON.parse(cible.litteral);
 const frais = lire(readFileSync(GEN, 'utf8'), 'EXOTIQUES_EBIRD_SCRAPED = ');
 if (!frais) { console.error('EXOTIQUES_EBIRD_SCRAPED absent du fichier scrape.'); process.exit(1); }
 
-// Presence dans le bar chart courant, par pays.
+// Pays a traiter : ceux passes en argument (« ... MA,TR »), sinon tous. Les autres sont recopies
+// tels quels. Un pays absent de l'ancienne table (pays nouveau) est cree : avant le 2026-11-09,
+// la boucle ne parcourait que l'ancienne table et le Maroc n'entrait jamais.
+const demandes = (process.argv.slice(2).find(a => !a.startsWith('--')) || '').split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
+const tousPays = [...new Set([...Object.keys(ancien), ...Object.keys(frais)])];
+const aTraiter = demandes.length ? demandes : tousPays;
+
+// Presence dans le bar chart courant, par pays. Les pays etrangers vivent dans
+// data/freq_monthly_pays.json depuis le 2026-09-27 : les chercher dans app.js ne trouvait rien,
+// et la regle « ligne au bar chart sans icone = sauvage » ne s'appliquait plus nulle part.
+const freqPays = JSON.parse(readFileSync(join(ROOT, 'data', 'freq_monthly_pays.json'), 'utf8'));
 const mensuel = {};
-for (const cc of Object.keys(ancien)) {
-  mensuel[cc] = lire(app, cc === 'FR' ? 'const REAL_FREQ_MONTHLY = ' : `const REAL_FREQ_MONTHLY_${cc} = `) || {};
+for (const cc of tousPays) {
+  mensuel[cc] = cc === 'FR' ? (lire(app, 'const REAL_FREQ_MONTHLY = ') || {})
+    : (freqPays[cc] || lire(app, `const REAL_FREQ_MONTHLY_${cc} = `) || {});
 }
 const auBarChart = (cc, sci) => {
   const a = mensuel[cc][sci];
   return Array.isArray(a) && Math.max(...a) > 0;
 };
 
-const fusion = {};
+const fusion = { ...ancien };
 let gardes = 0, retires = 0, ajoutes = 0;
 const detailGardes = [];
-for (const cc of Object.keys(ancien)) {
-  const out = { ...(frais[cc] || {}) };
-  for (const [sci, cat] of Object.entries(ancien[cc])) {
+for (const cc of aTraiter) {
+  if (!frais[cc]) { console.error(`ARRET : ${cc} absent du scrape (lancer scrape-ebird-exotic.mjs ${cc})`); process.exit(1); }
+  const out = { ...frais[cc] };
+  for (const [sci, cat] of Object.entries(ancien[cc] || {})) {
     if (out[sci]) continue;
     if (auBarChart(cc, sci)) { retires++; continue; }   // eBird a regarde : sauvage
     out[sci] = cat; gardes++;                            // rien a lire : on garde
     detailGardes.push(`${cc} ${sci} (${cat})`);
   }
-  for (const sci of Object.keys(frais[cc] || {})) if (!ancien[cc][sci]) ajoutes++;
+  for (const sci of Object.keys(frais[cc] || {})) if (!(ancien[cc] || {})[sci]) ajoutes++;
   fusion[cc] = out;
 }
 
