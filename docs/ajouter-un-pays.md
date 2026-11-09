@@ -52,8 +52,9 @@ Et deux pièges :
 
 - `outils/build/download-bar-charts-regional.mjs XX` : national + chaque zone, 2019-2026. Ajouter
   le pays et ses zones dans `REGIONS`.
-- `outils/build/download-bar-charts-par-annee.mjs` : national année par année (liste `PAYS`), pour
-  `compter-annees-presence.mjs` (`ANNEES_PRESENCE`).
+- Facultatif : `outils/build/download-bar-charts-par-annee.mjs` (national année par année, liste
+  `PAYS`), pour `compter-annees-presence.mjs` (`ANNEES_PRESENCE`). Seuls 16 pays l'ont (09/11) ; le
+  Maroc ne l'a pas, comme les 37 pays européens ajoutés le 2026-09-26.
 
 ## 3. Rareté et fréquences
 
