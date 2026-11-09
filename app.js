@@ -986,6 +986,20 @@ const CONTINENT_BY_CC = {
 // silencieusement absent du selecteur. C'est ce qui est arrive aux 35 pays europeens
 // ajoutes le 2026-09-26 - ils existaient dans COUNTRIES_REG mais ne s'affichaient pas.
 const CONTINENT_ORDER = ['Europe', 'Amérique', 'Afrique', 'Océanie', 'Asie', 'Autres'];
+// Les 7 continents du trophee des continents (Mathis, 10/11 : « 5 sur 7 »). CONTINENT_BY_CC ci-dessus ne connait
+// qu'une Amerique et une cinquantaine de pays : il sert au selecteur de pays, pas a compter des continents.
+// Pays -> continent, 7 continents : genere par outils/build/_continents.mjs (Natural Earth + 22 choix a la main), 250 pays.
+const CONTINENTS_7 = {
+  'Afrique': 'AO BF BI BJ BW CD CF CG CI CM CV DJ DZ EG EH ER ET GA GH GM GN GQ GW KE KM LR LS LY MA MG ML MR MU MW MZ NA NE NG RE RW SC SD SH SL SN SO SS ST SZ TD TG TN TZ UG YT ZA ZM ZW',
+  'Amérique du Nord': 'AG AI AW BB BL BM BQ BS BZ CA CR CU CW DM DO GD GL GP GT HN HT JM KN KY LC MF MQ MS MX NI PA PM PR SV SX TC TT US VC VG VI',
+  'Amérique du Sud': 'AR BO BR CL CO EC FK GF GY PE PY SR UY VE',
+  'Antarctique': 'AQ BV GS HM TF',
+  'Asie': 'AE AF AM AZ BD BH BN BT CC CN CX GE HK ID IL IN IO IQ IR JO JP KG KH KP KR KW KZ LA LB LK MM MN MO MV MY NP OM PH PK PS QA SA SG SY TH TJ TL TM TR TW UZ VN YE',
+  'Europe': 'AD AL AT AX BA BE BG BY CH CY CZ DE DK EE ES FI FO FR GB GG GI GR HR HU IE IM IS IT JE LI LT LU LV MC MD ME MK MT NL NO PL PT RO RS RU SE SI SJ SK SM UA VA XK',
+  'Océanie': 'AS AU CK FJ FM GU KI MH MP NC NF NR NU NZ PF PG PN PW SB TK TO TV UM VU WF WS',
+};
+const CONTINENT_7_DE = Object.fromEntries(Object.entries(CONTINENTS_7).flatMap(([c, l]) => l.split(' ').map(cc => [cc, c])));
+const CONTINENTS_7_ORDRE = ['Europe', 'Afrique', 'Asie', 'Amérique du Nord', 'Amérique du Sud', 'Océanie', 'Antarctique'];
 const CC_FLAGS = {
   FR:'🇫🇷', ME:'🇲🇪', ES:'🇪🇸', IT:'🇮🇹', GB:'🇬🇧', PT:'🇵🇹',
   DE:'🇩🇪', NL:'🇳🇱', GR:'🇬🇷', CH:'🇨🇭', BE:'🇧🇪', HR:'🇭🇷', AL:'🇦🇱', TR:'🇹🇷', IS:'🇮🇸',
@@ -3871,6 +3885,18 @@ function makeTierFamily(cfg){
     };
   });
 }
+// Le trophee Terroir : l'aliment de chaque region, choisi par Mathis le 10/11 (dessine sur sa planche)
+const TERROIR_ALIMENTS = { 'FR-ARA':'reblochon', 'FR-BFC':'escargots', 'FR-BRE':'crêpe', 'FR-CVL':'rillettes de Tours', 'FR-COR':'figatellu',
+  'FR-GES':'bretzel', 'FR-HDF':'frites', 'FR-IDF':'baguette', 'FR-NOR':'cidre', 'FR-NAQ':'canelé', 'FR-OCC':'cassoulet',
+  'FR-PDL':'petit-beurre LU', 'FR-PAC':'calissons' };
+// Le compte de Sam : Gros Bebe lui revient d'office (Mathis, 10/11). L'identifiant, pas le nom : le depot est public.
+// Les trophees « Fun » (fun:true) sont des trophees prives de la ligue : la demo du portfolio (/demo/) ne les
+// montre pas et ne les annonce pas (Mathis, 10/11 : « si jamais on ouvre le site a plus de monde, on verra »).
+const TROPHEES_FUN_VISIBLES = !location.pathname.includes('/demo/');
+const GROS_BEBE_DOFFICE = 'XLE3gYESGaexYimXdugvldHhmBh1';
+// Ancien compte -> compte actuel, pour les votes donnes avant une reinscription : 2 votes du Necrophile visaient
+// l'ancien compte d'un membre (sauvegarde du 01/09, meme nom ; Mathis, 10/11). Rien n'est reecrit dans la base.
+const VOTE_COMPTE_ACTUEL = { 'hHHui0vDP7g5QawW4a2hOusFvHw2': 'a9zxGD9PvDecKwTKzZFA3fsiZe93' };
 const TROPHIES = [
   // -- Familles a paliers (6 tiers Bronze->Emeraude, cumulatifs a vie) --
   ...makeTierFamily({
@@ -4126,17 +4152,29 @@ const TROPHIES = [
     info:s=>s.hotPhotos>0 ? `${s.hotPhotos} photo${s.hotPhotos>1?'s':''} qui claque${s.hotPhotos>1?'nt':''}` : '',
   }),
   // -- Trophees one-shot (binaires, pas de tiers) --
-  { theme:'groupe',      icon:ICONS.picNoirBadge, name:'Pic noir', desc:'Observer le Pic noir', test:s=>s.blackWoodpecker, exotic:true, speciesFamilyKey:'picNoir', list:s=>s.blackWoodpecker ? [{ name:frName('dryocopus martius','Pic noir'), sci:'dryocopus martius', owned:true }] : [] },
-  { theme:'groupe',      icon:ICONS.pelagic,    name:'Oiseau pélagique',  desc:'Observer un albatros, un puffin, un pétrel ou un océanite (Procellariiformes)',      test:s=>s.hasPelagic,     exotic:true, speciesFamilyKey:'pelagics',     list:s=>[...(s.pelagicsSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
-  { theme:'groupe',      icon:ICONS.jaseur,     name:'Jaseur',            desc:'Observer un jaseur (Bombycillidae) : boréal, d\'Amérique ou du Japon',                test:s=>s.hasWaxwing,     exotic:true, speciesFamilyKey:'waxwings',     list:s=>[...(s.waxwingsSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
-  { theme:'groupe',      icon:ICONS.engoulevent, name:'Engoulevent & cousins', desc:'Observer un engoulevent, un ibijau, un podarge ou un guacharo',                test:s=>s.hasNightjar,    exotic:true, speciesFamilyKey:'nightjars',    list:s=>[...(s.nightjarsSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
-  { theme:'groupe',      icon:ICONS.pieGrieche, name:'Pie-grièche',       desc:'Observer une pie-grièche (Laniidae)',                                                test:s=>s.hasShrike,      exotic:true, speciesFamilyKey:'shrikes',      list:s=>[...(s.shrikesSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
-  { theme:'groupe',      icon:ICONS.colibri,   name:'Colibri',            desc:'Observer un colibri (Trochilidae)',                                                  test:s=>s.hasHummingbird, exotic:true, speciesFamilyKey:'hummingbirds', list:s=>[...(s.hummingbirdsSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
-  { theme:'groupe',      icon:ICONS.ratite,    name:'Grand ratite',       desc:'Observer une autruche, un nandou, un casoar ou un émeu',                             test:s=>s.hasRatite,      exotic:true, speciesFamilyKey:'ratites',      list:s=>[...(s.ratitesSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
-  { theme:'groupe',      icon:ICONS.perroquet, name:'Perroquet exotique', desc:'Observer un perroquet, une perruche ou un cacatoès (hors Perruche à collier férale)', test:s=>s.hasExoticParrot, exotic:true, speciesFamilyKey:'exoticParrots', list:s=>[...(s.exoticParrotsSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
-  { theme:'groupe',      icon:ICONS.toucan,    name:'Toucan',             desc:'Observer un toucan (Ramphastidae)',                                                  test:s=>s.hasToucan,      exotic:true, speciesFamilyKey:'toucans',      list:s=>[...(s.toucansSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
-  { theme:'groupe',      icon:ICONS.calao,     name:'Calao',              desc:'Observer un calao (Bucerotidae ou Bucorvidae)',                                      test:s=>s.hasHornbill,    exotic:true, speciesFamilyKey:'hornbills',    list:s=>[...(s.hornbillsSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
-  { theme:'groupe',      icon:ICONS.penguinBadge, name:'Pingouin, manchot & cousins', desc:'Observer un pingouin, un manchot ou un cousin (macareux, guillemot…)', test:s=>s.hasPenguin, exotic:true, speciesFamilyKey:'penguins',
+  { theme:'groupe',      icon:ICONS.picNoirBadge, name:'Pic noir pic noir pic noir', desc:'Observer le Pic noir', test:s=>s.blackWoodpecker, exotic:true, speciesFamilyKey:'picNoir', list:s=>s.blackWoodpecker ? [{ name:frName('dryocopus martius','Pic noir'), sci:'dryocopus martius', owned:true }] : [] },
+  { theme:'groupe',      icon:ICONS.pelagic,    name:'Vendée Globe',      desc:'Observer un albatros, un puffin, un pétrel ou un océanite (Procellariiformes)',      test:s=>s.hasPelagic,     exotic:true, speciesFamilyKey:'pelagics',     list:s=>[...(s.pelagicsSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
+  { theme:'groupe',      icon:ICONS.jaseur,     name:'Jazz Club',         desc:'Observer un jaseur (Bombycillidae) : boréal, d\'Amérique ou du Japon',                test:s=>s.hasWaxwing,     exotic:true, speciesFamilyKey:'waxwings',     list:s=>[...(s.waxwingsSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
+  { theme:'groupe',      icon:ICONS.engoulevent, name:'Batman', desc:'Observer un engoulevent, un ibijau, un podarge ou un guacharo',                test:s=>s.hasNightjar,    exotic:true, speciesFamilyKey:'nightjars',    list:s=>[...(s.nightjarsSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
+  { theme:'groupe',      icon:ICONS.pieGrieche, name:'Le Boucher',        desc:'Observer une pie-grièche (Laniidae)',                                                test:s=>s.hasShrike,      exotic:true, speciesFamilyKey:'shrikes',      list:s=>[...(s.shrikesSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
+  { theme:'groupe',      icon:ICONS.colibri,   name:'Poids plume',        desc:'Observer un colibri (Trochilidae)',                                                  test:s=>s.hasHummingbird, exotic:true, speciesFamilyKey:'hummingbirds', list:s=>[...(s.hummingbirdsSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
+  { theme:'groupe',      icon:ICONS.ratite,    name:'La Tête dans le sable', desc:'Observer une autruche, un nandou, un casoar ou un émeu',                             test:s=>s.hasRatite,      exotic:true, speciesFamilyKey:'ratites',      list:s=>[...(s.ratitesSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
+  { theme:'groupe',      icon:ICONS.perroquet, name:'Jacquot',            desc:'Observer un perroquet, une perruche ou un cacatoès (hors Perruche à collier férale)', test:s=>s.hasExoticParrot, exotic:true, speciesFamilyKey:'exoticParrots', list:s=>[...(s.exoticParrotsSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
+  { theme:'groupe',      icon:ICONS.toucan,    name:'Cyrano',             desc:'Observer un toucan (Ramphastidae)',                                                  test:s=>s.hasToucan,      exotic:true, speciesFamilyKey:'toucans',      list:s=>[...(s.toucansSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
+  { theme:'groupe',      icon:ICONS.calao,     name:'Cyrano(céros)',      desc:'Observer un calao (Bucerotidae ou Bucorvidae)',                                      test:s=>s.hasHornbill,    exotic:true, speciesFamilyKey:'hornbills',    list:s=>[...(s.hornbillsSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
+  { theme:'groupe',      icon:"<img src=\"assets/trophies/themes/pelican/pelican.png\" alt=\"Pélican\" style=\"width:60px;height:60px;border-radius:50%;object-fit:cover\">", name:'Gargantua',          desc:'Observer un pélican (Pelecanidae)',                                                test:s=>s.hasPelican,     exotic:true, speciesFamilyKey:'pelicans',     list:s=>[...(s.pelicansSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },   // image de Mathis (10/11), nom choisi par lui
+  // Premier trophee de la categorie « Exploits » de la vitrine (exploit:true) : pas lie a un type d'oiseau.
+  { theme:'localisation', exploit:true, icon:ICONS.avion, name:'Magellan', libelle:'continents',   /* icone de l'ancienne grille cachee : l'avion (67 Ko, deja la) ; le navire de la vitrine pesait 273 Ko au demarrage */           desc:'Observer un oiseau sur 5 continents, sur les 7',   test:s=>(s.continents?.size || 0) >= 5, note:s=>`${s.continents?.size || 0} / 7 continents`, list:s=>CONTINENTS_7_ORDRE.map(c=>({ name:c, owned:!!s.continents?.has(c) })) },   // image de Mathis (10/11), nom choisi par lui
+  // Les trophees en pause depuis le 03/10, repris dans les Exploits le 10/11 (Mathis), sauf Wallaby. Les trois a
+  // vote se gagnent quand UN membre valide la preuve (Mathis, 10/11 ; 3 votes avant). Gros Bebe : le prenom seul
+  // (le depot est public) ; Sam l'a d'office, reconnu a son identifiant de compte et non a son nom. Plus de vote
+  // pour soi-meme, que les regles Firestore refusaient de toute facon (target != auteur).
+  // Images provisoires : les anciens badges ronds.
+  { theme:'communaute',  exploit:true, fun:true, icon:ICONS.kimono, name:'Tia mis le kimono', desc:"Faire une observation avec le T-shirt Merlin (preuve à l'appui)", special:'vote', voteId:'kimono', voteThreshold:1, test:s=>(s.kimonoVotes||0)>=1 },   // dans Fun (Mathis, 10/11)
+  { theme:'communaute',  exploit:true, fun:true, icon:ICONS.mort, name:'Nécrophile', desc:'Observer un oiseau décédé #ripstayproud (preuve demandée)', special:'vote', voteId:'necrophile', voteThreshold:1, test:s=>(s.necrophileVotes||0)>=1 },
+  { theme:'communaute',  exploit:true, fun:true, icon:ICONS.bebe, name:'Gros Bébé', desc:'Observer des oiseaux avec Samuel (preuve demandée)', special:'vote', voteId:'grosBebe', voteThreshold:1, voteDoffice:GROS_BEBE_DOFFICE, test:s=>s.uid===GROS_BEBE_DOFFICE || (s.grosBebeVotes||0)>=1 },
+  { theme:'localisation', exploit:true, fun:true, icon:ICONS.huitre, name:'Bourriche d’huître', desc:'Observer un oiseau à La Teste-de-Buch', test:s=>s.locTeste },
+  { theme:'groupe',      icon:ICONS.penguinBadge, name:'Happy Feet', desc:'Observer un pingouin, un manchot ou un cousin (macareux, guillemot…)', test:s=>s.hasPenguin, exotic:true, speciesFamilyKey:'penguins',
     list:s=> [
       ...ALCID_CATALOG.filter(m=>s.alcidOwnedSet.has(m.sci)).map(m=>({ name:m.name, sci:m.sci, owned:true })),
       ...MANCHOT_CATALOG.filter(m=>s.manchotOwnedSet && s.manchotOwnedSet.has(m.sci)).map(m=>({ name:m.name, sci:m.sci, owned:true })),
@@ -4448,6 +4486,10 @@ const SPECIES_FAMILY_FILTERS = {
     const fam = (typeof familyOf === 'function') ? familyOf(sci) : null;
     return fam === 'Calaos';
   },
+  pelicans: sci => {
+    const fam = (typeof familyOf === 'function') ? familyOf(sci) : null;
+    return fam === 'Pélicans';
+  },
   shrikes: sci => {
     const fam = (typeof familyOf === 'function') ? familyOf(sci) : null;
     return fam === 'Pies-grièches';
@@ -4527,6 +4569,7 @@ const SPECIES_FAMILY_LABELS = {
   exoticParrots: 'perroquets, perruches & cacatoès',
   toucans: 'toucans',
   hornbills: 'calaos',
+  pelicans: 'pélicans',
   shrikes: 'pies-grièches',
   pelagics: 'oiseaux pélagiques (albatros, puffins, pétrels, océanites)',
   picNoir: 'Pic noir',
@@ -5690,9 +5733,10 @@ function statsFor(me, N){
   const ranked=[...state.people].sort((a,b)=>b.total-a.total);   // rang basé sur le nb d'espèces (classement principal)
   const rank=ranked.findIndex(p=>p.id===me.id)+1;
   let owls=0,raptors=0,water=0,sea=0,blackWoodpecker=false,locTeste=false,hasKingfisher=false,hasPenguin=false,hasFireKingfisher=false,
-      hasHummingbird=false,hasRatite=false,hasExoticParrot=false,hasToucan=false,hasHornbill=false,hasShrike=false,hasPelagic=false,hasWaxwing=false,hasNightjar=false;
-  const hummingbirdsSet=new Set(), ratitesSet=new Set(), exoticParrotsSet=new Set(), toucansSet=new Set(), hornbillsSet=new Set(), shrikesSet=new Set(), pelagicsSet=new Set(), waxwingsSet=new Set(), nightjarsSet=new Set();
+      hasHummingbird=false,hasRatite=false,hasExoticParrot=false,hasToucan=false,hasHornbill=false,hasPelican=false,hasShrike=false,hasPelagic=false,hasWaxwing=false,hasNightjar=false;
+  const hummingbirdsSet=new Set(), ratitesSet=new Set(), exoticParrotsSet=new Set(), toucansSet=new Set(), hornbillsSet=new Set(), pelicansSet=new Set(), shrikesSet=new Set(), pelagicsSet=new Set(), waxwingsSet=new Set(), nightjarsSet=new Set();
   const megaList=[]; const megaOwnedSet=new Set();
+  const continents=new Set();   // trophee des continents (10/11) : ceux de tous les pays ou il a observe
   const seasonHit={}; SEASON_ORDER.forEach(s=>seasonHit[s]=false); const seasonOwnedSet=new Set();
   const raptorOwnedSet=new Set(), alcidOwnedSet=new Set(), manchotOwnedSet=new Set(), waterOwnedSet=new Set(), owlOwnedSet=new Set(), anatidaeOwnedSet=new Set();
   // 11 nouvelles familles d'especes (paridae inclut Aegithalos + Panurus + Remiz).
@@ -5712,6 +5756,7 @@ function statsFor(me, N){
     const sci=(v.sci||'').toLowerCase();
     const g=sci.split(' ')[0];
     const seas=SEASON_OF[sci]; if(seas){ seasonHit[seas]=true; seasonOwnedSet.add(sci); }
+    for(const cc of paysVus(v)){ const c = CONTINENT_7_DE[cc]; if(c) continents.add(c); }
     if(OWL_G.test(g)){ owls++; owlOwnedSet.add(sci); }
     // Fallback taxo : couvre les strigides mondiaux hors OWL_G (megascops, ninox, etc.)
     else {
@@ -5803,6 +5848,7 @@ function statsFor(me, N){
       if((fam === 'Perroquets' || fam === 'Cacatoès' || fam === 'Perruches' || fam === 'Perroquets de Nouvelle-Zélande') && sci !== 'psittacula krameri'){ hasExoticParrot = true; exoticParrotsSet.add(sci); }
       if(fam === 'Toucans'){ hasToucan = true; toucansSet.add(sci); }
       if(fam === 'Calaos'){ hasHornbill = true; hornbillsSet.add(sci); }
+      if(fam === 'Pélicans'){ hasPelican = true; pelicansSet.add(sci); }   // trophee du pelican (10/11)
       if(fam === 'Pies-grièches'){ hasShrike = true; shrikesSet.add(sci); }
       if(fam === 'Albatros' || fam === 'Puffins, pétrels' || fam === 'Océanites du Sud' || fam === 'Océanites du Nord'){ hasPelagic = true; pelagicsSet.add(sci); }
       if(fam === 'Jaseurs'){ hasWaxwing = true; waxwingsSet.add(sci); }
@@ -5824,16 +5870,17 @@ function statsFor(me, N){
   // Compte les photos de cette personne ayant ≥3 COEURS (bouton dédié type Instagram).
   // On ignore les autres emojis libres (seul le ❤️ compte) et le cœur que l'auteur
   // se donne à lui-même (auto-like non compté).
-  let hotPhotos = 0;
+  let hotPhotos = 0, postedPhotos = 0;   // postedPhotos : toutes ses photos, pour National Geographic de la vitrine
   for(const ph of (photos||[])){
     if(ph.uid !== me.id) continue;
+    postedPhotos++;
     const voters = reactionsMap.get('photo:'+ph.id)?.get(HEART_EMOJI);
     if(!voters) continue;
     let hearts = 0;
     for(const uid of voters) if(uid !== me.id) hearts++;
     if(hearts >= 2) hotPhotos++;
   }
-  return { total:me.total, unique:N>1?me.unique:0, score:me.score, rank, groupN:N, owls, raptors, water, sea, blackWoodpecker, hasKingfisher, hasPenguin, hasFireKingfisher, hasHummingbird, hasRatite, hasExoticParrot, hasToucan, hasHornbill, hasShrike, hasPelagic, hasWaxwing, hasNightjar, hummingbirdsSet, ratitesSet, exoticParrotsSet, toucansSet, hornbillsSet, shrikesSet, pelagicsSet, waxwingsSet, nightjarsSet, locTeste, mikeHorn:!!me.mikeHorn, mikeBird:me.mikeBird||'', megaList, megaOwnedSet, seasonCount, seasonOwnedSet, raptorOwnedSet, owlOwnedSet, alcidOwnedSet, manchotOwnedSet, waterOwnedSet, anatidaeOwnedSet, hirundoOwnedSet, martinetsOwnedSet, alaudaOwnedSet, paridaeOwnedSet, corvidaeOwnedSet, alcediOwnedSet, ardeidaeOwnedSet, columbidaeOwnedSet, galliformesOwnedSet, picidaeOwnedSet, scolopacidaeOwnedSet, rivagesOwnedSet, laridaeOwnedSet, turdidaeOwnedSet, muscicapidaeOwnedSet, sylviidaeOwnedSet, phylloscopidaeOwnedSet, fringillidaeOwnedSet, emberizidaeOwnedSet, rallidaeOwnedSet, motacillidaeOwnedSet, ciconiidaeOwnedSet, coraciiformesOwnedSet, suliformesOwnedSet, sturnoideaOwnedSet, passeridaeOwnedSet, certhioideaOwnedSet, podicipedidaeOwnedSet, cuculidaeOwnedSet, regionsOwnedSet, regionsCount, hotPhotos, grosBebeVotes:(votesMap.get('grosBebe')?.get(me.id)?.size)||0, kimonoVotes:(votesMap.get('kimono')?.get(me.id)?.size)||0, necrophileVotes:(votesMap.get('necrophile')?.get(me.id)?.size)||0, globeTrotter:!!me.globeTrotter, countryCount:me.countryCount||0 };
+  return { uid:me.id, postedPhotos, total:me.total, unique:N>1?me.unique:0, score:me.score, rank, groupN:N, owls, raptors, water, sea, blackWoodpecker, hasKingfisher, hasPenguin, hasFireKingfisher, hasHummingbird, hasRatite, hasExoticParrot, hasToucan, hasHornbill, hasPelican, continents, hasShrike, hasPelagic, hasWaxwing, hasNightjar, hummingbirdsSet, ratitesSet, exoticParrotsSet, toucansSet, hornbillsSet, pelicansSet, shrikesSet, pelagicsSet, waxwingsSet, nightjarsSet, locTeste, mikeHorn:!!me.mikeHorn, mikeBird:me.mikeBird||'', megaList, megaOwnedSet, seasonCount, seasonOwnedSet, raptorOwnedSet, owlOwnedSet, alcidOwnedSet, manchotOwnedSet, waterOwnedSet, anatidaeOwnedSet, hirundoOwnedSet, martinetsOwnedSet, alaudaOwnedSet, paridaeOwnedSet, corvidaeOwnedSet, alcediOwnedSet, ardeidaeOwnedSet, columbidaeOwnedSet, galliformesOwnedSet, picidaeOwnedSet, scolopacidaeOwnedSet, rivagesOwnedSet, laridaeOwnedSet, turdidaeOwnedSet, muscicapidaeOwnedSet, sylviidaeOwnedSet, phylloscopidaeOwnedSet, fringillidaeOwnedSet, emberizidaeOwnedSet, rallidaeOwnedSet, motacillidaeOwnedSet, ciconiidaeOwnedSet, coraciiformesOwnedSet, suliformesOwnedSet, sturnoideaOwnedSet, passeridaeOwnedSet, certhioideaOwnedSet, podicipedidaeOwnedSet, cuculidaeOwnedSet, regionsOwnedSet, regionsCount, hotPhotos, grosBebeVotes:(votesMap.get('grosBebe')?.get(me.id)?.size)||0, kimonoVotes:(votesMap.get('kimono')?.get(me.id)?.size)||0, necrophileVotes:(votesMap.get('necrophile')?.get(me.id)?.size)||0, globeTrotter:!!me.globeTrotter, countryCount:me.countryCount||0 };
 }
 let trophyPlayerId = null, trophyData = {N:0}, trophyDetails = {};
 function renderTrophies(data){
@@ -6175,6 +6222,564 @@ function renderTrophies(data){
     </div>`;
   const label = sel.isMe ? 'Tu as' : esc(sel.name)+' a';
   summary.textContent = `${label} débloqué ${unlocked} trophée${unlocked>1?'s':''} sur ${TROPHIES.length}`;
+  try{ renderVitrine(sel, s, data); }catch(e){ console.warn('vitrine', e); }
+}
+
+/* ---------------- Vitrine des trophées (commencee le 2026-11-08, en ligne le 2026-11-10) ----------------
+   La maquette choisie par Mathis (notes-privees/maquettes/trophees/vitrine.html), posee sur la vraie
+   page avec les vraies donnees ; decisions dans notes-privees/trophees/THEMES.md.
+   - une seule ligne qui defile, galerie de musee en ebene, un spot par trophee gagne ;
+   - sans socle : le bloc brun des images est reconnu et decoupe ;
+   - le nom sur une plaque en or champagne, rien d'autre dessous ;
+   - un trophee manquant : emplacement sombre, spot eteint, plaque ternie (plus de pointilles, 08/11) ;
+   - des groupes d'especes, seul Armee d'aigles royaux (les rapaces diurnes) est montre, demande de
+     Mathis : 3 images, une par place du podium de la ligue (3e l'aigle, 2e + le vautour, 1er + le faucon) ;
+   - cliquer un trophee l'allume ou l'eteint pour voir a quoi il ressemble ; rien n'est enregistre.
+   L'ancienne grille est toujours construite (le banc « trophees » la compte), seulement masquee. */
+const VITRINE_AIGLES = [1, 2, 3].map(n => `assets/trophies/themes/armee-aigles-royaux/niveau-${n}.png`);
+const VITRINE_PROGRESSION = ['ecologue', 'marcoPolo', 'maFrance', 'natGeo'];
+// Les nouvelles images des trophees uniques, a la place de leur ancien badge, dans la vitrine seulement
+const VITRINE_IMAGES = { 'Pic noir pic noir pic noir': 'assets/trophies/themes/pic-noir/pic-noir.png',   // images de Mathis, 09/11
+  'Vendée Globe': 'assets/trophies/themes/oiseau-pelagique/oiseau-pelagique.png',
+  'Bourriche d’huître': 'assets/trophies/themes/huitre/huitre.png',   // images de Mathis, 10/11 (deja detourees)
+  'Gros Bébé': 'assets/trophies/themes/gros-bebe/gros-bebe.png',
+  'Nécrophile': 'assets/trophies/themes/necrophile/necrophile.png',
+  'Magellan': 'assets/trophies/themes/navire/navire.png',   // le navire et ses oiseaux, a la place du globe (Mathis, 10/11)
+  'Tia mis le kimono': 'assets/trophies/themes/kimono/kimono.png' };   // image de Mathis, liseré clair repeint par _lisere.mjs (10/11)
+// Une image a rendre plus petite ou plus grande que la taille calculee (1 = inchangee). Le Pic noir, sans socle,
+// prenait toute la hauteur : « retrecis legerement » (Mathis, 09/11). Gros Bebe, etroit sur un socle large,
+// paraissait petit : « agrandis un peu » (Mathis, 10/11). Agrandie, une image reste dans son emplacement.
+const VITRINE_ECHELLE = { 'assets/trophies/themes/pic-noir/pic-noir.png': 0.88, 'assets/trophies/themes/gros-bebe/gros-bebe.png': 1.25,
+  'assets/trophies/themes/attente/point-interrogation.png': 0.55 };   // le « ? », sans socle, prendrait toute la hauteur
+// Une image a eclaircir (1 = inchangee), appliquee aux pixels une fois au chargement : un filtre CSS
+// sauterait a la fin de l'animation, qui anime deja le filtre. Le Calao « trop sombre » (Mathis, 09/11) :
+// luminance moyenne 68, contre 81 et 82 pour le Pic noir et l'Oiseau pelagique ; x 1,18 l'y ramene.
+const VITRINE_LUMIERE = { 'assets/icons/calao.png': 1.18 };
+const VITRINE_AVEC_PROGRESSION = false;   // retiree « pour le moment » (Mathis, 08/11)
+let _vitrineAnime = null;              // trophee qu'on vient d'allumer : { id, niveauAvant } pour l'animation
+// L'animation de deblocage : « Poussiere d'or », choisie par Mathis le 08/11 parmi quatre (Projecteur,
+// Balayage et Rayons retires a sa demande).
+const _vitrineApercu = new Map();      // personne|trophee -> etat choisi au clic (true/false, ou niveau 0-3)
+const _vitrineImages = new Map();      // adresse(s) -> promesse de l'image preparee
+// Toucher un trophee ouvre sa liste d'oiseaux ; le bouton « Essai » rend au toucher son role d'essai
+// (faire comme si on venait de le gagner), choix de Mathis le 10/11.
+let _vitrineEssai = false;
+// Le bouton « Essai » ne sert qu'a Mathis et aux essais : en local seulement, pas en ligne (mise en ligne du 10/11)
+const VITRINE_ESSAI_PERMIS = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+let _vitrineDetail = null;             // la liste ouverte depuis la vitrine : les puces Monde / France la relisent
+let _vitrineVoteOuvert = null;         // « trophee|personne » du vote affiche : un nouveau vote recu redessine la fenetre
+// La fenetre des trophees de l'ancienne grille (#trophyModal), avec sa liste Monde / France : toutes les
+// especes que le trophee compte, celles de la personne affichee cochees.
+function _vitrineListe(cas){
+  $('#tmodalTitle').textContent = cas.nom;
+  let html = cas.bulle ? `<p class="tmodal-note">${esc(cas.bulle)}</p>` : '';
+  _vitrineDetail = cas.filtre ? { familyName:cas.nom, speciesOwnedSet:cas.possedees, filtre:cas.filtre, libelle:cas.libelle || 'espèces' } : null;
+  if(_vitrineDetail){
+    html += `<hr class="tmodal-sep"><div class="tmodal-country-select" data-kind="species" data-detail="vt">
+        <button type="button" class="tro-cc-chip on" data-cc="monde">Dans le monde</button>
+        <button type="button" class="tro-cc-chip" data-cc="fr">En France</button>
+      </div>
+      <div class="tmodal-country-body">${_renderSpeciesFamilyCountryList('monde', _vitrineDetail.libelle, cas.possedees, cas.filtre)}</div>`;
+  }
+  if(cas.items){
+    const n = cas.items.filter(x => x.owned).length;
+    html += `<hr class="tmodal-sep"><div class="tmodal-country-body"><p class="tmodal-note"><b>${n} / ${cas.items.length}</b> ${esc(cas.libelle || '')}</p>` +
+      '<ul class="tmodal-list mega" style="columns:2;column-gap:24px;padding-left:20px;">' +
+      cas.items.map(x => `<li class="${x.owned ? 'own' : ''}">${x.owned ? '✓ ' : ''}${esc(x.name)}</li>`).join('') + '</ul></div>';
+  }
+  _vitrineVoteOuvert = cas.vote ? cas.id + '|' + cas.vote.cible : null;
+  if(cas.vote && !cas.vote.doffice){
+    // Les trophees a vote (10/11) : 3 membres valident la preuve ; personne ne vote pour soi (regles Firestore)
+    const voix = votesMap.get(cas.vote.id)?.get(cas.vote.cible);
+    const noms = [...(voix || [])].map(uid => state.people.find(p => p.id === uid)?.name).filter(Boolean).sort((a, b) => a.localeCompare(b, 'fr'));
+    html += `<hr class="tmodal-sep"><div class="vt-vote"><p class="tmodal-note">${noms.length ? 'Ont validé : ' + esc(noms.join(', ')) : 'Personne n\'a encore validé'}</p>`;
+    if(cas.vote.cible === myUid) html += '<p class="tmodal-note">Ce sont les autres membres qui votent pour toi, sur preuve.</p>';
+    else if(myMemberName()){ const moi = !!voix?.has(myUid);
+      html += `<button type="button" class="vt-vote-btn${moi ? ' on' : ''}" data-vote-target="${esc(cas.vote.cible)}" data-vote-trophy="${esc(cas.vote.id)}">${moi ? 'Retirer mon vote' : 'Valider'}</button>`; }
+    html += '</div>';
+  }
+  $('#tmodalBody').innerHTML = html;
+  $('#trophyModal').classList.add('open');
+  document.body.classList.add('trophy-modal-open');
+}
+
+// Les cases de la ligne, dans l'ordre : Progression, ligue, uniques.
+function _vitrineCases(sel, s, data){
+  const famille = key => TROPHIES.filter(t => t.family === key && t.tier)
+    .sort((a, b) => TROPHY_TIERS.findIndex(x => x.key === a.tier) - TROPHY_TIERS.findIndex(x => x.key === b.tier));
+  const prog = (VITRINE_AVEC_PROGRESSION ? VITRINE_PROGRESSION : []).map(key => {
+    const tiers = famille(key); if(!tiers.length) return null;
+    let i = -1; tiers.forEach((t, j) => { if(t.test(s)) i = j; });
+    const t = tiers[Math.max(0, i)];
+    return { id:key, nom:t.name, img:t.tierImg || TROPHY_TIERS.find(x => x.key === t.tier).img, gagne:i >= 0 };
+  }).filter(Boolean);
+  // Armee d'aigles royaux : place de la personne au podium des rapaces diurnes de la ligue. Egalite :
+  // le premier arrive garde la place (date de 1re observation de son n-ieme rapace, choix du 08/11).
+  // Un trophee par theme, chacun avec ses 3 images (une par place du podium). « Oiseaux de nuit » :
+  // nom provisoire, images decoupees dans celle aux trois chouettes de Mathis (08/11,
+  // outils/build/_niveaux-chouettes.mjs).
+  // Ce que compte chaque theme, espece par espece (noms savants en minuscules) :
+  // - Armee d'aigles royaux (Mathis, 08/11) : « les aigles, buses, busards, balbuzard... pas faucon,
+  //   vautour ou ce qui n'est pas vraiment considere avec les aigles ». Donc la famille des aigles et
+  //   buses du Birdydex, plus le balbuzard, MOINS les vautours de l'Ancien Monde qui y sont ranges
+  //   (griffons, moines, gypaete, percnoptere, palmiste) ; faucons et vautours du Nouveau Monde sont
+  //   deja des familles a part.
+  // - Oiseaux de nuit (Mathis, 09/11) : chouettes et hiboux, engoulevents et cousins (ibijaux, podarges,
+  //   guacharo : ceux du trophee unique), oedicnemes, et bihoreaux (genres Nycticorax et Nyctanassa,
+  //   ranges avec les herons dans le Birdydex).
+  const VAUTOURS = new Set(['gyps', 'aegypius', 'torgos', 'sarcogyps', 'trigonoceps', 'necrosyrtes', 'neophron', 'gypaetus', 'gypohierax']);
+  // Chaque theme a son filtre (une espece compte-t-elle ?) : il sert a la liste des oiseaux possibles
+  // qu'ouvre le toucher d'un trophee (Mathis, 10/11), et au podium quand il n'y a pas d'ensemble tout fait.
+  // Ceux du Birdydex (SPECIES_FAMILY_FILTERS) ne vont pas tels quels : « anatidae » y compte les grebes
+  // et « laridae » les labbes.
+  const fam = sci => typeof familyOf === 'function' ? familyOf(sci) : null, genre = sci => sci.split(' ')[0];
+  const selon = filtre => p => { const set = new Set();
+    for(const v of p._active.values()){ const sci = (v.sci || '').toLowerCase(); if(filtre(sci)) set.add(sci); }
+    return set; };
+  const filtreAigles = sci => (fam(sci) === 'Rapaces (aigles, buses…)' || fam(sci) === 'Balbuzard') && !VAUTOURS.has(genre(sci));
+  const especesAigles = selon(filtreAigles);
+  const NUIT_GENRES = new Set(['burhinus', 'esacus', 'nycticorax', 'nyctanassa']);
+  const filtreNuit = sci => SPECIES_FAMILY_FILTERS.nocturnes(sci) || SPECIES_FAMILY_FILTERS.nightjars(sci) || NUIT_GENRES.has(genre(sci));
+  const filtreCanards = sci => ANATIDAE_G.test(genre(sci)) || fam(sci) === 'Canards, oies, cygnes';   // comme anatidaeOwnedSet
+  const filtreMouettes = sci => fam(sci) === 'Goélands, mouettes, sternes';
+  const especesNuit = (p, sp) => { const set = new Set([...(sp.owlOwnedSet || []), ...(sp.nightjarsSet || [])]);
+    for(const v of p._active.values()){ const sci = (v.sci || '').toLowerCase(); if(NUIT_GENRES.has(sci.split(' ')[0])) set.add(sci); }
+    return set; };
+  const LIGUE = [
+    { id:'aigles', nom:"Armée d'aigles royaux", especes:especesAigles, niveaux:VITRINE_AIGLES,
+      filtre:filtreAigles, libelle:'aigles, buses, busards et balbuzards',
+      quoi:"Le plus d'aigles, buses, busards et balbuzards de la ligue" },
+    { id:'nuit', nom:'La Garde de Nuit', especes:especesNuit,   // Game of Thrones, choisi par Mathis le 09/11 (avant : The Dark Knight)
+      filtre:filtreNuit, libelle:'oiseaux nocturnes',
+      niveaux:[1, 2, 3].map(n => `assets/trophies/themes/oiseaux-de-nuit/niveau-${n}.png`),
+      quoi:"Le plus d'oiseaux nocturnes de la ligue : chouettes, hiboux, engoulevents, œdicnèmes et bihoreaux" },
+    // Toute la famille des canards, oies et cygnes du Birdydex (Mathis, 09/11). Niveaux decoupes dans son
+    // image par outils/build/_niveaux-canards.mjs : la cane et ses canetons, + le colvert de gauche, + celui
+    // du haut a droite. Nom choisi par Mathis le 09/11.
+    { id:'canards', nom:'La Bande à Picsou', especes:(p, sp) => new Set(sp.anatidaeOwnedSet || []),
+      filtre:filtreCanards, libelle:'canards, oies et cygnes',
+      niveaux:[1, 2, 3].map(n => `assets/trophies/themes/canards/niveau-${n}.png`),
+      quoi:"Le plus de canards, oies et cygnes de la ligue" },
+    // La famille « Goelands, mouettes, sternes » du Birdydex (guifettes, noddis, becs-en-ciseaux compris),
+    // sans les labbes, famille a part (Mathis, 10/11). Niveaux decoupes par outils/build/_niveaux-mouettes.mjs :
+    // la mouette posee, + les deux en vol a droite, + celle de gauche. Nom choisi par Mathis le 10/11 (Ali Baba).
+    { id:'mouettes', nom:'Les 40 Voleurs', especes:selon(filtreMouettes),
+      filtre:filtreMouettes, libelle:'goélands, mouettes et sternes',
+      niveaux:[1, 2, 3].map(n => `assets/trophies/themes/mouettes/niveau-${n}.png`),
+      quoi:"Le plus de goélands, mouettes et sternes de la ligue" },
+  ];
+  const ligue = [];
+  for(const th of LIGUE){
+    // Egalite : tous ceux qui ont le meme compte partagent la place, et le trophee (Mathis, 09/11).
+    // Place = 1 + le nombre de membres qui ont strictement plus (deux 2es, pas de 3e, puis un 4e).
+    let siennes = new Set();   // les especes du theme vues par la personne affichee, pour sa liste
+    const rang = state.people.map(p => {
+      const sp = p.id === sel.id ? s : statsFor(p, data.N), set = th.especes(p, sp);
+      if(p.id === sel.id) siennes = set;
+      return { id:p.id, nom:p.name, moi:p.isMe, n: set.size };
+    }).filter(x => x.n > 0).sort((a, b) => b.n - a.n);
+    const lui = rang.find(x => x.id === sel.id);
+    const rangLui = lui ? 1 + rang.filter(x => x.n > lui.n).length : 0, exaequo = lui && rang.filter(x => x.n === lui.n).length > 1;
+    const place = rangLui && rangLui <= 3 ? rangLui : 0;
+    // La bulle du survol de la plaque, courte (choix de Mathis, 08/11) : ce qu'il faut, et la place
+    const rangTxt = (rangLui === 1 ? '1er' : rangLui + 'e') + (exaequo ? ' ex æquo' : '');
+    const ou = lui ? `${sel.isMe ? 'Tu es' : sel.name + ' est'} ${rangTxt} (${lui.n})` : `${sel.isMe ? "Tu n'en as" : sel.name + " n'en a"} pas encore`;   // pas de point final (Mathis, 09/11)
+    const bulle = `${th.quoi}. ${ou}`;
+    ligue.push({ id:th.id, nom:th.nom, niveaux:th.niveaux, niveau: place ? 4 - place : 0, place, bulle,
+      filtre:th.filtre, libelle:th.libelle, possedees:siennes });
+  }
+  const src = html => (/src=\\?"([^"\\]+)"/.exec(html || '') || [])[1];
+  const uniques = TROPHIES.filter(t => !t.tier && t.theme === 'groupe' && src(t.icon))
+    .map(t => ({ id:'u-' + t.name, nom:t.name, img:VITRINE_IMAGES[t.name] || src(t.icon), gagne:!!t.test(s), bulle:t.desc.replace(/\.\s*$/, ''),
+      filtre:SPECIES_FAMILY_FILTERS[t.speciesFamilyKey], libelle:SPECIES_FAMILY_LABELS[t.speciesFamilyKey],
+      possedees:new Set((t.list ? t.list(s) : []).map(x => x.sci).filter(Boolean)) }));   // le nom est deja sur la plaque survolee ; pas de point final (Mathis, 09/11)
+  // Exploits (10/11) : des trophees qui ne tiennent pas a un type d'oiseau. Leur liste donne ce qui est fait.
+  // Les anciens trophees de progression en paliers uniques (Mathis, 10/11) : Ecologue a 100, 200, 300, 400 et
+  // 500 especes (un t-shirt entre amis pour chacun ; en attendant leurs images, les medailles de l'ancienne
+  // grille), les 13 regions de metropole, 25 photos avec 2 coeurs ou plus. Comptes repris des anciens trophees.
+  const compte = fam => { const t = TROPHIES.find(x => x.family === fam && x.prog); return t ? (t.prog(s)[0] || 0) : 0; };
+  const qui = sel.isMe ? 'Tu en as' : sel.name + ' en a';
+  const exploitsProg = [
+    // Ecologue, un t-shirt entre amis par palier (Mathis, 10/11). 100 : « La pie bavarde ça jacasse mais ça passe ».
+    // 200 : pas encore decide, nom et image en « ? ». 300, 400 et 500 retires en attendant leur t-shirt.
+    ...[100, 200].map((n, i) => ({ id:'x-ecologue-' + n, nom:['Ça jacasse', '?'][i], fam:'ecologue', seuil:n, quoi:`Observer ${n} espèces différentes`,
+      img:['assets/trophies/themes/ecologue/ecologue-100.png', 'assets/trophies/themes/attente/point-interrogation.png'][i] })),
+    // National Geographic : 100 photos postees, coeurs ou pas (Mathis, 10/11 ; avant, 25 photos a 2 coeurs)
+    { id:'x-natgeo', nom:'National Geographic', valeur:() => s.postedPhotos || 0, seuil:100, quoi:'Poster 100 photos', img:'assets/trophies/themes/natgeo/natgeo.png' },   // image de Mathis, 10/11
+  ].map(x => { const v = x.valeur ? x.valeur() : compte(x.fam); return { id:x.id, nom:x.nom, img:x.img, gagne:v >= x.seuil, bulle:`${x.quoi}. ${qui} ${v}` }; });
+  // Terroir en calques (Mathis, 10/11) : une planche en forme de France, un aliment par region, que chaque region
+  // observee fait apparaitre ; allume des la 1re region, complet a 13. Images : outils/build/_terroir.mjs.
+  const T_DIR = 'assets/trophies/themes/terroir/', vuesT = FR_REGIONS.map((r, i) => s.regionsOwnedSet?.has(r.code) ? i + 1 : 0).filter(Boolean);
+  exploitsProg.splice(2, 0, { id:'x-terroir', nom:'Terroir', calques:[T_DIR + 'fond.png', ...FR_REGIONS.map(r => T_DIR + r.code + '.png'), T_DIR + 'complet.png'],
+    vues:vuesT, gagne:vuesT.length > 0, libelle:'régions', items:FR_REGIONS.map((r, i) => ({ name:r.name + ' : ' + TERROIR_ALIMENTS[r.code], owned:vuesT.includes(i + 1) })),
+    bulle:`Observer un oiseau dans les 13 régions de France métropolitaine, un aliment par région. ${qui} ${vuesT.length}` });
+  // fun:true : un etage a part, « Fun » (Bourriche d'huitre, Le Necrophile, Gros Bebe ; Mathis, 10/11)
+  const versCase = t => {
+    const base = { id:'e-' + t.name, nom:t.name, img:VITRINE_IMAGES[t.name] || src(t.icon), gagne:!!t.test(s) };
+    if(t.special === 'vote'){ const n = votesMap.get(t.voteId)?.get(sel.id)?.size || 0, doffice = t.voteDoffice === sel.id;
+      const etat = doffice ? "Gagné d'office" : n >= t.voteThreshold ? `Validé par ${n} membre${n > 1 ? 's' : ''}` : 'Pas encore validé : un vote suffit';
+      return { ...base, vote:{ id:t.voteId, seuil:t.voteThreshold, cible:sel.id, doffice }, bulle:`${t.desc}. ${etat}` }; }
+    if(!t.list) return { ...base, bulle:t.desc };
+    const items = t.list(s), n = items.filter(x => x.owned).length;
+    return { ...base, items, libelle:t.libelle || '', bulle:`${t.desc}. ${qui} ${n}` }; };
+  const exploits = [...exploitsProg, ...TROPHIES.filter(t => t.exploit && !t.fun && src(t.icon)).map(versCase)];
+  const fun = TROPHEES_FUN_VISIBLES ? TROPHIES.filter(t => t.exploit && t.fun && src(t.icon)).map(versCase) : [];
+  const groupe = (liste, titre) => liste.map((c, i) => ({ ...c, gid:titre, ...(i ? {} : { groupe:titre }) }));
+  // Les Exploits en tete (Mathis, 10/11)
+  return [...groupe(exploits, 'Exploits'), ...groupe(prog, 'Progression'), ...groupe(ligue, 'Trophées de la ligue'), ...groupe(uniques, 'Trophées uniques'), ...groupe(fun, 'Fun')];
+}
+
+// Ce que la personne a deja VU de chaque trophee (le niveau dont l'animation a ete jouee), garde dans
+// le navigateur. Un trophee gagne au-dessus de ce niveau est « a debloquer » : il attend qu'on le
+// touche pour jouer son animation (Mathis, 08/11). Premiere visite : tout ce qui est deja gagne compte
+// comme vu, pour ne pas faire scintiller toute la vitrine d'un coup.
+const _VT_VU = 'vt-vu';
+function _vitrineVuLire(){ try{ return JSON.parse(localStorage.getItem(_VT_VU) || '{}') || {}; }catch(_){ return {}; } }
+function _vitrineVuEcrire(o){ try{ localStorage.setItem(_VT_VU, JSON.stringify(o)); }catch(_){} }
+const _vitrineMontres = new Set();     // trophees en attente vers lesquels la vitrine a deja defile
+// Ou en est la ligne, par personne : l'appli redessine la page a chaque donnee recue, et la ligne
+// revenait au debut (le defilement jusqu'au trophee en attente etait aussitot perdu, essai du 08/11).
+const _vitrinePos = new Map();
+
+// Les cases avec leur etat : reel (gagne, apercu du clic compris), vu, en attente, et ce qu'on affiche.
+function _vitrineEtat(sel, s, data){
+  const cases = _vitrineCases(sel, s, data);
+  for(const c of cases){
+    const a = _vitrineApercu.get(sel.id + '|' + c.id);
+    if(c.calques){ if(a !== undefined) c.vues = a; c.reel = c.vues.length; c.max = c.calques.length - 2; continue; }
+    c.reel = a !== undefined ? (c.niveaux ? a : (a ? 1 : 0)) : (c.niveaux ? c.niveau : (c.gagne ? 1 : 0));
+    c.max = c.niveaux ? 3 : 1;
+  }
+  if(sel.isMe){
+    const tout = _vitrineVuLire(); let vu = tout[sel.id], change = false;
+    // Premiere visite de la vitrine : chacun arrive avec 0 trophee et debloque un par un ceux qu'il a deja
+    // gagnes (Mathis, 10/11, pour la mise en ligne). Avant : tout ce qui etait gagne comptait comme deja vu.
+    if(!vu){ vu = tout[sel.id] = {}; for(const c of cases){ vu[c.id] = 0; if(c.calques) vu[c.id + ':vues'] = []; } change = true; }
+    for(const c of cases){
+      if(vu[c.id] === undefined || c.reel < vu[c.id]){ vu[c.id] = Math.min(c.reel, vu[c.id] ?? c.reel); change = true; }
+      c.attend = c.reel > vu[c.id];
+      c.vu = vu[c.id];
+      // Calques : la liste des regions dont l'animation a deja joue (en attente, seules celles-la s'affichent)
+      if(c.calques){ const cle = c.id + ':vues'; let lv = vu[cle];
+        if(!Array.isArray(lv) || !c.attend){ lv = c.vues.slice(); if(JSON.stringify(vu[cle]) !== JSON.stringify(lv)){ vu[cle] = lv; change = true; } }
+        c.vuesAvant = lv.filter(i => c.vues.includes(i)); }
+    }
+    if(change) _vitrineVuEcrire(tout);
+  }
+  // Ce qu'on affiche : en attente, l'etat d'avant (l'animation montrera la suite) ; sinon l'etat reel.
+  for(const c of cases){
+    if(c.calques){ c.affiches = c.attend ? (c.vuesAvant || []) : c.vues; c.gagne = c.affiches.length > 0; continue; }
+    const affiche = c.attend ? c.vu : c.reel;
+    if(c.niveaux) c.niveau = affiche; else c.gagne = affiche > 0;
+  }
+  return cases;
+}
+// Le nombre de trophees en attente, pour la pastille doree de l'onglet Trophees (updateTabDots).
+function _vitrineNbAttente(){
+  try{
+    const me = state.people.find(p => p.isMe);
+    if(!me || !_statsPretes(state.people)) return 0;
+    const data = trophyData && trophyData.N ? trophyData : { N: state.people.length };
+    return _vitrineEtat(me, statsFor(me, data.N), data).filter(c => c.attend).length;
+  }catch(_){ return 0; }
+}
+
+function renderVitrine(sel, s, data){
+  const grid = $('#trophyGrid'); if(!grid) return;
+  let box = $('#vitrine');
+  if(!box){ box = document.createElement('div'); box.id = 'vitrine'; grid.before(box); }
+  $('#viewTrophies')?.classList.add('avec-vitrine');
+  const cases = _vitrineEtat(sel, s, data);
+  if(_vitrineVoteOuvert && $('#trophyModal').classList.contains('open') && $('#tmodalBody .vt-vote')){
+    const ouvert = cases.find(c => c.vote && c.id + '|' + c.vote.cible === _vitrineVoteOuvert); if(ouvert) _vitrineListe(ouvert);
+  }
+  const allume = c => c.niveaux ? c.niveau > 0 : c.gagne;
+  const PLACE = { 1:'1er', 2:'2e', 3:'3e' };
+  // Un trophee en attente scintille : lueur doree qui pulse, paillettes, plaque « Touche pour debloquer »
+  // Poussiere permanente dans la lumiere d'un trophee gagne : 8 grains, places dans le faisceau, lents
+  const poussiere = () => Array.from({ length: 8 }, (_, i) => `<span class="vt-grain" aria-hidden="true" style="--gx:${38 + ((i * 29) % 26)}%;--gy:${22 + ((i * 41) % 52)}%;--gd:${(6 + (i * 1.7) % 4).toFixed(1)}s;--gl:${(-(i * 1.3) % 7).toFixed(1)}s;--gw:${((i % 2 ? 1 : -1) * (4 + (i * 3) % 8))}px"></span>`).join('');
+  const paillettes = () => Array.from({ length: 7 }, (_, i) => `<span class="vt-paillette" style="--px:${12 + ((i * 37) % 76)}%;--py:${18 + ((i * 53) % 62)}%;--pd:${(i * 0.37).toFixed(2)}s"></span>`).join('');
+  // Un etage par categorie (Mathis, 10/11 : « reessayer la vitrine sur plusieurs etages ») : le titre de la
+  // categorie passe en tete de son etage, il n'est plus pose sur le premier trophee.
+  const caseHtml = c => `<div class="vt-case${allume(c) ? '' : ' vt-manque'}${c.attend ? ' vt-attend' : ''}" role="button" tabindex="0"
+      aria-pressed="${allume(c)}" aria-label="${esc(c.nom)}${c.attend ? ', à débloquer' : allume(c) ? (c.place ? ', ' + PLACE[c.place] : '') : ', pas encore'}" data-id="${esc(c.id)}">
+    <div class="vt-emplacement"><span class="vt-faisceau" aria-hidden="true"><i></i><b></b></span>${c.attend ? `<span class="vt-lueur" aria-hidden="true"></span>${paillettes()}` : allume(c) ? poussiere() : ''}
+      <canvas class="vt-image" ${c.calques ? `data-niveaux="${c.calques.join('|')}" data-calques="${c.affiches.join(',')}"` : c.niveaux ? `data-niveaux="${c.niveaux.join('|')}" data-niveau="${c.niveau}"` : `data-src="${esc(c.img)}"`}${allume(c) ? '' : ' data-manque'}></canvas></div>
+    <div class="vt-planche"></div><div class="vt-nom${c.place && allume(c) && !c.attend ? ' vt-' + ['or', 'argent', 'bronze'][c.place - 1] : ''}"${c.bulle && !c.attend ? ` data-tip="${esc(c.bulle)}"` : ''}>${c.attend ? 'Touche pour débloquer' : esc(c.nom)}</div></div>`;
+  const n = cases.filter(c => c.reel > 0).length, enAttente = cases.filter(c => c.attend);
+  // Choisir la personne : le selecteur habituel du site (comme le Fil), a la place des jetons de noms
+  // (demande de Mathis, 08/11). Les jetons #trophyWho restent construits, seulement masques.
+  box.innerHTML = `<div class="vt-commandes">
+      <button type="button" id="vtPersonne" class="cp-btn" aria-label="Choisir la vitrine de qui"><span class="cp-btn-label">${esc(sel.name)}${sel.isMe ? ' (toi)' : ''}</span><span class="cp-btn-arrow">▾</span></button>
+      ${VITRINE_ESSAI_PERMIS ? `<button type="button" id="vtEssai" class="tro-cc-chip${_vitrineEssai ? ' on' : ''}" aria-pressed="${_vitrineEssai}">Essai</button>` : ''}
+      <span class="help">${_vitrineEssai
+        ? "Essai : touche un trophée pas encore gagné pour faire comme si tu venais de le gagner, puis touche-le encore pour le débloquer ; un trophée complet s'éteint."
+        : VITRINE_ESSAI_PERMIS ? 'Essai local. Touche un trophée pour voir ses oiseaux ; avec « Essai », le toucher fait comme si tu venais de le gagner.'
+        : 'Touche un trophée pour voir ce qu’il demande et ce qui est déjà fait.'}</span></div>
+    <div class="vt-vitrine"><div class="vt-tete"><h3>${sel.isMe ? 'Ma vitrine' : 'La vitrine de ' + esc(sel.name)}</h3><span><b>${n}</b> / ${cases.length}</span></div>
+      ${[...new Set(cases.map(c => c.gid))].map(gid => { const siens = cases.filter(c => c.gid === gid);
+        return `<section class="vt-etage" data-gid="${esc(gid)}"><div class="vt-etage-tete"><h4>${esc(gid)}</h4><span><b>${siens.filter(allume).length}</b> / ${siens.length}</span></div>
+      <div class="vt-defile"><div class="vt-rail">${siens.map(caseHtml).join('')}</div><div class="vt-fondu vt-fondu-g" hidden></div><div class="vt-fondu vt-fondu-d"></div>
+        <button type="button" class="vt-fleche vt-g" aria-label="${esc(gid)} : trophées précédents" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button type="button" class="vt-fleche vt-d" aria-label="${esc(gid)} : trophées suivants"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></section>`; }).join('')}</div>`;
+  // Chaque etage garde sa position, par personne : l'appli redessine la page a chaque donnee recue
+  const cleEtage = rail => sel.id + '|' + rail.closest('.vt-etage').dataset.gid;
+  // La destination est notee tout de suite : un redessin pendant le defilement la retrouve
+  const allerA = (id, doux) => { const c = [...box.querySelectorAll('.vt-case')].find(x => x.dataset.id === id), r = c?.closest('.vt-rail');
+    if(!r || !c) return; const left = Math.max(0, Math.min(r.scrollWidth - r.clientWidth, c.offsetLeft - 24));
+    _vitrinePos.set(cleEtage(r), left); r.scrollTo({ left, behavior: doux ? 'smooth' : 'auto' }); };
+  box.onclick = e => {
+    if(e.target.closest('#vtPersonne')){
+      const opts = [...state.people].sort((a, b) => a.name.localeCompare(b.name, 'fr')).map(p => ({ value:p.id, label:p.name, moi:p.isMe }));
+      _openFilterPicker(sel.id, { title:'La vitrine de qui ?', options:opts, searchable: opts.length > 8 }).then(v => {
+        if(v == null || v === sel.id) return;
+        trophyPlayerId = v; renderTrophies(trophyData);
+      });
+      return;
+    }
+    if(e.target.closest('#vtEssai')){ _vitrineEssai = !_vitrineEssai; renderVitrine(sel, s, data); return; }
+    const c = e.target.closest('.vt-case'); if(!c) return;
+    const rail = c.closest('.vt-rail'); if(rail.dataset.glisse === '1'){ rail.dataset.glisse = ''; return; }
+    const cas = cases.find(x => x.id === c.dataset.id); if(!cas) return;
+    const cle = sel.id + '|' + cas.id;
+    _vitrineAnime = null;
+    if(cas.attend){
+      // Debloquer : l'animation joue l'etape (ou les etapes) qui attendaient ; le niveau d'avant reste
+      // affiche, immobile (Mathis, 08/11 : l'etape deja debloquee ne doit pas « disparaitre et reapparaitre »).
+      const tout = _vitrineVuLire(); (tout[sel.id] = tout[sel.id] || {})[cas.id] = cas.reel;
+      if(cas.calques) tout[sel.id][cas.id + ':vues'] = cas.vues.slice();
+      _vitrineVuEcrire(tout);
+      _vitrineAnime = { id: cas.id, niveauAvant: cas.niveaux ? cas.vu : 0, calquesAvant: cas.calques ? (cas.vuesAvant || []) : null };
+    } else if(!_vitrineEssai){
+      // Hors essai, toucher un trophee ouvre la liste de ses oiseaux, ceux de la personne coches (Mathis, 10/11)
+      _vitrineListe(cas);
+      return;
+    } else if(cas.reel < cas.max){
+      // Essai : on fait comme si la personne venait de gagner l'etape suivante. Pour elle-meme, le
+      // trophee passe « a debloquer » ; chez quelqu'un d'autre, il se debloque tout de suite.
+      // Calques : la region suivante qui manque apparait
+      const suivante = cas.calques ? Array.from({ length: cas.max }, (_, i) => i + 1).find(i => !cas.vues.includes(i)) : 0;
+      _vitrineApercu.set(cle, cas.calques ? [...cas.vues, suivante] : cas.niveaux ? cas.reel + 1 : true);
+      if(!sel.isMe) _vitrineAnime = { id: cas.id, niveauAvant: cas.niveaux ? cas.reel : 0, calquesAvant: cas.calques ? cas.vues.slice() : null };
+      _vitrineMontres.add(cas.id);   // on y est deja : pas besoin d'y defiler
+    } else {
+      // Trophee complet : on l'eteint, et il compte comme jamais vu
+      _vitrineApercu.set(cle, cas.calques ? [] : cas.niveaux ? 0 : false);
+      const tout = _vitrineVuLire(); if(tout[sel.id]){ tout[sel.id][cas.id] = 0; _vitrineVuEcrire(tout); }
+    }
+    renderVitrine(sel, s, data);
+    try{ updateTabDots(); _barreBasPastilles(); }catch(_){}
+  };
+  box.onkeydown = e => {
+    const c = e.target.closest?.('.vt-case'); if(!c || (e.key !== 'Enter' && e.key !== ' ')) return;
+    e.preventDefault(); c.click();
+  };
+  for(const defile of box.querySelectorAll('.vt-defile')){
+    _vitrineDefilement(defile);
+    const r = defile.querySelector('.vt-rail'), cle = cleEtage(r);
+    r.scrollLeft = _vitrinePos.get(cle) || 0;
+    r.addEventListener('scroll', () => _vitrinePos.set(cle, r.scrollLeft), { passive: true });
+  }
+  if(_vitrineAnime){
+    // Le trophee qu'on debloque : son dessin saura qu'il doit preparer l'animation (niveau d'avant
+    // immobile, seuls les nouveaux oiseaux animes).
+    const c = [...box.querySelectorAll('.vt-case')].find(x => x.dataset.id === _vitrineAnime.id);
+    const cv = c?.querySelector('canvas.vt-image');
+    if(cv){ cv.dataset.anime = '1'; cv.dataset.niveauAvant = _vitrineAnime.niveauAvant || 0; if(_vitrineAnime.niveauAvant) c.classList.add('vt-niveau-sup');
+      if(_vitrineAnime.calquesAvant?.length){ cv.dataset.calquesAvant = _vitrineAnime.calquesAvant.join(','); c.classList.add('vt-niveau-sup'); } }
+  }
+  for(const cv of box.querySelectorAll('canvas.vt-image')) _vitrineDessine(cv).catch(e => console.warn('vitrine', e));
+  if(_vitrineAnime){ _vitrineDeblocage(box, _vitrineAnime); _vitrineAnime = null; }
+  // La vitrine va d'elle-meme jusqu'au premier trophee en attente (une fois par trophee)
+  // La vitrine peut etre construite page cachee (largeur 0) : on attend qu'elle s'affiche pour y aller.
+  const aMontrer = enAttente.find(c => !_vitrineMontres.has(c.id));
+  if(aMontrer){
+    const rail = [...box.querySelectorAll('.vt-case')].find(x => x.dataset.id === aMontrer.id)?.closest('.vt-rail');
+    if(rail){
+    const faire = () => { if(!rail.isConnected || !rail.clientWidth) return false; _vitrineMontres.add(aMontrer.id); allerA(aMontrer.id, true); return true; };
+    if(!faire()){ const ro = new ResizeObserver(() => { if(faire() || !rail.isConnected) ro.disconnect(); }); ro.observe(rail); }
+    }
+  }
+}
+
+// L'animation de deblocage « Poussiere d'or » (choisie par Mathis le 08/11) : le spot s'allume, le
+// faisceau apparait,
+// le trophee se forme dans un halo pendant qu'une poussiere d'or monte, la plaque passe du terne a
+// l'or avec un reflet, le macaron de place surgit. Environ 2,8 s ; tout est en CSS (.vt-deverrouille).
+function _vitrineDeblocage(box, { id }){
+  const c = [...box.querySelectorAll('.vt-case')].find(x => x.dataset.id === id); if(!c) return;
+  const emp = c.querySelector('.vt-emplacement');
+  const halo = document.createElement('span'); halo.className = 'vt-halo'; halo.setAttribute('aria-hidden', 'true'); emp.appendChild(halo);
+  for(let i = 0; i < 22; i++){
+    const e = document.createElement('span');
+    e.className = 'vt-etincelle'; e.setAttribute('aria-hidden', 'true');
+    e.style.setProperty('--x0', Math.round((Math.random() - 0.5) * 160) + 'px');
+    e.style.setProperty('--h', Math.round(120 + Math.random() * 120) + 'px');
+    e.style.setProperty('--d', Math.round(Math.random() * 450) + 'ms');
+    emp.appendChild(e);
+  }
+  c.classList.add('vt-deverrouille');
+  setTimeout(() => { c.classList.remove('vt-deverrouille'); emp.querySelectorAll('.vt-etincelle, .vt-halo').forEach(x => x.remove()); }, 4800);   // la fin s'eteint en douceur jusqu'a ~4,4 s
+}
+
+// Faire defiler la ligne a la souris : molette, fleches, glisser (la barre de defilement est cachee).
+function _vitrineDefilement(defile){
+  if(!defile) return;
+  const rail = defile.querySelector('.vt-rail'), g = defile.querySelector('.vt-g'), d = defile.querySelector('.vt-d');
+  const fg = defile.querySelector('.vt-fondu-g'), fd = defile.querySelector('.vt-fondu-d');
+  const maj = () => { const max = rail.scrollWidth - rail.clientWidth; g.hidden = rail.scrollLeft <= 2; d.hidden = rail.scrollLeft >= max - 2;
+    if(fg) fg.hidden = g.hidden; if(fd) fd.hidden = d.hidden; };
+  g.onclick = () => rail.scrollBy({ left: -rail.clientWidth * 0.8, behavior: 'smooth' });
+  d.onclick = () => rail.scrollBy({ left: rail.clientWidth * 0.8, behavior: 'smooth' });
+  rail.addEventListener('wheel', e => {
+    if(Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+    // Sur un etage qui deborde, la molette ne fait QUE defiler l'etage, meme arrive au bout : avant, au bout,
+    // elle passait a la page, qui montait ou descendait sans qu'on le veuille (Mathis, 10/11). Un etage qui
+    // tient en entier laisse la molette a la page.
+    if(rail.scrollWidth - rail.clientWidth < 2) return;
+    e.preventDefault(); rail.scrollLeft += e.deltaY;
+  }, { passive: false });
+  // La capture du pointeur ne commence qu'apres 5 px : capturee des l'appui, la ligne recevait le
+  // clic a la place du trophee (essai du 08/11).
+  let depart = null;
+  rail.addEventListener('pointerdown', e => { if(e.pointerType !== 'mouse') return; depart = { x:e.clientX, s:rail.scrollLeft, id:e.pointerId }; rail.dataset.glisse = ''; });
+  rail.addEventListener('pointermove', e => {
+    if(!depart) return;
+    if(rail.dataset.glisse !== '1'){ if(Math.abs(e.clientX - depart.x) < 5) return; rail.dataset.glisse = '1'; rail.classList.add('vt-tire'); rail.setPointerCapture(depart.id); }
+    rail.scrollLeft = depart.s - (e.clientX - depart.x);
+  });
+  const lache = () => { depart = null; rail.classList.remove('vt-tire'); };
+  rail.addEventListener('pointerup', lache); rail.addEventListener('pointercancel', lache);
+  rail.addEventListener('scroll', maj, { passive: true });
+  requestAnimationFrame(maj);
+}
+
+// Charge une image et la prepare : liseré clair des bords retire (il dessinait un contour blanc sur
+// le bois sombre), recadree, et son socle brun reconnu (largeur = etalon, haut = ligne de coupe).
+const _vitrineBrute = src => new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ko(new Error('image : ' + src)); i.src = src; });
+function _vitrineNettoie(img, passes = 3){
+  const w = img.naturalWidth, h = img.naturalHeight, c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(img, 0, 0);
+  const d = x.getImageData(0, 0, w, h), a = d.data;
+  for(let passe = 0; passe < passes; passe++){
+    const retirer = [];
+    for(let j = 1; j < h - 1; j++) for(let i = 1; i < w - 1; i++){
+      const q = (j * w + i) * 4; if(a[q+3] <= 20) continue;
+      if(a[q-1] > 20 && a[q+7] > 20 && a[q-4*w+3] > 20 && a[q+4*w+3] > 20) continue;
+      const mn = Math.min(a[q], a[q+1], a[q+2]), mx = Math.max(a[q], a[q+1], a[q+2]);
+      if(a[q+3] < 230 || (mn > 170 && mx - mn < 60)) retirer.push(q);
+    }
+    for(const q of retirer) a[q+3] = 0;
+  }
+  x.putImageData(d, 0, 0);
+  return c;
+}
+function _vitrineEclaire(c, f){
+  if(!f || f === 1) return c;
+  const x = c.getContext('2d', { willReadFrequently: true }), d = x.getImageData(0, 0, c.width, c.height), a = d.data;
+  for(let q = 0; q < a.length; q += 4) if(a[q+3]){ a[q] = Math.min(255, a[q] * f); a[q+1] = Math.min(255, a[q+1] * f); a[q+2] = Math.min(255, a[q+2] * f); }
+  x.putImageData(d, 0, 0);
+  return c;
+}
+function _vitrineCadre(c){
+  const w = c.width, h = c.height, a = c.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, w, h).data;
+  let x0 = w, y0 = h, x1 = 0, y1 = 0;
+  for(let j = 0; j < h; j++) for(let i = 0; i < w; i++) if(a[(j*w + i)*4 + 3] > 20){ if(i < x0) x0 = i; if(i > x1) x1 = i; if(j < y0) y0 = j; if(j > y1) y1 = j; }
+  return { x0, y0, x1, y1 };
+}
+function _vitrineRecadre(c, { x0, y0, x1, y1 }){
+  const r = document.createElement('canvas'); r.width = Math.max(1, x1 - x0 + 1); r.height = Math.max(1, y1 - y0 + 1);
+  const rx = r.getContext('2d', { willReadFrequently: true });
+  rx.drawImage(c, x0, y0, r.width, r.height, 0, 0, r.width, r.height);
+  const rd = rx.getImageData(0, 0, r.width, r.height).data, xs = [];
+  const brun = q => { if(rd[q+3] < 200) return false; const R = rd[q], G = rd[q+1], B = rd[q+2], mx = Math.max(R, G, B), mn = Math.min(R, G, B);
+    return mx < 110 && R >= G && G >= B - 8 && mx - mn > 12; };
+  for(let j = Math.floor(r.height * 0.6); j < r.height; j++) for(let i = 0; i < r.width; i++) if(brun((j * r.width + i) * 4)) xs.push(i);
+  xs.sort((p, q) => p - q);
+  r.socle = xs.length > 50 ? { g: xs[Math.floor(xs.length * 0.02)], d: xs[Math.floor(xs.length * 0.98)] } : null;
+  if(r.socle){
+    // Haut du socle : rangees pleines a 75 % ET brunes sur leurs deux bords (sinon le fromage de
+    // « Notable », aussi large que le socle, etait coupe en deux).
+    const { g, d } = r.socle, L = d - g + 1, bord = Math.max(2, Math.round(L * 0.06)); let haut = r.height, rate = 0;
+    for(let j = r.height - 1; j >= 0; j--){
+      let n = 0, bg = 0, bd = 0;
+      for(let i = g; i <= d; i++){ const q = (j * r.width + i) * 4; if(rd[q+3] > 200) n++; if(i < g + bord && brun(q)) bg++; if(i > d - bord && brun(q)) bd++; }
+      if(n / L > 0.75 && bg / bord > 0.5 && bd / bord > 0.5){ haut = j; rate = 0; } else if(++rate > 3) break;
+    }
+    r.socle.haut = haut;
+  }
+  return r;
+}
+function _vitrineCharge(srcs){
+  const cle = srcs.join('|');
+  if(!_vitrineImages.has(cle)) _vitrineImages.set(cle, Promise.all(srcs.map(_vitrineBrute)).then(imgs => {
+    // Les aliments du Terroir, chacun sur son calque, ne sont pas nettoyes : calissons et fromage, blancs, perdaient
+    // leur bord clair (le nettoyage retire le clair au contact du vide, et chaque aliment est seul sur son calque)
+    const toiles = imgs.map((im, i) => _vitrineNettoie(im, /\/terroir\/FR-/.test(srcs[i]) ? 0 : 3)), c = _vitrineCadre(toiles[toiles.length - 1]);
+    // Eclaircir APRES le recadrage : le socle se repere a son brun sombre, qu'il faut lire intact
+    const r = toiles.map((t, i) => _vitrineEclaire(_vitrineRecadre(t, c), VITRINE_LUMIERE[srcs[i]]));
+    // Les niveaux partagent le socle du premier, pour rester superposables
+    for(const x of r) if(x.socle && r[0].socle) x.socle = { ...x.socle, haut: r[0].socle.haut };
+    return r;
+  }));
+  return _vitrineImages.get(cle);
+}
+// Dessine un emplacement : le trophee (sans son socle) pose sur la planche, ou ses pointilles.
+async function _vitrineDessine(cv){
+  // Un trophee manquant ne dessine rien : son image n'est meme pas telechargee
+  if(cv.hasAttribute('data-manque')) return;
+  // La vitrine se construit aussi page cachee (onglet Trophees ferme) : l'image attend que son emplacement ait une
+  // taille. Sans ca, toutes les images de la vitrine (6,7 Mo, mesure du 10/11) partaient au demarrage du site.
+  if(!cv.clientWidth || !cv.clientHeight){
+    const ro = new ResizeObserver(() => { if(!cv.isConnected){ ro.disconnect(); return; }
+      if(cv.clientWidth && cv.clientHeight){ ro.disconnect(); _vitrineDessine(cv).catch(e => console.warn('vitrine', e)); } });
+    ro.observe(cv); return;
+  }
+  const tous = await _vitrineCharge(cv.dataset.niveaux ? cv.dataset.niveaux.split('|') : [cv.dataset.src]);
+  if(!cv.isConnected) return;
+  const img = tous[tous.length - 1], manque = cv.hasAttribute('data-manque');
+  const niveaux = cv.dataset.niveaux && !manque ? tous : null;
+  const dpr = 2, W = Math.round(cv.clientWidth * dpr), H = Math.round(cv.clientHeight * dpr);
+  if(!W || !H) return;
+  cv.width = W; cv.height = H;
+  cv.parentElement.querySelectorAll('canvas.vt-nouveau').forEach(o => o.remove());
+  const etroit = matchMedia('(max-width: 700px)').matches, marge = 36 * dpr, socleW = (etroit ? 130 : 170) * dpr;   // agrandi a la demande de Mathis (08/11)
+  const srcH = img.socle ? img.socle.haut : img.height;
+  let k, cxSocle;
+  if(img.socle){ k = socleW / (img.socle.d - img.socle.g + 1); cxSocle = (img.socle.g + img.socle.d) / 2; }
+  else { k = Math.min(W / img.width, (H - marge) / img.height); cxSocle = img.width / 2; }
+  if(srcH * k > H - marge) k = (H - marge) / srcH;
+  if(img.width * k > W) k = W / img.width;
+  k = Math.min(k * (VITRINE_ECHELLE[cv.dataset.src] || 1), (H - marge) / srcH, W / img.width);
+  const iw = img.width * k, bh = srcH * k, ix = Math.max(0, Math.min(W - iw, W / 2 - cxSocle * k));
+  const dessine = (ctx, image) => ctx.drawImage(image, 0, 0, image.width, srcH, ix, H - bh, iw, bh);
+  if(niveaux && cv.dataset.calques !== undefined){
+    // Calques (Terroir) : la planche, puis l'aliment de chaque region observee. Au deblocage, ce qui etait deja la
+    // reste immobile et seuls les nouveaux aliments vont sur le calque que l'animation touche.
+    const liste = s => (s || '').split(',').filter(Boolean).map(Number);
+    const ont = liste(cv.dataset.calques), avant = cv.dataset.calquesAvant !== undefined ? liste(cv.dataset.calquesAvant) : [];
+    const neufs = avant.length ? ont.filter(i => !avant.includes(i)) : [], ctx = cv.getContext('2d');
+    dessine(ctx, niveaux[0]); for(const i of ont) if(!neufs.includes(i)) dessine(ctx, niveaux[i]);
+    if(neufs.length){ const nv = document.createElement('canvas'); nv.className = 'vt-image vt-nouveau'; nv.width = W; nv.height = H; nv.setAttribute('aria-hidden', 'true');
+      const nx = nv.getContext('2d'); for(const i of neufs) dessine(nx, niveaux[i]); cv.after(nv); }
+  } else if(niveaux){
+    const atteint = niveaux[Math.max(1, +cv.dataset.niveau) - 1];
+    const avant = +cv.dataset.niveauAvant ? niveaux[+cv.dataset.niveauAvant - 1] : null;
+    if(avant && avant !== atteint){
+      // Montee d'un niveau : le niveau d'avant reste pose, immobile ; les seuls nouveaux oiseaux
+      // (niveau atteint moins niveau d'avant, retire deux fois pour ne garder aucun liseré) vont sur
+      // un calque a part, le seul que l'animation touche.
+      dessine(cv.getContext('2d'), avant);
+      const nv = document.createElement('canvas'); nv.className = 'vt-image vt-nouveau'; nv.width = W; nv.height = H; nv.setAttribute('aria-hidden', 'true');
+      const nx = nv.getContext('2d'); dessine(nx, atteint);
+      nx.globalCompositeOperation = 'destination-out'; dessine(nx, avant); dessine(nx, avant);
+      cv.after(nv);
+    } else dessine(cv.getContext('2d'), atteint);
+  } else if(!manque){
+    dessine(cv.getContext('2d'), img);
+  }
+  // Un trophee manquant ne montre rien : emplacement sombre, spot eteint, plaque ternie. Plus aucun
+  // pointille, ni fixe ni pendant l'animation (Mathis, 08/11).
 }
 
 /* ---------------- Firestore <-> state ---------------- */
@@ -6406,6 +7011,8 @@ function subscribe(){
       if(!v.trophy || !v.target || !v.voter) return;
       if(!outer.has(v.trophy)) outer.set(v.trophy, new Map());
       const inner = outer.get(v.trophy);
+      // Un vote qui vise un ancien compte compte pour le compte actuel du meme membre (VOTE_COMPTE_ACTUEL)
+      v.target = VOTE_COMPTE_ACTUEL[v.target] || v.target;
       if(!inner.has(v.target)) inner.set(v.target, new Set());
       inner.get(v.target).add(v.voter);
     });
@@ -6970,7 +7577,27 @@ const SINGLE_HOLDER_TROPHIES = new Set(['Mike Horn']);
 // Uniquement en localStorage : c'est le "point de comparaison" LOCAL a l'appareil qui detecte
 // les changements. Les evenements eux-memes sont dans Firestore (collection trophyEvents), donc
 // partages entre appareils.
-function _loadCompState(){ try{ return JSON.parse(localStorage.getItem('mb-comp-state')||'{}'); }catch(_){ return {}; } }
+// Les trophees renommes : ancien nom -> nom actuel. Le navigateur retient par leur NOM les trophees
+// gagnes (mb-comp-state, mb-trophees-<uid>) : sans cette table, un trophee renomme passerait pour
+// neuf, chaque detenteur aurait un « a debloque » dans le Fil et sa scene a redecouvrir (09/11).
+// (La vitrine, elle, compte un trophee qu'elle ne connait pas comme deja vu : rien a faire pour vt-vu.)
+// Une declaration de fonction : elle existe avant que le demarrage n'appelle _troEtat.
+function _troNomActuel(nom){
+  return ({ 'Pingouin, manchot & cousins': 'Happy Feet', 'Oiseau pélagique': 'Vendée Globe', 'Grand ratite': 'La Tête dans le sable',
+    'Pic noir': 'Pic noir pic noir pic noir', 'Jaseur': 'Jazz Club', 'Pie-grièche': 'Le Boucher', 'Perroquet exotique': 'Jacquot',
+    'Engoulevent & cousins': 'Batman', 'Colibri': 'Poids plume', 'Toucan': 'Cyrano', 'Calao': 'Cyrano(céros)',
+    // « Zazu » et « Cyranocéros » n'ont vecu qu'en local, quelques minutes : le site local ecrit dans le vrai Fil
+    'Zazu': 'Cyrano(céros)', 'Cyranocéros': 'Cyrano(céros)', 'Le Nécrophile': 'Nécrophile', "T'ia mis le kimono": 'Tia mis le kimono' })[nom] || nom;
+}
+function _loadCompState(){ try{
+  const s = JSON.parse(localStorage.getItem('mb-comp-state')||'{}') || {};
+  if(s.unlocked) for(const uid in s.unlocked) if(Array.isArray(s.unlocked[uid])) s.unlocked[uid] = s.unlocked[uid].map(_troNomActuel);
+  if(s.holders) s.holders = Object.fromEntries(Object.entries(s.holders).map(([nom, h]) => [_troNomActuel(nom), h]));
+  if(s.topRank) for(const uid in s.topRank) s.topRank[uid] = _troNomActuel(s.topRank[uid]);
+  return s;
+}catch(_){ return {}; } }
+// A monter quand un jeu de trophees neufs ou renommes part en ligne (voir firstRun dans _detectTrophyEventsCore)
+const TROPHEES_VERSION = 2;   // 2 : la vitrine (10/11)
 function _saveCompState(s){ try{ localStorage.setItem('mb-comp-state', JSON.stringify(s)); }catch(_){} }
 // Slug pour construire des IDs Firestore deterministes (evite les doublons quand deux appareils
 // detectent le meme changement au meme moment).
@@ -6984,6 +7611,11 @@ const _DETECT_MIN_DELAY_MS = 10000;     // n'ecrit pas d'events avant 10s post-m
 let _detectTimer = null;
 function _detectTrophyEvents(){
   if(!realPeople.length || !myUid || !leagueId) return;
+  // En local (localhost), le site parle a la VRAIE ligue : un trophee essaye avant sa mise en ligne (nom
+  // provisoire, nouveau trophee) aurait ecrit « X a debloque … » dans le vrai Fil, chez tout le monde
+  // (10/11, en ajoutant le pelican). Les annonces ne partent que du site en ligne. Les bancs et les essais
+  // tournent aussi en local, mais sur un Firestore bouchonne (window.__fs) : eux gardent la detection.
+  if((location.hostname === 'localhost' || location.hostname === '127.0.0.1') && !window.__fs) return;
   // On attend que le snapshot Firestore ait repondu au moins une fois : sinon existingIds
   // est vide et on re-ecrit tous les events avec un nouveau serverTimestamp (bug historique
   // "trophees qui reapparaissent au hasard").
@@ -7016,7 +7648,10 @@ function _detectTrophyEventsCore(){
     return;
   }
   const prev = _loadCompState();
-  const firstRun = !prev.unlocked;
+  // Un nouveau jeu de trophees (TROPHEES_VERSION) : le premier passage apres sa mise en ligne est muet, comme le
+  // tout premier. Sans ca, chaque trophee neuf ou renomme serait annonce « X a debloque … » dans le Fil pour tous
+  // ceux qui l'ont deja (Magellan, Gargantua, Bourriche d'huitre... a la mise en ligne de la vitrine, 10/11).
+  const firstRun = !prev.unlocked || prev.version !== TROPHEES_VERSION;
   const N = state.people.length || realPeople.length;
   const nameByUid = Object.fromEntries(realPeople.map(p=>[p.id, p.name]));
   const currUnlocked = {}, currHolders = {}, currTopRank = {};
@@ -7024,6 +7659,7 @@ function _detectTrophyEventsCore(){
     const s = statsFor(p, N);
     const owned = [];
     for(const t of TROPHIES){
+      if(t.fun && !TROPHEES_FUN_VISIBLES) continue;
       let ok = false; try{ ok = !!t.test(s); }catch(_){}
       if(!ok) continue;
       owned.push(t.name);
@@ -7078,7 +7714,7 @@ function _detectTrophyEventsCore(){
       }
     }
   }
-  _saveCompState({ unlocked:currUnlocked, holders:currHolders, topRank:currTopRank });
+  _saveCompState({ unlocked:currUnlocked, holders:currHolders, topRank:currTopRank, version:TROPHEES_VERSION });
   _troMajAttente(currUnlocked[myUid]);
   // Ecriture Firestore (ID deterministe). AVANT : setDoc ecrasait le champ 'at' -> chaque
   // appareil qui detectait l'event (a cause d'un localStorage frais / vide) mettait a jour
@@ -12792,7 +13428,8 @@ function updateTabDots(){
   // en ouvrant l'onglet, elle baisse a chaque case touchee (choix de Mathis, 2026-10-30).
   const moi = realPeople.find(p => p.id === myUid);
   const especes = [..._decouvertes()].filter(sci => !moi?._active || _mineHasStrict(moi._active, sci)).length;
-  [['pokedex', especes], ['trophies', _troEtat().attente.length]].forEach(([v, n]) => {
+  // + les trophees de la vitrine qui attendent d'etre debloques (essai local du 08/11)
+  [['pokedex', especes], ['trophies', _troEtat().attente.length + _vitrineNbAttente()]].forEach(([v, n]) => {
     const tab = document.querySelector('.tab[data-view="' + v + '"]');
     if(tab) _setBadge(tab, 'tab-count tab-count-or', n, false);
   });
@@ -20223,24 +20860,19 @@ function _renderModalAccordion(items){
   }
   return html + '</div>';
 }
+// Voter pour le trophee d'un membre, ou retirer son vote. Jamais pour soi : les regles Firestore le refusent.
+async function _voteBascule(vb){
+  const target = vb.dataset.voteTarget, trophyId = vb.dataset.voteTrophy || 'grosBebe';
+  if(!target || !myUid || target === myUid) return;
+  const ref = doc(db, 'leagues', leagueId, 'votes', trophyId + '__' + target + '__' + myUid);
+  const iVoted = votesMap.get(trophyId)?.get(target)?.has(myUid);
+  vb.disabled = true;
+  try{ if(iVoted) await deleteDoc(ref); else await setDoc(ref, { trophy:trophyId, target, voter:myUid, createdAt:serverTimestamp() }); }
+  catch(err){ showError(err); if(vb.isConnected) vb.disabled = false; }
+}
 $('#trophyGrid').addEventListener('click',async e=>{
   const vb=e.target.closest('.vote-btn');
-  if(vb){
-    const target=vb.dataset.voteTarget;
-    const trophyId=vb.dataset.voteTrophy || 'grosBebe';
-    if(!target || !myUid) return;
-    // Auto-vote autorisé uniquement si le trophée l'a explicitement défini
-    // (Gros Bébé → Sam / rien pour Kimono → pas d'auto-vote).
-    const tDef = TROPHIES.find(x=>x.voteId===trophyId);
-    const canSelfVote = tDef && tDef.voteSelfCheck ? tDef.voteSelfCheck() : false;
-    if(target===myUid && !canSelfVote) return;
-    const ref=doc(db,'leagues',leagueId,'votes', trophyId+'__'+target+'__'+myUid);
-    const iVoted = votesMap.get(trophyId)?.get(target)?.has(myUid);
-    vb.disabled=true;
-    try{ if(iVoted) await deleteDoc(ref); else await setDoc(ref,{ trophy:trophyId, target, voter:myUid, createdAt:serverTimestamp() }); }
-    catch(err){ showError(err); }
-    return;
-  }
+  if(vb){ _voteBascule(vb); return; }
   const card=e.target.closest('.tro-family, .tro-oneshot.clic'); if(!card) return;
   const d=trophyDetails[card.dataset.detail]; if(!d) return;
   let html;
@@ -20314,11 +20946,12 @@ $('#trophyGrid').addEventListener('click',async e=>{
 });
 // Chip Monde / France dans le modal d'une famille d'especes : rebuild la liste.
 $('#tmodalBody').addEventListener('click', e => {
+  const vb = e.target.closest('.vt-vote-btn'); if(vb){ _voteBascule(vb); return; }   // le vote, depuis la vitrine
   const chip = e.target.closest('.tmodal-country-select .tro-cc-chip');
   if(!chip) return;
   const wrap = chip.closest('.tmodal-country-select');
   const detailIdx = wrap.dataset.detail;
-  const d = trophyDetails[detailIdx];
+  const d = detailIdx === 'vt' ? _vitrineDetail : trophyDetails[detailIdx];   // 'vt' : ouverte depuis la vitrine
   if(!d) return;
   const mode = chip.dataset.cc;
   wrap.querySelectorAll('.tro-cc-chip').forEach(c => c.classList.toggle('on', c === chip));
@@ -20326,8 +20959,8 @@ $('#tmodalBody').addEventListener('click', e => {
   if(!body) return;
   // Seul data-kind="species" est encore emis : la branche habitat a disparu avec ses trophees.
   const key = wrap.dataset.spKey;
-  const label = SPECIES_FAMILY_LABELS[key] || d.familyName?.toLowerCase() || 'espèces';
-  const filter = SPECIES_FAMILY_FILTERS[key];
+  const label = d.libelle || SPECIES_FAMILY_LABELS[key] || d.familyName?.toLowerCase() || 'espèces';
+  const filter = d.filtre || SPECIES_FAMILY_FILTERS[key];
   body.innerHTML = _renderSpeciesFamilyCountryList(mode, label, d.speciesOwnedSet, filter);
 });
 // Helper : ferme le modal ET debloque le scroll de fond.
@@ -22853,7 +23486,7 @@ function _troEtat(){
   _troMemo = { vus:null, attente:[] };
   try{
     const v = JSON.parse(localStorage.getItem('mb-trophees-' + myUid) || 'null');
-    if(v && Array.isArray(v.vus) && Array.isArray(v.attente)) _troMemo = v;
+    if(v && Array.isArray(v.vus) && Array.isArray(v.attente)){ v.vus = v.vus.map(_troNomActuel); v.attente = v.attente.map(_troNomActuel); _troMemo = v; }
   }catch(_){}
   return _troMemo;
 }
