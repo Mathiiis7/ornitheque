@@ -54,7 +54,7 @@ if (process.argv.includes('--monde')) {
     mkdirSync(join(RACINE, 'data', 'countries', cc.toLowerCase()), { recursive: true });
     writeFileSync(join(RACINE, 'data', 'countries', cc.toLowerCase(), 'pays.json'), JSON.stringify(d), 'utf8');
     nbEsp[cc] = Object.keys(d.rarete).length;
-    for (const [s, m] of Object.entries(d.freq)) (parSp[s] ||= {})[cc] = [d.rarete[s] || 0, ...m.map(v => +v.toFixed(4))];
+    for (const [s, m] of Object.entries(d.freq)) (parSp[s] ||= {})[cc] = [d.rarete[s] || 0, ...m.map(v => v ? +v.toPrecision(2) : 0)];
     n++;
   }
   // Morceaux par espèce, sur les deux premières lettres du nom latin (184 fichiers, mesuré le 2026-11-09).
