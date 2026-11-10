@@ -6454,7 +6454,7 @@ function _vitrineCases(sel, s, data){
     // Vitrine seule : renommer n'annonce rien dans le Fil.
     ...[100, 200, 300, 400, 500].map((n, i) => ({ id:'x-ecologue-' + n, nom:['Apprenti écologue', 'Écologue confirmé', 'Écologue chevronné', 'Écologue expert', 'Écologue de légende'][i],
       fam:'ecologue', seuil:n, quoi:`Observer ${n} espèces différentes`,
-      img:i ? 'assets/trophies/themes/attente/point-interrogation.png' : 'assets/trophies/themes/ecologue/ecologue-100.png' })),
+      img:n <= 200 ? `assets/trophies/themes/ecologue/ecologue-${n}.png` : 'assets/trophies/themes/attente/point-interrogation.png' })),   // 200 : la longue-vue de Mathis (10/11)
     // National Geographic : 100 photos postees, coeurs ou pas (Mathis, 10/11 ; avant, 25 photos a 2 coeurs)
     { id:'x-natgeo', nom:'National Geographic', valeur:() => s.postedPhotos || 0, seuil:100, quoi:'Poster 100 photos', img:'assets/trophies/themes/natgeo/natgeo.png' },   // image de Mathis, 10/11
   ].map(x => { const v = x.valeur ? x.valeur() : compte(x.fam); return { id:x.id, nom:x.nom, img:x.img, gagne:v >= x.seuil, bulle:`${x.quoi}. ${qui} ${v}` }; });
