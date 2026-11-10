@@ -19116,42 +19116,122 @@ function _continentDuPays(cc){
 // sur le monde zoome sur son continent ; le bouton sous les mois remonte d'un cran en dezoomant.
 // _ficheNav : { pays, continent, precharger } de la fiche ouverte (_renderSpeciesRarityCard).
 let _ficheNav = null;
-// La carte suivante part de ce cadre et s'elargit : { cc } (on remonte d'un pays) ou { cont } (d'un continent).
-let _oqDepart = null;
-// La carte suivante apparait en fondu apres un zoom : les deux projections ne se superposent pas exactement.
-let _oqFondu = false;
 let _oqZoomEnCours = false;
-// Le viewBox ne s'anime ni en CSS ni en SMIL : une boucle d'images. La largeur varie en echelle
-// logarithmique, sinon le zoom fonce au debut et se traine a la fin. Un minuteur de secours termine
-// l'animation si l'onglet est masque (requestAnimationFrame ne tourne plus).
-function _animerCadre(svg, de, vers, ms = 480){
-  return new Promise(fin => {
+// Un zoom sans coupure (Mathis, 2026-11-10 : « un zoom sans cut ») : les deux cartes n'ont ni la meme
+// projection, ni le meme cadre, ni la meme place dans le panneau. Pendant le mouvement, une scene posee
+// par-dessus le panneau porte une copie des deux : la carte de depart, telle qu'elle etait a l'ecran, et
+// celle d'arrivee, deja dessinee a sa place definitive mais masquee. Une meme camera les deplace ensemble,
+// le pays (ou le continent) servant d'ancre : il passe de sa place sur la premiere a sa place sur la
+// seconde, en grandissant ou en retrecissant, pendant que l'une s'efface et que l'autre apparait. A la
+// derniere image, la copie d'arrivee couvre exactement la vraie carte : on retire la scene, rien ne saute.
+// La scene travaille en pixels d'ecran (getBoundingClientRect), le seul repere commun aux deux cartes
+// sous le zoom 0,85 du corps de page ; ses dimensions CSS sont divisees par ce zoom.
+let _oqApresRendu = null;
+// Appele par les deux dessins de carte, juste apres avoir ecrit leur svg : la transition attend celui-la.
+function _oqSignalerRendu(svg){ const f = _oqApresRendu; if(f && svg){ _oqApresRendu = null; f(svg); } }
+// Ce qu'une carte montre a l'ecran : sa boite, sa mise a l'echelle (preserveAspectRatio meet), son
+// contenu, et l'ancre [x, y, l, h] du viewBox convertie en pixels d'ecran.
+function _oqPhoto(svg, ancre){
+  const r = svg.getBoundingClientRect(), v = svg.viewBox.baseVal;
+  const m = Math.min(r.width / v.width, r.height / v.height);
+  const ox = r.left + (r.width - v.width * m) / 2 - v.x * m, oy = r.top + (r.height - v.height * m) / 2 - v.y * m;
+  return { r, m, ox, oy, html: svg.innerHTML, ancre: ancre && [ox + ancre[0] * m, oy + ancre[1] * m, ancre[2] * m, ancre[3] * m] };
+}
+// La boite des zones d'une carte de pays, en unites de son viewBox : les chemins poses a plat, pas ceux
+// des encarts (la petite couronne, les iles), qui vivent dans un groupe deplace.
+function _oqBoiteZones(svg){
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for(const p of svg.children){
+    if(p.tagName !== 'path') continue;
+    const b = p.getBBox();
+    if(!b.width && !b.height) continue;
+    x0 = Math.min(x0, b.x); y0 = Math.min(y0, b.y); x1 = Math.max(x1, b.x + b.width); y1 = Math.max(y1, b.y + b.height);
+  }
+  return x1 > x0 ? [x0, y0, x1 - x0, y1 - y0] : null;
+}
+// depart : _oqPhoto de la carte qu'on quitte ; relais() fait le changement ; ancreArrivee(svg) donne
+// l'ancre dans la carte d'arrivee, ou { arrivee, depart } pour changer aussi celle de depart une fois la
+// carte d'arrivee connue. Rend une promesse tenue a la fin du mouvement.
+async function _oqTransition(depart, relais, ancreArrivee, ms = 700){
+  const bloc = document.querySelector('#smOuQuandCard .sm-oq-bloc');
+  if(!bloc || !depart || !depart.ancre || matchMedia('(prefers-reduced-motion: reduce)').matches){ relais(); return; }
+  const rb0 = bloc.getBoundingClientRect();
+  const z = (rb0.width / bloc.offsetWidth) || 1;
+  // La hauteur du bloc est figee pendant le mouvement, puis glisse vers la nouvelle.
+  const h0 = bloc.offsetHeight;
+  bloc.style.height = h0 + 'px';
+  bloc.classList.add('oq-en-zoom');
+  const nettoyer = () => { bloc.style.height = ''; bloc.classList.remove('oq-en-zoom'); };
+  const arrivee = await new Promise(res => {
+    const garde = setTimeout(() => { _oqApresRendu = null; res(null); }, 2500);
+    _oqApresRendu = svg => { clearTimeout(garde); res(svg); };
+    try { relais(); } catch(err){ clearTimeout(garde); _oqApresRendu = null; res(null); }
+  });
+  // Ici, la carte d'arrivee est ecrite mais pas encore peinte : on la mesure avant qu'elle ne se montre.
+  let ancreD = null;
+  try { ancreD = arrivee && ancreArrivee(arrivee); } catch(_){}
+  if(ancreD && !Array.isArray(ancreD)){
+    const a = ancreD.depart;
+    if(a) depart.ancre = [depart.ox + a[0] * depart.m, depart.oy + a[1] * depart.m, a[2] * depart.m, a[3] * depart.m];
+    ancreD = ancreD.arrivee;
+  }
+  if(!arrivee || !arrivee.isConnected || !ancreD){ nettoyer(); return; }
+  const fin = _oqPhoto(arrivee, ancreD);
+  bloc.style.height = ''; const h1 = bloc.offsetHeight; bloc.style.height = h0 + 'px';
+  const mois = arrivee.closest('#smRarityMap, #smContinentMap')?.querySelector('#smRarityMapMois, #smContinentMois');
+  if(mois) mois.classList.add('oq-apparait');
+  // La scene couvre les deux cartes, et rien d'autre : la colonne des mois reste hors champ.
+  const rb = bloc.getBoundingClientRect();
+  const U = { l: Math.min(depart.r.left, fin.r.left), t: Math.min(depart.r.top, fin.r.top),
+              r: Math.max(depart.r.right, fin.r.right), b: Math.max(depart.r.bottom, fin.r.bottom) };
+  const W = U.r - U.l, H = U.b - U.t;
+  const NS = 'http://www.w3.org/2000/svg';
+  const scene = document.createElementNS(NS, 'svg');
+  scene.setAttribute('class', 'oq-scene');
+  scene.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  scene.setAttribute('preserveAspectRatio', 'none');
+  scene.setAttribute('aria-hidden', 'true');
+  scene.style.cssText = `position:absolute; left:${(U.l - rb.left) / z - bloc.clientLeft}px; top:${(U.t - rb.top) / z - bloc.clientTop}px; width:${W / z}px; height:${H / z}px;`;
+  const pose = p => `matrix(${p.m} 0 0 ${p.m} ${p.ox - U.l} ${p.oy - U.t})`;
+  scene.innerHTML = `<g class="oq-a"><g transform="${pose(depart)}">${depart.html}</g></g>`
+    + `<g class="oq-b" opacity="0"><g transform="${pose(fin)}">${fin.html}</g></g>`;
+  bloc.appendChild(scene);
+  const gA = scene.querySelector('.oq-a'), gB = scene.querySelector('.oq-b');
+  // Ancres en coordonnees de la scene : centre et taille (moyenne geometrique de la largeur et de la hauteur).
+  const centre = a => [a[0] + a[2] / 2 - U.l, a[1] + a[3] / 2 - U.t], taille = a => Math.sqrt(Math.max(a[2] * a[3], 1e-6));
+  const [cA, cB, sA, sB] = [centre(depart.ancre), centre(fin.ancre), taille(depart.ancre), taille(fin.ancre)];
+  const doux = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  const palier = (a, b, x) => { const u = Math.min(1, Math.max(0, (x - a) / (b - a))); return u * u * (3 - 2 * u); };
+  const image = (t) => {
+    const e = doux(t);
+    // La taille de l'ancre varie en echelle logarithmique : un zoom regulier, qui ne fonce pas au debut.
+    const s = sA * Math.pow(sB / sA, e), cx = cA[0] + (cB[0] - cA[0]) * e, cy = cA[1] + (cB[1] - cA[1]) * e;
+    const ka = s / sA, kb = s / sB;
+    gA.setAttribute('transform', `matrix(${ka} 0 0 ${ka} ${cx - ka * cA[0]} ${cy - ka * cA[1]})`);
+    gB.setAttribute('transform', `matrix(${kb} 0 0 ${kb} ${cx - kb * cB[0]} ${cy - kb * cB[1]})`);
+    // Fondu court, au milieu du mouvement : les deux projections ne se superposent qu'a peu pres, et un
+    // long fondu montrait les pays en double.
+    gB.setAttribute('opacity', palier(.3, .6, t).toFixed(3));
+    gA.setAttribute('opacity', (1 - palier(.45, .75, t)).toFixed(3));
+    bloc.style.height = (h0 + (h1 - h0) * e) + 'px';
+  };
+  image(0);
+  await new Promise(res => {
     let fini = false;
-    const terminer = () => { if(fini) return; fini = true; svg.setAttribute('viewBox', vers.map(v => +v.toFixed(2)).join(' ')); fin(); };
-    if(!de || matchMedia('(prefers-reduced-motion: reduce)').matches){ terminer(); return; }
-    const garde = setTimeout(terminer, ms + 300);
+    // requestAnimationFrame s'arrete dans un onglet masque : un minuteur termine le mouvement.
+    const terminer = () => { if(fini) return; fini = true; res(); };
+    const garde = setTimeout(terminer, ms + 400);
     const t0 = performance.now();
-    const doux = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-    const [cx0, cy0, cx1, cy1] = [de[0] + de[2] / 2, de[1] + de[3] / 2, vers[0] + vers[2] / 2, vers[1] + vers[3] / 2];
-    const pas = (now) => {
+    const pas = now => {
       if(fini) return;
-      if(!svg.isConnected){ fini = true; clearTimeout(garde); fin(); return; }
-      const t = Math.min(1, (now - t0) / ms), k = doux(t);
-      const w = de[2] * Math.pow(vers[2] / de[2], k), h = de[3] * Math.pow(vers[3] / de[3], k);
-      const cx = cx0 + (cx1 - cx0) * k, cy = cy0 + (cy1 - cy0) * k;
-      svg.setAttribute('viewBox', [cx - w / 2, cy - h / 2, w, h].map(v => v.toFixed(2)).join(' '));
-      if(t < 1) requestAnimationFrame(pas); else { clearTimeout(garde); terminer(); }
+      const t = Math.min(1, Math.max(0, (now - t0) / ms));
+      image(t);
+      if(t < 1 && scene.isConnected) requestAnimationFrame(pas); else { clearTimeout(garde); terminer(); }
     };
     requestAnimationFrame(pas);
   });
-}
-// Le cadre d'arrivee d'un zoom : la boite du pays, avec de la marge, a la forme de la carte (sinon la
-// derniere image saute), et jamais plus petite qu'un dixieme de la carte - Malte n'est qu'un point.
-function _cadreDeZoom(b, W, H){
-  const r = W / H, cx = b.x + b.width / 2, cy = b.y + b.height / 2;
-  let w = Math.max(b.width * 1.3, W / 10), h = Math.max(b.height * 1.3, H / 10);
-  if(w / h > r) h = w / r; else w = h * r;
-  return [cx - w / 2, cy - h / 2, w, h];
+  scene.remove();
+  nettoyer();
 }
 // Le bouton qui remonte d'un cran, sous la colonne des mois des deux cartes.
 function _boutonRemonter(id, vers){
@@ -19251,60 +19331,62 @@ async function _renderCarteContinent(sci, nom){
   };
   const svgEl = box.querySelector('svg.oq-carte-cont');
   if(!svgEl) return;
-  const plein = [0, 0, VW, VH];
-  // On arrive d'en dessous (un pays, ou un continent vu depuis le monde) : la carte part de son cadre
-  // et s'elargit jusqu'a la vue entiere.
-  const depart = _oqDepart; _oqDepart = null;
-  if(_oqFondu && !depart) svgEl.classList.add('oq-fondu');
-  _oqFondu = false;
-  if(depart){
-    let de = null;
-    if(depart.cont && paths.cadres){
-      const c = paths.cadres[CARTES_CONTINENTS[depart.cont]];
-      if(c) de = _cadreDeZoom({ x: c[0], y: c[1], width: c[2], height: c[3] }, VW, VH);
-    } else if(depart.cc){
-      const p = svgEl.querySelector(`[data-zone="${depart.cc}"]`);
-      try { if(p) de = _cadreDeZoom(p.getBBox(), VW, VH); } catch(_){}
-    }
-    if(de){ svgEl.setAttribute('viewBox', de.join(' ')); _animerCadre(svgEl, de, plein); }
-  }
+  _oqSignalerRendu(svgEl);
+  // Le continent entier, dans sa propre carte : le cadre que la projection a cale a 10 unites des bords
+  // (outils/build/carte-continents.mjs). C'est lui qui repond au cadre du continent sur le monde.
+  const cadreEntier = sv => { const v = sv.viewBox.baseVal; return [v.x + 10, v.y + 10, v.width - 20, v.height - 20]; };
   const memeFiche = () => _ficheContinent === nom && (_smCurrentKey || '').toLowerCase().trim() === key;
   const remonter = document.getElementById('smOqRemonter');
   if(remonter) remonter.onclick = async () => {
     if(_oqZoomEnCours || !_ficheNav) return;
-    try { await _chargerCarteContinent('Monde'); } catch(_){}
-    if(!memeFiche()) return;
-    _oqDepart = { cont: nom };
-    _ficheNav.continent('Monde');
+    _oqZoomEnCours = true;
+    try {
+      const monde = await _chargerCarteContinent('Monde').catch(() => null);
+      if(!memeFiche()) return;
+      const c = monde && monde.cadres && monde.cadres[CARTES_CONTINENTS[nom]];
+      await _oqTransition(_oqPhoto(svgEl, c && cadreEntier(svgEl)), () => _ficheNav.continent('Monde'), () => c);
+    } finally { _oqZoomEnCours = false; }
   };
-  // Cliquer un pays zoome dessus. Rien n'est redessine pendant le clic : le relais part apres
-  // l'animation, quand le clic est retombe (piege du « clic a l'exterieur », CLAUDE.md).
+  // Cliquer un pays zoome dessus. Rien n'est redessine pendant le clic : le relais part apres le
+  // chargement, quand le clic est retombe (piege du « clic a l'exterieur », CLAUDE.md).
   svgEl.onclick = async (e) => {
     const p = e.target.closest('[data-zone]');
     if(!p || _oqZoomEnCours || !_ficheNav) return;
     const cc = p.dataset.zone;
-    let vers = null, charge, relais;
+    let ancre = null, charge, relais, ancreArrivee;
     if(surMonde){
       const cont = _continentDuPays(cc);
-      const c = paths.cadres && paths.cadres[CARTES_CONTINENTS[cont]];
-      if(c) vers = _cadreDeZoom({ x: c[0], y: c[1], width: c[2], height: c[3] }, VW, VH);
+      ancre = paths.cadres && paths.cadres[CARTES_CONTINENTS[cont]];
       charge = _chargerCarteContinent(cont);
-      relais = () => { _oqFondu = true; _ficheNav.continent(cont); };
+      relais = () => _ficheNav.continent(cont);
+      // Le mouvement se cale sur le pays clique, que l'oeil suit : les deux projections ne superposent
+      // pas les autres pays exactement. Sauf si le pays n'a pas la meme forme sur les deux cartes (la
+      // France du monde porte la Guyane et la Reunion, celle de l'Europe non) : on garde le continent.
+      let bMonde = null;
+      try { const b = p.getBBox(); bMonde = [b.x, b.y, b.width, b.height]; } catch(_){}
+      ancreArrivee = (sv) => {
+        const q = sv.querySelector(`[data-zone="${cc}"]`);
+        let bC = null;
+        try { if(q){ const b = q.getBBox(); bC = [b.x, b.y, b.width, b.height]; } } catch(_){}
+        const forme = a => a[2] / Math.max(a[3], 1e-6);
+        const r = bMonde && bC ? forme(bMonde) / forme(bC) : 0;
+        return (r > 1 / 1.3 && r < 1.3) ? { arrivee: bC, depart: bMonde } : cadreEntier(sv);
+      };
     } else {
       const ccD = COUNTRIES_REG[cc] ? cc : _RATTACHES_CARTE[cc];
       if(!ccD) return;
-      try { vers = _cadreDeZoom(p.getBBox(), VW, VH); } catch(_){}
-      // Les donnees du pays se chargent pendant le zoom, pour que sa carte arrive sans trou.
+      try { const b = p.getBBox(); ancre = [b.x, b.y, b.width, b.height]; } catch(_){}
+      // Les donnees du pays se chargent avant le mouvement, pour que sa carte soit prete a l'arrivee.
       charge = Promise.all([_ficheNav.precharger(ccD), _loadFreqDataForCountry(ccD), _loadExoticMapPaths(ccD)]);
-      relais = () => { _oqFondu = true; _ficheNav.pays(ccD); };
+      relais = () => _ficheNav.pays(ccD);
+      ancreArrivee = _oqBoiteZones;
     }
     _oqZoomEnCours = true;
     try {
-      // Un chargement lent n'est pas attendu au-dela d'une seconde et demie apres le zoom.
-      const anim = vers ? _animerCadre(svgEl, svgEl.getAttribute('viewBox').split(' ').map(Number), vers) : Promise.resolve();
-      await Promise.all([anim, Promise.race([Promise.resolve(charge).catch(() => {}), new Promise(r => setTimeout(r, 1500))])]);
+      // Un chargement lent n'est pas attendu au-dela d'une seconde et demie.
+      await Promise.race([Promise.resolve(charge).catch(() => {}), new Promise(r => setTimeout(r, 1500))]);
+      if(memeFiche()) await _oqTransition(_oqPhoto(svgEl, ancre), relais, ancreArrivee);
     } finally { _oqZoomEnCours = false; }
-    if(memeFiche()) relais();
   };
 }
 async function _renderRarityMap(sci, cc){
@@ -19351,13 +19433,9 @@ async function _renderRarityMap(sci, cc){
   const zonesSelectionnables = new Set(zonesFiche.map(r => r.code));
   const paths = byZone ? await _loadExoticMapPaths(cc) : null;
   if(!byZone || !paths){ container.innerHTML = ''; _majPanneauOuQuand(); return; }
-  // Une espece jamais vue nulle part dans l'annee n'a pas de carte a montrer.
+  // Une espece jamais notee dans le pays garde sa carte, toute en gris (Mathis, 2026-11-10) : sans elle,
+  // le bouton qui remonte au continent disparaissait aussi, et on restait coince sur le pays.
   const zones = Object.keys(paths.zones);
-  const aDeLaData = zones.some(z => {
-    const arr = byZone[z] && byZone[z][key];
-    return Array.isArray(arr) && arr.some(v => v > 0);
-  });
-  if(!aDeLaData){ container.innerHTML = ''; _majPanneauOuQuand(); return; }
   const ABSENT = '#d4d4d8';
   // Zones a mettre en avant quand une region est selectionnee dans la fiche. En France
   // la carte est au departement alors que la selection est une region : on retient donc
@@ -19476,16 +19554,23 @@ async function _renderRarityMap(sci, cc){
   // La carte n'a plus ni cle des couleurs ni note : le panneau n'en porte qu'une, en bas,
   // partagee avec le graphique qui lit la meme mesure (cf. _legendeOuQuand).
   _majPanneauOuQuand();
-  // Apres un zoom depuis le continent : la carte du pays arrive en fondu.
-  if(_oqFondu){ _oqFondu = false; container.querySelector('svg')?.classList.add('oq-fondu'); }
+  // La carte elle-meme (role="img") : le premier svg du conteneur est l'icone du bouton de la colonne.
+  const svgPays = container.querySelector('svg[role="img"]');
+  _oqSignalerRendu(svgPays);
   const remonterPays = document.getElementById('smOqRemonterPays');
   if(remonterPays) remonterPays.onclick = async () => {
-    if(_oqZoomEnCours || !_ficheNav) return;
-    try { await _chargerCarteContinent(contPays); } catch(_){}
-    if(_ccFicheObsolete(cc) || (_smCurrentKey || '').toLowerCase().trim() !== key) return;
-    // La carte du continent part du pays et s'elargit.
-    _oqDepart = { cc };
-    _ficheNav.continent(contPays);
+    if(_oqZoomEnCours || !_ficheNav || !svgPays) return;
+    _oqZoomEnCours = true;
+    try {
+      await _chargerCarteContinent(contPays).catch(() => null);
+      if(_ccFicheObsolete(cc) || (_smCurrentKey || '').toLowerCase().trim() !== key) return;
+      // Le pays retrecit jusqu'a sa place sur la carte du continent, qui apparait autour de lui.
+      await _oqTransition(_oqPhoto(svgPays, _oqBoiteZones(svgPays)), () => _ficheNav.continent(contPays), (sv) => {
+        const p = sv.querySelector(`[data-zone="${cc}"]`);
+        if(!p) return null;
+        const b = p.getBBox(); return [b.x, b.y, b.width, b.height];
+      });
+    } finally { _oqZoomEnCours = false; }
   };
   // Cliquer une zone la selectionne : c'est le geste naturel une fois qu'on l'a reperee
   // sur la carte. Recliquer la zone deja choisie revient au national, pour pouvoir

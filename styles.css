@@ -4946,6 +4946,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
 @media (pointer: coarse){ .oq-remonter { min-height:52px; } }
 /* Téléphone debout : les mois sont en grille au-dessus de la carte ; le bouton y prend sa propre ligne, centré. */
 @media (max-width:700px) and (orientation:portrait){ .oq-remonter { grid-column:1 / -1; justify-self:center; width:auto; margin-top:6px; padding:4px 16px; } }
-/* La carte qui prend le relais apres un zoom arrive en fondu */
-.oq-fondu { animation:oq-fondu .22s ease-out; }
-@keyframes oq-fondu { from { opacity:0; } to { opacity:1; } }
+/* Le zoom d'une carte a l'autre (app.js, _oqTransition) : pendant le mouvement, le bloc a une hauteur fixee
+   en ligne, et une scene posee par-dessus porte les deux cartes ; les vraies restent cachees dessous. */
+.species-modal .sm-oq-bloc.oq-en-zoom { position:relative; overflow:hidden; box-sizing:border-box; }
+.oq-en-zoom :is(#smRarityMap, #smContinentMap) > div > div:not([id]) > svg { visibility:hidden; }
+.oq-scene { pointer-events:none; overflow:hidden; }
+/* La colonne des mois de la carte d'arrivee apparait pendant le mouvement */
+.oq-apparait { animation:oq-apparait .5s ease-out; }
+@keyframes oq-apparait { from { opacity:0; } to { opacity:1; } }
