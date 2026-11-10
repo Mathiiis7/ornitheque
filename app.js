@@ -10854,7 +10854,7 @@ async function _ctChargeDeps(){
 }
 // Les frontières de tous les pays, sous les régions et les départements (calque ctPays, 345).
 async function _ctChargePays(){
-  if(!_ctPaysPromesse) _ctPaysPromesse = fetch('data/carte-pays.json?v=20261110').then(r => r.ok ? r.json() : null).catch(() => null);
+  if(!_ctPaysPromesse) _ctPaysPromesse = fetch('data/carte-pays.json?v=20261110b').then(r => r.ok ? r.json() : null).catch(() => null);
   const geo = await _ctPaysPromesse;
   if(!geo || !_map || _lyrPays) return;
   if(!_map.getPane('ctPays')) _map.createPane('ctPays').style.zIndex = 345;

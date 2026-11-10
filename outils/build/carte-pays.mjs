@@ -15,12 +15,16 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { CODES_MONDE } from './pays-monde.mjs';
+// Les îlots ne sont gardés que pour les pays du monde ajoutés le 2026-11-09 : partout, ils doublaient le fichier
+// (208 -> 429 Ko gz, surtout l'Arctique canadien et les côtes norvégiennes, déjà tracées avant).
+const ILOTS = new Set(CODES_MONDE);
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const SORTIE = join(__dir, '..', '..', 'data', 'carte-pays.json');
 // 0,03° (~3 km) : à l'échelle d'un continent, aucune différence visible avec le tracé d'origine,
 // pour un fichier divisé par dix. Les régions d'un pays cliqué ont leur propre tracé, plus fin.
-const TOL = 0.03;
+const TOL = +(process.env.TOL_PAYS || 0.03);
 // Sauf pour Jersey, Guernesey et l'île de Man, qui s'ouvrent sur leur zone du Royaume-Uni d'un clic : à
 // 0,03° leur forme n'avait que 4 à 8 sommets, et celle de Guernesey laissait Aurigny et Sercq en mer
 // (33 et 13 km, outils/verif/_contours-iles.mjs, 2026-10-29). Mêmes traits fins que leurs zones
@@ -34,6 +38,11 @@ function distPerp(p, a, b){
   if(!dx && !dy) return Math.hypot(p[0] - a[0], p[1] - a[1]);
   const t = Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / (dx * dx + dy * dy)));
   return Math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dy));
+}
+function tolAnneau(r, tol){
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for(const [x, y] of r){ if(x < x0) x0 = x; if(x > x1) x1 = x; if(y < y0) y0 = y; if(y > y1) y1 = y; }
+  return Math.min(tol, Math.max(0.0005, Math.max(x1 - x0, y1 - y0) / 10));
 }
 function douglasPeucker(pts, tol){
   if(pts.length < 3) return pts;
@@ -72,6 +81,20 @@ const PARTIR_DE = {
 const centre = anneau => anneau.reduce((a, [x, y]) => [a[0] + x / anneau.length, a[1] + y / anneau.length], [0, 0]);
 const admin1 = existsSync(ADMIN1) ? JSON.parse(readFileSync(ADMIN1, 'utf8')).features : [];
 
+const PLEIN_10M = new Set(('AQ MV SC PF FJ TF SH KI MH FM TO WS SB VU NC CK PW BS TC VG VI KY AG KN LC VC GD BB DM '
+  + 'MS AI BM FK GS KM MU CV ST MP GU AS NR NU WF PN NF HM BV IO CW AW SX BQ TT JM').split(' '));
+// Le 1:10 M, pour ses seules îles (voir plus bas).
+const NE10 = {};
+{
+  const p10 = join(CONTOURS, 'ne_10m_admin_0_countries.geojson');
+  if(existsSync(p10)) for(const g of JSON.parse(readFileSync(p10, 'utf8')).features){
+    const c = [g.properties.ISO_A2_EH, g.properties.ISO_A2].find(x => x && x !== '-99');
+    if(!c || !ILOTS.has(c)) continue;
+    (NE10[c] ||= []).push(...(g.geometry.type === 'Polygon' ? [g.geometry.coordinates] : g.geometry.coordinates));
+  }
+}
+function dedansAnneau([x, y], a){ let c = false; for(let i = 0, j = a.length - 1; i < a.length; j = i++){
+  const [xi, yi] = a[i], [xj, yj] = a[j]; if((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; }
 for(const f of ne.features){
   const p = f.properties;
   // ISO_A2 vaut -99 pour la France et la Norvège dans Natural Earth (territoires d'outre-mer) :
@@ -82,12 +105,26 @@ for(const f of ne.features){
   const fin = ILES_FINES[cc] && existsSync(join(CONTOURS, ILES_FINES[cc])) ? JSON.parse(readFileSync(join(CONTOURS, ILES_FINES[cc]), 'utf8')) : null;
   const geo = fin ? { type:'MultiPolygon', coordinates:fin.features.flatMap(g => g.geometry.type === 'Polygon' ? [g.geometry.coordinates] : g.geometry.coordinates) } : f.geometry;
   let polys = geo.type === 'Polygon' ? [geo.coordinates] : geo.coordinates;
+  // Pays du monde : les îles que le 1:50 M ignore viennent du 1:10 M (Ogasawara, Kerguelen, Ascension,
+  // Tristan da Cunha, atolls des Maldives...). Seulement celles dont le centre n'est dans aucune terre du
+  // 1:50 M : le 1:10 M entier doublait le fichier (208 -> 414 Ko gz) pour des côtes déjà tracées.
+  // L'Antarctique et les pays faits d'îles : le 1:10 M en entier, leurs côtes au 1:50 M laissaient
+  // la plupart de leurs sites eBird en mer (Antarctique : 88 % hors du trait).
+  if(PLEIN_10M.has(cc) && NE10[cc] && !fin) polys = NE10[cc];
+  else if(ILOTS.has(cc) && NE10[cc] && !fin){
+    const dansTerre = pt => polys.some(pp => dedansAnneau(pt, pp[0]));
+    for(const pp of NE10[cc]) if(!dansTerre(centre(pp[0]))) polys = polys.concat([pp]);
+  }
   if(PARTIR_DE[cc]) polys = polys.filter(poly => PARTIR_DE[cc](centre(poly[0])));
   const [tol, dec] = fin ? [TOL_ILES, 3] : [TOL, 2];
   const out = [];
   for(const poly of polys){
-    const anneaux = poly.map(r => douglasPeucker(r, tol)).filter(r => r.length >= 4)
-      .map(r => r.map(([x, y]) => [+x.toFixed(dec), +y.toFixed(dec)]));
+    // Tolérance à la mesure de chaque anneau (2026-11-10) : à 0,03° partout, une île de moins de ~10 km tombait
+    // sous 4 sommets et disparaissait (Ogasawara, Kerguelen, Tristan da Cunha, atolls des Maldives :
+    // outils/verif/_precision-contours.mjs). Un anneau garde au moins un dixième de son étendue en détail.
+    // Et l'arrondi suit : 2 décimales (1 km) écrasaient un îlot en un point ; 3 sous 0,01° de tolérance.
+    const anneaux = poly.map(r => { const t = ILOTS.has(cc) ? tolAnneau(r, tol) : tol; const d = t < 0.01 ? Math.max(dec, 3) : dec;
+      return douglasPeucker(r, t).map(([x, y]) => [+x.toFixed(d), +y.toFixed(d)]); }).filter(r => r.length >= 4);
     if(anneaux.length) out.push(anneaux);
   }
   if(!out.length) continue;
