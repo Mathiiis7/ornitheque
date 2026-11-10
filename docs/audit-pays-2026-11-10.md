@@ -46,3 +46,20 @@ Trois contrôles :
   (Canard colvert à Tripoli). C'est la règle de la fiche : pas de carte quand aucune zone dessinée n'a
   de données.
 - **Zone d'exotiques inconnue** : AF-FYB (Afghanistan), une zone eBird sans données, sans effet.
+
+## Onglets de la ligue, pays par pays (11 novembre, v1081)
+
+`outils/verif/_tour-pays-ligue.mjs` donne à Alex, dans la démo, une observation dans chacun des 241 pays
+du site (l'espèce la plus fréquente du pays, sauvage, pas encore sur sa liste), puis vérifie :
+- **Classement**, trois modes : le nombre d'espèces monte d'autant (212 -> 451), les deux raretés montent,
+  rien d'illisible à l'écran ;
+- **Qui a vu quoi** en rareté terrain, pays par pays : la ligne de l'espèce est là avec un palier du pays
+  (aucun « Sans palier », « Étranger » ni « pas de rareté terrain ») ;
+- **Fil** : les observations ajoutées s'affichent avec leur rareté (le Fil en montre 60 au plus, voulu) ;
+- **Trophées** : chaque pays du site a un continent pour Magellan ;
+- **Quiz** : il ne dépend d'aucun pays, ouvert une fois, sans erreur.
+
+Aucune erreur de page ni fichier manquant. Seul défaut, corrigé en v1081 : Ashmore-et-Cartier et les îles
+de la mer de Corail (Océanie), Clipperton (Amérique du Nord) manquaient à `CONTINENTS_7`.
+Deux pastilles portent une lettre d'exotique, voulu (statut eBird par région) : Serin des Canaries au
+Portugal (sauvage aux îles, échappé sur le continent), Géopélie zébrée en Thaïlande.
