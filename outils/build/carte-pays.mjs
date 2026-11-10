@@ -48,15 +48,41 @@ if(!src){ console.error('Usage : node outils/build/carte-pays.mjs <ne_50m_admin_
 const ne = JSON.parse(readFileSync(src, 'utf8'));
 const features = [];
 let sansCode = [];
+
+// Territoires qu'eBird traite en pays mais que Natural Earth admin-0 fond dans un autre (2026-11-10) :
+// la Guadeloupe, la Martinique, la Guyane, La Réunion et Mayotte étaient dans le contour de la France,
+// et un clic dessus ouvrait la France. Leur trait vient du fichier admin-1 au 1:10 M, où chacun est une
+// région à part ; ils sont retirés du pays qui les contenait (PARTIR_DE).
+const ADMIN1 = join(CONTOURS, 'ne_10m_admin_1_states_provinces.geojson');
+const TERRITOIRES = {
+  GP:{ codes:['FR-GP'], nom:'Guadeloupe' }, MQ:{ codes:['FR-MQ'], nom:'Martinique' },
+  GF:{ codes:['FR-GF'], nom:'Guyane' }, RE:{ codes:['FR-RE'], nom:'La Réunion' }, YT:{ codes:['FR-YT'], nom:'Mayotte' },
+  BQ:{ codes:['NL-BQ1', 'NL-BQ2', 'NL-BQ3'], nom:'Pays-Bas caribéens' },
+  CX:{ codes:['-99-X14~'], nom:'Île Christmas' }, CC:{ codes:['-99-X15~'], nom:'Îles Cocos' },
+  CS:{ codes:['-99-X03~'], nom:'Îles de la mer de Corail' }, CP:{ codes:['-99-X02~'], nom:'Île Clipperton' },
+  BV:{ codes:['NO-X01~'], nom:'Île Bouvet' }, AC:{ codes:['AU-X04~'], nom:'Îles Ashmore-et-Cartier' },
+};
+// Ce qu'on garde du pays d'origine : la France métropolitaine (Corse comprise), les Pays-Bas d'Europe,
+// la Norvège sans Bouvet. Les « Indian Ocean Ter. » rangés AU (Christmas et Cocos) sont remplacés.
+const PARTIR_DE = {
+  FR: ([x, y]) => x > -6 && x < 10 && y > 41 && y < 52,
+  NL: ([x, y]) => y > 45,
+  NO: ([x, y]) => y > 50,
+};
+const centre = anneau => anneau.reduce((a, [x, y]) => [a[0] + x / anneau.length, a[1] + y / anneau.length], [0, 0]);
+const admin1 = existsSync(ADMIN1) ? JSON.parse(readFileSync(ADMIN1, 'utf8')).features : [];
+
 for(const f of ne.features){
   const p = f.properties;
   // ISO_A2 vaut -99 pour la France et la Norvège dans Natural Earth (territoires d'outre-mer) :
   // ISO_A2_EH donne le code attendu.
   const cc = [p.ISO_A2_EH, p.ISO_A2].find(c => c && c !== '-99');
   if(!cc){ sansCode.push(p.NAME); continue; }
+  if(p.NAME === 'Indian Ocean Ter.' && TERRITOIRES.CX) continue;   // remplacé par Christmas et Cocos
   const fin = ILES_FINES[cc] && existsSync(join(CONTOURS, ILES_FINES[cc])) ? JSON.parse(readFileSync(join(CONTOURS, ILES_FINES[cc]), 'utf8')) : null;
   const geo = fin ? { type:'MultiPolygon', coordinates:fin.features.flatMap(g => g.geometry.type === 'Polygon' ? [g.geometry.coordinates] : g.geometry.coordinates) } : f.geometry;
-  const polys = geo.type === 'Polygon' ? [geo.coordinates] : geo.coordinates;
+  let polys = geo.type === 'Polygon' ? [geo.coordinates] : geo.coordinates;
+  if(PARTIR_DE[cc]) polys = polys.filter(poly => PARTIR_DE[cc](centre(poly[0])));
   const [tol, dec] = fin ? [TOL_ILES, 3] : [TOL, 2];
   const out = [];
   for(const poly of polys){
@@ -68,6 +94,29 @@ for(const f of ne.features){
   features.push({ type:'Feature', properties:{ cc, nom:p.NAME_FR || p.NAME },
     geometry:{ type:'MultiPolygon', coordinates:out } });
 }
+// Les territoires, puis les petits pays absents d'admin-0 au 1:50 M mais présents en admin-1 (Sint
+// Maarten, Tuvalu, Tokelau, îles mineures des États-Unis), au trait fin des îles.
+const dejaLa = new Set(features.map(f => f.properties.cc));
+const MANQUANTS = ['SX', 'TV', 'TK', 'UM'].filter(cc => !dejaLa.has(cc));
+const ajoutes = [];
+for(const [cc, t] of [...Object.entries(TERRITOIRES), ...MANQUANTS.map(cc => [cc, { iso:cc }])]){
+  if(dejaLa.has(cc) && !t.codes) continue;
+  const morceaux = admin1.filter(g => t.codes ? t.codes.includes(g.properties.iso_3166_2) : g.properties.iso_a2 === t.iso);
+  const out = [];
+  for(const g of morceaux){
+    const polys = g.geometry.type === 'Polygon' ? [g.geometry.coordinates] : g.geometry.coordinates;
+    for(const poly of polys){
+      const anneaux = poly.map(r => douglasPeucker(r, TOL_ILES)).filter(r => r.length >= 4)
+        .map(r => r.map(([x, y]) => [+x.toFixed(3), +y.toFixed(3)]));
+      if(anneaux.length) out.push(anneaux);
+    }
+  }
+  if(!out.length){ console.warn(`  ${cc} : aucun contour trouvé`); continue; }
+  features.push({ type:'Feature', properties:{ cc, nom:t.nom || morceaux[0].properties.admin },
+    geometry:{ type:'MultiPolygon', coordinates:out } });
+  ajoutes.push(cc);
+}
+console.log('Territoires et petits pays ajoutés :', ajoutes.join(' '));
 const json = JSON.stringify({ type:'FeatureCollection', features });
 writeFileSync(SORTIE, json);
 console.log(`${features.length} pays -> ${(json.length / 1024).toFixed(1)} Ko (${SORTIE})`);

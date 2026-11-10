@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { mkdirSync } from 'node:fs';
 
-const [PAYS = 'Japon', X, Y] = process.argv.slice(2).filter(a => !a.startsWith('--'));
+const [PAYS = 'Japon', X, Y] = process.argv.slice(2).filter(a => !a.startsWith('--') && !a.startsWith('ZOOM='));
 const URL = 'http://localhost:8766/demo/';
 const MOBILE = process.argv.includes('--mobile');
 const DOSSIER = join(tmpdir(), 'essai-monde'); mkdirSync(DOSSIER, { recursive: true });
@@ -31,7 +31,29 @@ await page.keyboard.press('Escape');
 await attendre(500);
 for (let i = 0; i < 4; i++) { await page.locator('.leaflet-control-zoom-out').click({ timeout: 2000 }).catch(() => {}); await attendre(400); }
 await attendre(1500);
+// ZOOM=x,y,n : zoomer n crans à la molette sur ce point avant la capture.
+const Z = (process.argv.find(a => a.startsWith('ZOOM=')) || '').slice(5).split(',').map(Number);
+if (Z.length === 3) { await page.mouse.move(Z[0], Z[1]); for (let i = 0; i < Z[2]; i++) { await page.mouse.wheel(0, -120); await attendre(700); } await attendre(1500); }
 await capture('0-monde');
+// --chercher : survole chaque pays dessiné (calque ctPays) jusqu'à la bulle qui porte son nom, puis
+// clique dessus. Pour les îles trop petites pour un clic au jugé.
+if (process.argv.includes('--chercher')) {
+  const boites = await page.evaluate(() => [...document.querySelectorAll('.leaflet-ctPays-pane path')]
+    .map(p => { const b = p.getBoundingClientRect(); return { x: b.x + b.width / 2, y: b.y + b.height / 2, w: b.width, h: b.height }; })
+    .filter(b => b.w > 0 && b.x > 40 && b.x < 900 && b.y > 300 && b.y < 830));
+  let trouve = null;
+  for (const b of boites) {
+    await page.mouse.move(b.x, b.y); await attendre(60);
+    const bulle = await page.locator('.leaflet-tooltip').allInnerTexts().catch(() => []);
+    if (bulle.some(t => t.trim() === PAYS)) { trouve = b; break; }
+  }
+  console.log('Trouvé sur la carte :', trouve ? `oui (${Math.round(trouve.x)}, ${Math.round(trouve.y)})` : 'NON', '-', boites.length, 'pays visibles');
+  if (trouve) {
+    await page.mouse.click(trouve.x, trouve.y); await attendre(4000); await capture('1-pays');
+    const texte = await page.locator('body').innerText();
+    console.log('Le panneau nomme le pays :', texte.includes(PAYS) ? 'oui' : 'NON');
+  }
+}
 if (X && Y) {
   await page.mouse.click(+X, +Y);
   await attendre(4000);

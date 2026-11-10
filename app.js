@@ -10802,7 +10802,7 @@ async function _ctChargeDeps(){
 }
 // Les frontières de tous les pays, sous les régions et les départements (calque ctPays, 345).
 async function _ctChargePays(){
-  if(!_ctPaysPromesse) _ctPaysPromesse = fetch('data/carte-pays.json?v=20261029').then(r => r.ok ? r.json() : null).catch(() => null);
+  if(!_ctPaysPromesse) _ctPaysPromesse = fetch('data/carte-pays.json?v=20261110').then(r => r.ok ? r.json() : null).catch(() => null);
   const geo = await _ctPaysPromesse;
   if(!geo || !_map || _lyrPays) return;
   if(!_map.getPane('ctPays')) _map.createPane('ctPays').style.zIndex = 345;
@@ -18182,11 +18182,11 @@ async function _renderExoticMap(sci, cc){
   container.innerHTML = `
       <div>
         <div style="display:flex; align-items:flex-start; gap:8px;">
-        <div style="flex:0 0 62px;" aria-hidden="true"></div>
+        <div style="flex:0 0 88px;" aria-hidden="true"></div>
         <div style="${_COLONNE_CARTE}"><svg viewBox="${_viewBoxCarte(cc, paths)}" style="${_styleCarte()}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Statut exotique par ${zoneWord}">
           ${svgZones}
         </svg></div>
-        <div style="flex:0 0 62px;" aria-hidden="true"></div>
+        <div style="flex:0 0 88px;" aria-hidden="true"></div>
         </div>
       </div>`;
   // Cliquer une zone la selectionne, comme sur la carte de rarete. Recliquer celle qui
@@ -19073,6 +19073,9 @@ async function _renderRarityMap(sci, cc){
       + '<span style="opacity:.85; font-variant-numeric:tabular-nums;">' + (vu ? t : '–') + '</span>'
       + '</button>';
   };
+  // Colonne des mois a 88 px (62 avant le 2026-11-10) : la gelule « ANNÉE » et son palier demandaient
+  // 74 px avec un palier a un chiffre, ~82 avec « 10 » (86 au telephone), et debordaient (vu par Mathis). Les colonnes
+  // fantomes des deux cartes de la fiche suivent, pour rester centrees au meme endroit.
   const moisBtns = chipMois('an', 'année', surAnnee, _valeurAnnuelleZone(serieRef, cc, zonePort || null), true)
     + '<span style="display:block; height:1px; margin:5px 3px; background:var(--line-2);"></span>'
     + _MOIS_COURTS.map((m, i) => chipMois(i, m, !surAnnee && i === mois, serieRef[i] || 0, false)).join('');
@@ -19085,7 +19088,7 @@ async function _renderRarityMap(sci, cc){
   _majEnteteOuQuand(nomPort);
   container.innerHTML = `
         <div style="display:flex; align-items:flex-start; justify-content:flex-start; gap:8px;">
-          <div id="smRarityMapMois" style="display:flex; flex-direction:column; gap:2px; flex:0 0 auto; width:62px;">
+          <div id="smRarityMapMois" style="display:flex; flex-direction:column; gap:2px; flex:0 0 auto; width:88px;">
             ${moisBtns}</div>
           <div style="${_COLONNE_CARTE}"><svg viewBox="${_viewBoxCarte(cc, paths)}" style="${_styleCarte()}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Rareté par ${zoneWord} sur ${libellePeriode}">
             ${svgZones}
@@ -19093,7 +19096,7 @@ async function _renderRarityMap(sci, cc){
           <!-- Colonne fantome de la largeur du selecteur de mois : sans elle, la carte se
                centrerait dans la place restante et non dans le panneau, donc pas au meme
                endroit que la carte de statut exotique juste en dessous. -->
-          <div style="flex:0 0 62px;" aria-hidden="true"></div>
+          <div style="flex:0 0 88px;" aria-hidden="true"></div>
         </div>`;
   // La carte n'a plus ni cle des couleurs ni note : le panneau n'en porte qu'une, en bas,
   // partagee avec le graphique qui lit la meme mesure (cf. _legendeOuQuand).

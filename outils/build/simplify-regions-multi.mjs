@@ -250,7 +250,28 @@ function resolveCode(cc, props){
   }
   return resolveCodeBrut(cc, props);
 }
+// Pays du monde : régions Natural Earth -> zone eBird, quand ni le code ni le nom ne s'apparient
+// (relevé un par un le 2026-11-10 par outils/verif/_zones-orphelines.mjs). Plusieurs régions vers une
+// même zone sont fondues. Laissés SANS contour, faute d'un découpage qui se recouvre : la Libye (34 zones
+// eBird contre 22), le Népal hors Extrême-Ouest, le Vietnam, le Qatar, Sejong, Aldabra, Kingman.
+const ALIAS_MONDE = {
+  'AF-LOG':'AF-LOW', 'AF-URU':'AF-ORU',
+  'AZ-SBN':'AZ-DAV', 'AZ-SR':'AZ-AB',
+  'BS-AK':'BS-AC', 'BS-CK':'BS-AC', 'BS-SS':'BS-SR', 'BS-RC':'BS-SR', 'BS-MI':'BS-SP', 'BS-SA':'BS-KB', 'BS-MC':'BS-KB',
+  'BI-BL':'BI-BJ', 'BI-BM':'BI-BJ',
+  'TD-X01~':'TD-BET', 'TD-BO':'TD-BET', 'TD-TI':'TD-BET',
+  'CO-X01~':'CO-DC',
+  'ID-KI':'ID-KA', 'ID-KB':'ID-KA', 'ID-KS':'ID-KA', 'ID-KT':'ID-KA', 'ID-KU':'ID-KA',
+  'ID-NT':'ID-NU', 'ID-NB':'ID-NU',
+  'ID-SN':'ID-SL', 'ID-SG':'ID-SL', 'ID-SA':'ID-SL', 'ID-ST':'ID-SL', 'ID-SR':'ID-SL', 'ID-GO':'ID-SL',
+  'ID-AC':'ID-SM', 'ID-SU':'ID-SM', 'ID-SB':'ID-SM', 'ID-RI':'ID-SM', 'ID-JA':'ID-SM', 'ID-SS':'ID-SM',
+  'ID-BE':'ID-SM', 'ID-LA':'ID-SM', 'ID-BB':'ID-SM', 'ID-KR':'ID-SM',
+  'NP-MA':'NP-7', 'NP-SE':'NP-7',          // Sudurpaschim = Mahakali + Seti, exactement
+  'OM-SH':'OM-SJ', 'PG-NSB':'PG-NSA', 'PH-MNL':'PH-00',
+};
+
 function resolveCodeBrut(cc, props){
+  if(PAYS_MONDE[cc] && ALIAS_MONDE[props.iso_3166_2]) return ALIAS_MONDE[props.iso_3166_2];
   if(cc === 'ES') return ES_HASC[props.code_hasc] || null;
   if(cc === 'IT') return IT_REGION[props.region] || null;
   if(cc === 'GB') return resolveGB(props);
