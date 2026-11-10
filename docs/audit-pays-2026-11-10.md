@@ -22,8 +22,10 @@ Trois contrôles :
 
 ## Limites des sources (rien à corriger chez nous)
 
-- **98 couples espèce-pays restent à « - »** : eBird publie lui-même 0,0 tous les mois. L'espèce est
-  signalée, mais trop rarement pour sa précision (Tadorne casarca au Canada, par exemple).
+- **Espèces qu'eBird publie à 0,0 tous les mois** (Tadorne casarca au Canada) : décision de Mathis, elles
+  ne sont pas présentes dans le pays. 98 retirées en v1074, hors France ; les 5 françaises (Oie naine,
+  Bernache de Hutchins, Dendrocygne à ventre noir, Faucon laggar...) attendent sa décision, car les
+  paliers français comptent pour la ligue.
 - **Zones sans forme** : Libye (7 zones, découpage de 2007 qu'aucune carte n'a), Qatar Al Ghuwayriyah,
   îles Baker, Howland et Kingman Reef (trop petites).
 - **6 territoires qui ont des zones chez eBird mais aucune tracée** : Pays-Bas caribéens, îles Caïmans,
@@ -35,8 +37,8 @@ Trois contrôles :
   - petites îles et paroisses de 2 à 4 sites (Barbade, Grenade, Seychelles, Samoa) ;
   - pays dont la Carte regroupe les communes d'eBird (Slovénie, Hongrie, Lettonie, Moldavie, Monténégro,
     Macédoine du Nord, Suisse, Royaume-Uni) : leurs sites tombent dans le regroupement, c'est voulu.
-- **Monténégro sans fichier des 48 quinzaines** : ses tables viennent d'une chaîne à part depuis
-  septembre. Son histogramme de saisonnalité reste en 12 mois.
+- **Monténégro sans fichier des 48 quinzaines** : premier pays étranger du site, il a gardé son script à
+  part (`build-rarity-me-quinzaines.mjs`), qui ne l'écrivait pas. Corrigé en v1074 (`--quinzaines`).
 - **Effort par zone absent pour 22 pays** (Afghanistan, Hongrie...) : l'appli retombe sans bruit sur
   l'effort national.
 - **Pas de carte dans la fiche pour une espèce notée au niveau national mais dans aucune zone**

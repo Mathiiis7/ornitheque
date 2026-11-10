@@ -24,6 +24,8 @@ import { PAYS_MONDE, AVEC_MONDE } from './pays-monde.mjs';
 // pourcentage (303 couples espèce-pays, audit du 2026-11-10). Une valeur que toFixed(5) garde ne change pas ;
 // une valeur qu'il effaçait garde ses deux premiers chiffres.
 const arrondi = v => (+(v || 0).toFixed(5)) || (v ? +v.toPrecision(2) : 0);
+// Pays où une espèce à 0 tous les mois reste listée (voir « Absentes » plus bas).
+const PAYS_QUI_GARDENT_LES_ZEROS = new Set(['FR']);
 
 // Les noms latins du site, pas ceux de la taxonomie eBird du jour : voir noms-du-site.mjs.
 import { renommages, renommer } from './noms-du-site.mjs';
@@ -485,6 +487,14 @@ async function processCountry(cc){
   if(unmatchedList.length > 0){
     console.log(`  Sample unmatched : ${unmatchedList.slice(0, 5).join(', ')}${unmatchedList.length > 5 ? '...' : ''}`);
   }
+  // Une espèce que le bar chart donne à 0 tous les mois n'est pas présente dans le pays (décision de Mathis,
+  // 2026-11-10) : eBird la liste, mais trop rarement pour sa précision, et la fiche affichait « - » à côté
+  // d'un palier « rarissime ». Elle sort du pays, de ses zones et de ses 48 quinzaines (98 couples hors
+  // France ce jour-là). La France attend sa décision : ses paliers comptent pour la ligue.
+  const absentes = new Set(PAYS_QUI_GARDENT_LES_ZEROS.has(cc) ? []
+    : Object.keys(monthly).filter(s => monthly[s].every(v => !v)));
+  for(const s of absentes){ delete rarity[s]; delete monthly[s]; }
+  if(absentes.size) console.log(`  Absentes (0 tous les mois) : ${[...absentes].join(', ')}`);
   // Retour aux noms du site (voir renommages) : la même table sert aux zones et aux 48 quinzaines.
   const ren = renommages(Object.keys(rarity));
   if(Object.keys(ren).length){
@@ -515,7 +525,7 @@ async function processCountry(cc){
       const regMap = {};
       for (const [k, { name, monthly: m12 }] of Object.entries(barReg)) {
         const sci = resolveSci(tax, k, name);
-        if (sci) regMap[ren[sci] || sci] = m12.map(arrondi);
+        if (sci && !absentes.has(sci)) regMap[ren[sci] || sci] = m12.map(arrondi);
       }
       if (Object.keys(regMap).length > 0) {
         regionalData[regCode] = regMap;
@@ -537,7 +547,7 @@ async function processCountry(cc){
   const q48 = {};
   for(const [k, o] of Object.entries(bar)){
     const sci = resolveSci(tax, k, o.name);
-    if(sci && o.q48) q48[ren[sci] || sci] = o.q48;
+    if(sci && o.q48 && !absentes.has(sci)) q48[ren[sci] || sci] = o.q48;
   }
   const q48Path = join(countryDir, `freq_48.json`);
   writeFileSync(q48Path, JSON.stringify(q48));

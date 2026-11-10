@@ -80,7 +80,7 @@ console.log('  min ' + (Math.min(...effMois) * 100).toFixed(1) + '% du total, ma
 const THR = JSON.parse(src.match(/const _ANNUAL_THR = (\[\[.*?\]\]);/)[1]);
 const palier = v => { if(!(v > 0)) return 10; for(const [l, t] of THR) if(v >= l) return t; return 10; };
 
-const tiers = {}, mois = {};
+const tiers = {}, mois = {}, quinzaines = {};
 let apparies = 0; const orphelins = [];
 for(const { nom, v } of brut){
   // Le bar chart 2019-2026 est servi avec les noms CINFO longs ("Pluvier grand-gravelot"),
@@ -102,9 +102,20 @@ for(const { nom, v } of brut){
   const an = v.reduce((s, x, i) => s + x * poids[i], 0) / totalListes;
   tiers[sci] = palier(an);
   mois[sci] = m12;
+  quinzaines[sci] = v.map(x => (+x.toFixed(5)) || (x ? +x.toPrecision(2) : 0));
 }
 console.log('apparies : ' + apparies + ' / ' + brut.length + ' (orphelins : ' + orphelins.length + ')');
 if(orphelins.length) console.log('  ' + orphelins.slice(0, 10).join(' | '));
+
+// --quinzaines : les 48 quinzaines du pays, data/countries/me/freq_48.json, comme tous les autres pays
+// (build-rarity-multi-country.mjs). Le Monténégro, premier pays étranger du site, a gardé ce script à part
+// et n'avait pas ce fichier : son histogramme de saisonnalité étirait 12 mois sur 48 créneaux, et la page
+// demandait un fichier absent (404, tour des pays du 2026-11-10). N'écrit que ce fichier.
+if(process.argv.includes('--quinzaines')){
+  writeFileSync('data/countries/me/freq_48.json', JSON.stringify(quinzaines));
+  console.log('ecrit data/countries/me/freq_48.json : ' + Object.keys(quinzaines).length + ' especes');
+  process.exit(0);
+}
 
 // --- comparaison avec les tables en place ---
 const T0 = litObjet(src, 'REAL_RARITY_ME_EBIRD');
