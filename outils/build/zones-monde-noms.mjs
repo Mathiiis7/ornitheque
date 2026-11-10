@@ -18,8 +18,17 @@ import { fileURLToPath } from 'node:url';
 const RACINE = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const liste = JSON.parse(readFileSync(join(RACINE, 'outils', 'config', 'pays-a-ajouter.json'), 'utf8'));
 const ne = JSON.parse(readFileSync(join(RACINE, 'notes-privees', 'contours-monde', 'ne_10m_admin_1_states_provinces.geojson'), 'utf8'));
-const NE_FR = {};
-for (const f of ne.features) if (f.properties.iso_3166_2 && f.properties.name_fr) NE_FR[f.properties.iso_3166_2] = f.properties.name_fr;
+const NE_FR = {}, NE_NOMS = {};
+for (const f of ne.features) if (f.properties.iso_3166_2) {
+  const p = f.properties;
+  if (p.name_fr) NE_FR[p.iso_3166_2] = p.name_fr;
+  NE_NOMS[p.iso_3166_2] = [p.name, p.name_en, p.name_alt, p.woe_name, p.gn_name].flatMap(n => String(n || '').split('|'));
+}
+// Le nom français de Natural Earth n'est pris que si sa région porte le MÊME nom qu'eBird : au Vietnam, en
+// Tanzanie, en Corée, les codes sont décalés et VN-24 (Bac Ninh chez eBird) est Quảng Bình chez Natural
+// Earth (outils/verif/_zones-noms-croises.mjs, 2026-11-10).
+const sansAccent = s => String(s || '').split(',')[0].normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z]/g, '');
+const proches = (a, b) => { a = sansAccent(a); b = sansAccent(b); return !!a && !!b && (a.includes(b) || b.includes(a) || a.slice(0, 4) === b.slice(0, 4)); };
 
 const PREFIXES = /^(Préfecture|Province|Région|Gouvernorat|État|District|Département|Division|Comté|Paroisse|Municipalité|Territoire|Oblast|Wilaya|Émirat|Canton|Commune|Île|Zone)\s+(de la |de l'|de l’|du |des |d'|d’|de )/i;
 const CARDINAUX = { 'Central': 'Centre', 'Eastern': 'Est', 'Western': 'Ouest', 'Northern': 'Nord',
@@ -39,7 +48,8 @@ const sortie = {};
 let neUtilises = 0;
 for (const p of liste) for (const [code, nom] of Object.entries(p.noms || {})) {
   const fr = NE_FR[code];
-  if (fr && !/^[A-Z]{2}-/.test(fr)) { sortie[code] = fr.replace(PREFIXES, '').trim(); neUtilises++; }
+  const memeRegion = (NE_NOMS[code] || []).some(n => proches(n, nom)) || proches(fr, nom);
+  if (fr && memeRegion && !/^[A-Z]{2}-/.test(fr)) { sortie[code] = fr.replace(PREFIXES, '').trim(); neUtilises++; }
   else sortie[code] = depuisEbird(nom);
 }
 writeFileSync(join(RACINE, 'outils', 'config', 'zones-monde-noms.json'), JSON.stringify(sortie, null, 1));

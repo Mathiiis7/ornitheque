@@ -1,0 +1,197 @@
+{
+ "AFG-ADM1": {
+  "licence": "Public Domain",
+  "source": "Wikimedia, geoBoundaries",
+  "annee": "2007"
+ },
+ "AFG-ADM2": {
+  "licence": "Public Domain",
+  "source": "Afghanistan Information Management Services, Esri Disaster Response Program",
+  "annee": "2014"
+ },
+ "AZE-ADM1": {
+  "licence": "Open Data Commons Open Database License 1.0",
+  "source": "geoBoundaries, OpenStreetMap",
+  "annee": "2021"
+ },
+ "AZE-ADM2": {
+  "licence": "Creative Commons Attribution-ShareAlike 3.0 Unported",
+  "source": "Wikipedia",
+  "annee": "2020"
+ },
+ "BHS-ADM1": {
+  "licence": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
+  "source": "Haiti GeoPortal",
+  "annee": "09-09-2017 to 24-08-2020"
+ },
+ "BHS-ADM2": {
+  "licence": "Open Data Commons Open Database License 1.0",
+  "source": "OpenStreetMap, Wambacher",
+  "annee": "2017"
+ },
+ "IND-ADM1": {
+  "licence": "Creative Commons Attribution 2.5 India (CC BY 2.5 IN)",
+  "source": "DataMeet India community, Election Commission of India",
+  "annee": "2011"
+ },
+ "IND-ADM2": {
+  "licence": "Open Data Commons Open Database License 1.0",
+  "source": "Pathways Data Pvt. Ltd., lgdirectory.gov.in",
+  "annee": "2021"
+ },
+ "KAZ-ADM1": {
+  "licence": "Open Data Commons Open Database License 1.0",
+  "source": "OpenStreetMap, Wambacher",
+  "annee": "2017"
+ },
+ "KAZ-ADM2": {
+  "licence": "Open Data Commons Open Database License 1.0",
+  "source": "OpenStreetMap, Wambacher",
+  "annee": "2017"
+ },
+ "LAO-ADM1": {
+  "licence": "Open Data Commons Open Database License 1.0",
+  "source": "OpenStreetMap, Wambacher",
+  "annee": "2017"
+ },
+ "LAO-ADM2": {
+  "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+  "source": "National Geographic Department, OCHA ROAP",
+  "annee": "2019"
+ },
+ "LBN-ADM1": {
+  "licence": "Public Domain",
+  "source": "geoBoundaries, Wikimedia Commons",
+  "annee": "2017"
+ },
+ "LBN-ADM2": {
+  "licence": "Public Domain",
+  "source": "geoBoundaries, Wikipedia",
+  "annee": "2021"
+ },
+ "LBY-ADM1": {
+  "licence": "Public Domain",
+  "source": "Natural Earth",
+  "annee": "2021"
+ },
+ "NPL-ADM1": {
+  "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+  "source": "Survey Department of Nepal, OCHA FISS",
+  "annee": "2020"
+ },
+ "NPL-ADM2": {
+  "licence": "Public Domain",
+  "source": "geoBoundaries, Wikimedia Commons",
+  "annee": "2006"
+ },
+ "PHL-ADM1": {
+  "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+  "source": "National Mapping and Resource Information Authority (NAMRIA), Philippines Statistics Authority (PSA), OCHA Philippines",
+  "annee": "2020"
+ },
+ "PHL-ADM2": {
+  "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+  "source": "National Mapping and Resource Information Authority (NAMRIA), Philippines Statistics Authority (PSA), OCHA Philippines",
+  "annee": "2020"
+ },
+ "QAT-ADM1": {
+  "licence": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
+  "source": "geoBoundaries, Qatar Open Data Portal",
+  "annee": "2015"
+ },
+ "QAT-ADM2": {
+  "licence": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
+  "source": "geoBoundaries, Qatar Open Data Portal",
+  "annee": "2015"
+ },
+ "LCA-ADM1": {
+  "licence": "CC0 1.0 Universal (CC0 1.0) Public Domain Dedication",
+  "source": "Wikimedia Commons, Wikimedia Commons",
+  "annee": "2015"
+ },
+ "LCA-ADM2": {
+  "licence": "Creative Commons Attribution 4.0 (CC BY 4.0)",
+  "source": "Department of Physical Planning, Saint Lucia Open Data",
+  "annee": "2019"
+ },
+ "SYC-ADM1": {
+  "licence": "Creative Commons Attribution-ShareAlike 3.0 Unported",
+  "source": "Digitizedhttps, Digitizedhttps",
+  "annee": "2018"
+ },
+ "SYC-ADM2": {
+  "licence": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
+  "source": "Seychelles National Bureau of Statistics, OCHA ROSEA",
+  "annee": "2020"
+ },
+ "SLB-ADM1": {
+  "licence": "Public Domain",
+  "source": "Natural Earth",
+  "annee": "2021"
+ },
+ "SLB-ADM2": {
+  "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+  "source": "Solomon Islands National Statistics Office (SINSO), OCHA ROAP",
+  "annee": "2018"
+ },
+ "SOM-ADM1": {
+  "licence": "Open Data Commons Open Database License 1.0",
+  "source": "OpenStreetMap, Wambacher",
+  "annee": "2015"
+ },
+ "SOM-ADM2": {
+  "licence": "Creative Commons Attribution 4.0 (CC BY 4.0)",
+  "source": "Global Polio Eradication Initiative (GPEI), Frank Salet",
+  "annee": "2022"
+ },
+ "KOR-ADM1": {
+  "licence": "Public Domain",
+  "source": "Natural Earth",
+  "annee": "2021"
+ },
+ "KOR-ADM2": {
+  "licence": "Creative Commons Attribution 3.0 License",
+  "source": "geoBoundaries, citypopulation.de",
+  "annee": "2020"
+ },
+ "TWN-ADM1": {
+  "licence": "Open Data Commons Open Database License 1.0",
+  "source": "OpenStreetMap, Wambacher",
+  "annee": "2017"
+ },
+ "TWN-ADM2": {
+  "licence": "Creative Commons Attribution-ShareAlike 2.0",
+  "source": "OpenStreetMap, Wambacher",
+  "annee": "2017"
+ },
+ "TZA-ADM1": {
+  "licence": "Open Data Commons Open Database License 1.0",
+  "source": "OpenStreetMap, Wambacher",
+  "annee": "2015"
+ },
+ "TZA-ADM2": {
+  "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+  "source": "Tanzania National Bureau of Statistics / UN OCHA ROSA, OCHA ROSA",
+  "annee": "2021"
+ },
+ "TUN-ADM1": {
+  "licence": "Open Data Commons Open Database License 1.0",
+  "source": "OpenStreetMap, Wambacher",
+  "annee": "2017"
+ },
+ "TUN-ADM2": {
+  "licence": "Open Data Commons Open Database License 1.0",
+  "source": "OpenStreetMap, Wambacher",
+  "annee": "2017"
+ },
+ "VNM-ADM1": {
+  "licence": "Public Domain",
+  "source": "geoBoundaries, Wikipedia",
+  "annee": "2008"
+ },
+ "VNM-ADM2": {
+  "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+  "source": "OCHA ROAP, Government of Viet Nam",
+  "annee": "2020"
+ }
+}

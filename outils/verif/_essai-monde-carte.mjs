@@ -39,7 +39,7 @@ await capture('0-monde');
 // clique dessus. Pour les îles trop petites pour un clic au jugé.
 if (process.argv.includes('--chercher')) {
   const boites = await page.evaluate(() => [...document.querySelectorAll('.leaflet-ctPays-pane path')]
-    .map(p => { const b = p.getBoundingClientRect(); return { x: b.x + b.width / 2, y: b.y + b.height / 2, w: b.width, h: b.height }; })
+    .map(p => { const b = p.getBoundingClientRect(); const L = p.getTotalLength ? p.getTotalLength() : 0; const m = p.getScreenCTM(); const q = L && m ? p.getPointAtLength(L / 3).matrixTransform(m) : null; return { x: q ? q.x : b.x + b.width / 2, y: q ? q.y : b.y + b.height / 2, w: b.width, h: b.height }; })   // un point du TRACÉ : le centre du cadre tombe hors des pays en S
     .filter(b => b.w > 0 && b.x > 40 && b.x < 900 && b.y > 300 && b.y < 830));
   let trouve = null;
   for (const b of boites) {

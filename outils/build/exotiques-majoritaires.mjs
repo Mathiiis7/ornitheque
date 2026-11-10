@@ -37,6 +37,13 @@ const litObjet = (nom) => {
 };
 const NAT = litObjet('EXOTIQUES_EBIRD_PAR_PAYS').obj;
 const MULTI = litObjet('EXOTIC_STATUS_BY_REGION_MULTI').obj;
+// Les pays du monde (2026-11-10) ont leurs exotiques par zone hors d'app.js, dans le fichier de chaque
+// pays : inject-exotic-by-region.mjs les range dans outils/config/exotiques-zones-monde.json. Sans
+// elles, la règle de la moitié ne tournait pour aucun des 150 pays du monde qui ont des zones.
+{
+  const f = 'outils/config/exotiques-zones-monde.json';
+  if (existsSync(f)) for (const [cc, z] of Object.entries(JSON.parse(readFileSync(f, 'utf8')))) if (!MULTI[cc]) MULTI[cc] = z;
+}
 const DEP = litObjet('EXOTIC_STATUS_BY_DEP_FR').obj;
 
 const sortie = {}; let n = 0;

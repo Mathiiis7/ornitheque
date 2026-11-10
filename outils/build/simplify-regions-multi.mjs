@@ -268,10 +268,65 @@ const ALIAS_MONDE = {
   'ID-BE':'ID-SM', 'ID-LA':'ID-SM', 'ID-BB':'ID-SM', 'ID-KR':'ID-SM',
   'NP-MA':'NP-7', 'NP-SE':'NP-7',          // Sudurpaschim = Mahakali + Seti, exactement
   'OM-SH':'OM-SJ', 'PG-NSB':'PG-NSA', 'PH-MNL':'PH-00',
+  // Codes décalés entre Natural Earth et eBird (outils/verif/_zones-noms-croises.mjs, 2026-11-10) : la forme
+  // de Sejong portait le nom de Jeju, celle de Njombe celui de Katavi...
+  'KR-42':'KR-51', 'KR-49':'KR-50', 'KR-50':'KR-36',
+  'TZ-28':'TZ-29', 'TZ-29':'TZ-31', 'TZ-30':'TZ-28',
 };
 
+// Seconde source des pays du monde : geoBoundaries (outils/build/geoboundaries-monde.mjs). « tout » : le
+// pays entier vient de geoBoundaries ; « ajout » : seulement les zones absentes de Natural Earth.
+const NE_PAR_CODE = {};
+const GB_MONDE = {
+  VN:{ fichier:'geoBoundaries-VNM-ADM1.geojson', mode:'tout' },  SO:{ fichier:'geoBoundaries-SOM-ADM1.geojson', mode:'tout' },
+  // Tanzanie : ni Natural Earth ni geoBoundaries n'ont Songwe (2016), compté dans Mbeya : il reste sans contour.
+  LA:{ fichier:'geoBoundaries-LAO-ADM1.geojson', mode:'tout' },  NP:{ fichier:'geoBoundaries-NPL-ADM1.geojson', mode:'tout' },
+  AF:{ fichier:'geoBoundaries-AFG-ADM1.geojson', mode:'tout' },  KZ:{ fichier:'geoBoundaries-KAZ-ADM1.geojson', mode:'tout' },
+  LB:{ fichier:'geoBoundaries-LBN-ADM1.geojson', mode:'tout' },  TN:{ fichier:'geoBoundaries-TUN-ADM1.geojson', mode:'tout' },
+  SB:{ fichier:'geoBoundaries-SLB-ADM1.geojson', mode:'tout' },  TW:{ fichier:'geoBoundaries-TWN-ADM1.geojson', mode:'tout' },
+  LC:{ fichier:'geoBoundaries-LCA-ADM1.geojson', mode:'tout' },
+  PH:{ fichier:'geoBoundaries-PHL-ADM2.geojson', mode:'ajout' },
+};
+// Noms geoBoundaries -> zone eBird, quand les deux ne s'écrivent pas pareil (relevés un à un).
+// Comparés au nom EXACT de geoBoundaries, avant toute normalisation (« Vientiane » et « Vientiane Capital »
+// se confondaient une fois « Capital » retiré).
+const ALIAS_GB = {
+  NP:{ 'Province 2':'NP-2', 'Madhesh':'NP-2', 'Province 1':'NP-1', 'Koshi':'NP-1', 'Sudurpashchim':'NP-7', 'Province 5':'NP-5', 'Lumbini':'NP-5' },
+  LA:{ 'Vientiane Capital':'LA-VT', 'Vientiane':'LA-VI', 'Xaignabouli':'LA-XA', 'Bolikhamsai':'LA-BL', 'Champasak':'LA-CH',
+       'Salavan':'LA-SL', 'Xekong':'LA-XE', 'Xiangkhouang':'LA-XI' },
+  TW:{ 'Matsu Islands':'TW-LIE', 'Kinmen':'TW-KIN', 'Chiayi':'TW-CYI', 'Chiayi County':'TW-CYQ', 'Hsinchu':'TW-HSZ', 'Hsinchu County':'TW-HSQ' },
+  SO:{ 'Banadir':'SO-BN', 'Galgaduud':'SO-GA', 'Middle Juba':'SO-JD', 'Lower Juba':'SO-JH', 'Middle Shebelle':'SO-SD', 'Lower Shebelle':'SO-SH' },
+  AF:{ 'Zabul':'AF-ZAB', 'Uruzgan':'AF-ORU', 'Daykundi':'AF-DAY', 'Ghanzi':'AF-GHA', 'Logar':'AF-LOW', 'Kabul':'AF-KAB',
+       'Kunar':'AF-KNR', 'Nuristan':'AF-NUR', 'Bamyan':'AF-BAM', 'Kunduz':'AF-KDZ', 'Ghor':'AF-GHO' },
+  KZ:{ 'Almaty':'KZ-ALA', 'Almaty Region':'KZ-ALM', 'Jambyl Region':'KZ-ZHA', 'Kostanay Region':'KZ-KUS', 'Mangystau Region':'KZ-MAN',
+       'East Kazakhstan Region':'KZ-VOS', 'Aktobe Region':'KZ-AKT', 'South Kazakhstan Region':'KZ-YUZ', 'Akmola Region':'KZ-AKM',
+       'North Kazakhstan Region':'KZ-SEV', 'West Kazakhstan Region':'KZ-ZAP' },
+  LB:{ 'Beyrouth':'LB-BA', 'Liban-Nord':'LB-AS', 'Liban-Sud':'LB-JA', 'Keserwan-Jbeil':'LB-JL' },   // Keserwan-Jbeil : détaché du Mont-Liban en 2017
+  TN:{ 'El Kef':'TN-33', 'Manouba':'TN-14', 'Ariana':'TN-12' },
+  SB:{ 'Makira':'SB-MK' }, LC:{ 'Anse la Raya':'LC-01' },
+  // Vietnam : eBird suit la réforme du 12 juin 2025 (résolution 202/2025/QH15), 63 provinces fondues en 34.
+  // geoBoundaries a les 63 anciennes : chacune rejoint la province nouvelle qui l'a absorbée.
+  VN:{ 'An Giang':'VN-91', 'Kiên Giang':'VN-91', 'Bắc Ninh':'VN-24', 'Bắc Giang':'VN-24', 'Cà Mau':'VN-96', 'Bạc Liêu':'VN-96',
+       'Cần Thơ':'VN-92', 'Sóc Trăng':'VN-92', 'Hậu Giang':'VN-92', 'Cao Bằng':'VN-04', 'Đà Nẵng':'VN-48', 'Quảng Nam':'VN-48',
+       'Đắk Lắk':'VN-66', 'Phú Yên':'VN-66', 'Điện Biên':'VN-11', 'Đồng Nai':'VN-75', 'Bình Phước':'VN-75',
+       'Đồng Tháp':'VN-82', 'Tiền Giang':'VN-82', 'Gia Lai':'VN-52', 'Bình Định':'VN-52', 'Hà Nội':'VN-01', 'Hà Tĩnh':'VN-42',
+       'Hải Phòng':'VN-31', 'Hải Dương':'VN-31', 'Ho Chi Minh':'VN-79', 'Bình Dương':'VN-79', 'Bà Rịa–Vũng Tàu':'VN-79', 'Côn Đảo':'VN-79',
+       'Thừa Thiên Huế':'VN-46', 'Hưng Yên':'VN-33', 'Thái Bình':'VN-33', 'Khánh Hòa':'VN-56', 'Ninh Thuận':'VN-56',
+       'Lai Châu':'VN-12', 'Lâm Đồng':'VN-68', 'Đắk Nông':'VN-68', 'Bình Thuận':'VN-68', 'Lạng Sơn':'VN-20',
+       'Lào Cai':'VN-15', 'Yên Bái':'VN-15', 'Nghệ An':'VN-40', 'Ninh Bình':'VN-37', 'Hà Nam':'VN-37', 'Nam Định':'VN-37',
+       'Phú Thọ':'VN-25', 'Vĩnh Phúc':'VN-25', 'Hòa Bình':'VN-25', 'Quảng Ngãi':'VN-51', 'Kon Tum':'VN-51', 'Quảng Ninh':'VN-22',
+       'Quảng Trị':'VN-44', 'Quảng Bình':'VN-44', 'Sơn La':'VN-14', 'Tây Ninh':'VN-80', 'Long An':'VN-80',
+       'Thái Nguyên':'VN-19', 'Bắc Kạn':'VN-19', 'Thanh Hóa':'VN-38', 'Tuyên Quang':'VN-08', 'Hà Giang':'VN-08',
+       'Vĩnh Long':'VN-86', 'Bến Tre':'VN-86', 'Trà Vinh':'VN-86' },
+};
+function normGb(s){
+  return String(s || '').split(',')[0].normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+    .replace(/đ/g, 'd').replace(/\b(province|provincia|region|regione|district|state|governorate|prefecture|municipality|city|county|oblysy|oblast|special|metropolitan|capital|autonomous|self-governing|tinh|thanh pho|-si|-do|si|do)\b/g, ' ')
+    .replace(/[^a-z0-9]+/g, '');
+}
+
 function resolveCodeBrut(cc, props){
-  if(PAYS_MONDE[cc] && ALIAS_MONDE[props.iso_3166_2]) return ALIAS_MONDE[props.iso_3166_2];
+  if(PAYS_MONDE[cc] && !props.gb && ALIAS_MONDE[props.iso_3166_2]) return ALIAS_MONDE[props.iso_3166_2];   // gb : déjà le code eBird
   if(cc === 'ES') return ES_HASC[props.code_hasc] || null;
   if(cc === 'IT') return IT_REGION[props.region] || null;
   if(cc === 'GB') return resolveGB(props);
@@ -299,6 +354,23 @@ function resolveCodeBrut(cc, props){
       }
     }
     return null;
+  }
+  // Le code correspond, mais Natural Earth le donne parfois à DEUX régions (Téhéran et Alborz en IR-07,
+  // Malé et Meemu en MV-12) : celle dont le nom (hors champ region) est celui d'une AUTRE zone d'eBird
+  // rejoint cette zone-là, au lieu d'être fondue dans la première (2026-11-10).
+  // Seulement quand le code est PARTAGÉ et que ce morceau ne ressemble pas au nom d'eBird pour ce code :
+  // appliquée partout, la règle versait le Tachkent (région) dans Tachkent (ville), la province de
+  // Buenos Aires dans la ville, Grand'Anse de Mahé dans celle de Praslin (contrôle du 2026-11-10,
+  // outils/verif/_zones-morceaux.mjs).
+  if(PAYS_MONDE[cc] && iso && !props.gb && (NE_PAR_CODE[iso] || 0) > 1){
+    const parNom = PAYS_MONDE[cc].parNom, code0 = ISO_FIXUP[iso] || iso;
+    const noms = [props.name, props.name_en, props.name_alt, props.woe_name, props.gn_name].flatMap(n => String(n || '').split('|'));
+    const nom0 = PAYS_MONDE[cc].noms[code0];
+    const ressemble = nom0 && noms.some(m => { const a = normNomMonde(m), b = normNomMonde(nom0); return a && b && (a.includes(b) || b.includes(a) || a.slice(0, 4) === b.slice(0, 4)); });
+    if(!ressemble) for(const m of noms){
+      const autre = parNom[normNomMonde(m)];
+      if(autre && autre !== code0 && normNomMonde(PAYS_MONDE[cc].noms[autre]) !== normNomMonde(nom0)) return autre;
+    }
   }
   if(!iso) return null;
   const fixed = ISO_FIXUP[iso] || iso;
@@ -869,7 +941,9 @@ function buildCountry(features, cc){
   // 1bis. ES/IT/GB : fusionne les provinces d'une meme region eBird en supprimant
   // leurs frontieres internes. Les autres pays sont deja en 1:1 avec eBird.
   let dissolved = 0, dissolveFailed = 0;
-  if(AGGREGATED.has(cc)){
+  // Pays du monde aussi (2026-11-10) : le Vietnam de 2025 fond 63 provinces en 34, l'Indonesie ses provinces
+  // en 7 grandes iles, l'Ouganda ses districts en 4 regions ; sans le dissolve, leurs limites interieures restaient.
+  if(AGGREGATED.has(cc) || PAYS_MONDE[cc]){
     for(const code of codes){
       const merged = dissolveRings(byCode[code]);
       if(merged){ byCode[code] = merged; dissolved++; }
@@ -1087,6 +1161,8 @@ function zonesCarte(geo, noms){
 
 console.log(`Lecture ${srcPath} ...`);
 const raw = JSON.parse(readFileSync(srcPath, 'utf8'));
+// Combien de régions Natural Earth portent chaque code (voir resolveCodeBrut : codes partagés).
+for(const f of raw.features) if(f.properties.iso_3166_2) NE_PAR_CODE[f.properties.iso_3166_2] = (NE_PAR_CODE[f.properties.iso_3166_2] || 0) + 1;
 console.log(`  ${raw.features.length} features admin-1 mondiales.\n`);
 // Code pays à trois lettres des pays du monde : celui que Natural Earth porte sur leurs régions.
 for(const cc of Object.keys(PAYS_MONDE)) if(!ADM0[cc]){
@@ -1119,6 +1195,34 @@ for(const cc of COUNTRIES){
     const polys = JSON.parse(readFileSync(src, 'utf8')).features.flatMap(g => g.geometry.type === 'Polygon' ? [g.geometry.coordinates] : g.geometry.coordinates);
     return { ...f, geometry:{ type:'MultiPolygon', coordinates:polys } };
   });
+  // Pays du monde tracés par geoBoundaries plutôt que Natural Earth (2026-11-10) : soit les codes ISO de
+  // Natural Earth ne désignent pas les mêmes régions qu'eBird (Vietnam : 17 provinces sous un mauvais nom,
+  // Tanzanie, Corée du Sud ; outils/verif/_zones-noms-croises.mjs), soit des zones y manquaient
+  // (Somaliland, Panjshir, Laos...). Appariement par le NOM, jamais par le code. AJOUT : seulement les
+  // zones absentes de Natural Earth, le reste du pays garde son trait.
+  if(GB_MONDE[cc] && PAYS_MONDE[cc]){
+    const { fichier, mode } = GB_MONDE[cc];
+    const src = join(__dir, '..', '..', 'notes-privees', 'contours-monde', fichier);
+    if(existsSync(src)){
+      const parNom = {};
+      for(const code of PAYS_MONDE[cc].zones) for(const n of [PAYS_MONDE[cc].noms[code], ZONES_MONDE_FR[code]]) if(n) parNom[normGb(n)] = code;
+      const exact = ALIAS_GB[cc] || {};
+      const gb = JSON.parse(readFileSync(src, 'utf8')).features.map(f => {
+        const nom = String(f.properties.shapeName || '').trim();
+        const code = exact[nom] || (cc === 'VN' ? null : parNom[normGb(nom)]) || null;   // Vietnam : la table seule
+        return { ...f, properties:{ iso_3166_2: code || 'GB-NON-APPARIE', name: f.properties.shapeName, adm0_a3: a3, gb: true } };
+      });
+      const non = gb.filter(f => !f.properties.iso_3166_2.startsWith(cc + '-') && !PAYS_MONDE[cc].zones.includes(f.properties.iso_3166_2)).map(f => f.properties.name);
+      if(non.length) console.log(`  ${cc} geoBoundaries non appariés (${non.length}) : ${non.slice(0, 12).join(' | ')}`);
+      if(mode === 'tout') feats = gb.filter(f => f.properties.iso_3166_2 !== 'GB-NON-APPARIE');
+      else {
+        const remplace = new Set(GB_MONDE[cc].remplace || []);
+        if(remplace.size) feats = feats.filter(f => !remplace.has(resolveCode(cc, f.properties)));
+        const dejaLa = new Set(feats.map(f => resolveCode(cc, f.properties)).filter(Boolean));
+        feats = feats.concat(gb.filter(f => f.properties.iso_3166_2 !== 'GB-NON-APPARIE' && !dejaLa.has(f.properties.iso_3166_2)));
+      }
+    } else console.warn(`  ${cc} : ${fichier} absent (outils/build/geoboundaries-monde.mjs), Natural Earth gardé.`);
+  }
   // Danemark en --carte : Natural Earth n'a que ses 5 régions, eBird en compte 13. On prend les 98
   // communes de geoBoundaries (domaine public, notes-privees/contours-monde/), rattachées par leur nom
   // aux communes d'eBird, dont le code nomme la zone parente (DK-07-01 -> DK-07). Le dissolve efface
