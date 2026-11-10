@@ -4170,10 +4170,10 @@ const TROPHIES = [
   // (le depot est public) ; Sam l'a d'office, reconnu a son identifiant de compte et non a son nom. Plus de vote
   // pour soi-meme, que les regles Firestore refusaient de toute facon (target != auteur).
   // Images provisoires : les anciens badges ronds.
-  { theme:'communaute',  exploit:true, fun:true, icon:ICONS.kimono, name:'Tia mis le kimono', desc:"Faire une observation avec le T-shirt Merlin (preuve à l'appui)", special:'vote', voteId:'kimono', voteThreshold:1, test:s=>(s.kimonoVotes||0)>=1 },   // dans Fun (Mathis, 10/11)
   { theme:'communaute',  exploit:true, fun:true, icon:ICONS.mort, name:'Nécrophile', desc:'Observer un oiseau décédé #ripstayproud (preuve demandée)', special:'vote', voteId:'necrophile', voteThreshold:1, test:s=>(s.necrophileVotes||0)>=1 },
   { theme:'communaute',  exploit:true, fun:true, icon:ICONS.bebe, name:'Gros Bébé', desc:'Observer des oiseaux avec Samuel (preuve demandée)', special:'vote', voteId:'grosBebe', voteThreshold:1, voteDoffice:GROS_BEBE_DOFFICE, test:s=>s.uid===GROS_BEBE_DOFFICE || (s.grosBebeVotes||0)>=1 },
   { theme:'localisation', exploit:true, fun:true, icon:ICONS.huitre, name:'Bourriche d’huître', desc:'Observer un oiseau à La Teste-de-Buch', test:s=>s.locTeste },
+  { theme:'communaute',  exploit:true, fun:true, icon:ICONS.kimono, name:'Tia mis le kimono', desc:"Faire une observation avec le T-shirt Merlin (preuve à l'appui)", special:'vote', voteId:'kimono', voteThreshold:1, test:s=>(s.kimonoVotes||0)>=1 },   // dans Fun, apres Bourriche (Mathis, 10/11)
   { theme:'groupe',      icon:ICONS.penguinBadge, name:'Happy Feet', desc:'Observer un pingouin, un manchot ou un cousin (macareux, guillemot…)', test:s=>s.hasPenguin, exotic:true, speciesFamilyKey:'penguins',
     list:s=> [
       ...ALCID_CATALOG.filter(m=>s.alcidOwnedSet.has(m.sci)).map(m=>({ name:m.name, sci:m.sci, owned:true })),
@@ -6400,9 +6400,10 @@ function _vitrineCases(sel, s, data){
   const compte = fam => { const t = TROPHIES.find(x => x.family === fam && x.prog); return t ? (t.prog(s)[0] || 0) : 0; };
   const qui = sel.isMe ? 'Tu en as' : sel.name + ' en a';
   const exploitsProg = [
-    // Ecologue, un t-shirt entre amis par palier (Mathis, 10/11). 100 : « La pie bavarde ça jacasse mais ça passe ».
-    // 200 : pas encore decide, nom et image en « ? ». 300, 400 et 500 retires en attendant leur t-shirt.
-    ...[100, 200].map((n, i) => ({ id:'x-ecologue-' + n, nom:['Ça jacasse', '?'][i], fam:'ecologue', seuil:n, quoi:`Observer ${n} espèces différentes`,
+    // Ecologue, un t-shirt entre amis par palier (Mathis, 10/11). 100 : « Apprenti ornithologue », le t-shirt vert vu
+    // de dos (avant : « Ça jacasse », le devant avec sa phrase). 200 : pas encore decide, nom et image en « ? ».
+    // 300, 400 et 500 retires en attendant leur t-shirt. Vitrine seule : renommer n'annonce rien dans le Fil.
+    ...[100, 200].map((n, i) => ({ id:'x-ecologue-' + n, nom:['Apprenti ornithologue', '?'][i], fam:'ecologue', seuil:n, quoi:`Observer ${n} espèces différentes`,
       img:['assets/trophies/themes/ecologue/ecologue-100.png', 'assets/trophies/themes/attente/point-interrogation.png'][i] })),
     // National Geographic : 100 photos postees, coeurs ou pas (Mathis, 10/11 ; avant, 25 photos a 2 coeurs)
     { id:'x-natgeo', nom:'National Geographic', valeur:() => s.postedPhotos || 0, seuil:100, quoi:'Poster 100 photos', img:'assets/trophies/themes/natgeo/natgeo.png' },   // image de Mathis, 10/11
@@ -6657,7 +6658,8 @@ function _vitrineDefilement(defile){
 // Charge une image et la prepare : liseré clair des bords retire (il dessinait un contour blanc sur
 // le bois sombre), recadree, et son socle brun reconnu (largeur = etalon, haut = ligne de coupe).
 const _vitrineBrute = src => new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ko(new Error('image : ' + src)); i.src = src; });
-function _vitrineNettoie(img, passes = 3){
+// garderClair : ne retirer que les pixels semi-transparents du bord, pas les clairs (une image au bord creme voulu)
+function _vitrineNettoie(img, passes = 3, garderClair = false){
   const w = img.naturalWidth, h = img.naturalHeight, c = document.createElement('canvas'); c.width = w; c.height = h;
   const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(img, 0, 0);
   const d = x.getImageData(0, 0, w, h), a = d.data;
@@ -6667,7 +6669,7 @@ function _vitrineNettoie(img, passes = 3){
       const q = (j * w + i) * 4; if(a[q+3] <= 20) continue;
       if(a[q-1] > 20 && a[q+7] > 20 && a[q-4*w+3] > 20 && a[q+4*w+3] > 20) continue;
       const mn = Math.min(a[q], a[q+1], a[q+2]), mx = Math.max(a[q], a[q+1], a[q+2]);
-      if(a[q+3] < 230 || (mn > 170 && mx - mn < 60)) retirer.push(q);
+      if(a[q+3] < 230 || (!garderClair && mn > 170 && mx - mn < 60)) retirer.push(q);
     }
     for(const q of retirer) a[q+3] = 0;
   }
@@ -6714,8 +6716,10 @@ function _vitrineCharge(srcs){
   const cle = srcs.join('|');
   if(!_vitrineImages.has(cle)) _vitrineImages.set(cle, Promise.all(srcs.map(_vitrineBrute)).then(imgs => {
     // Les aliments du Terroir, chacun sur son calque, ne sont pas nettoyes : calissons et fromage, blancs, perdaient
-    // leur bord clair (le nettoyage retire le clair au contact du vide, et chaque aliment est seul sur son calque)
-    const toiles = imgs.map((im, i) => _vitrineNettoie(im, /\/terroir\/FR-/.test(srcs[i]) ? 0 : 3)), c = _vitrineCadre(toiles[toiles.length - 1]);
+    // leur bord clair (le nettoyage retire le clair au contact du vide, et chaque aliment est seul sur son calque).
+    // Le kimono garde son nettoyage des bords semi-transparents (sans lui, son socle n'etait plus reconnu) mais
+    // pas celui du clair : le short creme y aurait perdu 3 px (10/11).
+    const toiles = imgs.map((im, i) => /\/terroir\/FR-/.test(srcs[i]) ? _vitrineNettoie(im, 0) : _vitrineNettoie(im, 3, /\/kimono\//.test(srcs[i]))), c = _vitrineCadre(toiles[toiles.length - 1]);
     // Eclaircir APRES le recadrage : le socle se repere a son brun sombre, qu'il faut lire intact
     const r = toiles.map((t, i) => _vitrineEclaire(_vitrineRecadre(t, c), VITRINE_LUMIERE[srcs[i]]));
     // Les niveaux partagent le socle du premier, pour rester superposables
