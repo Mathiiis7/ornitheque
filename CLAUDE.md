@@ -96,6 +96,14 @@ sinon les visiteurs gardent l'ancienne version en cache :
    passer : le 2026-11-07, un iPhone a pris le nouvel app.js avec l'ancien CSS, panneau de la Carte
    invisible. Un seul remplacement de `(app\.js|styles\.css)\?v=\d+` fait les quatre.
 
+**Des trophées neufs ou renommés qui partent en ligne : monter `TROPHEES_VERSION`** (app.js). Le premier passage
+de la détection après la mise à jour est alors muet ; sans ça, chaque trophée neuf s'annonce « X a débloqué … » dans le
+Fil pour tous ceux qui l'ont déjà : 464 annonces à l'essai de la vitrine (2026-11-10, `outils/verif/_essai-mise-en-ligne.mjs`).
+
+**Un déploiement GitHub Pages peut expirer chez GitHub** (« Timeout reached » en « syncing_files », 2026-11-10) et sa
+relance rester en file d'attente : demander une nouvelle construction (`gh api -X POST repos/Mathiiis7/ornitheque/pages/builds`),
+puis vérifier `CACHE_VERSION` sur le site, pas seulement le push.
+
 **Le poids publié se mesure avec `node outils/build/poids-publie.mjs`, jamais avec `du`.**
 `du -sh` compte ce que `.gitignore` exclut : il annonçait 469 Mo le 2026-09-28 et m'a fait
 alerter à tort sur le plafond de 1 Go de GitHub Pages. Le vrai chiffre est **95,4 Mo, 9 % du
