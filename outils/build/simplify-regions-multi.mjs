@@ -277,6 +277,8 @@ const ALIAS_MONDE = {
 // Seconde source des pays du monde : geoBoundaries (outils/build/geoboundaries-monde.mjs). « tout » : le
 // pays entier vient de geoBoundaries ; « ajout » : seulement les zones absentes de Natural Earth.
 const NE_PAR_CODE = {};
+const OSM_MONDE = (() => { const p = join(__dir, '..', '..', 'notes-privees', 'contours-monde', 'osm-monde.geojson');
+  return existsSync(p) ? JSON.parse(readFileSync(p, 'utf8')).features : []; })();
 const GB_MONDE = {
   VN:{ fichier:'geoBoundaries-VNM-ADM1.geojson', mode:'tout' },  SO:{ fichier:'geoBoundaries-SOM-ADM1.geojson', mode:'tout' },
   // Tanzanie : ni Natural Earth ni geoBoundaries n'ont Songwe (2016), compté dans Mbeya : il reste sans contour.
@@ -285,6 +287,9 @@ const GB_MONDE = {
   LB:{ fichier:'geoBoundaries-LBN-ADM1.geojson', mode:'tout' },  TN:{ fichier:'geoBoundaries-TUN-ADM1.geojson', mode:'tout' },
   SB:{ fichier:'geoBoundaries-SLB-ADM1.geojson', mode:'tout' },  TW:{ fichier:'geoBoundaries-TWN-ADM1.geojson', mode:'tout' },
   LC:{ fichier:'geoBoundaries-LCA-ADM1.geojson', mode:'tout' },
+  // Qatar : eBird garde les 9 municipalités d'avant 2004, qu'aucune carte n'a. Frontières APPROCHÉES d'après
+  // ses sites (zones-approchees.mjs), décision de Mathis du 2026-11-10. La Libye n'a que 2 sites eBird : impossible.
+  QA:{ fichier:'approche-QA.geojson', mode:'tout' },
   PH:{ fichier:'geoBoundaries-PHL-ADM2.geojson', mode:'ajout' },
 };
 // Noms geoBoundaries -> zone eBird, quand les deux ne s'écrivent pas pareil (relevés un à un).
@@ -1014,6 +1019,14 @@ function buildCountry(features, cc){
       }
       paths.push('M' + proj.map(([x,y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' L') + ' Z');
     }
+    // Dernier recours (2026-11-10) : une zone faite seulement de tres petites iles (iles mineures des
+    // Etats-Unis) perdait tout a la simplification et n avait aucun contour. On garde son plus grand anneau,
+    // a une tolerance vingt fois plus fine. Les zones qui gardaient un morceau ne changent pas.
+    if(!paths.length && byCode[code].length){
+      const plusGrand = byCode[code].reduce((m, r) => r.length > m.length ? r : m);
+      const fin = douglasPeucker(plusGrand, tolDe(code) / 20);
+      if(fin.length >= 4) paths.push("M" + fin.map(project).map(([x,y]) => x.toFixed(1) + "," + y.toFixed(1)).join(" L") + " Z");
+    }
     if(!paths.length) continue;
     // Archipel trop etale pour un simple agrandissement : ses iles sont reposees cote a
     // cote dans la boite, et la boite reelle est alors celle-ci, pas celle des chemins.
@@ -1151,6 +1164,12 @@ function zonesCarte(geo, noms){
       surface += aire(s);
       polys.push([s.map(([x, y]) => [+x.toFixed(3), +y.toFixed(3)])]);
     }
+    // Même dernier recours que la fiche : une zone d ilots ne disparait plus de la Carte.
+    if(!polys.length && parBase[code].length){
+      const plusGrand = parBase[code].reduce((m, r) => r.length > m.length ? r : m);
+      const fin = douglasPeucker(plusGrand, tol / 20);
+      if(fin.length >= 4){ polys.push([fin.map(([x, y]) => [+x.toFixed(4), +y.toFixed(4)])]); surface += aire(fin); }
+    }
     if(!polys.length) continue;
     features.push({ surface, f:{ type:'Feature', properties:{ ebird:code, nom:noms[code] || NAMES[code] || code },
       geometry:{ type:'MultiPolygon', coordinates:polys } } });
@@ -1209,7 +1228,8 @@ for(const cc of COUNTRIES){
       const exact = ALIAS_GB[cc] || {};
       const gb = JSON.parse(readFileSync(src, 'utf8')).features.map(f => {
         const nom = String(f.properties.shapeName || '').trim();
-        const code = exact[nom] || (cc === 'VN' ? null : parNom[normGb(nom)]) || null;   // Vietnam : la table seule
+        // properties.ebird : fichiers déjà rattachés (zones approchées, zones-approchees.mjs)
+        const code = f.properties.ebird || exact[nom] || (cc === 'VN' ? null : parNom[normGb(nom)]) || null;   // Vietnam : la table seule
         return { ...f, properties:{ iso_3166_2: code || 'GB-NON-APPARIE', name: f.properties.shapeName, adm0_a3: a3, gb: true } };
       });
       const non = gb.filter(f => !f.properties.iso_3166_2.startsWith(cc + '-') && !PAYS_MONDE[cc].zones.includes(f.properties.iso_3166_2)).map(f => f.properties.name);
@@ -1222,6 +1242,15 @@ for(const cc of COUNTRIES){
         feats = feats.concat(gb.filter(f => f.properties.iso_3166_2 !== 'GB-NON-APPARIE' && !dejaLa.has(f.properties.iso_3166_2)));
       }
     } else console.warn(`  ${cc} : ${fichier} absent (outils/build/geoboundaries-monde.mjs), Natural Earth gardé.`);
+  }
+  // Zones prises dans OpenStreetMap (osm-zones-monde.mjs, ODbL) : régions récentes ou districts que ni Natural
+  // Earth ni geoBoundaries n'ont (Songwe, Daman et Diu, North Abaco, Aldabra...). Le morceau Natural Earth
+  // qui portait la zone est retiré, la forme OSM prend sa place (2026-11-10).
+  if(PAYS_MONDE[cc] && OSM_MONDE.some(f => f.properties.ebird.startsWith(cc + '-'))){
+    const osm = OSM_MONDE.filter(f => f.properties.ebird.startsWith(cc + '-'));
+    const codes = new Set(osm.map(f => f.properties.ebird));
+    feats = feats.filter(f => !codes.has(resolveCode(cc, f.properties)))
+      .concat(osm.map(f => ({ type:'Feature', geometry:f.geometry, properties:{ iso_3166_2:f.properties.ebird, name:f.properties.ebird, adm0_a3:a3, gb:true } })));
   }
   // Danemark en --carte : Natural Earth n'a que ses 5 régions, eBird en compte 13. On prend les 98
   // communes de geoBoundaries (domaine public, notes-privees/contours-monde/), rattachées par leur nom
