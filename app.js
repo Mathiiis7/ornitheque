@@ -10673,8 +10673,8 @@ function _ctSurligne(){
 // même calque, au-dessus. Depuis le 2026-10-26, contours IGN plus fins (la côte du Croisic n'est plus
 // coupée en ligne droite) : 201 Ko gzippés pour les départements, 83 pour les régions (95 et 51 avant).
 async function _ctChargeDeps(){
-  if(!_ctDepsPromesse) _ctDepsPromesse = fetch('data/carte-departements.json?v=20261026').then(r => r.ok ? r.json() : null).catch(() => null);
-  if(!_ctRegsPromesse) _ctRegsPromesse = fetch('data/carte-regions.json?v=20261026').then(r => r.ok ? r.json() : null).catch(() => null);
+  if(!_ctDepsPromesse) _ctDepsPromesse = fetch('data/carte-departements.json?v=20261110').then(r => r.ok ? r.json() : null).catch(() => null);
+  if(!_ctRegsPromesse) _ctRegsPromesse = fetch('data/carte-regions.json?v=20261110').then(r => r.ok ? r.json() : null).catch(() => null);
   const [geo, geoR] = await Promise.all([_ctDepsPromesse, _ctRegsPromesse]);
   if(!geo || !_map || _lyrDeps) return;
   if(!_map.getPane('ctDeps')){ _map.createPane('ctDeps').style.zIndex = 350; }
@@ -10933,7 +10933,7 @@ async function _ctGeoZonesPays(cc){
   if(cc in _ctGeoZonesLu) return _ctGeoZonesLu[cc];
   let geo = null;
   if(cc === 'FR'){
-    if(!_ctDepsPromesse) _ctDepsPromesse = fetch('data/carte-departements.json?v=20261026').then(r => r.ok ? r.json() : null).catch(() => null);
+    if(!_ctDepsPromesse) _ctDepsPromesse = fetch('data/carte-departements.json?v=20261110').then(r => r.ok ? r.json() : null).catch(() => null);
     geo = await _ctDepsPromesse;
   } else geo = await _ctChargeZones(cc);
   return (_ctGeoZonesLu[cc] = geo);
