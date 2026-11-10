@@ -86,6 +86,15 @@ arbre). D'où deux étages :
 - `data/countries/xx/` : `freq_48.json`, `freq_by_region.json`, `freq48/` + `freq48_index.json`
   (`build-freq48-par-zone.mjs`), `effort_by_zone.json` (`build-effort-by-zone.mjs`).
 - `EFFORT_MENSUEL_PAR_PAYS` dans app.js.
+- **Noms latins** : le générateur et `inject-exotic-by-region.mjs` ramènent les noms de la taxonomie eBird
+  du jour à ceux du site (`noms-du-site.mjs`). Ne jamais appliquer `SCI_ALIAS` tel quel à des données : il
+  va dans les deux sens et sert aussi aux espèces séparées (il fondait les deux Hirondelles rousselines de
+  Russie, 2026-11-10). Une espèce nouvelle d'eBird sans nom français : `ajouter-noms-fr.mjs`.
+- **Ne jamais importer un générateur pour le « tester »** (`node -e "import(...)"`) : il s'exécute en
+  entier. C'est ainsi que les 54 pays d'avant ont été régénérés par mégarde le 2026-11-10.
+- Après une régénération, comparer à git avec `outils/verif/_diff-frequences.mjs` : une espèce qui
+  disparaît sans réapparaître sous un autre nom est un nom français qu'eBird a changé (« Pluvier à face
+  noire » devenu « Gravelot à face noire ») : l'ajouter à `BAR_CHART_ALIAS`.
 
 ## 4. Exotiques
 
@@ -102,6 +111,10 @@ arbre). D'où deux étages :
 - `ebird-zones-carte.mjs`, puis `simplify-regions-multi.mjs --carte` : `data/carte-zones/xx.json`.
 - `data/carte-pays.json` a déjà les frontières des 234 pays : le pays devient cliquable dès qu'il a
   une rareté.
+- **Contrôler la place des formes, pas seulement leurs noms** : `outils/verif/_zones-sites.mjs XX` vérifie
+  que les sites eBird de chaque zone tombent dans SA forme. Natural Earth a des régions mal étiquetées nom
+  compris (Guyana, Équateur, Érythrée, trouvés le 2026-11-10) ; `_zones-sites-proposition.mjs` donne la
+  correction à porter dans `ALIAS_MONDE`.
 
 ## 6. Branchements dans app.js
 

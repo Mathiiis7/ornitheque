@@ -14,7 +14,7 @@ const ctx = await navigateur.newContext(MOBILE ? { viewport: { width: 390, heigh
 const page = await ctx.newPage();
 const erreurs = [];
 page.on('pageerror', e => erreurs.push(e.message));
-await page.goto('http://localhost:8766/demo/', { waitUntil: 'networkidle' });
+await page.goto('http://localhost:8765/demo/', { waitUntil: 'networkidle' });   // ornitheque-dev (.claude/launch.json)
 await page.waitForTimeout(1500);
 await page.keyboard.press('Escape');
 await page.locator('text=Birdydex >> visible=true').first().click();

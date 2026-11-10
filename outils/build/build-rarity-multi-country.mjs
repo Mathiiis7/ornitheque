@@ -19,6 +19,15 @@ import { dirname, join } from 'node:path';
 import { anneesPourFichier, poidsAnnuels } from './annees-par-quinzaine.mjs';
 import { PAYS_MONDE, AVEC_MONDE } from './pays-monde.mjs';
 
+// Arrondi des fréquences. toFixed(5) seul effaçait les espèces les plus rares d'un grand pays : le Tadorne
+// casarca au Canada (palier 10) tombait à 0 tous les mois, et la fiche affichait « - » au lieu d'un
+// pourcentage (303 couples espèce-pays, audit du 2026-11-10). Une valeur que toFixed(5) garde ne change pas ;
+// une valeur qu'il effaçait garde ses deux premiers chiffres.
+const arrondi = v => (+(v || 0).toFixed(5)) || (v ? +v.toPrecision(2) : 0);
+
+// Les noms latins du site, pas ceux de la taxonomie eBird du jour : voir noms-du-site.mjs.
+import { renommages, renommer } from './noms-du-site.mjs';
+
 const __dir = dirname(fileURLToPath(import.meta.url));
 
 // Ajout du 2026-09-26 : toute l'Europe. Le Vatican, Monaco, Saint-Marin, le Liechtenstein
@@ -294,6 +303,17 @@ const BAR_CHART_ALIAS = {
   'Guignard d’Eurasie': 'Pluvier guignard',
   'Guignard d\'Eurasie': 'Pluvier guignard',
   'Harle bièvre': 'Grand Harle',
+  // Renommés par la taxonomie d'octobre 2026 ; les bar charts de septembre gardent l'ancien nom. Sans ces
+  // lignes, une nouvelle génération retirait ces quatre gravelots d'Australie et de Nouvelle-Zélande (2026-11-10).
+  'Pluvier à face noire': 'Gravelot à face noire',
+  'Pluvier à camail': 'Gravelot à camail',
+  'Pluvier de Nouvelle-Zélande': 'Gravelot de Nouvelle-Zélande',
+  'Pluvier anarhynque': 'Gravelot anarhynque',
+};
+// Espèces que la taxonomie du jour ne connaît plus sous aucun nom français : on garde le nom latin du site.
+// Le Martinet malais a été fondu dans le Martinet des maisons (Apus affinis) en octobre 2026.
+const BAR_CHART_SCI = {
+  'Martinet malais': 'apus nipalensis',
 };
 
 // Regions eBird qu un pays ABSORBE dans son total national. eBird publie Svalbard et Jan
@@ -386,7 +406,7 @@ function mettreEnForme({ effort, taxons, annees }){
       m12[m] = valeurPonderee(q48.slice(m * 4, m * 4 + 4), poids.slice(m * 4, m * 4 + 4));
     }
     // La valeur annuelle se calcule sur les 48 quinzaines, pas sur les 12 mois agreges.
-    out[k] = { name, freq: valeurPonderee(q48, poids), monthly: m12, q48: q48.map(v => +(v || 0).toFixed(5)) };
+    out[k] = { name, freq: valeurPonderee(q48, poids), monthly: m12, q48: q48.map(arrondi) };
   }
   return out;
 }
@@ -419,7 +439,7 @@ function resolveSci(tax, k, name){
   const direct = tax[k];
   if(direct) return direct;
   const al = BAR_CHART_ALIAS[name];
-  return al ? tax[norm(al)] : undefined;
+  return (al && tax[norm(al)]) || BAR_CHART_SCI[name];
 }
 
 // Profil d effort mensuel par pays : part des listes de l annee tombant dans chaque mois.
@@ -457,13 +477,20 @@ async function processCountry(cc){
     const sci = resolveSci(tax, k, name);
     if(sci){
       rarity[sci] = weightFor(freq);
-      monthly[sci] = m12.map(v => +v.toFixed(5));
+      monthly[sci] = m12.map(arrondi);
       matched++;
     } else { unmatched++; unmatchedList.push(name); }
   }
   console.log(`  Matched : ${matched}, unmatched : ${unmatched}`);
   if(unmatchedList.length > 0){
     console.log(`  Sample unmatched : ${unmatchedList.slice(0, 5).join(', ')}${unmatchedList.length > 5 ? '...' : ''}`);
+  }
+  // Retour aux noms du site (voir renommages) : la même table sert aux zones et aux 48 quinzaines.
+  const ren = renommages(Object.keys(rarity));
+  if(Object.keys(ren).length){
+    Object.assign(rarity, renommer(rarity, ren)); Object.assign(monthly, renommer(monthly, ren));
+    for(const s of Object.keys(ren)){ delete rarity[s]; delete monthly[s]; }
+    console.log(`  Noms du site : ${Object.entries(ren).map(([a, b]) => a + ' -> ' + b).join(', ')}`);
   }
 
   const distr = {1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0};
@@ -488,7 +515,7 @@ async function processCountry(cc){
       const regMap = {};
       for (const [k, { name, monthly: m12 }] of Object.entries(barReg)) {
         const sci = resolveSci(tax, k, name);
-        if (sci) regMap[sci] = m12.map(v => +v.toFixed(5));
+        if (sci) regMap[ren[sci] || sci] = m12.map(arrondi);
       }
       if (Object.keys(regMap).length > 0) {
         regionalData[regCode] = regMap;
@@ -510,7 +537,7 @@ async function processCountry(cc){
   const q48 = {};
   for(const [k, o] of Object.entries(bar)){
     const sci = resolveSci(tax, k, o.name);
-    if(sci && o.q48) q48[sci] = o.q48;
+    if(sci && o.q48) q48[ren[sci] || sci] = o.q48;
   }
   const q48Path = join(countryDir, `freq_48.json`);
   writeFileSync(q48Path, JSON.stringify(q48));

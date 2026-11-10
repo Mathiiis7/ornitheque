@@ -15,6 +15,7 @@ import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { ZONES_MONDE } from './pays-monde.mjs';
+import { renommer } from './noms-du-site.mjs';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const APP = join(__dir, '..', '..', 'app.js');
@@ -71,7 +72,9 @@ for(const cc of CCS){
   const src = readFileSync(f, 'utf8');
   const m = src.match(new RegExp(`EXOTIC_STATUS_BY_REGION_${cc}\\s*=\\s*(\\{[\\s\\S]*?\\});`));
   if(!m){ console.warn(`  ${cc} : pattern introuvable, skip.`); continue; }
-  const data = JSON.parse(m[1]);
+  // Les noms latins du site, pas ceux de la taxonomie eBird du jour (noms-du-site.mjs) : le Bruant à tête
+  // rousse des Émirats était rangé sous « melophus bruniceps », introuvable depuis sa fiche (2026-11-10).
+  const data = Object.fromEntries(Object.entries(JSON.parse(m[1])).map(([z, o]) => [z, renommer(o)]));
   // Une region presente avec un objet vide a bien ete scrapee et n'a simplement aucune
   // exotique : on la garde, c'est justement la qu'une espece peut etre native. Le scraper
   // supprime la cle des regions en echec, donc "absent du dict" = "pas encore scrape".

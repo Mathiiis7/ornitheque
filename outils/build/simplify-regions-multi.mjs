@@ -272,6 +272,14 @@ const ALIAS_MONDE = {
   // de Sejong portait le nom de Jeju, celle de Njombe celui de Katavi...
   'KR-42':'KR-51', 'KR-49':'KR-50', 'KR-50':'KR-36',
   'TZ-28':'TZ-29', 'TZ-29':'TZ-31', 'TZ-30':'TZ-28',
+  // Formes mal étiquetées DANS Natural Earth, nom compris (la forme « Mahaica-Berbice » y est la région de
+  // Berbice oriental-Courantyne) : aucun contrôle par nom ne les voyait. Trouvées le 2026-11-10 par les sites
+  // eBird de chaque zone, qui tombaient tous dans la forme d'une autre (outils/verif/_zones-sites.mjs) ;
+  // chaque ligne est la zone dont les sites dominent dans la forme (_zones-sites-proposition.mjs).
+  'GY-UD':'GY-UT', 'GY-UT':'GY-UD', 'GY-PM':'GY-CU', 'GY-CU':'GY-PM',
+  'GY-MA':'GY-EB', 'GY-ES':'GY-MA', 'GY-DE':'GY-ES', 'GY-EB':'GY-DE',
+  'EC-T':'EC-N', 'EC-N':'EC-T',                                   // Napo (288 sites) et Tungurahua
+  'ER-DU':'ER-SK', 'ER-SK':'ER-AN', 'ER-MA':'ER-DU', 'ER-AN':'ER-MA',
 };
 
 // Seconde source des pays du monde : geoBoundaries (outils/build/geoboundaries-monde.mjs). « tout » : le
@@ -330,8 +338,13 @@ function normGb(s){
     .replace(/[^a-z0-9]+/g, '');
 }
 
+// Le même défaut dans un pays d'avant : chez Natural Earth, la forme RU-MOW (Moscou, la ville) est la région
+// et RU-MOS la ville. 356 sites eBird de la ville tombaient dans la forme de la région (_zones-sites.mjs,
+// 2026-11-10) : cliquer la ville montrait les chiffres de la région, et l'inverse.
+const ECHANGES_NE = { 'RU-MOW':'RU-MOS', 'RU-MOS':'RU-MOW' };
 function resolveCodeBrut(cc, props){
   if(PAYS_MONDE[cc] && !props.gb && ALIAS_MONDE[props.iso_3166_2]) return ALIAS_MONDE[props.iso_3166_2];   // gb : déjà le code eBird
+  if(ECHANGES_NE[props.iso_3166_2]) return ECHANGES_NE[props.iso_3166_2];
   if(cc === 'ES') return ES_HASC[props.code_hasc] || null;
   if(cc === 'IT') return IT_REGION[props.region] || null;
   if(cc === 'GB') return resolveGB(props);
@@ -1096,13 +1109,18 @@ function vuePolaire(f){
 }
 function regionsTracees(cc){ const p = join(__dir, '..', '..', 'data', 'regions-' + cc.toLowerCase() + '-simplified.json');
   return existsSync(p) && Object.keys(JSON.parse(readFileSync(p, 'utf8')).regions || {}).some(k => k !== cc); }
+// Des zones chez eBird, mais aucune avec des listes (data/countries/xx/pays.json, liste « zones ») : le site
+// traite le pays d'une pièce. Les Îles Marshall gardaient pourtant leurs deux chaînes d'îles dessinées, sans
+// données à y poser : la carte de leur fiche restait vide (tour des pays du 2026-11-10).
+function zonesAvecDonnees(cc){ const p = join(__dir, '..', '..', 'data', 'countries', cc.toLowerCase(), 'pays.json');
+  return !existsSync(p) || (JSON.parse(readFileSync(p, 'utf8')).zones || []).length > 0; }
 const SANS_ZONES = process.argv.includes('--sans-zones') && !CARTE
-  ? Object.keys(PAYS_MONDE).filter(cc => !PAYS_MONDE[cc].zones.length || !regionsTracees(cc)) : [];
+  ? Object.keys(PAYS_MONDE).filter(cc => !PAYS_MONDE[cc].zones.length || !regionsTracees(cc) || !zonesAvecDonnees(cc)) : [];
 const CARTE_PAYS = SANS_ZONES.length ? JSON.parse(readFileSync(join(__dir, '..', '..', 'data', 'carte-pays.json'), 'utf8')).features : [];
 for(const cc of SANS_ZONES){ PAYS_MONDE[cc].zones = [cc]; EBIRD_REGIONS[cc] = [cc]; if(!ADM0[cc]) ADM0[cc] = 'SANS-' + cc; }
 const COUNTRIES = filter ? filter.split(',').map(s => s.trim().toUpperCase())
   : SANS_ZONES.length ? SANS_ZONES
-  : process.argv.includes('--monde') ? Object.keys(PAYS_MONDE).filter(cc => PAYS_MONDE[cc].zones.length)
+  : process.argv.includes('--monde') ? Object.keys(PAYS_MONDE).filter(cc => PAYS_MONDE[cc].zones.length && zonesAvecDonnees(cc))
   : Object.keys(ADM0);
 for(const [cc, p] of Object.entries(PAYS_MONDE)){
   if(!p.zones.length) continue;
