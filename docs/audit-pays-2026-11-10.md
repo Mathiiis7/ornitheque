@@ -23,9 +23,9 @@ Trois contrôles :
 ## Limites des sources (rien à corriger chez nous)
 
 - **Espèces qu'eBird publie à 0,0 tous les mois** (Tadorne casarca au Canada) : décision de Mathis, elles
-  ne sont pas présentes dans le pays. 98 retirées en v1074, hors France ; les 5 françaises (Oie naine,
-  Bernache de Hutchins, Dendrocygne à ventre noir, Faucon laggar...) attendent sa décision, car les
-  paliers français comptent pour la ligue.
+  ne sont pas présentes dans le pays. 98 retirées en v1074 hors France, puis les 5 françaises en v1075
+  avec l'accord de Mathis (Oie naine et Bernache de Hutchins à 0 %, Dendrocygne à ventre noir, Faucon
+  laggar et Bulbul orphée, absents du bar chart mais gardés par la fusion des tables françaises).
 - **Zones sans forme** : Libye (7 zones, découpage de 2007 qu'aucune carte n'a), Qatar Al Ghuwayriyah,
   îles Baker, Howland et Kingman Reef (trop petites).
 - **6 territoires qui ont des zones chez eBird mais aucune tracée** : Pays-Bas caribéens, îles Caïmans,

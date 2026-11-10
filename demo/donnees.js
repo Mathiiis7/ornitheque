@@ -2,7 +2,7 @@
   La fausse ligue de la demo. FICHIER GENERE par outils/build/genere-demo.mjs : ne pas
   modifier a la main, la prochaine execution ecraserait tout.
 
-  Les 599 especes disponibles viennent de data/countries/fr/freq_48.json, triees de la plus
+  Les 597 especes disponibles viennent de data/countries/fr/freq_48.json, triees de la plus
   commune a la plus rare en France ; leurs noms francais de la table FR_NAMES d app.js. Les
   listes sont donc vraisemblables, et les fiches d espece s affichent puisque les cles sont
   celles du vrai jeu de donnees.

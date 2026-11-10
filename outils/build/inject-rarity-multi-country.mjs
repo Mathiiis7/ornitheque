@@ -12,6 +12,7 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { estAlias } from './noms-du-site.mjs';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dir, '..', '..');
@@ -62,7 +63,10 @@ for (const cc of PAYS) {
     const avant = Object.keys(ancien).length;
     let conserves = 0;
     if (FUSIONNE.has(cc)) {
-      for (const k of Object.keys(ancien)) if (!(k in neuf)) { neuf[k] = ancien[k]; conserves++; }
+      // Seuls les anciens noms de genre, que SCI_ALIAS résout, sont gardés. Garder toute clé absente du
+      // bar chart conservait aussi des espèces sorties de France : le Dendrocygne à ventre noir, le Faucon
+      // laggar et le Bulbul orphée y restaient au palier 9 sans aucune donnée (2026-11-10).
+      for (const k of Object.keys(ancien)) if (!(k in neuf) && estAlias(k)) { neuf[k] = ancien[k]; conserves++; }
     }
     const apres = Object.keys(neuf).length;
     app = app.slice(0, cible.debut) + JSON.stringify(neuf) + app.slice(cible.fin);

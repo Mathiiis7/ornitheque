@@ -24,6 +24,9 @@ const debut = app.indexOf('const SCI_ALIAS = {');
 const ALIAS_SITE = Object.fromEntries([...app.slice(debut, app.indexOf('\n};', debut))
   .matchAll(/^\s*['"]([^'"]+)['"]\s*:\s*['"]([^'"]+)['"]/gm)].map(m => [m[1], m[2]]));
 
+// Vrai pour un ancien nom que SCI_ALIAS sait résoudre (« bubulcus ibis » -> « ardea ibis »).
+export const estAlias = sci => sci in ALIAS_SITE;
+
 // { nom du jour : nom du site } pour une liste de noms (ceux d'un bar chart, d'une zone).
 export function renommages(noms){
   const presents = new Set(noms), r = {};

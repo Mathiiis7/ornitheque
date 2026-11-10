@@ -24,8 +24,9 @@ import { PAYS_MONDE, AVEC_MONDE } from './pays-monde.mjs';
 // pourcentage (303 couples espèce-pays, audit du 2026-11-10). Une valeur que toFixed(5) garde ne change pas ;
 // une valeur qu'il effaçait garde ses deux premiers chiffres.
 const arrondi = v => (+(v || 0).toFixed(5)) || (v ? +v.toPrecision(2) : 0);
-// Pays où une espèce à 0 tous les mois reste listée (voir « Absentes » plus bas).
-const PAYS_QUI_GARDENT_LES_ZEROS = new Set(['FR']);
+// Pays où une espèce à 0 tous les mois reste listée (voir « Absentes » plus bas). Vide depuis que Mathis a
+// tranché pour la France aussi (2026-11-10, « Oui, retire-les »).
+const PAYS_QUI_GARDENT_LES_ZEROS = new Set();
 
 // Les noms latins du site, pas ceux de la taxonomie eBird du jour : voir noms-du-site.mjs.
 import { renommages, renommer } from './noms-du-site.mjs';
@@ -489,8 +490,8 @@ async function processCountry(cc){
   }
   // Une espèce que le bar chart donne à 0 tous les mois n'est pas présente dans le pays (décision de Mathis,
   // 2026-11-10) : eBird la liste, mais trop rarement pour sa précision, et la fiche affichait « - » à côté
-  // d'un palier « rarissime ». Elle sort du pays, de ses zones et de ses 48 quinzaines (98 couples hors
-  // France ce jour-là). La France attend sa décision : ses paliers comptent pour la ligue.
+  // d'un palier « rarissime ». Elle sort du pays, de ses zones et de ses 48 quinzaines (103 couples ce
+  // jour-là, dont 5 en France).
   const absentes = new Set(PAYS_QUI_GARDENT_LES_ZEROS.has(cc) ? []
     : Object.keys(monthly).filter(s => monthly[s].every(v => !v)));
   for(const s of absentes){ delete rarity[s]; delete monthly[s]; }
