@@ -16,7 +16,8 @@ export const quoi = 'nom de zone, jeton de statut, pourcentage, hauteur constant
 
 export function html(){
   const source = fonctions('esc', 'jetonExo', 'libelleExo', '_vueCarte', '_carteExoAffichee',
-    '_bulleSiCoupe', '_majEnteteOuQuand') + '\n' + constante('EXOTIC_CATEGORY_LABEL');
+    '_bulleSiCoupe', '_majEnteteOuQuand') + '\n' + constante('EXOTIC_CATEGORY_LABEL')
+    + "\nlet _ficheContinent = '';";   // la fiche regarde un pays, pas un continent (2026-11-10)
 
   const cadre = (id, onglets, largeur = 520) => `<div class="species-modal" style="width:${largeur}px">
     <div style="background:#fff; border-radius:12px; padding:12px; margin-bottom:8px;">

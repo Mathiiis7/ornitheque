@@ -1004,7 +1004,8 @@ for(const [cc, [nom, prep, continent, nbEspeces]] of Object.entries(PAYS_MONDE))
 // ils rejoignent Malte, le Kosovo et les Feroe dans _SANS_DECOUPAGE et CT_PAYS_SANS_ZONES.
 const PAYS_MONDE_SANS_ZONES = ["AS","AI","AQ","AW","AC","BM","BV","IO","BQ","KY","CX","CP","CC","CK","CS","CW","GQ","FK","GF","TF","GL","GP","GU","HM","HK","KI","MO","MH","MQ","YT","MS","NC","NU","NF","PS","PN","PR","RE","BL","MF","PM","SG","SX","GS","TK","TC","TV","VG","WF","EH"];
 // PAYS_MONDE : fin du bloc
-const CONTINENT_ORDER = ['Europe', 'Amérique', 'Afrique', 'Océanie', 'Asie', 'Autres'];
+// « Autres » reste en dernier : il recueille un pays qu'on aurait oublié de ranger.
+const CONTINENT_ORDER = ['Europe', 'Amérique du Nord', 'Amérique du Sud', 'Afrique', 'Océanie', 'Asie', 'Antarctique', 'Autres'];
 // Les 7 continents du trophee des continents (Mathis, 10/11 : « 5 sur 7 »). CONTINENT_BY_CC ci-dessus ne connait
 // qu'une Amerique et une cinquantaine de pays : il sert au selecteur de pays, pas a compter des continents.
 // Pays -> continent, 7 continents : genere par outils/build/_continents.mjs (Natural Earth + 22 choix a la main), 250 pays.
@@ -1019,6 +1020,28 @@ const CONTINENTS_7 = {
 };
 const CONTINENT_7_DE = Object.fromEntries(Object.entries(CONTINENTS_7).flatMap(([c, l]) => l.split(' ').map(cc => [cc, c])));
 const CONTINENTS_7_ORDRE = ['Europe', 'Afrique', 'Asie', 'Amérique du Nord', 'Amérique du Sud', 'Océanie', 'Antarctique'];
+// Le selecteur de pays separe l'Amerique du Nord et du Sud, et « Autres » (l'Antarctique et quatre iles
+// australes) devient « Antarctique » (Mathis, 2026-11-10) : meme partage que le trophee. Clipperton, que
+// le trophee ne compte pas, va avec l'Amerique du Nord.
+for(const [cc, c] of Object.entries(CONTINENT_BY_CC)){
+  if(c === 'Amérique') CONTINENT_BY_CC[cc] = CONTINENT_7_DE[cc] || 'Amérique du Nord';
+  else if(c === 'Autres' && CONTINENT_7_DE[cc] === 'Antarctique') CONTINENT_BY_CC[cc] = 'Antarctique';
+}
+// Les cartes des continents de la fiche espece (outils/build/carte-continents.mjs) : choisir un continent
+// dans le selecteur montre chaque pays colore par SA rarete. Un continent n'a pas de rarete a lui
+// (Mathis, 2026-11-10, apres quatre facons de la calculer, toutes trompeuses quelque part).
+const CARTES_CONTINENTS = { 'Monde': 'monde', 'Europe': 'europe', 'Amérique du Nord': 'amerique-du-nord',
+  'Amérique du Sud': 'amerique-du-sud', 'Afrique': 'afrique', 'Asie': 'asie', 'Océanie': 'oceanie', 'Antarctique': 'antarctique' };
+const _carteContinentPromesses = {};
+function _chargerCarteContinent(nom){
+  const f = CARTES_CONTINENTS[nom];
+  if(!f) return Promise.resolve(null);
+  return _carteContinentPromesses[nom] ||= fetch('data/carte-continents/' + f + '.json?v=20261110')
+    .then(r => r.ok ? r.json() : null).catch(() => { delete _carteContinentPromesses[nom]; return null; });
+}
+// Le continent montre par la fiche, '' quand c'est un pays. Jamais enregistre, et jamais ecrit dans
+// _speciesCountry ni dans le pays du site : ceux-la restent des pays.
+let _ficheContinent = '';
 const CC_FLAGS = {
   FR:'🇫🇷', ME:'🇲🇪', ES:'🇪🇸', IT:'🇮🇹', GB:'🇬🇧', PT:'🇵🇹',
   DE:'🇩🇪', NL:'🇳🇱', GR:'🇬🇷', CH:'🇨🇭', BE:'🇧🇪', HR:'🇭🇷', AL:'🇦🇱', TR:'🇹🇷', IS:'🇮🇸',
@@ -1092,11 +1115,34 @@ function _syncCountryButton(btn, cc){
 // Resolution : sans zones, le code pays comme avant ; avec zones, { type:'zone', code }
 // quand une zone est choisie, null a la fermeture - le changement de pays, lui, a deja
 // ete applique par opts.onPays.
+// Ce qu'on sait d'une espece dans un pays, tel que la ligne du pays l'ecrit dans le selecteur de la
+// fiche : palier, valeur (l'annee, ou le mois moisLu 0..11), statut exotique local, absente ou pas.
+// La carte des continents lit la meme chose, pour que la liste et la carte ne se contredisent pas.
+// pret : les frequences des pays (et le morceau de l'espece pour les pays du monde) sont arrivees.
+function _verdictPaysEspece(sci, cc, moisLu, pret){
+  const reg = COUNTRIES_REG[cc];
+  if(!reg) return null;
+  // Pays du monde pas encore lu : l'espece se lit dans son morceau (_chargerEspeceMonde).
+  const vm = (reg.monde && !_RARETE_PAYS[cc]) ? _especeMonde(sci, cc) : null;
+  const ebCC = EXOTIQUES_EBIRD_PAR_PAYS[cc] && EXOTIQUES_EBIRD_PAR_PAYS[cc][sci];
+  const isExoLocal = ((cc === 'FR') ? isExoticInCountry(sci, cc) : !!ebCC) && !_isIsolatedXExotic(sci, cc);
+  const tier = rarityForCountry(sci, cc) || (vm ? vm[0] : 0);
+  const monCC = reg.monthly()[sci] || (vm ? vm.slice(1) : undefined);
+  const vAn = !Array.isArray(monCC) ? 0
+    : (moisLu == null ? _valeurAnnuelleZone(monCC, cc) : (monCC[moisLu] || 0));
+  // Pays dont les frequences ne sont pas encore arrivees : « absente » serait faux.
+  const sansDonnees = !pret && !Object.keys(reg.monthly() || {}).length;
+  const absent = !sansDonnees && tier === 0 && (!isExoLocal || vAn === 0);
+  return { tier, vAn, ebCC, isExoLocal, sansDonnees, absent };
+}
 function _openCountryPicker(currentCode, opts = {}){
   return new Promise((resolve) => {
     const avecZones = typeof opts.zones === 'function';
     let ccCourant = currentCode;
-    let onglet = (opts.onglet === 'zones' && avecZones) ? 'zones' : 'pays';
+    // opts.continents (fiche espece) : les titres de continent et une ligne « Monde » se choisissent
+    // aussi ; opts.onContinent(nom) les applique, opts.continent dit celui qui est montre.
+    let contCourant = (opts.continents && opts.continent) || '';
+    let onglet = (opts.onglet === 'zones' && avecZones && !contCourant) ? 'zones' : 'pays';
     const motZone = (cc) => typeof opts.motZone === 'function' ? opts.motZone(cc)
       : (opts.motZone || 'Régions');
     // Mois choisi sur la carte de la fiche. Le selecteur s'aligne dessus : son titre l'annonce,
@@ -1127,8 +1173,6 @@ function _openCountryPicker(currentCode, opts = {}){
     const _mondeNonLu = cc => COUNTRIES_REG[cc] && COUNTRIES_REG[cc].monde && !_RARETE_PAYS[cc];
     const _mensuelMonde = cc => { if(!focusSci || !_mondeNonLu(cc)) return undefined;
       const v = _especeMonde(focusSci, cc); return v ? v.slice(1) : undefined; };
-    const _palierMonde = cc => { if(!focusSci || !_mondeNonLu(cc)) return 0;
-      const v = _especeMonde(focusSci, cc); return v ? v[0] : 0; };
     // Uniquement le bar chart mensuel (% de listes). Le repli S&T qui existait ici
     // renvoyait un score en ind/h, trie dans la meme liste que des pourcentages : un pays
     // note 0.015 ind/h se retrouvait classe comme un pays a 1,5 % de listes. Il ne se
@@ -1246,6 +1290,8 @@ function _openCountryPicker(currentCode, opts = {}){
         backdrop.querySelectorAll('.cp-tab').forEach(t => t.classList.toggle('on', t.dataset.onglet === onglet));
         const onglZone = backdrop.querySelector('.cp-tab[data-onglet="zones"]');
         if(onglZone) onglZone.textContent = motZone(ccCourant);
+        // Un continent n'a pas de zones : l'onglet revient avec le premier pays choisi.
+        if(onglZone) onglZone.hidden = !!contCourant;
         // Le champ dit ce qu'on y cherche, comme pour les pays. Le singulier est derive du
         // mot au pluriel qui sert deja d'etiquette a l'onglet, plutot que de reclamer un
         // second libelle a l'appelant.
@@ -1291,6 +1337,13 @@ function _openCountryPicker(currentCode, opts = {}){
           <div class="reg-picker-bar"><div style="width:${Math.round(n / maxEspeces * 100)}%; color:var(--accent);"></div></div>`}
         </div>`;
       }
+      // Fiche espece : le titre d'un continent se choisit, et montre la carte de ses pays, chacun a sa
+      // couleur. Pas de pourcentage ni de pastille : un continent n'a pas de rarete (Mathis, 2026-11-10).
+      const titreCont = (nom) => opts.continents && CARTES_CONTINENTS[nom]
+        ? `<button type="button" class="cp-group-title cp-cont${contCourant === nom ? ' on' : ''}" data-cont="${esc(nom)}"`
+          + ` aria-pressed="${contCourant === nom}"><span>${esc(nom)}</span><span class="cp-cont-voir">voir la carte</span></button>`
+        : `<div class="cp-group-title">${esc(nom)}</div>`;
+      if(opts.continents && (!fLC || 'monde'.includes(fLC))) html += titreCont('Monde');
       for(const cont of CONTINENT_ORDER){
         const items = (grouped[cont] || []).filter(x => {
           const cc = x.cc;
@@ -1299,7 +1352,7 @@ function _openCountryPicker(currentCode, opts = {}){
           return name.includes(fLC) || cc.toLowerCase().includes(fLC);
         });
         if(!items.length) continue;
-        html += `<div class="cp-group-title">${esc(cont)}</div>`;
+        html += titreCont(cont);
         for(const it of items){
           const cc = it.cc;
           const reg = COUNTRIES_REG[cc];
@@ -1319,24 +1372,23 @@ function _openCountryPicker(currentCode, opts = {}){
             // entree explicite dans EXOTIQUES_EBIRD_PAR_PAYS[cc] pour etre considere "exotique
             // local". Sinon la Perruche a collier apparaissait comme 'N Introduit etabli' en
             // Islande / Sri Lanka via fallback FR alors qu'elle n'y est pas listee.
-            const ebCC = EXOTIQUES_EBIRD_PAR_PAYS[cc] && EXOTIQUES_EBIRD_PAR_PAYS[cc][focusSci];
+            // Le verdict de la ligne vient de _verdictPaysEspece, que la carte des continents lit aussi.
+            const vd = _verdictPaysEspece(focusSci, cc, moisLu, etatPays === 'pret');
+            const ebCC = vd.ebCC;
             // Un X isole (echappe anecdotique) est traite comme non-exotique local :
             // le picker doit afficher "absente" pour Diamant de Gould en Espagne, pas "X".
-            const isExoLocal = ((cc === 'FR') ? isExoticInCountry(focusSci, cc) : !!ebCC)
-              && !_isIsolatedXExotic(focusSci, cc);
+            const isExoLocal = vd.isExoLocal;
             // Source de verite = rarityForCountry (meme calcul que la fiche espece).
             // Fix 2026-09-22 : avant, le picker basait "absente" sur it.score (max monthly
             // brut) alors que la fiche utilise rarityForCountry qui a des fallbacks
             // supplementaires (exotiques, REAL_RARITY legacy). Ex :
             // Dindon sauvage affichait tier 9 sur la fiche mais "absente" sur le picker.
             // On aligne : absent = rarityForCountry retourne 0 ET pas exotique local.
-            const tier = rarityForCountry(focusSci, cc) || _palierMonde(cc);
-            const monCC = reg.monthly()[focusSci] || _mensuelMonde(cc);
+            const tier = vd.tier;
             // Meme bascule que la liste des zones : un mois choisi sur la carte se lit ici
             // aussi, sinon les deux onglets du meme selecteur ne parleraient pas de la meme
             // periode.
-            const vAn = !Array.isArray(monCC) ? 0
-              : (moisLu == null ? _valeurAnnuelleZone(monCC, cc) : (monCC[moisLu] || 0));
+            const vAn = vd.vAn;
             // Un tag exotique sans la moindre ligne de bar chart ne prouve aucune presence :
             // il dit seulement qu'un reviewer a prevu un classement si l'espece se montre.
             // Meme regle que la fiche (noBarData), sans quoi le selecteur affichait « P » pour
@@ -1345,8 +1397,8 @@ function _openCountryPicker(currentCode, opts = {}){
             // Pays dont le bar chart n'est pas encore arrive (fichier a part, charge a
             // l'ouverture) : « absente » serait faux, on dit qu'on attend. Un echec du
             // telechargement ne doit pas non plus passer pour une absence.
-            const sansDonnees = etatPays !== 'pret' && !Object.keys(reg.monthly() || {}).length;
-            const absent = !sansDonnees && tier === 0 && (!isExoLocal || vAn === 0);
+            const sansDonnees = vd.sansDonnees;
+            const absent = vd.absent;
             const col = realColor(tier);
             // Chip letter : aligne le comportement sur la fiche espece (renderLine).
             // - Tier 0 exotique : affiche la lettre categorie (N/P/X/C)
@@ -1425,7 +1477,7 @@ function _openCountryPicker(currentCode, opts = {}){
            // ET pas exotique local) au lieu de it.score seul. Sinon FR avec tier 7 via
           // S&T Cornell mais aucune data monthly apparaît grisée à tort.
           const absentCls = focusSci && typeof absent !== 'undefined' && absent ? ' absent' : '';
-          html += `<div class="cp-item${focusSci ? '' : ' sans-palier'}${cc === ccCourant ? ' on' : ''}${absentCls}" data-cc="${esc(cc)}"${titreLigne ? ` data-tip="${esc(titreLigne)}"` : ''}>
+          html += `<div class="cp-item${focusSci ? '' : ' sans-palier'}${cc === ccCourant && !contCourant ? ' on' : ''}${absentCls}" data-cc="${esc(cc)}"${titreLigne ? ` data-tip="${esc(titreLigne)}"` : ''}>
             <span class="cp-item-flag">${flag}</span>
             <span class="cp-item-name">${esc(nomPays(cc))}</span>
             ${meta}
@@ -1500,10 +1552,21 @@ function _openCountryPicker(currentCode, opts = {}){
     listEl.addEventListener('click', async e => {
       const zone = e.target.closest('.reg-picker-item');
       if(zone && avecZones){ cleanup(); resolve({ type: 'zone', code: zone.dataset.code || '' }); return; }
+      // Un continent s'applique comme un pays : la fenetre reste ouverte, sur la liste des pays.
+      const cont = e.target.closest('[data-cont]');
+      if(cont && opts.continents){
+        contCourant = cont.dataset.cont;
+        onglet = 'pays';
+        try { opts.onContinent(contCourant); } catch(err) { console.warn('continent :', err.message); }
+        render(searchEl.value);
+        return;
+      }
       const it = e.target.closest('.cp-item');
       if(!it || it.classList.contains('disabled')) return;
       const cc = it.dataset.cc;
       if(!avecZones){ cleanup(); resolve(cc); return; }
+      // Depuis un continent, meme le pays d'avant doit s'appliquer : c'est lui qui revient a l'ecran.
+      if(contCourant){ contCourant = ''; if(cc === ccCourant) ccCourant = null; }
       // Choisir un pays ne ferme pas le modal et ne change pas d'onglet : on applique, et
       // la liste des pays reste a l'ecran, le nouveau pays surligne. Elle basculait
       // automatiquement sur les zones, en supposant qu'on avait change de pays pour y
@@ -18272,6 +18335,8 @@ async function _renderExoticMap(sci, cc){
 // pays entre-temps, le rendu le plus lent ecraserait le plus recent : on abandonne quand
 // le pays demande n'est plus celui selectionne dans la fiche.
 function _ccFicheObsolete(cc){
+  // Un continent a l'ecran : le dessin d'un pays qui arrive en retard ne doit plus rien peindre.
+  if(_ficheContinent) return true;
   const actuel = document.getElementById('smRarityCountrySel')?.dataset.cc;
   return !!actuel && actuel !== cc;
 }
@@ -18753,6 +18818,12 @@ function _carteExoAffichee(){
 function _majEnteteOuQuand(nomZone){
   const el = document.getElementById('smOqZone');
   if(!el) return;
+  // Un continent garde son nom, sans statut exotique ni chiffre : il n'a pas de rarete.
+  if(_ficheContinent){
+    el.dataset.nom = _ficheContinent;
+    el.innerHTML = `<span class="sm-oq-nom" data-tip-coupe="${esc(_ficheContinent)}">${esc(_ficheContinent)}</span>`;
+    return;
+  }
   if(nomZone != null) el.dataset.nom = nomZone;
   const nom = el.dataset.nom || '';
   const note = (_carteExoAffichee() && window._oqNoteExo)
@@ -18925,6 +18996,28 @@ function _majPanneauOuQuand(){
   const carteExo = document.getElementById('smExoticMap');
   const graph = document.getElementById('smGraphZone');
   const bloc = card.querySelector('.sm-oq-bloc');
+  // Un continent : sa carte seule, ni graphique des saisons, ni statut exotique, ni detail du calcul.
+  // Les dessins du pays d'avant peuvent encore remplir leurs cases : elles restent masquees.
+  const carteCont = document.getElementById('smContinentMap');
+  const details = document.getElementById('smDetailsCalcul');
+  if(details) details.hidden = !!_ficheContinent;
+  if(_ficheContinent){
+    const aCont = !!(carteCont && carteCont.innerHTML.trim());
+    if(carteCont) carteCont.hidden = false;
+    if(carte) carte.hidden = true;
+    if(carteExo) carteExo.hidden = true;
+    if(graph) graph.hidden = true;
+    const onglets = document.getElementById('smOqOnglets');
+    if(onglets) onglets.innerHTML = '';
+    if(bloc) bloc.hidden = false;
+    card.hidden = false;
+    card.classList.remove('oq-deux');
+    _majEnteteOuQuand(null);
+    const legC = document.getElementById('smOuQuandLegende');
+    if(legC){ legC.hidden = !aCont; legC.innerHTML = aCont ? _legendeOuQuand(true, false, false) : ''; }
+    return;
+  }
+  if(carteCont){ carteCont.hidden = true; carteCont.innerHTML = ''; }
   const aCarte = !!(carte && carte.innerHTML.trim());
   const aExo = !!(carteExo && carteExo.innerHTML.trim());
   const aGraph = !!(graph && graph.dataset.plein === '1');
@@ -18989,6 +19082,9 @@ function _legendeOuQuand(aCarte, aGraph, vueExo){
   // et rien du tout la ou eBird ne decoupe pas.
   // Un pays qu'eBird ne subdivise pas n'a ni zone a cliquer ni decoupage a nommer : sa
   // carte d'une piece prend la valeur nationale du mois choisi.
+  // Un continent : chaque pays porte sa propre rarete ; le continent, lui, n'en a pas.
+  if(p.continent) return `<div class="sm-oq-cles">${cles}</div>`
+    + `<div class="sm-oq-note">ⓘ Chaque pays a la couleur de sa propre rareté, mois par mois dans la colonne de gauche. C'est une facilité de rencontre, pas un effectif.</div>`;
   const surCarte = p.sansDecoupage ? 'Le pays entier sur la carte' : `Par ${p.zoneWord || 'région'} sur la carte`;
   const aCliquer = p.sansDecoupage ? 'un mois ou une barre' : 'une zone, un mois ou une barre';
   // La note dit ce que seule elle peut dire - que la carte et la colonne donnent le mois entier
@@ -19003,6 +19099,91 @@ function _legendeOuQuand(aCarte, aGraph, vueExo){
     : `La fréquence au fil de l'année.`;
   return `<div class="sm-oq-cles">${cles}</div>`
     + `<div class="sm-oq-note">ⓘ ${phrase} C'est une facilité de rencontre, pas un effectif.</div>`;
+}
+// La carte d'un continent, ou du monde, dans la fiche : chaque pays a la couleur de SA rarete, le verdict
+// meme de sa ligne dans le selecteur (_verdictPaysEspece). Le continent n'a pas de rarete a lui (Mathis,
+// 2026-11-10) : la colonne des mois choisit la periode et ne porte aucune couleur de palier.
+// Les territoires dont eBird range les listes dans un autre pays prennent la couleur de ce pays.
+const _RATTACHES_CARTE = { JE: 'GB', GG: 'GB', IM: 'GB', SJ: 'NO' };
+async function _renderCarteContinent(sci, nom){
+  const box = document.getElementById('smContinentMap');
+  if(!box) return;
+  const key = (sci || '').toLowerCase();
+  window._oqPortee = { zoneWord: 'pays', sansDecoupage: false, continent: true };
+  if(window._smRarityMapMonth == null) window._smRarityMapMonth = 'an';
+  const periode = window._smRarityMapMonth;
+  const surAnnee = periode === 'an';
+  const mois = surAnnee ? null : Math.min(11, Math.max(0, +periode));
+  const lib = surAnnee ? 'année' : _MOIS_COURTS[mois];
+  // Tous les pays a la fois : les 48 des fichiers communs et le morceau de l'espece pour les autres.
+  let paths = null;
+  try { [paths] = await Promise.all([_chargerCarteContinent(nom), _chargerDonneesPays(), _chargerEspeceMonde(key)]); } catch(_){}
+  if(_ficheContinent !== nom) return;
+  if(!paths){
+    box.innerHTML = '<div class="help" style="padding:12px 0;">Carte indisponible pour le moment.</div>';
+    _majPanneauOuQuand(); return;
+  }
+  const pret = _donneesPaysPretes() && _especeMondePrete(key);
+  const ABSENT = '#d4d4d8';
+  // Le format des lignes du selecteur : un pays a 0,004 % ne se lit pas « 0,00 % ».
+  const fmtP = (x) => { const p = x * 100;
+    return p >= 10 ? Math.round(p) + _PCT : p >= 0.1 ? _fr(p.toFixed(1)) + _PCT : _fr(Number(p.toPrecision(1))) + _PCT; };
+  let svg = '';
+  for(const [cc, r] of Object.entries(paths.regions)){
+    const ccD = COUNTRIES_REG[cc] ? cc : _RATTACHES_CARTE[cc];
+    const vd = ccD ? _verdictPaysEspece(key, ccD, mois, pret) : null;
+    // Un pays sans aucune donnee chez nous (Vatican, Monaco...) : le fond, pas le gris « jamais notee ».
+    let fill = 'var(--surface-3)', titre = r.name + ' - pas de données';
+    if(vd && !vd.sansDonnees){
+      // L'annee prend le palier du pays, celui de la pastille de sa ligne ; un mois, celui de sa valeur.
+      // Une exotique sans palier (X, P, C) reste grise : pas d'echappes en couleur.
+      const t = vd.tier > 0 ? (surAnnee ? vd.tier : (vd.vAn > 0 ? annualFreqToTier(vd.vAn) : 0)) : 0;
+      if(t > 0){
+        fill = realColor(t);
+        titre = `${r.name} - ${REAL_LABELS[t] || 'palier ' + t} (${t})`
+          + (vd.vAn > 0 ? ` · ${fmtP(vd.vAn)} des listes ` + (surAnnee ? "sur l'année" : 'en ' + lib) : '');
+      } else {
+        fill = ABSENT;
+        titre = r.name + ' - ' + (vd.absent ? 'jamais notée' : vd.tier > 0 ? 'absente en ' + lib : 'échappée ou introduite, sans rareté');
+      }
+    }
+    svg += _pathZone(r.path, fill, titre, false, false, null, 1);
+  }
+  // La colonne des mois garde sa forme (la gelule ANNÉE, puis les douze mois), sans couleur de palier :
+  // le choisi prend l'accent.
+  const chipMois = (val, label, actif, annuel) => {
+    const forme = annuel
+      ? ' padding:4px 7px; border-radius:999px; font:' + (actif ? '800' : '700') + ' 13px/1.2 system-ui; letter-spacing:.7px; text-transform:uppercase;'
+      : ' padding:2px 6px; border-radius:5px; font:' + (actif ? '800' : '600') + ' 14px/1.3 system-ui;';
+    return '<button type="button" data-mois="' + val + '" aria-pressed="' + actif + '" aria-label="' + esc(annuel ? "Toute l'année" : label) + '"'
+      + ' style="display:flex; align-items:center; justify-content:center; width:100%; border:0; cursor:pointer;' + forme
+      + ' background:' + (actif ? 'var(--accent)' : 'var(--surface-2)') + '; color:' + (actif ? 'var(--sur-accent)' : 'var(--ink-2)') + ';">'
+      + label + '</button>';
+  };
+  const moisBtns = chipMois('an', 'année', surAnnee, true)
+    + '<span style="display:block; height:1px; margin:5px 3px; background:var(--line-2);"></span>'
+    + _MOIS_COURTS.map((m, i) => chipMois(i, m, !surAnnee && i === mois, false)).join('');
+  box.innerHTML = `
+        <div style="display:flex; align-items:flex-start; justify-content:flex-start; gap:8px;">
+          <div id="smContinentMois" style="display:flex; flex-direction:column; gap:2px; flex:0 0 auto; width:88px;">
+            ${moisBtns}</div>
+          <div style="flex:1 1 auto; min-width:0;"><svg viewBox="${paths.viewBox}" style="width:100%; height:auto; display:block;" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${esc('Rareté par pays, ' + nom + ', ' + lib)}">
+            ${svg}
+          </svg></div>
+        </div>`;
+  // Ni colonne fantome ni boite fixe, a la difference de la carte d'un pays : elles la gardaient
+  // alignee sur la carte des statuts exotiques, qu'un continent n'a pas. Le monde, tres large, y
+  // gagne toute la place a droite des mois.
+  _majPanneauOuQuand();
+  const colonne = document.getElementById('smContinentMois');
+  if(colonne) colonne.onclick = (e) => {
+    const b = e.target.closest('[data-mois]');
+    if(!b) return;
+    // Recliquer le mois deja choisi revient a l'annee, comme sur la carte d'un pays.
+    const choix = b.dataset.mois === 'an' ? 'an' : +b.dataset.mois;
+    window._smRarityMapMonth = (choix !== 'an' && choix === window._smRarityMapMonth) ? 'an' : choix;
+    _renderCarteContinent(sci, nom);
+  };
 }
 async function _renderRarityMap(sci, cc){
   const container = document.getElementById('smRarityMap');
@@ -19329,6 +19510,8 @@ function _renderSpeciesRarityCard(key){
   // le innerHTML car les templates referencent initCountry via getTriggerLabel/buildRegPanel.
   // Le choix fait sur une fiche precedente prime sur le contexte : c'est lui qu'on veut
   // retrouver en passant d'une espece a l'autre avec les fleches.
+  // Une fiche s'ouvre toujours sur un pays : le continent choisi sur la precedente ne la suit pas.
+  _ficheContinent = '';
   const ctxCountry = (_speciesCountry && COUNTRIES_REG[_speciesCountry] ? _speciesCountry : '')
     || (typeof _pkdxFilters !== 'undefined' && _pkdxFilters.country)
     || (typeof ebFilter !== 'undefined' && ebFilter.country)
@@ -19485,6 +19668,8 @@ function _renderSpeciesRarityCard(key){
     return proms.length ? Promise.all(proms) : Promise.resolve();
   };
   loadRegionalDataFor(initCountry).then(() => {
+    // Un continent choisi entre-temps : ce pays n'est plus a l'ecran.
+    if(_ficheContinent) return;
     // Pays du monde : ses paliers et ses zones viennent d'arriver (data/countries/xx/pays.json).
     if(COUNTRIES_REG[initCountry] && COUNTRIES_REG[initCountry].monde){ renderLine(initCountry); updateRegVisibility(initCountry); }
     // La liste des zones est construite a l'ouverture du selecteur, elle n'a plus besoin
@@ -19501,6 +19686,8 @@ function _renderSpeciesRarityCard(key){
   // l'onglet « Carte & observations », est parti avec l'onglet (Mathis, 2026-11-08).
   const applyCountryChange = (chosen) => {
     if(!chosen) return;
+    // Quitter un continent : le pays revient, avec ses zones, son graphique et son bouton.
+    if(_ficheContinent){ _ficheContinent = ''; if(sel) delete sel.dataset.cont; }
     _speciesCountry = chosen;
     try{ localStorage.setItem('mb-species-country', chosen); }catch(_){}
     _syncCountryButton(sel, chosen);
@@ -19517,10 +19704,30 @@ function _renderSpeciesRarityCard(key){
       const lbl = $('#smRegPickerLabel');
       if(lbl) lbl.textContent = getTriggerLabel(chosen);
       // Un pays du monde n'a ses paliers et ses zones qu'une fois son fichier lu : on redessine.
-      if(COUNTRIES_REG[chosen] && COUNTRIES_REG[chosen].monde && _speciesCountry === chosen){
+      if(COUNTRIES_REG[chosen] && COUNTRIES_REG[chosen].monde && _speciesCountry === chosen && !_ficheContinent){
         renderLine(chosen); updateRegVisibility(chosen); }
       _renderSpeciesFreqChart(k, chosen);
     });
+  };
+  // Un continent, ou le monde : la carte de ses pays, chacun a la couleur de sa rarete (Mathis,
+  // 2026-11-10). Le pays de la fiche ne change pas : il revient des qu'on choisit un pays.
+  const appliquerContinent = (nom) => {
+    if(!CARTES_CONTINENTS[nom]) return;
+    _ficheContinent = nom;
+    if(sel){
+      sel.dataset.cont = nom;
+      const fEl = sel.querySelector('.cp-btn-flag'), lEl = sel.querySelector('.cp-btn-label');
+      if(fEl) fEl.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">'
+        + '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9s1.3-6.4 3.8-9z"/></svg>';
+      if(lEl) lEl.textContent = nom;
+    }
+    if(regPick) regPick.style.display = 'none';
+    const boxRar = document.getElementById('smRarityCard');
+    if(boxRar) boxRar.hidden = true;
+    window._oqStatutExo = '';
+    window._oqScore = '';
+    _majPanneauOuQuand();
+    _renderCarteContinent(k, nom);
   };
   // Selectionner une zone : depuis le selecteur, ou depuis la carte via _appliquerZoneFiche.
   const appliquer = (code) => {
@@ -19552,6 +19759,9 @@ function _renderSpeciesRarityCard(key){
       precharger: (cc2) => loadRegionalDataFor(cc2),
       motZone: (cc2) => cc2 === 'FR' ? 'Départements' : 'Régions',
       onglet,
+      continents: true,
+      continent: _ficheContinent,
+      onContinent: appliquerContinent,
     });
     if(res && res.type === 'zone') appliquer(res.code);
   };
@@ -19830,6 +20040,8 @@ function _scoreAnnuelLbl(m12, cc, zone){
   return `<b data-tip="${esc(tip)}" style="font-weight:700;color:var(--ink-2);">${t}${_PCT}${suffixe}</b>`;
 }
 function _renderSpeciesFreqChart(key, country){
+  // Un continent n'a pas de graphique des saisons : il reviendra avec le premier pays choisi.
+  if(_ficheContinent) return;
   // `card` est le panneau fusionne, qui porte AUSSI la carte : le graphique n'a donc plus
   // le droit de le masquer tout seul. Il montre ou cache sa propre zone et laisse
   // _majPanneauOuQuand decider du sort du panneau.

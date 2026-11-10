@@ -8,6 +8,12 @@
       "port": 8765
     },
     {
+      "name": "ornitheque-dev-2",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["--yes", "http-server", ".", "-p", "8767", "-c-1"],
+      "port": 8767
+    },
+    {
       "name": "ornitheque-carte",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["--yes", "http-server", "../ornitheque-carte", "-p", "8766", "-c-1"],

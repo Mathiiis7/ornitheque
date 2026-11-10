@@ -987,6 +987,14 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .cp-tab.on { background:var(--accent); border-color:var(--accent); color:var(--sur-accent); font-weight:700; }
   .cp-list { overflow-y:auto; overscroll-behavior:contain; flex:1; }
   .cp-group-title { font:700 13px var(--sans); text-transform:uppercase; letter-spacing:.4px; color:var(--ink-3); padding:8px 10px 4px; }
+  /* Fiche espece : le titre d'un continent se choisit et montre la carte de ses pays (2026-11-10).
+     Un bouton qui garde l'allure du titre ; l'accent dit qu'il est cliquable, comme un lien. */
+  .cp-group-title.cp-cont { display:flex; align-items:baseline; justify-content:space-between; gap:8px;
+    width:100%; margin-top:4px; padding:7px 10px; border:0; border-radius:8px; background:none; cursor:pointer; text-align:left; }
+  .cp-cont-voir { font:600 14px var(--sans); text-transform:none; letter-spacing:0; color:var(--accent-ink); }
+  .cp-group-title.cp-cont:hover { background:var(--surface-3); }
+  .cp-group-title.cp-cont.on { background:var(--accent); color:var(--sur-accent); }
+  .cp-group-title.cp-cont.on .cp-cont-voir { color:var(--sur-accent); }
   /* Meme plancher que .reg-picker-item : les deux onglets du selecteur partagent le pas
      de leurs lignes, au-dessus comme au-dessous de la hauteur de reference. */
   .cp-item { display:grid; grid-template-columns:28px minmax(0,1fr) var(--cp-exo,16px) 44px 60px 30px;
@@ -4169,6 +4177,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .fm-tout { min-height:52px; }
     .fm-pop .miss-toggle { display:flex; align-items:center; }
 
+    /* Selecteur de pays de la fiche : les continents qui se choisissent. */
+    .cp-group-title.cp-cont { min-height:52px; align-items:center; }
+
     /* Classement : au doigt, chaque espece est une cible de doigt. */
     .board-pile .board-rond { width:52px; height:52px; }
     .board-sp { min-height:52px; }
@@ -4591,13 +4602,14 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      centrée. En colonne à gauche, ils laissaient à la carte 162 × 124 px dans un coin (Mathis, 2026-11-08).
      app.js écrit ces réglages en style en ligne, d'où les !important. Couché, la colonne reste. */
   @media (max-width:700px) and (orientation:portrait){
-    #smRarityMap > div { flex-direction:column !important; align-items:stretch !important; gap:12px !important; }
-    #smRarityMapMois { display:grid !important; grid-template-columns:repeat(6, minmax(0, 1fr)); gap:4px !important; width:auto !important; }
-    #smRarityMapMois > span { display:none !important; }
-    #smRarityMapMois > [data-mois="an"] { grid-column:1 / -1; justify-self:center; width:auto !important; gap:8px !important; margin-bottom:4px; }
-    #smRarityMapMois > [data-mois]:not([data-mois="an"]) { flex-direction:column; justify-content:center !important; gap:0 !important;
+    /* La carte d'un continent (2026-11-10) suit la meme mise en page. */
+    #smRarityMap > div, #smContinentMap > div { flex-direction:column !important; align-items:stretch !important; gap:12px !important; }
+    #smRarityMapMois, #smContinentMois { display:grid !important; grid-template-columns:repeat(6, minmax(0, 1fr)); gap:4px !important; width:auto !important; }
+    #smRarityMapMois > span, #smContinentMois > span { display:none !important; }
+    #smRarityMapMois > [data-mois="an"], #smContinentMois > [data-mois="an"] { grid-column:1 / -1; justify-self:center; width:auto !important; gap:8px !important; margin-bottom:4px; }
+    #smRarityMapMois > [data-mois]:not([data-mois="an"]), #smContinentMois > [data-mois]:not([data-mois="an"]) { flex-direction:column; justify-content:center !important; gap:0 !important;
       padding:3px 0 !important; line-height:1.2 !important; }
-    #smRarityMap > div > div:nth-child(2) { flex:none !important; width:100% !important; max-width:none !important; margin:0 !important; }
+    #smRarityMap > div > div:nth-child(2), #smContinentMap > div > div:nth-child(2) { flex:none !important; width:100% !important; max-width:none !important; margin:0 !important; }
     #smRarityMap > div > div:nth-child(2) > svg { max-width:none !important; }
     #smRarityMap > div > div[aria-hidden] { display:none !important; }
   }

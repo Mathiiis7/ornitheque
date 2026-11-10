@@ -17,7 +17,8 @@ export const quoi = 'quelle carte s affiche, le graphique, la légende';
 export function html(){
   const source = fonctions('esc', 'realColor', '_vueCarte', '_carteExoAffichee', '_bulleSiCoupe',
     'libelleExo', '_majEnteteOuQuand', '_majOngletsOuQuand', '_majPanneauOuQuand', '_legendeOuQuand')
-    + '\n' + constante('EXOTIC_CATEGORY_LABEL');
+    + '\n' + constante('EXOTIC_CATEGORY_LABEL')
+    + "\nlet _ficheContinent = '';";   // la fiche regarde un pays, pas un continent (2026-11-10)
 
   const CAS = [
     { nom: 'les deux cartes', rar: 1, exo: 1, graph: 1, national: 1 },
