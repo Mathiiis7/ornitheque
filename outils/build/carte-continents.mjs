@@ -140,7 +140,12 @@ for(const [nom, cadre] of Object.entries(CADRES)){
       cadres[autre] = [r(a0), r(b0), r(a1 - a0), r(yBas - b0)];
     }
   }
-  const json = JSON.stringify(cadres ? { viewBox: `0 0 ${W} ${H}`, cadres, regions } : { viewBox: `0 0 ${W} ${H}`, regions });
+  // La surface de chaque pays dessiné, en km² (le pays entier, outre-mer compris, pas la part coupée par le
+  // cadre) : la rareté d'un continent est la moyenne de ses pays pondérée par elle, aucun pays ne pesant plus
+  // de 10 % du continent (Mathis, 2026-11-11 ; comparaison dans notes-privees/rarete-continent/).
+  const aires = {};
+  if(!cadre.sphere) for(const cc of Object.keys(regions)) aires[cc] = Math.max(1, Math.round(geoArea(parCode.get(cc).geom) * 6371 * 6371));
+  const json = JSON.stringify(cadres ? { viewBox: `0 0 ${W} ${H}`, cadres, regions } : { viewBox: `0 0 ${W} ${H}`, aires, regions });
   fs.writeFileSync(new URL(nom + '.json', dossier), json);
   total += json.length;
   console.log(nom.padEnd(17), Object.keys(regions).length, 'pays,', points, 'en point,', 'viewBox 1000x' + H + ',', Math.round(json.length / 1024), 'Ko');

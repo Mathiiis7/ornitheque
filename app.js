@@ -1028,15 +1028,16 @@ for(const [cc, c] of Object.entries(CONTINENT_BY_CC)){
   else if(c === 'Autres' && CONTINENT_7_DE[cc] === 'Antarctique') CONTINENT_BY_CC[cc] = 'Antarctique';
 }
 // Les cartes des continents de la fiche espece (outils/build/carte-continents.mjs) : choisir un continent
-// dans le selecteur montre chaque pays colore par SA rarete. Un continent n'a pas de rarete a lui
-// (Mathis, 2026-11-10, apres quatre facons de la calculer, toutes trompeuses quelque part).
+// dans le selecteur montre chaque pays colore par SA rarete. Le monde n'a pas de rarete a lui (Mathis,
+// 2026-11-10, apres quatre facons de la calculer, toutes trompeuses quelque part) ; un continent en a une
+// depuis le 2026-11-11, la moyenne de ses pays selon leur surface plafonnee (_renderCarteContinent).
 const CARTES_CONTINENTS = { 'Monde': 'monde', 'Europe': 'europe', 'Amérique du Nord': 'amerique-du-nord',
   'Amérique du Sud': 'amerique-du-sud', 'Afrique': 'afrique', 'Asie': 'asie', 'Océanie': 'oceanie', 'Antarctique': 'antarctique' };
 const _carteContinentPromesses = {};
 function _chargerCarteContinent(nom){
   const f = CARTES_CONTINENTS[nom];
   if(!f) return Promise.resolve(null);
-  return _carteContinentPromesses[nom] ||= fetch('data/carte-continents/' + f + '.json?v=20261110c')
+  return _carteContinentPromesses[nom] ||= fetch('data/carte-continents/' + f + '.json?v=20261111')
     .then(r => r.ok ? r.json() : null).catch(() => { delete _carteContinentPromesses[nom]; return null; });
 }
 // Le continent montre par la fiche, '' quand c'est un pays. Jamais enregistre, et jamais ecrit dans
@@ -1338,7 +1339,8 @@ function _openCountryPicker(currentCode, opts = {}){
         </div>`;
       }
       // Fiche espece : le titre d'un continent se choisit, et montre la carte de ses pays, chacun a sa
-      // couleur. Pas de pourcentage ni de pastille : un continent n'a pas de rarete (Mathis, 2026-11-10).
+      // couleur. Pas de pourcentage ni de pastille dans la liste : la rarete d'un continent (2026-11-11) se lit
+      // dans la colonne des mois de sa carte, et le monde n'en a pas.
       const titreCont = (nom) => opts.continents && CARTES_CONTINENTS[nom]
         ? `<button type="button" class="cp-group-title cp-cont${contCourant === nom ? ' on' : ''}" data-cont="${esc(nom)}"`
           + ` aria-pressed="${contCourant === nom}"><span>${esc(nom)}</span><span class="cp-cont-voir">voir la carte</span></button>`
@@ -18818,10 +18820,12 @@ function _carteExoAffichee(){
 function _majEnteteOuQuand(nomZone){
   const el = document.getElementById('smOqZone');
   if(!el) return;
-  // Un continent garde son nom, sans statut exotique ni chiffre : il n'a pas de rarete.
+  // Un continent garde son nom et son chiffre (la moyenne de ses pays, 2026-11-11), sans statut exotique.
+  // Le monde n'a pas de chiffre : _oqScore y est vide.
   if(_ficheContinent){
     el.dataset.nom = _ficheContinent;
-    el.innerHTML = `<span class="sm-oq-nom" data-tip-coupe="${esc(_ficheContinent)}">${esc(_ficheContinent)}</span>`;
+    el.innerHTML = `<span class="sm-oq-nom" data-tip-coupe="${esc(_ficheContinent)}">${esc(_ficheContinent)}</span>`
+      + (window._oqScore ? `<span class="sm-oq-score">${window._oqScore}</span>` : '');
     return;
   }
   if(nomZone != null) el.dataset.nom = nomZone;
@@ -19084,7 +19088,8 @@ function _legendeOuQuand(aCarte, aGraph, vueExo){
   // carte d'une piece prend la valeur nationale du mois choisi.
   // Un continent : chaque pays porte sa propre rarete ; le continent, lui, n'en a pas.
   if(p.continent) return `<div class="sm-oq-cles">${cles}</div>`
-    + `<div class="sm-oq-note">ⓘ Chaque pays a la couleur de sa propre rareté, mois par mois dans la colonne de gauche. C'est une facilité de rencontre, pas un effectif.</div>`;
+    + (p.monde ? `<div class="sm-oq-note">ⓘ Chaque pays a la couleur de sa propre rareté, mois par mois dans la colonne de gauche. C'est une facilité de rencontre, pas un effectif.</div>`
+      : `<div class="sm-oq-note">ⓘ Chaque pays a la couleur de sa propre rareté. La colonne de gauche donne celle du continent : la moyenne de ses pays selon leur surface, aucun ne comptant pour plus de 10 %. C'est une facilité de rencontre, pas un effectif.</div>`);
   const surCarte = p.sansDecoupage ? 'Le pays entier sur la carte' : `Par ${p.zoneWord || 'région'} sur la carte`;
   const aCliquer = p.sansDecoupage ? 'un mois ou une barre' : 'une zone, un mois ou une barre';
   // La note dit ce que seule elle peut dire - que la carte et la colonne donnent le mois entier
@@ -19244,7 +19249,7 @@ async function _renderCarteContinent(sci, nom){
   const box = document.getElementById('smContinentMap');
   if(!box) return;
   const key = (sci || '').toLowerCase();
-  window._oqPortee = { zoneWord: 'pays', sansDecoupage: false, continent: true };
+  window._oqPortee = { zoneWord: 'pays', sansDecoupage: false, continent: true, monde: nom === 'Monde' };
   if(window._smRarityMapMonth == null) window._smRarityMapMonth = 'an';
   const periode = window._smRarityMapMonth;
   const surAnnee = periode === 'an';
@@ -19291,12 +19296,51 @@ async function _renderCarteContinent(sci, nom){
     }
     svg += _pathZone(r.path, fill, titre, false, horsCont, cible, 1);
   }
-  // La colonne des mois garde sa forme (la gelule ANNÉE, puis les douze mois), sans couleur de palier :
-  // le choisi prend l'accent.
+  // La rarete du continent (Mathis, 2026-11-11, apres comparaison de sept calculs sur cinq continents :
+  // notes-privees/rarete-continent/comparaison.md). Moyenne des pays du continent ponderee par leur surface,
+  // aucun pays ne pesant plus de 10 % du continent : sans ce plafond la Russie faisait 74 % de l'Europe, et
+  // ponderer par les listes laissait les Etats-Unis (81 % des listes) decider seuls pour l'Amerique du Nord.
+  // Un pays sans donnees ne compte pas ; une exotique sans palier (X, P, C) compte pour 0, comme sa couleur.
+  // Le monde n'en a pas : a cette echelle, aucun calcul ne tenait (2026-11-10).
+  let m12Cont = null, anCont = 0;
+  if(!surMonde && paths.aires){
+    const membres = [];
+    for(const cc of Object.keys(paths.regions)){
+      if(!COUNTRIES_REG[cc] || _continentDuPays(cc) !== nom || !(paths.aires[cc] > 0)) continue;
+      const vA = _verdictPaysEspece(key, cc, null, pret);
+      if(!vA || vA.sansDonnees) continue;
+      const sauvage = vA.tier > 0;
+      const m12 = _MOIS_COURTS.map((_, mi) => { if(!sauvage) return 0; const v = _verdictPaysEspece(key, cc, mi, pret); return (v && v.vAn) || 0; });
+      membres.push({ aire: paths.aires[cc], an: sauvage ? vA.vAn : 0, m12 });
+    }
+    const plafond = 0.10 * membres.reduce((a, x) => a + x.aire, 0);
+    let poids = 0; m12Cont = Array(12).fill(0);
+    for(const x of membres){
+      const w = Math.min(x.aire, plafond);
+      poids += w; anCont += x.an * w;
+      for(let mi = 0; mi < 12; mi++) m12Cont[mi] += x.m12[mi] * w;
+    }
+    if(poids > 0){ anCont /= poids; m12Cont = m12Cont.map(v => v / poids); } else m12Cont = null;
+  }
+  window._oqScore = m12Cont ? _scoreAnnuelLbl(m12Cont, null, null, anCont) : '';
+  // La colonne des mois garde sa forme (la gelule ANNÉE, puis les douze mois). Un continent : chaque mois a
+  // la couleur du palier du continent, comme sur la carte d'un pays. Le monde : sans couleur, le choisi
+  // prend l'accent.
   const chipMois = (val, label, actif, annuel) => {
     const forme = annuel
       ? ' padding:4px 7px; border-radius:999px; font:' + (actif ? '800' : '700') + ' 13px/1.2 system-ui; letter-spacing:.7px; text-transform:uppercase;'
       : ' padding:2px 6px; border-radius:5px; font:' + (actif ? '800' : '600') + ' 14px/1.3 system-ui;';
+    if(m12Cont){
+      const valeur = annuel ? anCont : (m12Cont[val] || 0);
+      const vu = valeur > 0, t = vu ? annualFreqToTier(valeur) : 0;
+      const lbl = vu ? (REAL_LABELS[t] || 'palier ' + t) : (annuel ? 'jamais notée' : 'absente ce mois-ci');
+      const tip = label + ' · ' + nom + ' - ' + (vu ? fmtP(valeur) + ' des listes · ' + lbl + ' (' + t + ')' : lbl);
+      const anneau = actif ? ' box-shadow:0 0 0 1.5px var(--surface-2, #fafafa), 0 0 0 3px var(--ink-2);' : '';
+      return '<button type="button" data-mois="' + val + '" aria-pressed="' + actif + '" aria-label="' + esc(tip) + '"'
+        + ' style="display:flex; align-items:center; justify-content:space-between; gap:4px; width:100%; border:0; cursor:pointer;' + forme
+        + ' background:' + (vu ? realColor(t) : ABSENT) + '; color:' + (vu ? '#fff' : 'var(--ink-3)') + ';' + anneau + '">'
+        + '<span>' + label + '</span><span style="opacity:.85; font-variant-numeric:tabular-nums;">' + (vu ? t : '–') + '</span></button>';
+    }
     return '<button type="button" data-mois="' + val + '" aria-pressed="' + actif + '" aria-label="' + esc(annuel ? "Toute l'année" : label) + '"'
       + ' style="display:flex; align-items:center; justify-content:center; width:100%; border:0; cursor:pointer;' + forme
       + ' background:' + (actif ? 'var(--accent)' : 'var(--surface-2)') + '; color:' + (actif ? 'var(--sur-accent)' : 'var(--ink-2)') + ';">'
@@ -20234,14 +20278,15 @@ function _titreSrc(ccLabel, regionScope, strictRegional){
 // valeur qui decide du palier, calculee sur la zone que montre le graphique : region si
 // une region est selectionnee, pays sinon. L'entete ne donnait jusqu'ici que le pic, ce qui
 // laissait croire que le tier en decoulait ; les deux chiffres sont maintenant cote a cote.
-function _scoreAnnuelLbl(m12, cc, zone){
+// annuel : la valeur de l'annee quand elle ne se deduit pas des douze mois (un continent, moyenne de ses pays).
+function _scoreAnnuelLbl(m12, cc, zone, annuel){
   if(!Array.isArray(m12) || m12.length !== 12) return '';
   // Un mois choisi dans la colonne de la carte remplace le chiffre annuel par le sien :
   // l'en-tete doit dire ce que la carte et le graphique montrent en dessous, pas autre chose.
   const mm = window._smRarityMapMonth;
   const mois = (typeof mm === 'number' && mm >= 0 && mm <= 11) ? mm : null;
   const suffixe = mois == null ? '' : ' en ' + _MOIS_COURTS[mois];
-  const v = mois == null ? _valeurAnnuelleZone(m12, cc, zone) : (m12[mois] || 0);
+  const v = mois == null ? (annuel != null ? annuel : _valeurAnnuelleZone(m12, cc, zone)) : (m12[mois] || 0);
   // Plus de « · » en tete : le point separait le chiffre du nom de zone quand les deux
   // vivaient dans le titre du panneau, a la suite. Ils sont maintenant deux elements d'une
   // meme ligne, espaces par la grille - le point flottait entre eux sans rien separer.
@@ -20256,7 +20301,10 @@ function _scoreAnnuelLbl(m12, cc, zone){
           // Sous 0,01 % on donnait « <0.01 », qui confondait une espece a 0,009 % et une a
           // 0,0002 %. Deux chiffres significatifs : la vraie valeur, sans zeros inutiles.
           : _fr(Number((v * 100).toPrecision(2)));
-  const tip = mois == null
+  const tip = annuel != null
+    ? (mois == null ? "Moyenne des pays du continent selon leur surface, aucun ne comptant pour plus de 10 % : la part de leurs listes qui citent l'espèce. C'est elle qui détermine le palier de rareté."
+      : "Moyenne des pays du continent sur ce seul mois, pondérée de même.")
+    : mois == null
     ? "Fréquence annuelle pondérée par l'effort d'observation : la part des listes de la zone qui citent l'espèce. C'est elle qui détermine le palier de rareté."
     : "Part des listes de la zone qui citent l'espèce sur ce seul mois.";
   return `<b data-tip="${esc(tip)}" style="font-weight:700;color:var(--ink-2);">${t}${_PCT}${suffixe}</b>`;
