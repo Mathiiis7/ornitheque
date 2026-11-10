@@ -16,7 +16,7 @@
 //
 // Source : data/carte-pays.json (outils/build/carte-pays.mjs). Usage : node outils/build/carte-continents.mjs
 import fs from 'node:fs';
-import { geoArea, geoPath, geoEqualEarth, geoConicEqualArea, geoAzimuthalEqualArea } from 'd3-geo';
+import { geoArea, geoPath, geoNaturalEarth1, geoConicEqualArea, geoAzimuthalEqualArea } from 'd3-geo';
 
 const RACINE = new URL('../../', import.meta.url);
 const W = 1000;
@@ -28,7 +28,9 @@ const AIRE_MINI = Math.PI * RAYON_POINT * RAYON_POINT;
 // Le cadre se donne en degrés (ouest, sud, est, nord), l'est pouvant dépasser 180 quand il passe
 // l'antiméridien (Océanie). La projection est tournée sur le centre du cadre.
 const CADRES = {
-  monde:              { proj: () => geoEqualEarth().rotate([-10, 0]), sphere: true },
+  // Natural Earth plutot qu'Equal Earth (Mathis, 2026-11-10) : a surfaces egales, le Canada et la Russie
+  // paraissaient ecrases ; ce compromis garde des surfaces presque justes sans aplatir le nord.
+  monde:              { proj: () => geoNaturalEarth1().rotate([-10, 0]), sphere: true },
   europe:             { proj: () => geoConicEqualArea().rotate([-15, 0]).parallels([40, 65]), bbox: [-25, 34, 45, 71.5] },
   'amerique-du-nord': { proj: () => geoConicEqualArea().rotate([100, 0]).parallels([20, 60]), bbox: [-170, 6.5, -50, 83.5] },
   'amerique-du-sud':  { proj: () => geoAzimuthalEqualArea().rotate([60, 20]), bbox: [-92.5, -56.5, -33, 13.5] },

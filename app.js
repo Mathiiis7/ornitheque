@@ -1036,7 +1036,7 @@ const _carteContinentPromesses = {};
 function _chargerCarteContinent(nom){
   const f = CARTES_CONTINENTS[nom];
   if(!f) return Promise.resolve(null);
-  return _carteContinentPromesses[nom] ||= fetch('data/carte-continents/' + f + '.json?v=20261110b')
+  return _carteContinentPromesses[nom] ||= fetch('data/carte-continents/' + f + '.json?v=20261110c')
     .then(r => r.ok ? r.json() : null).catch(() => { delete _carteContinentPromesses[nom]; return null; });
 }
 // Le continent montre par la fiche, '' quand c'est un pays. Jamais enregistre, et jamais ecrit dans
