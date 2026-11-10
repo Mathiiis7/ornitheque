@@ -1,0 +1,4 @@
+// Genere par scrape-exotic-by-region-multi.mjs (Playwright + Chromium headless).
+// Ne pas editer a la main. Regenerable : node outils/build/scrape-exotic-by-region-multi.mjs BN
+// Format : { "BN-YY": { sciName: category } } avec N=Naturalized, P=Provisional, X=Escapee.
+export const EXOTIC_STATUS_BY_REGION_BN = {"BN-BE":{"columba livia":"N","geopelia striata":"N","acridotheres tristis":"N","acridotheres cristatellus":"N","padda oryzivora":"N"},"BN-BM":{"columba livia":"N","streptopelia tranquebarica":"N","geopelia striata":"N","acridotheres tristis":"N","acridotheres javanicus":"X","acridotheres cristatellus":"N","padda oryzivora":"N"},"BN-TE":{"columba livia":"N","geopelia striata":"N","acridotheres tristis":"N","acridotheres cristatellus":"N","padda oryzivora":"N"},"BN-TU":{"columba livia":"N","geopelia striata":"N","acridotheres tristis":"N","acridotheres javanicus":"X","padda oryzivora":"N"}};

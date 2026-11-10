@@ -1,0 +1,4 @@
+// Genere par scrape-exotic-by-region-multi.mjs (Playwright + Chromium headless).
+// Ne pas editer a la main. Regenerable : node outils/build/scrape-exotic-by-region-multi.mjs KE
+// Format : { "KE-YY": { sciName: category } } avec N=Naturalized, P=Provisional, X=Escapee.
+export const EXOTIC_STATUS_BY_REGION_KE = {"KE-200":{"columba livia":"N","corvus splendens":"N","passer domesticus":"N"},"KE-300":{"columba livia":"N","corvus splendens":"N","passer domesticus":"N"},"KE-400":{"corvus splendens":"N","passer domesticus":"N"},"KE-110":{"columba livia":"N","psittacus erithacus":"X","corvus splendens":"N","passer domesticus":"N"},"KE-500":{"passer domesticus":"N"},"KE-600":{"columba livia":"N","passer domesticus":"N"},"KE-700":{"psittacus erithacus":"X","poicephalus cryptoxanthus":"X","corvus splendens":"N","passer domesticus":"N"},"KE-800":{"columba livia":"N","passer domesticus":"N"}};

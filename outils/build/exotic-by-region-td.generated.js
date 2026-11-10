@@ -1,0 +1,4 @@
+// Genere par scrape-exotic-by-region-multi.mjs (Playwright + Chromium headless).
+// Ne pas editer a la main. Regenerable : node outils/build/scrape-exotic-by-region-multi.mjs TD
+// Format : { "TD-YY": { sciName: category } } avec N=Naturalized, P=Provisional, X=Escapee.
+export const EXOTIC_STATUS_BY_REGION_TD = {"TD-BA":{"columba livia":"N","passer domesticus":"N"},"TD-BET":{"passer domesticus":"N"},"TD-CB":{"columba livia":"N","passer domesticus":"N"},"TD-GR":{"columba livia":"N","passer domesticus":"N"},"TD-HL":{"passer domesticus":"N"},"TD-KA":{},"TD-LC":{"passer domesticus":"N"},"TD-LO":{},"TD-LR":{},"TD-ME":{},"TD-MO":{"columba livia":"N"},"TD-MC":{},"TD-ND":{"passer domesticus":"N"},"TD-OD":{"columba livia":"N","passer domesticus":"N"},"TD-SA":{"columba livia":"N","passer domesticus":"N"},"TD-TA":{},"TD-WF":{"passer domesticus":"N"}};

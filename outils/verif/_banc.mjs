@@ -26,7 +26,9 @@ import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, extname } from 'node:path';
 
-export const RACINE = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+// BANC_RACINE : faire tourner un banc sur une autre copie du site (2026-11-10 : trancher quel travail en
+// cours, dans un dossier partagé par plusieurs conversations, fait tomber un banc).
+export const RACINE = process.env.BANC_RACINE || join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 // Extrait une fonction d'app.js par son nom, telle quelle. Les bancs jouent le vrai code,
 // jamais une copie : une copie divergerait, et un banc qui teste autre chose que le site ne

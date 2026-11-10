@@ -213,6 +213,30 @@ const AGREGE = (() => {
   } catch(e){ return {}; }
 })();
 
+// Les pays du monde ajoutés le 2026-11-09 : leurs zones et leurs noms viennent d'eBird, par
+// inventaire-pays.mjs (outils/config/pays-a-ajouter.json). Un nom se compare sans accents, sans
+// casse, sans les mots génériques (province, région, district...), qui changent d'une source à l'autre.
+function normNomMonde(s){
+  // « Boké, Gouvernorat de » chez eBird : on garde ce qui précède la virgule.
+  return String(s || '').split(',')[0].normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+    .replace(/\b(gouvernorat|bibhag|division|province|provincia|region|regione|district|state|division|department|departement|departamento|governorate|prefecture|municipality|municipio|parish|county|oblast|autonomous|special|capital|territory|city|of|the|de|du|la|le|des)\b/g, ' ')
+    .replace(/[^a-z0-9]+/g, '');
+}
+const PAYS_MONDE = (() => {
+  const p = join(__dir, '..', 'config', 'pays-a-ajouter.json');
+  if(!existsSync(p)) return {};
+  const out = {};
+  // Les écartés de pays-monde.mjs (micro-États, Monténégro déjà présent) n'en font pas partie : les lire
+  // ici en brut avait tracé Andorre, le Liechtenstein et Saint-Marin (vu au commit du 2026-11-10).
+  const ECARTES = ['ME', 'VA', 'MC', 'SM', 'LI', 'AD', 'XX'];
+  for(const pays of JSON.parse(readFileSync(p, 'utf8')).filter(x => !ECARTES.includes(x.cc))){
+    const parNom = {};
+    for(const [code, nom] of Object.entries(pays.noms || {})) parNom[normNomMonde(nom)] = code;
+    out[pays.cc] = { zones: pays.zones, noms: pays.noms || {}, parNom };
+  }
+  return out;
+})();
+
 function resolveCode(cc, props){
   // La Carte appelle eBird zone par zone : elle a besoin des vrais codes d'eBird (cantons suisses,
   // comtés anglais, communes slovènes), pas des regroupements faits pour les fréquences, qu'eBird
@@ -240,6 +264,21 @@ function resolveCodeBrut(cc, props){
   if(cc === 'HR' && props.adm1_code === HR_POZEGA) return 'HR-11';
   if(cc === 'RS' && RS_VOJVODINE.has(props.iso_3166_2)) return 'RS-VO';
   const iso = props.iso_3166_2;
+  // Pays du monde ajoutés le 2026-11-09 : quand le code ISO de Natural Earth n'est pas celui
+  // d'eBird (Chine, Vietnam, Népal...), on apparie par le nom, table NOMS_MONDE plus bas.
+  if(PAYS_MONDE[cc] && !(iso && PAYS_MONDE[cc].zones.includes(ISO_FIXUP[iso] || iso))){
+    const parNom = PAYS_MONDE[cc].parNom;
+    // Le champ region en dernier : là où eBird regroupe des districts (Ouganda : 4 régions pour 112
+    // districts ; Malawi, Cap-Vert, Guinée), Natural Earth porte le groupe dans ce champ, et toutes
+    // les pièces du même groupe sont fondues en une zone.
+    for(const n of [props.name, props.name_en, props.name_fr, props.name_alt, props.woe_name, props.gn_name, props.region]){
+      for(const morceau of String(n || '').split('|')){
+        const code = parNom[normNomMonde(morceau)];
+        if(code) return code;
+      }
+    }
+    return null;
+  }
   if(!iso) return null;
   const fixed = ISO_FIXUP[iso] || iso;
   // Le prefixe suffit d'ordinaire, mais une zone peut porter un code qui ne commence pas
@@ -931,7 +970,19 @@ const ADM0 = {
 const CARTE = process.argv.includes('--carte');
 const ZONES_EBIRD = CARTE ? JSON.parse(readFileSync(join(__dir, '..', 'config', 'ebird-zones-carte.json'), 'utf8')) : {};
 const filter = process.argv.slice(3).find(a => !a.startsWith('--'));
-const COUNTRIES = filter ? filter.split(',').map(s => s.trim().toUpperCase()) : Object.keys(ADM0);
+// Les noms français des zones du monde (zones-monde-noms.mjs), avant ceux d'eBird.
+const ZONES_MONDE_FR = (() => { const p = join(__dir, '..', 'config', 'zones-monde-noms.json');
+  return existsSync(p) ? JSON.parse(readFileSync(p, 'utf8')) : {}; })();
+// --monde : les pays du monde ajoutés le 2026-11-09 qui ont des zones chez eBird.
+const COUNTRIES = filter ? filter.split(',').map(s => s.trim().toUpperCase())
+  : process.argv.includes('--monde') ? Object.keys(PAYS_MONDE).filter(cc => PAYS_MONDE[cc].zones.length)
+  : Object.keys(ADM0);
+for(const [cc, p] of Object.entries(PAYS_MONDE)){
+  if(!p.zones.length) continue;
+  if(!EBIRD_REGIONS[cc]) EBIRD_REGIONS[cc] = p.zones;
+  if(!ZONES_EBIRD[cc]) ZONES_EBIRD[cc] = p.zones;   // même source : subnational1 d'eBird
+  for(const [code, nom] of Object.entries(p.noms)) if(!NAMES[code]) NAMES[code] = ZONES_MONDE_FR[code] || nom;
+}
 // Une région en GeoJSON : chaque anneau devient un polygone. Les trous de Natural Earth (Berlin dans le
 // Brandebourg) deviennent donc des polygones pleins, sans effet sur le dessin (aucun remplissage) ; les
 // petites zones sont posées en dernier, donc au-dessus, pour garder leur clic.
@@ -1016,6 +1067,11 @@ function zonesCarte(geo, noms){
 console.log(`Lecture ${srcPath} ...`);
 const raw = JSON.parse(readFileSync(srcPath, 'utf8'));
 console.log(`  ${raw.features.length} features admin-1 mondiales.\n`);
+// Code pays à trois lettres des pays du monde : celui que Natural Earth porte sur leurs régions.
+for(const cc of Object.keys(PAYS_MONDE)) if(!ADM0[cc]){
+  const f = raw.features.find(x => x.properties.iso_a2 === cc);
+  if(f) ADM0[cc] = f.properties.adm0_a3;
+}
 
 let totalKB = 0;
 for(const cc of COUNTRIES){

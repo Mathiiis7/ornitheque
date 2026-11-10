@@ -21,6 +21,7 @@
 */
 import { EBIRD_API_KEY } from './cle-ebird.mjs';
 import { chromium } from 'playwright';
+import { ZONES_MONDE, AVEC_MONDE } from './pays-monde.mjs';
 import { writeFileSync, existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -164,7 +165,10 @@ const REGIONS = {
 const args = process.argv.slice(2);
 const FORCE = args.includes('--force');
 const filterArg = args.find(a => !a.startsWith('--'));
-const COUNTRIES = filterArg ? filterArg.split(',').map(s => s.trim().toUpperCase()) : Object.keys(REGIONS);
+// --monde : les pays du monde de pays-monde.mjs, avec leurs zones eBird (2026-11-09).
+if(AVEC_MONDE) for(const [cc, z] of Object.entries(ZONES_MONDE)) if(!REGIONS[cc] && z.length) REGIONS[cc] = z;
+const COUNTRIES = filterArg ? filterArg.split(',').map(s => s.trim().toUpperCase())
+  : AVEC_MONDE ? Object.keys(ZONES_MONDE).filter(cc => ZONES_MONDE[cc].length) : Object.keys(REGIONS);
 const totalRegions = COUNTRIES.reduce((a, c) => a + (REGIONS[c]?.length || 0), 0);
 console.log(`Scrape exotic status per region : ${COUNTRIES.length} pays, ${totalRegions} regions.`);
 if(FORCE) console.log(`Mode FORCE : re-scrape toutes les regions meme celles deja faites.`);

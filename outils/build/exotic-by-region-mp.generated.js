@@ -1,0 +1,4 @@
+// Genere par scrape-exotic-by-region-multi.mjs (Playwright + Chromium headless).
+// Ne pas editer a la main. Regenerable : node outils/build/scrape-exotic-by-region-multi.mjs MP
+// Format : { "MP-YY": { sciName: category } } avec N=Naturalized, P=Provisional, X=Escapee.
+export const EXOTIC_STATUS_BY_REGION_MP = {"MP-NI":{"gallus gallus":"N"},"MP-RO":{"cairina moschata":"X","gallus gallus":"N","columba livia":"N","streptopelia dusumieri":"N","dicrurus macrocercus":"N","passer montanus":"N"},"MP-SA":{"cairina moschata":"X","gallus gallus":"N","columba livia":"N","streptopelia dusumieri":"N","psittacula krameri":"X","melopsittacus undulatus":"X","dicrurus macrocercus":"N","estrilda melpoda":"N","passer montanus":"N"},"MP-TI":{"gallus gallus":"N","columba livia":"N","streptopelia dusumieri":"N","dicrurus macrocercus":"N","estrilda melpoda":"N","passer montanus":"N"}};

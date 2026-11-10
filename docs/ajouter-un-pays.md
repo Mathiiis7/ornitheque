@@ -28,6 +28,25 @@ Et deux pièges :
 - Le scrape national des exotiques a rendu 0 au premier passage, 13 au second (page pas finie) :
   un 0 se relance avant d'y croire.
 
+## Les pays du monde : deux étages (décidé le 2026-11-09)
+
+Mathis a choisi d'ajouter TOUS les pays restants (193, sans écarter les petits ; les 5 micro-États
+de septembre restent écartés, liste dans `outils/build/pays-monde.mjs`). Les verser dans les deux
+fichiers communs les aurait fait passer de 588 à 3 006 Ko gzippés (fréquences) et de 85 à 615 Ko
+(paliers), chargés d'un bloc par une douzaine d'écrans (sélecteur, Fil, Carte, recherche, fiche,
+arbre). D'où deux étages :
+- **Les 48 pays d'avant ne bougent pas** : mêmes fichiers communs, même chargement.
+- **Chaque pays du monde a son fichier** `data/countries/xx/pays.json` = `{ freq, rarete }`
+  (11 Ko gz en médiane, 78 au plus), chargé quand on le choisit, ou quand un écran affiche une
+  observation de ce pays. Un pays pas encore chargé se comporte comme le Kenya aujourd'hui.
+- **Le sélecteur avec une espèce ouverte** lit `data/especes-monde/<2 premières lettres>.json`
+  = `{ sci: { CC: [palier, 12 fréquences] } }` (184 fichiers, 5,6 Ko gz en médiane, 68 au plus).
+  Sans lui, un pays non chargé se lirait « absente ».
+- **Piège** : `_donneesPaysPretes()` répond vrai pour toujours une fois les 48 chargés. Un écran
+  dessiné avec une observation en Inde doit demander l'Inde et se redessiner à son arrivée.
+- `verser-pays.mjs --monde` écrit ces fichiers. **Ne jamais lui passer les codes du monde sans
+  `--monde`** : il les verserait dans les fichiers communs.
+
 ## 0. Avant de commencer
 
 - Cookie eBird d'une session connectée (les bar charts l'exigent) : `node outils/build/cookie-ebird.mjs`

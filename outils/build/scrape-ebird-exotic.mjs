@@ -11,6 +11,7 @@
 */
 import { EBIRD_API_KEY } from './cle-ebird.mjs';
 import { chromium } from 'playwright';
+import { CODES_MONDE, AVEC_MONDE } from './pays-monde.mjs';
 import { writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -27,8 +28,9 @@ const COUNTRIES = ['FR', 'ME', 'ES', 'IT', 'GB', 'PT', 'CH', 'NO', 'GR', 'IS', '
   'RU', 'SE', 'SI', 'SJ', 'SK', 'UA', 'XK',
   'MA'];
 // Sous-set pour un run cible : CLI arg 1 en CSV, sinon tous. Ex: node scrape... AU,NZ
-const CLI_COUNTRIES = (process.argv[2] || '').split(',').map(s => s.trim()).filter(Boolean);
-const RUN_COUNTRIES = CLI_COUNTRIES.length > 0 ? CLI_COUNTRIES : COUNTRIES;
+const CLI_COUNTRIES = (process.argv.slice(2).find(a => !a.startsWith('--')) || '').split(',').map(s => s.trim()).filter(Boolean);
+// --monde : les pays du monde de pays-monde.mjs (2026-11-09).
+const RUN_COUNTRIES = CLI_COUNTRIES.length > 0 ? CLI_COUNTRIES : AVEC_MONDE ? CODES_MONDE : COUNTRIES;
 
 // Regions pour pays trop gros (page nationale eBird echoue "Oups!") : on scrape
 // chaque region et on merge par priorite N > P > X.
@@ -128,7 +130,10 @@ async function scrapeCountry(page, cc) {
   return data;
 }
 
-const browser = await chromium.launch({ channel: 'chrome', headless: false });
+// Invisible par défaut, comme scrape-exotic-by-region-multi.mjs (mesure du 2026-09-28 : la page se
+// lit aussi bien sans fenêtre) ; --fenetre pour la voir. 193 pays d'un coup ouvraient sinon une
+// fenêtre une demi-heure sur l'écran de Mathis.
+const browser = await chromium.launch({ channel: 'chrome', headless: !process.argv.includes('--fenetre') });
 const ctx = await browser.newContext({
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36',
   locale: 'fr-FR',
@@ -139,9 +144,17 @@ const results = {};   // { cc: { speciesCode: cat } }
 for(const cc of RUN_COUNTRIES) {
   try {
     results[cc] = await scrapeCountry(page, cc);
+    // 0 au premier passage, 13 au second pour le Maroc (2026-11-09) : la page n'avait pas fini.
+    // Un 0 se relance une fois avant d'y croire.
+    if(!Object.keys(results[cc]).length){
+      console.log('  0 : second passage');
+      await page.waitForTimeout(5000);
+      results[cc] = await scrapeCountry(page, cc);
+    }
   } catch(e) {
+    // Un echec n'ecrit plus un pays vide : il effacerait une recolte precedente.
     console.error(`  ERREUR ${cc}:`, e.message);
-    results[cc] = {};
+    delete results[cc];
   }
 }
 

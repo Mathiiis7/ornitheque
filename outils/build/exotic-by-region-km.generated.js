@@ -1,0 +1,4 @@
+// Genere par scrape-exotic-by-region-multi.mjs (Playwright + Chromium headless).
+// Ne pas editer a la main. Regenerable : node outils/build/scrape-exotic-by-region-multi.mjs KM
+// Format : { "KM-YY": { sciName: category } } avec N=Naturalized, P=Provisional, X=Escapee.
+export const EXOTIC_STATUS_BY_REGION_KM = {"KM-A":{"columba livia":"N","streptopelia capicola":"N","corvus splendens":"P","acridotheres tristis":"N","foudia madagascariensis":"N","passer domesticus":"N"},"KM-G":{"columba livia":"N","streptopelia capicola":"N","agapornis canus":"P","corvus splendens":"P","acridotheres tristis":"N","foudia madagascariensis":"N","amandava amandava":"X","passer domesticus":"N"},"KM-M":{"columba livia":"N","streptopelia capicola":"N","acridotheres tristis":"N","foudia madagascariensis":"N","passer domesticus":"N"}};

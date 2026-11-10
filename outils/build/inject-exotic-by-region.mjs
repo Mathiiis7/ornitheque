@@ -14,6 +14,7 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { ZONES_MONDE } from './pays-monde.mjs';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const APP = join(__dir, '..', '..', 'app.js');
@@ -29,7 +30,9 @@ const CCS = ['FR','GB','ES','IT','PT','CH','NO','GR','IS','LK','NA','AU','NZ','U
   // sans le moindre signal. Completer le scraper sans completer cette liste ne sert a rien.
   'LU','MD','ME','MK',
   // Hors d'Europe, a partir du 2026-11-09 (docs/ajouter-un-pays.md).
-  'MA'];
+  'MA',
+  // Puis les pays du monde de pays-monde.mjs qui ont des zones : leur fichier est lu s'il existe.
+  ...Object.keys(ZONES_MONDE).filter(cc => ZONES_MONDE[cc].length)];
 
 // Pays dont les zones de la fiche sont des REGROUPEMENTS de zones eBird. Le scraping se
 // fait forcement a la maille eBird ; la carte, elle, affiche les regroupements. Sans cette
@@ -178,6 +181,15 @@ const NATIVE_HEADER = [
   '// Format : { cc: { sciName: ["XX-YY", ...] } }. Precalcule par inject-exotic-by-region.mjs.',
 ].join('\n');
 
+// Les pays du monde (pays-monde.mjs) ne restent PAS dans app.js : leurs 308 Ko (31 Ko gz) ne servent
+// qu'une fois le pays choisi. Ils partent dans outils/config/exotiques-zones-monde.json, que
+// verser-pays.mjs --monde range dans data/countries/xx/pays.json, lu par _chargerPaysMonde (2026-11-10).
+{
+  const monde = {};
+  for(const cc of Object.keys(ZONES_MONDE)) if(merged[cc]){ monde[cc] = merged[cc]; delete merged[cc]; }
+  writeFileSync(join(__dir, '..', 'config', 'exotiques-zones-monde.json'), JSON.stringify(monde));
+  console.log(`Pays du monde sortis vers exotiques-zones-monde.json : ${Object.keys(monde).length}`);
+}
 const block = `${HEADER}\nconst EXOTIC_STATUS_BY_REGION_MULTI = ${JSON.stringify(merged)};\n` +
               `${NATIVE_HEADER}\nconst NATIVE_REGIONS_DESPITE_NATIONAL_TAG = ${JSON.stringify(nativeRegions)};\n`;
 

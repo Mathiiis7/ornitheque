@@ -1,0 +1,4 @@
+// Genere par scrape-exotic-by-region-multi.mjs (Playwright + Chromium headless).
+// Ne pas editer a la main. Regenerable : node outils/build/scrape-exotic-by-region-multi.mjs VU
+// Format : { "VU-YY": { sciName: category } } avec N=Naturalized, P=Provisional, X=Escapee.
+export const EXOTIC_STATUS_BY_REGION_VU = {"VU-MAP":{"gallus gallus":"X","acridotheres tristis":"N","lonchura atricapilla":"N"},"VU-PAM":{"gallus gallus":"X"},"VU-SAM":{"gallus gallus":"X","columba livia":"N","acridotheres tristis":"N","lonchura atricapilla":"N","lonchura castaneothorax":"P","estrilda astrild":"N","passer domesticus":"N","passer montanus":"N"},"VU-SEE":{"gallus gallus":"N","columba livia":"N","acridotheres tristis":"N","estrilda astrild":"N","passer domesticus":"N"},"VU-TAE":{"anas platyrhynchos":"P","gallus gallus":"N","columba livia":"N","acridotheres tristis":"N"},"VU-TOB":{"gallus gallus":"X"}};

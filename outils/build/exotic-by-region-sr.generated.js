@@ -1,0 +1,4 @@
+// Genere par scrape-exotic-by-region-multi.mjs (Playwright + Chromium headless).
+// Ne pas editer a la main. Regenerable : node outils/build/scrape-exotic-by-region-multi.mjs SR
+// Format : { "SR-YY": { sciName: category } } avec N=Naturalized, P=Provisional, X=Escapee.
+export const EXOTIC_STATUS_BY_REGION_SR = {"SR-BR":{"columba livia":"N"},"SR-CM":{"columba livia":"N","passer domesticus":"N"},"SR-CR":{"columba livia":"N"},"SR-MA":{"columba livia":"N","passer domesticus":"N"},"SR-NI":{"columba livia":"N","passer domesticus":"N"},"SR-PR":{"columba livia":"N","passer domesticus":"N"},"SR-PM":{"columba livia":"N","passer domesticus":"N"},"SR-SA":{"columba livia":"N","passer domesticus":"N"},"SR-SI":{"columba livia":"N","passer domesticus":"N"},"SR-WA":{"columba livia":"N","passer domesticus":"N"}};

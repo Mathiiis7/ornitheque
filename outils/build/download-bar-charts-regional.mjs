@@ -204,6 +204,11 @@ async function main() {
 
   // Un pays demandé mais absent de REGIONS : ses zones viennent de l'API eBird, jamais d'une
   // liste locale (skill donnees-ebird : la Lettonie a perdu ses 5 plus grosses zones ainsi).
+  // --tous-restants (ou --monde) : les pays retenus de pays-monde.mjs, écartés exclus.
+  if (process.argv.includes('--tous-restants') || process.argv.includes('--monde')) {
+    const { PAYS_MONDE } = await import('./pays-monde.mjs');
+    for (const p of PAYS_MONDE) { REGIONS[p.cc] = p.zones; PAYS_DEMANDES.push(p.cc); }
+  }
   for (const cc of PAYS_DEMANDES) {
     if (REGIONS[cc]) continue;
     const env = existsSync('C:/Users/mathi/Documents/.Renviron') ? readFileSync('C:/Users/mathi/Documents/.Renviron', 'utf8') : '';
@@ -220,7 +225,9 @@ async function main() {
   // pour tous les pays sans exception.
   for (const [country, regions] of Object.entries(REGIONS)) {
     if (PAYS_DEMANDES.length && !PAYS_DEMANDES.includes(country)) continue;
-    const allRegions = [country, ...regions];
+    // --national : le pays seul, sans ses zones. Sert à mesurer d'abord quels pays valent la peine
+    // (2026-11-09 : 200 pays restants, 2 435 zones, 4 h 30 de récolte).
+    const allRegions = process.argv.includes('--national') ? [country] : [country, ...regions];
     console.log(`\n=== ${country} (${allRegions.length} fichiers : 1 national + ${regions.length} regions) ===`);
     for (const region of allRegions) {
       const res = await downloadOne(region);

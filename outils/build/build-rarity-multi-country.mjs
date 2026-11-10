@@ -17,6 +17,7 @@ import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { anneesPourFichier, poidsAnnuels } from './annees-par-quinzaine.mjs';
+import { PAYS_MONDE, AVEC_MONDE } from './pays-monde.mjs';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 
@@ -182,6 +183,11 @@ const REGIONS = {
   CA: ['CA-AB','CA-BC','CA-MB','CA-NB','CA-NL','CA-NT','CA-NS','CA-NU','CA-ON',
        'CA-PE','CA-QC','CA-SK','CA-YT'],
 };
+// --monde : les pays du monde (pays-monde.mjs), avec les zones qu'eBird leur donne.
+if(AVEC_MONDE) for(const p of PAYS_MONDE){
+  if(!COUNTRIES.includes(p.cc)) COUNTRIES.push(p.cc);
+  if(!REGIONS[p.cc] && p.zones.length) REGIONS[p.cc] = p.zones;
+}
 
 // Memes seuils que FR/ME (Option 1 recalibree 2026-08-27, tier 10 seuil 0.00015)
 // MESURE DE LA RARETE : part des listes eBird du pays qui mentionnent l espece, sur
@@ -536,7 +542,9 @@ async function processCountry(cc){
 // Filtre optionnel : « ... build-rarity-multi-country.mjs NO » ne refait que la Norvege.
 // Les pays non traites gardent leurs fichiers - le garde-fou sur freq_by_region.json et la
 // fusion du profil d effort s en chargent.
-const filtre = process.argv[2] ? process.argv[2].split(',').map(s => s.trim().toUpperCase()) : null;
+const argPays = process.argv.slice(2).find(a => !a.startsWith('--'));
+const filtre = argPays ? argPays.split(',').map(s => s.trim().toUpperCase())
+  : AVEC_MONDE ? PAYS_MONDE.map(p => p.cc) : null;   // --monde seul : seulement les pays du monde
 for(const cc of COUNTRIES){
   if(filtre && !filtre.includes(cc)) continue;
   await processCountry(cc);

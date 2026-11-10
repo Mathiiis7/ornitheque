@@ -1,0 +1,4 @@
+// Genere par scrape-exotic-by-region-multi.mjs (Playwright + Chromium headless).
+// Ne pas editer a la main. Regenerable : node outils/build/scrape-exotic-by-region-multi.mjs TN
+// Format : { "TN-YY": { sciName: category } } avec N=Naturalized, P=Provisional, X=Escapee.
+export const EXOTIC_STATUS_BY_REGION_TN = {"TN-13":{"numida meleagris":"X"},"TN-23":{},"TN-31":{},"TN-81":{},"TN-71":{},"TN-32":{},"TN-41":{},"TN-42":{},"TN-73":{},"TN-12":{"numida meleagris":"X"},"TN-14":{"numida meleagris":"X","columba livia":"N"},"TN-33":{},"TN-53":{"psittacula krameri":"P"},"TN-82":{},"TN-52":{},"TN-21":{"cairina moschata":"X","psittacula krameri":"P"},"TN-61":{},"TN-43":{},"TN-34":{},"TN-51":{},"TN-83":{},"TN-72":{},"TN-11":{"cairina moschata":"X","numida meleagris":"X","pavo cristatus":"X","psittacula krameri":"P"},"TN-22":{"numida meleagris":"X"}};

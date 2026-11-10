@@ -1,0 +1,1002 @@
+{
+ "AF": {
+  "nom": "Afghanistan",
+  "prep": "en",
+  "continent": "Asie"
+ },
+ "DZ": {
+  "nom": "Algérie",
+  "prep": "en",
+  "continent": "Afrique"
+ },
+ "AS": {
+  "nom": "Samoa américaines",
+  "prep": "aux",
+  "continent": "Océanie"
+ },
+ "AD": {
+  "nom": "Andorre",
+  "prep": "en",
+  "continent": "Europe"
+ },
+ "AO": {
+  "nom": "Angola",
+  "prep": "en",
+  "continent": "Afrique"
+ },
+ "AI": {
+  "nom": "Anguilla",
+  "prep": "à",
+  "continent": "Amérique"
+ },
+ "AQ": {
+  "nom": "Antarctique",
+  "prep": "en",
+  "continent": "Autres"
+ },
+ "AG": {
+  "nom": "Antigua-et-Barbuda",
+  "prep": "à",
+  "continent": "Amérique"
+ },
+ "AR": {
+  "nom": "Argentine",
+  "prep": "en",
+  "continent": "Amérique"
+ },
+ "AM": {
+  "nom": "Arménie",
+  "prep": "en",
+  "continent": "Asie"
+ },
+ "AW": {
+  "nom": "Aruba",
+  "prep": "à",
+  "continent": "Amérique"
+ },
+ "AC": {
+  "nom": "Îles Ashmore-et-Cartier",
+  "prep": "aux",
+  "continent": "Océanie"
+ },
+ "AZ": {
+  "nom": "Azerbaïdjan",
+  "prep": "en",
+  "continent": "Asie"
+ },
+ "BS": {
+  "nom": "Bahamas",
+  "prep": "aux",
+  "continent": "Amérique"
+ },
+ "BH": {
+  "nom": "Bahreïn",
+  "prep": "à",
+  "continent": "Asie"
+ },
+ "BD": {
+  "nom": "Bangladesh",
+  "prep": "au",
+  "continent": "Asie"
+ },
+ "BB": {
+  "nom": "Barbade",
+  "prep": "à la",
+  "continent": "Amérique"
+ },
+ "BZ": {
+  "nom": "Belize",
+  "prep": "au",
+  "continent": "Amérique"
+ },
+ "BJ": {
+  "nom": "Bénin",
+  "prep": "au",
+  "continent": "Afrique"
+ },
+ "BM": {
+  "nom": "Bermudes",
+  "prep": "aux",
+  "continent": "Amérique"
+ },
+ "BT": {
+  "nom": "Bhoutan",
+  "prep": "au",
+  "continent": "Asie"
+ },
+ "BO": {
+  "nom": "Bolivie",
+  "prep": "en",
+  "continent": "Amérique"
+ },
+ "BW": {
+  "nom": "Botswana",
+  "prep": "au",
+  "continent": "Afrique"
+ },
+ "BV": {
+  "nom": "île Bouvet",
+  "prep": "à l’",
+  "continent": "Autres"
+ },
+ "BR": {
+  "nom": "Brésil",
+  "prep": "au",
+  "continent": "Amérique"
+ },
+ "IO": {
+  "nom": "Territoire britannique de l’océan Indien",
+  "prep": "dans le",
+  "continent": "Asie"
+ },
+ "BN": {
+  "nom": "Brunei",
+  "prep": "à",
+  "continent": "Asie"
+ },
+ "BF": {
+  "nom": "Burkina Faso",
+  "prep": "au",
+  "continent": "Afrique"
+ },
+ "BI": {
+  "nom": "Burundi",
+  "prep": "au",
+  "continent": "Afrique"
+ },
+ "KH": {
+  "nom": "Cambodge",
+  "prep": "au",
+  "continent": "Asie"
+ },
+ "CM": {
+  "nom": "Cameroun",
+  "prep": "au",
+  "continent": "Afrique"
+ },
+ "CV": {
+  "nom": "Cap-Vert",
+  "prep": "au",
+  "continent": "Afrique"
+ },
+ "BQ": {
+  "nom": "Pays-Bas caribéens",
+  "prep": "aux",
+  "continent": "Amérique"
+ },
+ "KY": {
+  "nom": "îles Caïmans",
+  "prep": "aux",
+  "continent": "Amérique"
+ },
+ "CF": {
+  "nom": "République centrafricaine",
+  "prep": "en",
+  "continent": "Afrique"
+ },
+ "TD": {
+  "nom": "Tchad",
+  "prep": "au",
+  "continent": "Afrique"
+ },
+ "CL": {
+  "nom": "Chili",
+  "prep": "au",
+  "continent": "Amérique"
+ },
+ "CN": {
+  "nom": "Chine",
+  "prep": "en",
+  "continent": "Asie"
+ },
+ "CX": {
+  "nom": "île Christmas",
+  "prep": "à l’",
+  "continent": "Océanie"
+ },
+ "CP": {
+  "nom": "île Clipperton",
+  "prep": "à l’",
+  "continent": "Amérique"
+ },
+ "CC": {
+  "nom": "Îles Cocos",
+  "prep": "aux",
+  "continent": "Océanie"
+ },
+ "CO": {
+  "nom": "Colombie",
+  "prep": "en",
+  "continent": "Amérique"
+ },
+ "KM": {
+  "nom": "Comores",
+  "prep": "aux",
+  "continent": "Afrique"
+ },
+ "CG": {
+  "nom": "République du Congo",
+  "prep": "en",
+  "continent": "Afrique"
+ },
+ "CK": {
+  "nom": "Îles Cook",
+  "prep": "aux",
+  "continent": "Océanie"
+ },
+ "CS": {
+  "nom": "Îles de la mer de Corail",
+  "prep": "aux",
+  "continent": "Océanie"
+ },
+ "CR": {
+  "nom": "Costa Rica",
+  "prep": "au",
+  "continent": "Amérique"
+ },
+ "CI": {
+  "nom": "Côte d'Ivoire",
+  "prep": "en",
+  "continent": "Afrique"
+ },
+ "CU": {
+  "nom": "Cuba",
+  "prep": "à",
+  "continent": "Amérique"
+ },
+ "CW": {
+  "nom": "Curaçao",
+  "prep": "à",
+  "continent": "Amérique"
+ },
+ "DJ": {
+  "nom": "Djibouti",
+  "prep": "à",
+  "continent": "Afrique"
+ },
+ "DM": {
+  "nom": "Dominique",
+  "prep": "à la",
+  "continent": "Amérique"
+ },
+ "DO": {
+  "nom": "République dominicaine",
+  "prep": "en",
+  "continent": "Amérique"
+ },
+ "CD": {
+  "nom": "République démocratique du Congo",
+  "prep": "au",
+  "continent": "Afrique"
+ },
+ "EC": {
+  "nom": "Équateur",
+  "prep": "en",
+  "continent": "Amérique"
+ },
+ "EG": {
+  "nom": "Égypte",
+  "prep": "en",
+  "continent": "Afrique"
+ },
+ "SV": {
+  "nom": "Salvador",
+  "prep": "au",
+  "continent": "Amérique"
+ },
+ "GQ": {
+  "nom": "Guinée équatoriale",
+  "prep": "en",
+  "continent": "Afrique"
+ },
+ "ER": {
+  "nom": "Érythrée",
+  "prep": "en",
+  "continent": "Afrique"
+ },
+ "SZ": {
+  "nom": "Eswatini",
+  "prep": "en",
+  "continent": "Afrique"
+ },
+ "ET": {
+  "nom": "Éthiopie",
+  "prep": "en",
+  "continent": "Afrique"
+ },
+ "FK": {
+  "nom": "îles Malouines",
+  "prep": "aux",
+  "continent": "Amérique"
+ },
+ "FJ": {
+  "nom": "Fidji",
+  "prep": "aux",
+  "continent": "Océanie"
+ },
+ "GF": {
+  "nom": "Guyane",
+  "prep": "en",
+  "continent": "Amérique"
+ },
+ "PF": {
+  "nom": "Polynésie française",
+  "prep": "en",
+  "continent": "Océanie"
+ },
+ "TF": {
+  "nom": "Terres australes et antarctiques françaises",
+  "prep": "aux",
+  "continent": "Autres"
+ },
+ "GA": {
+  "nom": "Gabon",
+  "prep": "au",
+  "continent": "Afrique"
+ },
+ "GM": {
+  "nom": "Gambie",
+  "prep": "en",
+  "continent": "Afrique"
+ },
+ "GE": {
+  "nom": "Géorgie",
+  "prep": "en",
+  "continent": "Asie"
+ },
+ "GH": {
+  "nom": "Ghana",
+  "prep": "au",
+  "continent": "Afrique"
+ },
+ "GL": {
+  "nom": "Groenland",
+  "prep": "au",
+  "continent": "Amérique"
+ },
+ "GD": {
+  "nom": "Grenade",
+  "prep": "à la",
+  "continent": "Amérique"
+ },
+ "GP": {
+  "nom": "Guadeloupe",
+  "prep": "en",
+  "continent": "Amérique"
+ },
+ "GU": {
+  "nom": "Guam",
+  "prep": "à",
+  "continent": "Océanie"
+ },
+ "GT": {
+  "nom": "Guatemala",
+  "prep": "au",
+  "continent": "Amérique"
+ },
+ "GN": {
+  "nom": "Guinée",
+  "prep": "en",
+  "continent": "Afrique"
+ },
+ "GW": {
+  "nom": "Guinée-Bissau",
+  "prep": "en",
+  "continent": "Afrique"
+ },
+ "GY": {
+  "nom": "Guyana",
+  "prep": "au",
+  "continent": "Amérique"
+ },
+ "HT": {
+  "nom": "Haïti",
+  "prep": "en",
+  "continent": "Amérique"
+ },
+ "HM": {
+  "nom": "îles Heard-et-MacDonald",
+  "prep": "aux",
+  "continent": "Autres"
+ },
+ "XX": {
+  "nom": "haute mer",
+  "prep": "en",
+  "continent": "Autres"
+ },
+ "HN": {
+  "nom": "Honduras",
+  "prep": "au",
+  "continent": "Amérique"
+ },
+ "HK": {
+  "nom": "Hong Kong",
+  "prep": "à",
+  "continent": "Asie"
+ },
+ "IN": {
+  "nom": "Inde",
+  "prep": "en",
+  "continent": "Asie"
+ },
+ "ID": {
+  "nom": "Indonésie",
+  "prep": "en",
+  "continent": "Asie"
+ },
+ "IR": {
+  "nom": "Iran",
+  "prep": "en",
+  "continent": "Asie"
+ },
+ "IQ": {
+  "nom": "Irak",
+  "prep": "en",
+  "continent": "Asie"
+ },
+ "IL": {
+  "nom": "Israël",
+  "prep": "en",
+  "continent": "Asie"
+ },
+ "JM": {
+  "nom": "Jamaïque",
+  "prep": "en",
+  "continent": "Amérique"
+ },
+ "JP": {
+  "nom": "Japon",
+  "prep": "au",
+  "continent": "Asie"
+ },
+ "JO": {
+  "nom": "Jordanie",
+  "prep": "en",
+  "continent": "Asie"
+ },
+ "KZ": {
+  "nom": "Kazakhstan",
+  "prep": "au",
+  "continent": "Asie"
+ },
+ "KE": {
+  "nom": "Kenya",
+  "prep": "au",
+  "continent": "Afrique"
+ },
+ "KI": {
+  "nom": "Kiribati",
+  "prep": "aux",
+  "continent": "Océanie"
+ },
+ "KW": {
+  "nom": "Koweït",
+  "prep": "au",
+  "continent": "Asie"
+ },
+ "KG": {
+  "nom": "Kirghizistan",
+  "prep": "au",
+  "continent": "Asie"
+ },
+ "LA": {
+  "nom": "Laos",
+  "prep": "au",
+  "continent": "Asie"
+ },
+ "LB": {
+  "nom": "Liban",
+  "prep": "au",
+  "continent": "Asie"
+ },
+ "LS": {
+  "nom": "Lesotho",
+  "prep": "au",
+  "continent": "Afrique"
+ },
+ "LR": {
+  "nom": "Liberia",
+  "prep": "au",
+  "continent": "Afrique"
+ },
+ "LY": {
+  "nom": "Libye",
+  "prep": "en",
+  "continent": "Afrique"
+ },
+ "LI": {
+  "nom": "Liechtenstein",
+  "prep": "au",
+  "continent": "Europe"
+ },
+ "MO": {
+  "nom": "Macao",
+  "prep": "à",
+  "continent": "Asie"
+ },
+ "MG": {
+  "nom": "Madagascar",
+  "prep": "à",
+  "continent": "Afrique"
+ },
+ "MW": {
+  "nom": "Malawi",
+  "prep": "au",
+  "continent": "Afrique"
+ },
+ "MY": {
+  "nom": "Malaisie",
+  "prep": "en",
+  "continent": "Asie"
+ },
+ "MV": {
+  "nom": "Maldives",
+  "prep": "aux",
+  "continent": "Asie"
+ },
+ "ML": {
+  "nom": "Mali",
+  "prep": "au",
+  "continent": "Afrique"
+ },
+ "MH": {
+  "nom": "Îles Marshall",
+  "prep": "aux",
+  "continent": "Océanie"
+ },
+ "MQ": {
+  "nom": "Martinique",
+  "prep": "en",
+  "continent": "Amérique"
+ },
+ "MR": {
+  "nom": "Mauritanie",
+  "prep": "en",
+  "continent": "Afrique"
+ },
+ "MU": {
+  "nom": "Maurice",
+  "prep": "à",
+  "continent": "Afrique"
+ },
+ "YT": {
+  "nom": "Mayotte",
+  "prep": "à",
+  "continent": "Afrique"
+ },
+ "MX": {
+  "nom": "Mexique",
+  "prep": "au",
+  "continent": "Amérique"
+ },
+ "FM": {
+  "nom": "États fédérés de Micronésie",
+  "prep": "aux",
+  "continent": "Océanie"
+ },
+ "MC": {
+  "nom": "Monaco",
+  "prep": "à",
+  "continent": "Europe"
+ },
+ "MN": {
+  "nom": "Mongolie",
+  "prep": "en",
+  "continent": "Asie"
+ },
+ "ME": {
+  "nom": "Monténégro",
+  "prep": "au",
+  "continent": "Europe"
+ },
+ "MS": {
+  "nom": "Montserrat",
+  "prep": "à",
+  "continent": "Amérique"
+ },
+ "MZ": {
+  "nom": "Mozambique",
+  "prep": "au",
+  "continent": "Afrique"
+ },
+ "MM": {
+  "nom": "Birmanie",
+  "prep": "en",
+  "continent": "Asie"
+ },
+ "NR": {
+  "nom": "Nauru",
+  "prep": "à",
+  "continent": "Océanie"
+ },
+ "NP": {
+  "nom": "Népal",
+  "prep": "au",
+  "continent": "Asie"
+ },
+ "NC": {
+  "nom": "Nouvelle-Calédonie",
+  "prep": "en",
+  "continent": "Océanie"
+ },
+ "NI": {
+  "nom": "Nicaragua",
+  "prep": "au",
+  "continent": "Amérique"
+ },
+ "NE": {
+  "nom": "Niger",
+  "prep": "au",
+  "continent": "Afrique"
+ },
+ "NG": {
+  "nom": "Nigeria",
+  "prep": "au",
+  "continent": "Afrique"
+ },
+ "NU": {
+  "nom": "Niue",
+  "prep": "à",
+  "continent": "Océanie"
+ },
+ "NF": {
+  "nom": "île Norfolk",
+  "prep": "à l’",
+  "continent": "Océanie"
+ },
+ "MP": {
+  "nom": "îles Mariannes du Nord",
+  "prep": "aux",
+  "continent": "Océanie"
+ },
+ "KP": {
+  "nom": "Corée du Nord",
+  "prep": "en",
+  "continent": "Asie"
+ },
+ "OM": {
+  "nom": "Oman",
+  "prep": "à",
+  "continent": "Asie"
+ },
+ "PK": {
+  "nom": "Pakistan",
+  "prep": "au",
+  "continent": "Asie"
+ },
+ "PW": {
+  "nom": "Palaos",
+  "prep": "aux",
+  "continent": "Océanie"
+ },
+ "PS": {
+  "nom": "Palestine",
+  "prep": "en",
+  "continent": "Asie"
+ },
+ "PA": {
+  "nom": "Panama",
+  "prep": "au",
+  "continent": "Amérique"
+ },
+ "PG": {
+  "nom": "Papouasie-Nouvelle-Guinée",
+  "prep": "en",
+  "continent": "Océanie"
+ },
+ "PY": {
+  "nom": "Paraguay",
+  "prep": "au",
+  "continent": "Amérique"
+ },
+ "PE": {
+  "nom": "Pérou",
+  "prep": "au",
+  "continent": "Amérique"
+ },
+ "PH": {
+  "nom": "Philippines",
+  "prep": "aux",
+  "continent": "Asie"
+ },
+ "PN": {
+  "nom": "îles Pitcairn",
+  "prep": "aux",
+  "continent": "Océanie"
+ },
+ "PR": {
+  "nom": "Porto Rico",
+  "prep": "à",
+  "continent": "Amérique"
+ },
+ "QA": {
+  "nom": "Qatar",
+  "prep": "au",
+  "continent": "Asie"
+ },
+ "RE": {
+  "nom": "La Réunion",
+  "prep": "à",
+  "continent": "Afrique"
+ },
+ "RW": {
+  "nom": "Rwanda",
+  "prep": "au",
+  "continent": "Afrique"
+ },
+ "BL": {
+  "nom": "Saint-Barthélemy",
+  "prep": "à",
+  "continent": "Amérique"
+ },
+ "SH": {
+  "nom": "Sainte-Hélène",
+  "prep": "à",
+  "continent": "Afrique"
+ },
+ "KN": {
+  "nom": "Saint-Christophe-et-Niévès",
+  "prep": "à",
+  "continent": "Amérique"
+ },
+ "LC": {
+  "nom": "Sainte-Lucie",
+  "prep": "à",
+  "continent": "Amérique"
+ },
+ "MF": {
+  "nom": "Saint-Martin",
+  "prep": "à",
+  "continent": "Amérique"
+ },
+ "PM": {
+  "nom": "Saint-Pierre-et-Miquelon",
+  "prep": "à",
+  "continent": "Amérique"
+ },
+ "VC": {
+  "nom": "Saint-Vincent-et-les-Grenadines",
+  "prep": "à",
+  "continent": "Amérique"
+ },
+ "WS": {
+  "nom": "Samoa",
+  "prep": "aux",
+  "continent": "Océanie"
+ },
+ "SM": {
+  "nom": "Saint-Marin",
+  "prep": "à",
+  "continent": "Europe"
+ },
+ "ST": {
+  "nom": "Sao Tomé-et-Principe",
+  "prep": "à",
+  "continent": "Afrique"
+ },
+ "SA": {
+  "nom": "Arabie saoudite",
+  "prep": "en",
+  "continent": "Asie"
+ },
+ "SN": {
+  "nom": "Sénégal",
+  "prep": "au",
+  "continent": "Afrique"
+ },
+ "SC": {
+  "nom": "Seychelles",
+  "prep": "aux",
+  "continent": "Afrique"
+ },
+ "SL": {
+  "nom": "Sierra Leone",
+  "prep": "au",
+  "continent": "Afrique"
+ },
+ "SG": {
+  "nom": "Singapour",
+  "prep": "à",
+  "continent": "Asie"
+ },
+ "SX": {
+  "nom": "Saint-Martin (partie néerlandaise)",
+  "prep": "à",
+  "continent": "Amérique"
+ },
+ "SB": {
+  "nom": "Îles Salomon",
+  "prep": "aux",
+  "continent": "Océanie"
+ },
+ "SO": {
+  "nom": "Somalie",
+  "prep": "en",
+  "continent": "Afrique"
+ },
+ "ZA": {
+  "nom": "Afrique du Sud",
+  "prep": "en",
+  "continent": "Afrique"
+ },
+ "GS": {
+  "nom": "Géorgie du Sud-et-les Îles Sandwich du Sud",
+  "prep": "en",
+  "continent": "Autres"
+ },
+ "KR": {
+  "nom": "Corée du Sud",
+  "prep": "en",
+  "continent": "Asie"
+ },
+ "SS": {
+  "nom": "Soudan du Sud",
+  "prep": "au",
+  "continent": "Afrique"
+ },
+ "SD": {
+  "nom": "Soudan",
+  "prep": "au",
+  "continent": "Afrique"
+ },
+ "SR": {
+  "nom": "Suriname",
+  "prep": "au",
+  "continent": "Amérique"
+ },
+ "SY": {
+  "nom": "Syrie",
+  "prep": "en",
+  "continent": "Asie"
+ },
+ "TW": {
+  "nom": "Taïwan",
+  "prep": "à",
+  "continent": "Asie"
+ },
+ "TJ": {
+  "nom": "Tadjikistan",
+  "prep": "au",
+  "continent": "Asie"
+ },
+ "TZ": {
+  "nom": "Tanzanie",
+  "prep": "en",
+  "continent": "Afrique"
+ },
+ "TH": {
+  "nom": "Thaïlande",
+  "prep": "en",
+  "continent": "Asie"
+ },
+ "TL": {
+  "nom": "Timor oriental",
+  "prep": "au",
+  "continent": "Asie"
+ },
+ "TG": {
+  "nom": "Togo",
+  "prep": "au",
+  "continent": "Afrique"
+ },
+ "TK": {
+  "nom": "Tokelau",
+  "prep": "à",
+  "continent": "Océanie"
+ },
+ "TO": {
+  "nom": "Tonga",
+  "prep": "aux",
+  "continent": "Océanie"
+ },
+ "TT": {
+  "nom": "Trinité-et-Tobago",
+  "prep": "à",
+  "continent": "Amérique"
+ },
+ "TN": {
+  "nom": "Tunisie",
+  "prep": "en",
+  "continent": "Afrique"
+ },
+ "TR": {
+  "nom": "Turquie",
+  "prep": "en",
+  "continent": "Asie"
+ },
+ "TM": {
+  "nom": "Turkménistan",
+  "prep": "au",
+  "continent": "Asie"
+ },
+ "TC": {
+  "nom": "îles Turques-et-Caïques",
+  "prep": "aux",
+  "continent": "Amérique"
+ },
+ "TV": {
+  "nom": "Tuvalu",
+  "prep": "à",
+  "continent": "Océanie"
+ },
+ "UG": {
+  "nom": "Ouganda",
+  "prep": "en",
+  "continent": "Afrique"
+ },
+ "AE": {
+  "nom": "Émirats arabes unis",
+  "prep": "aux",
+  "continent": "Asie"
+ },
+ "UM": {
+  "nom": "Îles mineures éloignées des États-Unis",
+  "prep": "aux",
+  "continent": "Océanie"
+ },
+ "UY": {
+  "nom": "Uruguay",
+  "prep": "en",
+  "continent": "Amérique"
+ },
+ "UZ": {
+  "nom": "Ouzbékistan",
+  "prep": "en",
+  "continent": "Asie"
+ },
+ "VU": {
+  "nom": "Vanuatu",
+  "prep": "au",
+  "continent": "Océanie"
+ },
+ "VA": {
+  "nom": "Vatican",
+  "prep": "au",
+  "continent": "Europe"
+ },
+ "VE": {
+  "nom": "Venezuela",
+  "prep": "au",
+  "continent": "Amérique"
+ },
+ "VN": {
+  "nom": "Vietnam",
+  "prep": "au",
+  "continent": "Asie"
+ },
+ "VG": {
+  "nom": "îles Vierges britanniques",
+  "prep": "aux",
+  "continent": "Amérique"
+ },
+ "VI": {
+  "nom": "îles Vierges des États-Unis",
+  "prep": "aux",
+  "continent": "Amérique"
+ },
+ "WF": {
+  "nom": "Wallis-et-Futuna",
+  "prep": "à",
+  "continent": "Océanie"
+ },
+ "EH": {
+  "nom": "Sahara occidental",
+  "prep": "au",
+  "continent": "Afrique"
+ },
+ "YE": {
+  "nom": "Yémen",
+  "prep": "au",
+  "continent": "Asie"
+ },
+ "ZM": {
+  "nom": "Zambie",
+  "prep": "en",
+  "continent": "Afrique"
+ },
+ "ZW": {
+  "nom": "Zimbabwe",
+  "prep": "au",
+  "continent": "Afrique"
+ }
+}

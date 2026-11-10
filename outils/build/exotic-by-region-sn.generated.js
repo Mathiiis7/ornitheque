@@ -1,0 +1,4 @@
+// Genere par scrape-exotic-by-region-multi.mjs (Playwright + Chromium headless).
+// Ne pas editer a la main. Regenerable : node outils/build/scrape-exotic-by-region-multi.mjs SN
+// Format : { "SN-YY": { sciName: category } } avec N=Naturalized, P=Provisional, X=Escapee.
+export const EXOTIC_STATUS_BY_REGION_SN = {"SN-DK":{"columba livia":"N","melopsittacus undulatus":"X","passer domesticus":"N"},"SN-DB":{"columba livia":"N","passer domesticus":"N"},"SN-FK":{"cairina moschata":"X","passer domesticus":"N"},"SN-KL":{"anas platyrhynchos":"X","columba livia":"N","passer domesticus":"N"},"SN-KD":{"columba livia":"N","passer domesticus":"N"},"SN-LG":{"columba livia":"N","passer domesticus":"N"},"SN-MT":{"columba livia":"N","passer domesticus":"N"},"SN-SL":{"passer domesticus":"N"},"SN-TC":{"cairina moschata":"X","passer domesticus":"N"},"SN-TH":{"passer domesticus":"N"},"SN-ZG":{"cairina moschata":"X","passer domesticus":"N"}};

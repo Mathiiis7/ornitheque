@@ -1,0 +1,4 @@
+// Genere par scrape-exotic-by-region-multi.mjs (Playwright + Chromium headless).
+// Ne pas editer a la main. Regenerable : node outils/build/scrape-exotic-by-region-multi.mjs GA
+// Format : { "GA-YY": { sciName: category } } avec N=Naturalized, P=Provisional, X=Escapee.
+export const EXOTIC_STATUS_BY_REGION_GA = {"GA-1":{"pavo cristatus":"X","columba livia":"N","passer domesticus":"N"},"GA-2":{"columba livia":"N","passer domesticus":"N"},"GA-3":{"columba livia":"N","passer domesticus":"N"},"GA-4":{"columba livia":"N","passer domesticus":"N"},"GA-5":{"columba livia":"N","passer domesticus":"N"},"GA-6":{"columba livia":"N","passer domesticus":"N"},"GA-7":{"columba livia":"N","passer domesticus":"N"},"GA-8":{"columba livia":"N","passer domesticus":"N"},"GA-9":{"columba livia":"N","passer domesticus":"N"}};

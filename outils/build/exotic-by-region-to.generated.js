@@ -1,0 +1,4 @@
+// Genere par scrape-exotic-by-region-multi.mjs (Playwright + Chromium headless).
+// Ne pas editer a la main. Regenerable : node outils/build/scrape-exotic-by-region-multi.mjs TO
+// Format : { "TO-YY": { sciName: category } } avec N=Naturalized, P=Provisional, X=Escapee.
+export const EXOTIC_STATUS_BY_REGION_TO = {"TO-01":{"gallus gallus":"X","columba livia":"N","prosopeia tabuensis":"N","pycnonotus cafer":"N","sturnus vulgaris":"N","acridotheres tristis":"N"},"TO-02":{"gallus gallus":"X","columba livia":"N","pycnonotus cafer":"N","sturnus vulgaris":"N","acridotheres tristis":"N"},"TO-03":{},"TO-04":{"gallus gallus":"X","columba livia":"N","prosopeia tabuensis":"N","pycnonotus cafer":"N","sturnus vulgaris":"N","acridotheres tristis":"N","acridotheres fuscus":"N"},"TO-05":{"gallus gallus":"X","columba livia":"N","pycnonotus cafer":"N","sturnus vulgaris":"N","acridotheres tristis":"N"}};

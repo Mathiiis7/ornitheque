@@ -1,0 +1,4 @@
+// Genere par scrape-exotic-by-region-multi.mjs (Playwright + Chromium headless).
+// Ne pas editer a la main. Regenerable : node outils/build/scrape-exotic-by-region-multi.mjs MM
+// Format : { "MM-YY": { sciName: category } } avec N=Naturalized, P=Provisional, X=Escapee.
+export const EXOTIC_STATUS_BY_REGION_MM = {"MM-07":{"columba livia":"N"},"MM-02":{"chenonetta jubata":"X","columba livia":"N"},"MM-14":{},"MM-11":{"columba livia":"N"},"MM-12":{"columba livia":"N"},"MM-13":{"columba livia":"N","geopelia striata":"X"},"MM-03":{"columba livia":"N"},"MM-04":{"cygnus olor":"X","cygnus atratus":"X","columba livia":"N"},"MM-15":{"columba livia":"N","geopelia striata":"X"},"MM-16":{"columba livia":"N"},"MM-01":{"columba livia":"N"},"MM-17":{"geopelia striata":"X"},"MM-05":{"columba livia":"N"},"MM-06":{}};

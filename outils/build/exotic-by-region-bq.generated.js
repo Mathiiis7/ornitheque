@@ -1,0 +1,4 @@
+// Genere par scrape-exotic-by-region-multi.mjs (Playwright + Chromium headless).
+// Ne pas editer a la main. Regenerable : node outils/build/scrape-exotic-by-region-multi.mjs BQ
+// Format : { "BQ-YY": { sciName: category } } avec N=Naturalized, P=Provisional, X=Escapee.
+export const EXOTIC_STATUS_BY_REGION_BQ = {"BQ-BO":{"alopochen aegyptiaca":"X","cairina moschata":"X","pavo cristatus":"X","gallus gallus":"P","columba livia":"N","zenaida asiatica":"X","psittacula krameri":"X","ara severus":"X","passer domesticus":"N","icterus icterus":"N","sicalis flaveola":"N"},"BQ-SA":{"gallus gallus":"P","columba livia":"N","streptopelia decaocto":"N","eupsittula pertinax":"P","passer domesticus":"N"},"BQ-SE":{"cairina moschata":"X","numida meleagris":"X","meleagris gallopavo":"X","gallus gallus":"P","columba livia":"N","streptopelia decaocto":"N","ara chloropterus":"X","passer domesticus":"N"}};

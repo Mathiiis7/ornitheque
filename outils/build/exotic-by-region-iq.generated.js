@@ -1,0 +1,4 @@
+// Genere par scrape-exotic-by-region-multi.mjs (Playwright + Chromium headless).
+// Ne pas editer a la main. Regenerable : node outils/build/scrape-exotic-by-region-multi.mjs IQ
+// Format : { "IQ-YY": { sciName: category } } avec N=Naturalized, P=Provisional, X=Escapee.
+export const EXOTIC_STATUS_BY_REGION_IQ = {"IQ-AN":{},"IQ-BA":{"acridotheres tristis":"N"},"IQ-MU":{},"IQ-QA":{"acridotheres tristis":"N"},"IQ-NA":{},"IQ-AR":{"psittacula krameri":"N","acridotheres tristis":"N"},"IQ-SU":{"psittacula krameri":"N","acridotheres tristis":"N"},"IQ-TS":{},"IQ-BB":{"psittacula krameri":"N"},"IQ-BG":{"psittacula krameri":"N","acridotheres tristis":"N"},"IQ-DA":{},"IQ-DQ":{"acridotheres tristis":"N"},"IQ-DI":{},"IQ-KA":{},"IQ-MA":{},"IQ-NI":{"psittacula krameri":"N","acridotheres tristis":"N"},"IQ-SD":{"acridotheres tristis":"N"},"IQ-WA":{}};

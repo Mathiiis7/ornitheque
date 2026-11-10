@@ -1,0 +1,4 @@
+// Genere par scrape-exotic-by-region-multi.mjs (Playwright + Chromium headless).
+// Ne pas editer a la main. Regenerable : node outils/build/scrape-exotic-by-region-multi.mjs ST
+// Format : { "ST-YY": { sciName: category } } avec N=Naturalized, P=Provisional, X=Escapee.
+export const EXOTIC_STATUS_BY_REGION_ST = {"ST-P":{"columba livia":"N","spilopelia senegalensis":"N","spermestes cucullata":"N","estrilda astrild":"N","passer domesticus":"N"},"ST-S":{"pternistis afer":"N","spilopelia senegalensis":"N","agapornis pullarius":"N","ploceus velatus":"N","ploceus cucullatus":"N","euplectes hordeaceus":"N","euplectes aureus":"N","euplectes albonotatus":"N","spermestes cucullata":"N","estrilda astrild":"N","uraeginthus angolensis":"N","vidua macroura":"N","passer domesticus":"N","crithagra mozambica":"N"}};
