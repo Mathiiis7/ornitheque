@@ -1036,7 +1036,7 @@ const _carteContinentPromesses = {};
 function _chargerCarteContinent(nom){
   const f = CARTES_CONTINENTS[nom];
   if(!f) return Promise.resolve(null);
-  return _carteContinentPromesses[nom] ||= fetch('data/carte-continents/' + f + '.json?v=20261110')
+  return _carteContinentPromesses[nom] ||= fetch('data/carte-continents/' + f + '.json?v=20261110b')
     .then(r => r.ok ? r.json() : null).catch(() => { delete _carteContinentPromesses[nom]; return null; });
 }
 // Le continent montre par la fiche, '' quand c'est un pays. Jamais enregistre, et jamais ecrit dans
@@ -19105,6 +19105,61 @@ function _legendeOuQuand(aCarte, aGraph, vueExo){
 // 2026-11-10) : la colonne des mois choisit la periode et ne porte aucune couleur de palier.
 // Les territoires dont eBird range les listes dans un autre pays prennent la couleur de ce pays.
 const _RATTACHES_CARTE = { JE: 'GB', GG: 'GB', IM: 'GB', SJ: 'NO' };
+// Le continent d'un pays, tel que le selecteur le range (la Turquie en Asie, la Russie et Chypre en
+// Europe) : la carte grise ce que la liste ne met pas sous ce titre. Les pays sans fiche (Vatican,
+// Monaco) prennent le partage du trophee des continents.
+function _continentDuPays(cc){
+  return CONTINENT_BY_CC[cc] || CONTINENT_BY_CC[_RATTACHES_CARTE[cc]] || CONTINENT_7_DE[cc] || '';
+}
+// Passer d'une echelle a l'autre en zoomant (Mathis, 2026-11-10) : un pays clique sur la carte d'un
+// continent s'agrandit jusqu'a remplir le cadre, puis sa carte des zones prend le relais ; un pays clique
+// sur le monde zoome sur son continent ; le bouton sous les mois remonte d'un cran en dezoomant.
+// _ficheNav : { pays, continent, precharger } de la fiche ouverte (_renderSpeciesRarityCard).
+let _ficheNav = null;
+// La carte suivante part de ce cadre et s'elargit : { cc } (on remonte d'un pays) ou { cont } (d'un continent).
+let _oqDepart = null;
+// La carte suivante apparait en fondu apres un zoom : les deux projections ne se superposent pas exactement.
+let _oqFondu = false;
+let _oqZoomEnCours = false;
+// Le viewBox ne s'anime ni en CSS ni en SMIL : une boucle d'images. La largeur varie en echelle
+// logarithmique, sinon le zoom fonce au debut et se traine a la fin. Un minuteur de secours termine
+// l'animation si l'onglet est masque (requestAnimationFrame ne tourne plus).
+function _animerCadre(svg, de, vers, ms = 480){
+  return new Promise(fin => {
+    let fini = false;
+    const terminer = () => { if(fini) return; fini = true; svg.setAttribute('viewBox', vers.map(v => +v.toFixed(2)).join(' ')); fin(); };
+    if(!de || matchMedia('(prefers-reduced-motion: reduce)').matches){ terminer(); return; }
+    const garde = setTimeout(terminer, ms + 300);
+    const t0 = performance.now();
+    const doux = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    const [cx0, cy0, cx1, cy1] = [de[0] + de[2] / 2, de[1] + de[3] / 2, vers[0] + vers[2] / 2, vers[1] + vers[3] / 2];
+    const pas = (now) => {
+      if(fini) return;
+      if(!svg.isConnected){ fini = true; clearTimeout(garde); fin(); return; }
+      const t = Math.min(1, (now - t0) / ms), k = doux(t);
+      const w = de[2] * Math.pow(vers[2] / de[2], k), h = de[3] * Math.pow(vers[3] / de[3], k);
+      const cx = cx0 + (cx1 - cx0) * k, cy = cy0 + (cy1 - cy0) * k;
+      svg.setAttribute('viewBox', [cx - w / 2, cy - h / 2, w, h].map(v => v.toFixed(2)).join(' '));
+      if(t < 1) requestAnimationFrame(pas); else { clearTimeout(garde); terminer(); }
+    };
+    requestAnimationFrame(pas);
+  });
+}
+// Le cadre d'arrivee d'un zoom : la boite du pays, avec de la marge, a la forme de la carte (sinon la
+// derniere image saute), et jamais plus petite qu'un dixieme de la carte - Malte n'est qu'un point.
+function _cadreDeZoom(b, W, H){
+  const r = W / H, cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+  let w = Math.max(b.width * 1.3, W / 10), h = Math.max(b.height * 1.3, H / 10);
+  if(w / h > r) h = w / r; else w = h * r;
+  return [cx - w / 2, cy - h / 2, w, h];
+}
+// Le bouton qui remonte d'un cran, sous la colonne des mois des deux cartes.
+function _boutonRemonter(id, vers){
+  return `<button type="button" id="${id}" class="oq-remonter" aria-label="${esc('Dézoomer : ' + vers)}">`
+    + '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">'
+    + '<circle cx="10.5" cy="10.5" r="6.5"/><path d="M7.5 10.5h6M15.5 15.5l5 5"/></svg>'
+    + `<span>${esc(vers)}</span></button>`;
+}
 async function _renderCarteContinent(sci, nom){
   const box = document.getElementById('smContinentMap');
   if(!box) return;
@@ -19129,9 +19184,16 @@ async function _renderCarteContinent(sci, nom){
   const fmtP = (x) => { const p = x * 100;
     return p >= 10 ? Math.round(p) + _PCT : p >= 0.1 ? _fr(p.toFixed(1)) + _PCT : _fr(Number(p.toPrecision(1))) + _PCT; };
   let svg = '';
+  const surMonde = nom === 'Monde';
   for(const [cc, r] of Object.entries(paths.regions)){
     const ccD = COUNTRIES_REG[cc] ? cc : _RATTACHES_CARTE[cc];
     const vd = ccD ? _verdictPaysEspece(key, ccD, mois, pret) : null;
+    // Hors du continent : en transparence, comme les departements autour de celui qu'on a choisi
+    // (Mathis, 2026-11-10 : le Maroc et la Turquie se lisaient comme de l'Europe). Sa couleur reste.
+    const contCC = _continentDuPays(cc);
+    const horsCont = !surMonde && contCC !== nom;
+    // Cliquable : sur le monde, ce qui mene a un continent ; sur un continent, un pays qui a sa fiche.
+    const cible = surMonde ? (CARTES_CONTINENTS[contCC] && contCC !== 'Monde' ? cc : null) : (ccD ? cc : null);
     // Un pays sans aucune donnee chez nous (Vatican, Monaco...) : le fond, pas le gris « jamais notee ».
     let fill = 'var(--surface-3)', titre = r.name + ' - pas de données';
     if(vd && !vd.sansDonnees){
@@ -19147,7 +19209,7 @@ async function _renderCarteContinent(sci, nom){
         titre = r.name + ' - ' + (vd.absent ? 'jamais notée' : vd.tier > 0 ? 'absente en ' + lib : 'échappée ou introduite, sans rareté');
       }
     }
-    svg += _pathZone(r.path, fill, titre, false, false, null, 1);
+    svg += _pathZone(r.path, fill, titre, false, horsCont, cible, 1);
   }
   // La colonne des mois garde sa forme (la gelule ANNÉE, puis les douze mois), sans couleur de palier :
   // le choisi prend l'accent.
@@ -19163,11 +19225,14 @@ async function _renderCarteContinent(sci, nom){
   const moisBtns = chipMois('an', 'année', surAnnee, true)
     + '<span style="display:block; height:1px; margin:5px 3px; background:var(--line-2);"></span>'
     + _MOIS_COURTS.map((m, i) => chipMois(i, m, !surAnnee && i === mois, false)).join('');
+  // La forme de la carte est fixee par aspect-ratio : pendant un zoom, le viewBox change de forme et la
+  // carte ne doit pas changer de hauteur pour autant.
+  const [, , VW, VH] = paths.viewBox.split(' ').map(Number);
   box.innerHTML = `
         <div style="display:flex; align-items:flex-start; justify-content:flex-start; gap:8px;">
           <div id="smContinentMois" style="display:flex; flex-direction:column; gap:2px; flex:0 0 auto; width:88px;">
-            ${moisBtns}</div>
-          <div style="flex:1 1 auto; min-width:0;"><svg viewBox="${paths.viewBox}" style="width:100%; height:auto; display:block;" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${esc('Rareté par pays, ' + nom + ', ' + lib)}">
+            ${moisBtns}${surMonde ? '' : _boutonRemonter('smOqRemonter', 'Monde')}</div>
+          <div style="flex:1 1 auto; min-width:0;"><svg viewBox="${paths.viewBox}" class="oq-carte-cont" style="width:100%; height:auto; aspect-ratio:${VW}/${VH}; display:block;" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${esc('Rareté par pays, ' + nom + ', ' + lib)}">
             ${svg}
           </svg></div>
         </div>`;
@@ -19183,6 +19248,63 @@ async function _renderCarteContinent(sci, nom){
     const choix = b.dataset.mois === 'an' ? 'an' : +b.dataset.mois;
     window._smRarityMapMonth = (choix !== 'an' && choix === window._smRarityMapMonth) ? 'an' : choix;
     _renderCarteContinent(sci, nom);
+  };
+  const svgEl = box.querySelector('svg.oq-carte-cont');
+  if(!svgEl) return;
+  const plein = [0, 0, VW, VH];
+  // On arrive d'en dessous (un pays, ou un continent vu depuis le monde) : la carte part de son cadre
+  // et s'elargit jusqu'a la vue entiere.
+  const depart = _oqDepart; _oqDepart = null;
+  if(_oqFondu && !depart) svgEl.classList.add('oq-fondu');
+  _oqFondu = false;
+  if(depart){
+    let de = null;
+    if(depart.cont && paths.cadres){
+      const c = paths.cadres[CARTES_CONTINENTS[depart.cont]];
+      if(c) de = _cadreDeZoom({ x: c[0], y: c[1], width: c[2], height: c[3] }, VW, VH);
+    } else if(depart.cc){
+      const p = svgEl.querySelector(`[data-zone="${depart.cc}"]`);
+      try { if(p) de = _cadreDeZoom(p.getBBox(), VW, VH); } catch(_){}
+    }
+    if(de){ svgEl.setAttribute('viewBox', de.join(' ')); _animerCadre(svgEl, de, plein); }
+  }
+  const memeFiche = () => _ficheContinent === nom && (_smCurrentKey || '').toLowerCase().trim() === key;
+  const remonter = document.getElementById('smOqRemonter');
+  if(remonter) remonter.onclick = async () => {
+    if(_oqZoomEnCours || !_ficheNav) return;
+    try { await _chargerCarteContinent('Monde'); } catch(_){}
+    if(!memeFiche()) return;
+    _oqDepart = { cont: nom };
+    _ficheNav.continent('Monde');
+  };
+  // Cliquer un pays zoome dessus. Rien n'est redessine pendant le clic : le relais part apres
+  // l'animation, quand le clic est retombe (piege du « clic a l'exterieur », CLAUDE.md).
+  svgEl.onclick = async (e) => {
+    const p = e.target.closest('[data-zone]');
+    if(!p || _oqZoomEnCours || !_ficheNav) return;
+    const cc = p.dataset.zone;
+    let vers = null, charge, relais;
+    if(surMonde){
+      const cont = _continentDuPays(cc);
+      const c = paths.cadres && paths.cadres[CARTES_CONTINENTS[cont]];
+      if(c) vers = _cadreDeZoom({ x: c[0], y: c[1], width: c[2], height: c[3] }, VW, VH);
+      charge = _chargerCarteContinent(cont);
+      relais = () => { _oqFondu = true; _ficheNav.continent(cont); };
+    } else {
+      const ccD = COUNTRIES_REG[cc] ? cc : _RATTACHES_CARTE[cc];
+      if(!ccD) return;
+      try { vers = _cadreDeZoom(p.getBBox(), VW, VH); } catch(_){}
+      // Les donnees du pays se chargent pendant le zoom, pour que sa carte arrive sans trou.
+      charge = Promise.all([_ficheNav.precharger(ccD), _loadFreqDataForCountry(ccD), _loadExoticMapPaths(ccD)]);
+      relais = () => { _oqFondu = true; _ficheNav.pays(ccD); };
+    }
+    _oqZoomEnCours = true;
+    try {
+      // Un chargement lent n'est pas attendu au-dela d'une seconde et demie apres le zoom.
+      const anim = vers ? _animerCadre(svgEl, svgEl.getAttribute('viewBox').split(' ').map(Number), vers) : Promise.resolve();
+      await Promise.all([anim, Promise.race([Promise.resolve(charge).catch(() => {}), new Promise(r => setTimeout(r, 1500))])]);
+    } finally { _oqZoomEnCours = false; }
+    if(memeFiche()) relais();
   };
 }
 async function _renderRarityMap(sci, cc){
@@ -19336,10 +19458,13 @@ async function _renderRarityMap(sci, cc){
   // Le nom de la zone n'est plus dans la colonne des mois : il est passe dans l'entete du
   // bloc, ou il sert AUSSI a la carte des statuts exotiques, qui se relaie avec celle-ci.
   _majEnteteOuQuand(nomPort);
+  // Remonter au continent du pays, en dezoomant (Mathis, 2026-11-10).
+  const contPays = _continentDuPays(cc);
+  const peutRemonter = !!(CARTES_CONTINENTS[contPays] && _ficheNav);
   container.innerHTML = `
         <div style="display:flex; align-items:flex-start; justify-content:flex-start; gap:8px;">
           <div id="smRarityMapMois" style="display:flex; flex-direction:column; gap:2px; flex:0 0 auto; width:88px;">
-            ${moisBtns}</div>
+            ${moisBtns}${peutRemonter ? _boutonRemonter('smOqRemonterPays', contPays) : ''}</div>
           <div style="${_COLONNE_CARTE}"><svg viewBox="${_viewBoxCarte(cc, paths)}" style="${_styleCarte()}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Rareté par ${zoneWord} sur ${libellePeriode}">
             ${svgZones}
           </svg></div>
@@ -19351,6 +19476,17 @@ async function _renderRarityMap(sci, cc){
   // La carte n'a plus ni cle des couleurs ni note : le panneau n'en porte qu'une, en bas,
   // partagee avec le graphique qui lit la meme mesure (cf. _legendeOuQuand).
   _majPanneauOuQuand();
+  // Apres un zoom depuis le continent : la carte du pays arrive en fondu.
+  if(_oqFondu){ _oqFondu = false; container.querySelector('svg')?.classList.add('oq-fondu'); }
+  const remonterPays = document.getElementById('smOqRemonterPays');
+  if(remonterPays) remonterPays.onclick = async () => {
+    if(_oqZoomEnCours || !_ficheNav) return;
+    try { await _chargerCarteContinent(contPays); } catch(_){}
+    if(_ccFicheObsolete(cc) || (_smCurrentKey || '').toLowerCase().trim() !== key) return;
+    // La carte du continent part du pays et s'elargit.
+    _oqDepart = { cc };
+    _ficheNav.continent(contPays);
+  };
   // Cliquer une zone la selectionne : c'est le geste naturel une fois qu'on l'a reperee
   // sur la carte. Recliquer la zone deja choisie revient au national, pour pouvoir
   // ressortir sans aller chercher la ligne « Tous les départements » dans la liste.
@@ -19746,6 +19882,7 @@ function _renderSpeciesRarityCard(key){
     });
   };
   _appliquerZoneFiche = appliquer;
+  _ficheNav = { pays: applyCountryChange, continent: appliquerContinent, precharger: loadRegionalDataFor };
   // Le selecteur geographique, ouvert sur l'un ou l'autre de ses onglets. Les trois points
   // d'entree - bouton pays de la fiche, bouton pays de la carte, bouton de zone - ouvrent
   // desormais le meme modal.

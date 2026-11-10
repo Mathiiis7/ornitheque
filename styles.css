@@ -4935,3 +4935,17 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   100% { opacity:0; transform:translate(calc(var(--gw) * -.5), -56px); }
 }
 @media (prefers-reduced-motion: reduce){ .vt-grain { display:none; } }
+
+/* Fiche espece, « Où et quand » : le bouton qui remonte d'un cran en dezoomant (pays -> continent ->
+   monde), sous la colonne des mois. Bouton secondaire de la charte, a la hauteur des controles (34 px). */
+.oq-remonter { display:flex; align-items:center; justify-content:center; gap:5px; width:100%; min-height:34px; margin-top:10px;
+  padding:4px 6px; border:1px solid var(--line-2); border-radius:9px; background:transparent; color:var(--accent);
+  font:600 14px/1.15 system-ui; text-align:center; cursor:pointer; }
+.oq-remonter svg { flex:0 0 auto; }
+.oq-remonter:hover { background:var(--surface-2); }
+@media (pointer: coarse){ .oq-remonter { min-height:52px; } }
+/* Téléphone debout : les mois sont en grille au-dessus de la carte ; le bouton y prend sa propre ligne, centré. */
+@media (max-width:700px) and (orientation:portrait){ .oq-remonter { grid-column:1 / -1; justify-self:center; width:auto; margin-top:6px; padding:4px 16px; } }
+/* La carte qui prend le relais apres un zoom arrive en fondu */
+.oq-fondu { animation:oq-fondu .22s ease-out; }
+@keyframes oq-fondu { from { opacity:0; } to { opacity:1; } }

@@ -120,7 +120,25 @@ for(const [nom, cadre] of Object.entries(CADRES)){
     }
     if(d) regions[cc] = { name: n, path: d };
   }
-  const json = JSON.stringify({ viewBox: `0 0 ${W} ${H}`, regions });
+  // La carte du monde garde le cadre de chaque continent, dans ses propres coordonnées : cliquer un
+  // pays du monde zoome sur son continent, et remonter d'un continent au monde part de ce cadre
+  // (2026-11-10). [x, y, largeur, hauteur], au dixième.
+  let cadres;
+  if(cadre.sphere){
+    cadres = {};
+    for(const [autre, c] of Object.entries(CADRES)){
+      if(c.sphere) continue;
+      const cible2 = c.sud != null ? { type: 'MultiPoint', coordinates: Array.from({ length: 72 }, (_, i) => [i * 5 - 180, c.sud]) }
+        // L'Océanie passe l'antiméridien, qui est le bord du monde (centré sur 10° E) : son cadre y serait
+        // coupé en deux et couvrirait toute la largeur. On le garde à l'ouest de l'antiméridien.
+        : bordsDuCadre(c.bbox[2] > 180 ? [c.bbox[0], c.bbox[1], 189.9, c.bbox[3]] : c.bbox);
+      const [[a0, b0], [a1, b1]] = chemin.bounds(cible2);
+      const r = v => Math.round(v * 10) / 10;
+      const yBas = c.sud != null ? H - 10 : b1;
+      cadres[autre] = [r(a0), r(b0), r(a1 - a0), r(yBas - b0)];
+    }
+  }
+  const json = JSON.stringify(cadres ? { viewBox: `0 0 ${W} ${H}`, cadres, regions } : { viewBox: `0 0 ${W} ${H}`, regions });
   fs.writeFileSync(new URL(nom + '.json', dossier), json);
   total += json.length;
   console.log(nom.padEnd(17), Object.keys(regions).length, 'pays,', points, 'en point,', 'viewBox 1000x' + H + ',', Math.round(json.length / 1024), 'Ko');
