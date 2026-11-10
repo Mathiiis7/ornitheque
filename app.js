@@ -2698,11 +2698,16 @@ const holdersFR = u => u.counts!=null ? u.counts : [...u.seenBy.values()].filter
 // Drapeau emoji : marche sur mobile mais s'affiche « US »/« FR » sur Windows desktop.
 function countryFlag(cc){ cc=(cc||'').toUpperCase(); if(!/^[A-Z]{2}$/.test(cc)) return ''; return String.fromCodePoint(...[...cc].map(c=>0x1F1E6+c.charCodeAt(0)-65)); }
 // Vraie image de drapeau (flagcdn) : rendue partout, y compris Windows desktop.
+// Trois territoires d'eBird n'ont pas de drapeau chez flagcdn (404, mesuré le 2026-11-10 sur les
+// 242 pays du site) : ils prennent celui du pays dont ils dépendent. Les drapeaux locaux de
+// l'outre-mer (Guadeloupe, Réunion...) restent tels quels, choix de Mathis le même jour.
+const DRAPEAU_DU_PAYS = { ac:'au', cs:'au', cp:'fr' };   // Ashmore-et-Cartier, mer de Corail, Clipperton
 function flagImg(cc){
   // NB: on utilise <img flagcdn> car Windows desktop n'affiche pas les emoji drapeaux
   // (rendus en texte "FR"/"ME"...). Sur mobile/Mac les emoji marcheraient mais on veut
   // un rendu uniforme cross-platform.
   cc=(cc||'').toLowerCase();
+  cc = DRAPEAU_DU_PAYS[cc] || cc;
   if(!/^[a-z]{2}$/.test(cc)) return '';
   // alt vide : le drapeau est decoratif, le nom du pays est toujours ecrit a cote. Avec un
   // alt, une image qui ne charge pas affichait "FR" en toutes lettres a cote de "France".
@@ -23420,6 +23425,7 @@ function _debloqueInfos(sci){
 // Seule la scene autour reste un moment de jeu.
 function _futDrapeau(cc, cls){
   cc = (cc || '').toLowerCase();
+  cc = DRAPEAU_DU_PAYS[cc] || cc;
   if(!/^[a-z]{2}$/.test(cc)) return '';
   return '<img class="' + cls + '" src="https://flagcdn.com/w80/' + cc + '.png" srcset="https://flagcdn.com/w160/' + cc + '.png 2x" alt="">';
 }
