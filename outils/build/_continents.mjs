@@ -18,7 +18,10 @@ const NOMS = { 'Africa':'Afrique', 'Antarctica':'Antarctique', 'Asia':'Asie', 'E
 const A_LA_MAIN = { SC:'Afrique', MU:'Afrique', SH:'Afrique', MV:'Asie', IO:'Asie', TF:'Antarctique', HM:'Antarctique', GS:'Antarctique',
   RE:'Afrique', YT:'Afrique', GF:'Amérique du Sud', GP:'Amérique du Nord', MQ:'Amérique du Nord', BV:'Antarctique', CY:'Europe',
   // Petits territoires absents de Natural Earth a cette echelle, mais codes pays pour eBird
-  SJ:'Europe', GI:'Europe', BQ:'Amérique du Nord', CX:'Asie', CC:'Asie', TK:'Océanie', UM:'Océanie' };
+  SJ:'Europe', GI:'Europe', BQ:'Amérique du Nord', CX:'Asie', CC:'Asie', TK:'Océanie', UM:'Océanie',
+  // Trois îlots qu'eBird traite en pays, oubliés jusqu'au tour des pays du 2026-11-11 (_tour-pays-ligue.mjs) :
+  // une observation y comptait pour aucun continent. Clipperton, au large du Mexique, avec l'Amérique du Nord.
+  AC:'Océanie', CS:'Océanie', CP:'Amérique du Nord' };
 const geo = JSON.parse(readFileSync('notes-privees/contours-monde/ne_50m_admin_0_countries.geojson', 'utf8'));
 const table = {};
 for(const f of geo.features){
