@@ -19020,7 +19020,10 @@ async function _renderRarityMap(sci, cc){
   // selecteur de mois, qui est ce qu'on vient y chercher.
   // Leur fichier de fréquences par zone existe mais est vide ({}) : sans ce test, ce faux découpage
   // passait devant le repli et la carte restait vide (vu le 2026-10-24, Étourneau aux Féroé).
-  if((!byZone || !Object.keys(byZone).length) && _paysSansDecoupage(cc)){
+  // Pays du monde sans contour de zones (Porto Rico, Caïmans, Tuvalu...) : ils ONT des fréquences par zone,
+  // mais leur carte n'a qu'une pièce, le pays ; sans ce cas, la carte restait vide sous un titre périmé
+  // (« France » au-dessus de Porto Rico, vu le 2026-11-10).
+  if(_paysSansDecoupage(cc) && (!byZone || !Object.keys(byZone).length || (COUNTRIES_REG[cc] && COUNTRIES_REG[cc].monde))){
     const reg = COUNTRIES_REG[cc];
     const nat = (reg && typeof reg.monthly === 'function') ? reg.monthly() : null;
     if(nat && Object.keys(nat).length) byZone = { [cc]: nat };

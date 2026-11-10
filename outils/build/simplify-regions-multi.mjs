@@ -1082,7 +1082,26 @@ const filter = process.argv.slice(3).find(a => !a.startsWith('--'));
 const ZONES_MONDE_FR = (() => { const p = join(__dir, '..', 'config', 'zones-monde-noms.json');
   return existsSync(p) ? JSON.parse(readFileSync(p, 'utf8')) : {}; })();
 // --monde : les pays du monde ajoutés le 2026-11-09 qui ont des zones chez eBird.
+// --sans-zones (fiche seulement, jamais avec --carte) : les pays du monde sans zones reçoivent, comme Malte,
+// une carte d'une seule pièce, le pays entier sous son propre code, tirée de data/carte-pays.json (2026-11-10 :
+// la fiche du Groenland n'avait aucune carte). Pas de carte-zones pour eux : la Carte les ouvre déjà d'un bloc.
+// Aussi ceux qui ont des zones chez eBird mais aucune de tracée (Porto Rico, Caïmans, Tuvalu...).
+// L'Antarctique entoure le pôle : « à plat », il devenait une bande coupée tout droit (vu le 2026-11-10).
+// Ses coordonnées passent en vue polaire (pôle au centre, méridien 0 en haut, rayon = distance au pôle en
+// degrés) avant le reste de la chaîne, qui les prend pour des longitudes et latitudes ordinaires.
+function vuePolaire(f){
+  const p = ([lon, lat]) => { const r = 90 + lat, a = lon * Math.PI / 180; return [r * Math.sin(a), r * Math.cos(a)]; };
+  const polys = f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates;
+  return { ...f, geometry:{ type:'MultiPolygon', coordinates: polys.map(pp => pp.map(r => r.map(p))) } };
+}
+function regionsTracees(cc){ const p = join(__dir, '..', '..', 'data', 'regions-' + cc.toLowerCase() + '-simplified.json');
+  return existsSync(p) && Object.keys(JSON.parse(readFileSync(p, 'utf8')).regions || {}).some(k => k !== cc); }
+const SANS_ZONES = process.argv.includes('--sans-zones') && !CARTE
+  ? Object.keys(PAYS_MONDE).filter(cc => !PAYS_MONDE[cc].zones.length || !regionsTracees(cc)) : [];
+const CARTE_PAYS = SANS_ZONES.length ? JSON.parse(readFileSync(join(__dir, '..', '..', 'data', 'carte-pays.json'), 'utf8')).features : [];
+for(const cc of SANS_ZONES){ PAYS_MONDE[cc].zones = [cc]; EBIRD_REGIONS[cc] = [cc]; if(!ADM0[cc]) ADM0[cc] = 'SANS-' + cc; }
 const COUNTRIES = filter ? filter.split(',').map(s => s.trim().toUpperCase())
+  : SANS_ZONES.length ? SANS_ZONES
   : process.argv.includes('--monde') ? Object.keys(PAYS_MONDE).filter(cc => PAYS_MONDE[cc].zones.length)
   : Object.keys(ADM0);
 for(const [cc, p] of Object.entries(PAYS_MONDE)){
@@ -1199,7 +1218,9 @@ for(const cc of COUNTRIES){
   // Jersey, Guernesey et l'île de Man sont dans ce fichier au 1:10 M (47 à 73 sommets, contre 7 à 15 dans
   // le fichier des pays au 1:50 M), rangées comme des pays à part (JEY, GGY, IMN) : on les reprend pour
   // le Royaume-Uni. Guernesey y s'appelle « Sark » mais porte bien Guernesey, Sercq et Aurigny.
-  let feats = raw.features.filter(f => f.properties.adm0_a3 === a3
+  let feats = SANS_ZONES.includes(cc)
+    ? CARTE_PAYS.filter(f => f.properties.cc === cc).map(f => ({ ...(cc === 'AQ' ? vuePolaire(f) : f), properties:{ iso_3166_2:cc, name:f.properties.nom, adm0_a3:a3, gb:true } }))
+    : raw.features.filter(f => f.properties.adm0_a3 === a3
     || (f.properties.iso_3166_2 || '').startsWith(cc + '-')
     || (cc === 'GB' && CARTE && DEPENDANCES_GB.has(f.properties.iso_a2)));
   // Leur trait au 1:10 M reste grossier : Saint-Hélier à 500 m en mer, Aurigny réduit à un losange, un tiers
