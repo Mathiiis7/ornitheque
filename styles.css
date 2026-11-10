@@ -4848,6 +4848,17 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
    animation en pause montre son etat de depart, sans eclair de l'etat final */
 #vitrine .vt-prepare, #vitrine .vt-prepare *, #vitrine .vt-prepare::before, #vitrine .vt-prepare::after,
 #vitrine .vt-prepare *::before, #vitrine .vt-prepare *::after { animation-play-state:paused !important; }
+/* A l'ordinateur, rien ne change a l'oeil : la toile animee est seulement preparee a part par le navigateur */
+.vt-deverrouille canvas.vt-image { will-change:filter, opacity; }
+/* Au telephone (10/11) : plus de filtre anime sur la toile, mais un fondu, et la copie doree et floue
+   (_vitrineLueurTel) qui s'allume puis s'efface par-dessus. Seules des opacites bougent. */
+.vt-emplacement canvas.vt-image-lueur { z-index:2; pointer-events:none; opacity:0; }
+@media (max-width: 700px){
+  .vt-deverrouille canvas.vt-image { animation-name:vt-materialise-tel; will-change:opacity, transform; }
+  .vt-deverrouille canvas.vt-image-lueur { animation:vt-lueur-tel 2.6s .6s both ease-in-out; will-change:opacity; }
+}
+@keyframes vt-materialise-tel { 0% { opacity:0; transform:scale(.97); } 35% { opacity:1; } 100% { opacity:1; transform:none; } }
+@keyframes vt-lueur-tel { 0% { opacity:0; } 30% { opacity:1; } 65% { opacity:.45; } 100% { opacity:0; } }
 @keyframes vt-poussiere { 0% { opacity:0; transform:translateY(0) scale(.6); } 15% { opacity:1; } 70% { opacity:.6; } 100% { opacity:0; transform:translateY(calc(-1 * var(--h))) scale(1); } }
 .vt-deverrouille .vt-nom { animation:vt-plaque 1.2s 1.6s both ease-in-out; }
 @keyframes vt-plaque { from { filter:grayscale(1) brightness(.45); } to { filter:none; } }

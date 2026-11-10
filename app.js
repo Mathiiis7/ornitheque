@@ -6683,7 +6683,28 @@ function _vitrineDeblocage(box, { id }, dessins = []){
   const fin = () => { c.classList.remove('vt-deverrouille'); emp.querySelectorAll('.vt-etincelle, .vt-halo').forEach(x => x.remove()); };
   // Deux images d'affilee apres les dessins : la premiere peint les toiles, la seconde part d'un ecran calme
   const part = () => requestAnimationFrame(() => requestAnimationFrame(() => { c.classList.remove('vt-prepare'); setTimeout(fin, VITRINE_ANIM_MS); }));
-  Promise.race([Promise.allSettled(dessins), new Promise(ok => setTimeout(ok, 1500))]).then(part);
+  Promise.race([Promise.allSettled(dessins), new Promise(ok => setTimeout(ok, 1500))]).then(() => { _vitrineLueurTel(c); part(); });
+}
+// Au telephone, le trophee ne se forme plus par un filtre anime (flou, eclat, lueur recalcules a chaque image :
+// ~35 images/s au processeur ralenti 4 fois, mesure du 10/11) mais par le fondu d'une copie doree et floue, dessinee
+// UNE fois ici : seules des opacites bougent, ce que le telephone fait sans effort (Mathis, 10/11 : « allege pour le
+// telephone »). Le flou se fait en reduisant puis agrandissant l'image, pas avec ctx.filter qu'iOS ignore.
+function _vitrineLueurTel(c){
+  if(!matchMedia('(max-width: 700px)').matches || !c.isConnected) return;
+  const sup = c.classList.contains('vt-niveau-sup');
+  const toiles = [...c.querySelectorAll('canvas.vt-image')].filter(t => sup ? t.classList.contains('vt-nouveau') : !t.classList.contains('vt-nouveau'));
+  const or = (getComputedStyle(c).getPropertyValue('--vt-lumiere') || '255, 210, 120').trim();
+  for(const t of toiles){
+    if(!t.width || !t.height) continue;
+    const g = document.createElement('canvas'); g.className = 'vt-image-lueur'; g.width = t.width; g.height = t.height; g.setAttribute('aria-hidden', 'true');
+    const x = g.getContext('2d'), p = document.createElement('canvas'); p.width = Math.max(1, t.width >> 3); p.height = Math.max(1, t.height >> 3);
+    p.getContext('2d').drawImage(t, 0, 0, p.width, p.height);
+    x.imageSmoothingEnabled = true; x.drawImage(p, 0, 0, g.width, g.height); x.drawImage(p, 0, 0, g.width, g.height);   // le halo flou
+    x.globalCompositeOperation = 'source-atop'; x.fillStyle = `rgba(${or}, .6)`; x.fillRect(0, 0, g.width, g.height);   // dore
+    x.globalCompositeOperation = 'lighter'; x.globalAlpha = .55; x.drawImage(t, 0, 0);   // le trophee eclaire par-dessus
+    t.after(g);
+  }
+  setTimeout(() => c.querySelectorAll('canvas.vt-image-lueur').forEach(g => g.remove()), VITRINE_ANIM_MS);
 }
 
 // Faire defiler la ligne a la souris : molette, fleches, glisser (la barre de defilement est cachee).
