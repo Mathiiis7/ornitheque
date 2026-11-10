@@ -6412,12 +6412,15 @@ function _vitrineCases(sel, s, data){
       quoi:"Le plus de goélands, mouettes et sternes de la ligue" },
   ];
   const ligue = [];
+  // Les stats de chaque membre, calculees une fois pour tous les trophees de la ligue : avant, une fois PAR
+  // trophee, et ce calcul faisait l'essentiel des 200 ms du clic de deblocage (mesure du 10/11)
+  const statsVues = new Map(), _statsDe = p => { if(!statsVues.has(p.id)) statsVues.set(p.id, statsFor(p, data.N)); return statsVues.get(p.id); };
   for(const th of LIGUE){
     // Egalite : tous ceux qui ont le meme compte partagent la place, et le trophee (Mathis, 09/11).
     // Place = 1 + le nombre de membres qui ont strictement plus (deux 2es, pas de 3e, puis un 4e).
     let siennes = new Set();   // les especes du theme vues par la personne affichee, pour sa liste
     const rang = state.people.map(p => {
-      const sp = p.id === sel.id ? s : statsFor(p, data.N), set = th.especes(p, sp);
+      const sp = p.id === sel.id ? s : _statsDe(p), set = th.especes(p, sp);
       if(p.id === sel.id) siennes = set;
       return { id:p.id, nom:p.name, moi:p.isMe, n: set.size };
     }).filter(x => x.n > 0).sort((a, b) => b.n - a.n);
@@ -6446,10 +6449,12 @@ function _vitrineCases(sel, s, data){
     // Ecologue, le materiel qui grossit avec la liste (Mathis, 10/11). 100 : « Apprenti ecologue », les jumelles
     // (avant : le t-shirt vert de dos « Apprenti ornithologue », retire ; son image reste dans notes-privees).
     // 200 : « Ecologue confirme », une longue-vue sur trepied ; 300 : « Ecologue chevronne », un appareil photo a
-    // gros teleobjectif : images en « ? » en attendant celles de Mathis. 400 et 500 retires.
+    // gros teleobjectif ; 400 : « Ecologue expert », une cabane d'affut camouflee ; 500 : « Ecologue de legende », un
+    // guide des oiseaux relie d'or, ouvert, plein de marque-pages. Images en « ? » en attendant celles de Mathis.
     // Vitrine seule : renommer n'annonce rien dans le Fil.
-    ...[100, 200, 300].map((n, i) => ({ id:'x-ecologue-' + n, nom:['Apprenti écologue', 'Écologue confirmé', 'Écologue chevronné'][i], fam:'ecologue', seuil:n, quoi:`Observer ${n} espèces différentes`,
-      img:['assets/trophies/themes/ecologue/ecologue-100.png', 'assets/trophies/themes/attente/point-interrogation.png', 'assets/trophies/themes/attente/point-interrogation.png'][i] })),
+    ...[100, 200, 300, 400, 500].map((n, i) => ({ id:'x-ecologue-' + n, nom:['Apprenti écologue', 'Écologue confirmé', 'Écologue chevronné', 'Écologue expert', 'Écologue de légende'][i],
+      fam:'ecologue', seuil:n, quoi:`Observer ${n} espèces différentes`,
+      img:i ? 'assets/trophies/themes/attente/point-interrogation.png' : 'assets/trophies/themes/ecologue/ecologue-100.png' })),
     // National Geographic : 100 photos postees, coeurs ou pas (Mathis, 10/11 ; avant, 25 photos a 2 coeurs)
     { id:'x-natgeo', nom:'National Geographic', valeur:() => s.postedPhotos || 0, seuil:100, quoi:'Poster 100 photos', img:'assets/trophies/themes/natgeo/natgeo.png' },   // image de Mathis, 10/11
   ].map(x => { const v = x.valeur ? x.valeur() : compte(x.fam); return { id:x.id, nom:x.nom, img:x.img, gagne:v >= x.seuil, bulle:`${x.quoi}. ${qui} ${v}` }; });
@@ -6457,7 +6462,8 @@ function _vitrineCases(sel, s, data){
   // Il remplace la planche en forme de France ou chaque region visitee posait son aliment (calques, v1056) : la
   // vitrine sait toujours dessiner des calques, mais plus aucun trophee ne s'en sert. La liste garde les aliments.
   const vuesT = FR_REGIONS.filter(r => s.regionsOwnedSet?.has(r.code));
-  exploitsProg.splice(3, 0, { id:'x-terroir', nom:'Terroir', img:'assets/trophies/themes/terroir/plateau.png', gagne:vuesT.length >= TERROIR_SEUIL,
+  // juste apres la serie Ecologue, quel que soit son nombre de paliers
+  exploitsProg.splice(exploitsProg.findIndex(x => x.id === 'x-natgeo'), 0, { id:'x-terroir', nom:'Terroir', img:'assets/trophies/themes/terroir/plateau.png', gagne:vuesT.length >= TERROIR_SEUIL,
     libelle:'régions', items:FR_REGIONS.map(r => ({ name:r.name + ' : ' + TERROIR_ALIMENTS[r.code], owned:vuesT.includes(r) })),
     bulle:`Observer un oiseau dans ${TERROIR_SEUIL} des 13 régions de France métropolitaine. ${qui} ${vuesT.length}` });
   // fun:true : un etage a part, « Fun » (Bourriche d'huitre, Le Necrophile, Gros Bebe ; Mathis, 10/11)
@@ -6614,8 +6620,12 @@ function renderVitrine(sel, s, data){
       _vitrineApercu.set(cle, cas.calques ? [] : cas.niveaux ? 0 : false);
       const tout = _vitrineVuLire(); if(tout[sel.id]){ tout[sel.id][cas.id] = 0; _vitrineVuEcrire(tout); }
     }
+    const anime = !!_vitrineAnime;
     renderVitrine(sel, s, data);
-    try{ updateTabDots(); _barreBasPastilles(); }catch(_){}
+    // Les pastilles des onglets recalculent toute la vitrine et les stats : 200 ms au clic (700 au processeur ralenti
+    // 4 fois, mesure du 10/11), qui sautaient le debut de l'animation. Pendant un deblocage, elles attendent sa fin.
+    const pastilles = () => { try{ updateTabDots(); _barreBasPastilles(); }catch(_){} };
+    if(anime) setTimeout(pastilles, VITRINE_ANIM_MS); else pastilles();
   };
   box.onkeydown = e => {
     const c = e.target.closest?.('.vt-case'); if(!c || (e.key !== 'Enter' && e.key !== ' ')) return;
@@ -6635,8 +6645,8 @@ function renderVitrine(sel, s, data){
     if(cv){ cv.dataset.anime = '1'; cv.dataset.niveauAvant = _vitrineAnime.niveauAvant || 0; if(_vitrineAnime.niveauAvant) c.classList.add('vt-niveau-sup');
       if(_vitrineAnime.calquesAvant?.length){ cv.dataset.calquesAvant = _vitrineAnime.calquesAvant.join(','); c.classList.add('vt-niveau-sup'); } }
   }
-  for(const cv of box.querySelectorAll('canvas.vt-image')) _vitrineDessine(cv).catch(e => console.warn('vitrine', e));
-  if(_vitrineAnime){ _vitrineDeblocage(box, _vitrineAnime); _vitrineAnime = null; }
+  const dessins = [...box.querySelectorAll('canvas.vt-image')].map(cv => _vitrineDessine(cv).catch(e => console.warn('vitrine', e)));
+  if(_vitrineAnime){ _vitrineDeblocage(box, _vitrineAnime, dessins); _vitrineAnime = null; }
   // La vitrine va d'elle-meme jusqu'au premier trophee en attente (une fois par trophee)
   // La vitrine peut etre construite page cachee (largeur 0) : on attend qu'elle s'affiche pour y aller.
   const aMontrer = enAttente.find(c => !_vitrineMontres.has(c.id));
@@ -6653,7 +6663,11 @@ function renderVitrine(sel, s, data){
 // faisceau apparait,
 // le trophee se forme dans un halo pendant qu'une poussiere d'or monte, la plaque passe du terne a
 // l'or avec un reflet, le macaron de place surgit. Environ 2,8 s ; tout est en CSS (.vt-deverrouille).
-function _vitrineDeblocage(box, { id }){
+// Elle part FIGEE sur sa premiere image (.vt-prepare : animations en pause) et ne demarre qu'une fois les trophees
+// redessines (au plus 1,5 s) : le rendu recree les 28 toiles de la vitrine, et les redessiner coutait 150 a 250 ms
+// en plein debut d'animation, qui sautait (« ca rame et parfois ca skip », Mathis, 10/11).
+const VITRINE_ANIM_MS = 4800;   // la fin s'eteint en douceur jusqu'a ~4,4 s
+function _vitrineDeblocage(box, { id }, dessins = []){
   const c = [...box.querySelectorAll('.vt-case')].find(x => x.dataset.id === id); if(!c) return;
   const emp = c.querySelector('.vt-emplacement');
   const halo = document.createElement('span'); halo.className = 'vt-halo'; halo.setAttribute('aria-hidden', 'true'); emp.appendChild(halo);
@@ -6665,8 +6679,11 @@ function _vitrineDeblocage(box, { id }){
     e.style.setProperty('--d', Math.round(Math.random() * 450) + 'ms');
     emp.appendChild(e);
   }
-  c.classList.add('vt-deverrouille');
-  setTimeout(() => { c.classList.remove('vt-deverrouille'); emp.querySelectorAll('.vt-etincelle, .vt-halo').forEach(x => x.remove()); }, 4800);   // la fin s'eteint en douceur jusqu'a ~4,4 s
+  c.classList.add('vt-deverrouille', 'vt-prepare');
+  const fin = () => { c.classList.remove('vt-deverrouille'); emp.querySelectorAll('.vt-etincelle, .vt-halo').forEach(x => x.remove()); };
+  // Deux images d'affilee apres les dessins : la premiere peint les toiles, la seconde part d'un ecran calme
+  const part = () => requestAnimationFrame(() => requestAnimationFrame(() => { c.classList.remove('vt-prepare'); setTimeout(fin, VITRINE_ANIM_MS); }));
+  Promise.race([Promise.allSettled(dessins), new Promise(ok => setTimeout(ok, 1500))]).then(part);
 }
 
 // Faire defiler la ligne a la souris : molette, fleches, glisser (la barre de defilement est cachee).

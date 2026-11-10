@@ -4844,6 +4844,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   100% { opacity:1; filter:blur(0) brightness(1) drop-shadow(0 0 8px rgba(var(--vt-lumiere), calc(.16 * var(--vt-force)))); }
 }
 .vt-deverrouille .vt-etincelle { animation:vt-poussiere 2.6s calc(.5s + var(--d) * 2) both ease-out; }
+/* Figee sur sa premiere image tant que la vitrine se redessine (_vitrineDeblocage, 10/11) : avec « both », une
+   animation en pause montre son etat de depart, sans eclair de l'etat final */
+#vitrine .vt-prepare, #vitrine .vt-prepare *, #vitrine .vt-prepare::before, #vitrine .vt-prepare::after,
+#vitrine .vt-prepare *::before, #vitrine .vt-prepare *::after { animation-play-state:paused !important; }
 @keyframes vt-poussiere { 0% { opacity:0; transform:translateY(0) scale(.6); } 15% { opacity:1; } 70% { opacity:.6; } 100% { opacity:0; transform:translateY(calc(-1 * var(--h))) scale(1); } }
 .vt-deverrouille .vt-nom { animation:vt-plaque 1.2s 1.6s both ease-in-out; }
 @keyframes vt-plaque { from { filter:grayscale(1) brightness(.45); } to { filter:none; } }
