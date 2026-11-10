@@ -8,7 +8,9 @@
 // seul), complet.png (tout). La vitrine les recadre ensemble sur complet.png.
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { chromium } from 'playwright';
-const SRC = 'notes-privees/trophees/images/terroir/calques/', SORTIE = 'assets/trophies/themes/terroir/';
+// Depuis le 10/11 au soir, le Terroir est un plateau (assets/trophies/themes/terroir/plateau.png) : les calques ne
+// sont plus affiches et s'ecrivent dans archives/, hors du site
+const SRC = 'notes-privees/trophees/images/terroir/calques/', SORTIE = 'archives/terroir-calques/';
 // Place de chaque calque sur la page (points), relevee par _terroir-pdf.py
 const PLACES = {
   0: [282.2, 344.8, 627.2, 684.5],
@@ -27,15 +29,21 @@ const REGION = { 1:'FR-NOR', 2:'FR-HDF', 3:'FR-BRE', 4:'FR-PDL', 5:'FR-CVL', 6:'
 // Elle n'a ni la place ni tout a fait la taille de celle du PDF : les aliments y sont reportes par les cadres
 // opaques des deux planches (PDF : x 291,2 a 623,0 et y 347,2 a 676,7 en points ; vierge : x 388 a 832 et y 462 a
 // 880 en pixels, mesures), chacun a sa place par axe et a une taille commune (la moyenne des deux echelles).
-const VIERGE = 'notes-privees/trophees/images/terroir/planche-vierge.png', COTE = 1264;
+// DEPUIS LE 10/11 APRES-MIDI : la planche est taillee dans la VRAIE France (outils/build/_planche-exacte.mjs,
+// l'ancienne avait la Bretagne trop basse, pas de Cotentin, les Alpes rognees). Meme largeur (x 389 a 831) et meme
+// bas : la taille des aliments ne change pas. Chaque aliment est centre sur le barycentre de SA region
+// (centres-regions.json, ecrit par _planche-exacte.mjs), plus le DECALAGE ; la Corse garde sa place d'avant.
+const VIERGE = 'notes-privees/trophees/images/terroir/planche-exacte.png', COTE = 1264;
+const CENTRES = JSON.parse(readFileSync('notes-privees/trophees/images/terroir/centres-regions.json', 'utf8'));
 const AX = (832 - 388) / (623.0 - 291.2), AY = (880 - 462) / (676.7 - 347.2), TAILLE = (AX + AY) / 2;
 const versX = x => 388 + (x - 291.2) * AX, versY = y => 462 + (y - 347.2) * AY;
 // Reglages a l'oeil, en pixels, si un aliment tombe a cote de sa region sur la planche vierge
-const DECALAGE = {};
+// La Corse touchait la cote de PACA, plus a l est sur la vraie France (10/11)
+const DECALAGE = { 13: [14, 4] };
 
 const img = i => 'data:image/png;base64,' + readFileSync(SRC + 'img-' + String(i).padStart(2, '0') + '.png').toString('base64');
 const nav = await chromium.launch(), page = await nav.newPage();
-const sorties = await page.evaluate(async ({ PLACES, REGION, COTE, AX, AY, TAILLE, DECALAGE, sources }) => {
+const sorties = await page.evaluate(async ({ PLACES, REGION, COTE, AX, AY, TAILLE, DECALAGE, CENTRES, sources }) => {
   const charge = s => new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ko; i.src = s; });
   const im = {}; for(const [k, s] of Object.entries(sources)) im[k] = await charge(s);
   const W = COTE, H = COTE;
@@ -43,13 +51,24 @@ const sorties = await page.evaluate(async ({ PLACES, REGION, COTE, AX, AY, TAILL
   const versX = x => 388 + (x - 291.2) * AX, versY = y => 462 + (y - 347.2) * AY;
   // Un calque du PDF reporte sur la planche vierge : son centre a sa place, sa taille a l'echelle commune
   const place = i => { const [x0, y0, x1, y1] = PLACES[i], d = DECALAGE[i] || [0, 0], w = (x1 - x0) * TAILLE, h = (y1 - y0) * TAILLE;
-    return [versX((x0 + x1) / 2) - w / 2 + d[0], versY((y0 + y1) / 2) - h / 2 + d[1], w, h]; };
+    const c = CENTRES[REGION[i]] || [versX((x0 + x1) / 2), versY((y0 + y1) / 2)];
+    return [c[0] - w / 2 + d[0], c[1] - h / 2 + d[1], w, h]; };
   const pose = (x, i) => x.drawImage(im[i], ...place(i));
   const socle = x => x.drawImage(im.vierge, 0, 0, W, H);   // la planche vierge, socle compris
   const png = c => c.toDataURL('image/png').split(',')[1];
   // La Corse sans son figatellu (« la Corse doit apparaitre sans son aliment meme si on ne l'a pas visitee »,
   // Mathis 10/11) : dans un cadre autour du saucisson, de sa ficelle et de son ombre (releve a la loupe, pixels de
   // img-13), tout ce qui s'ecarte du bois de l'ile prend la couleur mediane de ce bois, un peu bruitee.
+  // Le bois de la planche (sa mediane, face seule : pixels opaques clairs au-dessus du socle) : la Corse, taillee
+  // dans le bois du PDF, plus sombre, est ramenee a cette couleur (« la Corse n'est plus de la bonne couleur »,
+  // Mathis 10/11), son figatellu non.
+  const boisPlanche = (() => {
+    const c = toile(), x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(im.vierge, 0, 0);
+    const a = x.getImageData(0, 0, W, 883).data, v = [[], [], []];
+    for(let p = 0; p < a.length; p += 4) if(a[p+3] > 250 && 0.2126 * a[p] + 0.7152 * a[p+1] + 0.0722 * a[p+2] > 150) for(let k = 0; k < 3; k++) v[k].push(a[p+k]);
+    return v.map(l => l.sort((m, n) => m - n)[l.length >> 1]);
+  })();
+  let corse = null;   // img-13 au bois de la planche, figatellu intact (le calque de l'aliment corse)
   const ile = (() => {
     const s = im[13], c = document.createElement('canvas'); c.width = s.width; c.height = s.height;
     const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(s, 0, 0);
@@ -67,11 +86,16 @@ const sorties = await page.evaluate(async ({ PLACES, REGION, COTE, AX, AY, TAILL
     for(let k = 0; k < 2; k++){ const m2 = masque.slice();
       for(let Y = 1; Y < H - 1; Y++) for(let X = 1; X < W - 1; X++) if(!masque[Y * W + X] && dans(X, Y) && (masque[Y * W + X - 1] || masque[Y * W + X + 1] || masque[(Y - 1) * W + X] || masque[(Y + 1) * W + X])) m2[Y * W + X] = 1;
       masque.set(m2); }
+    // Teinte : chaque canal multiplie par (bois de la planche / bois de l'ile), hors figatellu
+    const k = [0, 1, 2].map(i => boisPlanche[i] / bois[i]);
+    for(let q = 0; q < W * H; q++) if(!masque[q]) for(let i = 0; i < 3; i++) a[q*4+i] = Math.min(255, a[q*4+i] * k[i]);
+    const cc = document.createElement('canvas'); cc.width = W; cc.height = H; cc.getContext('2d').putImageData(d, 0, 0); corse = cc;
     for(let q = 0; q < W * H; q++) if(masque[q] && a[q*4+3] > 20){ const n = (Math.random() - 0.5) * 6;
-      a[q*4] = bois[0] + n; a[q*4+1] = bois[1] + n; a[q*4+2] = bois[2] + n; a[q*4+3] = 255; }
+      a[q*4] = boisPlanche[0] + n; a[q*4+1] = boisPlanche[1] + n; a[q*4+2] = boisPlanche[2] + n; a[q*4+3] = 255; }
     x.putImageData(d, 0, 0);
     return c;
   })();
+  im[13] = corse;
   const poseIle = x => x.drawImage(ile, ...place(13));   // la planche vierge n'a pas de Corse : l'ile du PDF, sans figatellu
   const r = {};
   const fond = toile(), fx = fond.getContext('2d'); socle(fx); poseIle(fx); r.fond = png(fond);
@@ -79,7 +103,7 @@ const sorties = await page.evaluate(async ({ PLACES, REGION, COTE, AX, AY, TAILL
   for(const i of Object.keys(REGION).map(Number)){ const c = toile(); pose(c.getContext('2d'), i); r[REGION[i]] = png(c); pose(tx, i); }
   r.complet = png(tout);
   return r;
-}, { PLACES, REGION, COTE, AX, AY, TAILLE, DECALAGE, sources: { ...Object.fromEntries(Object.keys(PLACES).map(i => [i, img(i)])),
+}, { PLACES, REGION, COTE, AX, AY, TAILLE, DECALAGE, CENTRES, sources: { ...Object.fromEntries(Object.keys(PLACES).map(i => [i, img(i)])),
   vierge: 'data:image/png;base64,' + readFileSync(VIERGE).toString('base64') } });
 await nav.close();
 mkdirSync(SORTIE, { recursive: true });

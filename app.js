@@ -4201,7 +4201,7 @@ const TROPHIES = [
   // Images provisoires : les anciens badges ronds.
   { theme:'communaute',  exploit:true, fun:true, icon:ICONS.mort, name:'Nécrophile', desc:'Observer un oiseau décédé #ripstayproud (preuve demandée)', special:'vote', voteId:'necrophile', voteThreshold:1, test:s=>(s.necrophileVotes||0)>=1 },
   { theme:'communaute',  exploit:true, fun:true, icon:ICONS.bebe, name:'Gros Bébé', desc:'Observer des oiseaux avec Samuel (preuve demandée)', special:'vote', voteId:'grosBebe', voteThreshold:1, voteDoffice:GROS_BEBE_DOFFICE, test:s=>s.uid===GROS_BEBE_DOFFICE || (s.grosBebeVotes||0)>=1 },
-  { theme:'localisation', exploit:true, fun:true, icon:ICONS.huitre, name:'Bourriche d’huître', desc:'Observer un oiseau à La Teste-de-Buch', test:s=>s.locTeste },
+  { theme:'localisation', exploit:true, fun:true, icon:ICONS.huitre, name:'Bourriche d’huître', desc:'Observer un oiseau sur le bassin d’Arcachon', test:s=>s.locTeste },
   { theme:'communaute',  exploit:true, fun:true, icon:ICONS.kimono, name:'Tia mis le kimono', desc:"Faire une observation avec le T-shirt Merlin (preuve à l'appui)", special:'vote', voteId:'kimono', voteThreshold:1, test:s=>(s.kimonoVotes||0)>=1 },   // dans Fun, apres Bourriche (Mathis, 10/11)
   { theme:'groupe',      icon:ICONS.penguinBadge, name:'Happy Feet', desc:'Observer un pingouin, un manchot ou un cousin (macareux, guillemot…)', test:s=>s.hasPenguin, exotic:true, speciesFamilyKey:'penguins',
     list:s=> [
@@ -5758,6 +5758,16 @@ const MANCHOT_SET = new Set(MANCHOT_CATALOG.map(m=>m.sci));
 // avec un N a 0 et des total undefined les rangs sont faux, et _detectTrophyEventsCore ecrit
 // ses evenements de classement dans Firestore, donc chez tous les membres.
 function _statsPretes(gens){ return gens.length > 0 && gens.every(p => p._active); }
+// Le bassin d'Arcachon (trophee Bourriche d'huitre) : par les coordonnees quand il y en a, un cadre qui couvre les
+// dix communes du bassin, de Cazaux (44,53 N) a Lege-Cap-Ferret (44,80 N) et du banc d'Arguin (-1,26) a Biganos
+// (-0,98), sans Sanguinet (44,48 N) ni Mios (-0,93). Sinon par le nom du lieu, avec les seuls noms sans homonyme
+// connu (pas « Ares », qui existe en Galice, ni « Cazaux », courant dans le Sud-Ouest).
+const BASSIN_ARCACHON_NOMS = /arcachon|teste[- ]?de[- ]?buch|\b(?:le|du) teich\b|gujan|biganos|audenge|andernos|cap[- ]ferret|arguin|dune du p(?:ilat|yla)|\bpyla\b/i;
+function _surBassinArcachon(o){
+  if(!o) return false;
+  if(typeof o.lat === 'number' && typeof o.lon === 'number') return o.lat >= 44.50 && o.lat <= 44.82 && o.lon >= -1.28 && o.lon <= -0.95;
+  return BASSIN_ARCACHON_NOMS.test(o.loc || '');
+}
 function statsFor(me, N){
   const ranked=[...state.people].sort((a,b)=>b.total-a.total);   // rang basé sur le nb d'espèces (classement principal)
   const rank=ranked.findIndex(p=>p.id===me.id)+1;
@@ -5890,7 +5900,10 @@ function statsFor(me, N){
     // pour les N/P sous leur tier GBIF). Sans ces 2 checks, Cacatua alba (X tier 9)
     // debloquait le trophee alors qu'elle n'apparait pas dans le catalogue.
     if(!_isExoticNotCounted(sci) && rarityForFilter(sci)>=8){ megaList.push(frName(v.sci, v.common)); megaOwnedSet.add(sci); }
-    if(/teste[- ]?de[- ]?buch|arcachon/i.test(v.loc||'')) locTeste=true;
+    // Bourriche d'huitre : tout le bassin d'Arcachon compte, pas seulement La Teste (Mathis, 10/11 : la reserve
+    // ornithologique du Teich ne comptait pas, son nom ne contient ni « Arcachon » ni « La Teste »). Toutes les
+    // observations de l'espece, pas seulement la premiere.
+    if(!locTeste && [v, ...(v.allObs || [])].some(_surBassinArcachon)) locTeste=true;
   }
   megaList.sort((a,b)=>a.localeCompare(b,'fr'));
   const seasonCount=SEASON_ORDER.filter(s=>seasonHit[s]).length;
@@ -6274,7 +6287,7 @@ const VITRINE_IMAGES = { 'Pic noir pic noir pic noir': 'assets/trophies/themes/p
   'Gros Bébé': 'assets/trophies/themes/gros-bebe/gros-bebe.png',
   'Nécrophile': 'assets/trophies/themes/necrophile/necrophile.png',
   'Magellan': 'assets/trophies/themes/navire/navire.png',   // le navire et ses oiseaux, a la place du globe (Mathis, 10/11)
-  'Tia mis le kimono': 'assets/trophies/themes/kimono/kimono.png' };   // image de Mathis, liseré clair repeint par _lisere.mjs (10/11)
+  'Tia mis le kimono': 'assets/trophies/themes/kimono/kimono.png' };   // le costume lilas, choisi par Mathis le 10/11 contre le kimono rouge (gardé dans notes-privees)
 // Une image a rendre plus petite ou plus grande que la taille calculee (1 = inchangee). Le Pic noir, sans socle,
 // prenait toute la hauteur : « retrecis legerement » (Mathis, 09/11). Gros Bebe, etroit sur un socle large,
 // paraissait petit : « agrandis un peu » (Mathis, 10/11). Agrandie, une image reste dans son emplacement.
@@ -6285,6 +6298,7 @@ const VITRINE_ECHELLE = { 'assets/trophies/themes/pic-noir/pic-noir.png': 0.88, 
 // luminance moyenne 68, contre 81 et 82 pour le Pic noir et l'Oiseau pelagique ; x 1,18 l'y ramene.
 const VITRINE_LUMIERE = { 'assets/icons/calao.png': 1.18 };
 const VITRINE_AVEC_PROGRESSION = false;   // retiree « pour le moment » (Mathis, 08/11)
+const TERROIR_SEUIL = 11;   // le Terroir se gagne a 11 regions de metropole sur 13 (Mathis, 10/11)
 let _vitrineAnime = null;              // trophee qu'on vient d'allumer : { id, niveauAvant } pour l'animation
 // L'animation de deblocage : « Poussiere d'or », choisie par Mathis le 08/11 parmi quatre (Projecteur,
 // Balayage et Rayons retires a sa demande).
@@ -6429,20 +6443,23 @@ function _vitrineCases(sel, s, data){
   const compte = fam => { const t = TROPHIES.find(x => x.family === fam && x.prog); return t ? (t.prog(s)[0] || 0) : 0; };
   const qui = sel.isMe ? 'Tu en as' : sel.name + ' en a';
   const exploitsProg = [
-    // Ecologue, un t-shirt entre amis par palier (Mathis, 10/11). 100 : « Apprenti ornithologue », le t-shirt vert vu
-    // de dos (avant : « Ça jacasse », le devant avec sa phrase). 200 : pas encore decide, nom et image en « ? ».
-    // 300, 400 et 500 retires en attendant leur t-shirt. Vitrine seule : renommer n'annonce rien dans le Fil.
-    ...[100, 200].map((n, i) => ({ id:'x-ecologue-' + n, nom:['Apprenti ornithologue', '?'][i], fam:'ecologue', seuil:n, quoi:`Observer ${n} espèces différentes`,
-      img:['assets/trophies/themes/ecologue/ecologue-100.png', 'assets/trophies/themes/attente/point-interrogation.png'][i] })),
+    // Ecologue, le materiel qui grossit avec la liste (Mathis, 10/11). 100 : « Apprenti ecologue », les jumelles
+    // (avant : le t-shirt vert de dos « Apprenti ornithologue », retire ; son image reste dans notes-privees).
+    // 200 : « Ecologue confirme », une longue-vue sur trepied ; 300 : « Ecologue chevronne », un appareil photo a
+    // gros teleobjectif : images en « ? » en attendant celles de Mathis. 400 et 500 retires.
+    // Vitrine seule : renommer n'annonce rien dans le Fil.
+    ...[100, 200, 300].map((n, i) => ({ id:'x-ecologue-' + n, nom:['Apprenti écologue', 'Écologue confirmé', 'Écologue chevronné'][i], fam:'ecologue', seuil:n, quoi:`Observer ${n} espèces différentes`,
+      img:['assets/trophies/themes/ecologue/ecologue-100.png', 'assets/trophies/themes/attente/point-interrogation.png', 'assets/trophies/themes/attente/point-interrogation.png'][i] })),
     // National Geographic : 100 photos postees, coeurs ou pas (Mathis, 10/11 ; avant, 25 photos a 2 coeurs)
     { id:'x-natgeo', nom:'National Geographic', valeur:() => s.postedPhotos || 0, seuil:100, quoi:'Poster 100 photos', img:'assets/trophies/themes/natgeo/natgeo.png' },   // image de Mathis, 10/11
   ].map(x => { const v = x.valeur ? x.valeur() : compte(x.fam); return { id:x.id, nom:x.nom, img:x.img, gagne:v >= x.seuil, bulle:`${x.quoi}. ${qui} ${v}` }; });
-  // Terroir en calques (Mathis, 10/11) : une planche en forme de France, un aliment par region, que chaque region
-  // observee fait apparaitre ; allume des la 1re region, complet a 13. Images : outils/build/_terroir.mjs.
-  const T_DIR = 'assets/trophies/themes/terroir/', vuesT = FR_REGIONS.map((r, i) => s.regionsOwnedSet?.has(r.code) ? i + 1 : 0).filter(Boolean);
-  exploitsProg.splice(2, 0, { id:'x-terroir', nom:'Terroir', calques:[T_DIR + 'fond.png', ...FR_REGIONS.map(r => T_DIR + r.code + '.png'), T_DIR + 'complet.png'],
-    vues:vuesT, gagne:vuesT.length > 0, libelle:'régions', items:FR_REGIONS.map((r, i) => ({ name:r.name + ' : ' + TERROIR_ALIMENTS[r.code], owned:vuesT.includes(i + 1) })),
-    bulle:`Observer un oiseau dans les 13 régions de France métropolitaine, un aliment par région. ${qui} ${vuesT.length}` });
+  // Terroir : un plateau de fromages et charcuterie, gagne a 11 regions de metropole sur 13 (Mathis, 10/11 apres-midi).
+  // Il remplace la planche en forme de France ou chaque region visitee posait son aliment (calques, v1056) : la
+  // vitrine sait toujours dessiner des calques, mais plus aucun trophee ne s'en sert. La liste garde les aliments.
+  const vuesT = FR_REGIONS.filter(r => s.regionsOwnedSet?.has(r.code));
+  exploitsProg.splice(3, 0, { id:'x-terroir', nom:'Terroir', img:'assets/trophies/themes/terroir/plateau.png', gagne:vuesT.length >= TERROIR_SEUIL,
+    libelle:'régions', items:FR_REGIONS.map(r => ({ name:r.name + ' : ' + TERROIR_ALIMENTS[r.code], owned:vuesT.includes(r) })),
+    bulle:`Observer un oiseau dans ${TERROIR_SEUIL} des 13 régions de France métropolitaine. ${qui} ${vuesT.length}` });
   // fun:true : un etage a part, « Fun » (Bourriche d'huitre, Le Necrophile, Gros Bebe ; Mathis, 10/11)
   const versCase = t => {
     const base = { id:'e-' + t.name, nom:t.name, img:VITRINE_IMAGES[t.name] || src(t.icon), gagne:!!t.test(s) };
@@ -6687,8 +6704,7 @@ function _vitrineDefilement(defile){
 // Charge une image et la prepare : liseré clair des bords retire (il dessinait un contour blanc sur
 // le bois sombre), recadree, et son socle brun reconnu (largeur = etalon, haut = ligne de coupe).
 const _vitrineBrute = src => new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ko(new Error('image : ' + src)); i.src = src; });
-// garderClair : ne retirer que les pixels semi-transparents du bord, pas les clairs (une image au bord creme voulu)
-function _vitrineNettoie(img, passes = 3, garderClair = false){
+function _vitrineNettoie(img, passes = 3){
   const w = img.naturalWidth, h = img.naturalHeight, c = document.createElement('canvas'); c.width = w; c.height = h;
   const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(img, 0, 0);
   const d = x.getImageData(0, 0, w, h), a = d.data;
@@ -6698,7 +6714,7 @@ function _vitrineNettoie(img, passes = 3, garderClair = false){
       const q = (j * w + i) * 4; if(a[q+3] <= 20) continue;
       if(a[q-1] > 20 && a[q+7] > 20 && a[q-4*w+3] > 20 && a[q+4*w+3] > 20) continue;
       const mn = Math.min(a[q], a[q+1], a[q+2]), mx = Math.max(a[q], a[q+1], a[q+2]);
-      if(a[q+3] < 230 || (!garderClair && mn > 170 && mx - mn < 60)) retirer.push(q);
+      if(a[q+3] < 230 || (mn > 170 && mx - mn < 60)) retirer.push(q);
     }
     for(const q of retirer) a[q+3] = 0;
   }
@@ -6746,9 +6762,7 @@ function _vitrineCharge(srcs){
   if(!_vitrineImages.has(cle)) _vitrineImages.set(cle, Promise.all(srcs.map(_vitrineBrute)).then(imgs => {
     // Les aliments du Terroir, chacun sur son calque, ne sont pas nettoyes : calissons et fromage, blancs, perdaient
     // leur bord clair (le nettoyage retire le clair au contact du vide, et chaque aliment est seul sur son calque).
-    // Le kimono garde son nettoyage des bords semi-transparents (sans lui, son socle n'etait plus reconnu) mais
-    // pas celui du clair : le short creme y aurait perdu 3 px (10/11).
-    const toiles = imgs.map((im, i) => /\/terroir\/FR-/.test(srcs[i]) ? _vitrineNettoie(im, 0) : _vitrineNettoie(im, 3, /\/kimono\//.test(srcs[i]))), c = _vitrineCadre(toiles[toiles.length - 1]);
+    const toiles = imgs.map((im, i) => _vitrineNettoie(im, /\/terroir\/FR-/.test(srcs[i]) ? 0 : 3)), c = _vitrineCadre(toiles[toiles.length - 1]);
     // Eclaircir APRES le recadrage : le socle se repere a son brun sombre, qu'il faut lire intact
     const r = toiles.map((t, i) => _vitrineEclaire(_vitrineRecadre(t, c), VITRINE_LUMIERE[srcs[i]]));
     // Les niveaux partagent le socle du premier, pour rester superposables
