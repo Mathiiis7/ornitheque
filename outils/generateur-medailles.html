@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Générateur de médailles · L’Ornithèque</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<!--
+  Générateur de médailles (2026-11-08) : la version « médaille » de generateur-trophees.html.
+  On dépose l'image d'une médaille, l'outil en fait trois métaux pour le podium : or (1er),
+  argent (2e), bronze (3e). Même recette que les trophées : chaque pixel est recoloré selon sa
+  luminosité dans un dégradé de cinq teintes du métal (ombre profonde, ombre, teinte, clair,
+  reflet), avec un reflet en diagonale pour l'effet poli.
+  Ce qui a été retiré par rapport aux trophées : tout ce qui servait le socle brun (zone protégée
+  du bas, comblement des pattes, socle redessiné, alpha tranché net). Une médaille garde donc ses
+  bords adoucis et toute sa surface est recolorée.
+-->
+<style>
+  * { box-sizing:border-box; }
+  body { font-family:"Segoe UI", system-ui, sans-serif; background:#eef2f1; color:#15201e; margin:0; padding:24px; line-height:1.5; }
+  h1 { font-size:24px; margin:0 0 6px; }
+  p.sub { color:#47534f; margin:0 0 18px; font-size:14px; max-width:90ch; }
+  .wrap { max-width:1200px; margin:0 auto; }
+  .card { background:#fff; border:1px solid rgba(0,0,0,.08); border-radius:16px; padding:22px; box-shadow:0 8px 28px rgba(0,0,0,.06); }
+  .drop { display:block; border:2px dashed #c9d3d0; border-radius:14px; padding:26px; text-align:center; color:#556; cursor:pointer; background:#fafcfb; }
+  .drop:hover, .drop.dragover { border-color:#0b7c77; background:#eefbf7; color:#0b7c77; }
+  .drop input[type=file] { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
+  .drop b { color:#0b7c77; }
+  .reglages { display:none; flex-wrap:wrap; gap:14px 24px; margin:16px 0 0; align-items:center; }
+  .reglages.on { display:flex; }
+  .metal { display:flex; align-items:center; gap:8px; font-size:14px; font-weight:600; }
+  .metal input[type=color] { width:44px; height:34px; border:1px solid #cfd8d5; border-radius:8px; padding:0; background:#fff; cursor:pointer; }
+  .curseur { display:flex; align-items:center; gap:8px; font-size:14px; font-weight:600; }
+  .curseur output { font-weight:400; color:#47534f; min-width:3ch; }
+  label.case { display:flex; align-items:center; gap:6px; font-size:14px; font-weight:600; cursor:pointer; }
+  .row-btns { display:none; gap:10px; flex-wrap:wrap; margin:16px 0 0; }
+  .row-btns.on { display:flex; }
+  .btn { background:#0b7c77; color:#fff; border:none; border-radius:10px; padding:9px 16px; font-size:14px; font-weight:600; cursor:pointer; }
+  .btn.ghost { background:#eef2f1; color:#15201e; border:1px solid #cfd8d5; }
+  .grid { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:18px; margin-top:16px; }
+  @media (max-width:700px){ .grid { grid-template-columns:1fr; } }
+  .tile { display:flex; flex-direction:column; align-items:center; gap:8px; padding:16px; border:1px solid rgba(0,0,0,.08); border-radius:12px; background:#fafcfb; }
+  .grid.sombre .tile { background:#131f1d; border-color:#223231; }
+  .tile canvas { width:100%; height:auto; max-width:300px; }
+  .tile .petit { width:48px; height:48px; }
+  .tile .lbl { font-size:13px; font-weight:700; padding:3px 12px; border-radius:99px; color:#fff; }
+  .tile a { font-size:14px; color:#0b7c77; text-decoration:none; font-weight:600; }
+  .grid.sombre .tile a { color:#54cfc4; }
+  .warn { background:#fdecea; border:1px solid #e9b7b7; color:#8b1e1e; padding:10px 12px; border-radius:10px; font-size:14px; margin-top:14px; }
+  details { margin-top:16px; font-size:14px; color:#47534f; }
+  details summary { cursor:pointer; font-weight:600; }
+  code { background:#f2f5f4; padding:2px 6px; border-radius:6px; font-size:13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🏅 Générateur de médailles</h1>
+  <p class="sub">Dépose l'image d'une médaille (PNG à fond transparent, carré, 1024 px ou plus). L'outil la
+    passe en or, en argent et en bronze, les trois places du podium. Les couleurs de ton image ne
+    comptent pas, seules ses ombres et ses lumières sont gardées : une médaille dessinée en gris ou en
+    doré donne le même résultat.</p>
+
+  <div class="card">
+    <label class="drop" id="drop">
+      <input type="file" id="file" accept="image/png,image/jpeg,image/webp">
+      <div><b>📁 Choisir une image</b> ou glisser-déposer ici</div>
+    </label>
+
+    <div class="reglages" id="reglages">
+      <span class="metal">Or <input type="color" id="c-or" value="#e6c235"></span>
+      <span class="metal">Argent <input type="color" id="c-argent" value="#b4c3cf"></span>
+      <span class="metal">Bronze <input type="color" id="c-bronze" value="#d18855"></span>
+      <span class="curseur">Brillance <input type="range" id="brillance" min="70" max="95" value="80"><output id="brillanceVal">80/output></span>
+      <span class="curseur">Relief <input type="range" id="contraste" min="20" max="70" value="50"><output id="contrasteVal">50</output></span>
+      <label class="case"><input type="checkbox" id="reflet" checked> Reflet en diagonale</label>
+      <label class="case"><input type="checkbox" id="sombre"> Voir sur fond sombre</label>
+    </div>
+
+    <div class="row-btns" id="controls">
+      <button class="btn" id="downloadAll">⬇ Télécharger les 3 (zip)</button>
+      <button class="btn ghost" id="reset">Recommencer</button>
+    </div>
+    <div id="msg"></div>
+    <div class="grid" id="tiles"></div>
+
+    <details>
+      <summary>Où ranger les fichiers ?</summary>
+      <p>Le zip contient <code>or.png</code>, <code>argent.png</code> et <code>bronze.png</code> dans un dossier au
+        nom de la médaille. Mets ce dossier dans <code>assets/medailles/</code> et dis-le-moi : je le branche.</p>
+    </details>
+  </div>
+</div>
+
+<script>
+// Les trois metaux du podium, dans l'ordre des places. Teintes reprises des paliers des trophees
+// (TROPHY_TIERS d'app.js), sauf l'argent, un peu plus gris : le bleu glace #9ab8d0 se lisait
+// « diamant » sur une medaille.
+const METAUX = [
+  { key:'or',     label:'Or · 1er',     input:'c-or' },
+  { key:'argent', label:'Argent · 2e',  input:'c-argent' },
+  { key:'bronze', label:'Bronze · 3e',  input:'c-bronze' },
+];
+
+function hexToRgb(hex){ const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex); return m ? { r:parseInt(m[1],16), g:parseInt(m[2],16), b:parseInt(m[3],16) } : { r:0, g:0, b:0 }; }
+function rgbToHsl(r,g,b){
+  r/=255; g/=255; b/=255;
+  const max=Math.max(r,g,b), min=Math.min(r,g,b); let h=0, s=0; const l=(max+min)/2;
+  if(max !== min){ const d=max-min; s = l>0.5 ? d/(2-max-min) : d/(max+min);
+    switch(max){ case r: h=(g-b)/d+(g<b?6:0); break; case g: h=(b-r)/d+2; break; default: h=(r-g)/d+4; } h*=60; }
+  return [h, s, l];
+}
+function hslToRgb(h, s, l){
+  h = ((h % 360) + 360) % 360;
+  const c = (1 - Math.abs(2*l - 1)) * s, x = c * (1 - Math.abs(((h/60) % 2) - 1)), m = l - c/2;
+  let r=0, g=0, b=0;
+  if(h<60){ r=c; g=x; } else if(h<120){ r=x; g=c; } else if(h<180){ g=c; b=x; } else if(h<240){ g=x; b=c; } else if(h<300){ r=x; b=c; } else { r=c; b=x; }
+  return [Math.round((r+m)*255), Math.round((g+m)*255), Math.round((b+m)*255)];
+}
+
+// Cinq teintes du metal, de l'ombre au reflet : la meme derivation que generateur-trophees.html
+// (enrichTier), qui a fait ses preuves sur les figurines.
+function teintes(hex){
+  const rgb = hexToRgb(hex); const [h, s, l] = rgbToHsl(rgb.r, rgb.g, rgb.b);
+  const c = (sat, lum) => { const [r, g, b] = hslToRgb(h, sat, lum); return { r, g, b }; };
+  return [
+    { L:0.00, ...c(Math.min(1, s*0.90), Math.max(0.06, l*0.16)) },
+    { L:0.30, ...c(Math.min(1, s*0.85), Math.max(0.15, l*0.42)) },
+    { L:0.55, ...rgb },
+    { L:0.82, ...c(s*0.55, Math.min(0.90, l + (1-l)*0.65)) },
+    { L:1.00, ...c(s*0.20, 0.97) },
+  ];
+}
+function degrade(L, stops){
+  if(L <= stops[0].L) return [stops[0].r, stops[0].g, stops[0].b];
+  for(let i = 1; i < stops.length; i++){
+    const a = stops[i-1], b = stops[i];
+    if(L <= b.L){ const t = (L - a.L) / (b.L - a.L); return [(a.r+(b.r-a.r)*t)|0, (a.g+(b.g-a.g)*t)|0, (a.b+(b.b-a.b)*t)|0]; }
+  }
+  const z = stops[stops.length-1]; return [z.r, z.g, z.b];
+}
+// Courbe en S : donne du relief sans ecraser les tons moyens (k = 2,8 comme les trophees).
+function courbeS(L, k = 2.8){
+  const sig = x => 1 / (1 + Math.exp(-x));
+  return (sig((L - 0.5) * k) - sig(-k/2)) / (sig(k/2) - sig(-k/2));
+}
+
+function metallise(src, stops, { cap, ecart, reflet }){
+  const w = src.width, h = src.height, sd = src.data;
+  const out = new ImageData(w, h), od = out.data;
+  // Repere : la luminosite MEDIANE de la medaille, et l'ecart entre ses 10 % les plus sombres et
+  // ses 10 % les plus clairs. La moyenne des trophees ne convient pas ici : les contours fonces
+  // d'une medaille la tirent vers le bas, et toute la surface partait au blanc (essai du 08/11 sur
+  // le croquis d'Oeil de faucon et sur la figurine des rapaces). Calee sur la mediane, la surface
+  // tombe sur la teinte du metal elle-meme.
+  const histo = new Uint32Array(256); let n = 0;
+  for(let i = 0; i < sd.length; i += 4){
+    if(sd[i+3] < 8) continue;
+    histo[Math.round(rgbToHsl(sd[i], sd[i+1], sd[i+2])[2] * 255)]++; n++;
+  }
+  const quantile = q => { let cumul = 0; for(let v = 0; v < 256; v++){ cumul += histo[v]; if(cumul >= q * n) return v / 255; } return 1; };
+  const bas = quantile(0.10), mediane = quantile(0.50), haut = quantile(0.90);
+  const etendue = haut - bas, moyenne = mediane;
+  const plate = n > 0 && etendue < 0.05;   // image sans relief : on invente une lumiere
+  for(let i = 0; i < sd.length; i += 4){
+    const a = sd[i+3];
+    if(a === 0){ od[i+3] = 0; continue; }
+    const px = (i/4) % w, py = (i/4 / w) | 0, nx = px / w, ny = py / h;
+    const L = rgbToHsl(sd[i], sd[i+1], sd[i+2])[2];
+    let nl = Math.max(0.12, Math.min(0.92, 0.55 + (L - moyenne) / Math.max(etendue, ecart) * 0.70));
+    // Reflet : une bande claire en diagonale et un haut un peu plus eclaire. Deux fois plus fins que
+    // sur les trophees : une medaille remplit toute l'image, et la bande des trophees (18 % de large,
+    // jusqu'a +0,30) blanchissait la moitie du croquis d'Oeil de faucon (essai du 08/11).
+    const bande = reflet ? Math.max(0, 0.10 - Math.abs(nx - (1 - ny))) * 1.5 : 0;
+    const dessus = (1 - ny) * 0.06;
+    if(plate) nl = 0.25 + Math.max(0, Math.min(1, 1 - (nx + ny) * 0.55)) * 0.55 + bande * 0.5;
+    else nl = Math.min(cap, nl + Math.min(0.22, bande + dessus));
+    const [r, g, b] = degrade(courbeS(nl), stops);
+    od[i] = r; od[i+1] = g; od[i+2] = b; od[i+3] = a;
+  }
+  return out;
+}
+
+const $ = id => document.getElementById(id);
+const tiles = $('tiles'), msg = $('msg');
+let source = null; const fichiers = {};
+
+function rendre(){
+  if(!source) return;
+  $('reglages').classList.add('on'); $('controls').classList.add('on');
+  tiles.classList.toggle('sombre', $('sombre').checked);
+  const cv = document.createElement('canvas'); cv.width = source.naturalWidth; cv.height = source.naturalHeight;
+  const cx = cv.getContext('2d'); cx.drawImage(source, 0, 0);
+  const data = cx.getImageData(0, 0, cv.width, cv.height);
+  // Relief : plus il est haut, plus l'ecart de reference est petit, donc plus les ombres et les
+  // lumieres de l'image sont etirees. 50 donne un ecart de 0,30, celui des trophees.
+  const reglage = { cap: $('brillance').value / 100, ecart: (80 - $('contraste').value) / 100, reflet: $('reflet').checked };
+  tiles.innerHTML = '';
+  for(const m of METAUX){
+    const couleur = $(m.input).value;
+    const res = metallise(data, teintes(couleur), reglage);
+    const out = document.createElement('canvas'); out.width = cv.width; out.height = cv.height;
+    out.getContext('2d').putImageData(res, 0, 0);
+    out.toBlob(b => { fichiers[m.key] = b; }, 'image/png');
+    const tile = document.createElement('div'); tile.className = 'tile';
+    tile.innerHTML = `<span class="lbl" style="background:${couleur}">${m.label}</span>`;
+    tile.appendChild(out);
+    const petit = document.createElement('img'); petit.className = 'petit'; petit.alt = 'en petit'; petit.src = out.toDataURL('image/png');
+    tile.appendChild(petit);
+    const lien = document.createElement('a'); lien.href = petit.src; lien.download = m.key + '.png'; lien.textContent = '⬇ ' + m.key + '.png';
+    tile.appendChild(lien);
+    tiles.appendChild(tile);
+  }
+}
+
+let attente = null;
+const rendreBientot = () => { clearTimeout(attente); attente = setTimeout(rendre, 120); };
+['c-or','c-argent','c-bronze','brillance','contraste','reflet','sombre'].forEach(id => $(id).addEventListener('input', () => {
+  $('brillanceVal').textContent = $('brillance').value; $('contrasteVal').textContent = $('contraste').value; rendreBientot();
+}));
+
+function charger(f){
+  msg.innerHTML = '';
+  if(!/^image\/(png|jpeg|webp)$/.test(f.type)){ msg.innerHTML = '<div class="warn">Il faut une image PNG, JPG ou WebP.</div>'; return; }
+  const img = new Image();
+  img.onload = () => { source = img; rendre(); };
+  img.onerror = () => { msg.innerHTML = '<div class="warn">Impossible de lire cette image.</div>'; };
+  img.src = URL.createObjectURL(f);
+}
+const drop = $('drop');
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('dragover'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
+drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('dragover'); const f = e.dataTransfer.files?.[0]; if(f) charger(f); });
+$('file').addEventListener('change', e => { const f = e.target.files?.[0]; if(f) charger(f); });
+$('reset').addEventListener('click', () => { source = null; tiles.innerHTML = ''; $('file').value = ''; $('reglages').classList.remove('on'); $('controls').classList.remove('on'); });
+$('downloadAll').addEventListener('click', async () => {
+  const brut = window.prompt('Nom de la médaille (le dossier) ?', 'oeil-de-faucon');
+  if(brut === null) return;
+  const nom = (brut.trim() || 'medaille').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w-]+/g, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'medaille';
+  const zip = new JSZip(); const dos = zip.folder(nom);
+  for(const m of METAUX) if(fichiers[m.key]) dos.file(m.key + '.png', fichiers[m.key]);
+  const blob = await zip.generateAsync({ type:'blob' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nom + '.zip'; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
+</script>
+</body>
+</html>
