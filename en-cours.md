@@ -399,7 +399,7 @@ la page). Captures : `notes-privees/chantier-telephone/pages/` (outils/verif/_ca
 **v1016 (08/11) EN LIGNE**, choix de Mathis : Ma liste A (carré teinté des icônes GARDÉ, il l'a demandé), Classement A
 mais « Qui a vu quoi » en TABLEAU comme à l'ordinateur (pas les cartes), Trophées A, Carte B, Tchat A
 (_chatEnBas). Essai : outils/verif/_essai-pages-tel.mjs. **v1017** : Birdydex C (3 colonnes même à 360 px, nom 14 px, sans latin ni numéro). Chantier téléphone 3b FINI ;
-reste seulement ce que Mathis verra sur son iPhone (clavier, barre Safari, appli installée).
+iPhone (clavier, barre Safari, appli installée) : bon pour Mathis le 11/11 (« c bon »). Plus rien d'ouvert.
 Déjà fait au téléphone, à ne pas défaire : Carte sans tiroir, panneau dessous (v1006) ; carte en `svh`
 (v1009) ; ronds de rareté à 24 px (v1006) ; bloc `@media (pointer: coarse)` en fin de styles.css.
 
