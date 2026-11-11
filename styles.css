@@ -1267,15 +1267,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .gif-pop-inner { position:absolute; left:50%; bottom:18px; transform:translateX(-50%);
     background:var(--surface); border:1px solid var(--line-2); border-radius:16px; padding:12px;
     width:min(420px, 92vw); max-height:70vh; display:flex; flex-direction:column; box-shadow:0 12px 40px rgba(0,0,0,.3); }
-  body:has(#viewChat.fab-open) .gif-pop .gif-pop-inner,
-  body:has(#viewPhotos.fab-open) .gif-pop .gif-pop-inner,
-  body:has(#viewFeed.fab-open) .gif-pop .gif-pop-inner {
+  html.fab-ouvert .gif-pop .gif-pop-inner {
     left:auto; right:20px; bottom:170px; transform:none;
   }
   @media (max-width:600px){
-    body:has(#viewChat.fab-open) .gif-pop .gif-pop-inner,
-    body:has(#viewPhotos.fab-open) .gif-pop .gif-pop-inner,
-    body:has(#viewFeed.fab-open) .gif-pop .gif-pop-inner {
+    html.fab-ouvert .gif-pop .gif-pop-inner {
       right:10px; left:10px; bottom:150px; width:auto;
     }
   }
@@ -3129,15 +3125,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     font:600 14px var(--sans); color:var(--ink-3); padding:12px 2px 6px; }
   /* Quand le chat/photos/feed FAB est ouvert, positionner le picker emoji aligne avec
      le panneau flottant (au-dessus du compose form), pas centre au milieu de l'ecran. */
-  body:has(#viewChat.fab-open) .emoji-pop .emoji-pop-inner,
-  body:has(#viewPhotos.fab-open) .emoji-pop .emoji-pop-inner,
-  body:has(#viewFeed.fab-open) .emoji-pop .emoji-pop-inner {
+  html.fab-ouvert .emoji-pop .emoji-pop-inner {
     left:auto; right:20px; bottom:170px; transform:none;
   }
   @media (max-width:600px){
-    body:has(#viewChat.fab-open) .emoji-pop .emoji-pop-inner,
-    body:has(#viewPhotos.fab-open) .emoji-pop .emoji-pop-inner,
-    body:has(#viewFeed.fab-open) .emoji-pop .emoji-pop-inner {
+    html.fab-ouvert .emoji-pop .emoji-pop-inner {
       right:10px; left:10px; bottom:150px;
     }
   }
@@ -3200,7 +3192,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .photo-del { margin-top:12px; width:34px; height:34px; display:grid; place-items:center; color:var(--ink-3); background:none; border:1px solid var(--line-2); border-radius:8px; padding:0; cursor:pointer; }
   .photo-del svg { width:19px; height:19px; }
   .photo-del:hover { color:#c0392b; }
-  body:has(#photoFiche) .emoji-pop { z-index:2147483001; }
+  /* html.fab-ouvert, .photo-fiche-ouverte, .saisie-ouverte : poses par app.js au moment ou l'etat change. Ils
+     remplacent des body:has(...) qui faisaient refouiller toute la page a chaque modification : 12 ms par
+     modification a l'ordinateur, 26 ms au telephone avec le Birdydex du Monde affiche, 1,3 et 0,2 ms sans
+     (outils/verif/_diag-blocs.mjs, 2026-11-11). */
+  html.photo-fiche-ouverte .emoji-pop { z-index:2147483001; }
 
   /* trophées */
   .who-select { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
@@ -3611,6 +3607,17 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      a huit. 150 se tient au milieu, donc une fenetre un peu plus large ou plus etroite ne
      fait pas sauter la rangee d'un cran. */
   .pkdx-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:10px; margin-top:6px; }
+  /* La grille du Birdydex se pose en blocs (app.js, _pkdxPoser, 2026-11-11) : chacun est sa propre grille et
+     reprend les colonnes et l'ecart de #pkdxGrid (inherit, telephone compris) ; #pkdxGrid les empile avec le
+     meme ecart. content-visibility : un bloc loin de l'ecran n'est pas mis en page - le Monde (10 922 cases)
+     gelait l'ecran 1,3 s. Un titre qui ouvre un bloc garde la marge qu'il aurait eue dans la grille d'un seul tenant. */
+  #pkdxGrid.pkdx-grid { display:flex; flex-direction:column; }
+  .pkdx-tranche { display:grid; grid-template-columns:inherit; gap:inherit; content-visibility:auto; contain-intrinsic-size:auto 600px;
+    /* content-visibility rogne ce qui deborde du bloc : l'ombre et le soulevement d'une case survolee au bord.
+       20 px de rembourrage, rendus par une marge negative : la mise en page ne bouge pas d'un pixel. */
+    padding:20px; margin:-20px; }
+  .pkdx-tranche + .pkdx-tranche > .pkdx-groupe:first-child { margin-top:18px; }
+  .pkdx-tranche + .pkdx-tranche > .pkdx-ordre:first-child { margin-top:30px; }
   .pkdx-card {
     /* Virtualisation native : le navigateur skip completement le rendu (layout, paint,
        style) des cards hors ecran. 597 cards mais seules ~30 sont reellement rendues.
@@ -4403,7 +4410,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
     .xa-hdr-link { margin-left:auto; }
     .xa-hdr-meta { order:9; flex:1 1 100%; white-space:normal; overflow:visible; }
     /* Le clavier ouvert : la barre remonterait au-dessus de lui et prendrait la place du champ. */
-    body:has(:is(input:not([type=checkbox], [type=radio], [type=range]), textarea, select):focus) .barre-bas { display:none; }
+    html.saisie-ouverte .barre-bas { display:none; }
     /* iOS agrandit la page sur un champ de moins de 16 px, et ne la remet pas après. */
     input:not([type=checkbox], [type=radio], [type=range]), textarea, select { font-size:16px !important; }
 

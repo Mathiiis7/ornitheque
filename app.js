@@ -1087,6 +1087,9 @@ let _ficheContinentVoulu = '';
 // choix n'est jamais enregistre ni ecrit dans _pkdxFilters.country ou le pays du site : la Carte et les autres
 // onglets lisent un pays, et « Europe » les casserait.
 let _pkdxContinent = '';
+// Le remplissage par paquets de la grille (_pkdxPoser) : declare ici, avant tout rendu possible.
+let _pkdxIO = null, _pkdxJeton = 0, _pkdxEnCours = null, _pkdxOrdre = [];
+const _pkdxQuandRempliAttente = [];
 // Sa liste : data/birdydex-continents/<continent>.json, calcule d'avance par outils/build/birdydex-continents.mjs
 // avec les fonctions de _rareteEtendue (recoupees, zero palier different). { sci: [valeur annuelle, drapeaux,
 // "NPX"] } ; drapeaux 1 = reguliere quelque part, 2 = saisonniere, 4 = exotique partout ou elle vit. Monde :
@@ -2207,11 +2210,19 @@ const _isSciAliasSource = sci => !!(SCI_ALIAS[sci] && FR_NAMES[SCI_ALIAS[sci]]);
 // est le point d'entree utilise par les filtres "manquantes" : quand ebFilter.showObserved
 // est active, _mineHas retourne false pour tous, ce qui inclut les especes deja observees
 // dans les resultats "a cocher".
+// Les anciens noms de chaque nom actuel, lus une fois : parcourir tout SCI_ALIAS pour chaque espece non vue
+// coutait 152 ms au Birdydex du Monde (2026-11-11). SCI_ALIAS n'est jamais modifie.
+let _anciensNoms = null;
 function _mineHasStrict(mine, sci){
   const k = (sci||'').trim().toLowerCase();
   if(mine.has(k)) return true;
   if(SCI_ALIAS[k] && mine.has(SCI_ALIAS[k])) return true;
-  for(const [old, canon] of Object.entries(SCI_ALIAS)){ if(canon === k && mine.has(old)) return true; }
+  if(!_anciensNoms){
+    _anciensNoms = new Map();
+    for(const [old, canon] of Object.entries(SCI_ALIAS)){ if(!_anciensNoms.has(canon)) _anciensNoms.set(canon, []); _anciensNoms.get(canon).push(old); }
+  }
+  const anciens = _anciensNoms.get(k);
+  if(anciens) for(const old of anciens){ if(mine.has(old)) return true; }
   return false;
 }
 function _mineHas(mine, sci){
@@ -7773,7 +7784,7 @@ let _fichePhotoId = null;
 function _ouvrirFichePhoto(id){
   const ph = photos.find(p => p.id === id);
   let fond = document.getElementById('photoFiche');
-  if(!ph){ if(fond) fond.remove(); _fichePhotoId = null; return; }
+  if(!ph){ if(fond) fond.remove(); document.documentElement.classList.remove('photo-fiche-ouverte'); _fichePhotoId = null; return; }
   const target = 'photo:'+id;
   if(!fond){
     fond = document.createElement('div');
@@ -7783,6 +7794,8 @@ function _ouvrirFichePhoto(id){
       _clicPhoto(e);
     });
     document.body.appendChild(fond);
+    // Pour la CSS de la fenetre d'emoji (html.photo-fiche-ouverte) : un body:has(#photoFiche) refouillait la page.
+    document.documentElement.classList.add('photo-fiche-ouverte');
   }
   _fichePhotoId = id;
   const nm = realPeople.find(p => p.id === ph.uid)?.name || ph.name || 'Invité';
@@ -7799,7 +7812,7 @@ function _ouvrirFichePhoto(id){
   const n = fond.querySelector('.cmt-input');
   if(n){ n.value = texte; if(focus) n.focus(); }
 }
-function _fermerFichePhoto(){ document.getElementById('photoFiche')?.remove(); _fichePhotoId = null; }
+function _fermerFichePhoto(){ document.getElementById('photoFiche')?.remove(); document.documentElement.classList.remove('photo-fiche-ouverte'); _fichePhotoId = null; }
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && _fichePhotoId && !document.querySelector('.emoji-pop.open')) _fermerFichePhoto(); });
 // ---- Fil des observations ----
 let feedMode = 'new';       // 'new' = tri par addedAt (par défaut), 'chrono' = tri par date d'obs
@@ -15297,6 +15310,8 @@ function _toggleFabPanel(view, fabBtn){
   // d'ecran, la CSS du panneau en pixels CSS : on divise par le zoom de body (0,85).
   _placeFabPanel(target, fabBtn);
   target.classList.add('fab-open');
+  // Pour la CSS des fenetres d'emoji et de GIF (html.fab-ouvert) : un body:has() refouillait toute la page.
+  document.documentElement.classList.add('fab-ouvert');
   const bd = document.getElementById('fabBackdrop'); if(bd) bd.hidden = false;
   document.querySelectorAll('#fabStack button').forEach(b => b.classList.remove('fab-active'));
   if(fabBtn) fabBtn.classList.add('fab-active');
@@ -15331,6 +15346,7 @@ addEventListener('resize', () => {
 });
 function _closeFabPanel(){
   document.querySelectorAll('#viewChat, #viewPhotos, #viewFeed').forEach(el => el.classList.remove('fab-open'));
+  document.documentElement.classList.remove('fab-ouvert');
   document.querySelectorAll('#fabStack button').forEach(b => b.classList.remove('fab-active'));
   const bd = document.getElementById('fabBackdrop'); if(bd) bd.hidden = true;
 }
@@ -15362,6 +15378,16 @@ let _clicMenu = false;
 // moins, la rangée d'onglets laisse place à une barre en bas (Classement, Birdydex, Carte, Quiz, Plus).
 // Le même point de rupture que la CSS (bloc « Le téléphone » de styles.css). Le téléphone couché en fait partie
 // (500 px de haut au plus, au doigt : 2026-11-08) ; sa barre devient un bandeau fin en haut (CSS seule).
+// Un champ de saisie a le curseur (le clavier du telephone est ouvert) : la barre du bas se cache
+// (html.saisie-ouverte, styles.css). C'etait un body:has(...:focus), qui refouillait toute la page a chaque
+// modification : 26 ms par modification au telephone avec le Birdydex du Monde (2026-11-11).
+const _majSaisie = () => {
+  const el = document.activeElement;
+  const champ = !!(el && el.matches && el.matches('input:not([type=checkbox], [type=radio], [type=range]), textarea, select'));
+  document.documentElement.classList.toggle('saisie-ouverte', champ);
+};
+document.addEventListener('focusin', _majSaisie);
+document.addEventListener('focusout', () => setTimeout(_majSaisie, 0));
 const _telBarre = window.matchMedia('(max-width:700px), (max-height:500px) and (orientation:landscape) and (pointer:coarse)');
 // Les pages de la barre ; tout le reste se range dans Plus, qui s'allume quand l'une d'elles est ouverte.
 const BARRE_VUES = ['ranking', 'pokedex', 'map', 'quiz'];
@@ -23622,6 +23648,7 @@ function _pkdxRender(){
   const listeCont = cont ? _pkdxContinents[cont] : null;
   if(cont && !listeCont){
     // Jamais « 0 espèce » pendant l'attente : la grille dit qu'elle charge, puis se redessine.
+    _pkdxPoser(grid, [], null);
     grid.innerHTML = '<div class="help" style="grid-column:1/-1; padding:16px 0;">Chargement des espèces '
       + esc(cont === 'Monde' ? 'du monde' : 'de ' + cont) + '…</div>';
     empty.style.display = 'none';
@@ -23861,7 +23888,7 @@ function _pkdxRender(){
   // Apres le filtre par zone : « filtré : N » se calculait avant, et annoncait en Vendee les
   // especes de toute la France que la grille ne montrait pas (Mathis, 2026-10-23).
   if(counter) counter.innerHTML = `<strong>${totalOwned}</strong> espèces vues sur ${totalFR}${rows.length !== totalFR ? ` · filtré : ${rows.length}` : ''}`;
-  if(!rows.length){ grid.innerHTML = ''; empty.style.display = ''; return; }
+  if(!rows.length){ _pkdxPoser(grid, [], null); empty.style.display = ''; return; }
   empty.style.display = 'none';
   const tri = _pkdxFilters.sort || 'famille';
   if(tri === 'rarete'){
@@ -23876,7 +23903,8 @@ function _pkdxRender(){
     + rows.map(r => r.sci + (r.owned ? (dec.has(r.sci) ? '2' : '1') : '0')).join(',');
   // On compte les cartes et non les enfants : les titres de famille ou de milieu en sont
   // aussi, et comparer les enfants refaisait la grille entiere a chaque passage.
-  if(rowsHash === _pkdxLastRowsHash && grid.querySelectorAll(':scope > .pkdx-card').length === rows.length){
+  if(rowsHash === _pkdxLastRowsHash && _pkdxEnCours === rowsHash) return;   // la meme grille se remplit encore
+  if(rowsHash === _pkdxLastRowsHash && grid.querySelectorAll('.pkdx-card').length === rows.length){
     _jouerRevelations();
     return;   // DOM deja a jour
   }
@@ -23939,13 +23967,15 @@ function _pkdxRender(){
       ${r.saison ? `<span class="pkdx-saison" data-tip="Espèce nettement saisonnière : elle déserte une bonne partie de l'année. Viser le bon mois change tout.">◑</span>` : ''}
       ${cats.length ? `<span class="pkdx-exos">${exoChips}</span>` : ''}
       <span class="pkdx-tier" style="background:${fondBadge};"${infoPastille ? ` data-tip="${infoPastille}"` : ''}>${badgeText}</span>
-      <div class="pkdx-img"${photoConnue ? '' : ` data-pkdx-lazy="${esc(r.sci)}"`}>${photoConnue
+      <div class="pkdx-img"${photoConnue || !r.owned ? '' : ` data-pkdx-lazy="${esc(r.sci)}"`}>${photoConnue
         ? _imgVignette(photoConnue, r.nm)
         : (r.owned ? '🐦' : '')}</div>
       <div class="pkdx-name">${esc(r.nm)}</div>
       <div class="pkdx-sci">${esc(latinAff(r.sci))}</div>
     </div>`;
   };
+  // Titres (HTML) et cases (lignes, dessinees au moment d'etre posees), dans l'ordre de la grille.
+  const morceaux = [];
   if(tri === 'habitat'){
     // Une espece vit souvent dans deux milieux : elle apparait sous chacun, comme le filtre
     // par milieu la retient pour chacun. Sa case est la meme, son numero aussi.
@@ -23962,13 +23992,12 @@ function _pkdxRender(){
       const ia = ordre.indexOf(a), ib = ordre.indexOf(b);
       return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib);
     });
-    grid.innerHTML = cles.map(h => {
+    for(const h of cles){
       const titre = h ? ((typeof HABITAT_LABELS === 'object' && HABITAT_LABELS[h]) || h) : 'Milieu inconnu';
       const lot = parMilieu.get(h);
-      return '<div class="pkdx-groupe">' + esc(titre)
-        + ' <span class="pkdx-groupe-n">' + lot.length + '</span></div>'
-        + lot.map(carte).join('');
-    }).join('');
+      morceaux.push('<div class="pkdx-groupe">' + esc(titre)
+        + ' <span class="pkdx-groupe-n">' + lot.length + '</span></div>', ...lot);
+    }
   } else if(tri === 'famille'){
     // Un titre par famille, avec ce qu'on en a vu : « Canards, oies et cygnes · 18 sur 20 ».
     // Les lignes arrivent deja dans l'ordre des familles (_pkdxAllSorted), on coupe donc a
@@ -23994,7 +24023,7 @@ function _pkdxRender(){
     // Il etait colle au bord droit, loin du nom qu'il traduit (Mathis, 2026-10-22).
     const sansAccent = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
     let ordrePrec = null;
-    grid.innerHTML = lots.map(l => {
+    for(const l of lots){
       const o = ordreDe(l);
       let titreOrdre = '';
       if(o && o !== ordrePrec){
@@ -24006,16 +24035,13 @@ function _pkdxRender(){
       const sci = (FAMILLE_INFO[l.fam] || [])[1];
       const savant = sci && sansAccent(sci) !== sansAccent(l.fam)
         ? ' <span class="pkdx-groupe-n">·</span> <span class="pkdx-groupe-sci">' + esc(latinAff(sci)) + '</span>' : '';
-      return titreOrdre + '<div class="pkdx-groupe pkdx-groupe-fam"><span>' + esc(l.fam) + savant
-      + ' <span class="pkdx-groupe-n">· ' + l.rows.filter(r => r.owned).length + ' sur ' + l.rows.length + '</span></span></div>'
-      + l.rows.map(carte).join('');
-    }).join('');
+      morceaux.push(titreOrdre + '<div class="pkdx-groupe pkdx-groupe-fam"><span>' + esc(l.fam) + savant
+      + ' <span class="pkdx-groupe-n">· ' + l.rows.filter(r => r.owned).length + ' sur ' + l.rows.length + '</span></span></div>', ...l.rows);
+    }
   } else {
-    grid.innerHTML = rows.map(carte).join('');
+    morceaux.push(...rows);
   }
-  // Lazy loading photos via IntersectionObserver.
-  _pkdxLazyPhotos();
-  _jouerRevelations();
+  _pkdxPoser(grid, morceaux, carte, rowsHash);
 }
 // Photo deja connue, lue sans attendre : on la pose directement dans le HTML de la carte.
 // Sans ca, chaque re-rendu de la grille - cocher un filtre, changer de tri - repassait par
@@ -24071,10 +24097,103 @@ addEventListener('scroll', () => {
   clearTimeout(_pkdxDefileMinuteur);
   _pkdxDefileMinuteur = setTimeout(() => g.classList.remove('defile'), 150);
 }, { passive: true, capture: true });
-function _pkdxLazyPhotos(){
-  const els = document.querySelectorAll('#pkdxGrid .pkdx-img[data-pkdx-lazy]');
+// Poser la grille en BLOCS (2026-11-11, Mathis : « allège ») : chaque bloc est sa propre grille, fait de familles
+// entieres, et le navigateur ne met en page que les blocs proches de l'ecran (content-visibility, styles.css).
+// Le Monde (10 922 cases) gelait l'ecran 1,3 s a l'ordinateur et pres de 10 s au telephone ralenti 4 fois
+// (_mesure-birdydex-monde.mjs) : une seule grille, mise en page d'un bloc. L'ajouter par paquets dans CETTE
+// grille etait pire (40 s pour la completer) : chaque paquet faisait remettre en page toutes les cases d'avant.
+// Un bloc commence sur un titre, ou sur une rangee pleine dans une longue suite sans titre (tri par rarete) :
+// la coupure ne se voit pas. morceaux : titres (HTML) et lignes (dessinees par carte(r) au moment d'etre posees).
+// Cases par bloc, environ : assez pour remplir l'ecran avec le premier, assez peu pour mettre un bloc en page vite.
+const _PKDX_BLOC = 150;
+// Le temps de travail vise par image pour poser les blocs suivants (hors de l'ecran, ils ne coutent que leur HTML).
+const _PKDX_IMAGE_MS = 8;
+let _pkdxCols = 0, _pkdxCoupeRangs = false, _pkdxRO = null;
+// Promesse tenue quand la grille est complete : ce qui cherche une case (centrer une case a decouvrir) l'attend.
+function _pkdxQuandRempli(){
+  return _pkdxEnCours ? new Promise(r => _pkdxQuandRempliAttente.push(r)) : Promise.resolve();
+}
+// Le nombre de colonnes d'un bloc, lu sur le navigateur (repeat(auto-fill) depend de la largeur et de l'ecran).
+function _pkdxColonnes(grid){
+  const sonde = document.createElement('div');
+  sonde.className = 'pkdx-tranche';
+  grid.appendChild(sonde);
+  const n = getComputedStyle(sonde).gridTemplateColumns.split(' ').filter(Boolean).length || 1;
+  sonde.remove();
+  return n;
+}
+function _pkdxPoser(grid, morceaux, carte, hash){
+  const jeton = ++_pkdxJeton;
+  if(_pkdxIO){ _pkdxIO.disconnect(); _pkdxIO = null; }
+  // L'ordre des cases, pour les fleches de la fiche : il ne doit pas attendre que la grille soit complete.
+  _pkdxOrdre = morceaux.filter(m => typeof m !== 'string').map(r => r.sci);
+  const fini = () => {
+    _pkdxEnCours = null;
+    grid.dataset.rempli = '1';   // pour les bancs : la grille est complete
+    _pkdxQuandRempliAttente.splice(0).forEach(r => r());
+    _jouerRevelations();
+  };
+  grid.innerHTML = '';
+  if(!morceaux.length){ fini(); return; }
+  const cols = _pkdxCols = _pkdxColonnes(grid);
+  // Une largeur qui change le nombre de colonnes decale les coupures faites sur une rangee pleine : on redessine.
+  if(!_pkdxRO && 'ResizeObserver' in window){
+    _pkdxRO = new ResizeObserver(() => {
+      if(!_pkdxCoupeRangs || !grid.isConnected || !grid.getClientRects().length) return;
+      if(_pkdxColonnes(grid) !== _pkdxCols){ _pkdxLastRowsHash = null; _pkdxRender(); }
+    });
+    _pkdxRO.observe(grid);
+  }
+  // Decoupe en blocs : [debut, fin, rangees estimees, titres].
+  const blocs = [];
+  let debut = 0, cases = 0, suite = 0, rangs = 0, titres = 0;
+  _pkdxCoupeRangs = false;
+  for(let k = 0; k < morceaux.length; k++){
+    const titre = typeof morceaux[k] === 'string';
+    const coupeTitre = titre && cases >= _PKDX_BLOC;
+    const coupeRang = !titre && cases >= _PKDX_BLOC * 2 && suite % cols === 0;
+    if(k > debut && (coupeTitre || coupeRang)){
+      if(coupeRang) _pkdxCoupeRangs = true;
+      blocs.push([debut, k, rangs, titres]);
+      debut = k; cases = 0; rangs = 0; titres = 0;
+    }
+    // Une rangee de plus a chaque case qui en ouvre une (la premiere apres un titre, puis toutes les cols).
+    if(titre){ suite = 0; titres++; }
+    else { if(suite % cols === 0) rangs++; cases++; suite++; }
+  }
+  blocs.push([debut, morceaux.length, rangs, titres]);
+  // Hauteur d'une rangee, pour reserver la place des blocs pas encore mis en page (la barre de defilement
+  // garde sa longueur) ; « auto » garde ensuite la vraie hauteur, une fois le bloc vu.
+  let hRang = 0;
+  const html = (a, b) => { let s = ''; for(let k = a; k < b; k++){ const m = morceaux[k]; s += typeof m === 'string' ? m : carte(m); } return s; };
+  const poser = ([a, b, nRangs, nTitres]) => {
+    const est = hRang ? Math.round(nRangs * hRang + nTitres * 48) : 0;
+    grid.insertAdjacentHTML('beforeend', '<div class="pkdx-tranche"' + (est ? ' style="contain-intrinsic-size:auto ' + est + 'px"' : '') + '>' + html(a, b) + '</div>');
+    _pkdxLazyPhotos(grid.lastElementChild);
+  };
+  poser(blocs[0]);
+  if(blocs.length === 1){ fini(); return; }
+  { const c = grid.querySelector('.pkdx-card'); const g = parseFloat(getComputedStyle(grid.firstElementChild).rowGap) || 10;
+    hRang = (c ? c.offsetHeight : 200) + g; }
+  _pkdxEnCours = hash || '?';
+  grid.dataset.rempli = '0';
+  let n = 1;
+  const suivants = () => {
+    if(jeton !== _pkdxJeton || !grid.isConnected) return;
+    const t0 = performance.now();
+    while(n < blocs.length && (performance.now() - t0) < _PKDX_IMAGE_MS) poser(blocs[n++]);
+    if(n < blocs.length) requestAnimationFrame(suivants); else fini();
+  };
+  requestAnimationFrame(suivants);
+}
+function _pkdxLazyPhotos(racine){
+  const els = Array.isArray(racine) ? racine : racine ? racine.querySelectorAll('.pkdx-img[data-pkdx-lazy]')
+    : document.querySelectorAll('#pkdxGrid .pkdx-img[data-pkdx-lazy]');
   if(!els.length || !('IntersectionObserver' in window)) return;
-  const io = new IntersectionObserver(entries => {
+  // Un seul guetteur pour la grille, arrete par _pkdxPoser a chaque nouvelle grille. Il en naissait un par
+  // rendu, jamais arrete, qui gardait toutes les cases d'avant : apres le Monde, 10 922 cases disparues
+  // surveillees a chaque image, et la France mettait 366 ms a se dessiner au lieu de ~100 (2026-11-11).
+  const io = _pkdxIO ||= new IntersectionObserver(entries => {
     for(const e of entries){
       if(!e.isIntersecting) continue;
       const el = e.target;
@@ -24292,6 +24411,9 @@ function _centrerCase(el){
 // la fin de chaque rendu de la grille, a la fermeture de la fiche et de la carte.
 function _jouerRevelations(){
   if(!_revelationsEnAttente.size || !_vueBirdydex()) return;
+  // Grille en cours de remplissage : _pkdxPoser rappelle a la fin. Sinon une case pas encore posee passait
+  // pour ecartee par un filtre, et sa revelation etait perdue.
+  if(_pkdxEnCours) return;
   if(!$('#speciesModal')?.hidden || $('#debloqueDialog')?.open) return;
   const grid = $('#pkdxGrid'); if(!grid) return;
   const cartes = [];
@@ -24378,7 +24500,7 @@ $('#decouvrirVoir')?.addEventListener('click', () => {
   $('#decouvrirDialog').close();
   document.querySelector('.tab[data-view="pokedex"]')?.click();
   // La grille se dessine juste apres le changement d'onglet.
-  setTimeout(() => _centrerCase(document.querySelector('#pkdxGrid .pkdx-card.a-decouvrir')), 300);
+  setTimeout(() => _pkdxQuandRempli().then(() => _centrerCase(document.querySelector('#pkdxGrid .pkdx-card.a-decouvrir'))), 300);
 });
 // ---- Trophees a decouvrir ----
 // Gagne, un trophee attend : sa case reste sur le palier d'avant, et sa scene se joue d'elle-meme
@@ -24595,7 +24717,7 @@ document.addEventListener('click', e => {
   // Pool de navigation : toutes les cartes du Pokedex dans l'ordre affiche
   // (respecte les filtres actifs). Les fleches prev/next de la fiche circuleront
   // dans cet ordre.
-  const siblings = [...document.querySelectorAll('#pkdxGrid .pkdx-card[data-sci]')].map(c => c.dataset.sci);
+  const siblings = _pkdxOrdre.length ? _pkdxOrdre.slice() : [...document.querySelectorAll('#pkdxGrid .pkdx-card[data-sci]')].map(c => c.dataset.sci);
   setSpeciesNavPool(siblings, card.dataset.sci);
   // La fiche s'ouvre a l'echelle ou la grille etait lue : meme pays, meme zone. Sans ca on
   // cliquait une espece vue « palier 1 en Camargue » pour tomber sur son palier national.

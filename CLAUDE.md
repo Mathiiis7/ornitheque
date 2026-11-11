@@ -243,6 +243,13 @@ blanche, cases repeintes par morceaux. Le remède est `border-collapse:separate;
 avec des bordures droite et basse sur chaque case (2026-10-22). Et une fenêtre de test réduite
 par `resize_window` peut montrer des traits fantômes : juger le rendu à taille réelle.
 
+**Jamais de `body:has(...)` ni `html:has(...)` dans la CSS.** Chaque modification de la page oblige alors le
+navigateur à re-fouiller toute la page : avec le Birdydex du Monde (10 922 cases), 12 ms par modification à
+l'ordinateur, 26 au téléphone, et 0,2 sans (2026-11-11, `outils/verif/_diag-blocs.mjs`). Poser plutôt une classe
+sur `<html>` depuis app.js quand l'état change (`fab-ouvert`, `photo-fiche-ouverte`, `saisie-ouverte`). Un `:has()`
+sur un petit élément (`.btn:has(...)`) ne coûte rien. Et une grosse grille se pose en blocs (`_pkdxPoser`) :
+l'ajouter par paquets dans UNE grille fait remettre en page toutes les cases d'avant à chaque paquet (40 s).
+
 **`:where()` ne compte pour rien dans la spécificité.** Deux règles à spécificité égale : la
 dernière écrite gagne. Un `cursor:help` écrit à la main plus bas dans le fichier annulait la
 règle générale du curseur dessiné.
