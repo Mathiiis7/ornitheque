@@ -25,7 +25,7 @@ exclusives, dans les Exploits). Corvidés, flamant, rollier + guêpier ABANDONN�
 - **v1087 (11/11, 89582f30)** : scène du zoom posée dès le clic (écran vide pendant le téléchargement en ligne) ;
   Birdydex : vignettes en srcset (240/250 px) + decoding async, pas de survol pendant le défilement. Mesures :
   `outils/verif/_mesure-defilement-birdydex.mjs [port] [ralenti] [ordi|tel]`, `_trace-defilement-birdydex.mjs`.
-  Reste : le tramage des cases qui entrent à l écran (2,4 s sur 4 s en navigateur invisible, sans carte graphique).
+  Défilement validé par Mathis le 11/11 au soir (voir v1091) : plus rien à faire.
 
 - **v1085 (11/11, f6a52d86)** : clic de zone réparé (cassé depuis v1078, tous pays) ; zones sans liste eBird
   hachurées (`listes_zones.json`, `outils/build/listes-par-zone.mjs`) ; zoom en couches CSS. Mesure :
@@ -175,7 +175,7 @@ exclusives, dans les Exploits). Corvidés, flamant, rollier + guêpier ABANDONN�
 
 - **v1049 (08/11, conversation de l'arbre)** : plus de point à la racine des familles d'un ordre (la phrase de
   l'ordre le dit déjà, choix de Mathis) ; traits ajoutés aux phrases des Martinets et colibris et des Chouettes.
-  Reste 8 points à trait, 156 ADN. `data/arbre.json?v=20261108f`.
+  `data/arbre.json?v=20261108f`. (Arbre déclaré fini par Mathis le 08/11 : rien à poser.)
 
 - **10/11, v1059 (06d3b716)** : Écologue 100 « Apprenti ornithologue », nouvelle image du kimono, kimono après Bourriche.
   **Palmarès : codé en partie par sa conversation (fermée), NON commité, dans le dossier de travail** (app.js :
@@ -314,7 +314,7 @@ exclusives, dans les Exploits). Corvidés, flamant, rollier + guêpier ABANDONN�
   ligne ; X/P/N à 19 px (plus petits que les chiffres, 24). Essais : _essai-classement-tel.mjs, _essai-filtres-qui.mjs.
 - **v1018** : la pastille de version des admins (#adminBuildStamp) cachée au téléphone, gardée à l'ordinateur.
 
-## NOUVEAU CHANTIER (demandé le 08/11) : l'arbre de l'évolution des oiseaux
+## CHANTIER FINI (demandé et clos le 08/11) : l'arbre de l'évolution des oiseaux
 Une page « arbre phylogénétique » : d'où vient chaque famille, ce qui la distingue, quels oiseaux
 elle contient, **monde entier**. Choix de Mathis : « purement scientifique », grands groupes au-dessus
 des ordres, **une phrase par branche** (sourcée), grands groupes et ordres d'abord (~60 phrases), les
@@ -371,10 +371,9 @@ familles ensuite par lots relus.
   **Phrases des 45 ordres écrites** (`notes-privees/maquettes/arbre/phrases-ordres.json`, relecture dans
   `notes-privees/arbre/PHRASES-ORDRES.md`), tirées de l'intro Wikipedia EN de chaque ordre (`_wiki-ordres.mjs`,
   textes dans `notes-privees/arbre/wiki-ordres/`), reformulées ; affichées au clic sur un ordre dans la maquette D.
-  Reste : relecture des phrases par Mathis ; puis décider la suite (phrases des 250 familles par lots ? construire
-  la vraie page dans le site : données dans `data/arbre-*.json`, page dans « Plus », clair/sombre, crédits PhyloPic).
+  Suite faite : phrases relues, familles écrites et validées (v1041), page en ligne (v1040). Chantier FINI le 08/11.
 
-## CHANTIER EN COURS DANS UNE AUTRE CONVERSATION (demandé le 07/11) : le site au téléphone
+## CHANTIER FINI (07/11 au 08/11, v1015 à v1017) : le site au téléphone
 Mathis trouve l'affichage téléphone « pas adapté et pas très utilisable », sur **tout le site**. Ce qui
 gêne, ses trois réponses : **trop d'infos à l'écran** (serré, on ne sait pas où regarder, beaucoup de
 défilement), **des choses coupées** (textes tronqués, tableaux qui débordent, éléments hors écran), et
@@ -393,11 +392,8 @@ Profil, Requêtes, À propos, guide, thème, déconnexion ; ses pastilles additi
 100 % (zoom 1 sous 700 px), pages à plat. Barre du bas + page Plus, Fil/Photos/Tchat en pages, guide redirigé,
 ronds recentrés au doigt (banc pastilles), ordinateur identique au pixel (_ref-ordi.mjs, bruit des photos et
 tuiles mis à part). Essai : outils/verif/_essai-barre-tel.mjs (390/360, clair/sombre). À faire vérifier par
-Mathis sur iPhone : clavier (barre cachée, pas de zoom), barre Safari, appli installée. Reste 3b, page par
-page : tableau du Classement (défile de côté, « Qui a vu quoi » 40 écrans), grille du Birdydex, cartes des
-Trophées, liste de Ma liste dans sa boîte, boutons de couche de la Carte sur 2 lignes, boîte du Tchat.
-Toujours pas de réponse sur ce qu'il a vu COUPÉ sur son iPhone.
-**3b (08/11)** : maquette de toutes les pages d'un coup, à faire choisir : `notes-privees/maquettes/telephone-pages/`
+Mathis sur iPhone : clavier (barre cachée, pas de zoom), barre Safari, appli installée.
+**3b (08/11)** : maquette de toutes les pages d'un coup, choisie par Mathis : `notes-privees/maquettes/telephone-pages/`
 (Ma liste A/B, Classement A/B, Birdydex A/B/C, Trophées A/B, Carte A/B, Tchat A/B ; CSS de chaque version dans
 la page). Captures : `notes-privees/chantier-telephone/pages/` (outils/verif/_capture-maquette-pages.mjs).
 **v1016 (08/11) EN LIGNE**, choix de Mathis : Ma liste A (carré teinté des icônes GARDÉ, il l'a demandé), Classement A
