@@ -1386,14 +1386,18 @@ function _openCountryPicker(currentCode, opts = {}){
         const r = rarContCache.get(nom);
         if(!r) return '';
         const v = moisLu == null ? r.an : r.m12[moisLu];
-        if(!(v > 0)) return '<span class="cp-cont-rar"><span class="reg-picker-val">absente</span>' + tierChip('–', 'var(--line-2)', { cls: 'tier-rond' }) + '</span>';
-        const t = annualFreqToTier(v);
+        // Les memes trois colonnes que la ligne d'un pays (pourcentage, barre, pastille), au meme bord droit :
+        // le chiffre du continent se lit dans la colonne de ceux de ses pays (Mathis, 2026-11-11).
+        if(!(v > 0)) return '<span class="cp-cont-rar"><span class="reg-picker-val">absente</span><span class="reg-picker-bar"></span>'
+          + tierChip('–', 'var(--line-2)', { cls: 'tier-rond' }) + '</span>';
+        const t = annualFreqToTier(v), col = realColor(t);
         return '<span class="cp-cont-rar"><span class="reg-picker-val">' + esc(fmtPct(v)) + '</span>'
-          + tierChip(t, realColor(t), { title: 'palier ' + t, cls: 'tier-rond' }) + '</span>';
+          + '<span class="reg-picker-bar"><span style="display:block; height:100%; border-radius:5px; width:' + _longueurBarre(v) + '%; background:' + col + ';"></span></span>'
+          + tierChip(t, col, { title: 'palier ' + t, cls: 'tier-rond' }) + '</span>';
       };
       const titreCont = (nom) => opts.continents && CARTES_CONTINENTS[nom]
         ? `<button type="button" class="cp-group-title cp-cont${contCourant === nom ? ' on' : ''}" data-cont="${esc(nom)}"`
-          + ` aria-pressed="${contCourant === nom}"><span>${esc(nom)}</span>${rarCont(nom)}<span class="cp-cont-voir">voir la carte</span></button>`
+          + ` aria-pressed="${contCourant === nom}"><span>${esc(nom)}</span><span class="cp-cont-voir">voir la carte</span>${rarCont(nom)}</button>`
         : `<div class="cp-group-title">${esc(nom)}</div>`;
       if(opts.continents && (!fLC || 'monde'.includes(fLC))) html += titreCont('Monde');
       for(const cont of CONTINENT_ORDER){

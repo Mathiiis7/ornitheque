@@ -934,7 +934,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* justify-self : sans lui, la pastille est etiree a la largeur de sa colonne de grille et
      ne fait plus la meme taille que dans la liste des pays, ou elle est un element flex
      libre. La colonne reste fixe pour que les barres restent alignees d une ligne a l autre. */
-  .reg-picker-item .tier-chip, .cp-item .tier-chip { justify-self:end; }
+  .reg-picker-item .tier-chip, .cp-item .tier-chip, .cp-cont-rar .tier-chip { justify-self:end; }
   /* Memes colonnes de mesure dans les lignes de pays, qui sont en flex : la valeur et sa
      barre doivent tomber au meme endroit dans les deux onglets du selecteur. */
   /* Une case de largeur fixe pour le rond du statut, occupee ou non : sans elle, les
@@ -991,12 +991,15 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
      Un bouton qui garde l'allure du titre ; l'accent dit qu'il est cliquable, comme un lien. */
   .cp-group-title.cp-cont { display:flex; align-items:baseline; justify-content:space-between; gap:8px;
     width:100%; margin-top:4px; padding:7px 10px; border:0; border-radius:8px; background:none; cursor:pointer; text-align:left; }
+  /* Le continent se detache un peu de ses pays (Mathis, 2026-11-11 : « on les voit mal », sans que ce soit trop
+     evident) : un fond legerement teinte, l'encre pleine au lieu du gris, 14 px comme les noms de pays. */
+  .cp-group-title.cp-cont { margin-top:10px; background:var(--surface-2); color:var(--ink); font-size:14px; }
   .cp-cont-voir { font:600 14px var(--sans); text-transform:none; letter-spacing:0; color:var(--accent-ink); }
   .cp-group-title.cp-cont:hover { background:var(--surface-3); }
   .cp-group-title.cp-cont.on { background:var(--accent); color:var(--sur-accent); }
   .cp-group-title.cp-cont.on .cp-cont-voir { color:var(--sur-accent); }
   /* La rarete du continent (2026-11-11) : le pourcentage et la pastille, comme sur la ligne d'un pays */
-  .cp-cont-rar { margin-left:auto; display:inline-flex; align-items:center; gap:8px; align-self:center;
+  .cp-cont-rar { margin-left:auto; display:grid; grid-template-columns:44px 60px 30px; gap:8px; align-items:center; align-self:center;
     font:600 14px var(--sans); text-transform:none; letter-spacing:0; color:var(--ink-2); }
   .cp-group-title.cp-cont.on .cp-cont-rar, .cp-group-title.cp-cont.on .cp-cont-rar .reg-picker-val { color:var(--sur-accent); }
   /* Meme plancher que .reg-picker-item : les deux onglets du selecteur partagent le pas
