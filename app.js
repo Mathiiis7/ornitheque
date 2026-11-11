@@ -2872,6 +2872,9 @@ function realTier(sci, abroad){
 // chart du pays n'a pas de palier.
 function realTierPays(sci, cc){
   if(!cc || cc === 'FR') return realTier(sci, false);
+  // Pays sans rarete (PAYS_SANS_RARETE) : ni palier ni point, le rond gris a tiret ; le Fil et « Qui a vu quoi »
+  // suivent la fiche et le Birdydex (Mathis, 2026-11-11 : « fais pareil pour le classement et le fil »).
+  if(_sansRarete(cc)) return { id:'peu', ord:0, label:'Trop peu de listes', color:'#9aa3ad' };
   const w = rarityForCountry(sci, cc);
   const palier = () => ({ id:'r'+w, ord:w, label:REAL_LABELS[w]||('niveau '+w), color:realColor(w) });
   if(isExoticInCountry(sci, cc)){
@@ -3621,7 +3624,7 @@ function renderMatrix({universe,N}){
       const palier = /^r([1-9]|10)$/.test(t.id);
       // Étranger, non observé, vu seulement hors de France : le meme rond gris a tiret que dans
       // la colonne.
-      if(t.id === 'etr' || t.id === 'none' || t.id === '0') return `<button type="button" class="rar-chip${on?' on':''}" data-tier="${esc(t.id)}" data-rar style="${on?'background:var(--line-2);':''}" title="${esc(t.label)}">–</button>`;
+      if(t.id === 'etr' || t.id === 'none' || t.id === '0' || t.id === 'peu') return `<button type="button" class="rar-chip${on?' on':''}" data-tier="${esc(t.id)}" data-rar style="${on?'background:var(--line-2);':''}" title="${esc(t.label)}">–</button>`;
       // Ligue : le rond du nombre de membres, a sa teinte, chiffre fonce sur les teintes claires.
       // Un palier qui regroupe plusieurs nombres de membres ecrit ses bornes (« 5–10 ») : ce n'est
       // plus un rond mais une etiquette, a la couleur du palier.
