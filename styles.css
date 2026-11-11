@@ -4957,7 +4957,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
    en ligne, et une scene posee par-dessus porte les deux cartes ; les vraies restent cachees dessous. */
 .species-modal .sm-oq-bloc.oq-en-zoom { position:relative; overflow:hidden; box-sizing:border-box; }
 .oq-en-zoom :is(#smRarityMap, #smContinentMap) > div > div:not([id]) > svg { visibility:hidden; }
-.oq-scene { pointer-events:none; overflow:hidden; }
+.oq-scene { position:absolute; pointer-events:none; overflow:hidden; contain:strict; }
+.oq-scene-carte { position:absolute; display:block; transform-origin:0 0; will-change:transform, opacity; }
+.species-modal .oq-carte-en-zoom { overflow:hidden; box-sizing:border-box; }
 /* La colonne des mois de la carte d'arrivee apparait pendant le mouvement */
 .oq-apparait { animation:oq-apparait .5s ease-out; }
 @keyframes oq-apparait { from { opacity:0; } to { opacity:1; } }

@@ -8823,6 +8823,10 @@ const REAL_FREQ_MONTHLY_BY_REGION_MULTI = {};
 // departements francais : 13,45 % des couples zone-espece changeaient de palier.
 // cc -> { 'FR-BRE-29': [12 parts sommant a 1] }. Zone absente = on retombe sur le pays.
 const EFFORT_PAR_ZONE = {};
+// Listes eBird par zone et par mois, 2019-2026 (outils/build/listes-par-zone.mjs) : une zone sans aucune liste
+// sur la periode lue se hachure sur la carte de la fiche (Mathis, 2026-11-11 : au Tchad, 52 listes en mai pour
+// tout le pays, presque toutes a N'Djamena ; le reste de la carte, gris « jamais notee », mentait).
+const LISTES_PAR_ZONE = {};
 const _freqDataPromises = {};
 // Series en 48 quinzaines du bar chart national, chargees a la demande (~200 Ko par pays).
 // L'histogramme de saisonnalite etirait jusqu'ici 12 valeurs mensuelles sur ses 52 creneaux,
@@ -9020,6 +9024,11 @@ async function _loadFreqDataForCountry(cc){
         const eff = await fetch('data/countries/' + cc.toLowerCase() + '/effort_by_zone.json?v=20260926j')
           .then(r => r.ok ? r.json() : null);
         if(eff) EFFORT_PAR_ZONE[cc] = eff;
+      }catch(_){}
+      try{
+        const ls = await fetch('data/countries/' + cc.toLowerCase() + '/listes_zones.json?v=20261111')
+          .then(r => r.ok ? r.json() : null);
+        if(ls) LISTES_PAR_ZONE[cc] = ls;
       }catch(_){}
     }catch(err){
       console.warn('Erreur load freq_by_region_' + cc + ':', err.message);
@@ -19132,6 +19141,7 @@ function _legendeOuQuand(aCarte, aGraph, vueExo){
       `<span style="display:inline-flex;height:12px;border:1px solid var(--line);border-radius:2px;overflow:hidden;margin-right:5px;">${bande}</span>`,
       'facile → rare')
     + jeton('<span class="sm-freq-sw" style="background:#d4d4d8;margin-right:5px;"></span>', 'jamais notée')
+    + (p.hachures && aCarte ? jeton('<span class="sm-freq-sw" style="background:repeating-linear-gradient(45deg,#d4d4d8 0 2px,var(--surface-2) 2px 4px);margin-right:5px;"></span>', 'aucune liste') : '')
     // « période actuelle » et non « mois actuel » : le contour encadre une quinzaine quand
     // la source est hebdomadaire, un mois quand elle ne l'est pas, et le lecteur n'a pas a
     // savoir laquelle des deux il regarde - c'est la periode en cours dans les deux cas.
@@ -19178,6 +19188,7 @@ function _continentDuPays(cc){
 // _ficheNav : { pays, continent, precharger } de la fiche ouverte (_renderSpeciesRarityCard).
 let _ficheNav = null;
 let _oqZoomEnCours = false;
+let _oqHachN = 0;   // les motifs de hachures des cartes de pays, un identifiant par dessin
 // Un zoom sans coupure (Mathis, 2026-11-10 : « un zoom sans cut ») : les deux cartes n'ont ni la meme
 // projection, ni le meme cadre, ni la meme place dans le panneau. Pendant le mouvement, une scene posee
 // par-dessus le panneau porte une copie des deux : la carte de depart, telle qu'elle etait a l'ecran, et
@@ -19196,7 +19207,7 @@ function _oqPhoto(svg, ancre){
   const r = svg.getBoundingClientRect(), v = svg.viewBox.baseVal;
   const m = Math.min(r.width / v.width, r.height / v.height);
   const ox = r.left + (r.width - v.width * m) / 2 - v.x * m, oy = r.top + (r.height - v.height * m) / 2 - v.y * m;
-  return { r, m, ox, oy, html: svg.innerHTML, ancre: ancre && [ox + ancre[0] * m, oy + ancre[1] * m, ancre[2] * m, ancre[3] * m] };
+  return { r, m, ox, oy, vb: svg.getAttribute('viewBox'), html: svg.innerHTML, ancre: ancre && [ox + ancre[0] * m, oy + ancre[1] * m, ancre[2] * m, ancre[3] * m] };
 }
 // La boite des zones d'une carte de pays, en unites de son viewBox : les chemins poses a plat, pas ceux
 // des encarts (la petite couronne, les iles), qui vivent dans un groupe deplace.
@@ -19215,14 +19226,19 @@ function _oqBoiteZones(svg){
 // carte d'arrivee connue. Rend une promesse tenue a la fin du mouvement.
 async function _oqTransition(depart, relais, ancreArrivee, ms = 700){
   const bloc = document.querySelector('#smOuQuandCard .sm-oq-bloc');
-  if(!bloc || !depart || !depart.ancre || matchMedia('(prefers-reduced-motion: reduce)').matches){ relais(); return; }
+  const carte = document.getElementById('smOuQuandCard');
+  if(!bloc || !carte || !depart || !depart.ancre || matchMedia('(prefers-reduced-motion: reduce)').matches){ relais(); return; }
   const rb0 = bloc.getBoundingClientRect();
   const z = (rb0.width / bloc.offsetWidth) || 1;
-  // La hauteur du bloc est figee pendant le mouvement, puis glisse vers la nouvelle.
-  const h0 = bloc.offsetHeight;
-  bloc.style.height = h0 + 'px';
-  bloc.classList.add('oq-en-zoom');
-  const nettoyer = () => { bloc.style.height = ''; bloc.classList.remove('oq-en-zoom'); };
+  // Le bloc des cartes ET le panneau qui le porte gardent leur hauteur pendant le mouvement, puis glissent vers
+  // la nouvelle : le graphique des saisons, qui apparait ou disparait avec un pays, faisait sauter le panneau de
+  // 190 px d'un coup (mesure du 2026-11-11, outils/verif/_mesure-transitions.mjs).
+  const h0 = bloc.offsetHeight, hc0 = carte.offsetHeight;
+  const graph = document.getElementById('smGraphZone');
+  const graphAvant = !!(graph && !graph.hidden && graph.offsetHeight);
+  bloc.style.height = h0 + 'px'; carte.style.height = hc0 + 'px';
+  bloc.classList.add('oq-en-zoom'); carte.classList.add('oq-carte-en-zoom');
+  const nettoyer = () => { bloc.style.height = ''; carte.style.height = ''; bloc.classList.remove('oq-en-zoom'); carte.classList.remove('oq-carte-en-zoom'); };
   const arrivee = await new Promise(res => {
     const garde = setTimeout(() => { _oqApresRendu = null; res(null); }, 2500);
     _oqApresRendu = svg => { clearTimeout(garde); res(svg); };
@@ -19238,44 +19254,60 @@ async function _oqTransition(depart, relais, ancreArrivee, ms = 700){
   }
   if(!arrivee || !arrivee.isConnected || !ancreD){ nettoyer(); return; }
   const fin = _oqPhoto(arrivee, ancreD);
-  bloc.style.height = ''; const h1 = bloc.offsetHeight; bloc.style.height = h0 + 'px';
+  bloc.style.height = ''; carte.style.height = '';
+  const h1 = bloc.offsetHeight, hc1 = carte.offsetHeight;
+  bloc.style.height = h0 + 'px'; carte.style.height = hc0 + 'px';
   const mois = arrivee.closest('#smRarityMap, #smContinentMap')?.querySelector('#smRarityMapMois, #smContinentMois');
   if(mois) mois.classList.add('oq-apparait');
-  // La scene couvre les deux cartes, et rien d'autre : la colonne des mois reste hors champ.
+  if(graph && !graphAvant && !graph.hidden) graph.classList.add('oq-apparait');
+  // La scene couvre les deux cartes, et rien d'autre : la colonne des mois reste hors champ. Chaque carte y est
+  // un svg a part, deplace et agrandi par une transformation CSS : la carte graphique les fait glisser sans
+  // les redessiner. Redessinees a chaque image (version precedente, un groupe SVG transforme), elles tombaient
+  // a 6-15 images par seconde au processeur ralenti par 4.
   const rb = bloc.getBoundingClientRect();
   const U = { l: Math.min(depart.r.left, fin.r.left), t: Math.min(depart.r.top, fin.r.top),
               r: Math.max(depart.r.right, fin.r.right), b: Math.max(depart.r.bottom, fin.r.bottom) };
-  const W = U.r - U.l, H = U.b - U.t;
-  const NS = 'http://www.w3.org/2000/svg';
-  const scene = document.createElementNS(NS, 'svg');
-  scene.setAttribute('class', 'oq-scene');
-  scene.setAttribute('viewBox', `0 0 ${W} ${H}`);
-  scene.setAttribute('preserveAspectRatio', 'none');
+  const scene = document.createElement('div');
+  scene.className = 'oq-scene';
   scene.setAttribute('aria-hidden', 'true');
-  scene.style.cssText = `position:absolute; left:${(U.l - rb.left) / z - bloc.clientLeft}px; top:${(U.t - rb.top) / z - bloc.clientTop}px; width:${W / z}px; height:${H / z}px;`;
-  const pose = p => `matrix(${p.m} 0 0 ${p.m} ${p.ox - U.l} ${p.oy - U.t})`;
-  scene.innerHTML = `<g class="oq-a"><g transform="${pose(depart)}">${depart.html}</g></g>`
-    + `<g class="oq-b" opacity="0"><g transform="${pose(fin)}">${fin.html}</g></g>`;
+  scene.style.cssText = `left:${(U.l - rb.left) / z - bloc.clientLeft}px; top:${(U.t - rb.top) / z - bloc.clientTop}px; width:${(U.r - U.l) / z}px; height:${(U.b - U.t) / z}px;`;
+  // Les motifs (hachures) des copies changent de nom : sinon elles pointeraient vers ceux des vraies cartes,
+  // dont l'une est deja masquee (display:none), et ses hachures disparaitraient pendant le mouvement.
+  const renomme = (h, x) => h.replace(/oqh-(\d+)/g, 'oqh-$1' + x);
+  // Origine de chaque copie dans la scene (pixels d'ecran), a la place exacte de la carte qu'elle reproduit.
+  const oA = [depart.r.left - U.l, depart.r.top - U.t], oB = [fin.r.left - U.l, fin.r.top - U.t];
+  const copie = (p, o, x) => `<svg class="oq-scene-carte" viewBox="${p.vb}" preserveAspectRatio="xMidYMid meet"`
+    + ` style="left:${o[0] / z}px; top:${o[1] / z}px; width:${p.r.width / z}px; height:${p.r.height / z}px;">${renomme(p.html, x)}</svg>`;
+  scene.innerHTML = copie(depart, oA, 'a') + copie(fin, oB, 'b');
+  const [svgA, svgB] = scene.children;
+  svgB.style.opacity = '0';
   bloc.appendChild(scene);
-  const gA = scene.querySelector('.oq-a'), gB = scene.querySelector('.oq-b');
   // Ancres en coordonnees de la scene : centre et taille (moyenne geometrique de la largeur et de la hauteur).
   const centre = a => [a[0] + a[2] / 2 - U.l, a[1] + a[3] / 2 - U.t], taille = a => Math.sqrt(Math.max(a[2] * a[3], 1e-6));
   const [cA, cB, sA, sB] = [centre(depart.ancre), centre(fin.ancre), taille(depart.ancre), taille(fin.ancre)];
   const doux = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
   const palier = (a, b, x) => { const u = Math.min(1, Math.max(0, (x - a) / (b - a))); return u * u * (3 - 2 * u); };
+  // Le point d'ecran q d'une copie (origine o, ancre de centre cK) va en c + k (q - cK). En CSS, avec
+  // transform-origin au coin : translate(T) scale(k), T = (c - k cK + (k - 1) o) / z.
+  const place = (el, k, c, cK, o) => {
+    el.style.transform = `translate(${((c[0] - k * cK[0] + (k - 1) * o[0]) / z).toFixed(2)}px, ${((c[1] - k * cK[1] + (k - 1) * o[1]) / z).toFixed(2)}px) scale(${k.toFixed(4)})`;
+  };
   const image = (t) => {
     const e = doux(t);
     // La taille de l'ancre varie en echelle logarithmique : un zoom regulier, qui ne fonce pas au debut.
-    const s = sA * Math.pow(sB / sA, e), cx = cA[0] + (cB[0] - cA[0]) * e, cy = cA[1] + (cB[1] - cA[1]) * e;
-    const ka = s / sA, kb = s / sB;
-    gA.setAttribute('transform', `matrix(${ka} 0 0 ${ka} ${cx - ka * cA[0]} ${cy - ka * cA[1]})`);
-    gB.setAttribute('transform', `matrix(${kb} 0 0 ${kb} ${cx - kb * cB[0]} ${cy - kb * cB[1]})`);
+    const sz = sA * Math.pow(sB / sA, e), c = [cA[0] + (cB[0] - cA[0]) * e, cA[1] + (cB[1] - cA[1]) * e];
+    place(svgA, sz / sA, c, cA, oA);
+    place(svgB, sz / sB, c, cB, oB);
     // Fondu court, au milieu du mouvement : les deux projections ne se superposent qu'a peu pres, et un
     // long fondu montrait les pays en double.
-    gB.setAttribute('opacity', palier(.3, .6, t).toFixed(3));
-    gA.setAttribute('opacity', (1 - palier(.45, .75, t)).toFixed(3));
+    svgB.style.opacity = palier(.3, .6, t).toFixed(3);
+    svgA.style.opacity = (1 - palier(.45, .75, t)).toFixed(3);
     bloc.style.height = (h0 + (h1 - h0) * e) + 'px';
+    carte.style.height = (hc0 + (hc1 - hc0) * e) + 'px';
   };
+  // Une premiere image a l'echelle 1 pour les deux copies : la carte graphique fixe la finesse d'une couche a
+  // sa premiere peinture. Peinte d'emblee a 1/5 (la carte du pays au debut d'un zoom), elle restait floue.
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
   image(0);
   await new Promise(res => {
     let fini = false;
@@ -19292,6 +19324,8 @@ async function _oqTransition(depart, relais, ancreArrivee, ms = 700){
     requestAnimationFrame(pas);
   });
   scene.remove();
+  // Le fondu du graphique a joue : la classe part, pour pouvoir rejouer au prochain passage.
+  if(graph) graph.classList.remove('oq-apparait');
   nettoyer();
 }
 // Le bouton qui remonte d'un cran, sous la colonne des mois des deux cartes.
@@ -19519,6 +19553,13 @@ async function _renderRarityMap(sci, cc){
   // aussi les zones prefixees (FR-ARA -> FR-ARA-01, FR-ARA-03...).
   const selection = _zonesSelectionnees(cc, zones);
   const fmtP = (x) => x >= 0.1 ? Math.round(x*100)+_PCT : x >= 0.01 ? _fr((x*100).toFixed(1))+_PCT : _fr((x*100).toFixed(2))+_PCT;
+  // Les hachures d'une zone sans aucune liste sur la periode : on n'y sait rien, ce n'est pas « jamais notee ».
+  // Un identifiant par dessin (deux cartes coexistent pendant un zoom), un pas de 6 px a l'ecran quelle que
+  // soit l'echelle du pays (la boite de la carte fait 413 px de large).
+  const listesZ = LISTES_PAR_ZONE[cc] || null;
+  const idHach = 'oqh-' + (++_oqHachN);
+  const pasHach = ((+String(_viewBoxCarte(cc, paths)).split(/\s+/)[2] || 413) / 413 * 6).toFixed(2);
+  let aHachures = false;
   // Rendu d'une zone, isole pour que l'encart montre exactement la meme chose que la
   // carte : memes couleurs, memes infobulles, meme clic.
   const rendreZone = (z, echelle, dRemplace) => {
@@ -19539,6 +19580,11 @@ async function _renderRarityMap(sci, cc){
     const nom = nomZone(cc, z, paths.zones[z].name);
     let fill = ABSENT;
     let titre = surAnnee ? `${nom} - jamais observée` : `${nom} - absente en ${libellePeriode}`;
+    const ls = listesZ && listesZ[z];
+    if(!(v > 0) && Array.isArray(ls) && (surAnnee ? !ls.some(x => x > 0) : !(ls[mois] > 0))){
+      fill = `url(#${idHach})`; aHachures = true;
+      titre = `${nom} - aucune liste eBird ${surAnnee ? 'entre 2019 et 2026' : 'en ' + libellePeriode}`;
+    }
     if(v > 0){
       const tier = annualFreqToTier(v);
       fill = realColor(tier);
@@ -19559,6 +19605,9 @@ async function _renderRarityMap(sci, cc){
   const zonesCarte = horsCarte ? zones.filter(z => !horsCarte.has(z)) : zones;
   const svgZones = _ordonnerSelectionDevant(zonesCarte, selection).map(z => rendreZone(z, 1)).join('')
     + _encartCarte(cc, paths, rendreZone) + _cadresEncarts(cc, paths);
+  const defsHach = aHachures ? `<defs><pattern id="${idHach}" patternUnits="userSpaceOnUse" width="${pasHach}" height="${pasHach}" patternTransform="rotate(45)">`
+    + `<rect width="${pasHach}" height="${pasHach}" fill="var(--surface-2)"/><rect width="${(pasHach / 2).toFixed(2)}" height="${pasHach}" fill="${ABSENT}"/></pattern></defs>` : '';
+  window._oqPortee.hachures = aHachures;
   // Les douze mois passent en colonne le long de la carte, chacun colore par SON propre
   // palier : la colonne se lit alors comme un calendrier de chances, et la bonne saison
   // saute aux yeux sans avoir a cliquer les mois un par un.
@@ -19621,7 +19670,7 @@ async function _renderRarityMap(sci, cc){
           <div id="smRarityMapMois" style="display:flex; flex-direction:column; gap:2px; flex:0 0 auto; width:88px;">
             ${moisBtns}${peutRemonter ? _boutonRemonter('smOqRemonterPays', contPays) : ''}</div>
           <div style="${_COLONNE_CARTE}"><svg viewBox="${_viewBoxCarte(cc, paths)}" style="${_styleCarte()}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Rareté par ${zoneWord} sur ${libellePeriode}">
-            ${svgZones}
+            ${defsHach}${svgZones}
           </svg></div>
           <!-- Colonne fantome de la largeur du selecteur de mois : sans elle, la carte se
                centrerait dans la place restante et non dans le panneau, donc pas au meme
@@ -19652,7 +19701,10 @@ async function _renderRarityMap(sci, cc){
   // Cliquer une zone la selectionne : c'est le geste naturel une fois qu'on l'a reperee
   // sur la carte. Recliquer la zone deja choisie revient au national, pour pouvoir
   // ressortir sans aller chercher la ligne « Tous les départements » dans la liste.
-  const svgCarte = document.querySelector('#smRarityMap svg');
+  // La carte, pas le premier svg venu : depuis la v1078, la loupe du bouton « remonter » de la colonne des
+  // mois passe avant elle, et le clic s'accrochait a l'icone - plus aucune zone ne se choisissait (Soudan,
+  // France, Espagne... vu par Mathis le 2026-11-11).
+  const svgCarte = svgPays;
   if(svgCarte && typeof _appliquerZoneFiche === 'function'){
     svgCarte.onclick = (e) => {
       const p = e.target.closest('[data-zone]');
