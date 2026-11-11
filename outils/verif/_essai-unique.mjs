@@ -1,19 +1,19 @@
-/* Essai du 11/11 (pas un banc) : le trophee unique « Fixation béton » (la huppe). Pour un membre qui a vu une huppe
-   et le Pic noir : la case suit celle du Pic noir, arrive « a debloquer » (trophee neuf), se debloque au toucher,
-   puis le toucher ouvre la liste des huppes. Bouchons, rien n'est ecrit.
-   Usage : node outils/verif/_essai-huppe.mjs <sauvegarde.json> <dossier des captures> [nom du membre] */
+/* Essai du 11/11 (pas un banc) : un trophee unique neuf, ecrit pour « Fixation béton » (la huppe), puis Spider-Man.
+   Pour un membre qui a l'oiseau : on voit ses voisins dans la vitrine, la case arrive « a debloquer » (trophee neuf),
+   se debloque au toucher, puis le toucher ouvre la liste de ses oiseaux. Bouchons, rien n'est ecrit.
+   Usage : node outils/verif/_essai-unique.mjs <sauvegarde.json> <dossier des captures> [nom du membre] [nom du trophee] */
 import { readFileSync, existsSync, mkdirSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { join, extname } from 'node:path';
 import { chromium } from 'playwright';
 import { RACINE } from './_banc.mjs';
 
-const [fichier, S, QUI = 'Paul'] = process.argv.slice(2);
+const [fichier, S, QUI = 'Paul', TROPHEE = 'Fixation béton'] = process.argv.slice(2);
 mkdirSync(S, { recursive: true });
 const sauvegarde = JSON.parse(readFileSync(fichier, 'utf8'));
 const MEMBRES = Object.entries(sauvegarde.data.leagues['merlin-bird']._subs.members).map(([id, m]) => ({ id, data: m._data }));
 const moi = MEMBRES.find(m => m.data.name === QUI);
-const ID = 'u-Fixation béton';
+const ID = 'u-' + TROPHEE;
 
 const BASE = 'https://www.gstatic.com/firebasejs/10.12.5/';
 const TYPES = { '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.woff2': 'font/woff2' };
@@ -54,7 +54,7 @@ for(const [larg, haut, mobile, nom] of [[1400, 950, false, 'ordi'], [390, 844, t
   const page = await ctx.newPage();
   page.on('pageerror', e => erreurs.push(nom + ' : ' + String(e).slice(0, 200)));
   await charger(page);
-  // Tout le reste deja vu (niveau 3), la huppe jamais rencontree : le navigateur d'un membre avant cette mise a jour
+  // Tout le reste deja vu (niveau 3), le trophee neuf jamais rencontre : le navigateur d'un membre avant cette mise a jour
   await page.evaluate(([uid, id]) => { const vu = {}; document.querySelectorAll('#vitrine .vt-case').forEach(c => { if(c.dataset.id !== id) vu[c.dataset.id] = 3; });
     localStorage.setItem('vt-vu', JSON.stringify({ [uid]: vu })); }, [moi.id, ID]);
   await charger(page);
@@ -67,7 +67,7 @@ for(const [larg, haut, mobile, nom] of [[1400, 950, false, 'ordi'], [390, 844, t
   await c.click(); await page.waitForTimeout(4500);
   console.log('   apres toucher :', await c.evaluate(e => e.classList.contains('vt-attend') ? 'attend encore' : 'debloque'));
   const b = await c.boundingBox();
-  await page.screenshot({ path: S + '/' + nom + '-huppe.png', clip: { x: Math.max(0, b.x - b.width), y: Math.max(0, b.y - 20), width: Math.min(larg - Math.max(0, b.x - b.width), b.width * 3), height: b.height + 40 } });
+  await page.screenshot({ path: S + '/' + nom + '-unique.png', clip: { x: Math.max(0, b.x - b.width), y: Math.max(0, b.y - 20), width: Math.min(larg - Math.max(0, b.x - b.width), b.width * 3), height: b.height + 40 } });
   await c.click(); await page.waitForTimeout(600);
   console.log('   fenetre :', await page.textContent('#tmodalTitle'), '|', (await page.textContent('#tmodalBody .tmodal-country-body .tmodal-note'))?.trim());
   await ctx.close();
