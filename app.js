@@ -6916,6 +6916,8 @@ function _vitrineCases(sel, s, data){
 // touche pour jouer son animation (Mathis, 08/11). Premiere visite : tout ce qui est deja gagne compte
 // comme vu, pour ne pas faire scintiller toute la vitrine d'un coup.
 const _VT_VU = 'vt-vu';
+// Trophees dont le niveau vu repart a 0 une fois : en ligne debloques d'office (v1099), avant la correction
+const _VT_REMIS = { limicoles: 1, echassiers: 1 };
 function _vitrineVuLire(){ try{ return JSON.parse(localStorage.getItem(_VT_VU) || '{}') || {}; }catch(_){ return {}; } }
 function _vitrineVuEcrire(o){ try{ localStorage.setItem(_VT_VU, JSON.stringify(o)); }catch(_){} }
 const _vitrineMontres = new Set();     // trophees en attente vers lesquels la vitrine a deja defile
@@ -6941,7 +6943,11 @@ function _vitrineEtat(sel, s, data){
       // Ce qui a ete debloque le reste (Mathis, 11/11) : le niveau vu ne redescend JAMAIS. Il redescendait quand un
       // trophee paraissait perdu, or a chaque chargement la vitrine se dessine avant l'arrivee des votes : un
       // trophee a vote valait 0 un instant, son niveau vu retombait a 0, et il redevenait « a debloquer ».
-      if(vu[c.id] === undefined){ vu[c.id] = c.reel; change = true; }
+      // Un trophee neuf arrive « a debloquer » : on le touche pour le decouvrir (Mathis, 11/11). Avant, il comptait
+      // d'office comme deja vu a son niveau du moment, et les limicoles et echassiers sont arrives debloques.
+      // _VT_REMIS remet a 0, une fois, le niveau vu d'un trophee deja range ainsi (monter son numero pour recommencer).
+      const remis = _VT_REMIS[c.id] || 0;
+      if(vu[c.id] === undefined || (vu[c.id + ':remis'] || 0) < remis){ vu[c.id] = 0; if(remis) vu[c.id + ':remis'] = remis; change = true; }
       c.attend = c.reel > vu[c.id];
       c.vu = vu[c.id];
       // Calques : la liste des regions dont l'animation a deja joue (en attente, seules celles-la s'affichent)
