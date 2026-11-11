@@ -74,11 +74,11 @@ const res = await p.evaluate(async (prefixes) => {
     // Une fois par pays : le verdict de l'annee, et les 12 mois si l'espece y est sauvage.
     const parPays = {};
     for(const cc of membres.Monde){
-      const vA = B._verdictPaysEspece(key, cc, null, true);
+      const vA = B._verdictPaysEspece(key, cc, null, true, true);
       if(!vA || vA.sansDonnees) continue;
       const sauvage = vA.tier > 0;
       parPays[cc] = { an: sauvage ? vA.vAn : 0, sauvage, exo: vA.isExoLocal, absent: vA.absent,
-        m12: B._MOIS_COURTS.map((_, mi) => sauvage ? ((B._verdictPaysEspece(key, cc, mi, true) || {}).vAn || 0) : 0) };
+        m12: B._MOIS_COURTS.map((_, mi) => sauvage ? ((B._verdictPaysEspece(key, cc, mi, true, true) || {}).vAn || 0) : 0) };
     }
     for(const nom of ECHELLES){
       let poidsTotal = 0;

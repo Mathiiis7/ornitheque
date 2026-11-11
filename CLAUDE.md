@@ -128,6 +128,8 @@ téléchargement GBIF wa632u. La carte de l'année n'en dépend pas. Même ordre
 `outils/build/birdydex-continents.mjs` avec les fonctions mêmes de la fiche (`_rareteEtendue`), recoupées à zéro
 palier près. **Le régénérer, puis monter `BIRDYDEX_CONTINENTS_V`, dès que changent les données des pays, les
 morceaux `especes-monde`, `aires-pays.json` ou la règle** : sinon Birdydex et fiche se contredisent sans bruit.
+Pour un continent, la fiche lit les pays du monde dans les morceaux même quand leur `pays.json` est arrivé
+(`_verdictPaysEspece(..., morceau)`) : sinon sa valeur dépendait des pays déjà ouverts (2 paliers sur 1 475).
 
 **Les autres bases GBIF nomment les oiseaux à l'ancienne.** Trinômes (« Corvus corone cornix ») et
 espèces regroupées (« Phoenicopterus ruber » pour le Flamant rose de l'atlas sud-africain) : sans

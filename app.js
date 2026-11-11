@@ -1060,11 +1060,11 @@ function _rareteEtendue(sci, nom, pret){
   for(const cc of Object.keys(COUNTRIES_REG)){
     const aire = _airesPays[cc];
     if(!(aire > 0) || (nom !== 'Monde' && _continentDuPays(cc) !== nom)) continue;
-    const vA = _verdictPaysEspece(key, cc, null, pret);
+    const vA = _verdictPaysEspece(key, cc, null, pret, true);
     if(!vA || vA.sansDonnees) continue;
     const sauvage = vA.tier > 0;
     membres.push({ aire, an: sauvage ? vA.vAn : 0,
-      m12: _MOIS_COURTS.map((_, mi) => sauvage ? ((_verdictPaysEspece(key, cc, mi, pret) || {}).vAn || 0) : 0) });
+      m12: _MOIS_COURTS.map((_, mi) => sauvage ? ((_verdictPaysEspece(key, cc, mi, pret, true) || {}).vAn || 0) : 0) });
     poidsTotal += aire;
   }
   if(!membres.length) return null;
@@ -1182,15 +1182,21 @@ function _syncCountryButton(btn, cc){
 // fiche : palier, valeur (l'annee, ou le mois moisLu 0..11), statut exotique local, absente ou pas.
 // La carte des continents lit la meme chose, pour que la liste et la carte ne se contredisent pas.
 // pret : les frequences des pays (et le morceau de l'espece pour les pays du monde) sont arrivees.
-function _verdictPaysEspece(sci, cc, moisLu, pret){
+// morceau (rarete d'un continent, _rareteEtendue) : un pays du monde se lit TOUJOURS dans le morceau de
+// l'espece, meme quand son pays.json est arrive. Sinon la fiche changeait de valeur selon les pays deja lus
+// (Fil, Carte, survol du selecteur) et contredisait le Birdydex du continent, calcule sur les morceaux :
+// 2 paliers sur 1 475 d'un cran (Guepier de Somalie, Monde, 8 contre 9 ; outils/verif/_concordance-birdydex-
+// continents.mjs, 2026-11-11). Les morceaux arrondissent a 2 chiffres : ecart sans effet sur une moyenne.
+function _verdictPaysEspece(sci, cc, moisLu, pret, morceau){
   const reg = COUNTRIES_REG[cc];
   if(!reg) return null;
   // Pays du monde pas encore lu : l'espece se lit dans son morceau (_chargerEspeceMonde).
-  const vm = (reg.monde && !_RARETE_PAYS[cc]) ? _especeMonde(sci, cc) : null;
+  const parMorceau = !!(morceau && reg.monde);
+  const vm = (reg.monde && (parMorceau || !_RARETE_PAYS[cc])) ? _especeMonde(sci, cc) : null;
   const ebCC = EXOTIQUES_EBIRD_PAR_PAYS[cc] && EXOTIQUES_EBIRD_PAR_PAYS[cc][sci];
   const isExoLocal = ((cc === 'FR') ? isExoticInCountry(sci, cc) : !!ebCC) && !_isIsolatedXExotic(sci, cc);
-  const tier = rarityForCountry(sci, cc) || (vm ? vm[0] : 0);
-  const monCC = reg.monthly()[sci] || (vm ? vm.slice(1) : undefined);
+  const tier = parMorceau ? (vm ? vm[0] : 0) : (rarityForCountry(sci, cc) || (vm ? vm[0] : 0));
+  const monCC = parMorceau ? (vm ? vm.slice(1) : undefined) : (reg.monthly()[sci] || (vm ? vm.slice(1) : undefined));
   const vAn = !Array.isArray(monCC) ? 0
     : (moisLu == null ? _valeurAnnuelleZone(monCC, cc) : (monCC[moisLu] || 0));
   // Pays dont les frequences ne sont pas encore arrivees : « absente » serait faux.
@@ -23460,7 +23466,7 @@ function renderPokedex(){
           continents: true,
           continent: _pkdxContinent,
           onContinent: appliquerContinentPkdx,
-          voirCont: 'voir ses espèces',
+          voirCont: 'voir le Birdydex',
         });
         if(!res || res.type !== 'zone') return;
         _pkdxFilters.zone = res.code || '';
