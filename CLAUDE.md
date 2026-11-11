@@ -130,6 +130,9 @@ palier près. **Le régénérer, puis monter `BIRDYDEX_CONTINENTS_V`, dès que c
 morceaux `especes-monde`, `aires-pays.json` ou la règle** : sinon Birdydex et fiche se contredisent sans bruit.
 Pour un continent, la fiche lit les pays du monde dans les morceaux même quand leur `pays.json` est arrivé
 (`_verdictPaysEspece(..., morceau)`) : sinon sa valeur dépendait des pays déjà ouverts (2 paliers sur 1 475).
+**Un continent et le monde ont leurs propres seuils de paliers** (`seuils.json`, `_palierEtendu`, choix de Mathis
+le 2026-11-11) : réglés pour répartir leurs espèces comme un pays moyen ; avec ceux d'un pays, le Monde n'avait
+personne aux paliers 1 à 4. Ne jamais convertir une valeur de continent avec `annualFreqToTier`.
 
 **Les autres bases GBIF nomment les oiseaux à l'ancienne.** Trinômes (« Corvus corone cornix ») et
 espèces regroupées (« Phoenicopterus ruber » pour le Flamant rose de l'atlas sud-africain) : sans

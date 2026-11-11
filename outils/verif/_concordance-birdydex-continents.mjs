@@ -11,7 +11,9 @@ const EXPORTS = `
   _chargerAiresPays, _chargerEspeceMonde, _chargerPaysMondes, annualFreqToTier };
 `;
 const fichiers = {};
-for(const f of fs.readdirSync('data/birdydex-continents')) fichiers[f.slice(0, -5)] = JSON.parse(fs.readFileSync('data/birdydex-continents/' + f, 'utf8'));
+// Les seuils propres a chaque echelle (seuils.json), comme _palierEtendu.
+const seuils = JSON.parse(fs.readFileSync('data/birdydex-continents/seuils.json', 'utf8'));
+for(const f of fs.readdirSync('data/birdydex-continents').filter(f => f !== 'seuils.json')) fichiers[f.slice(0, -5)] = JSON.parse(fs.readFileSync('data/birdydex-continents/' + f, 'utf8'));
 const prefixes = fs.readdirSync('data/especes-monde').filter(f => f.endsWith('.json')).map(f => f.slice(0, -5));
 const nav = await chromium.launch();
 const ctx = await nav.newContext({ serviceWorkers: 'block' });
@@ -23,7 +25,8 @@ await ctx.route(/\/app\.js(\?.*)?$/, async route => {
 const p = await ctx.newPage();
 await p.goto(`http://localhost:${port}/demo/`, { waitUntil: 'load' });
 await p.waitForFunction(() => window.__bdx, null, { timeout: 30000 });
-const r = await p.evaluate(async ({ fichiers, prefixes }) => {
+const r = await p.evaluate(async ({ fichiers, prefixes, seuils }) => {
+  const palier = (v, nom) => { const s = seuils[nom]; if(!(v > 0)) return 10; for(let k = 0; k < 9; k++) if(v >= s[k]) return k + 1; return 10; };
   const B = window.__bdx;
   const monde = Object.keys(B.COUNTRIES_REG).filter(cc => B.COUNTRIES_REG[cc].monde);
   await Promise.all([B._chargerDonneesPays(), B._chargerAiresPays(), B._chargerPaysMondes(monde), ...prefixes.map(k => B._chargerEspeceMonde(k))]);
@@ -36,14 +39,14 @@ const r = await p.evaluate(async ({ fichiers, prefixes }) => {
       const e = fichiers[slug][sci];
       if(!e) continue;   // pas de case : rien a comparer
       const v = B._rareteEtendue(sci, nom, true);
-      const fiche = v && v.an > 0 ? B.annualFreqToTier(v.an) : 0;
-      const caseP = B.annualFreqToTier(e[0]);
+      const fiche = v && v.an > 0 ? palier(v.an, nom) : 0;
+      const caseP = palier(e[0], nom);
       n++;
       if(fiche !== caseP) ecarts.push([sci, nom, 'case ' + caseP, 'fiche ' + fiche]);
     }
   }
   return { n, ecarts, mondeLus: monde.length };
-}, { fichiers, prefixes });
+}, { fichiers, prefixes, seuils });
 console.log(`${r.mondeLus} pays du monde lus ; ${r.n} cases comparees, ${r.ecarts.length} palier(s) different(s)`);
 for(const e of r.ecarts.slice(0, 30)) console.log('  ', e.join(' | '));
 console.log(r.ecarts.length ? 'DÉFAUT' : 'CONFORME');

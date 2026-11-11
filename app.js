@@ -1047,9 +1047,30 @@ function _chargerCarteContinent(nom){
 // monde) : data/aires-pays.json, outils/build/carte-continents.mjs.
 // Un pays sans donnees ne compte pas ; une exotique sans palier (X, P, C) compte pour 0, comme sa couleur.
 let _airesPays = null, _airesPaysPromesse = null;
+// Les seuils arrivent avec les surfaces : _airesPays n'est pose qu'une fois les deux la, pour qu'aucun palier
+// de continent ne s'affiche avec les seuils d'un pays le temps d'un chargement.
 function _chargerAiresPays(){
-  return _airesPaysPromesse ||= fetch('data/aires-pays.json?v=20261111').then(r => r.ok ? r.json() : null)
-    .then(j => { _airesPays = j; return j; }).catch(() => { _airesPaysPromesse = null; return null; });
+  return _airesPaysPromesse ||= Promise.all([fetch('data/aires-pays.json?v=20261111').then(r => r.ok ? r.json() : null), _chargerSeuilsEtendus()])
+    .then(([j]) => { _airesPays = j; return j; }).catch(() => { _airesPaysPromesse = null; return null; });
+}
+// Les seuils des paliers d'un continent et du monde (Mathis, 2026-11-11 : « comme un pays »). Avec ceux d'un pays,
+// le Monde n'avait personne aux paliers 1 a 4 et 46 % au palier 10 : aucune espece n'est sur 24 % des listes du
+// monde. Chaque echelle a les siens, places pour que ses especes se repartissent entre les paliers comme celles
+// d'un pays moyen (4, 6, 7, 10, 10, 8, 14, 12, 14, 15 % du palier 1 au 10, moyenne de 47 pays). Calcules par
+// outils/build/birdydex-continents.mjs, avec les listes du Birdydex : data/birdydex-continents/seuils.json.
+let _seuilsEtendus = null, _seuilsEtendusPromesse = null;
+function _chargerSeuilsEtendus(){
+  return _seuilsEtendusPromesse ||= fetch('data/birdydex-continents/seuils.json?v=' + BIRDYDEX_CONTINENTS_V)
+    .then(r => r.ok ? r.json() : null).then(j => { _seuilsEtendus = j; return j; })
+    .catch(() => { _seuilsEtendusPromesse = null; return null; });
+}
+// Le palier d'une valeur a l'echelle d'un continent ou du monde : ses seuils, ceux d'un pays a defaut.
+function _palierEtendu(v, nom){
+  const s = _seuilsEtendus && _seuilsEtendus[nom];
+  if(!s) return annualFreqToTier(v);
+  if(!(v > 0)) return 10;
+  for(let k = 0; k < s.length; k++) if(v >= s[k]) return k + 1;
+  return 10;
 }
 // { an, m12 } (parts des listes, 0..1), ou null tant que les surfaces ne sont pas arrivees.
 function _rareteEtendue(sci, nom, pret){
@@ -1094,13 +1115,13 @@ const _pkdxQuandRempliAttente = [];
 // avec les fonctions de _rareteEtendue (recoupees, zero palier different). { sci: [valeur annuelle, drapeaux,
 // "NPX"] } ; drapeaux 1 = reguliere quelque part, 2 = saisonniere, 4 = exotique partout ou elle vit. Monde :
 // 101 Ko gz, Europe 13 Ko. A REGENERER quand les donnees des pays ou les surfaces changent, puis monter ce numero.
-const BIRDYDEX_CONTINENTS_V = '20261111';
+const BIRDYDEX_CONTINENTS_V = '20261111c';
 const _pkdxContinents = {}, _pkdxContinentsPromesses = {};
 function _chargerPkdxContinent(nom){
   const f = CARTES_CONTINENTS[nom];
   if(!f) return Promise.resolve(null);
-  return _pkdxContinentsPromesses[nom] ||= fetch('data/birdydex-continents/' + f + '.json?v=' + BIRDYDEX_CONTINENTS_V)
-    .then(r => r.ok ? r.json() : null).then(j => { if(j) _pkdxContinents[nom] = j; return j; })
+  return _pkdxContinentsPromesses[nom] ||= Promise.all([fetch('data/birdydex-continents/' + f + '.json?v=' + BIRDYDEX_CONTINENTS_V)
+    .then(r => r.ok ? r.json() : null), _chargerSeuilsEtendus()]).then(([j, s]) => { if(j && s){ _pkdxContinents[nom] = j; return j; } delete _pkdxContinentsPromesses[nom]; return null; })
     .catch(() => { delete _pkdxContinentsPromesses[nom]; return null; });
 }
 // Le globe d'un bouton de pays qui montre un continent (fiche, Birdydex).
@@ -1424,7 +1445,7 @@ function _openCountryPicker(currentCode, opts = {}){
         // le chiffre du continent se lit dans la colonne de ceux de ses pays (Mathis, 2026-11-11).
         if(!(v > 0)) return '<span class="cp-cont-rar"><span class="reg-picker-val">absente</span><span class="reg-picker-bar"></span>'
           + tierChip('–', 'var(--line-2)', { cls: 'tier-rond' }) + '</span>';
-        const t = annualFreqToTier(v), col = realColor(t);
+        const t = _palierEtendu(v, nom), col = realColor(t);
         return '<span class="cp-cont-rar"><span class="reg-picker-val">' + esc(fmtPct(v)) + '</span>'
           + '<span class="reg-picker-bar"><span style="display:block; height:100%; border-radius:5px; width:' + _longueurBarre(v) + '%; background:' + col + ';"></span></span>'
           + tierChip(t, col, { title: 'palier ' + t, cls: 'tier-rond' }) + '</span>';
@@ -19468,7 +19489,7 @@ async function _renderCarteContinent(sci, nom){
       : ' padding:2px 6px; border-radius:5px; font:' + (actif ? '800' : '600') + ' 14px/1.3 system-ui;';
     if(m12Cont){
       const valeur = annuel ? anCont : (m12Cont[val] || 0);
-      const vu = valeur > 0, t = vu ? annualFreqToTier(valeur) : 0;
+      const vu = valeur > 0, t = vu ? _palierEtendu(valeur, nom) : 0;
       const lbl = vu ? (REAL_LABELS[t] || 'palier ' + t) : (annuel ? 'jamais notée' : 'absente ce mois-ci');
       const tip = label + ' · ' + nom + ' - ' + (vu ? fmtP(valeur) + ' des listes · ' + lbl + ' (' + t + ')' : lbl);
       const anneau = actif ? ' box-shadow:0 0 0 1.5px var(--surface-2, #fafafa), 0 0 0 3px var(--ink-2); position:relative; z-index:1;' : '';
@@ -20466,7 +20487,7 @@ function _scoreAnnuelLbl(m12, cc, zone, annuel){
           // 0,0002 %. Deux chiffres significatifs : la vraie valeur, sans zeros inutiles.
           : _fr(Number((v * 100).toPrecision(2)));
   const tip = annuel != null
-    ? (mois == null ? "Moyenne des pays selon leur surface, aucun ne comptant pour plus de 10 % : la part de leurs listes qui citent l'espèce. C'est elle qui détermine le palier de rareté."
+    ? (mois == null ? "Moyenne des pays selon leur surface, aucun ne comptant pour plus de 10 % : la part de leurs listes qui citent l'espèce. C'est elle qui détermine le palier de rareté, avec des seuils propres à cette échelle : ses espèces se répartissent entre les paliers comme celles d'un pays."
       : "Moyenne des pays sur ce seul mois, pondérée de même.")
     : mois == null
     ? "Fréquence annuelle pondérée par l'effort d'observation : la part des listes de la zone qui citent l'espèce. C'est elle qui détermine le palier de rareté."
@@ -23669,7 +23690,7 @@ function _pkdxRender(){
       if(!e) continue;
       const [val, drap, lettres] = e;
       // Meme palier que la fiche sur ce continent : la meme fonction, sur la meme valeur.
-      const tier = annualFreqToTier(val);
+      const tier = _palierEtendu(val, cont);
       const exo = !!(drap & 4);
       // Les statuts qu'elle porte dans au moins un pays, du plus etabli au moins etabli (N, P, X, C) :
       // une exotique garde le plus etabli pour le tri, comme une naturalisee d'un pays garde son rang.

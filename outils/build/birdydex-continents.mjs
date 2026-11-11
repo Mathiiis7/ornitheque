@@ -68,6 +68,8 @@ const res = await p.evaluate(async (prefixes) => {
   const especes = Object.keys(B.FR_NAMES).filter(s => !B._isSciAliasSource(s));
   const sortie = Object.fromEntries(ECHELLES.map(n => [n, {}]));
   const ecartes = {}, horsGrille = new Set();
+  // La valeur exacte de chaque case, avant arrondi : pour les seuils et le recoupement avec la fiche.
+  const exact = Object.fromEntries(ECHELLES.map(n => [n, new Map()]));
   const t0 = performance.now();
   for(const sci of especes){
     const key = sci.toLowerCase();
@@ -115,16 +117,47 @@ const res = await p.evaluate(async (prefixes) => {
       // Parcs du monde entier (Bernache nene, flamants ornementaux) : gardes seulement s'ils vivent
       // ici en liberte ou s'y sont etablis, comme dans la grille d'un pays.
       if(B.isParkOnlyExotic(sci) && exotique && !cats.has('N') && !cats.has('P')){ horsGrille.add(nom + '|' + sci); continue; }
-      // Arrondi : 3 chiffres significatifs, plus si le palier en changerait.
-      const palier = B.annualFreqToTier(an);
-      let arr = an;
-      for(const d of [3, 4, 5, 6, 8, 12]){ const r = Number(an.toPrecision(d)); if(B.annualFreqToTier(r) === palier){ arr = r; break; } }
+      exact[nom].set(sci, an);
       const drap = (reguliere ? 1 : 0) | (B._estSaisonniere(m12, an) ? 2 : 0) | (exotique ? 4 : 0);
       const ord = ['N', 'P', 'X', 'C'].filter(c => cats.has(c)).join('');
-      sortie[nom][sci] = ord ? [arr, drap, ord] : [arr, drap];
+      sortie[nom][sci] = ord ? [an, drap, ord] : [an, drap];
     }
   }
   const duree = Math.round(performance.now() - t0);
+  // LES SEUILS DE CHAQUE ECHELLE (Mathis, 2026-11-11 : « comme un pays »). Avec ceux d'un pays, le Monde n'avait
+  // personne aux paliers 1 a 4 et 46 % au palier 10 : aucune espece n'est sur 24 % des listes du monde entier.
+  // Chaque echelle recoit les siens, places pour que ses especes se repartissent entre les paliers comme celles
+  // d'un pays moyen (moyenne des parts de chaque palier sur les pays qui ont leurs paliers, chacun comptant pareil).
+  const pays = Object.keys(B.raretePays).filter(cc => !B.COUNTRIES_REG[cc]?.monde);
+  const parts = Array(11).fill(0);
+  for(const cc of pays){
+    const v = Object.values(B.raretePays[cc]).map(x => Array.isArray(x) ? x[0] : x).filter(x => x >= 1 && x <= 10);
+    if(!v.length) continue;
+    const c = Array(11).fill(0); v.forEach(x => c[x]++);
+    for(let k = 1; k <= 10; k++) parts[k] += c[k] / v.length / pays.length;
+  }
+  const seuils = {};
+  for(const nom of ECHELLES){
+    const vals = [...exact[nom].values()].sort((a, b) => b - a);
+    if(!vals.length) continue;
+    // Le seuil du palier k : la plus petite valeur parmi les especes que la part cumulee des paliers 1..k couvre.
+    let cumul = 0; const s = [];
+    for(let k = 1; k <= 9; k++){
+      cumul += parts[k];
+      const i = Math.min(vals.length - 1, Math.max(0, Math.ceil(cumul * vals.length) - 1));
+      s.push(Number(vals[i].toPrecision(4)));
+    }
+    seuils[nom] = s;
+  }
+  const palierDe = (v, nom) => { const s = seuils[nom]; if(!(v > 0)) return 10; for(let k = 0; k < 9; k++) if(v >= s[k]) return k + 1; return 10; };
+  // Arrondi : 3 chiffres significatifs, plus si le palier de l'echelle en changerait.
+  for(const nom of ECHELLES){
+    for(const [sci, an] of exact[nom]){
+      const p = palierDe(an, nom); let arr = an;
+      for(const d of [3, 4, 5, 6, 8, 12]){ const r = Number(an.toPrecision(d)); if(palierDe(r, nom) === p){ arr = r; break; } }
+      sortie[nom][sci][0] = arr;
+    }
+  }
   // Recoupe avec le vrai _rareteEtendue, celui de la fiche : un echantillon d'especes, toutes les echelles.
   let compares = 0; const ecarts = [];
   const pas = Math.max(1, Math.floor(especes.length / 600));
@@ -132,15 +165,21 @@ const res = await p.evaluate(async (prefixes) => {
     const sci = especes[i];
     for(const nom of ECHELLES){
       const r = B._rareteEtendue(sci, nom, true);
-      const vrai = r && r.an > 0 ? B.annualFreqToTier(r.an) : 0;
+      // La valeur elle-meme, a l'identique (avant arrondi), puis le palier de l'echelle sur la valeur arrondie.
+      const vraiAn = r && r.an > 0 ? r.an : 0;
+      const monAn = exact[nom].get(sci) || 0;
       const e = sortie[nom][sci];
-      const moi = e ? B.annualFreqToTier(e[0]) : 0;
+      const memeValeur = Math.abs(vraiAn - monAn) <= 1e-12 * Math.max(vraiAn, 1e-9);
+      const memePalier = !e || palierDe(e[0], nom) === palierDe(vraiAn, nom);
       // Une espece ecartee volontairement (parc, echappe isole) n'est pas un ecart de calcul.
-      if(moi !== vrai && !(moi === 0 && horsGrille.has(nom + '|' + sci))) ecarts.push([sci, nom, vrai, moi]);
+      if(!(memeValeur && memePalier) && !(!e && horsGrille.has(nom + '|' + sci))) ecarts.push([sci, nom, vraiAn, monAn]);
       compares++;
     }
   }
-  return { sortie, duree, compares, ecarts, ecartes, nbEspeces: especes.length };
+  // La repartition obtenue, palier par palier, pour le dire.
+  const repart = {};
+  for(const nom of ECHELLES){ const c = Array(11).fill(0); for(const an of exact[nom].values()) c[palierDe(an, nom)]++; repart[nom] = c.slice(1).map(x => Math.round(x / Math.max(1, exact[nom].size) * 100)); }
+  return { sortie, duree, compares, ecarts, ecartes, seuils, repart, cible: parts.slice(1).map(x => Math.round(x * 100)), nbPays: pays.length, nbEspeces: especes.length };
 }, prefixes);
 
 await nav.close();
@@ -151,11 +190,15 @@ if(res.ecarts.length){
   console.log('RIEN ECRIT : le calcul ne concorde pas avec la fiche.');
   process.exit(1);
 }
+console.log(`Repartition cible (moyenne de ${res.nbPays} pays), paliers 1 a 10 :`, res.cible.join(' '));
+for(const [nom, r] of Object.entries(res.repart)) console.log('  ' + nom.padEnd(17), r.join(' '), ' seuils', res.seuils[nom].join(' '));
 console.log('Echappes isoles ecartes (aucune grille de pays ne les montre) :', JSON.stringify(res.ecartes));
 if(erreurs.length) console.log('Erreurs de la page (sans effet sur le calcul ?) :', erreurs.slice(0, 5).join(' | '));
 fs.mkdirSync(SORTIE, { recursive: true });
 const SLUG = { 'Monde': 'monde', 'Europe': 'europe', 'Amérique du Nord': 'amerique-du-nord', 'Amérique du Sud': 'amerique-du-sud',
   'Afrique': 'afrique', 'Asie': 'asie', 'Océanie': 'oceanie', 'Antarctique': 'antarctique' };
+// Les seuils, a part : la fiche les lit sans telecharger les listes (data/birdydex-continents/seuils.json).
+fs.writeFileSync(path.join(SORTIE, 'seuils.json'), JSON.stringify(res.seuils));
 for(const [nom, table] of Object.entries(res.sortie)){
   const f = path.join(SORTIE, (SLUG[nom] || nom) + '.json');
   const txt = JSON.stringify(table);
