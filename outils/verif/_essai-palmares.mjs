@@ -82,8 +82,11 @@ for(const [larg, haut, mobile, nom] of [[1400, 950, false, 'ordi'], [390, 844, t
   page.on('pageerror', e => erreurs.push(nom + ' : ' + String(e).slice(0, 200)));
   await charger(page); await page.waitForTimeout(1500); await ouvrirTrophees(page);
   await page.evaluate(id => document.querySelector('#trophyWho .whochip[data-id="' + id + '"]').click(), cible.id); await page.waitForTimeout(1500);
-  for(const id of ['aigles', 'nuit', 'canards', 'mouettes']){
+  for(const id of ['aigles', 'nuit', 'canards', 'mouettes', 'limicoles', 'echassiers']){
     const c = page.locator('#vitrine .vt-case[data-id="' + id + '"]');
+    if(id === 'limicoles' || id === 'echassiers'){ await c.scrollIntoViewIfNeeded(); await page.waitForTimeout(800);
+      const b = await c.boundingBox(); await page.screenshot({ path: S + '/' + nom + '-vitrine-' + id + '.png',
+        clip: { x: Math.max(0, b.x - b.width * 2.2), y: Math.max(0, b.y - 40), width: Math.min(larg, b.width * 4.4), height: b.height + 80 } }); }
     const plaque = await c.evaluate(e => ({ nom: e.querySelector('.vt-nom').textContent, bulle: e.querySelector('.vt-nom').dataset.tip || '' }));
     await c.scrollIntoViewIfNeeded(); await c.click(); await page.waitForTimeout(500);
     const f = await page.evaluate(() => ({
@@ -99,7 +102,7 @@ for(const [larg, haut, mobile, nom] of [[1400, 950, false, 'ordi'], [390, 844, t
       console.log(f.lignes.slice(0, 8).map(l => '   ' + l).join('\n'));
       console.log('   en cours :', f.enCours.join(' ; '), '|', f.plus, '| tailles :', f.tailles.join(' '));
     }
-    if(id === 'aigles'){ await page.locator('#trophyModal .tmodal, #trophyModal > *').first().screenshot({ path: S + '/' + nom + '-palmares-aigles.png' }); }
+    if(id === 'echassiers' || id === 'limicoles'){ await page.locator('#trophyModal .tmodal, #trophyModal > *').first().screenshot({ path: S + '/' + nom + '-palmares-' + id + '.png' }); }
     await page.locator('#tmodalX').click(); await page.waitForTimeout(300);
   }
   if(mobile) console.log('\ntelephone | debordement :', await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth));

@@ -6774,6 +6774,16 @@ function _vitrineCases(sel, s, data){
   const filtreNuit = sci => SPECIES_FAMILY_FILTERS.nocturnes(sci) || SPECIES_FAMILY_FILTERS.nightjars(sci) || NUIT_GENRES.has(genre(sci));
   const filtreCanards = sci => ANATIDAE_G.test(genre(sci)) || fam(sci) === 'Canards, oies, cygnes';   // comme anatidaeOwnedSet
   const filtreMouettes = sci => fam(sci) === 'Goélands, mouettes, sternes';
+  // Limicoles (Mathis, 11/11) : tous, oedicnemes compris, qui comptent donc AUSSI pour La Garde de Nuit (voulu).
+  // Familles du Birdydex des oiseaux de rivage ; pas les chionis, thinocores ni le pedionome, cousins de
+  // classification qui ne vivent pas les pieds dans l'eau.
+  const LIMICOLES = new Set(['Bécasseaux, chevaliers', 'Pluviers, vanneaux', 'Avocettes, échasses', 'Huîtriers', 'Œdicnèmes',
+    'Glaréoles', 'Jacanas', 'Rhynchées', 'Ibidorhynque', 'Pluvier de Magellan', 'Drome']);
+  const filtreLimicoles = sci => LIMICOLES.has(fam(sci));
+  // Echassiers (Mathis, 11/11) : herons, aigrettes, butors, ibis, spatules, cigognes, grues, sans les flamants.
+  // Les bihoreaux en font partie et comptent AUSSI pour La Garde de Nuit (voulu).
+  const ECHASSIERS = new Set(['Hérons, aigrettes', 'Ibis, spatules', 'Cigognes', 'Grues']);
+  const filtreEchassiers = sci => ECHASSIERS.has(fam(sci));
   const especesNuit = (p, sp) => { const set = new Set([...(sp.owlOwnedSet || []), ...(sp.nightjarsSet || [])]);
     for(const v of p._active.values()){ const sci = (v.sci || '').toLowerCase(); if(NUIT_GENRES.has(sci.split(' ')[0])) set.add(sci); }
     return set; };
@@ -6799,6 +6809,18 @@ function _vitrineCases(sel, s, data){
       filtre:filtreMouettes, libelle:'goélands, mouettes et sternes',
       niveaux:[1, 2, 3].map(n => `assets/trophies/themes/mouettes/niveau-${n}.png`),
       quoi:"Le plus de goélands, mouettes et sternes de la ligue" },
+    // Niveaux decoupes par outils/build/_niveaux-limicoles.mjs : les deux avocettes, + le becasseau en vol a
+    // droite, + le vol de gauche (ordre de Mathis, 11/11). Nom choisi par Mathis le 11/11 (les chevaliers).
+    { id:'limicoles', nom:'Les Chevaliers de la Table ronde', especes:selon(filtreLimicoles),
+      filtre:filtreLimicoles, libelle:'limicoles',
+      niveaux:[1, 2, 3].map(n => `assets/trophies/themes/limicoles/niveau-${n}.png`),
+      quoi:"Le plus de limicoles de la ligue : bécasseaux, chevaliers, pluviers, avocettes et huîtriers" },
+    // Niveaux decoupes par outils/build/_niveaux-echassiers.mjs : la spatule penchee a gauche, + celle posee sur
+    // la branche, + les deux en vol (ordre de Mathis, 11/11). Nom choisi par Mathis le 11/11 (Rodin : le heron fige).
+    { id:'echassiers', nom:'Le Penseur', especes:selon(filtreEchassiers),
+      filtre:filtreEchassiers, libelle:'échassiers',
+      niveaux:[1, 2, 3].map(n => `assets/trophies/themes/echassiers/niveau-${n}.png`),
+      quoi:"Le plus d'échassiers de la ligue : hérons, aigrettes, ibis, spatules, cigognes et grues" },
   ];
   // Le palmares (_vitrinePalmaresHtml) : le jour d'observation de chaque espece chez chacun, le plus ancien si
   // l'espece revient sous plusieurs noms ; a defaut, le jour ou elle est arrivee sur le site. Le calcul de la
