@@ -1,10 +1,13 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1104 / app.js?v=676 (11/11, trophée unique « Aquaman », 05fe82af). Prochaine : v1105 / 677.
-TROPHEES_VERSION = 5 (à monter à chaque trophée unique neuf). Uniques en ligne le 11/11 : Fixation béton (huppe),
-Spider-Man (tichodrome), Aquaman (cincles) ; essai : `outils/verif/_essai-unique.mjs <sauvegarde> <captures> <membre> <trophée>`.
-En attente des images de Mathis : « Arc-en-ciel » (rolliers + guêpiers), « Seul au monde » (top 3 des espèces
-exclusives, dans les Exploits). Corvidés et flamant ABANDONNÉS (11/11), à ne plus reproposer. Détail : fin de THEMES.md.
+Dernière version : v1106 / app.js?v=678 (11/11, rareté des continents aux seuils d'un pays, ee94dd55). Prochaine : v1107 / 679.
+- **v1106** : continents et monde reprennent les seuils d'un pays (le Tichodrome était 4 dans le monde, 5 au mieux
+  dans un pays) ; seuils.json retiré, Birdydex des continents régénéré, `_concordance-birdydex-continents.mjs` 0 écart.
+TROPHEES_VERSION = 6 (à monter à chaque trophée unique neuf). Uniques en ligne le 11/11 : Fixation béton (huppe),
+Spider-Man (tichodrome, agrandi x 1,12), Aquaman (cincles), Matuidi Charo (vautours, v1105) ; huppe décalée
+(VITRINE_DECALAGE). Essai : `outils/verif/_essai-unique.mjs <sauvegarde> <captures> <membre> <trophée>`.
+En attente de l'image de Mathis : « Seul au monde » (top 3 des espèces
+exclusives, dans les Exploits). Corvidés, flamant, rollier + guêpier ABANDONNÉS (11/11), à ne plus reproposer. Détail : fin de THEMES.md.
 
 - **v1100 (0254dfa8)** : un trophée neuf de la vitrine arrive « à débloquer » (avant : compté d'office comme vu) ;
   `_VT_REMIS` a remis limicoles et échassiers à 0 une fois. Essai : `outils/verif/_essai-remis.mjs`.
