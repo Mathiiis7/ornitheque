@@ -4,8 +4,8 @@ Dernière version : v1099 / app.js?v=671 (11/11, trophées limicoles et échassi
 
 - **v1099 (11/11, f820893b) : deux trophées de la ligue EN LIGNE**, « Les Chevaliers de la Table ronde » (limicoles,
   œdicnèmes compris) et « Le Penseur » (hérons, ibis, spatules, cigognes, grues, bihoreaux compris). Niveaux :
-  `outils/build/_niveaux-limicoles.mjs`, `_niveaux-echassiers.mjs`. Question laissée à Mathis : chionis, thinocores,
-  pédionome, écartés des limicoles. Détail : fin de `notes-privees/trophees/THEMES.md`.
+  `outils/build/_niveaux-limicoles.mjs`, `_niveaux-echassiers.mjs`. Chionis, thinocores et
+  pédionome restent hors des limicoles (Mathis, 11/11). Détail : fin de `notes-privees/trophees/THEMES.md`.
 
 - **v1097 (11/11, 0c109a97) : Sahara occidental recoupé à 27°40' N** (Natural Earth le donnait au Maroc à l'ouest du mur) :
   `outils/build/sahara-occidental.mjs`, pays, continents, régions du Maroc, surfaces et Birdydex des continents régénérés.
