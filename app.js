@@ -1050,9 +1050,23 @@ let _airesPays = null, _airesPaysPromesse = null;
 // Les seuils arrivent avec les surfaces : _airesPays n'est pose qu'une fois les deux la, pour qu'aucun palier
 // de continent ne s'affiche avec les seuils d'un pays le temps d'un chargement.
 function _chargerAiresPays(){
-  return _airesPaysPromesse ||= Promise.all([fetch('data/aires-pays.json?v=20261111').then(r => r.ok ? r.json() : null), _chargerSeuilsEtendus()])
+  return _airesPaysPromesse ||= Promise.all([fetch('data/aires-pays.json?v=20261111').then(r => r.ok ? r.json() : null), _chargerSeuilsEtendus(), _chargerListesPays()])
     .then(([j]) => { _airesPays = j; return j; }).catch(() => { _airesPaysPromesse = null; return null; });
 }
+// Le nombre de listes eBird de chaque pays, mois par mois, 2019-2026 (data/listes-pays.json, outils/build/listes-pays.mjs).
+// Choix de Mathis le 2026-11-11, devant la Libye (93 listes en huit ans, une espece y paraissait commune) : la fiche
+// previent qu'un tel pays a des pourcentages fragiles, et la rarete d'un continent l'allege (_fiabilitePays).
+let _listesPays = null, _listesPaysPromesse = null;
+function _chargerListesPays(){
+  return _listesPaysPromesse ||= fetch('data/listes-pays.json?v=20261111').then(r => r.ok ? r.json() : null)
+    .then(j => { _listesPays = j; return j; }).catch(() => { _listesPaysPromesse = null; return null; });
+}
+// En dessous, un pays est « peu observe » : la fiche le dit, et son poids dans un continent baisse d'autant
+// (500 listes : la moitie de son poids). 46 pays sur 253, dont la Libye, le Niger, le Mali et le Soudan.
+const LISTES_POIDS_PLEIN = 1000;
+function _nbListesPays(cc){ const l = _listesPays && _listesPays[cc]; return l ? l.reduce((a, b) => a + b, 0) : null; }
+// Le poids d'un pays dans un continent, de 0 a 1 selon ses listes. Un pays dont on ne sait rien garde tout son poids.
+function _fiabilitePays(cc){ const n = _nbListesPays(cc); return n == null ? 1 : Math.min(1, n / LISTES_POIDS_PLEIN); }
 // Les seuils des paliers d'un continent et du monde (Mathis, 2026-11-11 : « comme un pays »). Avec ceux d'un pays,
 // le Monde n'avait personne aux paliers 1 a 4 et 46 % au palier 10 : aucune espece n'est sur 24 % des listes du
 // monde. Chaque echelle a les siens, places pour que ses especes se repartissent entre les paliers comme celles
@@ -1084,7 +1098,7 @@ function _rareteEtendue(sci, nom, pret){
     const vA = _verdictPaysEspece(key, cc, null, pret, true);
     if(!vA || vA.sansDonnees) continue;
     const sauvage = vA.tier > 0;
-    membres.push({ aire, an: sauvage ? vA.vAn : 0,
+    membres.push({ cc, aire, an: sauvage ? vA.vAn : 0,
       m12: _MOIS_COURTS.map((_, mi) => sauvage ? ((_verdictPaysEspece(key, cc, mi, pret, true) || {}).vAn || 0) : 0) });
     poidsTotal += aire;
   }
@@ -1092,7 +1106,9 @@ function _rareteEtendue(sci, nom, pret){
   const plafond = 0.10 * poidsTotal;
   let poids = 0, an = 0; const m12 = Array(12).fill(0);
   for(const x of membres){
-    const w = Math.min(x.aire, plafond);
+    // La surface plafonnee, allegee pour un pays peu observe (_fiabilitePays) : 93 listes ne decident pas pour
+    // 1,6 million de km2 de Libye.
+    const w = Math.min(x.aire, plafond) * _fiabilitePays(x.cc);
     poids += w; an += x.an * w;
     for(let mi = 0; mi < 12; mi++) m12[mi] += x.m12[mi] * w;
   }
@@ -1115,7 +1131,7 @@ const _pkdxQuandRempliAttente = [];
 // avec les fonctions de _rareteEtendue (recoupees, zero palier different). { sci: [valeur annuelle, drapeaux,
 // "NPX"] } ; drapeaux 1 = reguliere quelque part, 2 = saisonniere, 4 = exotique partout ou elle vit. Monde :
 // 101 Ko gz, Europe 13 Ko. A REGENERER quand les donnees des pays ou les surfaces changent, puis monter ce numero.
-const BIRDYDEX_CONTINENTS_V = '20261111c';
+const BIRDYDEX_CONTINENTS_V = '20261111d';
 const _pkdxContinents = {}, _pkdxContinentsPromesses = {};
 function _chargerPkdxContinent(nom){
   const f = CARTES_CONTINENTS[nom];
@@ -1255,6 +1271,17 @@ function _openCountryPicker(currentCode, opts = {}){
     // les filtres eBird de la Carte les reçoivent un par un (opts.surMaj, plus bas).
     // opts.tip(cc) : la bulle de la ligne (le nom du meilleur hotspot).
     const avecCompte = typeof opts.compte === 'function';
+    // Un pays peu observe porte un repere a cote de son nom (Mathis, 2026-11-11 : « dans le selecteur de pays,
+    // partout ou ca peut etre utile »). Pas la ou la liste compte les observations de la ligue (opts.compte) :
+    // ce n'est pas un pourcentage eBird qu'on y lit.
+    const montrerPeu = !avecCompte && opts.peuDeListes !== false;
+    const nomLigne = cc => {
+      const n = montrerPeu ? _nbListesPays(cc) : null;
+      if(n == null || n >= LISTES_POIDS_PLEIN) return `<span class="cp-item-name">${esc(nomPays(cc))}</span>`;
+      const dit = `Seulement ${n} liste${n > 1 ? 's' : ''} eBird depuis 2019 : pourcentages fragiles.`;
+      return `<span class="cp-item-name cp-item-name-peu"><span class="cp-item-nom">${esc(nomPays(cc))}</span>`
+        + `<span class="cp-peu" role="img" aria-label="${esc(dit)}" data-tip="${esc(dit)}">⚠&#xFE0E;</span></span>`;
+    };
     const unite = opts.unite || 'esp.';
     const allCodes = avecCompte ? availableCodes.slice() : availableCodes.filter(cc => COUNTRIES_REG[cc]);
     const nomPays = cc => (COUNTRIES_REG[cc] && COUNTRIES_REG[cc].name) || countryLabel(cc);
@@ -1590,7 +1617,7 @@ function _openCountryPicker(currentCode, opts = {}){
           const absentCls = focusSci && typeof absent !== 'undefined' && absent ? ' absent' : '';
           html += `<div class="cp-item${focusSci ? '' : ' sans-palier'}${cc === ccCourant && !contCourant ? ' on' : ''}${absentCls}" data-cc="${esc(cc)}"${titreLigne ? ` data-tip="${esc(titreLigne)}"` : ''}>
             <span class="cp-item-flag">${flag}</span>
-            <span class="cp-item-name">${esc(nomPays(cc))}</span>
+            ${nomLigne(cc)}
             ${meta}
           </div>`;
         }
@@ -1598,6 +1625,7 @@ function _openCountryPicker(currentCode, opts = {}){
       listEl.innerHTML = html || '<div style="padding:16px; text-align:center; color:var(--ink-3);">Aucun pays trouvé.</div>';
     };
     render();
+    if(montrerPeu && !_listesPays) _chargerListesPays().then(j => { if(j && backdrop.isConnected) render(searchEl.value); });
     // Les comptes qui arrivent après l'ouverture (filtres eBird de la Carte) : l'appelant rappelle
     // redessiner à chaque arrivée ; il sait que la fenêtre est fermée quand ouverte() rend faux.
     // Lancé une fois la fenêtre posée (plus bas) : avant, ouverte() rendait faux et le chargement
@@ -19249,8 +19277,13 @@ function _legendeOuQuand(aCarte, aGraph, vueExo){
     : aCarte
     ? `${surCarte}, mois par mois dans la colonne de gauche.`
     : `La fréquence au fil de l'année.`;
+  // Un pays peu observe : ses pourcentages reposent sur une poignee de listes (Mathis, 2026-11-11, devant la Libye).
+  const n = p.cc ? _nbListesPays(p.cc) : null;
+  if(p.cc && !_listesPays) _chargerListesPays().then(j => { if(j) _majPanneauOuQuand(); });
+  const fragile = n != null && n < LISTES_POIDS_PLEIN
+    ? `<div class="sm-oq-note sm-oq-fragile">⚠ Seulement ${n} liste${n > 1 ? 's' : ''} eBird ${_auPays(p.cc)} depuis 2019 : ces pourcentages sont fragiles.</div>` : '';
   return `<div class="sm-oq-cles">${cles}</div>`
-    + `<div class="sm-oq-note">ⓘ ${phrase} C'est une facilité de rencontre, pas un effectif.</div>`;
+    + `<div class="sm-oq-note">ⓘ ${phrase} C'est une facilité de rencontre, pas un effectif.</div>` + fragile;
 }
 // La carte d'un continent, ou du monde, dans la fiche : chaque pays a la couleur de SA rarete, le verdict
 // meme de sa ligne dans le selecteur (_verdictPaysEspece). Le continent n'a pas de rarete a lui (Mathis,
@@ -19602,6 +19635,7 @@ async function _renderRarityMap(sci, cc){
   // chargement ci-dessous - le graphique, lui, est synchrone et peut ecrire la legende le
   // premier, avec le mot de zone du pays precedent.
   window._oqPortee = {
+    cc,
     zoneWord: cc === 'FR' ? 'département' : (_paysSansDecoupage(cc) ? 'mois' : 'région'),
     sansDecoupage: _paysSansDecoupage(cc),
   };

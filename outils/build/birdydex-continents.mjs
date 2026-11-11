@@ -32,7 +32,7 @@ const EXPORTS = `
 ;window.__bdx = { FR_NAMES, COUNTRIES_REG, CARTES_CONTINENTS, _MOIS_COURTS, _isSciAliasSource, isParkOnlyExotic,
   _continentDuPays, _verdictPaysEspece, _rareteEtendue, _chargerDonneesPays, _donneesPaysPretes, _chargerAiresPays,
   _chargerEspeceMonde, annualFreqToTier, _estReguliere, exoticCategoryInCountry, _estSaisonniere,
-  _countryHasSpecies, _especeMonde, EXOTIQUES_EBIRD_PAR_PAYS, _MOIS_MIN_X_VISIBLE,
+  _countryHasSpecies, _especeMonde, EXOTIQUES_EBIRD_PAR_PAYS, _MOIS_MIN_X_VISIBLE, _fiabilitePays, get listesPays(){ return _listesPays; },
   get airesPays(){ return _airesPays; }, get raretePays(){ return _RARETE_PAYS; } };
 `;
 const prefixes = fs.readdirSync('data/especes-monde').filter(f => f.endsWith('.json')).map(f => f.slice(0, -5));
@@ -54,7 +54,7 @@ await p.waitForFunction(() => window.__bdx, null, { timeout: 30000 });
 const res = await p.evaluate(async (prefixes) => {
   const B = window.__bdx;
   await Promise.all([B._chargerDonneesPays(), B._chargerAiresPays(), ...prefixes.map(k => B._chargerEspeceMonde(k))]);
-  if(!B._donneesPaysPretes() || !B.airesPays) return { erreur: 'donnees des pays ou surfaces absentes' };
+  if(!B._donneesPaysPretes() || !B.airesPays || !B.listesPays) return { erreur: 'donnees des pays, surfaces ou listes absentes' };
   // Session neuve : aucun pays du monde lu (sinon sa frequence complete remplacerait le morceau arrondi
   // que lit la fiche). Les 48 pays des fichiers communs, eux, sont toujours lus.
   const mondeLus = Object.keys(B.COUNTRIES_REG).filter(cc => B.COUNTRIES_REG[cc].monde && B.raretePays[cc]);
@@ -90,7 +90,8 @@ const res = await p.evaluate(async (prefixes) => {
       const plafond = 0.10 * poidsTotal;
       let poids = 0, an = 0; const m12 = Array(12).fill(0);
       for(const [cc, x] of lot){
-        const w = Math.min(aires[cc], plafond);
+        // Le meme allegement que _rareteEtendue pour un pays peu observe (_fiabilitePays, data/listes-pays.json).
+        const w = Math.min(aires[cc], plafond) * B._fiabilitePays(cc);
         poids += w; an += x.an * w;
         for(let mi = 0; mi < 12; mi++) m12[mi] += x.m12[mi] * w;
       }
