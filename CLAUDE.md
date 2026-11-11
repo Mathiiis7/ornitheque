@@ -63,9 +63,21 @@ hors du projet, mais qui en dépend - à corriger si un chemin bouge
                     lance node outils/build/backup-firestore.mjs depuis la racine
                     (C:\Users\mathi\Documents\0-Claude\1-App\ornitheque). Corrigée le 2026-10-04
                     par le QG ; a tourné une fois ce jour-là, résultat 0
-                    (outils/backups/firestore-2026-10-04-0852.json), prochaine le 2026-10-09.
+                    (outils/backups/firestore-2026-10-04-0852.json). Puis en panne : Windows la
+                    tuait au démarrage (0xC000013A, 9/10 et 9/11). Réparée le 2026-11-10 par
+                    Mathis : node lancé par `conhost.exe --headless`, tourne sur batterie, rattrape
+                    une échéance manquée. Pas encore vue tourner : regarder le 2026-12-09.
                     Créée en administrateur, la modifier
                     demande une fenêtre élevée (Set-ScheduledTask refuse sinon).
+                    **Une sauvegarde complète lit chaque document, une lecture chacun sur les
+                    50 000 par jour du plan gratuit** : le 2026-11-10 elle a buté sur le quota
+                    (RESOURCE_EXHAUSTED), sans doute bloquant le site jusqu'à 9 h. `ebirdCache`, simple copie des réponses eBird qui
+                    grossit sans fin (10 748 documents sur 13 328 le 2026-10-04), est exclu depuis.
+                    Ne PAS le vider sans fait nouveau (décidé le 2026-11-10) : 13 225 copies de
+                    4,4 Ko, environ 57 Mo, 6 % du gigaoctet gratuit, et le site ne lit que la
+                    copie dont il a besoin. Si la place manque un jour :
+                    `outils/build/purge-ebird-cache.mjs` (`--compter` presque gratuit). Réparer la
+                    tâche : `outils/reparer-tache-sauvegarde.ps1`, en administrateur.
 ```
 
 **Un fichier ignoré qui vit dans `outils/` s'ignore sous ce nom-là.** La clé Firebase et les
@@ -355,7 +367,9 @@ sessions après la disparition de la bulle qu'il annonçait.
 Après toute retouche de l'entête du panneau, des sélecteurs, des pastilles ou des cartes :
 `node outils/verif/tous.mjs`, chaque banc finit par `CONFORME` ou `DÉFAUT`. **Juger sur la dernière ligne**
 (« Les 11 bancs sont conformes » ou « N banc(s) en défaut »), jamais sur un `grep DÉFAUT` : le banc pastilles
-écrit `DEFAUT` sans accent, et un défaut des filtres X / P / N est passé inaperçu de la v1027 à la v1037 (2026-11-08). **Un crochet le fait
+écrit `DEFAUT` sans accent, et un défaut des filtres X / P / N est passé inaperçu de la v1027 à la v1037 (2026-11-08).
+Dans un enchaînement, `tous.mjs | tail -1 && git commit` commite MÊME en défaut (le tube rend le code de `tail`) :
+écrire `| tail -1 | grep -q "sont conformes" && git commit` (v1070 partie ainsi le 2026-11-10, défaut passager). **Un crochet le fait
 tout seul** : `.claude/hooks/verif-avant-fin.mjs`, branché sur l'événement `Stop`, rejoue tous les
 bancs et refuse de laisser une réponse finir tant qu'un banc est en défaut, dès qu'`app.js`,
 `index.html` ou `styles.css` sont modifiés et pas encore commités. Après une retouche

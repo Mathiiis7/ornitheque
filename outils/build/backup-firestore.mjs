@@ -80,6 +80,12 @@ function serialize(v) {
 // donc on ne l'appelle QUE sur les docs qu'on sait etre des containers (leagues/{lg}).
 // Les leaf docs (chat, photos, comments...) sont dumped sans check subs.
 const CONTAINER_COLLECTIONS = new Set(['leagues']);
+// Collections jamais sauvegardees : ebirdCache n'est qu'une copie des reponses eBird (valable 6 h,
+// refaite par le premier ami qui charge la page), et elle grossit sans fin. Le 2026-10-04 elle
+// faisait deja 10 748 des 13 328 documents, et chaque document lu coute une lecture sur les
+// 50 000 du plan gratuit : le 2026-11-10, la sauvegarde complete a echoue sur RESOURCE_EXHAUSTED
+// (quota du jour depasse) apres 47 s de lecture.
+const COLLECTIONS_EXCLUES = new Set(['ebirdCache']);
 async function dumpCollection(collRef, path, depth = 0) {
   // Recupere les docs explicites via .get() (rapide, une seule query) au lieu de
   // listDocuments() qui necessite 1 get() par doc pour recuperer les fields.
@@ -111,6 +117,7 @@ async function dumpCollection(collRef, path, depth = 0) {
       if (subs.length > 0) {
         docs[ref.id]._subs = {};
         for (const sub of subs) {
+          if (COLLECTIONS_EXCLUES.has(sub.id)) { console.log(`  ${path}/${ref.id}/${sub.id} : ignoree (cache)`); continue; }
           const subDump = await dumpCollection(sub, `${path}/${ref.id}/${sub.id}`, depth + 1);
           docs[ref.id]._subs[sub.id] = subDump;
           subCount += Object.keys(subDump).length;
