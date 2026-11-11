@@ -1064,6 +1064,15 @@ function _chargerListesPays(){
 // En dessous, un pays est « peu observe » : la fiche le dit, et son poids dans un continent baisse d'autant
 // (500 listes : la moitie de son poids). 46 pays sur 253, dont la Libye, le Niger, le Mali et le Soudan.
 const LISTES_POIDS_PLEIN = 1000;
+// Les pays sans rarete (Mathis, 2026-11-11) : moins de 200 listes eBird depuis 2019, et aucune espece qu'on ne trouve
+// que la, ou presque (sauvage chez eux, absente ou au palier 8 et au-dela partout ailleurs). Calcule par
+// outils/build/pays-sans-rarete.mjs : Nauru, la Coree du Nord, le Mali et l'Afghanistan gardent la leur pour une
+// espece propre. Ils restent dans le selecteur, « trop peu de listes » ; leur carte est hachuree ; ils ne comptent
+// plus dans un continent ni le monde ; leur Birdydex liste les especes sans palier. Le Classement et le Fil
+// continuent de lire leurs paliers.
+const PAYS_SANS_RARETE = {"BV":6,"CP":16,"HM":22,"TK":61,"WF":70,"CS":84,"LY":93,"TV":120,"ER":123,"NE":138,"SY":139,"NU":156,"IO":192};
+const _sansRarete = cc => !!PAYS_SANS_RARETE[cc];
+const _phraseSansRarete = cc => `Trop peu de listes eBird ${_auPays(cc)} (${PAYS_SANS_RARETE[cc]} depuis 2019) pour donner une rareté.`;
 function _nbListesPays(cc){ const l = _listesPays && _listesPays[cc]; return l ? l.reduce((a, b) => a + b, 0) : null; }
 // Le poids d'un pays dans un continent, de 0 a 1 selon ses listes. Un pays dont on ne sait rien garde tout son poids.
 function _fiabilitePays(cc){ const n = _nbListesPays(cc); return n == null ? 1 : Math.min(1, n / LISTES_POIDS_PLEIN); }
@@ -1094,7 +1103,7 @@ function _rareteEtendue(sci, nom, pret){
   const membres = [];
   for(const cc of Object.keys(COUNTRIES_REG)){
     const aire = _airesPays[cc];
-    if(!(aire > 0) || (nom !== 'Monde' && _continentDuPays(cc) !== nom)) continue;
+    if(!(aire > 0) || _sansRarete(cc) || (nom !== 'Monde' && _continentDuPays(cc) !== nom)) continue;
     const vA = _verdictPaysEspece(key, cc, null, pret, true);
     if(!vA || vA.sansDonnees) continue;
     const sauvage = vA.tier > 0;
@@ -1112,6 +1121,7 @@ function _rareteEtendue(sci, nom, pret){
     poids += w; an += x.an * w;
     for(let mi = 0; mi < 12; mi++) m12[mi] += x.m12[mi] * w;
   }
+  if(!(poids > 0)) return null;
   return { an: an / poids, m12: m12.map(v => v / poids) };
 }
 // Le continent montre par la fiche, '' quand c'est un pays. Jamais enregistre, et jamais ecrit dans
@@ -1131,7 +1141,7 @@ const _pkdxQuandRempliAttente = [];
 // avec les fonctions de _rareteEtendue (recoupees, zero palier different). { sci: [valeur annuelle, drapeaux,
 // "NPX"] } ; drapeaux 1 = reguliere quelque part, 2 = saisonniere, 4 = exotique partout ou elle vit. Monde :
 // 101 Ko gz, Europe 13 Ko. A REGENERER quand les donnees des pays ou les surfaces changent, puis monter ce numero.
-const BIRDYDEX_CONTINENTS_V = '20261111d';
+const BIRDYDEX_CONTINENTS_V = '20261111e';
 const _pkdxContinents = {}, _pkdxContinentsPromesses = {};
 function _chargerPkdxContinent(nom){
   const f = CARTES_CONTINENTS[nom];
@@ -1278,7 +1288,7 @@ function _openCountryPicker(currentCode, opts = {}){
     const nomLigne = cc => {
       const n = montrerPeu ? _nbListesPays(cc) : null;
       if(n == null || n >= LISTES_POIDS_PLEIN) return `<span class="cp-item-name">${esc(nomPays(cc))}</span>`;
-      const dit = `Seulement ${n} liste${n > 1 ? 's' : ''} eBird depuis 2019 : pourcentages fragiles.`;
+      const dit = `Seulement ${n} liste${n > 1 ? 's' : ''} eBird depuis 2019 : ` + (_sansRarete(cc) ? 'trop peu pour donner une rareté.' : 'pourcentages fragiles.');
       return `<span class="cp-item-name cp-item-name-peu"><span class="cp-item-nom">${esc(nomPays(cc))}</span>`
         + `<span class="cp-peu" role="img" aria-label="${esc(dit)}" data-tip="${esc(dit)}">⚠&#xFE0E;</span></span>`;
     };
@@ -1305,6 +1315,8 @@ function _openCountryPicker(currentCode, opts = {}){
     // ligne - moyenne annuelle ponderee, ou le mois choisi sur la carte. Les deux sont
     // distinctes : au mois de janvier un migrateur estival affiche 0 sans etre absent.
     const scoreCountryForSpecies = (cc) => {
+      // Sans rarete : rien a classer, la ligne descend avec les absents.
+      if(_sansRarete(cc)) return { score: 0, aff: 0, isSt: false };
       const reg = COUNTRIES_REG[cc];
       const monArr = reg.monthly()[focusSci] || _mensuelMonde(cc);
       if(!Array.isArray(monArr)) return { score: 0, aff: 0, isSt: false };
@@ -1587,6 +1599,10 @@ function _openCountryPicker(currentCode, opts = {}){
               ? '<span class="cp-item-exo"></span><span class="reg-picker-val">'
                 + (etatPays === 'echec' ? 'indisponible' : 'chargement…') + '</span><div class="reg-picker-bar"></div>'
                 + tierChip('…', 'var(--line-2)', { cls: 'tier-rond' })
+              // Sans rarete : ni pourcentage ni palier, meme « absente » (93 listes ne prouvent pas une absence).
+              : _sansRarete(cc)
+              ? '<span class="cp-item-exo"></span><span class="reg-picker-val cp-trop-peu">trop peu de listes</span>'
+                + tierChip('–', 'var(--line-2)', { cls: 'tier-rond' })
               : absent
               ? '<span class="cp-item-exo"></span><span class="reg-picker-val">absente</span><div class="reg-picker-bar"></div>'
                 + tierChip('–', 'var(--line-2)', { cls: 'tier-rond' })
@@ -19280,7 +19296,7 @@ function _legendeOuQuand(aCarte, aGraph, vueExo){
   // Un pays peu observe : ses pourcentages reposent sur une poignee de listes (Mathis, 2026-11-11, devant la Libye).
   const n = p.cc ? _nbListesPays(p.cc) : null;
   if(p.cc && !_listesPays) _chargerListesPays().then(j => { if(j) _majPanneauOuQuand(); });
-  const fragile = n != null && n < LISTES_POIDS_PLEIN
+  const fragile = n != null && n < LISTES_POIDS_PLEIN && !_sansRarete(p.cc)
     ? `<div class="sm-oq-note sm-oq-fragile">⚠ Seulement ${n} liste${n > 1 ? 's' : ''} eBird ${_auPays(p.cc)} depuis 2019 : ces pourcentages sont fragiles.</div>` : '';
   return `<div class="sm-oq-cles">${cles}</div>`
     + `<div class="sm-oq-note">ⓘ ${phrase} C'est une facilité de rencontre, pas un effectif.</div>` + fragile;
@@ -19486,6 +19502,9 @@ async function _renderCarteContinent(sci, nom){
     return p >= 10 ? Math.round(p) + _PCT : p >= 0.1 ? _fr(p.toFixed(1)) + _PCT : _fr(Number(p.toPrecision(1))) + _PCT; };
   let svg = '';
   const surMonde = nom === 'Monde';
+  // Les hachures d'un pays sans rarete (PAYS_SANS_RARETE) : un pas de 6 px a l'ecran, comme sur la carte d'un pays.
+  const idHachC = 'oqh-' + (++_oqHachN);
+  let hachC = false;
   for(const [cc, r] of Object.entries(paths.regions)){
     const ccD = COUNTRIES_REG[cc] ? cc : _RATTACHES_CARTE[cc];
     const vd = ccD ? _verdictPaysEspece(key, ccD, mois, pret) : null;
@@ -19497,7 +19516,8 @@ async function _renderCarteContinent(sci, nom){
     const cible = surMonde ? (CARTES_CONTINENTS[contCC] && contCC !== 'Monde' ? cc : null) : (ccD ? cc : null);
     // Un pays sans aucune donnee chez nous (Vatican, Monaco...) : le fond, pas le gris « jamais notee ».
     let fill = 'var(--surface-3)', titre = r.name + ' - pas de données';
-    if(vd && !vd.sansDonnees){
+    if(ccD && _sansRarete(ccD)){ fill = 'url(#' + idHachC + ')'; hachC = true; titre = r.name + ' - trop peu de listes eBird pour une rareté'; }
+    else if(vd && !vd.sansDonnees){
       // L'annee prend le palier du pays, celui de la pastille de sa ligne ; un mois, celui de sa valeur.
       // Une exotique sans palier (X, P, C) reste grise : pas d'echappes en couleur.
       const t = vd.tier > 0 ? (surAnnee ? vd.tier : (vd.vAn > 0 ? annualFreqToTier(vd.vAn) : 0)) : 0;
@@ -19512,6 +19532,9 @@ async function _renderCarteContinent(sci, nom){
     }
     svg += _pathZone(r.path, fill, titre, false, horsCont, cible, 1);
   }
+  if(hachC){ const pas = ((+paths.viewBox.split(' ')[2] || 413) / 413 * 6).toFixed(2);
+    svg = `<defs><pattern id="${idHachC}" patternUnits="userSpaceOnUse" width="${pas}" height="${pas}" patternTransform="rotate(45)">`
+      + `<rect width="${pas}" height="${pas}" fill="var(--surface-2)"/><rect width="${(pas / 2).toFixed(2)}" height="${pas}" fill="${ABSENT}"/></pattern></defs>` + svg; }
   // La rarete du continent, ou du monde : _rareteEtendue.
   const rar = _rareteEtendue(key, nom, pret);
   const m12Cont = rar ? rar.m12 : null, anCont = rar ? rar.an : 0;
@@ -19684,6 +19707,7 @@ async function _renderRarityMap(sci, cc){
   // Un identifiant par dessin (deux cartes coexistent pendant un zoom), un pas de 6 px a l'ecran quelle que
   // soit l'echelle du pays (la boite de la carte fait 413 px de large).
   const listesZ = LISTES_PAR_ZONE[cc] || null;
+  const sansRar = _sansRarete(cc);
   const idHach = 'oqh-' + (++_oqHachN);
   const pasHach = ((+String(_viewBoxCarte(cc, paths)).split(/\s+/)[2] || 413) / 413 * 6).toFixed(2);
   let aHachures = false;
@@ -19708,7 +19732,9 @@ async function _renderRarityMap(sci, cc){
     let fill = ABSENT;
     let titre = surAnnee ? `${nom} - jamais observée` : `${nom} - absente en ${libellePeriode}`;
     const ls = listesZ && listesZ[z];
-    if(!(v > 0) && Array.isArray(ls) && (surAnnee ? !ls.some(x => x > 0) : !(ls[mois] > 0))){
+    if(sansRar){ fill = `url(#${idHach})`; aHachures = true; v = 0;
+      titre = `${nom} - trop peu de listes eBird pour une rareté`; }
+    else if(!(v > 0) && Array.isArray(ls) && (surAnnee ? !ls.some(x => x > 0) : !(ls[mois] > 0))){
       fill = `url(#${idHach})`; aHachures = true;
       titre = `${nom} - aucune liste eBird ${surAnnee ? 'entre 2019 et 2026' : 'en ' + libellePeriode}`;
     }
@@ -19757,10 +19783,10 @@ async function _renderRarityMap(sci, cc){
     ? ((zonesFiche.find(r => r.code === zonePort) || {}).name || zonePort)
     : ((COUNTRIES_REG[cc] && COUNTRIES_REG[cc].name) || cc);
   const chipMois = (val, label, actif, valeur, annuel) => {
-    const vu = valeur > 0;
+    const vu = valeur > 0 && !sansRar;
     const t = vu ? annualFreqToTier(valeur) : 0;
     const lbl = vu ? ((typeof REAL_LABELS === 'object' && REAL_LABELS[t]) || ('palier ' + t))
-                   : (annuel ? 'jamais notée' : 'absente ce mois-ci');
+                   : sansRar ? 'trop peu de listes' : (annuel ? 'jamais notée' : 'absente ce mois-ci');
     const tip = label + ' · ' + nomPort + ' - ' + (vu ? fmtP(valeur) + ' des listes · ' + lbl + ' (' + t + ')' : lbl);
     // L'etat courant ne peut pas se marquer par la couleur, elle porte deja le palier :
     // un anneau sombre autour de la pastille, detache du fond par un lisere clair.
@@ -20053,6 +20079,7 @@ function _renderSpeciesRarityCard(key){
     // mais le palier de la zone se lit deja juste en dessous, sur la carte et dans la liste :
     // deux chiffres differents pour la meme espece au meme moment se lisaient comme une
     // contradiction. Ici le repere fixe, en dessous la lecture locale.
+    if(_sansRarete(cc)){ _messageRarete(esc(_phraseSansRarete(cc))); return; }
     const w = rarityForCountry(k, cc);
     // isExo est PER-PAYS via isExoticInCountry (le Pelican gris est exotique X en ME
     // via EXOTIQUES_EBIRD_PAR_PAYS mais pas dans le dict EXOTIQUES_CONNUES_FR global centre FR).
@@ -20548,6 +20575,8 @@ function _renderSpeciesFreqChart(key, country){
   };
   if(!svg) return;
   const cc = country || 'FR';
+  // Pays sans rarete : ses pourcentages ne disent rien (PAYS_SANS_RARETE), le graphique se retire.
+  if(_sansRarete(cc)){ window._oqScore = ''; _majEnteteOuQuand(null); montrerGraph(false); return; }
   // Charge les 48 quinzaines du pays si besoin, puis redessine. Le premier rendu se fait
   // sans, en etirant les 12 mois : on affiche tout de suite plutot que d attendre 200 Ko.
   if(typeof REAL_FREQ_48_MULTI === 'object' && !REAL_FREQ_48_MULTI[cc] && typeof _loadFreq48 === 'function'){
@@ -23664,7 +23693,7 @@ function _pkdxLignes(mine, exclude){
       // quand on coche X, meme si eBird la classe N au national. Un deuxieme passage plus
       // bas resserre sur le statut de la zone quand une zone est choisie.
       if(!cats.length || !cats.some(c => _pkdxCatSelected.has(c))) continue;
-    } else if(_pkdxTierExcl.has(tier)){
+    } else if(_pkdxTierExcl.has(tier) && !(!_pkdxContinent && _sansRarete(_pkdxFilters.country || 'FR'))){
       continue;
     }
     const owned = _mineHasStrict(mine, sci);
@@ -23822,6 +23851,8 @@ function _pkdxRender(){
       // exoticCategoriesInCountry) doivent aussi s'afficher sur la vignette et le filtre.
       const catsPays = exoticCategoriesInCountry(sci, country) || [];
       const cats = catsPays.length ? catsPays : (cat ? [cat] : []);
+      // Pays sans rarete (PAYS_SANS_RARETE) : les especes, sans palier ni frequence ; le tri retombe sur les noms.
+      if(_sansRarete(country)){ all.push({ sci, nm, fam, tier: 10, val: 0, exo, cat, cats, accidentelle, saison: false }); continue; }
       all.push({ sci, nm, fam, tier, val, exo, cat, cats, accidentelle, saison });
     }
     // Tri : par ordre taxonomique IOC/eBird (FAMILY_ORDER), puis les exotiques rejetees en
@@ -23861,7 +23892,7 @@ function _pkdxRender(){
     // Quand un cat est actif (_pkdxCatSelected non vide), les tier chips sont visuellement
     // desactives (gris) car le filtre cat prime.
     const catActive = _pkdxCatSelected.size > 0;
-    const tiersPresent = [...new Set(_pkdxAllSorted.map(r => r.tier))].filter(t => t != null && t !== 0).sort((a, b) => a - b);
+    const tiersPresent = (!cont && _sansRarete(country)) ? [] : [...new Set(_pkdxAllSorted.map(r => r.tier))].filter(t => t != null && t !== 0).sort((a, b) => a - b);
     const chipsHtml = tiersPresent.map(t => {
       const on = !catActive && !_pkdxTierExcl.has(t);
       const lbl = (typeof REAL_LABELS === 'object' && REAL_LABELS[t]) || ('palier ' + t);
@@ -23987,8 +24018,9 @@ function _pkdxRender(){
     // petite puce grise - comme le repere des saisonnieres. Les deux repondent a des
     // questions differentes : le palier dit la difficulte a rencontrer l'oiseau, la lettre
     // dit d'ou il sort. Les faire s'exclure obligeait a choisir laquelle perdre.
-    const badgeText = vue.tier;
-    const fondBadge = tierBg;
+    const sansPalier = !cont && _sansRarete(country);
+    const badgeText = sansPalier ? '–' : vue.tier;
+    const fondBadge = sansPalier ? '#9aa3ad' : tierBg;
     // Les pastilles disent le statut A L'ECHELLE LUE, la meme que le filtre N/P/X.
     // Sans zone, tous ceux que l'espece porte dans le pays : « N X » previent qu'il y a
     // ici des populations etablies et des echappes isoles, et que le statut du coin depend
@@ -24099,6 +24131,8 @@ function _pkdxRender(){
   } else {
     morceaux.push(...rows);
   }
+  // Pays sans rarete : une phrase en tete de grille dit pourquoi les cases n'ont pas de palier.
+  if(!cont && _sansRarete(country)) morceaux.unshift('<div class="pkdx-note-sans-rarete">' + esc(_phraseSansRarete(country)) + ' Les espèces sont listées sans palier.</div>');
   _pkdxPoser(grid, morceaux, carte, rowsHash);
 }
 // Photo deja connue, lue sans attendre : on la pose directement dans le HTML de la carte.

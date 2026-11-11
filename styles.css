@@ -1038,6 +1038,9 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .cp-item-name-peu { display:flex; align-items:baseline; gap:5px; }
   .cp-item-name-peu .cp-item-nom { min-width:0; overflow:hidden; text-overflow:ellipsis; }
   .cp-peu { flex:none; color:var(--ink-3); }
+  /* Pays sans rarete (app.js, PAYS_SANS_RARETE) : le texte prend la place du pourcentage ET de la barre. */
+  .cp-trop-peu { grid-column:span 2; text-align:right; white-space:normal; line-height:1.15; min-width:0; }
+  .pkdx-note-sans-rarete { grid-column:1/-1; padding:10px 12px; border-radius:10px; background:var(--surface-2); color:var(--ink-2); font:500 14px/1.4 var(--sans); }
   /* margin-left:auto : sans espece courante, la ligne ne porte que le nom, le compte et
      la barre. Le compte est pousse a droite avec la barre a sa suite, pour que celle-ci
      finisse la ligne comme dans la liste des zones. */

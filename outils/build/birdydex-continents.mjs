@@ -32,7 +32,7 @@ const EXPORTS = `
 ;window.__bdx = { FR_NAMES, COUNTRIES_REG, CARTES_CONTINENTS, _MOIS_COURTS, _isSciAliasSource, isParkOnlyExotic,
   _continentDuPays, _verdictPaysEspece, _rareteEtendue, _chargerDonneesPays, _donneesPaysPretes, _chargerAiresPays,
   _chargerEspeceMonde, annualFreqToTier, _estReguliere, exoticCategoryInCountry, _estSaisonniere,
-  _countryHasSpecies, _especeMonde, EXOTIQUES_EBIRD_PAR_PAYS, _MOIS_MIN_X_VISIBLE, _fiabilitePays, get listesPays(){ return _listesPays; },
+  _countryHasSpecies, _especeMonde, EXOTIQUES_EBIRD_PAR_PAYS, _MOIS_MIN_X_VISIBLE, _fiabilitePays, _sansRarete, get listesPays(){ return _listesPays; },
   get airesPays(){ return _airesPays; }, get raretePays(){ return _RARETE_PAYS; } };
 `;
 const prefixes = fs.readdirSync('data/especes-monde').filter(f => f.endsWith('.json')).map(f => f.slice(0, -5));
@@ -64,7 +64,7 @@ const res = await p.evaluate(async (prefixes) => {
   // Les membres de chaque echelle, exactement comme _rareteEtendue les choisit.
   const membres = {};
   for(const nom of ECHELLES) membres[nom] = Object.keys(B.COUNTRIES_REG)
-    .filter(cc => aires[cc] > 0 && (nom === 'Monde' || B._continentDuPays(cc) === nom));
+    .filter(cc => aires[cc] > 0 && !B._sansRarete(cc) && (nom === 'Monde' || B._continentDuPays(cc) === nom));
   const especes = Object.keys(B.FR_NAMES).filter(s => !B._isSciAliasSource(s));
   const sortie = Object.fromEntries(ECHELLES.map(n => [n, {}]));
   const ecartes = {}, horsGrille = new Set();
