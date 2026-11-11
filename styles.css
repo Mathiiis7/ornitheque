@@ -3623,6 +3623,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
        reserve 220px pour eviter les sauts au scroll. Enorme gain sur 720 cartes. */
     content-visibility:auto; contain-intrinsic-size:220px; }
   .pkdx-card:hover { transform:translateY(-2px); box-shadow:0 6px 14px rgba(0,0,0,.12); border-color:var(--accent); }
+  /* Pendant un défilement, pas de survol (app.js, _pkdxDefileMinuteur) : 0,4 s de survol à repeindre sur 4 s de défilement */
+  #pkdxGrid.defile .pkdx-card { pointer-events:none; }
   .pkdx-card .pkdx-num { position:absolute; top:6px; left:8px; font:700 10px ui-monospace, monospace; color:var(--ink-3-sur-blanc); background:rgba(255,255,255,.85); padding:1px 6px; border-radius:8px; z-index:2; }
   /* Seule exception au carre commun : dans la grille, le rond se pose sur la photo sans
      entrer en concurrence avec le numero d espece, qui est deja un rectangle de texte. */

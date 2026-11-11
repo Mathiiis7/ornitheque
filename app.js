@@ -19237,8 +19237,35 @@ async function _oqTransition(depart, relais, ancreArrivee, ms = 700){
   const graph = document.getElementById('smGraphZone');
   const graphAvant = !!(graph && !graph.hidden && graph.offsetHeight);
   bloc.style.height = h0 + 'px'; carte.style.height = hc0 + 'px';
+  // La scene pose tout de suite, avant le changement, une copie de la carte qu'on quitte, a sa place exacte :
+  // le changement cache la vraie, et la scene n'arrivait qu'une fois la nouvelle dessinee - entre les deux,
+  // le bloc restait vide un instant (vu par Mathis le 2026-11-11). Chaque carte y est un svg a part, deplace
+  // et agrandi par une transformation CSS : la carte graphique les fait glisser sans les redessiner.
+  // La scene couvre les cartes et rien d'autre : la colonne des mois reste hors champ. D'abord la seule
+  // carte de depart, puis l'union des deux quand la seconde est connue.
+  const scene = document.createElement('div');
+  scene.className = 'oq-scene';
+  scene.setAttribute('aria-hidden', 'true');
+  // Les motifs (hachures) des copies changent de nom : sinon elles pointeraient vers ceux des vraies cartes,
+  // dont l'une est deja masquee (display:none), et ses hachures disparaitraient pendant le mouvement.
+  const renomme = (h, x) => h.replace(/oqh-(\d+)/g, 'oqh-$1' + x);
+  const copie = (p, x) => { const el = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    el.setAttribute('class', 'oq-scene-carte'); el.setAttribute('viewBox', p.vb); el.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    el.innerHTML = renomme(p.html, x); return el; };
+  // Place la scene sur le rectangle U (pixels d'ecran) et chaque copie a sa place de repos dans la scene.
+  let U = null;
+  const cadrer = (nouveau, cartes) => {
+    U = nouveau;
+    scene.style.cssText = `left:${(U.l - rb0.left) / z - bloc.clientLeft}px; top:${(U.t - rb0.top) / z - bloc.clientTop}px; width:${(U.r - U.l) / z}px; height:${(U.b - U.t) / z}px;`;
+    for(const [el, p] of cartes) el.style.cssText = `left:${(p.r.left - U.l) / z}px; top:${(p.r.top - U.t) / z}px; width:${p.r.width / z}px; height:${p.r.height / z}px;`;
+  };
+  const svgA = copie(depart, 'a');
+  scene.appendChild(svgA);
+  cadrer({ l: depart.r.left, t: depart.r.top, r: depart.r.right, b: depart.r.bottom }, [[svgA, depart]]);
+  bloc.appendChild(scene);
   bloc.classList.add('oq-en-zoom'); carte.classList.add('oq-carte-en-zoom');
-  const nettoyer = () => { bloc.style.height = ''; carte.style.height = ''; bloc.classList.remove('oq-en-zoom'); carte.classList.remove('oq-carte-en-zoom'); };
+  const nettoyer = () => { scene.remove(); bloc.style.height = ''; carte.style.height = '';
+    bloc.classList.remove('oq-en-zoom'); carte.classList.remove('oq-carte-en-zoom'); if(graph) graph.classList.remove('oq-apparait'); };
   const arrivee = await new Promise(res => {
     const garde = setTimeout(() => { _oqApresRendu = null; res(null); }, 2500);
     _oqApresRendu = svg => { clearTimeout(garde); res(svg); };
@@ -19253,35 +19280,22 @@ async function _oqTransition(depart, relais, ancreArrivee, ms = 700){
     ancreD = ancreD.arrivee;
   }
   if(!arrivee || !arrivee.isConnected || !ancreD){ nettoyer(); return; }
-  const fin = _oqPhoto(arrivee, ancreD);
+  // La carte d'arrivee se mesure a sa place definitive : hauteurs liberees le temps de la mesure.
   bloc.style.height = ''; carte.style.height = '';
+  const fin = _oqPhoto(arrivee, ancreD);
   const h1 = bloc.offsetHeight, hc1 = carte.offsetHeight;
   bloc.style.height = h0 + 'px'; carte.style.height = hc0 + 'px';
   const mois = arrivee.closest('#smRarityMap, #smContinentMap')?.querySelector('#smRarityMapMois, #smContinentMois');
   if(mois) mois.classList.add('oq-apparait');
   if(graph && !graphAvant && !graph.hidden) graph.classList.add('oq-apparait');
-  // La scene couvre les deux cartes, et rien d'autre : la colonne des mois reste hors champ. Chaque carte y est
-  // un svg a part, deplace et agrandi par une transformation CSS : la carte graphique les fait glisser sans
-  // les redessiner. Redessinees a chaque image (version precedente, un groupe SVG transforme), elles tombaient
-  // a 6-15 images par seconde au processeur ralenti par 4.
-  const rb = bloc.getBoundingClientRect();
-  const U = { l: Math.min(depart.r.left, fin.r.left), t: Math.min(depart.r.top, fin.r.top),
-              r: Math.max(depart.r.right, fin.r.right), b: Math.max(depart.r.bottom, fin.r.bottom) };
-  const scene = document.createElement('div');
-  scene.className = 'oq-scene';
-  scene.setAttribute('aria-hidden', 'true');
-  scene.style.cssText = `left:${(U.l - rb.left) / z - bloc.clientLeft}px; top:${(U.t - rb.top) / z - bloc.clientTop}px; width:${(U.r - U.l) / z}px; height:${(U.b - U.t) / z}px;`;
-  // Les motifs (hachures) des copies changent de nom : sinon elles pointeraient vers ceux des vraies cartes,
-  // dont l'une est deja masquee (display:none), et ses hachures disparaitraient pendant le mouvement.
-  const renomme = (h, x) => h.replace(/oqh-(\d+)/g, 'oqh-$1' + x);
-  // Origine de chaque copie dans la scene (pixels d'ecran), a la place exacte de la carte qu'elle reproduit.
-  const oA = [depart.r.left - U.l, depart.r.top - U.t], oB = [fin.r.left - U.l, fin.r.top - U.t];
-  const copie = (p, o, x) => `<svg class="oq-scene-carte" viewBox="${p.vb}" preserveAspectRatio="xMidYMid meet"`
-    + ` style="left:${o[0] / z}px; top:${o[1] / z}px; width:${p.r.width / z}px; height:${p.r.height / z}px;">${renomme(p.html, x)}</svg>`;
-  scene.innerHTML = copie(depart, oA, 'a') + copie(fin, oB, 'b');
-  const [svgA, svgB] = scene.children;
+  const svgB = copie(fin, 'b');
   svgB.style.opacity = '0';
-  bloc.appendChild(scene);
+  scene.appendChild(svgB);
+  cadrer({ l: Math.min(depart.r.left, fin.r.left), t: Math.min(depart.r.top, fin.r.top),
+           r: Math.max(depart.r.right, fin.r.right), b: Math.max(depart.r.bottom, fin.r.bottom) }, [[svgA, depart], [svgB, fin]]);
+  svgB.style.opacity = '0';
+  // Origine de chaque copie dans la scene (pixels d'ecran).
+  const oA = [depart.r.left - U.l, depart.r.top - U.t], oB = [fin.r.left - U.l, fin.r.top - U.t];
   // Ancres en coordonnees de la scene : centre et taille (moyenne geometrique de la largeur et de la hauteur).
   const centre = a => [a[0] + a[2] / 2 - U.l, a[1] + a[3] / 2 - U.t], taille = a => Math.sqrt(Math.max(a[2] * a[3], 1e-6));
   const [cA, cB, sA, sB] = [centre(depart.ancre), centre(fin.ancre), taille(depart.ancre), taille(fin.ancre)];
@@ -19305,8 +19319,9 @@ async function _oqTransition(depart, relais, ancreArrivee, ms = 700){
     bloc.style.height = (h0 + (h1 - h0) * e) + 'px';
     carte.style.height = (hc0 + (hc1 - hc0) * e) + 'px';
   };
-  // Une premiere image a l'echelle 1 pour les deux copies : la carte graphique fixe la finesse d'une couche a
+  // Une premiere image a l'echelle 1 pour la nouvelle copie : la carte graphique fixe la finesse d'une couche a
   // sa premiere peinture. Peinte d'emblee a 1/5 (la carte du pays au debut d'un zoom), elle restait floue.
+  // Pendant ces deux images, la copie de depart reste a l'ecran, immobile : rien ne se vide.
   await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
   image(0);
   await new Promise(res => {
@@ -19323,9 +19338,6 @@ async function _oqTransition(depart, relais, ancreArrivee, ms = 700){
     };
     requestAnimationFrame(pas);
   });
-  scene.remove();
-  // Le fondu du graphique a joue : la classe part, pour pouvoir rejouer au prochain passage.
-  if(graph) graph.classList.remove('oq-apparait');
   nettoyer();
 }
 // Le bouton qui remonte d'un cran, sous la colonne des mois des deux cartes.
@@ -23812,7 +23824,7 @@ function _pkdxRender(){
       ${cats.length ? `<span class="pkdx-exos">${exoChips}</span>` : ''}
       <span class="pkdx-tier" style="background:${fondBadge};"${infoPastille ? ` data-tip="${infoPastille}"` : ''}>${badgeText}</span>
       <div class="pkdx-img"${photoConnue ? '' : ` data-pkdx-lazy="${esc(r.sci)}"`}>${photoConnue
-        ? `<img loading="lazy" src="${esc(photoConnue)}" alt="${esc(r.nm)}" onerror="this.parentElement.textContent='🐦'">`
+        ? _imgVignette(photoConnue, r.nm)
         : (r.owned ? '🐦' : '')}</div>
       <div class="pkdx-name">${esc(r.nm)}</div>
       <div class="pkdx-sci">${esc(latinAff(r.sci))}</div>
@@ -23918,6 +23930,31 @@ function _pkdxReessayer(io, el){
     io.observe(el);
   }, _PKDX_REPRISES[n]);
 }
+// Les vignettes du Birdydex s'affichent sur ~127 px ; on chargeait l'image de 500 x 333 px. Pendant un
+// defilement de 4 s, le navigateur passait 2,8 s a tramer et 0,8 s a decoder ces images trop grandes (trace du
+// 2026-11-11, outils/verif/_trace-defilement-birdydex.mjs). srcset laisse le navigateur prendre la petite
+// (240 px chez iNaturalist, 250 px chez Wikimedia, une taille standard) quand l'ecran n'en demande pas plus, et
+// la grande sur un ecran haute densite. decoding="async" sort le decodage du fil principal.
+function _imgVignette(src, alt){
+  let jeu = '';
+  if(/inaturalist[^/]*\/photos\/\d+\/medium\./.test(src)) jeu = src.replace('/medium.', '/small.') + ' 240w, ' + src + ' 500w';
+  else {
+    const m = /\/thumb\/.*\/(\d+)px-[^/]+$/.exec(src);
+    if(m && +m[1] > 260) jeu = src.replace(/\/\d+px-([^/]+)$/, '/250px-$1') + ' 250w, ' + src + ' ' + m[1] + 'w';
+  }
+  return `<img loading="lazy" decoding="async" src="${esc(src)}"${jeu ? ` srcset="${esc(jeu)}" sizes="(max-width:600px) 110px, 140px"` : ''} alt="${esc(alt)}" onerror="this.parentElement.textContent='🐦'">`;
+}
+// Pendant un defilement, les cases ne reagissent plus au survol : la souris immobile passait d'une case a
+// l'autre, et chaque passage relancait le relief et l'ombre du survol, a repeindre (0,4 s de survol sur 4 s,
+// meme trace). Le survol revient 150 ms apres le dernier mouvement.
+let _pkdxDefileMinuteur = 0;
+addEventListener('scroll', () => {
+  const g = document.getElementById('pkdxGrid');
+  if(!g || !g.offsetParent) return;
+  if(!g.classList.contains('defile')) g.classList.add('defile');
+  clearTimeout(_pkdxDefileMinuteur);
+  _pkdxDefileMinuteur = setTimeout(() => g.classList.remove('defile'), 150);
+}, { passive: true, capture: true });
 function _pkdxLazyPhotos(){
   const els = document.querySelectorAll('#pkdxGrid .pkdx-img[data-pkdx-lazy]');
   if(!els.length || !('IntersectionObserver' in window)) return;
@@ -23937,7 +23974,7 @@ function _pkdxLazyPhotos(){
         // Grille Birdydex : utilise thumb (~500px) pas la full res (1-5 MB). Full res
         // reservee a la fiche espece qui ouvre au clic.
         const src = p?.thumb || p?.url;
-        if(src){ el.innerHTML = `<img loading="lazy" src="${esc(src)}" alt="${esc(sci)}" onerror="this.parentElement.textContent='🐦'">`; return; }
+        if(src){ el.innerHTML = _imgVignette(src, sci); return; }
         _pkdxReessayer(io, el);
       }).catch(() => _pkdxReessayer(io, el));
     }
