@@ -4,7 +4,7 @@ Dernière version : v1104 / app.js?v=676 (11/11, trophée unique « Aquaman », 
 TROPHEES_VERSION = 5 (à monter à chaque trophée unique neuf). Uniques en ligne le 11/11 : Fixation béton (huppe),
 Spider-Man (tichodrome), Aquaman (cincles) ; essai : `outils/verif/_essai-unique.mjs <sauvegarde> <captures> <membre> <trophée>`.
 En attente des images de Mathis : « Arc-en-ciel » (rolliers + guêpiers), « Seul au monde » (top 3 des espèces
-exclusives, dans les Exploits), « Le Corbeau et le Renard » (corvidés, ligue). Flamant abandonné. Détail : fin de THEMES.md.
+exclusives, dans les Exploits). Corvidés et flamant ABANDONNÉS (11/11), à ne plus reproposer. Détail : fin de THEMES.md.
 
 - **v1100 (0254dfa8)** : un trophée neuf de la vitrine arrive « à débloquer » (avant : compté d'office comme vu) ;
   `_VT_REMIS` a remis limicoles et échassiers à 0 une fois. Essai : `outils/verif/_essai-remis.mjs`.
