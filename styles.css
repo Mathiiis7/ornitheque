@@ -4759,6 +4759,27 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
 .vt-vote-btn.on { background:var(--surface); color:var(--accent-ink); }
 .vt-vote-btn:disabled { opacity:.5; cursor:default; }
 @media (pointer: coarse){ .vt-vote-btn { min-height:52px; } }
+/* Le palmares d'un trophee de la ligue, en courbes (11/11) : la course reprend l'apparence de la Progression du
+   profil (classes st-*, lignes et bulle) dans sa propre boite, que le survol du profil ne capte pas ; sous la
+   courbe, une bande or / argent / bronze dit la place de la personne affichee */
+.vt-palmares { --argent:#9aa6ae; --bronze:#b8763f; }
+.vt-palmares h4 { margin:0 0 6px; font-size:16px; font-weight:700; color:var(--ink); }
+.vt-palm-resume { margin:0 0 12px; font-size:15px; color:var(--ink); }
+.vt-co { padding-left:36px; }
+.vt-co-plot { position:relative; height:220px; touch-action:pan-y; cursor:crosshair; }
+.vt-co-plot svg { position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
+.vt-co-plot svg * { vector-effect:non-scaling-stroke; }
+/* Hors du podium, la bande reste vide et seulement cernee : un fond gris se confondait avec l'argent (essai du 11/11) */
+.vt-co-places { position:relative; height:8px; margin-top:6px; border-radius:4px; box-shadow:inset 0 0 0 1px var(--line); overflow:hidden; }
+.vt-co .st-x { white-space:nowrap; }
+.vt-co-leg span { white-space:nowrap; }
+.vt-co-places span { position:absolute; top:0; bottom:0; }
+.vt-co-p1 { background:var(--gold); }
+.vt-co-p2 { background:var(--argent); }
+.vt-co-p3 { background:var(--bronze); }
+.vt-co-leg { margin:2px 0 0; font-size:14px; color:var(--ink-2); }
+.vt-co-leg i { display:inline-block; width:12px; height:8px; border-radius:2px; margin:0 4px 0 6px; vertical-align:1px; }
+.vt-palm-source { margin:8px 0 0; font-size:14px; color:var(--ink-3); }
 .vt-vitrine { border-radius:14px; padding:6px 14px 14px; position:relative; overflow:hidden;
   background:radial-gradient(ellipse 120% 90% at 50% 35%, transparent 50%, rgba(0,0,0,.55)),
     radial-gradient(rgba(255,235,210,.022) 1px, transparent 1px) 0 0 / 4px 4px,

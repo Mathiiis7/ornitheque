@@ -6547,11 +6547,164 @@ let _vitrineEssai = false;
 const VITRINE_ESSAI_PERMIS = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 let _vitrineDetail = null;             // la liste ouverte depuis la vitrine : les puces Monde / France la relisent
 let _vitrineVoteOuvert = null;         // « trophee|personne » du vote affiche : un nouveau vote recu redessine la fenetre
+// Le palmares d'un trophee de la ligue, en courbes (Mathis, 11/11 : « des courbes qui montent au fur et a mesure,
+// on voit a quel moment qui passe devant qui », comme la Progression du profil ; la liste des periodes, premier
+// essai du 10/11, retiree a sa demande). Rien n'est enregistre : la course est RECONSTITUEE. Chacun monte d'une
+// marche a la date d'OBSERVATION de chaque espece du theme (choix de Mathis : la date d'ajout au site posait toute
+// une liste deposee d'un coup sur un seul jour). Une espece sans date d'observation compte au jour ou elle est
+// arrivee sur le site, sinon aujourd'hui : chaque courbe finit ainsi sur le compte du podium.
+// Meme regle que la vitrine : place = 1 + le nombre de membres strictement devant, les ex aequo la partagent.
+// Les jours sont a minuit UTC, comme ceux de la courbe du profil (_ordVersMs, _jourFr).
+const _jourUTC = ms => { const d = new Date(ms); return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()); };
+// Le nombre d'especes d'une liste de jours triee a la date t (dichotomie : le survol le redemande sans cesse)
+function _vtCompteA(jours, t){ let lo = 0, hi = jours.length; while(lo < hi){ const m = (lo + hi) >> 1; if(jours[m] <= t) lo = m + 1; else hi = m; } return lo; }
+// Les places a la date t : [{ m, n, place }] des membres qui ont deja une espece, du premier au dernier
+function _vtPlacesA(membres, t){
+  const c = membres.map(m => ({ m, n:_vtCompteA(m.jours, t) })).filter(x => x.n > 0).sort((a, b) => b.n - a.n);
+  for(const x of c) x.place = 1 + c.filter(y => y.n > x.n).length;
+  return c;
+}
+// Une duree lisible : en jours sous deux mois, en mois sous deux ans, en ans (et mois) au-dela
+function _vtDuree(j){
+  if(j < 61) return j + (j > 1 ? ' jours' : ' jour');
+  const mois = Math.round(j / 30.44);
+  if(mois < 24) return mois + ' mois';
+  const ans = Math.floor(mois / 12), reste = mois % 12;
+  return ans + ' ans' + (reste ? ` et ${reste} mois` : '');
+}
+const _vtPlace = p => p === 1 ? '1er' : p + 'e';
+let _vtCourse = null;   // la course affichee, pour le survol
+// La section « Palmares » de la fenetre d'un trophee de la ligue : une phrase (ce qu'a tenu la personne affichee),
+// la course (elle en accent, les autres en gris, comme le profil), et sous la courbe une bande de sa place.
+function _vitrinePalmaresHtml(cas){
+  const P = cas.palmares; if(!P || !P.membres.length){ _vtCourse = null; return ''; }
+  const auj = _jourUTC(Date.now());
+  const lui = P.membres.find(m => m.id === P.qui) || null;
+  const Sa = lui && P.quiNom === 'Toi' ? 'Ta' : 'Sa';
+  // Le cadre part de la premiere espece de la personne affichee, comme le profil : partir de celle du doyen de la
+  // ligue tasserait la course dans un coin. Sans espece du theme, il part de la premiere de tous.
+  const x0 = lui ? lui.jours[0] : Math.min(...P.membres.map(m => m.jours[0]));
+  const x1 = Math.max(auj, x0 + _JOUR_MS * 30);
+  // Les jours ou quelque chose change, et la place de la personne affichee entre deux
+  const jours = [x0, ...[...new Set(P.membres.flatMap(m => m.jours).filter(j => j > x0))].sort((a, b) => a - b)];
+  const tenu = { 1:0, 2:0, 3:0 }, bandes = [];
+  if(lui) jours.forEach((j, k) => {
+    const fin = k + 1 < jours.length ? jours[k + 1] : x1;
+    const place = _vtPlacesA(P.membres, j).find(x => x.m === lui)?.place || 0;
+    if(!place || place > 3 || fin <= j) return;
+    tenu[place] += Math.round((fin - j) / _JOUR_MS);
+    const der = bandes[bandes.length - 1];
+    if(der && der.place === place && der.fin === j) der.fin = fin; else bandes.push({ place, debut:j, fin });
+  });
+  const NOM = { 1:'1re place', 2:'2e place', 3:'3e place' };
+  const parts = [1, 2, 3].filter(k => tenu[k] > 0).map(k => `${NOM[k]} pendant ${_vtDuree(tenu[k])}`);
+  const maintenant = lui ? _vtPlacesA(P.membres, auj).find(x => x.m === lui)?.place || 0 : 0;
+  const resume = `${P.quiNom} : ` + (!lui ? 'aucune espèce de ce trophée pour l’instant'
+    : parts.length ? parts.join(', ')
+    : maintenant && maintenant <= 3 ? `${NOM[maintenant]} depuis aujourd’hui`
+    : 'pas encore de place sur le podium');
+  // Les echelles, comme la courbe du profil : 0 a 1000 dans le SVG etire, le texte en HTML
+  const yHaut = Math.max(...P.membres.map(m => m.jours.length));
+  const pas = _pasRond(yHaut), yMax = yHaut * 1.06;
+  const X = t => ((t - x0) / (x1 - x0) * 1000).toFixed(1);
+  const Y = c => (1000 - c / yMax * 1000).toFixed(1);
+  // Une course est un escalier : chaque espece fait monter d'une marche
+  const trace = m => {
+    let d = `M0 ${Y(_vtCompteA(m.jours, x0))}`;
+    m.jours.forEach((t, i) => { if(t > x0) d += ` H${X(t)} V${Y(i + 1)}`; });
+    return d + ' H1000';
+  };
+  const grilles = [], etiqY = [], etiqX = [];
+  for(let v = 0; v <= yMax; v += pas){
+    grilles.push(`<line x1="0" x2="1000" y1="${Y(v)}" y2="${Y(v)}"/>`);
+    etiqY.push(`<span class="st-y" style="bottom:${(v / yMax * 100).toFixed(2)}%">${v}</span>`);
+  }
+  // L'axe du temps : les annees sur une longue course, les mois sur une courte (moins de deux ans)
+  const an0 = new Date(x0).getUTCFullYear(), an1 = new Date(x1).getUTCFullYear();
+  const reperes = [];
+  if(an1 - an0 >= 2){
+    const pasAn = an1 - an0 > 12 ? 5 : (an1 - an0 > 6 ? 2 : 1);
+    for(let a = an0 + 1; a <= an1; a++) if(!((a - an0) % pasAn)) reperes.push([Date.UTC(a, 0, 1), String(a)]);
+  } else {
+    const m0 = new Date(x0).getUTCMonth() + 1, nMois = (an1 - an0) * 12 + new Date(x1).getUTCMonth() - m0 + 1;
+    const pasM = Math.max(1, Math.ceil(nMois / 5));
+    for(let k = 0; k < nMois; k += pasM){
+      const t = Date.UTC(an0, m0 + k, 1);
+      reperes.push([t, new Date(t).toLocaleDateString('fr-FR', { month:'short', year:'2-digit', timeZone:'UTC' })]);
+    }
+  }
+  for(const [t, txt] of reperes){
+    if(t <= x0 || t >= x1) continue;
+    grilles.push(`<line class="st-grille-an" x1="${X(t)}" x2="${X(t)}" y1="0" y2="1000"/>`);
+    if(X(t) < 920) etiqX.push(`<span class="st-x" style="left:${(X(t) / 10).toFixed(2)}%">${txt}</span>`);
+  }
+  const autres = P.membres.map((m, i) => m === lui ? '' : `<path class="st-autre" data-i="${i}" d="${trace(m)}"/>`).join('');
+  const dLui = lui ? trace(lui) : '';
+  _vtCourse = { x0, x1, yMax, membres:P.membres, qui:P.qui };
+  const autresN = P.membres.length - (lui ? 1 : 0);
+  return `<hr class="tmodal-sep"><div class="vt-palmares"><h4>Palmarès</h4><p class="vt-palm-resume">${esc(resume)}</p>
+    <div class="vt-co">
+      <div class="vt-co-plot" role="img" aria-label="${esc(resume)}">
+        <svg viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true">
+          <g class="st-grille">${grilles.join('')}</g>
+          ${autres}
+          ${lui ? `<path class="st-aire" d="${dLui} V1000 H0 Z"/><path class="st-lui" d="${dLui}"/>` : ''}
+          <line class="st-curseur" x1="0" x2="0" y1="0" y2="1000" visibility="hidden"/>
+        </svg>
+        ${etiqY.join('')}
+        <div class="st-bulle" hidden></div>
+      </div>
+      ${bandes.length ? `<div class="vt-co-places" aria-hidden="true">${bandes.map(b =>
+        `<span class="vt-co-p${b.place}" style="left:${(X(b.debut) / 10).toFixed(2)}%;width:${((X(b.fin) - X(b.debut)) / 10).toFixed(2)}%"></span>`).join('')}</div>` : ''}
+      <div class="st-xaxe">${etiqX.join('')}</div>
+    </div>
+    ${bandes.length ? `<p class="vt-co-leg">Sous la courbe, ${Sa.toLowerCase()} place sur le podium : <span><i class="vt-co-p1"></i>1re</span> <span><i class="vt-co-p2"></i>2e</span> <span><i class="vt-co-p3"></i>3e</span></p>` : ''}
+    <p class="vt-palm-source">${lui ? (Sa === 'Ta' ? 'Toi' : esc(P.quiNom)) + ' en couleur' + (autresN ? `, les ${autresN} autre${autresN > 1 ? 's' : ''} en gris` : '') + '. ' : ''}Chaque marche est une espèce du trophée, au jour de son observation. Survole la courbe pour voir le podium à cette date.</p></div>`;
+}
+// Survol de la course : un trait vertical, et une bulle avec le podium a cette date (plus la personne affichee
+// et la ligne grise la plus proche du pointeur, qui s'allume). Positions en FRACTIONS de la boite, comme le
+// profil : la fraction ne depend pas du zoom de 0,85.
+function _vtSurvol(e){
+  const plot = e.target.closest?.('.vt-co-plot');
+  if(!plot || !_vtCourse) return;
+  const r = plot.getBoundingClientRect();
+  const fx = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+  const fy = Math.min(1, Math.max(0, (e.clientY - r.top) / r.height));
+  const c = _vtCourse, t = c.x0 + fx * (c.x1 - c.x0);
+  let proche = -1, ecart = 0.06;
+  c.membres.forEach((m, i) => {
+    if(m.id === c.qui) return;
+    const d = Math.abs((1 - _vtCompteA(m.jours, t) / c.yMax) - fy);
+    if(d < ecart){ ecart = d; proche = i; }
+  });
+  const cur = plot.querySelector('.st-curseur');
+  cur.setAttribute('x1', fx * 1000); cur.setAttribute('x2', fx * 1000); cur.setAttribute('visibility', 'visible');
+  plot.querySelectorAll('.st-autre.on').forEach(l => l.classList.remove('on'));
+  if(proche >= 0) plot.querySelector(`.st-autre[data-i="${proche}"]`)?.classList.add('on');
+  const places = _vtPlacesA(c.membres, t).filter(x => x.place <= 3 || x.m.id === c.qui || x.m === c.membres[proche]);
+  const b = plot.querySelector('.st-bulle');
+  b.innerHTML = `<span class="st-bulle-date">${esc(_jourFr(t))}</span>`
+    + (places.length ? places.map(x => `<span><i class="st-pastille${x.m.id === c.qui ? ' lui' : ''}"></i>${_vtPlace(x.place)} · ${esc(x.m.nom)} : <b>${x.n}</b></span>`).join('')
+      : '<span>Personne encore</span>');
+  b.hidden = false;
+  b.style.left = (fx * 100) + '%';
+  b.classList.toggle('a-gauche', fx > 0.5);
+}
+document.addEventListener('pointermove', _vtSurvol);
+document.addEventListener('pointerdown', _vtSurvol);
+document.addEventListener('pointerout', e => {
+  const plot = e.target.closest?.('.vt-co-plot');
+  if(!plot || e.relatedTarget?.closest?.('.vt-co-plot')) return;
+  plot.querySelector('.st-bulle').hidden = true;
+  plot.querySelector('.st-curseur')?.setAttribute('visibility', 'hidden');
+  plot.querySelectorAll('.st-autre.on').forEach(l => l.classList.remove('on'));
+});
 // La fenetre des trophees de l'ancienne grille (#trophyModal), avec sa liste Monde / France : toutes les
 // especes que le trophee compte, celles de la personne affichee cochees.
 function _vitrineListe(cas){
   $('#tmodalTitle').textContent = cas.nom;
   let html = cas.bulle ? `<p class="tmodal-note">${esc(cas.bulle)}</p>` : '';
+  html += _vitrinePalmaresHtml(cas);
   _vitrineDetail = cas.filtre ? { familyName:cas.nom, speciesOwnedSet:cas.possedees, filtre:cas.filtre, libelle:cas.libelle || 'espèces' } : null;
   if(_vitrineDetail){
     html += `<hr class="tmodal-sep"><div class="tmodal-country-select" data-kind="species" data-detail="vt">
@@ -6647,6 +6800,20 @@ function _vitrineCases(sel, s, data){
       niveaux:[1, 2, 3].map(n => `assets/trophies/themes/mouettes/niveau-${n}.png`),
       quoi:"Le plus de goélands, mouettes et sternes de la ligue" },
   ];
+  // Le palmares (_vitrinePalmaresHtml) : le jour d'observation de chaque espece chez chacun, le plus ancien si
+  // l'espece revient sous plusieurs noms ; a defaut, le jour ou elle est arrivee sur le site. Le calcul de la
+  // course n'a lieu qu'a l'ouverture de la fenetre, pas a chaque rendu de la vitrine.
+  const datesVues = new Map(), datesDe = p => {
+    if(!datesVues.has(p.id)){ const obs = new Map(), ajout = new Map();
+      for(const v of p._active.values()){
+        const sci = (v.sci || '').toLowerCase(), pd = parseDate(v.date);
+        if(pd){ const t = _ordVersMs(pd.ord); if(!(obs.get(sci) <= t)) obs.set(sci, t); }
+        else if(v.addedAt > 0){ const t = _jourUTC(v.addedAt); if(!(ajout.get(sci) <= t)) ajout.set(sci, t); }
+      }
+      for(const [sci, t] of ajout) if(!obs.has(sci)) obs.set(sci, t);
+      datesVues.set(p.id, obs); }
+    return datesVues.get(p.id); };
+  const aujVitrine = _jourUTC(Date.now());
   const ligue = [];
   // Les stats de chaque membre, calculees une fois pour tous les trophees de la ligue : avant, une fois PAR
   // trophee, et ce calcul faisait l'essentiel des 200 ms du clic de deblocage (mesure du 10/11)
@@ -6655,9 +6822,12 @@ function _vitrineCases(sel, s, data){
     // Egalite : tous ceux qui ont le meme compte partagent la place, et le trophee (Mathis, 09/11).
     // Place = 1 + le nombre de membres qui ont strictement plus (deux 2es, pas de 3e, puis un 4e).
     let siennes = new Set();   // les especes du theme vues par la personne affichee, pour sa liste
+    const membres = [];        // pour le palmares : les memes ensembles que le podium, donc la meme place « en cours »
     const rang = state.people.map(p => {
       const sp = p.id === sel.id ? s : _statsDe(p), set = th.especes(p, sp);
       if(p.id === sel.id) siennes = set;
+      if(set.size) membres.push({ id:p.id, nom:p.id === myUid ? 'Toi' : p.name,
+        jours:[...set].map(sci => Math.min(datesDe(p).get(sci) ?? aujVitrine, aujVitrine)).sort((a, b) => a - b) });
       return { id:p.id, nom:p.name, moi:p.isMe, n: set.size };
     }).filter(x => x.n > 0).sort((a, b) => b.n - a.n);
     const lui = rang.find(x => x.id === sel.id);
@@ -6668,7 +6838,8 @@ function _vitrineCases(sel, s, data){
     const ou = lui ? `${sel.isMe ? 'Tu es' : sel.name + ' est'} ${rangTxt} (${lui.n})` : `${sel.isMe ? "Tu n'en as" : sel.name + " n'en a"} pas encore`;   // pas de point final (Mathis, 09/11)
     const bulle = `${th.quoi}. ${ou}`;
     ligue.push({ id:th.id, nom:th.nom, niveaux:th.niveaux, niveau: place ? 4 - place : 0, place, bulle,
-      filtre:th.filtre, libelle:th.libelle, possedees:siennes });
+      filtre:th.filtre, libelle:th.libelle, possedees:siennes,
+      palmares:{ membres, qui:sel.id, quiNom:sel.isMe ? 'Toi' : sel.name } });
   }
   const src = html => (/src=\\?"([^"\\]+)"/.exec(html || '') || [])[1];
   const uniques = TROPHIES.filter(t => !t.tier && t.theme === 'groupe' && src(t.icon))
@@ -19299,7 +19470,12 @@ function _legendeOuQuand(aCarte, aGraph, vueExo){
   // Un pays peu observe : ses pourcentages reposent sur une poignee de listes (Mathis, 2026-11-11, devant la Libye).
   const n = p.cc ? _nbListesPays(p.cc) : null;
   if(p.cc && !_listesPays) _chargerListesPays().then(j => { if(j) _majPanneauOuQuand(); });
-  const fragile = n != null && n < LISTES_POIDS_PLEIN && !_sansRarete(p.cc)
+  // Un pays sans rarete garde aussi sa phrase sous la carte hachuree, sinon rien ne dit pourquoi elle est vide
+  // (Mathis, 2026-11-11, devant la Libye) ; son compte est connu sans attendre listes-pays.json.
+  const nSans = p.cc && _sansRarete(p.cc) ? PAYS_SANS_RARETE[p.cc] : null;
+  const fragile = nSans != null
+    ? `<div class="sm-oq-note sm-oq-fragile">⚠ Seulement ${nSans} liste${nSans > 1 ? 's' : ''} eBird ${_auPays(p.cc)} depuis 2019 : trop peu pour colorer la carte.</div>`
+    : n != null && n < LISTES_POIDS_PLEIN
     ? `<div class="sm-oq-note sm-oq-fragile">⚠ Seulement ${n} liste${n > 1 ? 's' : ''} eBird ${_auPays(p.cc)} depuis 2019 : ces pourcentages sont fragiles.</div>` : '';
   return `<div class="sm-oq-cles">${cles}</div>`
     + `<div class="sm-oq-note">ⓘ ${phrase} C'est une facilité de rencontre, pas un effectif.</div>` + fragile;
