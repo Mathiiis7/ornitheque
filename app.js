@@ -11010,7 +11010,7 @@ async function _ctChargePays(){
 // Les régions d'un pays étranger, lues à son premier clic.
 function _ctChargeZones(cc){
   if(cc === 'FR' || CT_PAYS_SANS_ZONES.has(cc)) return Promise.resolve(null);
-  if(!(cc in _ctZonesPromesses)) _ctZonesPromesses[cc] = fetch(`data/carte-zones/${cc.toLowerCase()}.json?v=20261110d`).then(r => r.ok ? r.json() : null)
+  if(!(cc in _ctZonesPromesses)) _ctZonesPromesses[cc] = fetch(`data/carte-zones/${cc.toLowerCase()}.json?v=20261111`).then(r => r.ok ? r.json() : null)
     .then(geo => { if(geo) for(const f of geo.features) if(f.properties.zones) _ctGroupes[f.properties.ebird] = f.properties.zones; return geo; })
     .catch(() => null);
   return _ctZonesPromesses[cc];
@@ -18258,7 +18258,7 @@ function _exoticMapFileFor(cc){
     // Les contours sont caches dans lmb-data, qui survit aux changements de version du
     // service worker : sans ce parametre, un visiteur deja venu garderait indefiniment
     // l ancienne Bosnie amputee de sa Republique serbe.
-    : `data/regions-${cc.toLowerCase()}-simplified.json?v=20261110c`;
+    : `data/regions-${cc.toLowerCase()}-simplified.json?v=20261111`;
 }
 async function _loadExoticMapPaths(cc){
   if(_exoticMapPathsCache[cc] !== undefined) return _exoticMapPathsCache[cc];
@@ -19141,7 +19141,7 @@ function _legendeOuQuand(aCarte, aGraph, vueExo){
       `<span style="display:inline-flex;height:12px;border:1px solid var(--line);border-radius:2px;overflow:hidden;margin-right:5px;">${bande}</span>`,
       'facile → rare')
     + jeton('<span class="sm-freq-sw" style="background:#d4d4d8;margin-right:5px;"></span>', 'jamais notée')
-    + (p.hachures && aCarte ? jeton('<span class="sm-freq-sw" style="background:repeating-linear-gradient(45deg,#d4d4d8 0 2px,var(--surface-2) 2px 4px);margin-right:5px;"></span>', 'aucune liste') : '')
+    + (p.hachures && aCarte ? jeton('<span class="sm-freq-sw" style="background:repeating-linear-gradient(45deg,#d4d4d8 0 2px,var(--surface-2) 2px 4px);margin-right:5px;"></span>', 'aucune donnée') : '')
     // « période actuelle » et non « mois actuel » : le contour encadre une quinzaine quand
     // la source est hebdomadaire, un mois quand elle ne l'est pas, et le lecteur n'a pas a
     // savoir laquelle des deux il regarde - c'est la periode en cours dans les deux cas.
@@ -19584,6 +19584,13 @@ async function _renderRarityMap(sci, cc){
     if(!(v > 0) && Array.isArray(ls) && (surAnnee ? !ls.some(x => x > 0) : !(ls[mois] > 0))){
       fill = `url(#${idHach})`; aHachures = true;
       titre = `${nom} - aucune liste eBird ${surAnnee ? 'entre 2019 et 2026' : 'en ' + libellePeriode}`;
+    }
+    // Une zone que la carte dessine mais dont eBird ne donne aucune frequence : 118 zones au 2026-11-11, dont
+    // 53 sans liste depuis 2019 et 60 jamais visitees (verifie zone par zone, outils/verif/_zones-muettes.mjs).
+    // Elle se hachure toute l'annee, et reste muette au clic : il n'y a rien a y choisir.
+    else if(!(v > 0) && !byZone[z]){
+      fill = `url(#${idHach})`; aHachures = true;
+      titre = `${nom} - aucune donnée eBird entre 2019 et 2026`;
     }
     if(v > 0){
       const tier = annualFreqToTier(v);

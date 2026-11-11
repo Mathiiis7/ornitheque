@@ -280,6 +280,11 @@ const ALIAS_MONDE = {
   'GY-MA':'GY-EB', 'GY-ES':'GY-MA', 'GY-DE':'GY-ES', 'GY-EB':'GY-DE',
   'EC-T':'EC-N', 'EC-N':'EC-T',                                   // Napo (288 sites) et Tungurahua
   'ER-DU':'ER-SK', 'ER-SK':'ER-AN', 'ER-MA':'ER-DU', 'ER-AN':'ER-MA',
+  // Zones qu'eBird connaît mais où il n'a jamais rien rangé (0 espèce) : ses sites d'observation dans la forme
+  // appartiennent à la zone voisine, qui la recouvre chez lui (2026-11-11, outils/verif/_zones-hotes.mjs).
+  // Sans fusion, la forme restait muette au clic. Louxor (6 sites) est dans Qena, Damas dans Rif Dimachq,
+  // la ville de Lankaran dans son district (Sheki, ville et district sous un même code chez Natural Earth, reste à part).
+  'EG-LX':'EG-KN', 'SY-DI':'SY-RD', 'AZ-LA':'AZ-LAN',
 };
 
 // Seconde source des pays du monde : geoBoundaries (outils/build/geoboundaries-monde.mjs). « tout » : le
@@ -314,9 +319,11 @@ const ALIAS_GB = {
   KZ:{ 'Almaty':'KZ-ALA', 'Almaty Region':'KZ-ALM', 'Jambyl Region':'KZ-ZHA', 'Kostanay Region':'KZ-KUS', 'Mangystau Region':'KZ-MAN',
        'East Kazakhstan Region':'KZ-VOS', 'Aktobe Region':'KZ-AKT', 'South Kazakhstan Region':'KZ-YUZ', 'Akmola Region':'KZ-AKM',
        'North Kazakhstan Region':'KZ-SEV', 'West Kazakhstan Region':'KZ-ZAP' },
-  LB:{ 'Beyrouth':'LB-BA', 'Liban-Nord':'LB-AS', 'Liban-Sud':'LB-JA', 'Keserwan-Jbeil':'LB-JL' },   // Keserwan-Jbeil : détaché du Mont-Liban en 2017
+  LB:{ 'Beyrouth':'LB-BA', 'Liban-Nord':'LB-AS', 'Liban-Sud':'LB-JA', 'Keserwan-Jbeil':'LB-JL',   // Keserwan-Jbeil : détaché du Mont-Liban en 2017
+       'Aakkâr':'LB-AS' },   // Akkar : détaché du Liban-Nord en 2003, eBird y range toujours ses sites (2026-11-11)
   TN:{ 'El Kef':'TN-33', 'Manouba':'TN-14', 'Ariana':'TN-12' },
-  SB:{ 'Makira':'SB-MK' }, LC:{ 'Anse la Raya':'LC-01' },
+  SB:{ 'Makira':'SB-MK', 'Capital Territory (Honiara)':'SB-GU' },   // Honiara : eBird range ses sites dans Guadalcanal (2026-11-11)
+  LC:{ 'Anse la Raya':'LC-01' },
   // Vietnam : eBird suit la réforme du 12 juin 2025 (résolution 202/2025/QH15), 63 provinces fondues en 34.
   // geoBoundaries a les 63 anciennes : chacune rejoint la province nouvelle qui l'a absorbée.
   VN:{ 'An Giang':'VN-91', 'Kiên Giang':'VN-91', 'Bắc Ninh':'VN-24', 'Bắc Giang':'VN-24', 'Cà Mau':'VN-96', 'Bạc Liêu':'VN-96',
