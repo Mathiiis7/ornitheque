@@ -2316,7 +2316,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .st-grille line { stroke:var(--line); stroke-width:1; }
   .st-grille .st-grille-an { stroke-dasharray:2 4; }
   .st-autre { fill:none; stroke:var(--ink-3); stroke-opacity:.35; stroke-width:1.5; }
-  .st-autre.on { stroke:var(--ink); stroke-opacity:.9; stroke-width:2.5; }
+  .st-autre.on, .st-autre.choisi { stroke:var(--ink); stroke-opacity:.9; stroke-width:2.5; }   /* choisi : touchee dans le palmares, ses oiseaux sont coches */
   .st-aire { fill:color-mix(in srgb, var(--accent) 12%, transparent); stroke:none; }
   .st-lui { fill:none; stroke:var(--accent); stroke-width:2.5; stroke-linejoin:round; }
   .st-objectif { stroke:var(--accent-ink); stroke-width:1.5; stroke-dasharray:6 5; }
@@ -4780,6 +4780,7 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
 .vt-co-leg { margin:2px 0 0; font-size:14px; color:var(--ink-2); }
 .vt-co-leg i { display:inline-block; width:12px; height:8px; border-radius:2px; margin:0 4px 0 6px; vertical-align:1px; }
 .vt-palm-source { margin:8px 0 0; font-size:14px; color:var(--ink-3); }
+.vt-liste-qui { font-size:14px; margin-bottom:8px; }   /* au-dessus de Monde / France, quand une autre course est touchee */
 .vt-vitrine { border-radius:14px; padding:6px 14px 14px; position:relative; overflow:hidden;
   background:radial-gradient(ellipse 120% 90% at 50% 35%, transparent 50%, rgba(0,0,0,.55)),
     radial-gradient(rgba(255,235,210,.022) 1px, transparent 1px) 0 0 / 4px 4px,

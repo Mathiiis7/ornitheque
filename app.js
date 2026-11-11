@@ -6640,7 +6640,7 @@ function _vitrinePalmaresHtml(cas){
   }
   const autres = P.membres.map((m, i) => m === lui ? '' : `<path class="st-autre" data-i="${i}" d="${trace(m)}"/>`).join('');
   const dLui = lui ? trace(lui) : '';
-  _vtCourse = { x0, x1, yMax, membres:P.membres, qui:P.qui };
+  _vtCourse = { x0, x1, yMax, membres:P.membres, qui:P.qui, quiNom:P.quiNom };
   const autresN = P.membres.length - (lui ? 1 : 0);
   return `<hr class="tmodal-sep"><div class="vt-palmares"><h4>Palmarès</h4><p class="vt-palm-resume">${esc(resume)}</p>
     <div class="vt-co">
@@ -6692,6 +6692,31 @@ function _vtSurvol(e){
 }
 document.addEventListener('pointermove', _vtSurvol);
 document.addEventListener('pointerdown', _vtSurvol);
+// Toucher la course d'un autre joueur : la liste des oiseaux en dessous coche les siens, et sa courbe reste allumee
+// (Mathis, 11/11). La courbe choisie est la plus proche du doigt, comme au survol (les traits sont trop fins pour
+// viser) ; toucher celle de la personne affichee, ou loin de toute courbe, revient a ses oiseaux a elle.
+document.addEventListener('click', e => {
+  const plot = e.target.closest?.('.vt-co-plot');
+  if(!plot || !_vtCourse || !_vitrineDetail) return;
+  const r = plot.getBoundingClientRect(), c = _vtCourse;
+  const fx = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), fy = Math.min(1, Math.max(0, (e.clientY - r.top) / r.height));
+  const t = c.x0 + fx * (c.x1 - c.x0);
+  // La personne affichee passe en premier : quand sa courbe et une autre se superposent, c'est la sienne qu'on touche
+  // (essai du 11/11 : sur sa propre courbe, le clic prenait Lucas, a egalite au meme endroit)
+  let proche = -1, ecart = 0.06;
+  const ordre = c.membres.map((m, i) => i).sort((a, b) => (c.membres[b].id === c.qui) - (c.membres[a].id === c.qui));
+  for(const i of ordre){ const d = Math.abs((1 - _vtCompteA(c.membres[i].jours, t) / c.yMax) - fy); if(d < ecart){ ecart = d; proche = i; } }
+  const m = proche >= 0 && c.membres[proche].id !== c.qui ? c.membres[proche] : null;
+  plot.querySelectorAll('.st-autre.choisi').forEach(l => l.classList.remove('choisi'));
+  if(m) plot.querySelector(`.st-autre[data-i="${proche}"]`)?.classList.add('choisi');
+  _vitrineDetail.speciesOwnedSet = m ? m.especes : _vitrineDetail.possedeesQui;
+  const qui = $('#tmodalBody .vt-liste-qui');
+  if(qui){ qui.hidden = !m;
+    if(m) qui.innerHTML = `Cochés : les oiseaux ${/^[aeiouyàâéèêîôû]/i.test(m.nom) ? 'd’' : 'de '}<b>${esc(m.nom)}</b>. Touche ${c.quiNom === 'Toi' ? 'ta courbe pour revenir aux tiens' : 'la courbe de ' + esc(c.quiNom) + ' pour revenir aux siens'}.`; }
+  const mode = $('#tmodalBody .tmodal-country-select .tro-cc-chip.on')?.dataset.cc || 'monde';
+  const body = $('#tmodalBody .tmodal-country-select')?.parentElement.querySelector('.tmodal-country-body');
+  if(body) body.innerHTML = _renderSpeciesFamilyCountryList(mode, _vitrineDetail.libelle, _vitrineDetail.speciesOwnedSet, _vitrineDetail.filtre);
+});
 document.addEventListener('pointerout', e => {
   const plot = e.target.closest?.('.vt-co-plot');
   if(!plot || e.relatedTarget?.closest?.('.vt-co-plot')) return;
@@ -6705,9 +6730,9 @@ function _vitrineListe(cas){
   $('#tmodalTitle').textContent = cas.nom;
   let html = cas.bulle ? `<p class="tmodal-note">${esc(cas.bulle)}</p>` : '';
   html += _vitrinePalmaresHtml(cas);
-  _vitrineDetail = cas.filtre ? { familyName:cas.nom, speciesOwnedSet:cas.possedees, filtre:cas.filtre, libelle:cas.libelle || 'espèces' } : null;
+  _vitrineDetail = cas.filtre ? { familyName:cas.nom, speciesOwnedSet:cas.possedees, possedeesQui:cas.possedees, filtre:cas.filtre, libelle:cas.libelle || 'espèces' } : null;
   if(_vitrineDetail){
-    html += `<hr class="tmodal-sep"><div class="tmodal-country-select" data-kind="species" data-detail="vt">
+    html += `<hr class="tmodal-sep">${cas.palmares ? '<p class="tmodal-note vt-liste-qui" hidden></p>' : ''}<div class="tmodal-country-select" data-kind="species" data-detail="vt">
         <button type="button" class="tro-cc-chip on" data-cc="monde">Dans le monde</button>
         <button type="button" class="tro-cc-chip" data-cc="fr">En France</button>
       </div>
@@ -6848,7 +6873,7 @@ function _vitrineCases(sel, s, data){
     const rang = state.people.map(p => {
       const sp = p.id === sel.id ? s : _statsDe(p), set = th.especes(p, sp);
       if(p.id === sel.id) siennes = set;
-      if(set.size) membres.push({ id:p.id, nom:p.id === myUid ? 'Toi' : p.name,
+      if(set.size) membres.push({ id:p.id, nom:p.id === myUid ? 'Toi' : p.name, especes:set,
         jours:[...set].map(sci => Math.min(datesDe(p).get(sci) ?? aujVitrine, aujVitrine)).sort((a, b) => a - b) });
       return { id:p.id, nom:p.name, moi:p.isMe, n: set.size };
     }).filter(x => x.n > 0).sort((a, b) => b.n - a.n);
