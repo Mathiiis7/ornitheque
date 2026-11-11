@@ -142,9 +142,10 @@ palier près. **Le régénérer, puis monter `BIRDYDEX_CONTINENTS_V`, dès que c
 morceaux `especes-monde`, `aires-pays.json` ou la règle** : sinon Birdydex et fiche se contredisent sans bruit.
 Pour un continent, la fiche lit les pays du monde dans les morceaux même quand leur `pays.json` est arrivé
 (`_verdictPaysEspece(..., morceau)`) : sinon sa valeur dépendait des pays déjà ouverts (2 paliers sur 1 475).
-**Un continent et le monde ont leurs propres seuils de paliers** (`seuils.json`, `_palierEtendu`, choix de Mathis
-le 2026-11-11) : réglés pour répartir leurs espèces comme un pays moyen ; avec ceux d'un pays, le Monde n'avait
-personne aux paliers 1 à 4. Ne jamais convertir une valeur de continent avec `annualFreqToTier`.
+**Un continent et le monde prennent les seuils d'un pays** (`_palierEtendu` = `annualFreqToTier`, choix de Mathis
+le 2026-11-11 au soir). Des seuils propres à chaque échelle, essayés le matin même, classaient le Tichodrome 4 dans
+le monde quand aucun pays ne le met plus haut que 5. Le Monde n'a presque personne aux paliers 1 à 4 : c'est accepté,
+ne pas revenir aux seuils propres sans fait nouveau.
 
 **Natural Earth donne au Maroc l'ouest du Sahara occidental** (tout ce qui est à l'ouest du mur de sable), alors
 qu'eBird range sous EH tout le sud du 27°40' N. `outils/build/sahara-occidental.mjs` recoupe le Maroc et ses régions

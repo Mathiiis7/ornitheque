@@ -68,7 +68,7 @@ const res = await p.evaluate(async (prefixes) => {
   const especes = Object.keys(B.FR_NAMES).filter(s => !B._isSciAliasSource(s));
   const sortie = Object.fromEntries(ECHELLES.map(n => [n, {}]));
   const ecartes = {}, horsGrille = new Set();
-  // La valeur exacte de chaque case, avant arrondi : pour les seuils et le recoupement avec la fiche.
+  // La valeur exacte de chaque case, avant arrondi : pour l'arrondi et le recoupement avec la fiche.
   const exact = Object.fromEntries(ECHELLES.map(n => [n, new Map()]));
   const t0 = performance.now();
   for(const sci of especes){
@@ -125,10 +125,9 @@ const res = await p.evaluate(async (prefixes) => {
     }
   }
   const duree = Math.round(performance.now() - t0);
-  // LES SEUILS DE CHAQUE ECHELLE (Mathis, 2026-11-11 : « comme un pays »). Avec ceux d'un pays, le Monde n'avait
-  // personne aux paliers 1 a 4 et 46 % au palier 10 : aucune espece n'est sur 24 % des listes du monde entier.
-  // Chaque echelle recoit les siens, places pour que ses especes se repartissent entre les paliers comme celles
-  // d'un pays moyen (moyenne des parts de chaque palier sur les pays qui ont leurs paliers, chacun comptant pareil).
+  // LES SEUILS D'UN PAYS, pour toutes les echelles (Mathis, 2026-11-11, soir). Le matin, chaque echelle avait eu
+  // les siens, places pour se repartir comme un pays moyen (seuils.json) : le Tichodrome sortait 4 dans le monde et
+  // 5 au mieux dans un pays. Le Monde n'a presque plus personne aux paliers 1 a 4, c'est accepte.
   const pays = Object.keys(B.raretePays).filter(cc => !B.COUNTRIES_REG[cc]?.monde);
   const parts = Array(11).fill(0);
   for(const cc of pays){
@@ -137,20 +136,7 @@ const res = await p.evaluate(async (prefixes) => {
     const c = Array(11).fill(0); v.forEach(x => c[x]++);
     for(let k = 1; k <= 10; k++) parts[k] += c[k] / v.length / pays.length;
   }
-  const seuils = {};
-  for(const nom of ECHELLES){
-    const vals = [...exact[nom].values()].sort((a, b) => b - a);
-    if(!vals.length) continue;
-    // Le seuil du palier k : la plus petite valeur parmi les especes que la part cumulee des paliers 1..k couvre.
-    let cumul = 0; const s = [];
-    for(let k = 1; k <= 9; k++){
-      cumul += parts[k];
-      const i = Math.min(vals.length - 1, Math.max(0, Math.ceil(cumul * vals.length) - 1));
-      s.push(Number(vals[i].toPrecision(4)));
-    }
-    seuils[nom] = s;
-  }
-  const palierDe = (v, nom) => { const s = seuils[nom]; if(!(v > 0)) return 10; for(let k = 0; k < 9; k++) if(v >= s[k]) return k + 1; return 10; };
+  const palierDe = v => B.annualFreqToTier(v);
   // Arrondi : 3 chiffres significatifs, plus si le palier de l'echelle en changerait.
   for(const nom of ECHELLES){
     for(const [sci, an] of exact[nom]){
@@ -180,7 +166,7 @@ const res = await p.evaluate(async (prefixes) => {
   // La repartition obtenue, palier par palier, pour le dire.
   const repart = {};
   for(const nom of ECHELLES){ const c = Array(11).fill(0); for(const an of exact[nom].values()) c[palierDe(an, nom)]++; repart[nom] = c.slice(1).map(x => Math.round(x / Math.max(1, exact[nom].size) * 100)); }
-  return { sortie, duree, compares, ecarts, ecartes, seuils, repart, cible: parts.slice(1).map(x => Math.round(x * 100)), nbPays: pays.length, nbEspeces: especes.length };
+  return { sortie, duree, compares, ecarts, ecartes, repart, cible: parts.slice(1).map(x => Math.round(x * 100)), nbPays: pays.length, nbEspeces: especes.length };
 }, prefixes);
 
 await nav.close();
@@ -192,14 +178,12 @@ if(res.ecarts.length){
   process.exit(1);
 }
 console.log(`Repartition cible (moyenne de ${res.nbPays} pays), paliers 1 a 10 :`, res.cible.join(' '));
-for(const [nom, r] of Object.entries(res.repart)) console.log('  ' + nom.padEnd(17), r.join(' '), ' seuils', res.seuils[nom].join(' '));
+for(const [nom, r] of Object.entries(res.repart)) console.log('  ' + nom.padEnd(17), r.join(' '));
 console.log('Echappes isoles ecartes (aucune grille de pays ne les montre) :', JSON.stringify(res.ecartes));
 if(erreurs.length) console.log('Erreurs de la page (sans effet sur le calcul ?) :', erreurs.slice(0, 5).join(' | '));
 fs.mkdirSync(SORTIE, { recursive: true });
 const SLUG = { 'Monde': 'monde', 'Europe': 'europe', 'Amérique du Nord': 'amerique-du-nord', 'Amérique du Sud': 'amerique-du-sud',
   'Afrique': 'afrique', 'Asie': 'asie', 'Océanie': 'oceanie', 'Antarctique': 'antarctique' };
-// Les seuils, a part : la fiche les lit sans telecharger les listes (data/birdydex-continents/seuils.json).
-fs.writeFileSync(path.join(SORTIE, 'seuils.json'), JSON.stringify(res.seuils));
 for(const [nom, table] of Object.entries(res.sortie)){
   const f = path.join(SORTIE, (SLUG[nom] || nom) + '.json');
   const txt = JSON.stringify(table);

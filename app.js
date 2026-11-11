@@ -1047,10 +1047,8 @@ function _chargerCarteContinent(nom){
 // monde) : data/aires-pays.json, outils/build/carte-continents.mjs.
 // Un pays sans donnees ne compte pas ; une exotique sans palier (X, P, C) compte pour 0, comme sa couleur.
 let _airesPays = null, _airesPaysPromesse = null;
-// Les seuils arrivent avec les surfaces : _airesPays n'est pose qu'une fois les deux la, pour qu'aucun palier
-// de continent ne s'affiche avec les seuils d'un pays le temps d'un chargement.
 function _chargerAiresPays(){
-  return _airesPaysPromesse ||= Promise.all([fetch('data/aires-pays.json?v=20261111b').then(r => r.ok ? r.json() : null), _chargerSeuilsEtendus(), _chargerListesPays()])
+  return _airesPaysPromesse ||= Promise.all([fetch('data/aires-pays.json?v=20261111b').then(r => r.ok ? r.json() : null), _chargerListesPays()])
     .then(([j]) => { _airesPays = j; return j; }).catch(() => { _airesPaysPromesse = null; return null; });
 }
 // Le nombre de listes eBird de chaque pays, mois par mois, 2019-2026 (data/listes-pays.json, outils/build/listes-pays.mjs).
@@ -1076,25 +1074,12 @@ const _phraseSansRarete = cc => `Trop peu de listes eBird ${_auPays(cc)} (${PAYS
 function _nbListesPays(cc){ const l = _listesPays && _listesPays[cc]; return l ? l.reduce((a, b) => a + b, 0) : null; }
 // Le poids d'un pays dans un continent, de 0 a 1 selon ses listes. Un pays dont on ne sait rien garde tout son poids.
 function _fiabilitePays(cc){ const n = _nbListesPays(cc); return n == null ? 1 : Math.min(1, n / LISTES_POIDS_PLEIN); }
-// Les seuils des paliers d'un continent et du monde (Mathis, 2026-11-11 : « comme un pays »). Avec ceux d'un pays,
-// le Monde n'avait personne aux paliers 1 a 4 et 46 % au palier 10 : aucune espece n'est sur 24 % des listes du
-// monde. Chaque echelle a les siens, places pour que ses especes se repartissent entre les paliers comme celles
-// d'un pays moyen (4, 6, 7, 10, 10, 8, 14, 12, 14, 15 % du palier 1 au 10, moyenne de 47 pays). Calcules par
-// outils/build/birdydex-continents.mjs, avec les listes du Birdydex : data/birdydex-continents/seuils.json.
-let _seuilsEtendus = null, _seuilsEtendusPromesse = null;
-function _chargerSeuilsEtendus(){
-  return _seuilsEtendusPromesse ||= fetch('data/birdydex-continents/seuils.json?v=' + BIRDYDEX_CONTINENTS_V)
-    .then(r => r.ok ? r.json() : null).then(j => { _seuilsEtendus = j; return j; })
-    .catch(() => { _seuilsEtendusPromesse = null; return null; });
-}
-// Le palier d'une valeur a l'echelle d'un continent ou du monde : ses seuils, ceux d'un pays a defaut.
-function _palierEtendu(v, nom){
-  const s = _seuilsEtendus && _seuilsEtendus[nom];
-  if(!s) return annualFreqToTier(v);
-  if(!(v > 0)) return 10;
-  for(let k = 0; k < s.length; k++) if(v >= s[k]) return k + 1;
-  return 10;
-}
+// Le palier d'une valeur a l'echelle d'un continent ou du monde : les seuils d'un pays (Mathis, 2026-11-11, soir).
+// Le matin, chaque echelle avait eu les siens, places pour se repartir comme un pays moyen ; mais le palier 4 du
+// monde commencait a 0,062 % des listes : le Tichodrome y etait 4, et 5 au mieux dans un pays (Georgie, Tadjikistan).
+// Un continent ne classe plus une espece plus commune qu'aucun de ses pays ne le fait ; le Monde n'a presque
+// personne aux paliers 1 a 4, c'est accepte.
+function _palierEtendu(v){ return annualFreqToTier(v); }
 // { an, m12 } (parts des listes, 0..1), ou null tant que les surfaces ne sont pas arrivees.
 function _rareteEtendue(sci, nom, pret){
   if(!_airesPays || !CARTES_CONTINENTS[nom]) return null;
@@ -1141,13 +1126,13 @@ const _pkdxQuandRempliAttente = [];
 // avec les fonctions de _rareteEtendue (recoupees, zero palier different). { sci: [valeur annuelle, drapeaux,
 // "NPX"] } ; drapeaux 1 = reguliere quelque part, 2 = saisonniere, 4 = exotique partout ou elle vit. Monde :
 // 101 Ko gz, Europe 13 Ko. A REGENERER quand les donnees des pays ou les surfaces changent, puis monter ce numero.
-const BIRDYDEX_CONTINENTS_V = '20261111f';
+const BIRDYDEX_CONTINENTS_V = '20261111g';
 const _pkdxContinents = {}, _pkdxContinentsPromesses = {};
 function _chargerPkdxContinent(nom){
   const f = CARTES_CONTINENTS[nom];
   if(!f) return Promise.resolve(null);
   return _pkdxContinentsPromesses[nom] ||= Promise.all([fetch('data/birdydex-continents/' + f + '.json?v=' + BIRDYDEX_CONTINENTS_V)
-    .then(r => r.ok ? r.json() : null), _chargerSeuilsEtendus()]).then(([j, s]) => { if(j && s){ _pkdxContinents[nom] = j; return j; } delete _pkdxContinentsPromesses[nom]; return null; })
+    .then(r => r.ok ? r.json() : null)]).then(([j]) => { if(j){ _pkdxContinents[nom] = j; return j; } delete _pkdxContinentsPromesses[nom]; return null; })
     .catch(() => { delete _pkdxContinentsPromesses[nom]; return null; });
 }
 // Le globe d'un bouton de pays qui montre un continent (fiche, Birdydex).
