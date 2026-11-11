@@ -1,6 +1,6 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1097 / app.js?v=669 (11/11, Sahara occidental dans ses frontières). Prochaine : v1098 / 670, réservée au palmarès des trophées (en cours).
+Dernière version : v1098 / app.js?v=670 (11/11, palmarès des trophées en courbes, 3ab8eaa5). Prochaine : v1099 / 671.
 
 - **v1097 (11/11, 0c109a97) : Sahara occidental recoupé à 27°40' N** (Natural Earth le donnait au Maroc à l'ouest du mur) :
   `outils/build/sahara-occidental.mjs`, pays, continents, régions du Maroc, surfaces et Birdydex des continents régénérés.
