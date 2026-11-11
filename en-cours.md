@@ -1,6 +1,11 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1099 / app.js?v=671 (11/11, trophées limicoles et échassiers, f820893b). Prochaine : v1100 / 672.
+Dernière version : v1101 / app.js?v=673 (11/11, clic sur une course du palmarès, 60f92002). Prochaine : v1102 / 674.
+
+- **v1100 (0254dfa8)** : un trophée neuf de la vitrine arrive « à débloquer » (avant : compté d'office comme vu) ;
+  `_VT_REMIS` a remis limicoles et échassiers à 0 une fois. Essai : `outils/verif/_essai-remis.mjs`.
+- **v1101 (60f92002)** : dans le palmarès, toucher la course d'un autre coche ses oiseaux dans la liste du dessous.
+  Essai : `outils/verif/_essai-clic-course.mjs`.
 
 - **v1099 (11/11, f820893b) : deux trophées de la ligue EN LIGNE**, « Les Chevaliers de la Table ronde » (limicoles,
   œdicnèmes compris) et « Le Penseur » (hérons, ibis, spatules, cigognes, grues, bihoreaux compris). Niveaux :
