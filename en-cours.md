@@ -1,9 +1,10 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1102 / app.js?v=674 (11/11, trophée unique « Fixation béton », la huppe, b2e60845). Prochaine : v1103 / 675.
-TROPHEES_VERSION = 3. Idées de trophées proposées le 11/11 (en attente du choix de Mathis) : uniques coucou, torcol,
-flamant, tichodrome, manakin, guêpier, cincle, martin-pêcheur, rollier ; ligue : corvidés « Les Oiseaux », faucons et
-vautours, hirondelles et martinets, pics, exclusivité.
+Dernière version : v1104 / app.js?v=676 (11/11, trophée unique « Aquaman », 05fe82af). Prochaine : v1105 / 677.
+TROPHEES_VERSION = 5 (à monter à chaque trophée unique neuf). Uniques en ligne le 11/11 : Fixation béton (huppe),
+Spider-Man (tichodrome), Aquaman (cincles) ; essai : `outils/verif/_essai-unique.mjs <sauvegarde> <captures> <membre> <trophée>`.
+En attente des images de Mathis : « Arc-en-ciel » (rolliers + guêpiers), « Seul au monde » (top 3 des espèces
+exclusives, dans les Exploits), « Le Corbeau et le Renard » (corvidés, ligue). Flamant abandonné. Détail : fin de THEMES.md.
 
 - **v1100 (0254dfa8)** : un trophée neuf de la vitrine arrive « à débloquer » (avant : compté d'office comme vu) ;
   `_VT_REMIS` a remis limicoles et échassiers à 0 une fois. Essai : `outils/verif/_essai-remis.mjs`.
