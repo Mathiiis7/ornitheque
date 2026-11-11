@@ -6698,7 +6698,10 @@ function _vitrineEtat(sel, s, data){
     // gagnes (Mathis, 10/11, pour la mise en ligne). Avant : tout ce qui etait gagne comptait comme deja vu.
     if(!vu){ vu = tout[sel.id] = {}; for(const c of cases){ vu[c.id] = 0; if(c.calques) vu[c.id + ':vues'] = []; } change = true; }
     for(const c of cases){
-      if(vu[c.id] === undefined || c.reel < vu[c.id]){ vu[c.id] = Math.min(c.reel, vu[c.id] ?? c.reel); change = true; }
+      // Ce qui a ete debloque le reste (Mathis, 11/11) : le niveau vu ne redescend JAMAIS. Il redescendait quand un
+      // trophee paraissait perdu, or a chaque chargement la vitrine se dessine avant l'arrivee des votes : un
+      // trophee a vote valait 0 un instant, son niveau vu retombait a 0, et il redevenait « a debloquer ».
+      if(vu[c.id] === undefined){ vu[c.id] = c.reel; change = true; }
       c.attend = c.reel > vu[c.id];
       c.vu = vu[c.id];
       // Calques : la liste des regions dont l'animation a deja joue (en attente, seules celles-la s'affichent)
