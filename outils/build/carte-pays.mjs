@@ -16,6 +16,7 @@ import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { CODES_MONDE } from './pays-monde.mjs';
+import { sansSahara, saharaEntier } from './sahara-occidental.mjs';
 // Les îlots ne sont gardés que pour les pays du monde ajoutés le 2026-11-09 : partout, ils doublaient le fichier
 // (208 -> 429 Ko gz, surtout l'Arctique canadien et les côtes norvégiennes, déjà tracées avant).
 const ILOTS = new Set(CODES_MONDE);
@@ -116,6 +117,11 @@ for(const f of ne.features){
     for(const pp of NE10[cc]) if(!dansTerre(centre(pp[0]))) polys = polys.concat([pp]);
   }
   if(PARTIR_DE[cc]) polys = polys.filter(poly => PARTIR_DE[cc](centre(poly[0])));
+  // Le Sahara occidental dans ses frontières reconnues, comme eBird le découpe : Natural Earth en donnait l'ouest
+  // au Maroc (sahara-occidental.mjs, 2026-11-11).
+  if(cc === 'MA') polys = sansSahara(polys);
+  if(cc === 'EH'){ const ma = ne.features.find(g => [g.properties.ISO_A2_EH, g.properties.ISO_A2].includes('MA'));
+    if(ma) polys = saharaEntier(polys, ma.geometry.coordinates); }
   const [tol, dec] = fin ? [TOL_ILES, 3] : [TOL, 2];
   const out = [];
   for(const poly of polys){

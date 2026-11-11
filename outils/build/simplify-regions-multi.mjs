@@ -16,6 +16,7 @@
     node outils/build/simplify-regions-multi.mjs ne_admin1.geojson US,CA    # subset
 */
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { sansSahara } from './sahara-occidental.mjs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -1224,6 +1225,14 @@ function zonesCarte(geo, noms){
 
 console.log(`Lecture ${srcPath} ...`);
 const raw = JSON.parse(readFileSync(srcPath, 'utf8'));
+// Les régions du Maroc s'arrêtent à la frontière du Sahara occidental (27°40' N, sahara-occidental.mjs, 2026-11-11) :
+// Natural Earth y range Laâyoune et Oued ed Dahab, qu'eBird met sous EH. MA-16 n'a plus de forme, MA-14 et
+// MA-15 perdent leur part saharienne (eBird ne garde à MA-15 que la bande de Tarfaya).
+raw.features = raw.features.flatMap(f => {
+  if(f.properties.adm0_a3 !== 'MAR' || !f.geometry) return [f];
+  const reste = sansSahara(f.geometry.coordinates);
+  return reste.length ? [{ ...f, geometry: { type: 'MultiPolygon', coordinates: reste } }] : [];
+});
 // Combien de régions Natural Earth portent chaque code (voir resolveCodeBrut : codes partagés).
 for(const f of raw.features) if(f.properties.iso_3166_2) NE_PAR_CODE[f.properties.iso_3166_2] = (NE_PAR_CODE[f.properties.iso_3166_2] || 0) + 1;
 console.log(`  ${raw.features.length} features admin-1 mondiales.\n`);

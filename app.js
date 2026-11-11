@@ -1036,7 +1036,7 @@ const _carteContinentPromesses = {};
 function _chargerCarteContinent(nom){
   const f = CARTES_CONTINENTS[nom];
   if(!f) return Promise.resolve(null);
-  return _carteContinentPromesses[nom] ||= fetch('data/carte-continents/' + f + '.json?v=20261111')
+  return _carteContinentPromesses[nom] ||= fetch('data/carte-continents/' + f + '.json?v=20261111b')
     .then(r => r.ok ? r.json() : null).catch(() => { delete _carteContinentPromesses[nom]; return null; });
 }
 // La rarete d'un continent, ou du monde (Mathis, 2026-11-11, apres comparaison : notes-privees/rarete-continent/).
@@ -1050,7 +1050,7 @@ let _airesPays = null, _airesPaysPromesse = null;
 // Les seuils arrivent avec les surfaces : _airesPays n'est pose qu'une fois les deux la, pour qu'aucun palier
 // de continent ne s'affiche avec les seuils d'un pays le temps d'un chargement.
 function _chargerAiresPays(){
-  return _airesPaysPromesse ||= Promise.all([fetch('data/aires-pays.json?v=20261111').then(r => r.ok ? r.json() : null), _chargerSeuilsEtendus(), _chargerListesPays()])
+  return _airesPaysPromesse ||= Promise.all([fetch('data/aires-pays.json?v=20261111b').then(r => r.ok ? r.json() : null), _chargerSeuilsEtendus(), _chargerListesPays()])
     .then(([j]) => { _airesPays = j; return j; }).catch(() => { _airesPaysPromesse = null; return null; });
 }
 // Le nombre de listes eBird de chaque pays, mois par mois, 2019-2026 (data/listes-pays.json, outils/build/listes-pays.mjs).
@@ -1141,7 +1141,7 @@ const _pkdxQuandRempliAttente = [];
 // avec les fonctions de _rareteEtendue (recoupees, zero palier different). { sci: [valeur annuelle, drapeaux,
 // "NPX"] } ; drapeaux 1 = reguliere quelque part, 2 = saisonniere, 4 = exotique partout ou elle vit. Monde :
 // 101 Ko gz, Europe 13 Ko. A REGENERER quand les donnees des pays ou les surfaces changent, puis monter ce numero.
-const BIRDYDEX_CONTINENTS_V = '20261111e';
+const BIRDYDEX_CONTINENTS_V = '20261111f';
 const _pkdxContinents = {}, _pkdxContinentsPromesses = {};
 function _chargerPkdxContinent(nom){
   const f = CARTES_CONTINENTS[nom];
@@ -11104,7 +11104,7 @@ async function _ctChargeDeps(){
 }
 // Les frontières de tous les pays, sous les régions et les départements (calque ctPays, 345).
 async function _ctChargePays(){
-  if(!_ctPaysPromesse) _ctPaysPromesse = fetch('data/carte-pays.json?v=20261110b').then(r => r.ok ? r.json() : null).catch(() => null);
+  if(!_ctPaysPromesse) _ctPaysPromesse = fetch('data/carte-pays.json?v=20261111b').then(r => r.ok ? r.json() : null).catch(() => null);
   const geo = await _ctPaysPromesse;
   if(!geo || !_map || _lyrPays) return;
   if(!_map.getPane('ctPays')) _map.createPane('ctPays').style.zIndex = 345;
@@ -11125,7 +11125,7 @@ async function _ctChargePays(){
 // Les régions d'un pays étranger, lues à son premier clic.
 function _ctChargeZones(cc){
   if(cc === 'FR' || CT_PAYS_SANS_ZONES.has(cc)) return Promise.resolve(null);
-  if(!(cc in _ctZonesPromesses)) _ctZonesPromesses[cc] = fetch(`data/carte-zones/${cc.toLowerCase()}.json?v=20261111`).then(r => r.ok ? r.json() : null)
+  if(!(cc in _ctZonesPromesses)) _ctZonesPromesses[cc] = fetch(`data/carte-zones/${cc.toLowerCase()}.json?v=20261111b`).then(r => r.ok ? r.json() : null)
     .then(geo => { if(geo) for(const f of geo.features) if(f.properties.zones) _ctGroupes[f.properties.ebird] = f.properties.zones; return geo; })
     .catch(() => null);
   return _ctZonesPromesses[cc];
@@ -18386,7 +18386,7 @@ function _exoticMapFileFor(cc){
     // Les contours sont caches dans lmb-data, qui survit aux changements de version du
     // service worker : sans ce parametre, un visiteur deja venu garderait indefiniment
     // l ancienne Bosnie amputee de sa Republique serbe.
-    : `data/regions-${cc.toLowerCase()}-simplified.json?v=20261111`;
+    : `data/regions-${cc.toLowerCase()}-simplified.json?v=20261111b`;
 }
 async function _loadExoticMapPaths(cc){
   if(_exoticMapPathsCache[cc] !== undefined) return _exoticMapPathsCache[cc];
