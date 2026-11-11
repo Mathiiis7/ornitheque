@@ -11368,7 +11368,7 @@ async function _ctChargePays(){
 // Les régions d'un pays étranger, lues à son premier clic.
 function _ctChargeZones(cc){
   if(cc === 'FR' || CT_PAYS_SANS_ZONES.has(cc)) return Promise.resolve(null);
-  if(!(cc in _ctZonesPromesses)) _ctZonesPromesses[cc] = fetch(`data/carte-zones/${cc.toLowerCase()}.json?v=20261111b`).then(r => r.ok ? r.json() : null)
+  if(!(cc in _ctZonesPromesses)) _ctZonesPromesses[cc] = fetch(`data/carte-zones/${cc.toLowerCase()}.json?v=20261111c`).then(r => r.ok ? r.json() : null)
     .then(geo => { if(geo) for(const f of geo.features) if(f.properties.zones) _ctGroupes[f.properties.ebird] = f.properties.zones; return geo; })
     .catch(() => null);
   return _ctZonesPromesses[cc];
@@ -18629,7 +18629,7 @@ function _exoticMapFileFor(cc){
     // Les contours sont caches dans lmb-data, qui survit aux changements de version du
     // service worker : sans ce parametre, un visiteur deja venu garderait indefiniment
     // l ancienne Bosnie amputee de sa Republique serbe.
-    : `data/regions-${cc.toLowerCase()}-simplified.json?v=20261111b`;
+    : `data/regions-${cc.toLowerCase()}-simplified.json?v=20261111c`;   // c : Tadjikistan entier (TJ-X01~ dans TJ-DU)
 }
 async function _loadExoticMapPaths(cc){
   if(_exoticMapPathsCache[cc] !== undefined) return _exoticMapPathsCache[cc];

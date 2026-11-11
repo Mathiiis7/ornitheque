@@ -262,6 +262,10 @@ const ALIAS_MONDE = {
   'BI-BL':'BI-BJ', 'BI-BM':'BI-BJ',
   'TD-X01~':'TD-BET', 'TD-BO':'TD-BET', 'TD-TI':'TD-BET',
   'CO-X01~':'CO-DC',
+  // Les districts de subordination republicaine (Natural Earth : « Tadzhikistan Territories ») n'existent pas chez
+  // eBird, qui range leurs sites dans TJ-DU (gorges de Kondara et Siyoma, Hissar, Tursunzoda : API hotspot/geo,
+  // 2026-11-11). Sans cet alias, toute la bande centrale du pays manquait sur la carte de la fiche.
+  'TJ-X01~':'TJ-DU',
   'ID-KI':'ID-KA', 'ID-KB':'ID-KA', 'ID-KS':'ID-KA', 'ID-KT':'ID-KA', 'ID-KU':'ID-KA',
   'ID-NT':'ID-NU', 'ID-NB':'ID-NU',
   'ID-SN':'ID-SL', 'ID-SG':'ID-SL', 'ID-SA':'ID-SL', 'ID-ST':'ID-SL', 'ID-SR':'ID-SL', 'ID-GO':'ID-SL',
