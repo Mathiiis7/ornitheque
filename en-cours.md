@@ -1,6 +1,8 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1106 / app.js?v=678 (11/11, rareté des continents aux seuils d'un pays, ee94dd55). Prochaine : v1107 / 679.
+Dernière version : v1107 / app.js?v=679 (11/11, Tadjikistan entier sur les cartes, cc190fd0). Prochaine : v1108 / 680.
+- **v1107** : TJ-X01~ (districts de subordination républicaine, absents d'eBird) fondu dans TJ-DU, où eBird range
+  leurs sites ; contours ?v=20261111c. Seul pays dans ce cas (régions à code provisoire vérifiées le 11/11).
 - **v1106** : continents et monde reprennent les seuils d'un pays (le Tichodrome était 4 dans le monde, 5 au mieux
   dans un pays) ; seuils.json retiré, Birdydex des continents régénéré, `_concordance-birdydex-continents.mjs` 0 écart.
 TROPHEES_VERSION = 6 (à monter à chaque trophée unique neuf). Uniques en ligne le 11/11 : Fixation béton (huppe),
