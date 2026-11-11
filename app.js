@@ -1028,9 +1028,8 @@ for(const [cc, c] of Object.entries(CONTINENT_BY_CC)){
   else if(c === 'Autres' && CONTINENT_7_DE[cc] === 'Antarctique') CONTINENT_BY_CC[cc] = 'Antarctique';
 }
 // Les cartes des continents de la fiche espece (outils/build/carte-continents.mjs) : choisir un continent
-// dans le selecteur montre chaque pays colore par SA rarete. Le monde n'a pas de rarete a lui (Mathis,
-// 2026-11-10, apres quatre facons de la calculer, toutes trompeuses quelque part) ; un continent en a une
-// depuis le 2026-11-11, la moyenne de ses pays selon leur surface plafonnee (_renderCarteContinent).
+// dans le selecteur montre chaque pays colore par SA rarete. Le continent, et le monde, ont la leur depuis le
+// 2026-11-11 : la moyenne de leurs pays selon leur surface plafonnee (_rareteEtendue).
 const CARTES_CONTINENTS = { 'Monde': 'monde', 'Europe': 'europe', 'Amérique du Nord': 'amerique-du-nord',
   'Amérique du Sud': 'amerique-du-sud', 'Afrique': 'afrique', 'Asie': 'asie', 'Océanie': 'oceanie', 'Antarctique': 'antarctique' };
 const _carteContinentPromesses = {};
@@ -1039,6 +1038,44 @@ function _chargerCarteContinent(nom){
   if(!f) return Promise.resolve(null);
   return _carteContinentPromesses[nom] ||= fetch('data/carte-continents/' + f + '.json?v=20261111')
     .then(r => r.ok ? r.json() : null).catch(() => { delete _carteContinentPromesses[nom]; return null; });
+}
+// La rarete d'un continent, ou du monde (Mathis, 2026-11-11, apres comparaison : notes-privees/rarete-continent/).
+// Moyenne de ses pays ponderee par leur surface, aucun pays ne pesant plus de 10 % de l'ensemble : sans ce
+// plafond la Russie faisait 74 % de l'Europe ; ponderer par les listes laissait les Etats-Unis (81 % des listes)
+// decider seuls pour l'Amerique du Nord ; compter les pays a egalite donnait aux iles des Caraibes le poids des
+// Etats-Unis. De l'Antarctique ne compte que sa cote (sinon le Manchot d'Adelie sortait « peu commun » dans le
+// monde) : data/aires-pays.json, outils/build/carte-continents.mjs.
+// Un pays sans donnees ne compte pas ; une exotique sans palier (X, P, C) compte pour 0, comme sa couleur.
+let _airesPays = null, _airesPaysPromesse = null;
+function _chargerAiresPays(){
+  return _airesPaysPromesse ||= fetch('data/aires-pays.json?v=20261111').then(r => r.ok ? r.json() : null)
+    .then(j => { _airesPays = j; return j; }).catch(() => { _airesPaysPromesse = null; return null; });
+}
+// { an, m12 } (parts des listes, 0..1), ou null tant que les surfaces ne sont pas arrivees.
+function _rareteEtendue(sci, nom, pret){
+  if(!_airesPays || !CARTES_CONTINENTS[nom]) return null;
+  const key = (sci || '').toLowerCase();
+  let poidsTotal = 0;
+  const membres = [];
+  for(const cc of Object.keys(COUNTRIES_REG)){
+    const aire = _airesPays[cc];
+    if(!(aire > 0) || (nom !== 'Monde' && _continentDuPays(cc) !== nom)) continue;
+    const vA = _verdictPaysEspece(key, cc, null, pret);
+    if(!vA || vA.sansDonnees) continue;
+    const sauvage = vA.tier > 0;
+    membres.push({ aire, an: sauvage ? vA.vAn : 0,
+      m12: _MOIS_COURTS.map((_, mi) => sauvage ? ((_verdictPaysEspece(key, cc, mi, pret) || {}).vAn || 0) : 0) });
+    poidsTotal += aire;
+  }
+  if(!membres.length) return null;
+  const plafond = 0.10 * poidsTotal;
+  let poids = 0, an = 0; const m12 = Array(12).fill(0);
+  for(const x of membres){
+    const w = Math.min(x.aire, plafond);
+    poids += w; an += x.an * w;
+    for(let mi = 0; mi < 12; mi++) m12[mi] += x.m12[mi] * w;
+  }
+  return { an: an / poids, m12: m12.map(v => v / poids) };
 }
 // Le continent montre par la fiche, '' quand c'est un pays. Jamais enregistre, et jamais ecrit dans
 // _speciesCountry ni dans le pays du site : ceux-la restent des pays.
@@ -1255,6 +1292,8 @@ function _openCountryPicker(currentCode, opts = {}){
     // 'attente' tant que les frequences des pays etrangers ne sont pas arrivees, 'echec' si
     // le telechargement a rate : dans les deux cas, ces pays ne doivent pas lire « absente ».
     let etatPays = _donneesPaysPretes() && (!focusSci || _especeMondePrete(focusSci)) ? 'pret' : 'attente';
+    // La rarete de chaque continent, calculee une fois par fenetre ouverte (_rareteEtendue lit tous les pays).
+    const rarContCache = new Map();
     const backdrop = document.createElement('div');
     backdrop.className = 'cp-modal-backdrop';
     backdrop.innerHTML = `
@@ -1339,11 +1378,22 @@ function _openCountryPicker(currentCode, opts = {}){
         </div>`;
       }
       // Fiche espece : le titre d'un continent se choisit, et montre la carte de ses pays, chacun a sa
-      // couleur. Pas de pourcentage ni de pastille dans la liste : la rarete d'un continent (2026-11-11) se lit
-      // dans la colonne des mois de sa carte, et le monde n'en a pas.
+      // couleur. Il porte la rarete du continent (2026-11-11, _rareteEtendue), sur l'annee ou le mois choisi sur
+      // la carte, comme les lignes des pays ; le monde aussi.
+      const rarCont = (nom) => {
+        if(!focusSci || etatPays !== 'pret' || !_airesPays) return '';
+        if(!rarContCache.has(nom)) rarContCache.set(nom, _rareteEtendue(focusSci, nom, true));
+        const r = rarContCache.get(nom);
+        if(!r) return '';
+        const v = moisLu == null ? r.an : r.m12[moisLu];
+        if(!(v > 0)) return '<span class="cp-cont-rar"><span class="reg-picker-val">absente</span>' + tierChip('–', 'var(--line-2)', { cls: 'tier-rond' }) + '</span>';
+        const t = annualFreqToTier(v);
+        return '<span class="cp-cont-rar"><span class="reg-picker-val">' + esc(fmtPct(v)) + '</span>'
+          + tierChip(t, realColor(t), { title: 'palier ' + t, cls: 'tier-rond' }) + '</span>';
+      };
       const titreCont = (nom) => opts.continents && CARTES_CONTINENTS[nom]
         ? `<button type="button" class="cp-group-title cp-cont${contCourant === nom ? ' on' : ''}" data-cont="${esc(nom)}"`
-          + ` aria-pressed="${contCourant === nom}"><span>${esc(nom)}</span><span class="cp-cont-voir">voir la carte</span></button>`
+          + ` aria-pressed="${contCourant === nom}"><span>${esc(nom)}</span>${rarCont(nom)}<span class="cp-cont-voir">voir la carte</span></button>`
         : `<div class="cp-group-title">${esc(nom)}</div>`;
       if(opts.continents && (!fLC || 'monde'.includes(fLC))) html += titreCont('Monde');
       for(const cont of CONTINENT_ORDER){
@@ -1503,9 +1553,11 @@ function _openCountryPicker(currentCode, opts = {}){
     // 2026-09-27, et ce selecteur est le seul endroit qui les veuille TOUTES a la fois. Si
     // elles ne sont pas encore arrivees, chaque ligne afficherait « - » : on redessine des
     // qu'elles sont la, plutot que de retarder l'ouverture du selecteur.
-    if(etatPays !== 'pret'){
-      Promise.all([_chargerDonneesPays(), focusSci ? _chargerEspeceMonde(focusSci) : null]).then(() => { try{
+    // Les surfaces des pays, pour la rarete des continents, arrivent de meme.
+    if(etatPays !== 'pret' || (opts.continents && !_airesPays)){
+      Promise.all([_chargerDonneesPays(), focusSci ? _chargerEspeceMonde(focusSci) : null, opts.continents ? _chargerAiresPays() : null]).then(() => { try{
         etatPays = _donneesPaysPretes() && (!focusSci || _especeMondePrete(focusSci)) ? 'pret' : 'echec';
+        rarContCache.clear();
         grouped = grouper(); render(searchEl.value); }catch(_){} });
     }
     // Events
@@ -18820,8 +18872,8 @@ function _carteExoAffichee(){
 function _majEnteteOuQuand(nomZone){
   const el = document.getElementById('smOqZone');
   if(!el) return;
-  // Un continent garde son nom et son chiffre (la moyenne de ses pays, 2026-11-11), sans statut exotique.
-  // Le monde n'a pas de chiffre : _oqScore y est vide.
+  // Un continent, ou le monde, garde son nom et son chiffre (la moyenne de ses pays, 2026-11-11), sans statut
+  // exotique.
   if(_ficheContinent){
     el.dataset.nom = _ficheContinent;
     el.innerHTML = `<span class="sm-oq-nom" data-tip-coupe="${esc(_ficheContinent)}">${esc(_ficheContinent)}</span>`
@@ -19088,7 +19140,7 @@ function _legendeOuQuand(aCarte, aGraph, vueExo){
   // carte d'une piece prend la valeur nationale du mois choisi.
   // Un continent : chaque pays porte sa propre rarete ; le continent, lui, n'en a pas.
   if(p.continent) return `<div class="sm-oq-cles">${cles}</div>`
-    + (p.monde ? `<div class="sm-oq-note">ⓘ Chaque pays a la couleur de sa propre rareté, mois par mois dans la colonne de gauche. C'est une facilité de rencontre, pas un effectif.</div>`
+    + (p.monde ? `<div class="sm-oq-note">ⓘ Chaque pays a la couleur de sa propre rareté. La colonne de gauche donne celle du monde : la moyenne des pays selon leur surface, aucun ne comptant pour plus de 10 %, et de l'Antarctique sa seule côte. C'est une facilité de rencontre, pas un effectif.</div>`
       : `<div class="sm-oq-note">ⓘ Chaque pays a la couleur de sa propre rareté. La colonne de gauche donne celle du continent : la moyenne de ses pays selon leur surface, aucun ne comptant pour plus de 10 %. C'est une facilité de rencontre, pas un effectif.</div>`);
   const surCarte = p.sansDecoupage ? 'Le pays entier sur la carte' : `Par ${p.zoneWord || 'région'} sur la carte`;
   const aCliquer = p.sansDecoupage ? 'un mois ou une barre' : 'une zone, un mois ou une barre';
@@ -19257,7 +19309,7 @@ async function _renderCarteContinent(sci, nom){
   const lib = surAnnee ? 'année' : _MOIS_COURTS[mois];
   // Tous les pays a la fois : les 48 des fichiers communs et le morceau de l'espece pour les autres.
   let paths = null;
-  try { [paths] = await Promise.all([_chargerCarteContinent(nom), _chargerDonneesPays(), _chargerEspeceMonde(key)]); } catch(_){}
+  try { [paths] = await Promise.all([_chargerCarteContinent(nom), _chargerDonneesPays(), _chargerEspeceMonde(key), _chargerAiresPays()]); } catch(_){}
   if(_ficheContinent !== nom) return;
   if(!paths){
     box.innerHTML = '<div class="help" style="padding:12px 0;">Carte indisponible pour le moment.</div>';
@@ -19296,36 +19348,13 @@ async function _renderCarteContinent(sci, nom){
     }
     svg += _pathZone(r.path, fill, titre, false, horsCont, cible, 1);
   }
-  // La rarete du continent (Mathis, 2026-11-11, apres comparaison de sept calculs sur cinq continents :
-  // notes-privees/rarete-continent/comparaison.md). Moyenne des pays du continent ponderee par leur surface,
-  // aucun pays ne pesant plus de 10 % du continent : sans ce plafond la Russie faisait 74 % de l'Europe, et
-  // ponderer par les listes laissait les Etats-Unis (81 % des listes) decider seuls pour l'Amerique du Nord.
-  // Un pays sans donnees ne compte pas ; une exotique sans palier (X, P, C) compte pour 0, comme sa couleur.
-  // Le monde n'en a pas : a cette echelle, aucun calcul ne tenait (2026-11-10).
-  let m12Cont = null, anCont = 0;
-  if(!surMonde && paths.aires){
-    const membres = [];
-    for(const cc of Object.keys(paths.regions)){
-      if(!COUNTRIES_REG[cc] || _continentDuPays(cc) !== nom || !(paths.aires[cc] > 0)) continue;
-      const vA = _verdictPaysEspece(key, cc, null, pret);
-      if(!vA || vA.sansDonnees) continue;
-      const sauvage = vA.tier > 0;
-      const m12 = _MOIS_COURTS.map((_, mi) => { if(!sauvage) return 0; const v = _verdictPaysEspece(key, cc, mi, pret); return (v && v.vAn) || 0; });
-      membres.push({ aire: paths.aires[cc], an: sauvage ? vA.vAn : 0, m12 });
-    }
-    const plafond = 0.10 * membres.reduce((a, x) => a + x.aire, 0);
-    let poids = 0; m12Cont = Array(12).fill(0);
-    for(const x of membres){
-      const w = Math.min(x.aire, plafond);
-      poids += w; anCont += x.an * w;
-      for(let mi = 0; mi < 12; mi++) m12Cont[mi] += x.m12[mi] * w;
-    }
-    if(poids > 0){ anCont /= poids; m12Cont = m12Cont.map(v => v / poids); } else m12Cont = null;
-  }
+  // La rarete du continent, ou du monde : _rareteEtendue.
+  const rar = _rareteEtendue(key, nom, pret);
+  const m12Cont = rar ? rar.m12 : null, anCont = rar ? rar.an : 0;
   window._oqScore = m12Cont ? _scoreAnnuelLbl(m12Cont, null, null, anCont) : '';
-  // La colonne des mois garde sa forme (la gelule ANNÉE, puis les douze mois). Un continent : chaque mois a
-  // la couleur du palier du continent, comme sur la carte d'un pays. Le monde : sans couleur, le choisi
-  // prend l'accent.
+  // La colonne des mois garde sa forme (la gelule ANNÉE, puis les douze mois) : chaque mois a la couleur du
+  // palier du continent, comme sur la carte d'un pays. Sans surfaces (fichier pas arrive), sans couleur, le
+  // choisi prend l'accent.
   const chipMois = (val, label, actif, annuel) => {
     const forme = annuel
       ? ' padding:4px 7px; border-radius:999px; font:' + (actif ? '800' : '700') + ' 13px/1.2 system-ui; letter-spacing:.7px; text-transform:uppercase;'
@@ -20278,7 +20307,7 @@ function _titreSrc(ccLabel, regionScope, strictRegional){
 // valeur qui decide du palier, calculee sur la zone que montre le graphique : region si
 // une region est selectionnee, pays sinon. L'entete ne donnait jusqu'ici que le pic, ce qui
 // laissait croire que le tier en decoulait ; les deux chiffres sont maintenant cote a cote.
-// annuel : la valeur de l'annee quand elle ne se deduit pas des douze mois (un continent, moyenne de ses pays).
+// annuel : la valeur de l'annee quand elle ne se deduit pas des douze mois (un continent ou le monde, moyenne de ses pays).
 function _scoreAnnuelLbl(m12, cc, zone, annuel){
   if(!Array.isArray(m12) || m12.length !== 12) return '';
   // Un mois choisi dans la colonne de la carte remplace le chiffre annuel par le sien :
@@ -20302,8 +20331,8 @@ function _scoreAnnuelLbl(m12, cc, zone, annuel){
           // 0,0002 %. Deux chiffres significatifs : la vraie valeur, sans zeros inutiles.
           : _fr(Number((v * 100).toPrecision(2)));
   const tip = annuel != null
-    ? (mois == null ? "Moyenne des pays du continent selon leur surface, aucun ne comptant pour plus de 10 % : la part de leurs listes qui citent l'espèce. C'est elle qui détermine le palier de rareté."
-      : "Moyenne des pays du continent sur ce seul mois, pondérée de même.")
+    ? (mois == null ? "Moyenne des pays selon leur surface, aucun ne comptant pour plus de 10 % : la part de leurs listes qui citent l'espèce. C'est elle qui détermine le palier de rareté."
+      : "Moyenne des pays sur ce seul mois, pondérée de même.")
     : mois == null
     ? "Fréquence annuelle pondérée par l'effort d'observation : la part des listes de la zone qui citent l'espèce. C'est elle qui détermine le palier de rareté."
     : "Part des listes de la zone qui citent l'espèce sur ce seul mois.";

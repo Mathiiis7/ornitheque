@@ -16,7 +16,7 @@
 //
 // Source : data/carte-pays.json (outils/build/carte-pays.mjs). Usage : node outils/build/carte-continents.mjs
 import fs from 'node:fs';
-import { geoArea, geoPath, geoNaturalEarth1, geoConicEqualArea, geoAzimuthalEqualArea } from 'd3-geo';
+import { geoArea, geoLength, geoPath, geoNaturalEarth1, geoConicEqualArea, geoAzimuthalEqualArea } from 'd3-geo';
 
 const RACINE = new URL('../../', import.meta.url);
 const W = 1000;
@@ -140,14 +140,27 @@ for(const [nom, cadre] of Object.entries(CADRES)){
       cadres[autre] = [r(a0), r(b0), r(a1 - a0), r(yBas - b0)];
     }
   }
-  // La surface de chaque pays dessiné, en km² (le pays entier, outre-mer compris, pas la part coupée par le
-  // cadre) : la rareté d'un continent est la moyenne de ses pays pondérée par elle, aucun pays ne pesant plus
-  // de 10 % du continent (Mathis, 2026-11-11 ; comparaison dans notes-privees/rarete-continent/).
-  const aires = {};
-  if(!cadre.sphere) for(const cc of Object.keys(regions)) aires[cc] = Math.max(1, Math.round(geoArea(parCode.get(cc).geom) * 6371 * 6371));
-  const json = JSON.stringify(cadres ? { viewBox: `0 0 ${W} ${H}`, cadres, regions } : { viewBox: `0 0 ${W} ${H}`, aires, regions });
+  const json = JSON.stringify(cadres ? { viewBox: `0 0 ${W} ${H}`, cadres, regions } : { viewBox: `0 0 ${W} ${H}`, regions });
   fs.writeFileSync(new URL(nom + '.json', dossier), json);
   total += json.length;
   console.log(nom.padEnd(17), Object.keys(regions).length, 'pays,', points, 'en point,', 'viewBox 1000x' + H + ',', Math.round(json.length / 1024), 'Ko');
 }
 console.log('Total', Math.round(total / 1024), 'Ko');
+
+// La surface de chaque pays, en km² (le pays entier, outre-mer compris) : data/aires-pays.json. La rareté d'un
+// continent, et celle du monde, est la moyenne de ses pays pondérée par elle, aucun pays ne pesant plus de
+// 10 % de l'ensemble (Mathis, 2026-11-11 ; comparaison dans notes-privees/rarete-continent/).
+// De l'Antarctique on ne visite que la côte (idée de Mathis, le même jour) : sa surface est remplacée par une
+// bande de COTE_AQ_KM le long de son contour. À 50 km, le Manchot d'Adélie sortait « rare » dans le monde ; à
+// 10 km, « très rare », comme le Condor des Andes. Les îles australes (BV, GS, HM, TF) gardent leur surface.
+const R_TERRE = 6371, COTE_AQ_KM = 10;
+const aires = {};
+for(const [cc, { geom }] of parCode) aires[cc] = Math.max(1, Math.round(geoArea(geom) * R_TERRE * R_TERRE));
+if(parCode.has('AQ')){
+  let cote = 0;
+  for(const poly of parCode.get('AQ').geom.coordinates) cote += geoLength({ type: 'LineString', coordinates: poly[0] }) * R_TERRE;
+  console.log('Antarctique :', Math.round(cote), 'km de côte,', aires.AQ, 'km² ramenés à', Math.round(cote * COTE_AQ_KM));
+  aires.AQ = Math.round(cote * COTE_AQ_KM);
+}
+fs.writeFileSync(new URL('data/aires-pays.json', RACINE), JSON.stringify(aires));
+console.log('aires-pays.json :', Object.keys(aires).length, 'pays');

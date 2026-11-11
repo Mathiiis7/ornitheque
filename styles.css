@@ -995,6 +995,10 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .cp-group-title.cp-cont:hover { background:var(--surface-3); }
   .cp-group-title.cp-cont.on { background:var(--accent); color:var(--sur-accent); }
   .cp-group-title.cp-cont.on .cp-cont-voir { color:var(--sur-accent); }
+  /* La rarete du continent (2026-11-11) : le pourcentage et la pastille, comme sur la ligne d'un pays */
+  .cp-cont-rar { margin-left:auto; display:inline-flex; align-items:center; gap:8px; align-self:center;
+    font:600 14px var(--sans); text-transform:none; letter-spacing:0; color:var(--ink-2); }
+  .cp-group-title.cp-cont.on .cp-cont-rar, .cp-group-title.cp-cont.on .cp-cont-rar .reg-picker-val { color:var(--sur-accent); }
   /* Meme plancher que .reg-picker-item : les deux onglets du selecteur partagent le pas
      de leurs lignes, au-dessus comme au-dessous de la hauteur de reference. */
   .cp-item { display:grid; grid-template-columns:28px minmax(0,1fr) var(--cp-exo,16px) 44px 60px 30px;
