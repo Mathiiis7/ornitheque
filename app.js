@@ -4425,6 +4425,9 @@ const TROPHIES = [
   { theme:'groupe',      icon:"<img src=\"assets/trophies/themes/tichodrome/tichodrome.png\" alt=\"Tichodrome\" style=\"width:60px;height:60px;border-radius:50%;object-fit:cover\">", name:'Spider-Man', desc:'Observer le tichodrome échelette', test:s=>s.hasWallcreeper, exotic:true, speciesFamilyKey:'wallcreepers', list:s=>[...(s.wallcreepersSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
   // Le cincle, qui marche sous l'eau : « Aquaman » (Mathis, 11/11, image de lui). Les 5 cincles du monde comptent.
   { theme:'groupe',      icon:"<img src=\"assets/trophies/themes/cincle/cincle.png\" alt=\"Cincle\" style=\"width:60px;height:60px;border-radius:50%;object-fit:cover\">", name:'Aquaman', desc:'Observer un cincle', test:s=>s.hasDipper, exotic:true, speciesFamilyKey:'dippers', list:s=>[...(s.dippersSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
+  // Le vautour : « Matuidi Charo », le morceau de Niska (le « charo », charognard) (Mathis, 11/11, image de lui ;
+  // poussieres du detourage retirees par outils/build/_sans-miettes.mjs). Ancien et Nouveau Monde (urubus, condors).
+  { theme:'groupe',      icon:"<img src=\"assets/trophies/themes/vautour/vautour.png\" alt=\"Vautour\" style=\"width:60px;height:60px;border-radius:50%;object-fit:cover\">", name:'Matuidi Charo', desc:'Observer un vautour', test:s=>s.hasVulture, exotic:true, speciesFamilyKey:'vultures', list:s=>[...(s.vulturesSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
   { theme:'groupe',      icon:ICONS.pelagic,    name:'Vendée Globe',      desc:'Observer un albatros, un puffin, un pétrel ou un océanite (Procellariiformes)',      test:s=>s.hasPelagic,     exotic:true, speciesFamilyKey:'pelagics',     list:s=>[...(s.pelagicsSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
   { theme:'groupe',      icon:ICONS.jaseur,     name:'Jazz Club',         desc:'Observer un jaseur (Bombycillidae) : boréal, d\'Amérique ou du Japon',                test:s=>s.hasWaxwing,     exotic:true, speciesFamilyKey:'waxwings',     list:s=>[...(s.waxwingsSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
   { theme:'groupe',      icon:ICONS.engoulevent, name:'Batman', desc:'Observer un engoulevent, un ibijau, un podarge ou un guacharo',                test:s=>s.hasNightjar,    exotic:true, speciesFamilyKey:'nightjars',    list:s=>[...(s.nightjarsSet||[])].sort().map(sci=>({ name:frName(sci,sci), sci, owned:true })) },
@@ -4553,6 +4556,10 @@ const CERTHIOIDEA_G=/^(sitta|tichodroma|certhia|salpornis|troglodytes|nannus|cis
 // Predicat de famille pour le modal des familles d'especes (bouton Monde/France).
 // Retourne true si l'espece appartient a la famille. Utilise pour filtrer le pool FR
 // via REAL_RARITY : intersection de (sci matche predicate) x (tier FR < 10).
+// Les vautours de l'Ancien Monde, ranges par le Birdydex avec les aigles et buses (genres) : l'Armee d'aigles royaux
+// les retire, « Matuidi Charo » les compte (avec les vautours du Nouveau Monde, famille a part).
+const VAUTOURS_ANCIEN_MONDE = new Set(['gyps', 'aegypius', 'torgos', 'sarcogyps', 'trigonoceps', 'necrosyrtes', 'neophron', 'gypaetus', 'gypohierax']);
+const _estVautour = sci => VAUTOURS_ANCIEN_MONDE.has((sci || '').split(' ')[0]) || ((typeof familyOf === 'function') && familyOf(sci) === 'Vautours du Nouveau Monde');
 const SPECIES_FAMILY_FILTERS = {
   rapaces: sci => {
     const g = (sci||'').split(' ')[0];
@@ -4774,6 +4781,7 @@ const SPECIES_FAMILY_FILTERS = {
   hoopoes: sci => (typeof familyOf === 'function') && familyOf(sci) === 'Huppes',
   wallcreepers: sci => (typeof familyOf === 'function') && familyOf(sci) === 'Tichodrome',
   dippers: sci => (typeof familyOf === 'function') && familyOf(sci) === 'Cincles',
+  vultures: sci => _estVautour(sci),
   penguins: sci => {
     const fam = (typeof familyOf === 'function') ? familyOf(sci) : null;
     return fam === 'Pingouins, guillemots' || fam === 'Manchots';
@@ -4851,6 +4859,7 @@ const SPECIES_FAMILY_LABELS = {
   hoopoes: 'huppes',
   wallcreepers: 'tichodromes',
   dippers: 'cincles',
+  vultures: 'vautours',
   penguins: 'pingouins & manchots',
   waxwings: 'jaseurs',
   nightjars: 'engoulevents, ibijaux, podarges & guacharos',
@@ -6021,8 +6030,8 @@ function statsFor(me, N){
   const ranked=[...state.people].sort((a,b)=>b.total-a.total);   // rang basé sur le nb d'espèces (classement principal)
   const rank=ranked.findIndex(p=>p.id===me.id)+1;
   let owls=0,raptors=0,water=0,sea=0,blackWoodpecker=false,locTeste=false,hasKingfisher=false,hasPenguin=false,hasFireKingfisher=false,
-      hasHummingbird=false,hasRatite=false,hasExoticParrot=false,hasToucan=false,hasHornbill=false,hasPelican=false,hasHoopoe=false,hasWallcreeper=false,hasDipper=false,hasShrike=false,hasPelagic=false,hasWaxwing=false,hasNightjar=false;
-  const hummingbirdsSet=new Set(), ratitesSet=new Set(), exoticParrotsSet=new Set(), toucansSet=new Set(), hornbillsSet=new Set(), pelicansSet=new Set(), hoopoesSet=new Set(), wallcreepersSet=new Set(), dippersSet=new Set(), shrikesSet=new Set(), pelagicsSet=new Set(), waxwingsSet=new Set(), nightjarsSet=new Set();
+      hasHummingbird=false,hasRatite=false,hasExoticParrot=false,hasToucan=false,hasHornbill=false,hasPelican=false,hasHoopoe=false,hasWallcreeper=false,hasDipper=false,hasVulture=false,hasShrike=false,hasPelagic=false,hasWaxwing=false,hasNightjar=false;
+  const hummingbirdsSet=new Set(), ratitesSet=new Set(), exoticParrotsSet=new Set(), toucansSet=new Set(), hornbillsSet=new Set(), pelicansSet=new Set(), hoopoesSet=new Set(), wallcreepersSet=new Set(), dippersSet=new Set(), vulturesSet=new Set(), shrikesSet=new Set(), pelagicsSet=new Set(), waxwingsSet=new Set(), nightjarsSet=new Set();
   const megaList=[]; const megaOwnedSet=new Set();
   const continents=new Set();   // trophee des continents (10/11) : ceux de tous les pays ou il a observe
   const seasonHit={}; SEASON_ORDER.forEach(s=>seasonHit[s]=false); const seasonOwnedSet=new Set();
@@ -6140,6 +6149,7 @@ function statsFor(me, N){
       if(fam === 'Huppes'){ hasHoopoe = true; hoopoesSet.add(sci); }   // trophee de la huppe (11/11)
       if(fam === 'Tichodrome'){ hasWallcreeper = true; wallcreepersSet.add(sci); }   // Spider-Man (11/11)
       if(fam === 'Cincles'){ hasDipper = true; dippersSet.add(sci); }   // Aquaman (11/11)
+      if(_estVautour(sci)){ hasVulture = true; vulturesSet.add(sci); }   // Matuidi Charo (11/11)
       if(fam === 'Pies-grièches'){ hasShrike = true; shrikesSet.add(sci); }
       if(fam === 'Albatros' || fam === 'Puffins, pétrels' || fam === 'Océanites du Sud' || fam === 'Océanites du Nord'){ hasPelagic = true; pelagicsSet.add(sci); }
       if(fam === 'Jaseurs'){ hasWaxwing = true; waxwingsSet.add(sci); }
@@ -6174,7 +6184,7 @@ function statsFor(me, N){
     for(const uid of voters) if(uid !== me.id) hearts++;
     if(hearts >= 2) hotPhotos++;
   }
-  return { uid:me.id, postedPhotos, total:me.total, unique:N>1?me.unique:0, score:me.score, rank, groupN:N, owls, raptors, water, sea, blackWoodpecker, hasKingfisher, hasPenguin, hasFireKingfisher, hasHummingbird, hasRatite, hasExoticParrot, hasToucan, hasHornbill, hasPelican, hasHoopoe, hasWallcreeper, hasDipper, continents, hasShrike, hasPelagic, hasWaxwing, hasNightjar, hummingbirdsSet, ratitesSet, exoticParrotsSet, toucansSet, hornbillsSet, pelicansSet, hoopoesSet, wallcreepersSet, dippersSet, shrikesSet, pelagicsSet, waxwingsSet, nightjarsSet, locTeste, mikeHorn:!!me.mikeHorn, mikeBird:me.mikeBird||'', megaList, megaOwnedSet, seasonCount, seasonOwnedSet, raptorOwnedSet, owlOwnedSet, alcidOwnedSet, manchotOwnedSet, waterOwnedSet, anatidaeOwnedSet, hirundoOwnedSet, martinetsOwnedSet, alaudaOwnedSet, paridaeOwnedSet, corvidaeOwnedSet, alcediOwnedSet, ardeidaeOwnedSet, columbidaeOwnedSet, galliformesOwnedSet, picidaeOwnedSet, scolopacidaeOwnedSet, rivagesOwnedSet, laridaeOwnedSet, turdidaeOwnedSet, muscicapidaeOwnedSet, sylviidaeOwnedSet, phylloscopidaeOwnedSet, fringillidaeOwnedSet, emberizidaeOwnedSet, rallidaeOwnedSet, motacillidaeOwnedSet, ciconiidaeOwnedSet, coraciiformesOwnedSet, suliformesOwnedSet, sturnoideaOwnedSet, passeridaeOwnedSet, certhioideaOwnedSet, podicipedidaeOwnedSet, cuculidaeOwnedSet, regionsOwnedSet, regionsCount, hotPhotos, grosBebeVotes:(votesMap.get('grosBebe')?.get(me.id)?.size)||0, kimonoVotes:(votesMap.get('kimono')?.get(me.id)?.size)||0, necrophileVotes:(votesMap.get('necrophile')?.get(me.id)?.size)||0, globeTrotter:!!me.globeTrotter, countryCount:me.countryCount||0 };
+  return { uid:me.id, postedPhotos, total:me.total, unique:N>1?me.unique:0, score:me.score, rank, groupN:N, owls, raptors, water, sea, blackWoodpecker, hasKingfisher, hasPenguin, hasFireKingfisher, hasHummingbird, hasRatite, hasExoticParrot, hasToucan, hasHornbill, hasPelican, hasHoopoe, hasWallcreeper, hasDipper, hasVulture, continents, hasShrike, hasPelagic, hasWaxwing, hasNightjar, hummingbirdsSet, ratitesSet, exoticParrotsSet, toucansSet, hornbillsSet, pelicansSet, hoopoesSet, wallcreepersSet, dippersSet, vulturesSet, shrikesSet, pelagicsSet, waxwingsSet, nightjarsSet, locTeste, mikeHorn:!!me.mikeHorn, mikeBird:me.mikeBird||'', megaList, megaOwnedSet, seasonCount, seasonOwnedSet, raptorOwnedSet, owlOwnedSet, alcidOwnedSet, manchotOwnedSet, waterOwnedSet, anatidaeOwnedSet, hirundoOwnedSet, martinetsOwnedSet, alaudaOwnedSet, paridaeOwnedSet, corvidaeOwnedSet, alcediOwnedSet, ardeidaeOwnedSet, columbidaeOwnedSet, galliformesOwnedSet, picidaeOwnedSet, scolopacidaeOwnedSet, rivagesOwnedSet, laridaeOwnedSet, turdidaeOwnedSet, muscicapidaeOwnedSet, sylviidaeOwnedSet, phylloscopidaeOwnedSet, fringillidaeOwnedSet, emberizidaeOwnedSet, rallidaeOwnedSet, motacillidaeOwnedSet, ciconiidaeOwnedSet, coraciiformesOwnedSet, suliformesOwnedSet, sturnoideaOwnedSet, passeridaeOwnedSet, certhioideaOwnedSet, podicipedidaeOwnedSet, cuculidaeOwnedSet, regionsOwnedSet, regionsCount, hotPhotos, grosBebeVotes:(votesMap.get('grosBebe')?.get(me.id)?.size)||0, kimonoVotes:(votesMap.get('kimono')?.get(me.id)?.size)||0, necrophileVotes:(votesMap.get('necrophile')?.get(me.id)?.size)||0, globeTrotter:!!me.globeTrotter, countryCount:me.countryCount||0 };
 }
 let trophyPlayerId = null, trophyData = {N:0}, trophyDetails = {};
 function renderTrophies(data){
@@ -6537,6 +6547,7 @@ const VITRINE_IMAGES = { 'Pic noir pic noir pic noir': 'assets/trophies/themes/p
   'Fixation béton': 'assets/trophies/themes/huppe/huppe.png',   // image de Mathis, 11/11 (deja detouree)
   'Spider-Man': 'assets/trophies/themes/tichodrome/tichodrome.png',   // image de Mathis, 11/11
   'Aquaman': 'assets/trophies/themes/cincle/cincle.png',   // image de Mathis, 11/11
+  'Matuidi Charo': 'assets/trophies/themes/vautour/vautour.png',   // image de Mathis, 11/11
   'Vendée Globe': 'assets/trophies/themes/oiseau-pelagique/oiseau-pelagique.png',
   'Bourriche d’huître': 'assets/trophies/themes/huitre/huitre.png',   // images de Mathis, 10/11 (deja detourees)
   'Gros Bébé': 'assets/trophies/themes/gros-bebe/gros-bebe.png',
@@ -6546,7 +6557,11 @@ const VITRINE_IMAGES = { 'Pic noir pic noir pic noir': 'assets/trophies/themes/p
 // Une image a rendre plus petite ou plus grande que la taille calculee (1 = inchangee). Le Pic noir, sans socle,
 // prenait toute la hauteur : « retrecis legerement » (Mathis, 09/11). Gros Bebe, etroit sur un socle large,
 // paraissait petit : « agrandis un peu » (Mathis, 10/11). Agrandie, une image reste dans son emplacement.
-const VITRINE_ECHELLE = { 'assets/trophies/themes/pic-noir/pic-noir.png': 0.88, 'assets/trophies/themes/gros-bebe/gros-bebe.png': 1.25,
+// Une image a decaler par rapport au centre de son socle, en pixels de l'image (negatif : a gauche). La huppe, aile
+// deployee a droite, debordait de 70 px a droite du socle contre 30 a gauche : « decale legerement » (Mathis, 11/11).
+const VITRINE_DECALAGE = { 'assets/trophies/themes/huppe/huppe.png': -40 };
+const VITRINE_ECHELLE = { 'assets/trophies/themes/tichodrome/tichodrome.png': 1.12,   // « augmente legerement » (Mathis, 11/11)
+  'assets/trophies/themes/pic-noir/pic-noir.png': 0.88, 'assets/trophies/themes/gros-bebe/gros-bebe.png': 1.25,
   'assets/trophies/themes/attente/point-interrogation.png': 0.55 };   // le « ? », sans socle, prendrait toute la hauteur
 // Une image a eclaircir (1 = inchangee), appliquee aux pixels une fois au chargement : un filtre CSS
 // sauterait a la fin de l'animation, qui anime deja le filtre. Le Calao « trop sombre » (Mathis, 09/11) :
@@ -6803,7 +6818,7 @@ function _vitrineCases(sel, s, data){
   // - Oiseaux de nuit (Mathis, 09/11) : chouettes et hiboux, engoulevents et cousins (ibijaux, podarges,
   //   guacharo : ceux du trophee unique), oedicnemes, et bihoreaux (genres Nycticorax et Nyctanassa,
   //   ranges avec les herons dans le Birdydex).
-  const VAUTOURS = new Set(['gyps', 'aegypius', 'torgos', 'sarcogyps', 'trigonoceps', 'necrosyrtes', 'neophron', 'gypaetus', 'gypohierax']);
+  const VAUTOURS = VAUTOURS_ANCIEN_MONDE;
   // Chaque theme a son filtre (une espece compte-t-elle ?) : il sert a la liste des oiseaux possibles
   // qu'ouvre le toucher d'un trophee (Mathis, 10/11), et au podium quand il n'y a pas d'ensemble tout fait.
   // Ceux du Birdydex (SPECIES_FAMILY_FILTERS) ne vont pas tels quels : « anatidae » y compte les grebes
@@ -7318,7 +7333,7 @@ async function _vitrineDessine(cv){
   if(srcH * k > H - marge) k = (H - marge) / srcH;
   if(img.width * k > W) k = W / img.width;
   k = Math.min(k * (VITRINE_ECHELLE[cv.dataset.src] || 1), (H - marge) / srcH, W / img.width);
-  const iw = img.width * k, bh = srcH * k, ix = Math.max(0, Math.min(W - iw, W / 2 - cxSocle * k));
+  const iw = img.width * k, bh = srcH * k, ix = Math.max(0, Math.min(W - iw, W / 2 - (cxSocle - (VITRINE_DECALAGE[cv.dataset.src] || 0)) * k));
   const dessine = (ctx, image) => ctx.drawImage(image, 0, 0, image.width, srcH, ix, H - bh, iw, bh);
   if(niveaux && cv.dataset.calques !== undefined){
     // Calques (Terroir) : la planche, puis l'aliment de chaque region observee. Au deblocage, ce qui etait deja la
@@ -8166,7 +8181,7 @@ function _loadCompState(){ try{
   return s;
 }catch(_){ return {}; } }
 // A monter quand un jeu de trophees neufs ou renommes part en ligne (voir firstRun dans _detectTrophyEventsCore)
-const TROPHEES_VERSION = 5;   // 2 : la vitrine (10/11) ; 3 : Fixation béton, la huppe (11/11) ; 4 : Spider-Man ; 5 : Aquaman
+const TROPHEES_VERSION = 6;   // 2 : la vitrine (10/11) ; 3 : Fixation béton, la huppe (11/11) ; 4 : Spider-Man ; 5 : Aquaman ; 6 : Matuidi Charo
 function _saveCompState(s){ try{ localStorage.setItem('mb-comp-state', JSON.stringify(s)); }catch(_){} }
 // Slug pour construire des IDs Firestore deterministes (evite les doublons quand deux appareils
 // detectent le meme changement au meme moment).
