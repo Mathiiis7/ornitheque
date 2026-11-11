@@ -19414,7 +19414,7 @@ async function _renderCarteContinent(sci, nom){
       const vu = valeur > 0, t = vu ? annualFreqToTier(valeur) : 0;
       const lbl = vu ? (REAL_LABELS[t] || 'palier ' + t) : (annuel ? 'jamais notée' : 'absente ce mois-ci');
       const tip = label + ' · ' + nom + ' - ' + (vu ? fmtP(valeur) + ' des listes · ' + lbl + ' (' + t + ')' : lbl);
-      const anneau = actif ? ' box-shadow:0 0 0 1.5px var(--surface-2, #fafafa), 0 0 0 3px var(--ink-2);' : '';
+      const anneau = actif ? ' box-shadow:0 0 0 1.5px var(--surface-2, #fafafa), 0 0 0 3px var(--ink-2); position:relative; z-index:1;' : '';
       return '<button type="button" data-mois="' + val + '" aria-pressed="' + actif + '" aria-label="' + esc(tip) + '"'
         + ' style="display:flex; align-items:center; justify-content:space-between; gap:4px; width:100%; border:0; cursor:pointer;' + forme
         + ' background:' + (vu ? realColor(t) : ABSENT) + '; color:' + (vu ? '#fff' : 'var(--ink-3)') + ';' + anneau + '">'
@@ -19649,7 +19649,8 @@ async function _renderRarityMap(sci, cc){
     const tip = label + ' · ' + nomPort + ' - ' + (vu ? fmtP(valeur) + ' des listes · ' + lbl + ' (' + t + ')' : lbl);
     // L'etat courant ne peut pas se marquer par la couleur, elle porte deja le palier :
     // un anneau sombre autour de la pastille, detache du fond par un lisere clair.
-    const anneau = actif ? ' box-shadow:0 0 0 1.5px var(--surface-2, #fafafa), 0 0 0 3px var(--ink-2);' : '';
+    // Devant ses voisins : la case suivante, posee apres elle, recouvrait le bas de l'anneau (« oct » sous « nov », Mathis, 2026-11-11).
+    const anneau = actif ? ' box-shadow:0 0 0 1.5px var(--surface-2, #fafafa), 0 0 0 3px var(--ink-2); position:relative; z-index:1;' : '';
     // L'annee n'est pas un treizieme mois, c'est le resume des douze. Elle prend donc une
     // forme franchement differente - gelule, libelle en capitales espacees, un cran plus
     // haute - suivie d'un filet. Meme code couleur, mais on ne la confond plus avec un mois
@@ -20630,6 +20631,17 @@ function _renderSpeciesFreqChart(key, country){
             : '<0,01';
     // Le chiffre descend dans l'entete du bloc, a cote du nom de zone auquel il se
     // rapporte. Le titre ne garde que ce que l'entete ne dit pas.
+    // Une zone choisie sans donnee pour l'espece : le graphique se rabat sur le pays (et le dit sous le titre),
+    // mais l'entete porte le NOM DE LA ZONE - y poser le chiffre national faisait lire « Logone Oriental 6,7 %
+    // en sept » au-dessus d'une zone hachuree (Mathis, 2026-11-11). Elle dit ce qu'on sait de la zone.
+    if(_speciesRegion && !regionScope){
+      const mm = window._smRarityMapMonth, moisZ = (typeof mm === 'number' && mm >= 0 && mm <= 11) ? mm : null;
+      const lsZ = LISTES_PAR_ZONE[cc] && LISTES_PAR_ZONE[cc][_speciesRegion];
+      const sansListe = !((REAL_FREQ_MONTHLY_BY_REGION_MULTI[cc] || {})[_speciesRegion])
+        || (Array.isArray(lsZ) && (moisZ == null ? !lsZ.some(x => x > 0) : !(lsZ[moisZ] > 0)));
+      window._oqScore = `<b style="font-weight:700;color:var(--ink-3);">${sansListe ? 'aucune liste' : 'jamais notée'}`
+        + `${moisZ == null ? '' : ' en ' + _MOIS_COURTS[moisZ]}</b>`;
+    } else
     window._oqScore = _scoreAnnuelLbl(monthlyArr, cc, regionScope);
     _majEnteteOuQuand(null);
     srcEl.innerHTML = `${esc(_titreSrc(ccLabel, regionScope, strictRegional))}${fallbackNote}`;
