@@ -1080,6 +1080,29 @@ function _rareteEtendue(sci, nom, pret){
 // Le continent montre par la fiche, '' quand c'est un pays. Jamais enregistre, et jamais ecrit dans
 // _speciesCountry ni dans le pays du site : ceux-la restent des pays.
 let _ficheContinent = '';
+// Le continent que la prochaine fiche doit montrer en s'ouvrant : celui du Birdydex quand on y clique une
+// case, pour qu'elle montre le meme palier que la case. Vide des qu'on choisit un pays dans la fiche.
+let _ficheContinentVoulu = '';
+// Le Birdydex d'un continent, ou du monde (Mathis, 2026-11-11 : « comme un pays »). Comme _ficheContinent, ce
+// choix n'est jamais enregistre ni ecrit dans _pkdxFilters.country ou le pays du site : la Carte et les autres
+// onglets lisent un pays, et « Europe » les casserait.
+let _pkdxContinent = '';
+// Sa liste : data/birdydex-continents/<continent>.json, calcule d'avance par outils/build/birdydex-continents.mjs
+// avec les fonctions de _rareteEtendue (recoupees, zero palier different). { sci: [valeur annuelle, drapeaux,
+// "NPX"] } ; drapeaux 1 = reguliere quelque part, 2 = saisonniere, 4 = exotique partout ou elle vit. Monde :
+// 101 Ko gz, Europe 13 Ko. A REGENERER quand les donnees des pays ou les surfaces changent, puis monter ce numero.
+const BIRDYDEX_CONTINENTS_V = '20261111';
+const _pkdxContinents = {}, _pkdxContinentsPromesses = {};
+function _chargerPkdxContinent(nom){
+  const f = CARTES_CONTINENTS[nom];
+  if(!f) return Promise.resolve(null);
+  return _pkdxContinentsPromesses[nom] ||= fetch('data/birdydex-continents/' + f + '.json?v=' + BIRDYDEX_CONTINENTS_V)
+    .then(r => r.ok ? r.json() : null).then(j => { if(j) _pkdxContinents[nom] = j; return j; })
+    .catch(() => { delete _pkdxContinentsPromesses[nom]; return null; });
+}
+// Le globe d'un bouton de pays qui montre un continent (fiche, Birdydex).
+const _GLOBE_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">'
+  + '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9s1.3-6.4 3.8-9z"/></svg>';
 const CC_FLAGS = {
   FR:'🇫🇷', ME:'🇲🇪', ES:'🇪🇸', IT:'🇮🇹', GB:'🇬🇧', PT:'🇵🇹',
   DE:'🇩🇪', NL:'🇳🇱', GR:'🇬🇷', CH:'🇨🇭', BE:'🇧🇪', HR:'🇭🇷', AL:'🇦🇱', TR:'🇹🇷', IS:'🇮🇸',
@@ -1104,6 +1127,8 @@ function _setGlobalCountry(cc){
   // Sync tous les states de pages
   if(typeof _pkdxFilters === 'object'){
     _pkdxFilters.country = cc;
+    // Un pays choisi ailleurs (Carte, Cette semaine) : le Birdydex le suit, meme s'il montrait un continent.
+    if(_pkdxContinent){ _pkdxContinent = ''; try{ _majEtiquetteZone(); }catch(_){} }
     try{ localStorage.setItem('mb-pkdx-filters', JSON.stringify(_pkdxFilters)); }catch(_){}
     if(typeof _pkdxAllSorted !== 'undefined') _pkdxAllSorted = null;
     if(typeof _pkdxNumById !== 'undefined') _pkdxNumById = null;
@@ -1397,7 +1422,7 @@ function _openCountryPicker(currentCode, opts = {}){
       };
       const titreCont = (nom) => opts.continents && CARTES_CONTINENTS[nom]
         ? `<button type="button" class="cp-group-title cp-cont${contCourant === nom ? ' on' : ''}" data-cont="${esc(nom)}"`
-          + ` aria-pressed="${contCourant === nom}"><span>${esc(nom)}</span><span class="cp-cont-voir">voir la carte</span>${rarCont(nom)}</button>`
+          + ` aria-pressed="${contCourant === nom}"><span>${esc(nom)}</span><span class="cp-cont-voir">${esc(opts.voirCont || 'voir la carte')}</span>${rarCont(nom)}</button>`
         : `<div class="cp-group-title">${esc(nom)}</div>`;
       if(opts.continents && (!fLC || 'monde'.includes(fLC))) html += titreCont('Monde');
       for(const cont of CONTINENT_ORDER){
@@ -14604,7 +14629,7 @@ const GUIDE_ETAPES = [
   { vue:'pokedex', fiche:true, cible:'#speciesModal .sm-tabs', titre:'La fiche espèce',
     texte:"Chaque oiseau a sa fiche, qui s'ouvre d'un clic sur lui. Info : photo, description, rareté, où et quand le trouver. Puis la carte des observations, et ses chants et cris. Les flèches en haut passent à l'espèce voisine." },
   { vue:'pokedex', cible:'#pkdxCountry', titre:'Le pays',
-    texte:"Choisis ici le pays : le Birdydex et les autres onglets le suivent." },
+    texte:"Choisis ici le pays : le Birdydex et les autres onglets le suivent. Un continent ou le monde se choisit aussi, pour le Birdydex seul." },
   { vue:'load', cible:'.tab[data-view="load"]', titre:'Ma liste',
     texte:"Ta life list eBird. Tu la charges ou la mets à jour ici, tu ajoutes une espèce à la main et tu indiques ton prénom. Un clic sur une espèce ouvre sa fiche." },
   { vue:'ranking', cible:'.tab[data-view="ranking"]', titre:'Classement',
@@ -20056,6 +20081,7 @@ function _renderSpeciesRarityCard(key){
   // l'onglet « Carte & observations », est parti avec l'onglet (Mathis, 2026-11-08).
   const applyCountryChange = (chosen) => {
     if(!chosen) return;
+    _ficheContinentVoulu = '';
     // Quitter un continent : le pays revient, avec ses zones, son graphique et son bouton.
     if(_ficheContinent){ _ficheContinent = ''; if(sel) delete sel.dataset.cont; }
     _speciesCountry = chosen;
@@ -20087,8 +20113,7 @@ function _renderSpeciesRarityCard(key){
     if(sel){
       sel.dataset.cont = nom;
       const fEl = sel.querySelector('.cp-btn-flag'), lEl = sel.querySelector('.cp-btn-label');
-      if(fEl) fEl.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">'
-        + '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9s1.3-6.4 3.8-9z"/></svg>';
+      if(fEl) fEl.innerHTML = _GLOBE_SVG;
       if(lEl) lEl.textContent = nom;
     }
     if(regPick) regPick.style.display = 'none';
@@ -20144,6 +20169,8 @@ function _renderSpeciesRarityCard(key){
     const btn = regPick.querySelector('.reg-picker-trigger');
     if(btn) btn.addEventListener('click', () => ouvrirGeo('zones'));
   }
+  // Ouverte depuis le Birdydex d'un continent : la fiche montre ce continent, et le meme palier que la case.
+  if(_ficheContinentVoulu && CARTES_CONTINENTS[_ficheContinentVoulu]) appliquerContinent(_ficheContinentVoulu);
 }
 // Description Wikipedia : fetch les sections nommees (Description, Habitat, Reproduction,
 // Alimentation, Comportement) au lieu du 1er paragraphe seul. Rendu en accordeon.
@@ -21413,6 +21440,7 @@ function closeSpeciesModal(){
   const modal = $('#speciesModal'); if(!modal) return;
   const etaitOuverte = !modal.hidden;
   modal.hidden = true;
+  _ficheContinentVoulu = '';
   if(etaitOuverte){
     if(_ficheEntree){ _ficheEntree = false; _ficheRetours++; history.back(); }
     // Le focus revient d'ou il venait, sauf si une fenetre ou le guide le tient, ou si la liste a ete redessinee.
@@ -23399,7 +23427,9 @@ function renderPokedex(){
       // Meme selecteur a deux onglets que les fiches espece : le pays et sa zone sont le
       // meme choix, l'endroit ou on lit la rarete.
       const appliquerPays = (cc2) => {
-        if(!cc2 || cc2 === _pkdxFilters.country) return;
+        // Depuis un continent, meme le pays d'avant s'applique : c'est lui qui revient a l'ecran.
+        if(!cc2 || (cc2 === _pkdxFilters.country && !_pkdxContinent)) return;
+        _pkdxContinent = '';
         _pkdxFilters.country = cc2;
         _pkdxFilters.zone = '';   // une zone n'appartient qu'a son pays
         _pkdxSaveFilters();
@@ -23410,12 +23440,27 @@ function renderPokedex(){
         // Sync le pays global pour que les autres onglets (Carte, Cette semaine, fiche espece) suivent.
         if(typeof _setGlobalCountry === 'function' && cc2 !== _globalCountry) _setGlobalCountry(cc2);
       };
+      // Un continent, ou le monde : sa grille, sans toucher au pays du site. Le pays revient des qu'on en
+      // choisit un. Une zone n'appartient qu'a son pays : elle tombe.
+      const appliquerContinentPkdx = (nom) => {
+        if(!CARTES_CONTINENTS[nom] || nom === _pkdxContinent) return;
+        _pkdxContinent = nom;
+        if(_pkdxFilters.zone){ _pkdxFilters.zone = ''; _pkdxSaveFilters(); }
+        _pkdxAllSorted = null; _pkdxNumById = null; _pkdxLastRowsHash = null;
+        _majEtiquetteZone();
+        _pkdxRender();
+      };
       ccBtn.addEventListener('click', async () => {
         const res = await _openCountryPicker(_pkdxFilters.country || 'FR', {
           zones: (cc2) => _pkdxLignesZones(cc2),
           onPays: async (cc2) => { appliquerPays(cc2); try{ await _loadFreqDataForCountry(cc2); }catch(_){} },
           precharger: (cc2) => _loadFreqDataForCountry(cc2),
           motZone: (cc2) => cc2 === 'FR' ? 'Départements' : 'Régions',
+          // Les continents et le monde se choisissent comme un pays (Mathis, 2026-11-11).
+          continents: true,
+          continent: _pkdxContinent,
+          onContinent: appliquerContinentPkdx,
+          voirCont: 'voir ses espèces',
         });
         if(!res || res.type !== 'zone') return;
         _pkdxFilters.zone = res.code || '';
@@ -23466,7 +23511,16 @@ function _majEtiquetteZone(){
   if(!btn) return;
   const lbl = btn.querySelector('.cp-btn-label');
   if(!lbl) return;
+  if(_pkdxContinent){
+    btn.dataset.cont = _pkdxContinent;
+    const fEl = btn.querySelector('.cp-btn-flag');
+    if(fEl) fEl.innerHTML = _GLOBE_SVG;
+    lbl.textContent = _pkdxContinent;
+    return;
+  }
   const cc = _pkdxFilters.country || 'FR';
+  // Retour d'un continent : le drapeau du pays remplace le globe.
+  if(btn.dataset.cont){ delete btn.dataset.cont; _syncCountryButton(btn, cc); }
   const z = _pkdxFilters.zone || '';
   const nom = z
     ? ((zonesFichePourPays(cc).find(r => r.code === z) || {}).name || z)
@@ -23557,6 +23611,46 @@ function _pkdxRender(){
   // #001..#N. Chaque oiseau garde son numero meme quand on filtre. Memoise dans
   // _pkdxAllSorted pour eviter de refaire le tri a chaque rendu.
   const country = _pkdxFilters.country || 'FR';
+  // Un continent, ou le monde : sa liste calculee d'avance (_chargerPkdxContinent), lue a la place du pays.
+  const cont = _pkdxContinent;
+  const listeCont = cont ? _pkdxContinents[cont] : null;
+  if(cont && !listeCont){
+    // Jamais « 0 espèce » pendant l'attente : la grille dit qu'elle charge, puis se redessine.
+    grid.innerHTML = '<div class="help" style="grid-column:1/-1; padding:16px 0;">Chargement des espèces '
+      + esc(cont === 'Monde' ? 'du monde' : 'de ' + cont) + '…</div>';
+    empty.style.display = 'none';
+    if(counter) counter.textContent = '…';
+    _pkdxLastRowsHash = null;
+    _chargerPkdxContinent(cont).then(j => {
+      if(_pkdxContinent !== cont) return;
+      if(j){ _pkdxAllSorted = null; _pkdxNumById = null; _pkdxRender(); }
+      else grid.innerHTML = '<div class="help" style="grid-column:1/-1; padding:16px 0;">Liste indisponible pour le moment.</div>';
+    });
+    return;
+  }
+  if(!_pkdxAllSorted && listeCont){
+    const all = [];
+    for(const sci in FR_NAMES){
+      if(_isSciAliasSource(sci)) continue;
+      const e = listeCont[sci];
+      if(!e) continue;
+      const [val, drap, lettres] = e;
+      // Meme palier que la fiche sur ce continent : la meme fonction, sur la meme valeur.
+      const tier = annualFreqToTier(val);
+      const exo = !!(drap & 4);
+      // Les statuts qu'elle porte dans au moins un pays, du plus etabli au moins etabli (N, P, X, C) :
+      // une exotique garde le plus etabli pour le tri, comme une naturalisee d'un pays garde son rang.
+      const cats = lettres ? lettres.split('') : [];
+      all.push({ sci, nm: FR_NAMES[sci] || sci, fam: familyOf(sci), tier, val, exo, cat: exo ? (cats[0] || '') : '',
+        cats, accidentelle: !(drap & 1), saison: !!(drap & 2) });
+    }
+    const relegue = (r) => (r.exo && !_isEstablishedExotic(r.cat)) ? 1 : 0;
+    all.sort((a,b) =>
+      ((FAMILY_ORDER[a.fam] ?? 9999) - (FAMILY_ORDER[b.fam] ?? 9999))
+      || (relegue(a) - relegue(b)) || a.tier - b.tier || a.nm.localeCompare(b.nm, 'fr'));
+    _pkdxAllSorted = all;
+    _pkdxNumById = new Map(all.map((r, i) => [r.sci, i+1]));
+  }
   if(!_pkdxAllSorted){
     const all = [];
     const regPkdx = COUNTRIES_REG[country];
@@ -23724,7 +23818,8 @@ function _pkdxRender(){
   // Compte owned dans le catalogue du pays (meme logique que le filtre inCatalog ci-dessus).
   // Fix 2026-09-21 : etendu aux 12 pays via _countryHasSpecies + EXOTIQUES_EBIRD_PAR_PAYS.
   // Park-only exclus partout (aligne avec le filtre inCatalog).
-  const totalOwned = [...mine].filter(s => {
+  // Sur un continent, ses especes cochees, accidentelles comprises comme dans un pays.
+  const totalOwned = cont ? _pkdxAllSorted.filter(r => _mineHasStrict(mine, r.sci)).length : [...mine].filter(s => {
     if(!FR_NAMES[s]) return false;
     if(isParkOnlyExotic(s)) return false;
     if(_countryHasSpecies(country, s)) return true;
@@ -23736,7 +23831,7 @@ function _pkdxRender(){
   // Echelle de lecture : le pays, ou la zone choisie dans le selecteur. Calculee ici et non
   // dans _pkdxAllSorted pour que les numeros du birdydex restent nationaux - ils
   // identifient l'espece, ils ne doivent pas bouger quand on change de departement.
-  const zone = _pkdxFilters.zone || '';
+  const zone = cont ? '' : (_pkdxFilters.zone || '');
   // Les frequences par zone sont chargees a la demande : si elles manquent, on les demande
   // et on redessine a leur arrivee.
   // Les milieux de vie vivent dans leur propre fichier depuis le 2026-09-27, et ne sont plus
@@ -23747,7 +23842,7 @@ function _pkdxRender(){
   if(!_habitatsPrets()) _chargerHabitats().then(() => { _pkdxLastRowsHash = null; _pkdxRender(); }).catch(() => {});
   // Un pays du monde (PAYS_MONDE) : sa liste vient de son propre fichier, lu ici a la demande.
   // La liste triee (_pkdxAllSorted) est gardee en cache : construite vide avant l'arrivee, on la jette.
-  if(!_paysMondePrets([country])) _chargerPaysMonde(country).then(() => { if(_paysMondePrets([country])){
+  if(!cont && !_paysMondePrets([country])) _chargerPaysMonde(country).then(() => { if(_paysMondePrets([country])){
     _pkdxAllSorted = null; _pkdxNumById = null; _pkdxLastRowsHash = null; _pkdxRender(); } }).catch(() => {});
   if(zone && typeof _loadFreqDataForCountry === 'function'){
     const byZ = (typeof REAL_FREQ_MONTHLY_BY_REGION_MULTI === 'object') ? REAL_FREQ_MONTHLY_BY_REGION_MULTI[country] : null;
@@ -23771,7 +23866,7 @@ function _pkdxRender(){
   }
   // « 2 » : vue mais pas encore decouverte (case sur fond a part, cf. _aDecouvrir).
   const dec = _decouvertes();
-  const rowsHash = rows.length + '|' + country + '|' + zone + '|' + tri + '|'
+  const rowsHash = rows.length + '|' + (cont || country) + '|' + zone + '|' + tri + '|'
     + rows.map(r => r.sci + (r.owned ? (dec.has(r.sci) ? '2' : '1') : '0')).join(',');
   // On compte les cartes et non les enfants : les titres de famille ou de milieu en sont
   // aussi, et comparer les enfants refaisait la grille entiere a chaque passage.
@@ -23793,8 +23888,9 @@ function _pkdxRender(){
     const tierBg = realColor(vue.tier);
     // Categorie exotique de l'espece ici. _exoticCategory est la table FR : hors de France
     // elle taguerait des especes qui y sont sauvages, on ne s'en sert donc que pour la France.
-    const cat = vue.cat || exoticCategoryInCountry(r.sci, country)
-      || (country === 'FR' ? _exoticCategory(r.sci) : '') || '';
+    // Sur un continent, ses statuts calcules d'avance : celui du pays du site n'a rien a dire ici.
+    const cat = cont ? (vue.cat || '') : (vue.cat || exoticCategoryInCountry(r.sci, country)
+      || (country === 'FR' ? _exoticCategory(r.sci) : '') || '');
     // La pastille garde toujours le palier, et le statut exotique se dit a cote, dans une
     // petite puce grise - comme le repere des saisonnieres. Les deux repondent a des
     // questions differentes : le palier dit la difficulte a rencontrer l'oiseau, la lettre
@@ -23814,7 +23910,9 @@ function _pkdxRender(){
     // on survole le N pour savoir ce qu'est un N, sans devoir demeler une bulle commune.
     const exoChips = cats.map(c => {
       const tip = `${EXOTIC_CATEGORY_LABEL[c] || 'Exotique ' + c} (${c})`
-        + (cats.length > 1 ? ' - un des statuts de l’espèce dans le pays, il change selon la région' : '');
+        + (cats.length > 1 ? (cont
+          ? ' - un des statuts de l’espèce ' + (cont === 'Monde' ? 'dans le monde' : 'sur le continent') + ', il change selon le pays'
+          : ' - un des statuts de l’espèce dans le pays, il change selon la région') : '');
       return jetonExo(c, { tip });
     }).join('');
     // Pas d'infobulle pour dire « Palier 4 » sur une pastille qui affiche deja 4, et pas le
@@ -24033,7 +24131,8 @@ function _vueBirdydex(){ return document.querySelector('.tab.on')?.dataset.view 
 function _debloqueInfos(sci){
   const cc = _globalCountry || 'FR';
   const tier = rarityForCountry(sci, cc);
-  const num = (_pkdxFilters && (_pkdxFilters.country || 'FR') === cc && _pkdxNumById) ? _pkdxNumById.get(sci) : null;
+  // Grille d'un continent : ses numeros ne sont pas ceux du pays.
+  const num = (_pkdxFilters && !_pkdxContinent && (_pkdxFilters.country || 'FR') === cc && _pkdxNumById) ? _pkdxNumById.get(sci) : null;
   return { cc, tier, num };
 }
 // La carte d'une espece debloquee, facon « walkout » de jeu de foot (demande de Mathis le
@@ -24504,6 +24603,8 @@ document.addEventListener('click', e => {
       try{ localStorage.setItem('mb-species-region', z); }catch(_){}
     }
   }
+  // Grille d'un continent : la fiche s'ouvre sur lui (son pays reste celui du site, en dessous).
+  _ficheContinentVoulu = _pkdxContinent || '';
   openSpeciesModal(card.dataset.sci);
 });
 // Pool d'especes selon le niveau (rarete max). Utilise toutes les especes FR

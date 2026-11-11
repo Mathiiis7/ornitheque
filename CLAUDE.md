@@ -124,6 +124,11 @@ les anciens cadres de `data/cartes-index.json`.
 manifeste `data/cartes-semaine-index.json`, gris tiré de `effort-s.png` (`outils/build/effort-semaine.mjs`),
 téléchargement GBIF wa632u. La carte de l'année n'en dépend pas. Même ordre de mise en ligne.
 
+**Le Birdydex d'un continent lit `data/birdydex-continents/`, calculé d'avance** (2026-11-11) par
+`outils/build/birdydex-continents.mjs` avec les fonctions mêmes de la fiche (`_rareteEtendue`), recoupées à zéro
+palier près. **Le régénérer, puis monter `BIRDYDEX_CONTINENTS_V`, dès que changent les données des pays, les
+morceaux `especes-monde`, `aires-pays.json` ou la règle** : sinon Birdydex et fiche se contredisent sans bruit.
+
 **Les autres bases GBIF nomment les oiseaux à l'ancienne.** Trinômes (« Corvus corone cornix ») et
 espèces regroupées (« Phoenicopterus ruber » pour le Flamant rose de l'atlas sud-africain) : sans
 garde-fou, la Corneille noire couvrait la Russie et le Flamant des Caraïbes l'Afrique du Sud. Le
