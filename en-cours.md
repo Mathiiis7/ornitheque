@@ -1,6 +1,143 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1054 / app.js?v=626 (et styles.css?v=626). Prochaine : v1055 / 627.
+Dernière version : v1097 / app.js?v=669 (11/11, Sahara occidental dans ses frontières). Prochaine : v1098 / 670, réservée au palmarès des trophées (en cours).
+
+- **v1097 (11/11, 0c109a97) : Sahara occidental recoupé à 27°40' N** (Natural Earth le donnait au Maroc à l'ouest du mur) :
+  `outils/build/sahara-occidental.mjs`, pays, continents, régions du Maroc, surfaces et Birdydex des continents régénérés.
+
+- **v1087 (11/11, 89582f30)** : scène du zoom posée dès le clic (écran vide pendant le téléchargement en ligne) ;
+  Birdydex : vignettes en srcset (240/250 px) + decoding async, pas de survol pendant le défilement. Mesures :
+  `outils/verif/_mesure-defilement-birdydex.mjs [port] [ralenti] [ordi|tel]`, `_trace-defilement-birdydex.mjs`.
+  Reste : le tramage des cases qui entrent à l écran (2,4 s sur 4 s en navigateur invisible, sans carte graphique).
+
+- **v1085 (11/11, f6a52d86)** : clic de zone réparé (cassé depuis v1078, tous pays) ; zones sans liste eBird
+  hachurées (`listes_zones.json`, `outils/build/listes-par-zone.mjs`) ; zoom en couches CSS. Mesure :
+  `outils/verif/_mesure-transitions.mjs [port] [ralenti]`.
+- **v1086 (11/11, 89ed756d) : zones muettes réglées.** 118 zones sans fréquence (bar chart < 500 octets jeté au
+  téléchargement = zone sans liste) : hachurées « aucune donnée » toute l'année. Vérifié via le relais
+  (`_zones-muettes.mjs`, `_zones-hotes.mjs`, résultats dans `notes-privees/zones-muettes.json`, `zones-hotes.json`) :
+  53 sans liste depuis 2019, 6 avec 1-2 listes, 60 jamais visitées ; Louxor, Damas, Akkar, Honiara, Lankaran
+  fondus dans leur zone hôte (ALIAS_MONDE / ALIAS_GB). Sheki-ville, Sämkir, Sissili, Cankuzo : un seul site, laissés.
+  Le relais refuse sans en-tête Origin du site (`http://localhost:8765` accepté).
+
+- **v1089-v1090 (11/11) : Birdydex par continent et Monde, « comme un pays » FAIT.** Choisis dans le sélecteur du
+  Birdydex (« voir le Birdydex », choix de Mathis), sans toucher au pays du site (`_pkdxContinent`, non enregistré). Liste calculée
+  d'avance : `data/birdydex-continents/` par `outils/build/birdydex-continents.mjs`, avec les fonctions de la fiche
+  (0 palier différent sur 4 984 couples ; 0 sur 1 475 avec les pays du monde déjà lus, v1090) ; À RÉGÉNÉRER si les données des pays changent (CLAUDE.md). Échappés
+  isolés qu'aucune grille de pays ne montre écartés (139 en Europe) ; accidentelles = régulière dans aucun pays.
+  Une case ouvre la fiche sur le même continent. Europe 1 002 cases, Monde 10 922. Essai :
+  `outils/verif/_essai-birdydex-continent.mjs` ; mesure `_mesure-birdydex-monde.mjs` : Monde 1,2 s à l'ordinateur,
+  3,5 s au téléphone ralenti 4 fois (fil bloqué 2 s) - à alléger seulement si Mathis le trouve lent.
+  v1091 : grille en blocs, body:has() retirés (Monde au téléphone /4 : 9,9 s -> 0,35 s). v1092 : seuils de paliers propres
+  à chaque continent et au monde (seuils.json, _palierEtendu), répartis comme un pays moyen (choix de Mathis).
+  v1093 : vitrine, un trophée débloqué le reste (niveau vu ne redescend plus). v1094 : pays sous 1 000 listes eBird
+  (data/listes-pays.json, 46 pays) : repère ⚠ dans le sélecteur, phrase sous la carte, poids allégé dans les continents.
+  Bulbul de Chine 3 % au monde : mesure gardée (Chine = 7 % des terres, 44 % de ses listes) ; question close.
+  v1095 : 13 pays sans rareté (PAYS_SANS_RARETE : moins de 200 listes ET aucune espèce propre ; Nauru, Corée du
+  Nord, Mali, Afghanistan gardés) : « trop peu de listes », carte hachurée, Birdydex sans palier, hors continents.
+  v1096 : Fil et « Qui a vu quoi » aussi (realTierPays : « Trop peu de listes »). Le score du Classement ne lit que la France.
+  Défilement du Birdydex : VALIDÉ par Mathis le 11/11 au soir (« plus fluide, c'est bon »), après la v1091. Clos.
+
+- **v1082-v1083 (11/11) : rareté par continent ET du monde**, surface plafonnée à 10 % (choix de Mathis parmi sept
+  calculs, `notes-privees/rarete-continent/`) ; pour le monde, l'Antarctique ne compte que pour une bande côtière de
+  10 km (`COTE_AQ_KM`, carte-continents.mjs → `data/aires-pays.json`). Calcul unique `_rareteEtendue`. Colonne des
+  mois colorée, pourcentage dans l'entête, pastille sur les titres du sélecteur. Essai :
+  `outils/verif/_essai-rarete-continent.mjs [port]`.
+
+- **v1081 (11/11) : tour des onglets de la ligue dans les 241 pays FAIT** (`outils/verif/_tour-pays-ligue.mjs`,
+  compte rendu en fin de `docs/audit-pays-2026-11-10.md`). Classement, Qui a vu quoi, Fil, Trophées, Quiz : tout
+  bon ; seul défaut corrigé, AC / CS (Océanie) et CP (Amérique du Nord) absents de CONTINENTS_7. Les pays sont
+  désormais contrôlés partout : données, zones, Birdydex, fiche, ligue.
+
+- **v1079-v1080 (10/11) : zoom sans coupure** (`_oqTransition`, scène posée sur le bloc, copie des deux cartes sous
+  une même caméra, fondu court) ; espèce jamais notée = carte grise gardée. Le monde passe en Natural Earth (choix
+  de Mathis, Equal Earth « écrasé en haut » ; comparaison dans `notes-privees/essai-zoom/projections.png`).
+
+- **v1078 (10/11, commit 4ad2b544) : zoom monde / continent / pays dans la fiche.** Pays hors du continent (rangement
+  du sélecteur, `_continentDuPays`) en transparence ; clic sur un pays = zoom puis sa carte ; clic sur le monde = zoom
+  sur son continent ; bouton sous les mois pour remonter. `monde.json` garde les cadres des continents. Essai :
+  `outils/verif/_essai-zoom-carte.mjs [port]`, captures dans `notes-privees/essai-zoom/`.
+
+- **v1077 (10/11) : exotiques des pays TRANCHÉ**. `inject-exotic-per-country.mjs` relancé sur tous changerait 45
+  étiquettes (liste : `notes-privees/exotiques-a-trancher.md`) : 39 pour Jersey, Guernesey, Man, Svalbard, Gibraltar
+  (absents du site, sans effet) et 6 visibles. Choix de Mathis : seul le Cygne tuberculé du Royaume-Uni devient
+  sauvage (eBird ne le marque introduit que dans 3 régions sur 20) ; Bernache du Canada GB, Oie des neiges GB, Oie
+  naine et Tarin US, Flamant des Caraïbes IT gardent leur étiquette. NE PAS relancer le script sur tous sans revoir ça.
+- **22 pays sans effort par zone** (Hongrie, Lettonie…) : ils ont les fréquences par région, seul le poids des mois
+  vient du pays. Mesuré sur 172 pays : 13 % des couples zone-espèce changent d'un cran, 0,3 % de plus. TRANCHÉ par
+  Mathis le 10/11 : on garde la rareté par région, rien à changer, ne pas reproposer sans fait nouveau.
+- **Limites des sources des pays : SUJET CLOS (Mathis, 10/11), ne plus en parler.** ~55 territoires d'un bloc sans
+  régions, 6 territoires aux zones eBird non dessinables (Porto Rico…), Libye sans contours, 22 pays au calendrier
+  national. Pas encore fait : un tour pays par pays du Classement, du Quiz et des Trophées (l'audit couvrait
+  données, zones, Birdydex et fiche).
+
+- **v1074-v1075 (10/11, pays)** : une espèce à 0 % tous les mois n'est plus présente (103 couples, France
+  comprise, accord de Mathis) ; Monténégro avec ses 48 quinzaines (`build-rarity-me-quinzaines.mjs --quinzaines`).
+  GitHub Pages a expiré 3 fois sur la v1075 (« Timeout reached », rien côté site) ; la v1076 l'a emportée.
+
+- **v1073 (10/11, conversation des pays) : audit des 242 pays**, compte rendu dans `docs/audit-pays-2026-11-10.md`
+  (corrigé / limites des sources). Fréquences rares gardées (arrondi), noms latins ramenés aux noms du site
+  (`noms-du-site.mjs`), 37 noms français ajoutés, formes Guyana / Équateur / Érythrée / Moscou remises en place,
+  noms de zones réparés. Outils : `_audit-pays.mjs`, `_zones-sites.mjs`, `_tour-pays.mjs`.
+
+- **v1071-v1072 (10/11, conversation des pays)** : v1071 (875ae3b0) = pourcentages des pays du monde dans le
+  sélecteur de la fiche (morceaux especes-monde arrondis à 2 chiffres significatifs, plus à 4 décimales ; effort
+  mensuel des 193 pays injecté), carte de répartition jusqu'à 80° S (Antarctique), aire iNaturalist bien placée
+  (`_carteCadreAffiche` : Leaflet coupe à 85,05°, 79 aires glissaient). v1072 (499a43f7) = drapeaux :
+  Ashmore-et-Cartier et mer de Corail -> australien, Clipperton -> français (`DRAPEAU_DU_PAYS`) ; drapeaux locaux
+  de l'outre-mer GARDÉS (choix de Mathis). Rattachements : JE/GG/IM dans GB, SJ dans NO depuis septembre, rien
+  d'autre à rattacher ; Gibraltar retiré en septembre (4e0c8483), toujours absent.
+
+- **v1065 (10/11, vitrine)** : déblocage allégé au téléphone (`_vitrineLueurTel`, copie dorée floue en fondu, plus de
+  filtre animé ; 58 i/s au processeur /4 contre 35). Ordinateur inchangé à l'œil. La v1064 avait échoué deux fois chez
+  GitHub (« Timeout reached » au déploiement) ; une vieille relance de la v1064 (run 42830341430) restait en file :
+  si le site revient à v1064, redemander une construction (`gh api -X POST repos/Mathiiis7/ornitheque/pages/builds`).
+
+- **v1064 (10/11, conversation « vitrine »)** (commit 7009eb3c, ses seuls morceaux, indexés par greffe sur HEAD) :
+  Écologue 400 « Écologue expert » (cabane d'affût) et 500 « Écologue de légende » (guide relié d'or), en « ? ».
+  Déblocage sans saccade : animation figée (`.vt-prepare`) jusqu'aux dessins, pastilles après l'animation, stats
+  calculées une fois par rendu (`_statsDe`). Mesuré : clic 206 → 66 ms (700 → 150 au processeur /4), 60 i/s.
+  RESTE (proposé à Mathis, pas fait) : au processeur ralenti, l'effet flou + lueur animé sur le trophée
+  (`vt-materialise`, filtre sur la toile) coûte encore ~35 i/s ; une version en fondu d'une copie pré-floutée le
+  rendrait léger, à faire seulement s'il le veut (l'animation est son choix du 08/11).
+  IMAGES ATTENDUES de Mathis (« plus tard ») : Écologue 400 (cabane d'affût), 500 (guide relié d'or). 200 = longue-vue
+  (v1068), 300 = téléobjectif (v1070, ?v=642, commit bac4e3a0), en ligne. Une image se branche par `ecologue-<n>.png`
+  dans assets/trophies/themes/ecologue/ et le seuil `n <= 300` de l'entrée Écologue.
+
+- **v1062 (10/11, conversation « vitrine ») : EN LIGNE** (commit 061cc19d, seulement ses morceaux d'app.js : le
+  palmarès et `EXOTIQUES_ZONES_MAJORITAIRES` restent dans le dossier). Kimono = costume lilas (rouge gardé dans
+  notes-privees/trophees/images/kimono/) ; Écologue 100 « Apprenti écologue » (jumelles), 200 « Écologue confirmé »
+  et 300 « Écologue chevronné » en « ? » (images de Mathis à venir : longue-vue sur trépied, téléobjectif) ;
+  Terroir = plateau fromages-charcuterie gagné à 11 régions sur 13 (`TERROIR_SEUIL`), calques rangés dans
+  `archives/terroir-calques/` (planche taillée dans le vrai contour : `_planche-exacte.mjs`, `_contour-france.mjs`) ;
+  Bourriche d'huître = tout le bassin d'Arcachon (`_surBassinArcachon`), toutes les observations.
+
+- **v1060 (10/11, conversation des pays) : 193 PAYS DU MONDE EN LIGNE** (commit 07efe417, seulement mes
+  morceaux d'app.js ; palmarès et vitrine restent dans le dossier). Le Maroc l'était depuis v1055.
+  Schéma « deux étages », recette et pièges : `docs/ajouter-un-pays.md`. Chaque pays du monde a
+  `data/countries/xx/pays.json` (lu à la demande) ; le sélecteur lit `data/especes-monde/`. app.js +14 Ko gz,
+  site publié ~124 -> 277 Mo. 50 pays sans zones (d'une pièce, comme Malte). Vérifié : 11 bancs sur la
+  version indexée ; Japon, Inde, Groenland en local, ordinateur et téléphone.
+  Le banc photos flanchait par moments sous charge (6/8 avec mes morceaux, 6/6 sans) : non reproduit sur
+  machine calme ; à surveiller.
+  v1061 (c94bad9a) : outre-mer, Bonaire, Christmas, Cocos... tracés à part sur la Carte (carte-pays.mjs,
+  TERRITOIRES) ; ALIAS_MONDE dans simplify-regions-multi.mjs : 52 zones sans contour restent (Libye,
+  Somaliland, Vietnam, Qatar : découpages qui ne se recouvrent pas) ; gélule ANNÉE à 88 px.
+  Les vignettes grises des pays du monde sont VOULUES (espèces non vues : pas de photo téléchargée).
+  v1063 (06b1fd22) : codes décalés VN/TZ/KR corrigés, geoBoundaries pour 12 pays (GB_MONDE, ALIAS_GB),
+  fusion des morceaux pour tous les pays du monde, EXOTIQUES_ZONES_MAJORITAIRES étendu. Restent 15 zones
+  avec listes sans forme (Libye, Qatar, Songwe, îles) : aucune source n'a ce découpage.
+  v1066 (9033f437) : OpenStreetMap pour Songwe, Daman et Diu, North Abaco, Aldabra, Perseverance, Şəki
+  (osm-zones-monde.mjs) ; Qatar en frontières APPROCHÉES d'après ses sites eBird (zones-approchees.mjs,
+  accord de Mathis) ; Libye impossible (2 sites eBird). v1067 (c787da85) : îles des pays du monde dans
+  carte-pays.json (1:10 M pour les îles absentes du 1:50 M, et en entier pour l'Antarctique et 50 archipels),
+  mesuré par outils/verif/_precision-contours.mjs : 8 633 -> 1 543 sites à plus de 10 km (mer, territoires
+  disputés, îlots sous la résolution d'une carte mondiale : c'est la limite).
+  v1069 (c5e4d85f) : carte de fiche d'une pièce pour les 49 pays sans zones tracées (simplify --sans-zones),
+  Antarctique en vue polaire, fiche de Porto Rico & co sur les chiffres nationaux. Toutes les observations
+  eBird sont rattachées par le code eBird, jamais par nos contours (ils ne servent qu'au clic).
+  RESTE : inject-exotic-per-country.mjs lancé sur
+  tous changerait 43 étiquettes ailleurs. Cookie eBird : `node outils/build/cookie-ebird.mjs`.
 
 - **v1054 (08/11)** : sources de l'arbre repliées sous un lien « Sources » (`<details class="arb-credits">`).
 
@@ -22,6 +159,59 @@ Dernière version : v1054 / app.js?v=626 (et styles.css?v=626). Prochaine : v105
 - **v1049 (08/11, conversation de l'arbre)** : plus de point à la racine des familles d'un ordre (la phrase de
   l'ordre le dit déjà, choix de Mathis) ; traits ajoutés aux phrases des Martinets et colibris et des Chouettes.
   Reste 8 points à trait, 156 ADN. `data/arbre.json?v=20261108f`.
+
+- **10/11, v1059 (06d3b716)** : Écologue 100 « Apprenti ornithologue », nouvelle image du kimono, kimono après Bourriche.
+  **Palmarès : codé en partie par sa conversation (fermée), NON commité, dans le dossier de travail** (app.js :
+  _vitrinePalmaresHtml, dates d'arrivée dans _vitrineCases ; styles.css : .vt-palm-*). Mathis ne l'a pas encore vu.
+  Au commit : HEAD + ces zones seulement (les 193 pays de « Nouveaux pays » sont aussi non commités) ; versions
+  libres après v1059 / 631.
+- **Vitrine des trophées EN LIGNE le 10/11 (v1056, commit a094f89f)** : étages Exploits / ligue / uniques / Fun, Terroir
+  en plateau, votes à 1. Chacun arrive avec 0 trophée et débloque un par un ; premier passage muet dans le Fil
+  (TROPHEES_VERSION = 2). Reste : t-shirt d'Écologue 200 (« ? »). Palmarès fait en LOCAL (10/11), à valider par Mathis puis à mettre en ligne
+    avec le kimono (nouvelle image, après Bourriche) : versions v1058 / 630 au plus tôt (v1057 / 629 = Nouveaux pays ; la session « frontières de la Carte » vise aussi
+    v1058 : le premier qui pousse la prend et prévient l'autre). Trois sessions touchent app.js : n'indexer que ses zones. Les 16 familles de l'ancienne grille : abandonnées (10/11).
+  Historique ci-dessous (ancien titre : essai local).
+- **Refonte des trophées : VITRINE en ESSAI LOCAL sur le vrai site (08-09/11), NON COMMITÉE, rien en ligne.**
+  Décisions et détails : `notes-privees/trophees/THEMES.md` (lire la fin).
+  - Code : `renderVitrine()` et `_vitrine*` en fin de `renderTrophies` (app.js) ; bloc « Vitrine des
+    trophees (ESSAI LOCAL) » et suivants en fin de styles.css ; images dans `assets/trophies/themes/`.
+    L'ancienne grille est masquée, pas supprimée. Les 11 bancs sont conformes.
+  - Ce qu'on voit : une ligne qui défile, en ébène, un spot par trophée gagné. Pas de socle, pas de
+    pointillés. Nom sur une plaque or champagne, bulle courte au survol de la plaque. Animation
+    « Poussière d'or ». Trophées « à débloquer » : scintillement, plaque, pastille dorée, défilement.
+  - Contenu : Armée d'aigles royaux (aigles, buses, busards, milans, éperviers, autours, balbuzard) et
+    Oiseaux de nuit (nom provisoire), 3 étapes chacun selon la place au podium, plus les 11 uniques.
+    Progression retirée pour le moment.
+  - Essais sans compte : `outils/verif/_essai-attente.mjs`, `_essai-selecteur.mjs`, `_essai-vitrine-site.mjs`.
+  - Au 09/11 : Armée d'aigles royaux (nouvelle image, aigles seuls : aigles, buses, busards, milans, éperviers,
+    autours, balbuzard) ; The Dark Knight (oiseaux nocturnes : chouettes, hiboux, engoulevents, œdicnèmes,
+    bihoreaux) ; égalité = trophée partagé, plaque or/argent/bronze selon la place ; nouveau Pic noir.
+    Découpe des images : outils/build/_niveaux-aigles.mjs, _niveaux-chouettes.mjs.
+  - Plus tard le 09/11 : image d'Oiseau pélagique, Pic noir rétréci, Calao éclairci, « Happy Feet » revenu
+    (table `_troNomActuel` pour qu'un renommage ne passe pas pour un trophée neuf). « Oiseau pélagique » devient
+    « Vendée Globe », « Grand ratite » devient « La Tête dans le sable ». Puis Pic noir pic noir pic noir, Jazz Club (jaseur). The Dark Knight devient La Garde de Nuit. Nouveau
+    trophée de ligue « La Bande à Picsou » (canards, oies, cygnes ; 3 niveaux). Détail : fin de THEMES.md.
+  - 10/11 : trophée de ligue des mouettes dans la vitrine (famille Goélands, mouettes, sternes, sans labbes ;
+    3 niveaux : posée, + les deux de droite, + celle de gauche). Nom : « Les 40 Voleurs ».
+  - 10/11 : toucher un trophée ouvre la liste de ses oiseaux (monde / France, ceux de la personne cochés) ;
+    l'essai « comme si gagné » est passé sur un bouton « Essai ».
+  - 10/11 : bas de page retiré partout (tout est dans À propos) ; liseré blanc des aigles retiré.
+    Noms : Le Boucher (pie-grièche), Jacquot (perroquet), Batman (engoulevents), Poids plume (colibri),
+    Cyrano (toucan), Cyrano(céros) (calao, avec les parenthèses), tous dans _troNomActuel. Tous les trophées de la vitrine ont leur nom.
+  - 10/11 : nouveau trophée unique « Gargantua » (pélican) et catégorie « Exploits » avec « Magellan »
+    (5 continents sur 7, table CONTINENTS_7). Le site local n'écrit plus d'annonces dans le vrai Fil.
+    Anciens trophées (notes-privees/trophees/anciens-trophees.md) : progression reprise (Écologue 100 à 500,
+    Terroir, National Geographic en Exploits ; Marco Polo retiré), images provisoires. À faire : images de
+    Mathis (t-shirts, Terroir, NatGeo), puis trancher les 16 familles d'oiseaux.
+    Trophées en pause repris en Exploits sauf Wallaby (kimono, Nécrophile, Gros Bébé par 1 vote, Sam d'office, vote dans la
+    fenêtre ; Bourriche d'huître). Images de Mathis sauf le kimono (ancien badge rond). Vitrine sur plusieurs étages (un par catégorie, chacun défile), étage « Fun » (Nécrophile, Gros Bébé, Bourriche). Anciens votes repris. Au passage en vrai : Bourriche,
+    Magellan, Gargantua s'annonceraient dans le Fil pour tous ceux qui les ont déjà.
+  - 10/11 soir : Terroir en calques (planche de France, un aliment par région, PDF de Mathis), Écologue 100 « Ça jacasse »
+    et 200 « ? », National Geographic à 100 photos, étage Fun privé (absent de la démo), Nécrophile sans « Le »,
+    molette bloquée sur les étages. Détail : fin de THEMES.md. Seul le kimono garde son ancien badge.
+  - Reste : les autres thèmes (noms, images), le palmarès (décidé, pas fait), puis le passage en vrai (commit
+    et mise en ligne, avec les versions à monter : v1056 / ?v=628 au plus tôt, v1055 / 627 pris par le Maroc le 10/11 ;
+    index.html, demo/index.html et service-worker.js du dossier de travail portent déjà 627 / v1055, à remonter).
 
 - **v1048 (08/11, conversation de l'arbre) : photos des familles + pays de l'arbre.** Chaque famille a la photo
   de l'espèce de son ordre si elle la contient, sinon de sa plus observée sur iNaturalist
