@@ -146,6 +146,11 @@ Pour un continent, la fiche lit les pays du monde dans les morceaux même quand 
 le 2026-11-11) : réglés pour répartir leurs espèces comme un pays moyen ; avec ceux d'un pays, le Monde n'avait
 personne aux paliers 1 à 4. Ne jamais convertir une valeur de continent avec `annualFreqToTier`.
 
+**Natural Earth donne au Maroc l'ouest du Sahara occidental** (tout ce qui est à l'ouest du mur de sable), alors
+qu'eBird range sous EH tout le sud du 27°40' N. `outils/build/sahara-occidental.mjs` recoupe le Maroc et ses régions
+à cette frontière ; `carte-pays.mjs` et `simplify-regions-multi.mjs` l'appellent (2026-11-11). Un nouveau
+générateur de contours qui lit Natural Earth doit l'appeler aussi.
+
 **Les autres bases GBIF nomment les oiseaux à l'ancienne.** Trinômes (« Corvus corone cornix ») et
 espèces regroupées (« Phoenicopterus ruber » pour le Flamant rose de l'atlas sud-africain) : sans
 garde-fou, la Corneille noire couvrait la Russie et le Flamant des Caraïbes l'Afrique du Sud. Le
