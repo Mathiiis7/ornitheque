@@ -11740,6 +11740,149 @@ function _ctNomZone(){
   if(!_ctPaysOuvert) return { nom:'Tous les pays', meta:'', ariane:'' };
   return { nom:countryLabel(cc), meta:'', ariane:'monde' };
 }
+// ---------- Météo et lever du soleil (2026-11-13) ----------
+// Pour préparer une sortie : aujourd'hui et les deux jours suivants, lus chez Open-Meteo (gratuit pour un usage
+// non commercial, moins de 10 000 demandes par jour, sans clé ; données CC BY 4.0, créditées ici et dans
+// l'À propos). Le lieu est le centre de la zone choisie ou le hotspot cliqué, jamais la position du visiteur.
+// Maquettes : notes-privees/maquettes/meteo/ ; Mathis a choisi le 2026-11-13 la version repliée (C) dans le
+// panneau, les trois colonnes en pied (B) dans la bulle d'un hotspot, et le détail heure par heure au clic d'un jour.
+const METEO_DUREE_MS = 30 * 60 * 1000;   // une prévision se relit au bout d'une demi-heure
+const _meteoCache = new Map();            // « lat,lon » arrondis à 0,01° (1 km) -> { t, p:promesse }
+let _meteoDeplie = false;                 // le panneau garde l'encart ouvert ou fermé d'une zone à l'autre
+// Codes météo de l'OMM, tels qu'Open-Meteo les rend (weather_code).
+// nuit : une heure d'après le coucher (is_day = 0) ; un ciel dégagé n'y montre pas de soleil.
+function _meteoCiel(code, nuit){
+  if(nuit && code <= 1) return ['🌙', code === 0 ? 'Ciel dégagé' : 'Peu nuageux'];
+  if(code === 0) return ['☀️', 'Ensoleillé'];
+  if(code === 1) return ['🌤️', 'Peu nuageux'];
+  if(code === 2) return ['⛅', 'Partiellement nuageux'];
+  if(code === 3) return ['☁️', 'Couvert'];
+  if(code === 45 || code === 48) return ['🌫️', 'Brouillard'];
+  if(code >= 51 && code <= 57) return ['🌦️', 'Bruine'];
+  if(code >= 61 && code <= 67) return ['🌧️', 'Pluie'];
+  if(code >= 71 && code <= 77) return ['🌨️', 'Neige'];
+  if(code >= 80 && code <= 82) return ['🌦️', 'Averses'];
+  if(code === 85 || code === 86) return ['🌨️', 'Averses de neige'];
+  if(code >= 95) return ['⛈️', 'Orage'];
+  return ['·', ''];
+}
+const _meteoVent = deg => ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'][Math.round(((deg % 360) + 360) % 360 / 45) % 8];
+// Open-Meteo rend l'heure locale du lieu (timezone=auto) : « 2026-11-13T08:14 » -> « 8 h 14 ».
+const _meteoHeure = iso => { const [h, m] = (iso || '').slice(11, 16).split(':'); return h ? `${+h} h ${m}` : ''; };
+function _meteoLire(lat, lon){
+  const cle = lat.toFixed(2) + ',' + lon.toFixed(2);
+  const c = _meteoCache.get(cle);
+  if(c && Date.now() - c.t < METEO_DUREE_MS) return c.p;
+  const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat.toFixed(2) + '&longitude=' + lon.toFixed(2) +
+    '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max,wind_direction_10m_dominant,sunrise,sunset' +
+    '&hourly=weather_code,temperature_2m,precipitation_probability,wind_speed_10m,wind_direction_10m,is_day&timezone=auto&forecast_days=3';
+  const p = fetch(url, { signal:AbortSignal.timeout(10000) }).then(r => { if(!r.ok) throw new Error('Open-Meteo ' + r.status); return r.json(); });
+  _meteoCache.set(cle, { t:Date.now(), p });
+  p.catch(() => _meteoCache.delete(cle));   // un refus ne reste pas en mémoire : on réessaie à la prochaine ouverture
+  return p;
+}
+const _meteoPluie = p => p == null ? '' : p >= 50 ? `<span class="meteo-pl">pluie ${p} %</span>` : `pluie ${p} %`;
+// L'encart : les trois jours en colonnes (chacune ouvre ses heures), le lever et le coucher en dessous.
+// opts.plie : true / false pour le panneau (une ligne qui se déplie) ; absent pour la bulle (toujours ouvert).
+function _meteoHtml(d, opts = {}){
+  const j = d.daily, h = d.hourly;
+  const nomJour = i => i === 0 ? 'Aujourd\'hui' : i === 1 ? 'Demain' : (s => s.charAt(0).toUpperCase() + s.slice(1))(new Date(j.time[i] + 'T12:00').toLocaleDateString('fr-FR', { weekday:'long' }));
+  const sol = i => `Lever <b>${_meteoHeure(j.sunrise[i])}</b> · coucher <b>${_meteoHeure(j.sunset[i])}</b>`;
+  // L'heure qu'il est au lieu, dans le même format que les heures d'Open-Meteo : on ne montre pas le passé.
+  const maintenant = new Date(Date.now() + (d.utc_offset_seconds || 0) * 1000).toISOString().slice(0, 13);
+  const cols = j.time.map((t, i) => {
+    const [ico, ciel] = _meteoCiel(j.weather_code[i]);
+    return `<button type="button" class="meteo-col" data-meteo-jour="${i}" aria-expanded="false" title="Heure par heure">` +
+      `<span class="meteo-j">${nomJour(i)}</span><span class="meteo-ico" role="img" aria-label="${ciel}">${ico}</span>` +
+      `<span class="meteo-t">${Math.round(j.temperature_2m_max[i])}° <span>${Math.round(j.temperature_2m_min[i])}°</span></span>` +
+      `<span class="meteo-v">${Math.round(j.wind_speed_10m_max[i])} km/h ${_meteoVent(j.wind_direction_10m_dominant[i])}</span>` +
+      `<span class="meteo-v">${_meteoPluie(j.precipitation_probability_max[i])}</span></button>`;
+  }).join('');
+  // Les heures d'un jour : d'une heure avant le lever à une heure après le coucher, celles d'oiseaux.
+  const heures = j.time.map((t, i) => {
+    const deb = Math.max(+j.sunrise[i].slice(11, 13) - 1, 0), fin = Math.min(+j.sunset[i].slice(11, 13) + 1, 23);
+    const cases = [];
+    h.time.forEach((ht, k) => {
+      if(ht.slice(0, 10) !== t) return;
+      const hh = +ht.slice(11, 13);
+      if(hh < deb || hh > fin || ht.slice(0, 13) < maintenant) return;
+      const [ico, ciel] = _meteoCiel(h.weather_code[k], h.is_day && h.is_day[k] === 0);
+      cases.push(`<li><span class="meteo-h">${hh} h</span><span class="meteo-ico" role="img" aria-label="${ciel}">${ico}</span>` +
+        `<b>${Math.round(h.temperature_2m[k])}°</b><span>${Math.round(h.wind_speed_10m[k])} km/h ${_meteoVent(h.wind_direction_10m[k])}</span>` +
+        `<span>${_meteoPluie(h.precipitation_probability[k])}</span></li>`);
+    });
+    const vide = '<li class="meteo-fini">Plus d\'heure de jour aujourd\'hui</li>';
+    return `<div class="meteo-jour" data-j="${i}" hidden><p class="meteo-sol">${nomJour(i)} : ${sol(i).charAt(0).toLowerCase() + sol(i).slice(1)}</p>` +
+      `<ul class="meteo-heures" aria-label="${nomJour(i)}, heure par heure">${cases.join('') || vide}</ul></div>`;
+  }).join('');
+  const source = '<a class="meteo-src" href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a>';
+  const corps = `<div class="meteo-corps"><div class="meteo-tete"><span class="meteo-et">Météo${opts.plie !== undefined ? ' au centre de la zone' : ''}</span>${source}</div>` +
+    `<div class="meteo-cols">${cols}</div><p class="meteo-sol meteo-sol-base">${sol(0)}</p>${heures}</div>`;
+  if(opts.plie === undefined) return corps;
+  const [ico0, ciel0] = _meteoCiel(j.weather_code[0]);
+  return `<button type="button" class="meteo-ligne" data-meteo-plier aria-expanded="${!opts.plie}">` +
+    `<span class="meteo-ico" role="img" aria-label="${ciel0}">${ico0}</span><span><b>${Math.round(j.temperature_2m_max[0])}°</b> · lever ${_meteoHeure(j.sunrise[0])}</span>` +
+    `<span class="meteo-plus">${opts.plie ? '3 jours ▾' : 'Replier ▴'}</span></button>` + corps;
+}
+// Le centre de la zone choisie : la moyenne des sommets d'une zone dessinée, sinon le milieu du cadre de ses contours.
+function _ctCentreZone(){
+  const p = ebFilter.polygon;
+  if(p && p.length) return [p.reduce((s, v) => s + v[0], 0) / p.length, p.reduce((s, v) => s + v[1], 0) / p.length];
+  const calque = _ctCalqueZones(); if(!calque) return null;
+  let b = null;
+  calque.eachLayer(l => { if(_ctDansZone(l)) b = b ? b.extend(l.getBounds()) : L.latLngBounds(l.getBounds().getSouthWest(), l.getBounds().getNorthEast()); });
+  if(!b) return null;
+  const c = b.getCenter(); return [c.lat, c.lng];
+}
+// L'encart du panneau, sous le nom de la zone. Rien pour un pays entier ni pour « Tous les pays » : la météo
+// n'a pas de sens sur une si grande surface. Il ne se redessine que si la zone change : _ctDessinePanneau est
+// appelé à chaque geste, et l'encart garderait sinon un jour ouvert le temps d'un clic.
+let _ctMeteoCle = '';
+function _ctMeteoMaj(){
+  const el = document.getElementById('ctMeteo'); if(!el) return;
+  const c = _ctZoneChoisie() ? _ctCentreZone() : null;
+  if(!c){ el.hidden = true; el.innerHTML = ''; _ctMeteoCle = ''; return; }
+  const cle = c[0].toFixed(2) + ',' + c[1].toFixed(2);
+  if(cle === _ctMeteoCle) return;
+  _ctMeteoCle = cle;
+  el.hidden = false;
+  el.innerHTML = '<p class="meteo-attente">Météo…</p>';
+  _meteoLire(c[0], c[1]).then(d => {
+    if(_ctMeteoCle !== cle) return;
+    el.innerHTML = _meteoHtml(d, { plie:!_meteoDeplie });
+    el.classList.toggle('meteo-ouvert', _meteoDeplie);
+  }).catch(() => { if(_ctMeteoCle === cle) el.innerHTML = '<p class="meteo-attente">Météo indisponible pour le moment.</p>'; });
+}
+// Dans la bulle d'un hotspot, en pied : la météo du point précis, lue à l'ouverture.
+function _meteoBulle(marker){
+  const el = marker._bulle && marker._bulle.querySelector('.meteo-bulle'); if(!el || el.dataset.fait) return;
+  el.dataset.fait = '1';
+  el.innerHTML = '<p class="meteo-attente">Météo…</p>';
+  const maj = () => { if(el.isConnected && _map && _map._popup) _map._popup.update(); };
+  _meteoLire(+el.dataset.lat, +el.dataset.lon)
+    .then(d => { el.innerHTML = _meteoHtml(d); maj(); })
+    .catch(() => { el.innerHTML = '<p class="meteo-attente">Météo indisponible pour le moment.</p>'; maj(); });
+}
+// Les clics de l'encart ne redessinent rien : ils ouvrent ou ferment ce qui est déjà écrit (un élément
+// redessiné pendant son propre clic sort de la page, et les gestionnaires « clic dehors » s'y trompent).
+document.addEventListener('click', e => {
+  const plier = e.target.closest('[data-meteo-plier]');
+  if(plier){
+    const bloc = plier.parentElement;
+    _meteoDeplie = !bloc.classList.contains('meteo-ouvert');
+    bloc.classList.toggle('meteo-ouvert', _meteoDeplie);
+    plier.setAttribute('aria-expanded', String(_meteoDeplie));
+    plier.querySelector('.meteo-plus').textContent = _meteoDeplie ? 'Replier ▴' : '3 jours ▾';
+    return;
+  }
+  const col = e.target.closest('[data-meteo-jour]'); if(!col) return;
+  const corps = col.closest('.meteo-corps'); if(!corps) return;
+  const ouvrir = col.getAttribute('aria-expanded') !== 'true';
+  corps.querySelectorAll('[data-meteo-jour]').forEach(b => b.setAttribute('aria-expanded', String(ouvrir && b === col)));
+  corps.querySelectorAll('.meteo-jour').forEach(j => { j.hidden = !(ouvrir && j.dataset.j === col.dataset.meteoJour); });
+  corps.querySelector('.meteo-sol-base').hidden = ouvrir;
+  if(col.closest('.leaflet-popup') && _map && _map._popup) _map._popup.update();
+});
 function _ctDessinePanneau(){
   const zone = document.getElementById('ctZone'); if(!zone) return;
   const onglet = CARTE_MODE_ONGLET[mapMode] || 'ligue';
@@ -11776,6 +11919,7 @@ function _ctDessinePanneau(){
   }
   const nom = document.getElementById('ctZoneNom'); if(nom) nom.textContent = z.nom;
   const meta = document.getElementById('ctZoneMeta'); if(meta) meta.textContent = z.meta;
+  _ctMeteoMaj();
   const ligue = _ctListeLigue();
   _ctListeRecent(); _ctListeHot(); _ctSyncFiltres();
   // Les nombres des onglets comptent ce que montrent leurs listes, espèce cherchée comprise.
@@ -13536,7 +13680,9 @@ async function _loadHotspotsLayer(region){
         const favBtn = myUid ? ` <button type="button" class="hs-fav${isFav ? ' on' : ''}" data-loc="${esc(h.locId)}" title="${isFav ? 'Retirer des favoris' : 'Ajouter aux favoris'}">${isFav ? '★' : '☆'}</button>` : '';
         const lieu = [h.subnational2Name, h.subnational1Name].filter(Boolean).map(esc).join(' · ') + dist;
         return `<p class="ct-hb-t">${esc(h.locName || h.name || '?')}${favBtn}</p>` +
-          (lieu ? `<p class="ct-gl-t ct-hb-s">${lieu}</p>` : '') + `<p class="ct-gl-t ct-hb-s">${resume}</p>` + liste;
+          (lieu ? `<p class="ct-gl-t ct-hb-s">${lieu}</p>` : '') + `<p class="ct-gl-t ct-hb-s">${resume}</p>` + liste +
+          // La météo du point, en pied (variante B de notes-privees/maquettes/meteo/, Mathis, 2026-11-13) : _meteoBulle.
+          `<div class="meteo meteo-bulle" data-lat="${h.lat}" data-lon="${h.lng}"></div>`;
       };
       // Un élément, écrit à l'ouverture et gardé tant que la bulle est ouverte : une fonction qui rendait du
       // texte était rappelée à chaque update() de Leaflet, et la bulle repartait sans ses dates ni son
@@ -13585,7 +13731,7 @@ async function _loadHotspotsLayer(region){
       // À l'ouverture du popup, ce qui a été vu ici ces 30 jours (_loadHotspotCounts).
       m._hotspotId = h.locId;
       // La bulle est réécrite à chaque ouverture (contenu) : ses dates se relisent, depuis le cache d'_ebFetch.
-      m.on('popupopen', () => _loadHotspotCounts(m));
+      m.on('popupopen', () => { _loadHotspotCounts(m); _meteoBulle(m); });
       _lyrHotspots.addLayer(m);
     };
     // Chaque carré paraît dès que sa liste arrive, les plus riches d'abord : à 22 demandes par 5 s, eBird met

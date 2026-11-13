@@ -20,7 +20,7 @@
   script-src 'self' 'unsafe-inline' https://www.gstatic.com https://unpkg.com;
   style-src 'self' 'unsafe-inline' https://unpkg.com;
   img-src 'self' data: blob: https://www.google.com https://upload.wikimedia.org https://thumb.wikimedia.org https://fr.wikipedia.org https://en.wikipedia.org https://static.inaturalist.org https://inaturalist-open-data.s3.amazonaws.com https://odata-inpn.mnhn.fr https://mathiiis7.github.io https://*.tile.openstreetmap.org https://server.arcgisonline.com https://flagcdn.com https://firebasestorage.googleapis.com https://xeno-canto.org https://cdn.download.ams.birds.cornell.edu https://base-prod.rspb-prod.magnolia-platform.com https://i.ytimg.com https://*.giphy.com;
-  connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.firebaseio.com https://www.gstatic.com https://unpkg.com https://ornitheque-relais.vercel.app https://ebird.org https://api.gbif.org https://api.inaturalist.org https://xeno-canto.org https://fr.wikipedia.org https://en.wikipedia.org https://*.wikipedia.org https://upload.wikimedia.org https://odata-inpn.mnhn.fr https://mathiiis7.github.io https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org https://server.arcgisonline.com https://api.giphy.com;
+  connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.firebaseio.com https://www.gstatic.com https://unpkg.com https://ornitheque-relais.vercel.app https://ebird.org https://api.gbif.org https://api.inaturalist.org https://xeno-canto.org https://fr.wikipedia.org https://en.wikipedia.org https://*.wikipedia.org https://upload.wikimedia.org https://odata-inpn.mnhn.fr https://mathiiis7.github.io https://nominatim.openstreetmap.org https://api.open-meteo.com https://*.tile.openstreetmap.org https://server.arcgisonline.com https://api.giphy.com;
   font-src 'self' data:;
   media-src 'self' data: blob: https://xeno-canto.org https://static.inaturalist.org;
   object-src 'none';
@@ -49,11 +49,11 @@
 <!-- Preload le module principal : le browser commence le fetch de app.js des le premier
      scan du <head>, en parallele du parsing HTML, au lieu d'attendre le <script> tout en
      bas (~1000 lignes plus loin). Gain ~200-400ms sur 3G/4G. -->
-<link rel="modulepreload" href="app.js?v=679">
+<link rel="modulepreload" href="app.js?v=680">
 <!-- Preload aussi le CSS principal (deja bloquant mais explicite ici). Il porte le MEME ?v= qu'app.js :
      sans numero, GitHub Pages le laisse 10 min en cache (max-age=600) et un telephone a garde l'ancien CSS
      avec le nouvel app.js - panneau de la Carte invisible (Mathis sur iPhone, 2026-11-07). -->
-<link rel="preload" href="styles.css?v=679" as="style">
+<link rel="preload" href="styles.css?v=680" as="style">
 <!-- Preconnect anticipe l'ouverture TCP+TLS vers les CDN critiques (Leaflet, Firebase, iNat, xeno-canto). -->
 <link rel="preconnect" href="https://unpkg.com" crossorigin>
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
@@ -76,7 +76,7 @@
 <!-- Les grappes de la Carte (choix de Mathis, 2026-10-23) : 34 Ko, après Leaflet dont elles ont besoin.
      Leur petite feuille de style (les animations) est réécrite dans styles.css, sans requête de plus. -->
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" integrity="sha256-Hk4dIpcqOSb0hZjgyvFOP+cEmDXUKKNE/tT542ZbNQg=" crossorigin="" defer></script>
-<link rel="stylesheet" href="styles.css?v=679">
+<link rel="stylesheet" href="styles.css?v=680">
 
 <!-- Etat d'auth : au chargement, on ne sait pas encore si l'utilisateur est connecte.
      data-auth="pending" par defaut -> affiche un splash neutre (pas l'ecran de connexion).
@@ -709,6 +709,7 @@ document.documentElement.setAttribute('data-theme', _theme);</script>
               <div class="ct-ariane" id="ctAriane"></div>
               <p class="ct-zone-nom" id="ctZoneNom">France</p>
               <p class="ct-zone-meta" id="ctZoneMeta"></p>
+              <div class="ct-meteo meteo" id="ctMeteo" hidden></div>
               <div class="ct-onglets" id="ctOnglets" role="tablist" aria-label="Ce que montre le panneau">
                 <button type="button" role="tab" data-onglet="recent" id="ctOngletRecent" aria-controls="ctVoletRecent" aria-selected="false" tabindex="-1">Récent<span class="ct-nb" data-nb="recent"></span></button>
                 <button type="button" role="tab" data-onglet="ligue" id="ctOngletLigue" aria-controls="ctVoletLigue" aria-selected="true">Ligue<span class="ct-nb" data-nb="ligue"></span></button>
@@ -1222,6 +1223,7 @@ document.documentElement.setAttribute('data-theme', _theme);</script>
           <li><b>BIRDBASE</b> - les milieux de vie. Şekercioğlu et al. 2025, <i>Scientific Data</i> 12:1558, <a href="https://doi.org/10.6084/m9.figshare.27051040" target="_blank" rel="noopener">doi:10.6084/m9.figshare.27051040</a>, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>.</li>
           <li><b>AVONET</b> - morphologie, régime, déplacement. Tobias et al. 2022, <i>Ecology Letters</i>.</li>
           <li><b>Réserves naturelles nationales et régionales, sites du Conservatoire du littoral</b> - la couche Réserves de la Carte. Données PatriNat (OFB, MNHN, CNRS, IRD) publiées par l'<a href="https://inpn.mnhn.fr/" target="_blank" rel="noopener">INPN</a>, © Muséum national d'Histoire naturelle, <a href="https://www.etalab.gouv.fr/licence-ouverte-open-licence/" target="_blank" rel="noopener">Licence Ouverte</a>, lues sur la Géoplateforme de l'IGN le 29 octobre 2026 et simplifiées à 100 m près.</li>
+          <li><b>Open-Meteo</b> (<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>) - la météo et les heures du lever et du coucher du soleil, sur la Carte. Elle reçoit seulement le centre de la zone ou le hotspot choisi, jamais ta position.</li>
           <li><b>Natural Earth</b> et <b>geoBoundaries</b> (domaine public) - contours des zones. Ceux de Guernesey et de l'île de Man viennent de <b>geoBoundaries</b> sous <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a> (tirés des images Sentinel-2 de 2021). Ceux d'Åland, de Chypre et de Jersey dérivent d'<b>OpenStreetMap</b> : © les contributeurs OpenStreetMap, <a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" rel="noopener">ODbL 1.0</a>, licence qui s'étend aux contours publiés ici (<code>data/regions-cy-simplified.json</code>, <code>data/regions-fi-simplified.json</code>, <code>data/carte-zones/gb.json</code>, <code>data/carte-pays.json</code>). Ceux de 12 pays où Natural Earth ne suit pas le découpage d'eBird viennent de <b>geoBoundaries</b> (gbOpen), sous la licence de leur source : domaine public (Afghanistan, Liban, Vietnam, Îles Salomon), CC0 (Sainte-Lucie), <a href="https://creativecommons.org/licenses/by/3.0/igo/" target="_blank" rel="noopener">CC BY 3.0 IGO</a> (Népal, Philippines) et <a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" rel="noopener">ODbL 1.0</a> (Kazakhstan, Laos, Somalie, Taïwan, Tunisie), licence qui s'étend à leurs contours publiés ici. Songwe et Mbeya (Tanzanie), Daman et Diu, Dadra et Nagar Haveli (Inde), North Abaco (Bahamas), Aldabra et Perseverance (Seychelles), Şəki (Azerbaïdjan) viennent d'<b>OpenStreetMap</b> (ODbL 1.0, même mention). Les zones du <b>Qatar</b> sont <b>approchées</b> : eBird y garde les municipalités d'avant 2004, dont aucune carte n'existe ; chaque point du pays y est rattaché à la zone du site eBird le plus proche.</li>
         </ul>
 
@@ -1643,4 +1645,4 @@ document.documentElement.setAttribute('data-theme', _theme);</script>
        leurs donnees s'affichent (docs/carte-donnees.md). -->
 </div>
 
-<script type="module" src="app.js?v=679"></script>
+<script type="module" src="app.js?v=680"></script>

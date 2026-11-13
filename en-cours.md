@@ -1,6 +1,10 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1107 / app.js?v=679 (11/11, Tadjikistan entier sur les cartes, cc190fd0). Prochaine : v1108 / 680.
+Dernière version : v1108 / app.js?v=680 (13/11, météo sur la Carte). Prochaine : v1109 / 681.
+- **v1108** : météo Open-Meteo (CC BY 4.0, sans clé, non commercial < 10 000 demandes/jour) et lever du soleil sur
+  la Carte. Panneau : ligne repliée sous le nom de la zone (région, département, zone dessinée ; rien pour un pays),
+  3 jours au dépli ; bulle d'un hotspot : 3 colonnes en pied. Un jour cliqué montre ses heures (lever - 1 h à
+  coucher + 1 h). Maquettes : `notes-privees/maquettes/meteo/`. Essai : `outils/verif/_essai-meteo.mjs [ordi|tel] [dossier]`.
 - **v1107** : TJ-X01~ (districts de subordination républicaine, absents d'eBird) fondu dans TJ-DU, où eBird range
   leurs sites ; contours ?v=20261111c. Seul pays dans ce cas (régions à code provisoire vérifiées le 11/11).
 - **v1106** : continents et monde reprennent les seuils d'un pays (le Tichodrome était 4 dans le monde, 5 au mieux
