@@ -12,8 +12,8 @@ Dernière version : v1108 / app.js?v=680 (13/11, météo sur la Carte). Prochain
 TROPHEES_VERSION = 6 (à monter à chaque trophée unique neuf). Uniques en ligne le 11/11 : Fixation béton (huppe),
 Spider-Man (tichodrome, agrandi x 1,12), Aquaman (cincles), Matuidi Charo (vautours, v1105) ; huppe décalée
 (VITRINE_DECALAGE). Essai : `outils/verif/_essai-unique.mjs <sauvegarde> <captures> <membre> <trophée>`.
-En attente de l'image de Mathis : « Seul au monde » (top 3 des espèces
-exclusives, dans les Exploits). Corvidés, flamant, rollier + guêpier ABANDONNÉS (11/11), à ne plus reproposer. Détail : fin de THEMES.md.
+Plus aucun trophée en attente. Corvidés, flamant, rollier + guêpier ABANDONNÉS (11/11), « Seul au monde » (top 3 des espèces
+exclusives) ABANDONNÉ (14/11), à ne plus reproposer. Détail : fin de THEMES.md.
 
 - **v1100 (0254dfa8)** : un trophée neuf de la vitrine arrive « à débloquer » (avant : compté d'office comme vu) ;
   `_VT_REMIS` a remis limicoles et échassiers à 0 une fois. Essai : `outils/verif/_essai-remis.mjs`.
