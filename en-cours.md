@@ -11,6 +11,8 @@
 - Base possible : l'ancien classement de la ligue (`_quizSubscribeCloud`, `_quizRenderLeaderboard`), retiré de la
   page mais gardé (docs/refonte-quiz.md l. 27). Règles Firestore et banc `firestore` à revoir (une lecture par abonné).
 - Méthode : maquettes d'abord (plusieurs directions), avant tout code.
+- **Caché tant que tous les parcours ne sont pas créés** (Mathis le 18/11) : on construit la base avec les 11 oiseaux
+  d'aujourd'hui, l'ouverture viendra plus tard. Maquettes : `notes-privees/maquettes/quiz-classe/` (A tableau, B chasse, C saison).
 - Reste ouvert : nombre de noms proposés, un essai par jour ou illimité, classement à vie ou par mois, que faire tant
   qu'il n'y a que 11 oiseaux.
 
