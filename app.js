@@ -26991,8 +26991,8 @@ function _pcSyncOuvrir(){
   try{ _pcSync.unsub = onSnapshot(_pcSyncDoc(), _pcSyncRecevoir, () => {}); }catch(_){}
 }
 document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden' && _pcSync.sale) _pcSyncEnvoyer(); });
-// Rend le palier gagne par cette reponse, ou 0. compte : la partie a assez d'oiseaux pour les
-// paliers (PC_PALIER_MIN_OISEAUX) ; sinon la reponse va dans la reussite et les confusions, mais
+// Rend le palier gagne par cette reponse, ou 0. compte : la reponse a ete donnee sans aide
+// (_pcQuestionCompte) ; sinon la reponse va dans la reussite et les confusions, mais
 // la serie ne bouge ni dans un sens ni dans l'autre.
 function _pcNoterReponse(cible, juste, choisi, compte){
   const st = _pcStats(), e = st.esp[cible] || [0, 0];
@@ -27031,7 +27031,22 @@ const _pcPalier = record => PC_PALIERS.filter(P => record >= P.seuil).length;   
 // Entre 2 ou 3 oiseaux, on devine trop facilement : 5 d'affilee s'enchainaient en une partie
 // (Mathis le 2026-10-18). Ces parties ne comptent pas pour les paliers, et la bulle des etapes
 // concernees le dit.
-const PC_PALIER_MIN_OISEAUX = 4;
+// Monte a 5 le 2026-11-17 (Mathis : 4 restait trop facile), avec les autres conditions de
+// _pcQuestionCompte.
+const PC_PALIER_MIN_OISEAUX = 5;
+// Une reponse ne fait bouger la serie (ni monter, ni casser) que si elle a ete donnee sans aide
+// (regle « partout, sans aide », choisie par Mathis le 2026-11-17 : les genres de questions
+// n'avaient pas la meme difficulte, et une liste qu'on se compose soi-meme peut etre facile) :
+// - au moins 5 oiseaux dans la partie, entrainement compris ;
+// - jamais « Un oiseau, 3 chants » : une chance sur 3 au hasard ;
+// - « Un chant, des noms » seulement parmi 5 noms ou plus ;
+// - jamais si les indices (cercles) ont ete visibles pendant la question, meme masques ensuite.
+function _pcQuestionCompte(p, q){
+  if(p.especes.length < PC_PALIER_MIN_OISEAUX) return false;
+  if(q.type === 'chant' || q.indicesVus) return false;
+  if(q.type === 'nom') return (q.choix?.length || 0) >= PC_PALIER_MIN_OISEAUX;
+  return q.type === 'ecrire';
+}
 const _pcSerie = (sci, st = _pcStats()) => st.serie[sci] || [0, 0];
 // A poser sur un rond [data-pc-vign] : son anneau (styles.css, [data-palier]), rien sans palier.
 // n force un palier (l'echelle de la fiche montre les cinq).
@@ -27109,6 +27124,9 @@ function _pcRenderOiseau(box){
     ? `<span>Série en cours : <b>${cur}</b> d'affilée. Encore <b>${suiv.seuil - cur}</b> pour ${esc(suiv.nom)}.</span>
        <span class="pc-barre" aria-hidden="true"><i style="width:${(cur / suiv.seuil * 100).toFixed(1)}%"></i></span>`
     : `<span>Série en cours : <b>${cur}</b> d'affilée. Tous les paliers sont gagnés.</span>`;
+  // La regle de _pcQuestionCompte, dite au joueur : sans elle, une serie qui ne bouge pas
+  // ressemble a une panne (indices visibles par defaut).
+  const regle = `<p class="pc-meta">Seules comptent les réponses sans aide, dans une partie d'au moins ${PC_PALIER_MIN_OISEAUX}&nbsp;oiseaux : chant vers nom parmi ${PC_PALIER_MIN_OISEAUX}&nbsp;noms ou plus, ou nom à écrire, indices masqués.</p>`;
   // conf « a|b » : a pris pour b. Ici, les oiseaux qu'on donne a la place de celui-ci.
   const confs = Object.entries(st.conf).filter(([c]) => c.startsWith(sci + '|'))
     .map(([c, k]) => [c.slice(sci.length + 1), k]).sort((a, b) => b[1] - a[1]).slice(0, 3);
@@ -27120,7 +27138,7 @@ function _pcRenderOiseau(box){
         <p class="pc-fiche-palier">${n ? `<span class="pc-pastille" style="--pc-palier:${PC_PALIERS[n - 1].anneau}"></span>${esc(PC_PALIERS[n - 1].nom)}` : 'Pas encore de palier'}<span class="pc-meta"> · record ${rec} d'affilée</span></p></div>
     </div>
     <div class="pc-echelle">${echelle}</div>
-    <div class="pc-fiche-prog">${prog}</div>
+    <div class="pc-fiche-prog">${prog}${regle}</div>
     <div class="pc-chiffres">
       <div class="pc-chiffre"><b>${vus ? Math.round((vus - rates) / vus * 100) + ' %' : '-'}</b><span>de bonnes réponses</span></div>
       <div class="pc-chiffre"><b>${vus}</b><span>fois au quiz</span></div>
@@ -27646,7 +27664,8 @@ function _pcBulleHTML(i, best, s){
     <h4 class="pc-bulle-titre">${esc(e.titre)}</h4>
     <span class="pc-bulle-meta">${esc(_pcDescription(e))}</span>
     <div class="pc-bulle-oiseaux">${oiseaux}</div>
-    ${e.n < PC_PALIER_MIN_OISEAUX ? `<p class="pc-bulle-note">Les paliers comptent à partir de ${PC_PALIER_MIN_OISEAUX}&nbsp;oiseaux.</p>` : ''}${pied}`;
+    ${e.n < PC_PALIER_MIN_OISEAUX ? `<p class="pc-bulle-note">Les paliers comptent à partir de ${PC_PALIER_MIN_OISEAUX}&nbsp;oiseaux.</p>`
+      : e.type === 'chant' ? '<p class="pc-bulle-note">Choisir parmi 3 chants ne compte pas pour les paliers.</p>' : ''}${pied}`;
 }
 // Remplit les photos [data-pc-vign] d'un bloc (memes photos que le reste de l'appli).
 function _pcPhotos(box){
@@ -27831,6 +27850,7 @@ function _pcQuestion(){
       // re-rendre couperait le chant.
       const etape = p.kind === 'entr' ? null : p.P.etapes[p.etape];
       cercles = !etape?.sansCercles && q.choix.some(sci => PC_CERCLES[sci]);
+      if(cercles && !_pcCerclesMasques()) q.indicesVus = true;   // la serie ne bougera pas (_pcQuestionCompte)
       reponses = `<div class="pc-reponses${cercles && _pcCerclesMasques() ? ' sans-cercles' : ''}" id="pcChoix">
         ${q.choix.map((sci, k) => `<button type="button" class="pc-reponse" data-pc-choix="${k}"><span class="pc-vign" data-pc-vign="${esc(sci)}"></span><span class="pc-reponse-nom">${esc(_pcNomFr(sci))}</span>${cercles ? _pcCerclesHtml(sci) : ''}</button>`).join('')}
       </div>`;
@@ -27961,7 +27981,7 @@ function _pcCompter(p, q, juste, choisi){
   p.repondu = true;
   if(juste) p.bonnes++; else if(choisi) p.confusions.push([q.cible, choisi]);
   p.resultats[p.cur] = juste ? 'ok' : 'ko';
-  const gagne = _pcNoterReponse(q.cible, juste, choisi, p.especes.length >= PC_PALIER_MIN_OISEAUX);
+  const gagne = _pcNoterReponse(q.cible, juste, choisi, _pcQuestionCompte(p, q));
   if(gagne) (p.paliers ||= new Map()).set(q.cible, gagne);   // le plus haut l'emporte : ils ne font que monter
   _pcCouperSons();
   const seg = document.querySelectorAll('#pcParcours .pc-segments i')[p.cur]; if(seg) seg.className = p.resultats[p.cur];
@@ -28131,6 +28151,8 @@ document.addEventListener('click', e => {
   if(bascule){
     const masquer = !_pcCerclesCaches;
     _pcCerclesCaches = masquer;
+    // Indices montres avant de repondre : cette question ne compte plus pour la serie.
+    const pq = _pc.partie; if(!masquer && pq && !pq.repondu) pq.questions[pq.cur].indicesVus = true;
     _stockageEcrire(PC_CLE_CERCLES, masquer ? '1' : '0');
     document.getElementById('pcChoix')?.classList.toggle('sans-cercles', masquer);
     bascule.setAttribute('aria-pressed', String(!masquer));
