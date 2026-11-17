@@ -27044,6 +27044,8 @@ const PC_PALIER_MIN_OISEAUX = 5;
 // L'entrainement ne compte plus du tout (Mathis le 2026-11-18) : on y compose sa liste soi-meme.
 function _pcQuestionCompte(p, q){
   if(p.kind === 'entr') return false;
+  // La survie compte (Mathis le 2026-11-18) : 5 noms qui se ressemblent, sans indices, liste imposee.
+  if(p.kind === 'survie') return !q.indicesVus;
   if(p.especes.length < PC_PALIER_MIN_OISEAUX) return false;
   if(q.type === 'chant' || q.indicesVus) return false;
   if(q.type === 'nom') return (q.choix?.length || 0) >= PC_PALIER_MIN_OISEAUX;
@@ -27445,6 +27447,236 @@ function _pcEntrFin(box, p){
   _pcPhotos(box);
 }
 
+// ---------- Survie : le mode classe (Mathis le 2026-11-18) ----------
+// Les chants s'enchainent jusqu'a la premiere erreur ; le record (bonnes reponses d'affilee) fait
+// le classement de la ligue. Maquette « B, la chasse » choisie (notes-privees/maquettes/quiz-classe/) :
+// podium, et le membre juste devant soi a depasser. Tous les oiseaux du quiz, 5 noms proposes,
+// pris parmi ceux qui se confondent avec le bon. Essais illimites, record a vie.
+// Cache tant que tous les parcours ne sont pas crees (Mathis le 2026-11-18), visible en local pour
+// le construire : ouvrir le mode, c'est retirer la seconde condition.
+const PC_SURVIE_NOMS = 5;
+const _pcSurvieOuverte = () => !PARCOURS_BIENTOT.length || /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+const PC_SURVIE_CLE = 'mb-quiz-survie';
+// Paires confondables : data/quiz-confusions.json, { sci: [[sci, niveau 1 a 3], ...] }, tire de
+// guides et de sites cites dans docs/quiz-confusions.md. Chargee au premier lancement seulement.
+const PC_SURVIE_TABLE_V = '20261118';
+let _pcSurvieTable = null;
+// Le classement, lu a l'ouverture de la page et apres chaque partie (pas d'abonnement : le banc
+// firestore compte 15 ecouteurs ouverts au demarrage, celui-ci n'y entre pas). null = pas encore lu.
+let _pcSurvieLigue = null;
+const PC_SURVIE_CONF_MAX = 50;   // paires gardees dans la fiche publique, les plus frequentes
+
+function _pcSurvieLocal(){
+  try{ const s = JSON.parse(localStorage.getItem(PC_SURVIE_CLE) || '{}'); return { record: +s.record || 0, parties: +s.parties || 0, conf: s.conf && typeof s.conf === 'object' ? s.conf : {}, sale: !!s.sale }; }
+  catch(_){ return { record: 0, parties: 0, conf: {}, sale: false }; }
+}
+const _pcSurvieGarder = s => _stockageEcrire(PC_SURVIE_CLE, JSON.stringify(s));
+// La fiche quizStats/<uid> sert deja au classement de l'ancien quiz : lisible par la ligue, ecrite
+// par son seul proprietaire, sans liste de champs imposee. La survie y range son champ, sans regle
+// nouvelle a coller.
+async function _pcSurvieEnvoyer(){
+  const s = _pcSurvieLocal();
+  if(!s.sale || !myUid || !leagueId) return;
+  // La carte des confusions est reecrite en entier : un merge fusionnerait aussi son contenu, et les
+  // paires retirees par le plafond resteraient.
+  const conf = Object.fromEntries(Object.entries(s.conf).sort((a, b) => b[1] - a[1]).slice(0, PC_SURVIE_CONF_MAX));
+  const me = realPeople.find(x => x.id === myUid);
+  try{
+    await setDoc(doc(db, 'leagues', leagueId, 'quizStats', myUid),
+      { uid: myUid, name: me?.name || myMemberName?.() || 'Joueur', survie: { record: s.record, parties: s.parties, conf, maj: serverTimestamp() } }, { merge: true });
+    s.sale = false; _pcSurvieGarder(s);
+  }catch(_){}
+}
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden') _pcSurvieEnvoyer(); });
+async function _pcSurvieLireLigue(){
+  if(!leagueId) return;
+  try{
+    const snap = await getDocs(collection(db, 'leagues', leagueId, 'quizStats'));
+    const l = [];
+    snap.forEach(d => { const v = d.data(), r = +v?.survie?.record || 0; if(v?.survie) l.push({ uid: d.id, name: v.name || '', record: r, conf: v.survie.conf || {} }); });
+    _pcSurvieLigue = l;
+    // Le record du compte suit d'un appareil a l'autre : on garde le plus haut des deux.
+    const moi = l.find(x => x.uid === myUid), s = _pcSurvieLocal();
+    if(moi && moi.record > s.record){ s.record = moi.record; _pcSurvieGarder(s); }
+  }catch(_){ if(!_pcSurvieLigue) _pcSurvieLigue = []; }
+}
+// Le classement, soi compris avec son record local (plus frais que la fiche si l'envoi attend).
+function _pcSurvieClassement(){
+  const l = (_pcSurvieLigue || []).filter(x => x.uid !== myUid).map(x => ({ ...x }));
+  const s = _pcSurvieLocal();
+  if(s.record || s.parties) l.push({ uid: myUid, name: realPeople.find(x => x.id === myUid)?.name || 'toi', record: s.record, moi: true });
+  return l.sort((a, b) => b.record - a.record || (a.moi ? -1 : 1));
+}
+// Le membre a depasser : le plus bas de ceux qui font strictement mieux que score.
+function _pcSurvieCible(score){
+  return _pcSurvieClassement().filter(x => !x.moi && x.record > score).sort((a, b) => a.record - b.record)[0] || null;
+}
+const _pcSurvieNom = x => x.moi ? 'toi' : (realPeople.find(p => p.id === x.uid)?.name || x.name || 'Sans nom');
+const _pcSurvieAv = (x, t) => _avatarHtml(realPeople.find(p => p.id === x.uid)?.avatar, _pcSurvieNom(x), t);
+
+// Ressemblance entre deux chants, pour choisir les noms proposes. Tout ce qui peut rendre deux
+// oiseaux confondables compte (Mathis le 2026-11-18) : la table des guides, les confusions de la
+// ligue et les siennes, les indices (meme motif, meme strophe), le meme parcours, le meme genre.
+function _pcRessemblance(a, b, conf){
+  let s = 0;
+  const t = _pcSurvieTable || {};
+  const niv = Math.max(0, ...(t[a] || []).filter(x => x[0] === b).map(x => x[1]), ...(t[b] || []).filter(x => x[0] === a).map(x => x[1]));
+  s += niv * 3;
+  const ca = PC_CERCLES[a], cb = PC_CERCLES[b];
+  if(ca && cb){ if(ca.motif === cb.motif) s += 2; if(ca.strophe === cb.strophe) s += 1; }
+  if([...PARCOURS_OUVERTS, ...PARCOURS_BIENTOT].some(P => P.especes.includes(a) && P.especes.includes(b))) s += 2;
+  if(a.split(' ')[0] === b.split(' ')[0]) s += 2;
+  s += Math.min(4, (conf[a + '|' + b] || 0) + (conf[b + '|' + a] || 0));
+  return s;
+}
+function _pcSurvieConfusions(){
+  const c = {};
+  const ajoute = m => { for(const [k, n] of Object.entries(m || {})) c[k] = (c[k] || 0) + (+n || 0); };
+  ajoute(_pcStats().conf);
+  for(const x of _pcSurvieLigue || []) if(x.uid !== myUid) ajoute(x.conf);
+  ajoute(_pcSurvieLocal().conf);
+  return c;
+}
+// Le bon et 4 autres, tires parmi les 8 plus ressemblants, au poids de la ressemblance : les memes
+// quatre a chaque fois s'apprendraient comme une liste. Seulement des oiseaux qui ont des chants
+// dans le quiz, sinon un nom propose ne serait jamais la bonne reponse et se jouerait d'office.
+function _pcSurvieChoix(p, cible){
+  const conf = p.conf || {};
+  let cand = p.especes.filter(s => s !== cible).map(s => [s, _pcRessemblance(cible, s, conf)]).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const pris = [];
+  while(pris.length < PC_SURVIE_NOMS - 1 && cand.length){
+    const tot = cand.reduce((t, x) => t + x[1] + 1, 0);
+    let r = Math.random() * tot, k = 0;
+    for(; k < cand.length - 1; k++){ r -= cand[k][1] + 1; if(r <= 0) break; }
+    pris.push(cand[k][0]); cand.splice(k, 1);
+  }
+  return _pcMelanger([cible, ...pris]);
+}
+// La cible suivante : au hasard, jamais deux fois de suite le meme oiseau.
+function _pcSurvieTirer(p){
+  const der = p.questions[p.questions.length - 1]?.cible;
+  const l = p.especes.filter(s => s !== der);
+  return { cible: l[Math.floor(Math.random() * l.length)], type: 'nom' };
+}
+async function _pcSurvieLancer(){
+  const box = document.getElementById('pcParcours'); if(!box) return;
+  _pc.vue = 'survie';
+  const especes = [...PC_ENTR_ESPECES];
+  const sons = await _pcSons(box, especes, 'Retour'); if(!sons) return;
+  if(!_pcSurvieTable){ try{ _pcSurvieTable = await (await fetch('data/quiz-confusions.json?v=' + PC_SURVIE_TABLE_V)).json(); }catch(_){ _pcSurvieTable = {}; } }
+  if(!_pcSurvieLigue) await _pcSurvieLireLigue();
+  const s = _pcSurvieLocal();
+  s.parties++; s.sale = true; _pcSurvieGarder(s);
+  const p = {
+    kind: 'survie', especes, sons, cur: 0, bonnes: 0, repondu: false, questions: [],
+    confusions: [], utilises: new Set(), enregistreurs: new Map(), resultats: [],
+    recordAvant: s.record, conf: _pcSurvieConfusions(),
+  };
+  p.questions.push(_pcSurvieTirer(p));
+  _pc.partie = p;
+  _pcQuestion();
+}
+// Appele a chaque reponse (_pcCompter) : une bonne en ajoute une, une erreur finit la partie.
+function _pcSurvieReponse(p, q, juste, choisi){
+  const s = _pcSurvieLocal();
+  if(juste){
+    p.questions.push(_pcSurvieTirer(p));
+    if(p.bonnes > s.record){ s.record = p.bonnes; s.sale = true; }
+  } else if(choisi){
+    const k = q.cible + '|' + choisi; s.conf[k] = (s.conf[k] || 0) + 1; s.sale = true;
+  }
+  _pcSurvieGarder(s);
+  _pcSurvieTeteMaj(p);
+}
+function _pcSurvieJauge(score){
+  const c = _pcSurvieCible(score), rec = _pcSurvieLocal().record;
+  if(!c) return { f: 1, txt: score > 0 && score >= rec && _pcSurvieClassement().length > 1 ? 'Tu es en tête de la ligue' : 'Personne devant toi' };
+  const base = _pcSurvieClassement().filter(x => !x.moi && x.record <= score).reduce((m, x) => Math.max(m, x.record), 0);
+  return { f: Math.max(0, Math.min(1, (score - base) / Math.max(1, c.record + 1 - base))), txt: `${esc(_pcSurvieNom(c))} à ${c.record}, encore ${c.record + 1 - score}` };
+}
+function _pcSurvieTeteHtml(p){
+  const j = _pcSurvieJauge(p.bonnes);
+  const rec = p.bonnes > p.recordAvant && p.recordAvant > 0;
+  return `<div class="pc-jeu-tete">
+      <span class="pc-survie-compte"><b>${p.bonnes}</b> d'affilée${rec ? ' <span class="pc-survie-record">· nouveau record</span>' : ''}</span>
+      <span class="pc-jeu-droite">${_pcHistoriqueHtml(p, p.cur, 'Réécouter', true)}<button type="button" class="btn ghost pc-quitter" data-pc-retour>Arrêter</button></span>
+    </div>
+    <div class="pc-survie-jauge"><span class="pc-barre" aria-hidden="true"><i style="width:${(j.f * 100).toFixed(1)}%"></i></span><span class="pc-meta">${j.txt}</span></div>`;
+}
+// Apres une reponse, le compteur et la jauge changent sans redessiner la question (le chant joue).
+function _pcSurvieTeteMaj(p){
+  const t = document.querySelector('#pcParcours .pc-survie-tete'); if(!t) return;
+  t.innerHTML = _pcSurvieTeteHtml(p);
+}
+// La « chasse » : le membre juste devant, et ce qu'il manque pour le depasser.
+function _pcSurvieChasseHtml(score){
+  const c = _pcSurvieCible(score);
+  if(!c) return _pcSurvieClassement().length > 1 ? '<div class="pc-chasse"><span>Tu es en tête de la ligue.</span></div>' : '';
+  const j = _pcSurvieJauge(score);
+  return `<div class="pc-chasse"><span>Encore <b>${c.record + 1 - score}</b> d'affilée pour dépasser <b>${esc(_pcSurvieNom(c))}</b></span>
+    <span class="pc-barre" aria-hidden="true"><i style="width:${(j.f * 100).toFixed(1)}%"></i></span></div>`;
+}
+function _pcSurviePodiumHtml(){
+  const l = _pcSurvieClassement().slice(0, 3);
+  if(!l.length) return '<p class="help">Personne n\'a encore joué. Le premier record sera le tien.</p>';
+  const marche = (x, rang) => x ? `<div class="pc-marche r${rang}${x.moi ? ' moi' : ''}">${_pcSurvieAv(x, 40)}<span class="pc-marche-nom">${esc(_pcSurvieNom(x))}</span><b>${x.record}</b></div>` : '<div></div>';
+  return `<div class="pc-podium" aria-label="Podium">${marche(l[1], 2)}${marche(l[0], 1)}${marche(l[2], 3)}</div>`;
+}
+function _pcSurvieTableauHtml(){
+  const l = _pcSurvieClassement();
+  if(l.length <= 3) return '';
+  return `<details class="pc-survie-tout"><summary>Tout le classement (${l.length})</summary>
+    <div class="pc-survie-tab">${l.map((x, i) => `<div class="pc-survie-l${x.moi ? ' moi' : ''}"><span class="pc-survie-rg">${i + 1}</span>${_pcSurvieAv(x, 28)}<span class="pc-survie-nm">${esc(_pcSurvieNom(x))}${x.moi ? '' : ''}</span><span class="pc-survie-sc">${x.record}</span></div>`).join('')}</div></details>`;
+}
+function _pcRenderSurvie(box){
+  const s = _pcSurvieLocal();
+  box.innerHTML = `<div class="pc-entr-page pc-survie">
+    <button type="button" class="pc-retour" data-pc-liste>${PC_ICO.retour}Quiz</button>
+    <div class="pc-entr-tete"><span class="pc-mode-ico">${PC_SURVIE_ICO}</span>
+      <div><h3 class="pc-titre">Survie</h3><span class="pc-meta">Tous les oiseaux du quiz, jusqu'à la première erreur · ton record : ${s.record}</span></div></div>
+    ${_pcSurvieLigue ? _pcSurviePodiumHtml() + _pcSurvieChasseHtml(s.record) + _pcSurvieTableauHtml() : '<p class="help">Chargement du classement…</p>'}
+    <div class="pc-entr-bas"><span class="pc-meta">5 noms proposés, choisis parmi les oiseaux qui se ressemblent.</span>
+      <button type="button" class="btn" data-pc-survie-jouer>Jouer</button></div>
+  </div>`;
+  if(!_pcSurvieLigue) _pcSurvieLireLigue().then(() => { if(_pc.vue === 'survie' && !_pc.partie) _parcoursRender(); });
+}
+function _pcSurvieFin(box, p){
+  _pc.partie = null;
+  const s = _pcSurvieLocal();
+  const nouveau = p.bonnes > p.recordAvant;
+  // _pcVerdict a deja avance p.cur : la question ratee est la derniere de la liste.
+  const q = p.questions[p.questions.length - 1], choisi = p.confusions[p.confusions.length - 1]?.[1];
+  const rang = _pcSurvieClassement().findIndex(x => x.moi) + 1;
+  box.innerHTML = `<div class="pc-fin pc-survie-fin">
+    <div class="pc-etiq">Survie · fini</div>
+    <div class="pc-fin-score">${p.bonnes}</div>
+    <p class="pc-meta">${nouveau ? (p.recordAvant ? 'Nouveau record' : 'Ton premier record') : `d'affilée · ton record reste ${s.record}`}${rang ? ` · ${rang}<sup>e</sup> de la ligue` : ''}</p>
+    ${_pcSurvieChasseHtml(s.record)}
+    ${q ? `<div class="pc-survie-rate"><span class="pc-bilan-ph" data-pc-vign="${esc(q.cible)}"></span><span>C'était : <span class="sp-link" data-sci="${esc(q.cible)}">${esc(_pcNomFr(q.cible))}</span>${choisi ? `, tu as répondu ${esc(_pcNomFr(choisi))}` : ''}.</span></div>` : ''}
+    ${_pcGainsHtml(p)}
+    ${_pcHistoriqueHtml(p, p.questions.length, 'Réécouter les chants de la partie')}
+    <div class="pc-fin-btns">
+      <button type="button" class="btn ghost" data-pc-survie>Classement</button>
+      <button type="button" class="btn" data-pc-survie-jouer>Rejouer</button>
+    </div>
+  </div>`;
+  _pcPhotos(box);
+  // Le record part a la ligue, puis le classement est relu pour la prochaine ouverture.
+  _pcSurvieEnvoyer().then(_pcSurvieLireLigue);
+}
+// L'entree, sur l'accueil du Quiz, sous l'entrainement.
+function _pcSurvieSectionHTML(){
+  const s = _pcSurvieLocal();
+  const rang = _pcSurvieLigue ? _pcSurvieClassement().findIndex(x => x.moi) + 1 : 0;
+  const desc = s.record ? `Ton record : ${s.record}${rang ? ` · ${rang}e de la ligue` : ''}` : 'Jusqu\'à la première erreur';
+  return `<section class="pc-bloc" aria-labelledby="pcSurvieTitre">
+    <h3 class="bloc-titre" id="pcSurvieTitre">Survie <span class="bloc-titre-note">· classement de la ligue</span></h3>
+    <div class="ml-boxes pc-boites"><button type="button" class="ml-box" data-pc-survie><span class="ml-ic" aria-hidden="true">${PC_SURVIE_ICO}</span><span class="pc-boite-txt"><span>Survie</span><span class="pc-boite-desc">${esc(desc)}</span></span></button></div>
+  </section>`;
+}
+// Un podium a trois marches, au trait comme les autres icones du Quiz.
+const PC_SURVIE_ICO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 20v-6h6v6M9 20V9h6v11M15 20v-8h6v8M2 20h20"/></svg>';
+
 const _pcSeuil = et => Math.ceil(et.q * 0.8);
 const _pcNomFr = sci => FR_NAMES[sci] || sci;
 const _pcMelanger = arr => arr.map(v => [Math.random(), v]).sort((a, b) => a[0] - b[0]).map(v => v[1]);
@@ -27504,12 +27736,13 @@ function _parcoursRender(){
   _pcHistArreter();
   // L'accueil se range comme les autres pages : colle en haut, sans agrandissement, avec sa
   // phrase d'introduction. Le chemin et les parties restent centres dans l'ecran.
-  const accueil = _pc.vue !== 'chemin' && _pc.vue !== 'entr' && _pc.vue !== 'oiseau';
+  const accueil = _pc.vue !== 'chemin' && _pc.vue !== 'entr' && _pc.vue !== 'oiseau' && _pc.vue !== 'survie';
   box.classList.toggle('pc-haut', accueil);
   const intro = document.getElementById('pcIntro'); if(intro) intro.hidden = !accueil;
   if(_pc.vue === 'chemin') _pcRenderChemin(box);
   else if(_pc.vue === 'entr') _pcRenderEntr(box);
   else if(_pc.vue === 'oiseau') _pcRenderOiseau(box);
+  else if(_pc.vue === 'survie') _pcRenderSurvie(box);
   else _pcRenderListe(box);
   _pcPhotos(box);
   _pcAjuster();
@@ -27541,6 +27774,7 @@ function _pcRenderListe(box){
     </div>`).join('');
   box.innerHTML = `<div class="pc-accueil">
     ${_pcEntrSectionHTML()}
+    ${_pcSurvieOuverte() ? _pcSurvieSectionHTML() : ''}
     ${_pcOiseauxSectionHTML()}
     <section class="pc-bloc" aria-labelledby="pcParcoursTitre">
       <h3 class="bloc-titre" id="pcParcoursTitre">Parcours <span class="bloc-titre-note">· ${PARCOURS_OUVERTS.length} ${PARCOURS_OUVERTS.length > 1 ? 'ouverts' : 'ouvert'}, ${PARCOURS_BIENTOT.length} à venir</span></h3>
@@ -27824,8 +28058,8 @@ function _pcQuestion(){
   _pcHistArreter();
   const q = p.questions[p.cur], total = p.questions.length;
   p.repondu = false;
-  const libelle = p.kind === 'entr' ? `${esc(PC_ENTR_MODES[p.mode].titre)} · manche` : `Étape ${p.etape + 1} · question`;
-  const tete = `
+  const libelle = p.kind === 'entr' ? `${esc(PC_ENTR_MODES[p.mode].titre)} · manche` : p.kind === 'survie' ? '' : `Étape ${p.etape + 1} · question`;
+  const tete = p.kind === 'survie' ? `<div class="pc-survie-tete">${_pcSurvieTeteHtml(p)}</div>` : `
     <div class="pc-jeu-tete">
       <span>${libelle} <b>${p.cur + 1}</b> sur ${total}</span>
       <span class="pc-jeu-droite"><span aria-label="${p.bonnes} bonnes réponses">✓ ${p.bonnes}</span>${_pcHistoriqueHtml(p, p.cur, 'Réécouter', true)}<button type="button" class="btn ghost pc-quitter" data-pc-retour>Quitter</button></span>
@@ -27844,14 +28078,14 @@ function _pcQuestion(){
     if(q.type === 'nom'){
       // Dans un parcours, tous les oiseaux en jeu sont proposes, six compris : « Un chant, 6 noms »
       // doit en montrer six. L'entrainement s'arrete a 5.
-      q.choix = _pcChoixNoms(p.especes, q.cible, p.kind === 'entr' ? PC_NOMS_MAX : p.especes.length);
+      q.choix = p.kind === 'survie' ? _pcSurvieChoix(p, q.cible) : _pcChoixNoms(p.especes, q.cible, p.kind === 'entr' ? PC_NOMS_MAX : p.especes.length);
       // Cercles d'indices : seulement pour apprendre, soit l'entrainement et les etapes d'un
       // parcours qui ajoutent un oiseau (pas celles marquees sansCercles), et jamais pour des
       // oiseaux qui n'en ont pas. Un futur mode classe n'en aura pas non plus (Mathis le
       // 2026-10-18) : il devra les couper ici. Masques a la demande, par une simple classe :
       // re-rendre couperait le chant.
-      const etape = p.kind === 'entr' ? null : p.P.etapes[p.etape];
-      cercles = !etape?.sansCercles && q.choix.some(sci => PC_CERCLES[sci]);
+      const etape = p.P ? p.P.etapes[p.etape] : null;   // ni l'entrainement ni la survie n'ont d'etape
+      cercles = p.kind !== 'survie' && !etape?.sansCercles && q.choix.some(sci => PC_CERCLES[sci]);
       if(cercles && !_pcCerclesMasques()) q.indicesVus = true;   // la serie ne bougera pas (_pcQuestionCompte)
       reponses = `<div class="pc-reponses${cercles && _pcCerclesMasques() ? ' sans-cercles' : ''}" id="pcChoix">
         ${q.choix.map((sci, k) => `<button type="button" class="pc-reponse" data-pc-choix="${k}"><span class="pc-vign" data-pc-vign="${esc(sci)}"></span><span class="pc-reponse-nom">${esc(_pcNomFr(sci))}</span>${cercles ? _pcCerclesHtml(sci) : ''}</button>`).join('')}
@@ -27984,7 +28218,8 @@ function _pcCompter(p, q, juste, choisi){
   if(juste) p.bonnes++; else if(choisi) p.confusions.push([q.cible, choisi]);
   p.resultats[p.cur] = juste ? 'ok' : 'ko';
   const gagne = _pcNoterReponse(q.cible, juste, choisi, _pcQuestionCompte(p, q));
-  if(gagne) (p.paliers ||= new Map()).set(q.cible, gagne);   // le plus haut l'emporte : ils ne font que monter
+  if(gagne) (p.paliers ||= new Map()).set(q.cible, gagne);
+  if(p.kind === 'survie') _pcSurvieReponse(p, q, juste, choisi);   // le plus haut l'emporte : ils ne font que monter
   _pcCouperSons();
   const seg = document.querySelectorAll('#pcParcours .pc-segments i')[p.cur]; if(seg) seg.className = p.resultats[p.cur];
 }
@@ -28092,6 +28327,7 @@ function _pcFin(){
   _pcLibererSons();
   // L'entrainement n'ecrit jamais dans le parcours : ni score, ni etoiles, ni etape ouverte.
   if(p.kind === 'entr'){ _pcEntrFin(box, p); return; }
+  if(p.kind === 'survie'){ _pcSurvieFin(box, p); return; }
   const et = p.P.etapes, e = et[p.etape];
   _pcEnregistrerScore(p.P, p.etape, p.bonnes);
   const ok = p.bonnes >= _pcSeuil(e);
@@ -28129,7 +28365,7 @@ document.addEventListener('click', e => {
   const liste = e.target.closest('[data-pc-liste]'); if(liste){ _pc.vue = 'liste'; _parcoursRender(); document.querySelector(`#pcParcours [data-pc-ouvrir="${_pc.parcours}"]`)?.focus(); return; }
   const etape = e.target.closest('[data-pc-etape]'); if(etape){ _pc.selection = +etape.dataset.pcEtape; _pcDessinerChemin(_pc.selection); return; }
   const jouer = e.target.closest('[data-pc-jouer]'); if(jouer){ _pcLancer(+jouer.dataset.pcJouer); return; }
-  const retour = e.target.closest('[data-pc-retour]'); if(retour){ _pcLibererSons(); _pc.partie = null; _parcoursRender(); return; }
+  const retour = e.target.closest('[data-pc-retour]'); if(retour){ _pcLibererSons(); if(_pc.partie?.kind === 'survie') _pcSurvieEnvoyer(); _pc.partie = null; _parcoursRender(); return; }
   const ecoute = e.target.closest('[data-pc-ecoute]'); if(ecoute){ _pcEcouter(+ecoute.dataset.pcEcoute); return; }
   // Entrainement
   const entr = e.target.closest('[data-pc-entr]'); if(entr){ _pc.vue = 'entr'; _pc.mode = entr.dataset.pcEntr; _parcoursRender(); document.querySelector('#pcParcours .pc-retour')?.focus(); return; }
@@ -28143,6 +28379,8 @@ document.addEventListener('click', e => {
     _parcoursRender(); document.querySelector('#pcParcours [data-pc-tout]')?.focus(); return;
   }
   const entrJouer = e.target.closest('[data-pc-entr-jouer]'); if(entrJouer){ _pcEntrLancer(entrJouer.dataset.pcEntrJouer); return; }
+  if(e.target.closest('[data-pc-survie-jouer]')){ _pcSurvieLancer(); return; }
+  if(e.target.closest('[data-pc-survie]')){ _pc.vue = 'survie'; _pcSurvieLigue = null; _parcoursRender(); document.querySelector('#pcParcours .pc-retour')?.focus(); return; }
   // Paliers : la fiche d'un oiseau, et l'entrainement sur lui
   const oiseau = e.target.closest('[data-pc-oiseau]'); if(oiseau){ _pc.vue = 'oiseau'; _pc.oiseau = oiseau.dataset.pcOiseau; _parcoursRender(); document.querySelector('#pcParcours .pc-retour')?.focus(); return; }
   const oiseauJouer = e.target.closest('[data-pc-oiseau-jouer]'); if(oiseauJouer){ _pcOiseauLancer(oiseauJouer.dataset.pcOiseauJouer); return; }

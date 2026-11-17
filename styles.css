@@ -1954,6 +1954,32 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .pc-confusions { list-style:none; padding:0; margin:6px 0 0; font-size:14px; color:var(--ink-2); }
   .pc-confusions li { margin:3px 0; }
   .pc-fin-btns { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:18px; }
+  /* Survie, le mode classe (maquette « B, la chasse », notes-privees/maquettes/quiz-classe/, 2026-11-18) */
+  .pc-survie-compte { font-size:15px; color:var(--ink-2); }
+  .pc-survie-compte b { font:700 24px/1 var(--titre); color:var(--accent-ink); margin-right:2px; }
+  .pc-survie-record { color:var(--accent-ink); font-weight:600; }
+  .pc-survie-jauge { display:flex; flex-direction:column; gap:6px; margin:10px 0 14px; }
+  .pc-survie-jauge .pc-barre, .pc-chasse .pc-barre { height:8px; border-radius:4px; }
+  .pc-chasse { display:flex; flex-direction:column; gap:8px; background:var(--surface-2); border-radius:12px; padding:12px 14px; font-size:15px; margin:12px 0; text-align:left; }
+  .pc-podium { display:grid; grid-template-columns:1fr 1.15fr 1fr; align-items:end; gap:8px; margin:14px 0 4px; max-width:460px; }
+  .pc-marche { display:flex; flex-direction:column; align-items:center; gap:4px; background:var(--surface-2); border-radius:12px 12px 0 0; padding:10px 6px; font-size:14px; min-width:0; }
+  .pc-marche.r1 { padding-top:26px; } .pc-marche.r2 { padding-top:16px; }
+  .pc-marche b { font:700 24px/1.1 var(--titre); }
+  .pc-marche-nom { max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--ink-2); }
+  .pc-marche.moi { background:color-mix(in srgb, var(--accent) 12%, var(--surface)); }
+  .pc-marche.moi .pc-marche-nom { color:var(--accent-ink); font-weight:600; }
+  .pc-survie-tout { margin:4px 0 8px; font-size:14px; }
+  .pc-survie-tout summary { cursor:pointer; color:var(--accent-ink); font-weight:600; padding:6px 0; }
+  .pc-survie-tab { border:1px solid var(--line); border-radius:10px; overflow:hidden; max-width:460px; }
+  .pc-survie-l { display:grid; grid-template-columns:28px 28px 1fr auto; gap:10px; align-items:center; padding:7px 12px; font-size:14px; border-top:1px solid var(--line); }
+  .pc-survie-l:first-child { border-top:0; }
+  .pc-survie-l.moi { background:color-mix(in srgb, var(--accent) 10%, transparent); }
+  .pc-survie-rg { font-weight:700; color:var(--ink-3); text-align:center; }
+  .pc-survie-nm { font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .pc-survie-sc { font-weight:700; font-variant-numeric:tabular-nums; }
+  .pc-survie-fin .pc-chasse { max-width:460px; margin-left:auto; margin-right:auto; }
+  .pc-survie-rate { display:flex; align-items:center; gap:10px; max-width:460px; margin:12px auto 0; padding:10px 12px; border-radius:10px; background:color-mix(in srgb, var(--pc-ko) 9%, var(--surface)); font-size:15px; text-align:left; }
+  .pc-survie-rate .pc-bilan-ph { width:36px; height:36px; }
   /* Entrainement (qg#56, maquette de notes-privees/maquettes/quiz-entrainement/) : les boites
      de l'accueil ouvrent chacune une page pour cocher les oiseaux. */
   .pc-mode-ico { flex:none; width:46px; height:46px; border-radius:50%; display:grid; place-items:center; background:color-mix(in srgb, var(--accent) 12%, var(--surface)); color:var(--accent-ink); }

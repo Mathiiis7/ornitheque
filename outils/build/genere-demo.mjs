@@ -309,6 +309,13 @@ IDEES.forEach(([uid, nom, texte, statut, jours], i) => {
     { uid, name: nom, text: texte, status: statut, createdAt: ts(MAINTENANT - jours * JOUR) };
 });
 
+// Records de la survie (quiz classe, 2026-11-18) : sans eux, le podium et « encore N pour
+// depasser » restent vides dans la demo. Le visiteur n'en a pas : il joue pour se placer.
+const SURVIE = [['demo-samir', 'Samir', 31], ['demo-lina', 'Lina', 24], ['demo-hugo', 'Hugo', 9], ['demo-claire', 'Claire', 4]];
+for(const [uid, nom, record] of SURVIE){
+  DONNEES['leagues/' + LIGUE + '/quizStats/' + uid] = { uid, name: nom, survie: { record, parties: record, conf: {}, maj: ts(MAINTENANT - record * 3600000) } };
+}
+
 const REACTIONS = [
   ['demo-hugo',   'chat:msg-4', '🎉'], ['demo-samir', 'chat:msg-4', '👏'],
   ['demo-claire', 'chat:msg-2', '😂'], [UID_MOI,      'chat:msg-1', '😍'],
