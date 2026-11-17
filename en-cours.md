@@ -1,6 +1,9 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1108 / app.js?v=680 (13/11, météo sur la Carte). Prochaine : v1109 / 681.
+Dernière version : v1113 / app.js?v=685 (17/11). Prochaine : v1114 / 686.
+- **v1113** : chant du quiz muet après l'ouverture d'une fiche. La fiche lançait jusqu'à 24 chants + sonagrammes
+  vers xeno-canto, qui répond 429 (trop de demandes) à tout ; elle ne précharge plus que chant et cri principaux.
+  xeno-canto refuse dès ~6 demandes simultanées, pas à 3 ; ne pas le tester en rafale (refusé, c'est leur serveur).
 - **v1108** : météo Open-Meteo (CC BY 4.0, sans clé, non commercial < 10 000 demandes/jour) et lever du soleil sur
   la Carte. Panneau : ligne repliée sous le nom de la zone (région, département, zone dessinée ; rien pour un pays),
   3 jours au dépli ; bulle d'un hotspot : 3 colonnes en pied. Un jour cliqué montre ses heures (lever - 1 h à
