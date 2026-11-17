@@ -5,9 +5,13 @@
   Visible seulement en local (`_pcSurvieOuverte`) ; l'ouvrir = retirer la condition localhost quand les parcours seront
   tous créés. Record dans `quizStats/<uid>.survie` (règles existantes), lu par getDocs (pas d'écouteur au démarrage).
   Ressemblance : `_pcRessemblance` (table `data/quiz-confusions.json` x3, motif/strophe des indices, même parcours, même
-  genre, confusions ligue + perso). Table encore VIDE : recherche internet en cours, à faire relire par Mathis.
-- Restent : remplir la table, la faire relire ; écran de fin : le repli « Réécouter » est aligné à gauche comme en
-  entraînement (pas retouché).
+  genre, confusions ligue + perso), tirage au poids au carre parmi les 8 plus proches.
+- v1117 : table remplie par `node outils/build/quiz-confusions.mjs` depuis `docs/quiz-confusions-recherche.json`
+  (59 paires, 49 dans le jeu). Relecture : `docs/quiz-confusions.md`. Les choix de Mathis vont dans
+  `docs/quiz-confusions-decisions.json` ({ "a|b" triés : niveau, 0 = retirée }), puis relancer le script et monter
+  `PC_SURVIE_TABLE_V`. Attendent sa réponse : 10 paires sans source. Sans aucune paire : Bouscarle, Cisticole, Bruant
+  des roseaux (rien de publié). Véloce/fitis seulement niveau 1 : le BTO dit leurs chants très différents.
+- Écran de fin : le repli « Réécouter » est aligné à gauche comme en entraînement (pas retouché).
 
 ## Décisions du mode classé (18/11)
 - **Score : survie.** Questions enchaînées jusqu'à la première erreur ; le record (bonnes réponses d'affilée) fait le
@@ -25,7 +29,7 @@
 - Reste ouvert : nombre de noms proposés, un essai par jour ou illimité, classement à vie ou par mois, que faire tant
   qu'il n'y a que 11 oiseaux.
 
-Dernière version : v1116 / app.js?v=688 (18/11). Prochaine : v1117 / 689.
+Dernière version : v1117 / app.js?v=689 (18/11). Prochaine : v1118 / 690.
 - **v1115** : l'entraînement ne fait plus bouger la série (seuls les parcours comptent).
 - **v1114** : série d'un oiseau au quiz, règle « partout, sans aide » choisie par Mathis (`_pcQuestionCompte`) :
   5 oiseaux mini, jamais « parmi 3 chants », jamais avec indices vus. Les séries déjà gagnées ne sont pas recalculées.
