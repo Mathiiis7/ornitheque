@@ -3011,13 +3011,15 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .pkdx-barre:has(+ .pkdx-bloc[hidden]) { margin-bottom:14px; }
   .pkdx-bloc .pkdx-tri { max-width:420px; }
   .pkdx-bloc .rar-chips { flex-wrap:wrap; row-gap:6px; }
-  /* Le Birdydex a toute la largeur : il ne prend pas l'écart de 2 px serré pour la Carte, qui fait 1,7 px
-     d'écran sous le zoom 0,85 et tombait entre deux pixels - écarts de 2 ou 3 px selon le rond (Mathis,
-     2026-11-17). Le pas d'un rond au suivant vaut ici 20 px d'ÉCRAN pile (400/17 px écrits × 0,85) : un
-     nombre entier de pixels d'appareil à 100, 125, 150 et 200 %, donc chaque rond tombe au même endroit
-     de la grille de pixels et tous les écarts sont égaux (3 px d'écran). */
+  /* L'écart de 2 px serré plus haut fait 1,7 px d'écran sous le zoom 0,85 et tombait entre deux pixels :
+     écarts de 2 ou 3 px selon le rond, Birdydex comme Carte (Mathis, 2026-11-17). Le pas d'un rond au
+     suivant vaut ici 20 px d'ÉCRAN pile (400/17 px écrits × 0,85) : un nombre entier de pixels d'appareil
+     à 100, 125, 150 et 200 %, donc chaque rond tombe au même endroit de la grille de pixels et tous les
+     écarts sont égaux (3 px d'écran). Le Récent tient encore sur une ligne : 261 px pour 268 (mesuré).
+     Le filet garde 6 px de chaque côté (écart + marge gauche = les 6 px de .rar-cats à droite). */
   @media (pointer: fine) and (min-width:701px){
-    .pkdx-bloc.ct-bloc .rar-chips { column-gap:calc(400px / 17 - 20px); }
+    .ct-bloc .rar-chips { column-gap:calc(400px / 17 - 20px); }
+    .ct-bloc .rar-sep { margin-left:calc(26px - 400px / 17); }
   }
   .pkdx-rar-liens { margin-left:14px; }
   /* Écran étroit, au doigt ou non : les pastilles passent à la ligne et les choix collés écrivent leur
