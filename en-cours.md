@@ -1,6 +1,8 @@
 # Où on en est (2026-11-07)
 
-Dernière version : v1113 / app.js?v=685 (17/11). Prochaine : v1114 / 686.
+Dernière version : v1114 / app.js?v=686 (17/11). Prochaine : v1115 / 687.
+- **v1114** : série d'un oiseau au quiz, règle « partout, sans aide » choisie par Mathis (`_pcQuestionCompte`) :
+  5 oiseaux mini, jamais « parmi 3 chants », jamais avec indices vus. Les séries déjà gagnées ne sont pas recalculées.
 - **v1113** : chant du quiz muet après l'ouverture d'une fiche. La fiche lançait jusqu'à 24 chants + sonagrammes
   vers xeno-canto, qui répond 429 (trop de demandes) à tout ; elle ne précharge plus que chant et cri principaux.
   xeno-canto refuse dès ~6 demandes simultanées, pas à 3 ; ne pas le tester en rafale (refusé, c'est leur serveur).
