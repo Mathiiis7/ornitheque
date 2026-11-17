@@ -10,7 +10,11 @@
   (59 paires, 49 dans le jeu). Relecture : `docs/quiz-confusions.md`. Les choix de Mathis vont dans
   `docs/quiz-confusions-decisions.json` ({ "a|b" triés : niveau, 0 = retirée }), puis relancer le script et monter
   `PC_SURVIE_TABLE_V`. Les 10 paires sans source : toutes gardées par Mathis (v1118), 59 paires dans le jeu. Sans aucune paire : Bouscarle, Cisticole, Bruant
-  des roseaux (rien de publié). Véloce/fitis seulement niveau 1 : le BTO dit leurs chants très différents.
+  des roseaux (rien de publié) : leurs pièges restent leurs voisins de parcours (roselières), choix de Mathis le 18/11.
+  Véloce/fitis seulement niveau 1 : le BTO dit leurs chants très différents.
+- **Tous les oiseaux ont la même chance d'être l'oiseau à trouver** (exigence de Mathis, 18/11) : `_pcSurvieTirer` tire
+  au hasard égal, seule règle en plus : jamais deux fois de suite. Les ressemblances ne jouent que sur les 4 pièges.
+  Ne jamais pondérer la cible (ni par ressemblance, ni par erreurs passées) sans lui demander.
 - Écran de fin : le repli « Réécouter » est aligné à gauche comme en entraînement (pas retouché).
 
 ## Décisions du mode classé (18/11)
