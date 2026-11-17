@@ -17712,7 +17712,9 @@ function _renderSpeciesAudioBlock(container, label, primaryId, list, apresLabel 
     return total > 20 ? '0:20' : s;
   };
   const playerHtml = (r, audioId, taille = 'petit') => {
-    const sono = r.sono ? `<img class="xa-bar-sono" src="${esc(r.sono)}" alt="Spectrogramme" onerror="this.remove()">` : `<div class="xa-bar-fallback">Pas de spectrogramme</div>`;
+    // Sonagrammes du repli en chargement differe : ils vivent aussi sur xeno-canto, et partaient
+    // tous avec la fiche, repli ferme (voir plus bas, le 429 du 2026-11-17).
+    const sono = r.sono ? `<img class="xa-bar-sono" src="${esc(r.sono)}" alt="Spectrogramme"${taille === 'mini' ? ' loading="lazy"' : ''} onerror="this.remove()">` : `<div class="xa-bar-fallback">Pas de spectrogramme</div>`;
     return `<div class="xa-player" data-xa-src="${esc(r.file)}"${audioId?` data-xa-id="${esc(audioId)}"`:''}>
       <button type="button" class="pc-lecture pc-lecture-${taille}" data-xa-play aria-label="Lire / pause">${PC_LECTURE_SVG}</button>
       <div class="xa-body">
@@ -17752,15 +17754,10 @@ function _renderSpeciesAudioBlock(container, label, primaryId, list, apresLabel 
   }
   // Wire les players custom (play + seek + progress update + time counter).
   container.querySelectorAll('.xa-player').forEach(_wireCustomAudioPlayer);
-  // Amorce le fetch des audios secondaires quand l'user deplie le <details>.
-  // Certains browsers deferrent preload="auto" pour les elements dans un ancestor
-  // display:none / <details> collapse -> click play = delai visible.
-  container.querySelectorAll('.xa-more').forEach(d => {
-    d.addEventListener('toggle', () => {
-      if(!d.open) return;
-      d.querySelectorAll('.xa-player audio').forEach(a => { try{ if(a.readyState === 0) a.load(); }catch(_){} });
-    });
-  });
+  // Les autres enregistrements ne se chargent qu'au clic sur leur bouton, plus a l'ouverture
+  // de la fiche ni du repli : une fiche lancait jusqu'a 24 chants d'un coup vers xeno-canto, qui
+  // repondait 429 (trop de demandes) a tout, y compris au chant du quiz suivant, reste muet
+  // (reproduit le 2026-11-17 en ouvrant la fiche depuis le verdict du quiz).
 }
 // Cable un player custom : play/pause, seek clic, progress bar animee, time text.
 // Registre global des audios de fiche espece pour un mutex fiable : quand un audio play,
@@ -17773,12 +17770,16 @@ function _wireCustomAudioPlayer(playerEl){
   const src = playerEl.dataset.xaSrc;
   const audioId = playerEl.dataset.xaId;
   if(!src) return;
-  const audio = new Audio(src);
-  audio.preload = 'auto';
+  // Seuls les lecteurs principaux (chant, cri) se prechargent ; ceux du repli attendent le clic,
+  // qui charge l'audio lui-meme (readyState 0 -> load).
+  const secondaire = !!playerEl.closest('.xa-more');
+  const audio = new Audio();
+  audio.preload = secondaire ? 'none' : 'auto';
+  audio.src = src;
   if(audioId) audio.id = audioId;
   playerEl.appendChild(audio);
   audio.style.display = 'none';
-  try{ audio.load(); }catch(_){}
+  if(!secondaire){ try{ audio.load(); }catch(_){} }
   _xaAudios.add(audio);
   // Fonction globale de cancel pour un audio + son bouton : reset l'etat visuel et
   // annule tout pending play. Stockee sur l'audio pour etre appelable depuis n'importe
@@ -27058,10 +27059,14 @@ function _pcSonSurveille(box){
       msg.hidden = false;
     };
     a.addEventListener('error', dire);
-    a.addEventListener('play', () => {
+    // Aussi quand le chant cale en route (waiting) : la surveillance ne s'armait qu'au depart, et
+    // un flux arrete apres « playing » laissait le bouton sur pause devant un silence (2026-11-17).
+    const armer = () => {
       clearTimeout(attente);
       if(a.readyState < 3) attente = setTimeout(() => { if(a.readyState < 3 && !a.paused) dire(); }, PC_SON_ATTENTE);
-    });
+    };
+    a.addEventListener('play', armer);
+    a.addEventListener('waiting', armer);
     a.addEventListener('playing', () => { clearTimeout(attente); msg.hidden = true; });
     a.addEventListener('pause', () => clearTimeout(attente));
   });
