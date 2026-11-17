@@ -1,6 +1,21 @@
-# Où on en est (2026-11-07)
+# Où on en est (2026-11-18)
 
-Dernière version : v1114 / app.js?v=686 (17/11). Prochaine : v1115 / 687.
+## PROCHAIN CHANTIER : mode classé du quiz (décidé avec Mathis le 18/11, rien de construit)
+- **Score : survie.** Questions enchaînées jusqu'à la première erreur ; le record (bonnes réponses d'affilée) fait le
+  classement de la ligue. Question type « un chant, des noms » (pas « parmi 3 chants »), sans indices.
+- **Ouvert à tous**, pas de condition de parcours finis. Oiseaux : tous ceux qui ont des chants gardés par Mathis
+  (aujourd'hui 11, ceux des 2 parcours ouverts ; grandit avec les parcours « bientôt »).
+- **Les noms proposés à côté du bon = oiseaux confondables**, d'un parcours ou d'un autre. Mathis veut tout combiner :
+  confusions de la ligue (`conf` des stats), recherches internet (espèces de confusion des guides, sources à citer),
+  indices (`PC_CERCLES`). Aucune table de ressemblance n'existe : à construire, puis à faire relire par Mathis.
+- Base possible : l'ancien classement de la ligue (`_quizSubscribeCloud`, `_quizRenderLeaderboard`), retiré de la
+  page mais gardé (docs/refonte-quiz.md l. 27). Règles Firestore et banc `firestore` à revoir (une lecture par abonné).
+- Méthode : maquettes d'abord (plusieurs directions), avant tout code.
+- Reste ouvert : nombre de noms proposés, un essai par jour ou illimité, classement à vie ou par mois, que faire tant
+  qu'il n'y a que 11 oiseaux.
+
+Dernière version : v1115 / app.js?v=687 (18/11). Prochaine : v1116 / 688.
+- **v1115** : l'entraînement ne fait plus bouger la série (seuls les parcours comptent).
 - **v1114** : série d'un oiseau au quiz, règle « partout, sans aide » choisie par Mathis (`_pcQuestionCompte`) :
   5 oiseaux mini, jamais « parmi 3 chants », jamais avec indices vus. Les séries déjà gagnées ne sont pas recalculées.
 - **v1113** : chant du quiz muet après l'ouverture d'une fiche. La fiche lançait jusqu'à 24 chants + sonagrammes
