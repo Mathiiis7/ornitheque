@@ -1,6 +1,15 @@
 # Où on en est (2026-11-18)
 
-## PROCHAIN CHANTIER : mode classé du quiz (décidé avec Mathis le 18/11, rien de construit)
+## Mode classé du quiz : « Survie », base en ligne en v1116 (18/11), CACHÉE en ligne
+- Construit : maquette B « la chasse » (podium + membre à dépasser), 5 noms (pas 6, Mathis), compte pour les séries.
+  Visible seulement en local (`_pcSurvieOuverte`) ; l'ouvrir = retirer la condition localhost quand les parcours seront
+  tous créés. Record dans `quizStats/<uid>.survie` (règles existantes), lu par getDocs (pas d'écouteur au démarrage).
+  Ressemblance : `_pcRessemblance` (table `data/quiz-confusions.json` x3, motif/strophe des indices, même parcours, même
+  genre, confusions ligue + perso). Table encore VIDE : recherche internet en cours, à faire relire par Mathis.
+- Restent : remplir la table, la faire relire ; écran de fin : le repli « Réécouter » est aligné à gauche comme en
+  entraînement (pas retouché).
+
+## Décisions du mode classé (18/11)
 - **Score : survie.** Questions enchaînées jusqu'à la première erreur ; le record (bonnes réponses d'affilée) fait le
   classement de la ligue. Question type « un chant, des noms » (pas « parmi 3 chants »), sans indices.
 - **Ouvert à tous**, pas de condition de parcours finis. Oiseaux : tous ceux qui ont des chants gardés par Mathis
@@ -16,7 +25,7 @@
 - Reste ouvert : nombre de noms proposés, un essai par jour ou illimité, classement à vie ou par mois, que faire tant
   qu'il n'y a que 11 oiseaux.
 
-Dernière version : v1115 / app.js?v=687 (18/11). Prochaine : v1116 / 688.
+Dernière version : v1116 / app.js?v=688 (18/11). Prochaine : v1117 / 689.
 - **v1115** : l'entraînement ne fait plus bouger la série (seuls les parcours comptent).
 - **v1114** : série d'un oiseau au quiz, règle « partout, sans aide » choisie par Mathis (`_pcQuestionCompte`) :
   5 oiseaux mini, jamais « parmi 3 chants », jamais avec indices vus. Les séries déjà gagnées ne sont pas recalculées.
