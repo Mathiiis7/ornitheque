@@ -24622,6 +24622,25 @@ function _pkdxPoser(grid, morceaux, carte, hash){
     _pkdxQuandRempliAttente.splice(0).forEach(r => r());
     _jouerRevelations();
   };
+  // Les photos deja affichees passent d'une grille a la suivante. Redessinee, chaque case recevait une
+  // image NEUVE, que le navigateur redecode (decoding="async") et re-differe (loading="lazy") avant de la
+  // peindre : a chaque clic sur un filtre, toutes les photos s'eteignaient puis revenaient (Mathis,
+  // 2026-11-17, « ca fait mal aux yeux »). Un element <img> deplace garde son image decodee.
+  const anciennes = new Map();
+  grid.querySelectorAll('.pkdx-card .pkdx-img > img').forEach(im => {
+    if(!im.complete || !im.naturalWidth) return;
+    const sci = im.closest('.pkdx-card').dataset.sci;
+    if(!anciennes.has(sci)) anciennes.set(sci, []);
+    anciennes.get(sci).push(im);
+  });
+  const reprendre = (tranche) => {
+    if(!anciennes.size) return;
+    tranche.querySelectorAll('.pkdx-card .pkdx-img > img').forEach(im => {
+      const l = anciennes.get(im.closest('.pkdx-card').dataset.sci);
+      const i = l ? l.findIndex(o => o.getAttribute('src') === im.getAttribute('src')) : -1;
+      if(i >= 0) im.replaceWith(l.splice(i, 1)[0]);
+    });
+  };
   grid.innerHTML = '';
   if(!morceaux.length){ fini(); return; }
   const cols = _pkdxCols = _pkdxColonnes(grid);
@@ -24658,6 +24677,7 @@ function _pkdxPoser(grid, morceaux, carte, hash){
   const poser = ([a, b, nRangs, nTitres]) => {
     const est = hRang ? Math.round(nRangs * hRang + nTitres * 48) : 0;
     grid.insertAdjacentHTML('beforeend', '<div class="pkdx-tranche"' + (est ? ' style="contain-intrinsic-size:auto ' + est + 'px"' : '') + '>' + html(a, b) + '</div>');
+    reprendre(grid.lastElementChild);
     _pkdxLazyPhotos(grid.lastElementChild);
   };
   poser(blocs[0]);
