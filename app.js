@@ -27041,7 +27041,9 @@ const PC_PALIER_MIN_OISEAUX = 5;
 // - jamais « Un oiseau, 3 chants » : une chance sur 3 au hasard ;
 // - « Un chant, des noms » seulement parmi 5 noms ou plus ;
 // - jamais si les indices (cercles) ont ete visibles pendant la question, meme masques ensuite.
+// L'entrainement ne compte plus du tout (Mathis le 2026-11-18) : on y compose sa liste soi-meme.
 function _pcQuestionCompte(p, q){
+  if(p.kind === 'entr') return false;
   if(p.especes.length < PC_PALIER_MIN_OISEAUX) return false;
   if(q.type === 'chant' || q.indicesVus) return false;
   if(q.type === 'nom') return (q.choix?.length || 0) >= PC_PALIER_MIN_OISEAUX;
@@ -27126,7 +27128,7 @@ function _pcRenderOiseau(box){
     : `<span>Série en cours : <b>${cur}</b> d'affilée. Tous les paliers sont gagnés.</span>`;
   // La regle de _pcQuestionCompte, dite au joueur : sans elle, une serie qui ne bouge pas
   // ressemble a une panne (indices visibles par defaut).
-  const regle = `<p class="pc-meta">Seules comptent les réponses sans aide, dans une partie d'au moins ${PC_PALIER_MIN_OISEAUX}&nbsp;oiseaux : chant vers nom parmi ${PC_PALIER_MIN_OISEAUX}&nbsp;noms ou plus, ou nom à écrire, indices masqués.</p>`;
+  const regle = `<p class="pc-meta">Seules comptent les réponses sans aide dans les parcours, à partir de ${PC_PALIER_MIN_OISEAUX}&nbsp;oiseaux : chant vers nom ou nom à écrire, indices masqués. L'entraînement ne compte pas.</p>`;
   // conf « a|b » : a pris pour b. Ici, les oiseaux qu'on donne a la place de celui-ci.
   const confs = Object.entries(st.conf).filter(([c]) => c.startsWith(sci + '|'))
     .map(([c, k]) => [c.slice(sci.length + 1), k]).sort((a, b) => b[1] - a[1]).slice(0, 3);
