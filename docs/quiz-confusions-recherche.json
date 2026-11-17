@@ -1,0 +1,415 @@
+{
+  "_lisez_moi": "Recherche du 2026-11-18. a_verifier=false : la source a été ouverte et dit la ressemblance. a_verifier=true : source vue seulement dans un résumé de recherche, page inaccessible, source faible (forum) ou pas de source (source null). Les titres de vidéos BTO '#BirdSongBasics: X and Y' sont des comparaisons de chant faites par le BTO lui-même ; elles disent que la paire mérite d'être comparée, pas le détail.",
+  "parus major": {
+    "proches": [
+      { "sci": "periparus ater", "niveau": 3, "raison": "Même motif répété de deux notes (« ti-tu ti-tu »), plus aigu, plus rapide et plus fondu chez la Mésange noire.", "sources": ["https://www.bto.org/understanding-birds/birdfacts/coal-tit", "https://www.the-soc.org.uk/blogs/blog/improving-your-bird-sounds-id", "https://garden-birds.co.uk/birds/coal_tit.html", "https://www.bto.org/understanding-birds/birdfacts/great-tit"], "a_verifier": false },
+      { "sci": "cyanistes caeruleus", "niveau": 2, "raison": "Le chant de la bleue sonne « comme une charbonnière en plus faible », et leurs cris se confondent facilement.", "sources": ["https://www.wildechoes.org/species/paridae/blue-tit", "https://www.bto.org/understanding-birds/birdfacts/great-tit"], "a_verifier": false },
+      { "sci": "phylloscopus collybita", "niveau": 1, "raison": "Deux notes répétées en boucle, sur un rythme régulier ; timbre différent (pouillot plus sec et plus mince).", "sources": [], "source": null, "a_verifier": true }
+    ],
+    "hors_liste": [],
+    "note": "Répertoire immense : la charbonnière « trompe bien des observateurs expérimentés » (wildechoes), mais aucune source ne nomme d'autre espèce."
+  },
+  "phylloscopus collybita": {
+    "proches": [
+      { "sci": "phylloscopus trochilus", "niveau": 1, "raison": "Proche parent au même timbre de pouillot, mais chant très différent (deux notes alternées contre une descente) ; existent des chanteurs mixtes.", "sources": ["https://www.bto.org/understanding-birds/birdfacts/chiffchaff", "https://www.the-soc.org.uk/blogs/blog/improving-your-bird-sounds-id", "https://www.xeno-canto.org/555115"], "a_verifier": false },
+      { "sci": "parus major", "niveau": 1, "raison": "Deux notes répétées en boucle, sur un rythme régulier.", "sources": [], "source": null, "a_verifier": true },
+      { "sci": "aegithalos caudatus", "niveau": 1, "raison": "Comparés par le BTO dans une même vidéo de chants ; la ressemblance précise n'est pas dite (peut-être les cris).", "sources": ["https://www.bto.org/understanding-birds/birdfacts/chiffchaff"], "a_verifier": true }
+    ],
+    "hors_liste": ["Pouillot ibérique", "Pouillot siffleur"],
+    "note": "Les sources insistent surtout sur le fait que véloce et fitis se ressemblent à la vue, pas au chant."
+  },
+  "cyanistes caeruleus": {
+    "proches": [
+      { "sci": "parus major", "niveau": 2, "raison": "Chant « comme une charbonnière en plus faible », cris facilement confondus.", "sources": ["https://www.wildechoes.org/species/paridae/blue-tit", "https://www.bto.org/understanding-birds/birdfacts/great-tit"], "a_verifier": false },
+      { "sci": "lophophanes cristatus", "niveau": 1, "raison": "Notes aiguës suivies d'un trille roulé chez les deux.", "sources": [], "source": null, "a_verifier": true }
+    ],
+    "hors_liste": [],
+    "note": "Peu de sources au-delà de la charbonnière."
+  },
+  "poecile palustris": {
+    "proches": [
+      { "sci": "periparus ater", "niveau": 1, "raison": "Certains chants de nonnette rappellent la Mésange noire (motif répété aigu) ; comparées dans une vidéo BTO.", "sources": ["https://www.bto.org/understanding-birds/birdfacts/marsh-tit", "https://birdforum.net/threads/marsh-tit-or-coal-tit.439667"], "a_verifier": true }
+    ],
+    "hors_liste": ["Mésange boréale (Poecile montanus), la vraie confusion classique, surtout à la vue et aux cris"],
+    "note": "Presque rien de solide sur le chant ; la vidéo BTO « GBW: Coal Tit and Marsh Tit » vise peut-être l'aspect."
+  },
+  "periparus ater": {
+    "proches": [
+      { "sci": "parus major", "niveau": 3, "raison": "Même motif répété de deux notes, plus aigu, plus rapide et plus fondu.", "sources": ["https://www.bto.org/understanding-birds/birdfacts/coal-tit", "https://www.the-soc.org.uk/blogs/blog/improving-your-bird-sounds-id", "https://garden-birds.co.uk/birds/coal_tit.html"], "a_verifier": false },
+      { "sci": "lophophanes cristatus", "niveau": 2, "raison": "Le chant de la huppée est décrit comme semblable à celui de la Mésange noire.", "sources": ["https://en.wikipedia.org/wiki/Crested_tit"], "a_verifier": false },
+      { "sci": "poecile palustris", "niveau": 1, "raison": "Certains chants de nonnette sonnent comme une Mésange noire.", "sources": ["https://birdforum.net/threads/marsh-tit-or-coal-tit.439667"], "a_verifier": true },
+      { "sci": "certhia brachydactyla", "niveau": 1, "raison": "Un cri de Mésange noire très semblable au Grimpereau des jardins, noté sur xeno-canto (cri, pas chant).", "sources": [], "source": null, "a_verifier": true }
+    ],
+    "hors_liste": [],
+    "note": ""
+  },
+  "fringilla coelebs": {
+    "proches": [
+      { "sci": "phylloscopus trochilus", "niveau": 2, "raison": "Phrase qui descend par paliers ; le fitis est plus aigu, plus doux et plus coulé, sans fioriture finale.", "sources": ["https://www.montwt.co.uk/node/2662", "https://shriekoftheweek.substack.com/p/willow-warbler"], "a_verifier": false },
+      { "sci": "anthus trivialis", "niveau": 1, "raison": "La fin puissante du chant du Pipit des arbres peut rappeler le pinson.", "sources": [], "source": null, "a_verifier": true }
+    ],
+    "hors_liste": ["Étourneau (vidéo BTO Chaffinch and Starling)", "Pinson du Nord"],
+    "note": "Chant décrit partout comme très reconnaissable (descente + fioriture)."
+  },
+  "certhia brachydactyla": {
+    "proches": [
+      { "sci": "certhia familiaris", "niveau": 3, "raison": "Chants différents en principe (notes régulières contre trille descendant), mais chacun peut chanter le chant de l'autre.", "sources": ["https://en.wikipedia.org/wiki/Eurasian_treecreeper"], "a_verifier": false },
+      { "sci": "regulus regulus", "niveau": 1, "raison": "Chants très aigus aux mêmes fréquences, qui se mêlent dans la forêt.", "sources": ["https://www.wildechoes.org/species/treecreepers"], "a_verifier": false },
+      { "sci": "periparus ater", "niveau": 1, "raison": "Un cri de Mésange noire très proche du grimpereau noté sur xeno-canto (cri, pas chant).", "sources": [], "source": null, "a_verifier": true }
+    ],
+    "hors_liste": ["Grosbec casse-noyaux (même gamme de fréquences)"],
+    "note": ""
+  },
+  "phoenicurus ochruros": {
+    "proches": [
+      { "sci": "phoenicurus phoenicurus", "niveau": 2, "raison": "Même structure de strophe brève ; le noir a une partie grinçante comme du gravier, le front blanc est plus mélodieux. Hybrides et chanteurs mixtes brouillent tout.", "sources": ["https://soundapproach.co.uk/pages/use-it-or-lose-it-4", "https://xeno-canto.org/article/254", "https://markavery.info/2020/04/12/bird-song-22-black-redstart/"], "a_verifier": false }
+    ],
+    "hors_liste": [],
+    "note": ""
+  },
+  "phylloscopus trochilus": {
+    "proches": [
+      { "sci": "fringilla coelebs", "niveau": 2, "raison": "Phrase qui descend par paliers ; le fitis est plus aigu, plus doux et plus coulé.", "sources": ["https://www.montwt.co.uk/node/2662", "https://shriekoftheweek.substack.com/p/willow-warbler"], "a_verifier": false },
+      { "sci": "phylloscopus collybita", "niveau": 1, "raison": "Même timbre de pouillot, chants pourtant très différents ; chanteurs mixtes connus.", "sources": ["https://www.bto.org/understanding-birds/birdfacts/chiffchaff", "https://www.xeno-canto.org/555115"], "a_verifier": false }
+    ],
+    "hors_liste": [],
+    "note": ""
+  },
+  "phoenicurus phoenicurus": {
+    "proches": [
+      { "sci": "phoenicurus ochruros", "niveau": 2, "raison": "Même structure de strophe brève ; le noir grince, le front blanc est mélodieux avec une fin imitée.", "sources": ["https://soundapproach.co.uk/pages/use-it-or-lose-it-4", "https://xeno-canto.org/article/254"], "a_verifier": false },
+      { "sci": "lullula arborea", "niveau": 1, "raison": "Le chant de l'Alouette lulu est dit ressembler à ceux du Pipit des arbres et du Rougequeue à front blanc.", "sources": ["https://birdsong.academy/w-species/woodlark"], "a_verifier": true }
+    ],
+    "hors_liste": [],
+    "note": "Grand imitateur (une trentaine d'espèces repérées dans ses fins de strophe, wildechoes), y compris le Pouillot de Bonelli (xeno-canto article 232)."
+  },
+  "certhia familiaris": {
+    "proches": [
+      { "sci": "certhia brachydactyla", "niveau": 3, "raison": "Chaque espèce peut chanter le chant de l'autre.", "sources": ["https://en.wikipedia.org/wiki/Eurasian_treecreeper"], "a_verifier": false },
+      { "sci": "regulus regulus", "niveau": 2, "raison": "Chants très aigus et grêles terminés par une petite fioriture ; le BTO les compare dans une vidéo de chants.", "sources": ["https://www.bto.org/understanding-birds/birdfacts/treecreeper", "https://www.bto.org/understanding-birds/birdfacts/goldcrest"], "a_verifier": false }
+    ],
+    "hors_liste": [],
+    "note": ""
+  },
+  "erithacus rubecula": {
+    "proches": [
+      { "sci": "luscinia megarhynchos", "niveau": 2, "raison": "Le rouge-gorge chante la nuit sous les lampadaires et passe souvent pour un rossignol.", "sources": ["https://garden-birds.co.uk/birds/robin.html", "https://garden-birds.co.uk/information/tutorials/tutorial3.html", "https://www.bto.org/understanding-birds/birdfacts/robin"], "a_verifier": false },
+      { "sci": "prunella modularis", "niveau": 2, "raison": "Gazouillis clair de même registre ; l'accenteur manque de la douceur du rouge-gorge.", "sources": ["https://www.garden-birds.co.uk/birds/dunnock.html"], "a_verifier": false },
+      { "sci": "turdus merula", "niveau": 1, "raison": "Comparés par le BTO dans une vidéo de chants (#BirdSongBasics: Robin and Blackbird) : phrases flûtées séparées de silences.", "sources": ["https://www.bto.org/understanding-birds/birdfacts/robin"], "a_verifier": false }
+    ],
+    "hors_liste": [],
+    "note": ""
+  },
+  "troglodytes troglodytes": {
+    "proches": [
+      { "sci": "prunella modularis", "niveau": 3, "raison": "Une partie du chant du troglodyte est couramment confondue avec l'accenteur ; le troglodyte est plus fort, plus long, avec des trilles.", "sources": ["https://garden-birds.co.uk/information/tutorials/tutorial3.html", "https://www.garden-birds.co.uk/birds/dunnock.html", "https://www.bto.org/understanding-birds/birdfacts/wren"], "a_verifier": false },
+      { "sci": "sitta europaea", "niveau": 1, "raison": "Trilles rapides aigus entendus ensemble en forêt.", "sources": ["https://www.wildechoes.org/species/nuthatches/nuthatch"], "a_verifier": true }
+    ],
+    "hors_liste": [],
+    "note": ""
+  },
+  "prunella modularis": {
+    "proches": [
+      { "sci": "troglodytes troglodytes", "niveau": 3, "raison": "Gazouillis aigu et pressé semblable à une partie du chant du troglodyte, mais plus bas, plus court et sans trilles.", "sources": ["https://garden-birds.co.uk/information/tutorials/tutorial3.html", "https://www.garden-birds.co.uk/birds/dunnock.html", "https://www.bto.org/understanding-birds/birdfacts/dunnock"], "a_verifier": false },
+      { "sci": "erithacus rubecula", "niveau": 2, "raison": "Gazouillis clair de même registre, sans la douceur du rouge-gorge.", "sources": ["https://www.garden-birds.co.uk/birds/dunnock.html"], "a_verifier": false },
+      { "sci": "saxicola rubicola", "niveau": 2, "raison": "Le chant du tarier est semblable à celui de l'accenteur, en plus court et plus grinçant.", "sources": ["https://garden-birds.co.uk/birds/stonechat.html"], "a_verifier": false }
+    ],
+    "hors_liste": ["Moineau domestique (vidéo BTO House Sparrow and Dunnock)"],
+    "note": ""
+  },
+  "carduelis carduelis": {
+    "proches": [
+      { "sci": "spinus spinus", "niveau": 2, "raison": "Gazouillis de même qualité, rapide et cliquetant ; le tarin se trahit par son cri étiré « tsiiii ».", "sources": ["https://wildechoes.org/species/finches/siskin"], "a_verifier": false },
+      { "sci": "chloris chloris", "niveau": 2, "raison": "Gazouillis de fringille comparés par le BTO dans une vidéo de chants.", "sources": ["https://www.bto.org/understanding-birds/birdfacts/goldfinch", "https://www.bto.org/understanding-birds/birdfacts/greenfinch"], "a_verifier": false },
+      { "sci": "linaria cannabina", "niveau": 1, "raison": "Gazouillis de fringille sans motif net, qui se reconnaît au timbre seul.", "sources": ["https://www.wildechoes.org/species/finches/linnet"], "a_verifier": true },
+      { "sci": "serinus serinus", "niveau": 1, "raison": "Le chant du serin a été décrit comme un mélange de chardonneret et de roitelet (émission BBC).", "sources": ["https://www.mixcloud.com/tweetoftheday/serin/"], "a_verifier": true }
+    ],
+    "hors_liste": ["Canari"],
+    "note": ""
+  },
+  "chloris chloris": {
+    "proches": [
+      { "sci": "carduelis carduelis", "niveau": 2, "raison": "Gazouillis de fringille comparés par le BTO dans une vidéo de chants.", "sources": ["https://www.bto.org/understanding-birds/birdfacts/greenfinch"], "a_verifier": false },
+      { "sci": "spinus spinus", "niveau": 2, "raison": "Une partie du chant du tarin sonne comme le verdier, y compris le son étiré et nasillard.", "sources": ["https://birdfact.com/articles/siskin-or-greenfinch"], "a_verifier": true }
+    ],
+    "hors_liste": ["Canari"],
+    "note": "Le « dzouiii » nasillard est le repère qui le distingue."
+  },
+  "linaria cannabina": {
+    "proches": [
+      { "sci": "carduelis carduelis", "niveau": 1, "raison": "Gazouillis de fringille sans motif net, qui se reconnaît au timbre seul.", "sources": ["https://www.wildechoes.org/species/finches/linnet"], "a_verifier": true }
+    ],
+    "hors_liste": ["Linotte à bec jaune (vidéo BTO Linnet & Twite)"],
+    "note": "Presque rien trouvé : les sources disent seulement que chez les fringilles c'est le timbre, pas le motif, qui identifie."
+  },
+  "serinus serinus": {
+    "proches": [
+      { "sci": "emberiza calandra", "niveau": 2, "raison": "Babil long et cliquetant qui rappelle le trousseau de clés du Bruant proyer.", "sources": ["https://birds-europe.linnaeus.naturalis.nl/linnaeus_ng/app/views/species/nsr_taxon.php?id=131021"], "a_verifier": false },
+      { "sci": "spinus spinus", "niveau": 2, "raison": "Gazouillis de même qualité, rapide et grinçant.", "sources": ["https://wildechoes.org/species/finches/siskin"], "a_verifier": false },
+      { "sci": "carduelis carduelis", "niveau": 1, "raison": "Décrit comme un mélange de chardonneret et de roitelet (émission BBC).", "sources": ["https://www.mixcloud.com/tweetoftheday/serin/"], "a_verifier": true },
+      { "sci": "regulus regulus", "niveau": 1, "raison": "Même émission BBC : notes très aiguës et grêles.", "sources": ["https://www.mixcloud.com/tweetoftheday/serin/"], "a_verifier": true }
+    ],
+    "hors_liste": ["Venturon montagnard", "Canari"],
+    "note": "Chant comparé à « du verre pilé » ; dit très reconnaissable par plusieurs sources."
+  },
+  "spinus spinus": {
+    "proches": [
+      { "sci": "carduelis carduelis", "niveau": 2, "raison": "Gazouillis de même qualité ; le tarin se trahit par son cri étiré.", "sources": ["https://wildechoes.org/species/finches/siskin"], "a_verifier": false },
+      { "sci": "serinus serinus", "niveau": 2, "raison": "Gazouillis de même qualité, rapide et grinçant.", "sources": ["https://wildechoes.org/species/finches/siskin"], "a_verifier": false },
+      { "sci": "chloris chloris", "niveau": 2, "raison": "Une partie du chant sonne comme le verdier, son étiré nasillard compris.", "sources": ["https://birdfact.com/articles/siskin-or-greenfinch"], "a_verifier": true }
+    ],
+    "hors_liste": [],
+    "note": "Imite d'autres espèces dans son chant."
+  },
+  "sylvia atricapilla": {
+    "proches": [
+      { "sci": "sylvia borin", "niveau": 3, "raison": "Gazouillis riche et flûté très semblable ; la noire marque des pauses et finit souvent en sifflements forts, la des jardins coule sans arrêt et plus doucement.", "sources": ["https://www.bto.org/understanding-birds/birdfacts/blackcap", "https://woodlandtrust.org.uk/blog/2022/04/warbler-song-identification/", "https://www.montwt.co.uk/node/2661"], "a_verifier": false },
+      { "sci": "turdus merula", "niveau": 1, "raison": "Notes riches et flûtées comme le merle, mais plus rapides et moins posées.", "sources": ["https://woodlandtrust.org.uk/blog/2022/04/warbler-song-identification/"], "a_verifier": false },
+      { "sci": "luscinia megarhynchos", "niveau": 1, "raison": "Surnommée « rossignol bâtard » en anglais (mock nightingale) pour la qualité de son chant.", "sources": ["https://woodlandtrust.org.uk/blog/2022/04/warbler-song-identification/"], "a_verifier": false }
+    ],
+    "hors_liste": [],
+    "note": ""
+  },
+  "curruca communis": {
+    "proches": [
+      { "sci": "hippolais polyglotta", "niveau": 2, "raison": "Strophes rapides et grinçantes ; un enregistrement hésitait entre les deux sur xeno-canto, l'hypolaïs étant un bon imitateur.", "sources": ["https://xeno-canto.org/forum/topic/50189"], "a_verifier": true },
+      { "sci": "curruca melanocephala", "niveau": 2, "raison": "Strophes courtes, rapides et grinçantes chez les deux.", "sources": [], "source": null, "a_verifier": true },
+      { "sci": "saxicola rubicola", "niveau": 1, "raison": "Gazouillis rapide et grinçant dans les mêmes landes.", "sources": ["https://www.birdwords.co.uk/?p=4067"], "a_verifier": true },
+      { "sci": "curruca curruca", "niveau": 1, "raison": "Même genre, mais la babillarde a un chant complètement différent (trille sec) : à ne pas compter comme confusion.", "sources": ["https://woodlandtrust.org.uk/blog/2022/04/warbler-song-identification/", "https://en.wikipedia.org/wiki/Lesser_whitethroat"], "a_verifier": false }
+    ],
+    "hors_liste": ["Fauvette pitchou", "Fauvette passerinette"],
+    "note": "Une publication de la FRAPNA dit la grisette difficile à confondre par son chant et son habitat. La paire avec la babillarde est citée pour dire que les chants diffèrent : niveau 1 par prudence, on peut l'écarter."
+  },
+  "curruca melanocephala": {
+    "proches": [
+      { "sci": "curruca communis", "niveau": 2, "raison": "Strophes courtes, rapides et grinçantes chez les deux.", "sources": [], "source": null, "a_verifier": true }
+    ],
+    "hors_liste": ["Fauvette passerinette (chant « pas très éloigné », oiseaux.net)", "Fauvette à lunettes"],
+    "note": "Les confusions documentées sont avec des fauvettes méditerranéennes hors liste."
+  },
+  "hippolais polyglotta": {
+    "proches": [
+      { "sci": "curruca communis", "niveau": 2, "raison": "Débit rapide et grinçant ; hésitation entre les deux sur un enregistrement xeno-canto.", "sources": ["https://xeno-canto.org/forum/topic/50189"], "a_verifier": true },
+      { "sci": "acrocephalus schoenobaenus", "niveau": 1, "raison": "Débit rapide, bavard, avec imitations.", "sources": [], "source": null, "a_verifier": true },
+      { "sci": "sylvia borin", "niveau": 1, "raison": "Gazouillis continu et soutenu.", "sources": [], "source": null, "a_verifier": true }
+    ],
+    "hors_liste": ["Hypolaïs ictérine (la vraie confusion : chant plus varié, plus haché)", "Rousserolle verderolle"],
+    "note": "Peu de comparaisons publiées avec des espèces de la liste."
+  },
+  "sylvia borin": {
+    "proches": [
+      { "sci": "sylvia atricapilla", "niveau": 3, "raison": "Gazouillis riche et flûté très semblable, plus continu et plus doux, sans les pauses ni les sifflements finaux de la noire.", "sources": ["https://www.bto.org/understanding-birds/birdfacts/garden-warbler", "https://woodlandtrust.org.uk/blog/2022/04/warbler-song-identification/", "https://www.montwt.co.uk/node/2661"], "a_verifier": false },
+      { "sci": "hippolais polyglotta", "niveau": 1, "raison": "Gazouillis continu et soutenu.", "sources": [], "source": null, "a_verifier": true }
+    ],
+    "hors_liste": [],
+    "note": ""
+  },
+  "turdus merula": {
+    "proches": [
+      { "sci": "turdus viscivorus", "niveau": 3, "raison": "Même ton flûté et même débit ; la draine est plus forte, plus courte, plus mélancolique et sans le gazouillis grinçant qui termine les strophes du merle.", "sources": ["https://www.wildechoes.org/species/thrushes/mistle-thrush", "https://sussexwildlifetrust.org.uk/news/blackbird-bird-song"], "a_verifier": false },
+      { "sci": "turdus philomelos", "niveau": 2, "raison": "Chant flûté proche mais en phrases bien plus courtes et répétées 2-3 fois chez la grive.", "sources": ["https://static.bto.org/sites/default/files/u23/downloads/pdfs/factsheet_thrushes/index.pdf", "https://www.bto.org/understanding-birds/birdfacts/blackbird"], "a_verifier": false },
+      { "sci": "oriolus oriolus", "niveau": 1, "raison": "Sifflement flûté grave ; une appli a pris un merle très flûté pour un loriot.", "sources": ["https://www.birdforum.net/threads/golden-oriole-in-uk.457204/#post-4644991"], "a_verifier": true },
+      { "sci": "erithacus rubecula", "niveau": 1, "raison": "Comparés par le BTO dans une vidéo de chants.", "sources": ["https://www.bto.org/understanding-birds/birdfacts/blackbird"], "a_verifier": false },
+      { "sci": "sylvia atricapilla", "niveau": 1, "raison": "Notes riches et flûtées, la fauvette plus rapide.", "sources": ["https://woodlandtrust.org.uk/blog/2022/04/warbler-song-identification/"], "a_verifier": false },
+      { "sci": "luscinia megarhynchos", "niveau": 1, "raison": "Chante la nuit ; cité par le BTO parmi les chanteurs nocturnes confondus avec le rossignol.", "sources": ["https://www.bto.org/understanding-birds/birdfacts/blackbird"], "a_verifier": false }
+    ],
+    "hors_liste": ["Merle à plastron"],
+    "note": ""
+  },
+  "turdus philomelos": {
+    "proches": [
+      { "sci": "turdus merula", "niveau": 2, "raison": "Chant flûté proche du merle mais en phrases courtes, chacune répétée 2-3 fois.", "sources": ["https://static.bto.org/sites/default/files/u23/downloads/pdfs/factsheet_thrushes/index.pdf", "https://www.bto.org/understanding-birds/birdfacts/song-thrush"], "a_verifier": false },
+      { "sci": "turdus viscivorus", "niveau": 2, "raison": "Comparées par le BTO dans une vidéo de chants ; la draine répète peu ses phrases, la musicienne les répète.", "sources": ["https://www.bto.org/understanding-birds/birdfacts/song-thrush", "https://www.bto.org/understanding-birds/birdfacts/mistle-thrush", "https://earthstar.blog/2023/02/01/song-vs-mistle/"], "a_verifier": false },
+      { "sci": "luscinia megarhynchos", "niveau": 1, "raison": "Motifs répétés et chant nocturne ; le BTO la cite comme confusion possible du rossignol.", "sources": ["https://www.bto.org/understanding-birds/birdfacts/song-thrush"], "a_verifier": false }
+    ],
+    "hors_liste": ["Merle à plastron (en montagne, wildechoes)"],
+    "note": "Wildechoes juge le chant de la draine « assez différent » de celui de la musicienne : la paire musicienne-draine vaut surtout par le nom et l'aspect."
+  },
+  "turdus viscivorus": {
+    "proches": [
+      { "sci": "turdus merula", "niveau": 3, "raison": "Même ton flûté et même débit ; la draine est plus forte, plus courte, plus mélancolique, sans gazouillis final.", "sources": ["https://www.wildechoes.org/species/thrushes/mistle-thrush", "https://sussexwildlifetrust.org.uk/news/blackbird-bird-song"], "a_verifier": false },
+      { "sci": "turdus philomelos", "niveau": 1, "raison": "Comparées par le BTO, mais le chant est dit assez différent (peu de répétitions chez la draine).", "sources": ["https://www.bto.org/understanding-birds/birdfacts/mistle-thrush", "https://www.wildechoes.org/species/thrushes/mistle-thrush"], "a_verifier": false }
+    ],
+    "hors_liste": [],
+    "note": ""
+  },
+  "luscinia megarhynchos": {
+    "proches": [
+      { "sci": "erithacus rubecula", "niveau": 2, "raison": "Le rouge-gorge qui chante la nuit est souvent pris pour un rossignol.", "sources": ["https://garden-birds.co.uk/birds/robin.html", "https://www.bto.org/understanding-birds/birdfacts/robin"], "a_verifier": false },
+      { "sci": "turdus philomelos", "niveau": 2, "raison": "Notes répétées en séries et chant nocturne ; listée par le BTO comme confusion du rossignol.", "sources": ["https://www.bto.org/understanding-birds/birdfacts/song-thrush"], "a_verifier": false },
+      { "sci": "lullula arborea", "niveau": 1, "raison": "Le chant nocturne de l'Alouette lulu a souvent été pris pour celui du rossignol (texte ancien cité).", "sources": ["https://en.wikipedia.org/wiki/Woodlark"], "a_verifier": false },
+      { "sci": "sylvia atricapilla", "niveau": 1, "raison": "Qualité de chant comparable, d'où son surnom anglais de « rossignol bâtard ».", "sources": ["https://woodlandtrust.org.uk/blog/2022/04/warbler-song-identification/"], "a_verifier": false },
+      { "sci": "turdus merula", "niveau": 1, "raison": "Chanteur nocturne cité dans la vidéo BTO sur les confusions du rossignol.", "sources": ["https://www.bto.org/understanding-birds/birdfacts/blackbird"], "a_verifier": false }
+    ],
+    "hors_liste": [],
+    "note": "Wildechoes le dit immédiatement reconnaissable de jour."
+  },
+  "oriolus oriolus": {
+    "proches": [
+      { "sci": "turdus merula", "niveau": 1, "raison": "Sifflement flûté grave ; une appli a peut-être pris un merle très flûté pour un loriot.", "sources": ["https://www.birdforum.net/threads/golden-oriole-in-uk.457204/#post-4644991"], "a_verifier": true }
+    ],
+    "hors_liste": [],
+    "note": "Presque rien : la seule source est une question de forum. Chant décrit partout comme très caractéristique."
+  },
+  "cettia cetti": {
+    "proches": [],
+    "hors_liste": [],
+    "note": "Rien trouvé : le chant explosif est décrit comme unique (Wikipedia)."
+  },
+  "cisticola juncidis": {
+    "proches": [],
+    "hors_liste": [],
+    "note": "Rien trouvé : « zit… zit… zit » régulier en vol, sans comparaison publiée."
+  },
+  "emberiza schoeniclus": {
+    "proches": [],
+    "hors_liste": [],
+    "note": "Rien trouvé : chant court et monotone, aucune comparaison de chant publiée (les comparaisons portent sur le plumage)."
+  },
+  "acrocephalus scirpaceus": {
+    "proches": [
+      { "sci": "acrocephalus schoenobaenus", "niveau": 3, "raison": "Bavardage continu dans les roseaux ; l'effarvatte est plus régulière, plus lente et plus musicale, le phragmite plus rêche, plus haché, avec des trilles.", "sources": ["https://woodlandtrust.org.uk/blog/2022/04/warbler-song-identification/", "https://www.bto.org/understanding-birds/birdfacts/sedge-warbler", "https://markavery.info/2020/04/13/bird-song-24-sedge-warbler-and-reed-warbler/"], "a_verifier": false },
+      { "sci": "acrocephalus arundinaceus", "niveau": 2, "raison": "Même rythme de « tchi-tchi-tchi » répété, mais la turdoïde est bien plus forte, plus grave et croassante.", "sources": [], "source": null, "a_verifier": true }
+    ],
+    "hors_liste": ["Rousserolle verderolle"],
+    "note": ""
+  },
+  "acrocephalus schoenobaenus": {
+    "proches": [
+      { "sci": "acrocephalus scirpaceus", "niveau": 3, "raison": "Bavardage continu dans les roseaux ; phragmite plus rêche, haché et varié, effarvatte plus régulière.", "sources": ["https://woodlandtrust.org.uk/blog/2022/04/warbler-song-identification/", "https://www.bto.org/understanding-birds/birdfacts/sedge-warbler"], "a_verifier": false },
+      { "sci": "acrocephalus arundinaceus", "niveau": 1, "raison": "Bavardage de rousserolle, beaucoup plus fort et grave chez la turdoïde.", "sources": [], "source": null, "a_verifier": true },
+      { "sci": "hippolais polyglotta", "niveau": 1, "raison": "Débit rapide et bavard avec imitations.", "sources": [], "source": null, "a_verifier": true }
+    ],
+    "hors_liste": ["Phragmite aquatique"],
+    "note": ""
+  },
+  "acrocephalus arundinaceus": {
+    "proches": [
+      { "sci": "acrocephalus scirpaceus", "niveau": 2, "raison": "Même rythme répété « karra karra kiit kiit », en bien plus fort, grave et croassant.", "sources": [], "source": null, "a_verifier": true }
+    ],
+    "hors_liste": ["Rousserolle verderolle (sifflements et imitations, Wikipedia)"],
+    "note": "Les sources trouvées comparent surtout la taille et le sourcil, pas le chant."
+  },
+  "alauda arvensis": {
+    "proches": [
+      { "sci": "lullula arborea", "niveau": 2, "raison": "Chant en vol haut dans le ciel ; le BTO les compare (vidéo Skylark & Woodlark), mais la lulu est plus douce et flûtée, en séries descendantes.", "sources": ["https://www.bto.org/understanding-birds/birdfacts/skylark", "https://en.wikipedia.org/wiki/Woodlark"], "a_verifier": false },
+      { "sci": "anthus pratensis", "niveau": 2, "raison": "Chant en vol, notes aiguës répétées ; comparés par le BTO (vidéo Meadow Pipit, Tree Pipit & Skylark).", "sources": ["https://www.bto.org/understanding-birds/birdfacts/skylark"], "a_verifier": false },
+      { "sci": "anthus trivialis", "niveau": 1, "raison": "Chant en vol ; même vidéo BTO.", "sources": ["https://www.bto.org/understanding-birds/birdfacts/tree-pipit"], "a_verifier": false }
+    ],
+    "hors_liste": [],
+    "note": "Les vidéos BTO peuvent viser aussi l'aspect ; la ressemblance de chant avec les pipits reste partielle."
+  },
+  "anthus pratensis": {
+    "proches": [
+      { "sci": "anthus trivialis", "niveau": 3, "raison": "Même chant en vol, même début ; le pipit des arbres finit par des trilles de canari et ralentit, le farlouse accélère vers la fin.", "sources": ["https://birds-europe.linnaeus.naturalis.nl/linnaeus_ng/app/views/species/nsr_taxon.php?id=130820", "https://www.newforestnpa.gov.uk/discover/wildlife/heathland-birds/meadow-and-tree-pipit", "https://www.birdguides.com/articles/meadow-and-tree-pipits"], "a_verifier": false },
+      { "sci": "alauda arvensis", "niveau": 2, "raison": "Chant en vol de notes aiguës répétées ; comparés par le BTO.", "sources": ["https://www.bto.org/understanding-birds/birdfacts/skylark"], "a_verifier": false }
+    ],
+    "hors_liste": ["Pipit spioncelle"],
+    "note": ""
+  },
+  "saxicola rubicola": {
+    "proches": [
+      { "sci": "prunella modularis", "niveau": 2, "raison": "Chant grinçant semblable à celui de l'accenteur, en plus court et plus rêche.", "sources": ["https://garden-birds.co.uk/birds/stonechat.html"], "a_verifier": false },
+      { "sci": "curruca communis", "niveau": 1, "raison": "Gazouillis rapide et grinçant, dans les mêmes landes.", "sources": ["https://www.birdwords.co.uk/?p=4067"], "a_verifier": true }
+    ],
+    "hors_liste": ["Tarier des prés"],
+    "note": ""
+  },
+  "lullula arborea": {
+    "proches": [
+      { "sci": "anthus trivialis", "niveau": 2, "raison": "Séries de notes flûtées en chant de vol ou perché, dans le même habitat.", "sources": ["https://birdsong.academy/w-species/woodlark"], "a_verifier": true },
+      { "sci": "alauda arvensis", "niveau": 2, "raison": "Chant en vol en cercles haut dans le ciel ; comparées par le BTO.", "sources": ["https://www.bto.org/understanding-birds/birdfacts/skylark", "https://en.wikipedia.org/wiki/Woodlark"], "a_verifier": false },
+      { "sci": "phoenicurus phoenicurus", "niveau": 1, "raison": "Même habitat, phrases douces ressemblantes selon une source.", "sources": ["https://birdsong.academy/w-species/woodlark"], "a_verifier": true },
+      { "sci": "luscinia megarhynchos", "niveau": 1, "raison": "Son chant nocturne a souvent été pris pour celui du rossignol.", "sources": ["https://en.wikipedia.org/wiki/Woodlark"], "a_verifier": false }
+    ],
+    "hors_liste": [],
+    "note": "La page birdsong.academy a renvoyé une erreur 404 à l'ouverture : vue seulement dans un résumé de recherche."
+  },
+  "emberiza calandra": {
+    "proches": [
+      { "sci": "serinus serinus", "niveau": 2, "raison": "Babil cliquetant de « trousseau de clés » que rappelle le serin.", "sources": ["https://birds-europe.linnaeus.naturalis.nl/linnaeus_ng/app/views/species/nsr_taxon.php?id=131021"], "a_verifier": false }
+    ],
+    "hors_liste": [],
+    "note": "Wikipedia ne le compare à aucun oiseau (« trousseau de clés »)."
+  },
+  "anthus trivialis": {
+    "proches": [
+      { "sci": "anthus pratensis", "niveau": 3, "raison": "Même chant en vol et même début ; le pipit des arbres finit en trilles de canari et en « sia sia sia » ralenti.", "sources": ["https://birds-europe.linnaeus.naturalis.nl/linnaeus_ng/app/views/species/nsr_taxon.php?id=130820", "https://www.newforestnpa.gov.uk/discover/wildlife/heathland-birds/meadow-and-tree-pipit"], "a_verifier": false },
+      { "sci": "lullula arborea", "niveau": 2, "raison": "Séries de notes flûtées dans le même habitat ; « woodlark » fut autrefois un nom du pipit des arbres.", "sources": ["https://birdsong.academy/w-species/woodlark", "https://en.wikipedia.org/wiki/Woodlark"], "a_verifier": true },
+      { "sci": "alauda arvensis", "niveau": 1, "raison": "Chant en vol ; vidéo BTO commune.", "sources": ["https://www.bto.org/understanding-birds/birdfacts/tree-pipit"], "a_verifier": false },
+      { "sci": "fringilla coelebs", "niveau": 1, "raison": "La fin puissante du chant peut rappeler le pinson.", "sources": [], "source": null, "a_verifier": true }
+    ],
+    "hors_liste": ["Canari"],
+    "note": ""
+  },
+  "emberiza cirlus": {
+    "proches": [
+      { "sci": "emberiza citrinella", "niveau": 3, "raison": "Trille sur une seule note ; le zizi est un cliquetis sec sans la note finale étirée du jaune, plus clair et plus sonore.", "sources": ["https://www.wildechoes.org/species/buntings/cirl-bunting", "https://www.rspb.org.uk/birds-and-wildlife/cirl-bunting"], "a_verifier": false },
+      { "sci": "curruca curruca", "niveau": 2, "raison": "Trille sec et monotone comme le cliquetis final de la Fauvette babillarde.", "sources": ["https://en.wikipedia.org/wiki/Cirl_bunting"], "a_verifier": false },
+      { "sci": "phylloscopus bonelli", "niveau": 2, "raison": "Trille rapide sur une note ; le Bonelli est plus aigu et plus musical. Difficiles à séparer quand ils chantent ensemble.", "sources": ["https://www.xeno-canto.org/forum/topic/18237"], "a_verifier": true }
+    ],
+    "hors_liste": ["Pouillot boréal"],
+    "note": "La source xeno-canto parle du Bonelli ORIENTAL, au trille très proche du nôtre."
+  },
+  "emberiza citrinella": {
+    "proches": [
+      { "sci": "emberiza cirlus", "niveau": 3, "raison": "Le trille d'introduction du jaune peut se confondre avec le zizi ; le jaune sonne plus clair et finit par une note étirée.", "sources": ["https://www.wildechoes.org/species/buntings/cirl-bunting"], "a_verifier": false }
+    ],
+    "hors_liste": [],
+    "note": ""
+  },
+  "phylloscopus bonelli": {
+    "proches": [
+      { "sci": "emberiza cirlus", "niveau": 2, "raison": "Trille rapide sur une note ; le zizi plus sec et plus bas.", "sources": ["https://www.xeno-canto.org/forum/topic/18237"], "a_verifier": true },
+      { "sci": "curruca curruca", "niveau": 1, "raison": "Trille sec et monotone, proche du cliquetis de la babillarde.", "sources": [], "source": null, "a_verifier": true }
+    ],
+    "hors_liste": ["Pouillot siffleur (trille semblable, plus aigu et plus serré : Wikipedia)", "Pouillot de Bonelli oriental"],
+    "note": "Une source française (cahier d'habitats INPN) recommanderait de se méfier du Bruant zizi au chant : vue seulement dans un résumé, le document n'a pas pu être ouvert (erreur 500)."
+  },
+  "curruca curruca": {
+    "proches": [
+      { "sci": "emberiza cirlus", "niveau": 2, "raison": "Le cliquetis final de la babillarde ressemble au trille sec du zizi.", "sources": ["https://en.wikipedia.org/wiki/Cirl_bunting"], "a_verifier": false },
+      { "sci": "phylloscopus bonelli", "niveau": 1, "raison": "Trille sec et monotone.", "sources": [], "source": null, "a_verifier": true }
+    ],
+    "hors_liste": [],
+    "note": "Sa ressemblance avec la Fauvette grisette est d'aspect : les chants sont dits complètement différents."
+  },
+  "aegithalos caudatus": {
+    "proches": [
+      { "sci": "phylloscopus collybita", "niveau": 1, "raison": "Comparés par le BTO dans une même vidéo de chants ; ressemblance non précisée (sans doute les cris).", "sources": ["https://www.bto.org/understanding-birds/birdfacts/chiffchaff"], "a_verifier": true }
+    ],
+    "hors_liste": [],
+    "note": "Presque rien : l'espèce s'entend surtout par ses cris, sans vrai chant comparé."
+  },
+  "sitta europaea": {
+    "proches": [
+      { "sci": "troglodytes troglodytes", "niveau": 1, "raison": "Trilles rapides entendus ensemble ; mention anecdotique.", "sources": ["https://www.wildechoes.org/species/nuthatches/nuthatch"], "a_verifier": true }
+    ],
+    "hors_liste": [],
+    "note": "Presque rien trouvé."
+  },
+  "regulus ignicapilla": {
+    "proches": [
+      { "sci": "regulus regulus", "niveau": 3, "raison": "Notes très aiguës : le triple-bandeau monte en crescendo et s'arrête net, le huppé répète un motif en boucle terminé par une fioriture. Peut imiter le huppé.", "sources": ["https://www.wildechoes.org/species/warblers/firecrest-goldcrest", "https://www.birdspot.co.uk/spot-the-difference/goldcrest-or-firecrest", "https://www.bto.org/understanding-birds/birdfacts/goldcrest"], "a_verifier": false }
+    ],
+    "hors_liste": [],
+    "note": ""
+  },
+  "regulus regulus": {
+    "proches": [
+      { "sci": "regulus ignicapilla", "niveau": 3, "raison": "Notes très aiguës : motif en boucle terminé par une fioriture contre crescendo qui s'arrête net.", "sources": ["https://www.wildechoes.org/species/warblers/firecrest-goldcrest", "https://www.birdspot.co.uk/spot-the-difference/goldcrest-or-firecrest", "https://www.bto.org/understanding-birds/birdfacts/goldcrest"], "a_verifier": false },
+      { "sci": "certhia familiaris", "niveau": 2, "raison": "Chants très aigus et grêles terminés par une fioriture ; comparés par le BTO dans une vidéo de chants.", "sources": ["https://www.bto.org/understanding-birds/birdfacts/goldcrest"], "a_verifier": false },
+      { "sci": "certhia brachydactyla", "niveau": 1, "raison": "Chants aigus aux mêmes fréquences, mêlés en forêt.", "sources": ["https://www.wildechoes.org/species/treecreepers"], "a_verifier": false }
+    ],
+    "hors_liste": [],
+    "note": ""
+  },
+  "lophophanes cristatus": {
+    "proches": [
+      { "sci": "periparus ater", "niveau": 2, "raison": "Le chant de la huppée est décrit comme semblable à celui de la Mésange noire.", "sources": ["https://en.wikipedia.org/wiki/Crested_tit"], "a_verifier": false },
+      { "sci": "cyanistes caeruleus", "niveau": 1, "raison": "Notes aiguës et trille roulé.", "sources": [], "source": null, "a_verifier": true }
+    ],
+    "hors_liste": [],
+    "note": "Wildechoes la dit plutôt silencieuse pour une mésange, sans comparaison."
+  }
+}

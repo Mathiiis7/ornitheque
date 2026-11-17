@@ -27459,7 +27459,7 @@ const _pcSurvieOuverte = () => !PARCOURS_BIENTOT.length || /^(localhost|127\.0\.
 const PC_SURVIE_CLE = 'mb-quiz-survie';
 // Paires confondables : data/quiz-confusions.json, { sci: [[sci, niveau 1 a 3], ...] }, tire de
 // guides et de sites cites dans docs/quiz-confusions.md. Chargee au premier lancement seulement.
-const PC_SURVIE_TABLE_V = '20261118';
+const PC_SURVIE_TABLE_V = '20261118b';
 let _pcSurvieTable = null;
 // Le classement, lu a l'ouverture de la page et apres chaque partie (pas d'abonnement : le banc
 // firestore compte 15 ecouteurs ouverts au demarrage, celui-ci n'y entre pas). null = pas encore lu.
@@ -27544,10 +27544,13 @@ function _pcSurvieChoix(p, cible){
   const conf = p.conf || {};
   let cand = p.especes.filter(s => s !== cible).map(s => [s, _pcRessemblance(cible, s, conf)]).sort((a, b) => b[1] - a[1]).slice(0, 8);
   const pris = [];
+  // Poids au carre : au poids simple, le Rougequeue noir manquait parfois a cote du Rougequeue a
+  // front blanc (essai du 2026-11-18), les oiseaux a peine ressemblants pesant presque autant.
+  const poids = x => x[1] * x[1] + 1;
   while(pris.length < PC_SURVIE_NOMS - 1 && cand.length){
-    const tot = cand.reduce((t, x) => t + x[1] + 1, 0);
+    const tot = cand.reduce((t, x) => t + poids(x), 0);
     let r = Math.random() * tot, k = 0;
-    for(; k < cand.length - 1; k++){ r -= cand[k][1] + 1; if(r <= 0) break; }
+    for(; k < cand.length - 1; k++){ r -= poids(cand[k]); if(r <= 0) break; }
     pris.push(cand[k][0]); cand.splice(k, 1);
   }
   return _pcMelanger([cible, ...pris]);
