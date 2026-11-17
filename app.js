@@ -24594,7 +24594,10 @@ addEventListener('scroll', () => {
 // Un bloc commence sur un titre, ou sur une rangee pleine dans une longue suite sans titre (tri par rarete) :
 // la coupure ne se voit pas. morceaux : titres (HTML) et lignes (dessinees par carte(r) au moment d'etre posees).
 // Cases par bloc, environ : assez pour remplir l'ecran avec le premier, assez peu pour mettre un bloc en page vite.
-const _PKDX_BLOC = 150;
+// 80 et non 150 depuis que les cases n'ont plus leur propre content-visibility (2026-11-17, styles.css) : tout
+// un bloc est alors mis en page d'un coup, et la France au telephone ralenti 4 fois gelait 278 ms a 150 cases,
+// 226 a 80 (135 avant la retouche) ; Monde inchange (_mesure-birdydex-monde.mjs).
+const _PKDX_BLOC = 80;
 // Le temps de travail vise par image pour poser les blocs suivants (hors de l'ecran, ils ne coutent que leur HTML).
 const _PKDX_IMAGE_MS = 8;
 let _pkdxCols = 0, _pkdxCoupeRangs = false, _pkdxRO = null;

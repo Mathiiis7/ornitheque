@@ -3672,16 +3672,11 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .pkdx-tranche + .pkdx-tranche > .pkdx-groupe:first-child { margin-top:18px; }
   .pkdx-tranche + .pkdx-tranche > .pkdx-ordre:first-child { margin-top:30px; }
   .pkdx-card {
-    /* Virtualisation native : le navigateur skip completement le rendu (layout, paint,
-       style) des cards hors ecran. 597 cards mais seules ~30 sont reellement rendues.
-       contain-intrinsic-size reserve la place (aspect ratio ~1x1 + labels) pour que
-       la scrollbar reste stable. Fallback silencieux sur Safari <18 : rendu normal. */
-    content-visibility: auto;
-    contain-intrinsic-size: 140px 200px;
-    position:relative; border:2px solid var(--line-2); background:var(--surface); border-radius:12px; padding:8px 8px 10px; cursor:pointer; transition:transform .1s, box-shadow .1s; overflow:hidden;
-    /* Virtualisation cote navigateur : ne paint/layout que les cartes visibles,
-       reserve 220px pour eviter les sauts au scroll. Enorme gain sur 720 cartes. */
-    content-visibility:auto; contain-intrinsic-size:220px; }
+    /* Plus de content-visibility sur chaque case (2026-11-17) : une case neuve passait une image entiere
+       vide, contour seul, avant d'etre dessinee, et chaque clic sur un filtre faisait clignoter toute la
+       grille en cadres blancs (Mathis : « des lignes entre deux cases »). Les blocs (.pkdx-tranche, plus
+       haut) font deja l'economie pour ce qui est loin de l'ecran. */
+    position:relative; border:2px solid var(--line-2); background:var(--surface); border-radius:12px; padding:8px 8px 10px; cursor:pointer; transition:transform .1s, box-shadow .1s; overflow:hidden; }
   .pkdx-card:hover { transform:translateY(-2px); box-shadow:0 6px 14px rgba(0,0,0,.12); border-color:var(--accent); }
   /* Pendant un défilement, pas de survol (app.js, _pkdxDefileMinuteur) : 0,4 s de survol à repeindre sur 4 s de défilement */
   #pkdxGrid.defile .pkdx-card { pointer-events:none; }
