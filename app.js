@@ -27459,7 +27459,7 @@ const _pcSurvieOuverte = () => !PARCOURS_BIENTOT.length || /^(localhost|127\.0\.
 const PC_SURVIE_CLE = 'mb-quiz-survie';
 // Paires confondables : data/quiz-confusions.json, { sci: [[sci, niveau 1 a 3], ...] }, tire de
 // guides et de sites cites dans docs/quiz-confusions.md. Chargee au premier lancement seulement.
-const PC_SURVIE_TABLE_V = '20261118b';
+const PC_SURVIE_TABLE_V = '20261118c';
 let _pcSurvieTable = null;
 // Le classement, lu a l'ouverture de la page et apres chaque partie (pas d'abonnement : le banc
 // firestore compte 15 ecouteurs ouverts au demarrage, celui-ci n'y entre pas). null = pas encore lu.
