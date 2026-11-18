@@ -46,7 +46,7 @@ chant », « Le mélange », « L'épreuve » (15 questions), sans indices pour 
 | roseaux | Bouscarle, Cisticole, Bruant des roseaux, Effarvatte, Phragmite, Turdoïde | Phragmite après l'Effarvatte ; la Turdoïde, la plus rare, en dernier |
 | champs | Alouette des champs, Tarier, Proyer, Farlouse, Lulu, Pipit des arbres | chaque sosie (Lulu, Pipit des arbres) après son modèle |
 | trilles | Zizi, Bonelli, Jaune, Babillarde | le Jaune, sosie du Zizi, après lui ; la Babillarde, la plus rare, en dernier |
-| ronde | Grimpereau des jardins, Sittelle, Orite, Triple bandeau, Huppée, Roitelet huppé | le Roitelet huppé, sosie du triple bandeau, en dernier |
+| ronde | Grimpereau des jardins, Sittelle, Triple bandeau, Huppée, Roitelet huppé (chants) ; l'Orite en plus dans les cris | le Roitelet huppé, sosie du triple bandeau, en dernier |
 
 Étapes : 4 oiseaux = 6 étapes, 5 = 7, 6 = 8. La ronde a en plus ses étapes de cris (Mathis le
 2026-11-18 : les chants puis les cris) : une étape « Les cris » à 3 puis à 6 noms, puis un mélange
@@ -76,7 +76,11 @@ Deux ou trois pistes par parcours, dans l'esprit de « Phrases qui dégringolent
 | trilles | « Crécelles et grelots » ; « Une note, très vite » ; « Les trilles » |
 | ronde | « La ronde d'hiver » ; « Petites voix des bois en hiver » ; « Cris de la ronde » |
 
-## À trancher
+## Décidé le 2026-11-18
 
-- **L'Orite à longue queue n'a pas de vrai chant** (oiseaux.net) : ses 12 « chants » sont des cris
-  enchaînés. Proposé : elle n'entre que dans les étapes de cris de la ronde.
+- **L'Orite à longue queue n'entre que dans les étapes de cris** de la ronde : pas de vrai chant
+  (oiseaux.net), ses 12 « chants » enregistrés sont des cris enchaînés. Les étapes de chants de la ronde
+  se font à 5 oiseaux.
+- **Indices : quatre cercles communs** (longueur, forme, fin, onomatopée), pour les nouveaux oiseaux et les
+  11 déjà faits ; le pouillot véloce passe en « une note répétée ». Dessins en maquette :
+  `notes-privees/maquettes/indices-4-cercles/`, à valider avant de toucher au site.

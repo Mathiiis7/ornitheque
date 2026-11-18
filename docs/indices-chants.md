@@ -3,10 +3,14 @@
 Pour que les indices disent la même chose d'un oiseau à l'autre. Fabriqué par
 `notes-privees/analyse-sons/2026-11-18-parcours/propositions.mjs`, à partir de trois recherches sourcées
 (`notes-privees/analyse-sons/2026-11-18-parcours/recherche/`) et de la mesure de 6 enregistrements par oiseau
-(`mesures.json`, même dossier). **Proposé, pas validé** : Mathis corrige à l'écoute sur la page
+(`mesures.json`, même dossier).
+
+**Décidé par Mathis le 2026-11-18** : les quatre cercles communs ; le pouillot véloce passe en « une note
+répétée » ; l'Orite n'entre que dans les étapes de cris. Restent à valider : les dessins
+(`notes-privees/maquettes/indices-4-cercles/`), puis chaque oiseau à l'écoute sur la page
 `notes-privees/ecoute-parcours/`.
 
-## Les cercles proposés
+## Les quatre cercles
 
 Aujourd'hui trois cercles : strophe, motif, onomatopée. Le « motif » a un dessin propre à presque chaque
 oiseau (fioriture, ritournelle, question, hui…) : il décrit bien chacun, mais ne se compare pas d'un

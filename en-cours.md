@@ -5,9 +5,10 @@
   (système d'indices proposé). Page d'écoute : `localhost:8765/notes-privees/ecoute-parcours/?p=jardins`.
 - Mathis écoutera plus tard, parcours par parcours, et collera sa sélection : la recopier dans
   `outils/build/chants-gardes.mjs`, puis créer le parcours dans app.js (modèle `PARCOURS_PHRASES`).
-- En attente de sa réponse : le système de 4 cercles (longueur, forme, fin, onomatopée) qui remplacerait le
-  « motif » propre à chaque oiseau ; le Pouillot véloce « une note répétée » au lieu de « deux hauteurs »
-  (mesure du 16/10) ; l'Orite seulement dans les cris ; les noms des parcours.
+- Décidé le 18/11 : 4 cercles communs (longueur, forme, fin, onomatopée) pour tous, véloce en « une note
+  répétée », Orite seulement dans les cris. Reste à valider : les DESSINS (notes-privees/maquettes/indices-4-cercles/),
+  puis coder les 4 cercles dans app.js (PC_CERCLES_DESSINS, PC_CERCLES des 11, styles .pc-c-*). Noms des parcours :
+  pistes dans docs/parcours-a-venir.md, à choisir.
 - Mesures et recherches : `notes-privees/analyse-sons/2026-11-18-parcours/` (wav ignorés, numpy/scipy dans
   `notes-privees/analyse-sons/py`, `PYTHONPATH=../py`). Ce qui n'a pas marché : compter les notes une à une
   (les trilles fusionnent) et juger « même strophe » par le contour (charbonnière jugée variée, faux).
