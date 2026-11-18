@@ -1,5 +1,17 @@
 # Où on en est (2026-11-18)
 
+## Les 8 parcours « Bientôt » : préparés, rien en ligne (18/11)
+- Tout est dans `docs/parcours-a-venir.md` (candidats, ordre, étapes, noms proposés) et `docs/indices-chants.md`
+  (système d'indices proposé). Page d'écoute : `localhost:8765/notes-privees/ecoute-parcours/?p=jardins`.
+- Mathis écoutera plus tard, parcours par parcours, et collera sa sélection : la recopier dans
+  `outils/build/chants-gardes.mjs`, puis créer le parcours dans app.js (modèle `PARCOURS_PHRASES`).
+- En attente de sa réponse : le système de 4 cercles (longueur, forme, fin, onomatopée) qui remplacerait le
+  « motif » propre à chaque oiseau ; le Pouillot véloce « une note répétée » au lieu de « deux hauteurs »
+  (mesure du 16/10) ; l'Orite seulement dans les cris ; les noms des parcours.
+- Mesures et recherches : `notes-privees/analyse-sons/2026-11-18-parcours/` (wav ignorés, numpy/scipy dans
+  `notes-privees/analyse-sons/py`, `PYTHONPATH=../py`). Ce qui n'a pas marché : compter les notes une à une
+  (les trilles fusionnent) et juger « même strophe » par le contour (charbonnière jugée variée, faux).
+
 ## Mode classé du quiz : « Survie », base en ligne en v1116 (18/11), CACHÉE en ligne
 - Construit : maquette B « la chasse » (podium + membre à dépasser), 5 noms (pas 6, Mathis), compte pour les séries.
   Visible seulement en local (`_pcSurvieOuverte`) ; l'ouvrir = retirer la condition localhost quand les parcours seront
