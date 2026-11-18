@@ -1,5 +1,19 @@
 # Où on en est (2026-11-18)
 
+## Chants du quiz copiés sur le site : v1119 (18/11 au soir)
+- Panne : xeno-canto répondait 504 au bout de 60 s à tous ses liens `/download` et à son API ; le premier chant du
+  quiz restait muet, bouton sur « lecture ». Ses fichiers directs (`/sounds/uploaded/...`) et ses sonagrammes répondaient.
+- Choix de Mathis : héberger. `outils/build/chants-heberges.mjs` copie un extrait de 20 s mono 96 kbit/s dans
+  `data/chants/<id>.mp3`, licence et lien direct pris sur GBIF (qui republie xeno-canto) ; champ `mp3` dans
+  `data/parcours-*.json`, lu par `_pcSrc` avant `file`. 137 sur 142 copiés, 30,8 Mo. Liste auteur + licence dans
+  À propos > Sources (formulation « Sobre » choisie par Mathis), chargée à l'ouverture du repli.
+- **Reste : 5 chants absents de GBIF** (1185195, 483107, 591238, 64859, 143380), encore lus chez xeno-canto. Quand son
+  API répond : relancer le script, puis monter les `?v=` des fichiers de parcours et de `CHANTS_LICENCES` (app.js).
+- **À relancer aussi pour chaque nouveau parcours**, après `chants-gardes.mjs` (qui réécrit le fichier sans `mp3`).
+- Encore chez xeno-canto : la fiche espèce (enregistrements entiers) et les sonagrammes.
+- Licences : 113 BY-NC-SA 4.0, 19 ND (8 en 4.0, 9 en 3.0, 2 en 2.5 : extrait permis, FAQ Creative Commons), 2 BY, 3 CC0.
+- Essayé sans marcher : rien, mais ne pas marteler xeno-canto pour vérifier s'il est revenu (une requête suffit).
+
 ## Les 8 parcours « Bientôt » : préparés, rien en ligne (18/11)
 - Tout est dans `docs/parcours-a-venir.md` (candidats, ordre, étapes, noms proposés) et `docs/indices-chants.md`
   (système d'indices proposé). Page d'écoute : `localhost:8765/notes-privees/ecoute-parcours/?p=jardins`.
@@ -49,7 +63,7 @@
 - Reste ouvert : nombre de noms proposés, un essai par jour ou illimité, classement à vie ou par mois, que faire tant
   qu'il n'y a que 11 oiseaux.
 
-Dernière version : v1118 / app.js?v=690 (18/11). Prochaine : v1119 / 691.
+Dernière version : v1119 / app.js?v=691 (18/11, chants copiés). Prochaine : v1120 / 692.
 - **v1115** : l'entraînement ne fait plus bouger la série (seuls les parcours comptent).
 - **v1114** : série d'un oiseau au quiz, règle « partout, sans aide » choisie par Mathis (`_pcQuestionCompte`) :
   5 oiseaux mini, jamais « parmi 3 chants », jamais avec indices vus. Les séries déjà gagnées ne sont pas recalculées.

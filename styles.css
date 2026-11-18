@@ -4209,6 +4209,8 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   .sources-chants summary { cursor:pointer; width:fit-content; }
   .sources-chants ul { margin:6px 0 0; padding-left:18px; columns:2 300px; column-gap:28px; }
   .sources-chants li { break-inside:avoid; }
+  /* Au doigt, le repli seul sur sa ligne fait 22 px de haut : 15 px de part et d'autre pour 52. */
+  @media (pointer: coarse){ .sources-chants summary { padding:15px 0; } }
   /* Schéma « D'où viennent les cartes » : cinq cases en ligne, qui s'empilent sur téléphone.
      L'accent ne marque que la dernière case, ce que voit le visiteur. */
   .carto-chemin { list-style:none; margin:4px 0 0; padding:0; display:flex; align-items:stretch; }

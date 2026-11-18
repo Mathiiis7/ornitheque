@@ -118,8 +118,8 @@ puis vérifier `CACHE_VERSION` sur le site, pas seulement le push.
 
 **Le poids publié se mesure avec `node outils/build/poids-publie.mjs`, jamais avec `du`.**
 `du -sh` compte ce que `.gitignore` exclut : il annonçait 469 Mo le 2026-09-28 et m'a fait
-alerter à tort sur le plafond de 1 Go de GitHub Pages. Le vrai chiffre est **95,4 Mo, 9 % du
-plafond**. Les cartes de répartition vivent dans le dépôt séparé
+alerter à tort sur le plafond de 1 Go de GitHub Pages. Le vrai chiffre était 95,4 Mo ce jour-là ;
+**284,0 Mo, 27,7 % du plafond, le 2026-11-18** (dont 30,8 Mo de chants du Quiz). Les cartes de répartition vivent dans le dépôt séparé
 `ornitheque-data`, et `data/range*` comme `data/generated` ne sont pas publiés.
 Ce dépôt-là pèse 250 Mo servis - 142 Mo de `range-weekly`, 108 Mo de `range` - mesuré le
 2026-09-28. Les 443 Mo que ce fichier annonçait avant comptaient le dossier `.git` : c'est
