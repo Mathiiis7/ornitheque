@@ -66,3 +66,5 @@ for (const [sci, ids] of Object.entries(GARDES)) {
 if (manque) process.exit(1);
 writeFileSync(join(RACINE, 'data', sortie), JSON.stringify(out));
 console.log('ecrit data/' + sortie);
+// Ce fichier vient d'etre recrit sans le champ "mp3" : le quiz relirait tout chez xeno-canto.
+console.log('PUIS : node outils/build/chants-heberges.mjs (extraits de 20 s copies sur le site), et monter le ?v= du fichier dans app.js');

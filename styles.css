@@ -4203,6 +4203,12 @@ body[data-map-render="sharp"] .sharp-overlay { image-rendering: pixelated; image
   /* Titres de section de l'À propos : le petit titre de bloc de la charte. */
   .about-body h3 { font:600 17px var(--titre); color:var(--ink); margin:20px 0 8px; }
   .about-body h3:first-child { margin-top:0; }
+  /* Sources : la liste des chants copiés pour le Quiz (142 au 2026-11-18), en colonnes sur
+     ordinateur pour ne pas faire trois écrans de haut, une seule au téléphone. */
+  .sources-chants { margin:4px 0 2px; }
+  .sources-chants summary { cursor:pointer; width:fit-content; }
+  .sources-chants ul { margin:6px 0 0; padding-left:18px; columns:2 300px; column-gap:28px; }
+  .sources-chants li { break-inside:avoid; }
   /* Schéma « D'où viennent les cartes » : cinq cases en ligne, qui s'empilent sur téléphone.
      L'accent ne marque que la dernière case, ce que voit le visiteur. */
   .carto-chemin { list-style:none; margin:4px 0 0; padding:0; display:flex; align-items:stretch; }

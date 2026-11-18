@@ -26594,7 +26594,7 @@ const PARCOURS_MESANGES = {
     { titre: 'Le mélange', type: 'melange', n: 5, q: 10, sansCercles: true },
     { titre: 'L\'épreuve', type: 'nom', n: 5, q: 15, epreuve: true, sansCercles: true },
   ],
-  chants: 'data/parcours-mesanges.json?v=20261018b',
+  chants: 'data/parcours-mesanges.json?v=20261118',   // ?v= a monter apres chants-gardes.mjs ou chants-heberges.mjs
 };
 // Groupe 2 de docs/groupes-chants.md, ouvert le 2026-10-17. Mathis garde les six oiseaux et
 // demande une etape de plus pour le sixieme. Ordre, meme regle que les mesanges : les courants
@@ -26616,7 +26616,7 @@ const PARCOURS_PHRASES = {
     { titre: 'Le mélange', type: 'melange', n: 6, q: 10, sansCercles: true },
     { titre: 'L\'épreuve', type: 'nom', n: 6, q: 15, epreuve: true, sansCercles: true },
   ],
-  chants: 'data/parcours-phrases.json?v=20261018b',
+  chants: 'data/parcours-phrases.json?v=20261118',
 };
 const PARCOURS_OUVERTS = [PARCOURS_MESANGES, PARCOURS_PHRASES];
 const _pcParcoursDe = cle => PARCOURS_OUVERTS.find(P => P.cle === cle) || PARCOURS_MESANGES;
@@ -27924,7 +27924,7 @@ function _pcPhotos(box){
 // neuf : derniere manche d'une serie d'entrainement, qui prend si possible un enregistrement
 // jamais entendu, pour reconnaitre l'oiseau et pas le fichier (accepte dans qg#56).
 function _pcChoisirEnreg(sci, partie, neuf){
-  let liste = (partie.sons[sci] || []).filter(r => r.file);
+  let liste = (partie.sons[sci] || []).filter(r => _pcSrc(r));
   if(neuf){
     const entendus = new Set(_pcStats().entendus);
     const jamais = liste.filter(r => !entendus.has(r.id));
@@ -28000,6 +28000,36 @@ async function _pcLancer(i){
 // bizarre (demande du 2026-10-17), et la personne qui l'a enregistre, que la licence de
 // xeno-canto demande de nommer. Ni l'un ni l'autre ne trahit l'oiseau.
 const _pcIdChant = r => r ? `Chant n° XC ${esc(r.id)} · ${esc(r.rec)}` : '';
+// Le son que joue le quiz : notre extrait de 20 s (data/chants/, outils/build/chants-heberges.mjs),
+// sinon le fichier chez xeno-canto. Le 2026-11-18, xeno-canto repondait 504 au bout de 60 s a tous
+// ses liens de telechargement : le premier chant restait muet, bouton sur « lecture ». La fiche
+// espece, elle, lit toujours l'enregistrement entier chez xeno-canto (r.file).
+const _pcSrc = r => r ? (r.mp3 || r.file || '') : '';
+// Page d'aide, « Sources des donnees » : auteur et licence de chaque chant copie pour le Quiz. Les
+// licences Creative Commons demandent de citer auteur, licence et source, et de dire que c'est un
+// extrait. La liste ne se charge qu'a l'ouverture du repli. ?v= a monter avec chants-heberges.mjs.
+const CHANTS_LICENCES = 'data/chants/licences.json?v=20261118';
+function _licenceCC(code){
+  const [nom, version] = String(code || '').split('/');
+  if(!nom || !version) return '';
+  const url = nom === 'cc0' ? `https://creativecommons.org/publicdomain/zero/${version}/` : `https://creativecommons.org/licenses/${nom}/${version}/`;
+  const libelle = nom === 'cc0' ? `CC0 ${version}` : `CC ${nom.toUpperCase()} ${version}`;
+  return `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(libelle)}</a>`;
+}
+document.addEventListener('toggle', async e => {
+  const d = e.target;
+  if(!d.classList || !d.classList.contains('sources-chants') || !d.open || d.dataset.rempli) return;
+  d.dataset.rempli = '1';
+  const ul = d.querySelector('ul');
+  try{
+    const lic = await (await fetch(CHANTS_LICENCES)).json();
+    ul.innerHTML = Object.entries(lic).map(([id, l]) =>
+      `<li><a href="https://xeno-canto.org/${esc(id)}" target="_blank" rel="noopener">XC ${esc(id)}</a> · ${esc(l.auteur)} · ${_licenceCC(l.licence)}</li>`).join('');
+  }catch(_){
+    delete d.dataset.rempli;
+    ul.innerHTML = '<li>Liste indisponible pour le moment, réessaie plus tard.</li>';
+  }
+}, true);
 // Reecouter les questions deja jouees (demande de Mathis le 2026-10-17) : une liste repliable
 // sous la question, la plus recente en haut, avec un lecteur a part, pour ne pas toucher au
 // <audio> de la question en cours.
@@ -28046,7 +28076,7 @@ function _pcHistoriqueHtml(p, n, titre, menu){
     recs.forEach(([sci, r], i) => {
       if(!r) return;
       const marque = i ? '' : `<span class="pc-hist-res ${res || ''}" aria-label="${res === 'ok' ? 'bonne réponse' : 'mauvaise réponse'}">${res === 'ok' ? PC_ICO.ok : PC_ICO.ko}</span>`;
-      lignes.push(`<li class="pc-hist-l"><button type="button" class="pc-lecture pc-lecture-mini" data-pc-hist="${esc(r.file)}" aria-label="Réécouter : question ${k + 1}, ${esc(_pcNomFr(sci))}">${PC_LECTURE_SVG}</button>
+      lignes.push(`<li class="pc-hist-l"><button type="button" class="pc-lecture pc-lecture-mini" data-pc-hist="${esc(_pcSrc(r))}" aria-label="Réécouter : question ${k + 1}, ${esc(_pcNomFr(sci))}">${PC_LECTURE_SVG}</button>
         <span class="pc-hist-q">${i ? '' : 'Q' + (k + 1)}</span>${marque || '<span class="pc-hist-res"></span>'}
         <span class="pc-hist-txt"><span class="pc-hist-nom">${esc(_pcNomFr(sci))}</span><span class="pc-hist-id">${_pcIdChant(r)}</span></span></li>`);
     });
@@ -28117,7 +28147,7 @@ function _pcQuestion(){
       <div class="pc-demande-ligne"><h3 class="bloc-titre pc-demande">Quel oiseau chante ?</h3>${cercles
         ? `<button type="button" class="pc-cercles-bascule" data-pc-cercles aria-pressed="${!_pcCerclesMasques()}">${_pcCerclesMasques() ? 'Afficher les indices' : 'Masquer les indices'}</button>` : ''}</div>
       ${reponses}
-      <audio id="pcAudio" preload="auto" src="${esc(rec?.file || '')}"></audio>`;
+      <audio id="pcAudio" preload="auto" src="${esc(_pcSrc(rec))}"></audio>`;
   } else {
     const autres = _pcMelanger(p.especes.filter(s => s !== q.cible)).slice(0, PC_CHANTS_PROPOSES - 1);
     q.choix = _pcMelanger([q.cible, ...autres]);
@@ -28137,7 +28167,7 @@ function _pcQuestion(){
             <button type="button" class="pc-lecture pc-lecture-petit" data-pc-ecoute="${k}" aria-label="Écouter le chant ${lettres[k]}">${PC_LECTURE_SVG}</button>
             <span class="pc-chant-nom">Chant ${lettres[k]}<span class="pc-chant-qui"></span><span class="pc-chant-id">${_pcIdChant(q.recs[k])}</span></span>
             <button type="button" class="btn ghost pc-choisir" data-pc-choix="${k}">Choisir</button>
-            <audio preload="auto" data-pc-audio="${k}" src="${esc(q.recs[k]?.file || '')}"></audio>
+            <audio preload="auto" data-pc-audio="${k}" src="${esc(_pcSrc(q.recs[k]))}"></audio>
           </div>`).join('')}
       </div>`;
   }

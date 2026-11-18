@@ -3,7 +3,7 @@
 //   puis rafraichit en background. Prochain reload = nouvelle version.
 // - Requetes cross-origin (Firestore, iNaturalist, xeno-canto, Wikipedia, etc.) : reseau seul.
 // - Bump CACHE_VERSION quand on veut invalider volontairement.
-const CACHE_VERSION = 'v1118-2026-11-18-survie-paires-validees';
+const CACHE_VERSION = 'v1119-2026-11-18-chants-heberges';
 const CACHE_NAME = 'lmb-' + CACHE_VERSION;
 
 // Cache des fichiers de donnees, volontairement SANS CACHE_VERSION dans son nom.
@@ -86,6 +86,9 @@ self.addEventListener('fetch', (event) => {
   if (url.pathname.includes('/demo/')) return;
   // Ni le film : un lecteur demande la video par morceaux, et une copie entiere en cache peut casser la lecture sur iPhone.
   if (url.pathname.endsWith('.mp4')) return;
+  // Ni les chants du quiz (data/chants/*.mp3, 2026-11-18), pour la meme raison : un <audio> les
+  // demande aussi par morceaux. Le cache HTTP du navigateur les garde quand meme.
+  if (url.pathname.endsWith('.mp3')) return;
   // data/generated/ retire du repo (2026-09-02) : etaient des build artifacts
   // jamais fetches par le site (data inline dans app.js). Cette regle bypass devient
   // inutile mais laissee pour retrocompat au cas ou.

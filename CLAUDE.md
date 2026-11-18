@@ -441,3 +441,11 @@ navigateur invisible n'obtient rien, l'appli bascule sur son recours iNaturalist
 enregistrements n'ont pas de sonagramme, et l'écran annonce « Pas de spectrogramme » comme si
 l'espèce n'en avait pas. Diagnostiqué à tort comme un défaut de l'appli le 2026-09-30 - voir
 `docs/VIDEO-PRESENTATION.md`.
+
+**Les chants du Quiz sont nos copies depuis le 2026-11-18** : extraits de 20 s en mono dans `data/chants/`,
+faits par `outils/build/chants-heberges.mjs`, à relancer après chaque `chants-gardes.mjs` (qui réécrit le
+fichier du parcours sans le champ `mp3`), puis monter les `?v=` des fichiers de parcours et de `CHANTS_LICENCES`.
+Ce soir-là, xeno-canto répondait 504 au bout de 60 s à tous ses liens `/download` et à son API, alors que
+ses fichiers directs (`/sounds/uploaded/...`) répondaient : le premier chant restait muet. La licence et le
+lien direct de chaque chant viennent de **GBIF**, qui republie xeno-canto et répond pendant ses pannes.
+La fiche espèce lit encore les enregistrements entiers chez xeno-canto.
