@@ -9,6 +9,9 @@
   répétée », Orite seulement dans les cris. Reste à valider : les DESSINS (notes-privees/maquettes/indices-4-cercles/),
   puis coder les 4 cercles dans app.js (PC_CERCLES_DESSINS, PC_CERCLES des 11, styles .pc-c-*). Noms des parcours :
   pistes dans docs/parcours-a-venir.md, à choisir.
+- Bulle au survol d'un cercle (aperçu sur la page d'écoute, fonction survol) : « Nom de la valeur : précision » ;
+  la Forme ajoute « Début : … » puis hauteur et timbre (valeurs seules). Hors bulle : précisions de hauteur et de
+  timbre, « Ma ligne ». À reprendre tel quel en codant les 4 cercles.
 - Mesures et recherches : `notes-privees/analyse-sons/2026-11-18-parcours/` (wav ignorés, numpy/scipy dans
   `notes-privees/analyse-sons/py`, `PYTHONPATH=../py`). Ce qui n'a pas marché : compter les notes une à une
   (les trilles fusionnent) et juger « même strophe » par le contour (charbonnière jugée variée, faux).
