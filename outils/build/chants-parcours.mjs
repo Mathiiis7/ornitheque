@@ -41,15 +41,45 @@ const PARCOURS = {
   phrases: { dossier: 'ecoute-chants-phrases', qualiteA: true, paysEnPlus: ['Spain'], dureeAdmise: [626692],
     especes: ['fringilla coelebs', 'phylloscopus trochilus', 'certhia brachydactyla', 'certhia familiaris',
       'phoenicurus ochruros', 'phoenicurus phoenicurus'] },
+  // Les huit parcours « Bientot » (groupes 3 a 10 de docs/groupes-chants.md), prepares le 2026-11-18 :
+  // noms provisoires, ni noms ni ordre ne sont decides. Memes filtres que les phrases (qualite A seule,
+  // pays voisins), plus le Portugal et l'Espagne pour les oiseaux du Sud (aucun pouillot veloce ici).
+  // Une page d'ecoute commune : notes-privees/ecoute-parcours/?p=<nom>.
+  // Le Chardonneret est dans deux parcours : ses candidats sont ceux de « jardins », ecartes aussi
+  // s'ils ont un fringille en fond (exclureAussi) ; « fringilles » ne le reliste pas (dejaAilleurs).
+  jardins: { dossier: 'ecoute-parcours/jardins', qualiteA: true, completer: true, paysEnPlus: ['Spain', 'Portugal'],
+    exclureAussi: ['chloris chloris', 'linaria cannabina', 'serinus serinus', 'spinus spinus'],
+    especes: ['erithacus rubecula', 'troglodytes troglodytes', 'prunella modularis', 'carduelis carduelis'] },
+  fringilles: { dossier: 'ecoute-parcours/fringilles', qualiteA: true, completer: true, paysEnPlus: ['Spain', 'Portugal'], dejaAilleurs: ['carduelis carduelis'],
+    especes: ['carduelis carduelis', 'chloris chloris', 'linaria cannabina', 'serinus serinus', 'spinus spinus'] },
+  fauvettes: { dossier: 'ecoute-parcours/fauvettes', qualiteA: true, completer: true, paysEnPlus: ['Spain', 'Portugal'],
+    especes: ['sylvia atricapilla', 'curruca communis', 'curruca melanocephala', 'hippolais polyglotta', 'sylvia borin'] },
+  grives: { dossier: 'ecoute-parcours/grives', qualiteA: true, completer: true, paysEnPlus: ['Spain', 'Portugal'],
+    especes: ['turdus merula', 'turdus philomelos', 'turdus viscivorus', 'luscinia megarhynchos', 'oriolus oriolus'] },
+  roseaux: { dossier: 'ecoute-parcours/roseaux', qualiteA: true, completer: true, paysEnPlus: ['Spain', 'Portugal'],
+    especes: ['cettia cetti', 'cisticola juncidis', 'emberiza schoeniclus', 'acrocephalus scirpaceus', 'acrocephalus schoenobaenus', 'acrocephalus arundinaceus'] },
+  champs: { dossier: 'ecoute-parcours/champs', qualiteA: true, completer: true, paysEnPlus: ['Spain', 'Portugal'],
+    especes: ['alauda arvensis', 'anthus pratensis', 'saxicola rubicola', 'lullula arborea', 'emberiza calandra', 'anthus trivialis'] },
+  trilles: { dossier: 'ecoute-parcours/trilles', qualiteA: true, completer: true, paysEnPlus: ['Spain', 'Portugal'],
+    especes: ['emberiza cirlus', 'emberiza citrinella', 'phylloscopus bonelli', 'curruca curruca'] },
+  // La ronde d'hiver : les chants, puis des etapes sur les cris (Mathis le 2026-11-18). Le Grimpereau
+  // des jardins a deja ses chants gardes (parcours phrases) : il n'a ici que des cris.
+  ronde: { dossier: 'ecoute-parcours/ronde', qualiteA: true, completer: true, paysEnPlus: ['Spain', 'Portugal'], dejaAilleurs: ['certhia brachydactyla'],
+    especes: ['aegithalos caudatus', 'certhia brachydactyla', 'sitta europaea', 'regulus ignicapilla', 'regulus regulus', 'lophophanes cristatus'] },
+  'ronde-cris': { dossier: 'ecoute-parcours/ronde-cris', qualiteA: true, completer: true, paysEnPlus: ['Spain', 'Portugal'], type: 'call',
+    especes: ['aegithalos caudatus', 'certhia brachydactyla', 'sitta europaea', 'regulus ignicapilla', 'regulus regulus', 'lophophanes cristatus'] },
 };
 const nom = process.argv[2] || 'mesanges';
 // Un nom inconnu s'arrete : retomber sur mesanges ecraserait les candidats deja ecoutes.
 if (!PARCOURS[nom]) { console.error('parcours inconnu :', nom, '- connus :', Object.keys(PARCOURS).join(', ')); process.exit(1); }
 const ESPECES = PARCOURS[nom].especes;
+const TYPE = PARCOURS[nom].type || 'song';
+const EXCLURE = [...ESPECES, ...(PARCOURS[nom].exclureAussi || [])];
 const SORTIE = join(RACINE, 'notes-privees', PARCOURS[nom].dossier, 'candidats.json');
 const PAYS = new Set(['France', 'Belgium', 'Switzerland', 'Luxembourg', 'Germany', 'Netherlands',
   'United Kingdom', 'Ireland', 'Italy', 'Austria', 'Denmark', ...(PARCOURS[nom].paysEnPlus || [])]);
 const PAR_ESPECE = 15;
+const PAYS_LARGE = new Set([...PAYS, 'Sweden', 'Norway', 'Finland', 'Poland', 'Czech Republic', 'Slovakia', 'Hungary', 'Slovenia', 'Croatia', 'Estonia', 'Latvia', 'Lithuania', 'Portugal', 'Spain']);
 
 const norm = u => !u ? null : u.startsWith('//') ? 'https:' + u : u.replace(/^http:\/\//, 'https://');
 const secondes = s => { const [m, ss] = String(s || '0:00').split(':').map(Number); return (m || 0) * 60 + (ss || 0); };
@@ -57,7 +87,8 @@ const secondes = s => { const [m, ss] = String(s || '0:00').split(':').map(Numbe
 async function tout(gen, sp, q){
   const out = [];
   for(let page = 1; page <= 10; page++){
-    const query = ['gen:' + gen, 'sp:' + sp, 'type:song', 'q:' + q].join(' ');
+    const query = ['gen:' + gen, 'sp:' + sp, 'type:' + TYPE, 'q:' + q].join(' ');
+    await new Promise(r => setTimeout(r, 1000));   // une demande par seconde : xeno-canto limite les rafales
     const r = await fetch('https://xeno-canto.org/api/3/recordings?query=' + encodeURIComponent(query) + '&per_page=500&page=' + page + '&key=' + CLE);
     const j = await r.json();
     out.push(...(j.recordings || []));
@@ -68,19 +99,26 @@ async function tout(gen, sp, q){
 
 const res = {};
 for(const sci of ESPECES){
+  if((PARCOURS[nom].dejaAilleurs || []).includes(sci)){ res[sci] = []; console.log(sci.padEnd(24), 'deja ecoute dans un autre parcours'); continue; }
   const [gen, sp] = sci.split(' ');
   let brut = await tout(gen, sp, 'A');
-  const garder = r => {
-    if(!r.file || r.type !== 'song' || !PAYS.has(r.cnt)) return false;
+  const garder = (r, pays) => {
+    if(!r.file || r.type !== TYPE || !(pays || PAYS).has(r.cnt)) return false;
     const autres = (r.also || []).filter(Boolean).map(s => s.toLowerCase());
-    if(autres.some(a => ESPECES.includes(a))) return false;
+    if(autres.some(a => EXCLURE.includes(a))) return false;
     const d = secondes(r.length);
     return (d >= 8 && d <= 180) || (PARCOURS[nom].dureeAdmise || []).includes(+r.id);
   };
-  let ok = brut.filter(garder);
+  let ok = brut.filter(r => garder(r));
+  // Parcours « Bientot » (2026-11-18) : moins de 15 enregistreurs en qualite A dans les pays de base
+  // (Tarin, Pipit farlouse, Orite, Roitelet huppe, Mesange huppee : oiseaux surtout nordiques ou peu
+  // enregistres). On elargit a l'Europe du Nord et du Centre, puis on admet la qualite B, rangee apres.
+  const assez = () => new Set(ok.map(r => r.rec)).size >= PAR_ESPECE;
+  if(PARCOURS[nom].completer && !assez()) ok.push(...brut.filter(r => !PAYS.has(r.cnt) && garder(r, PAYS_LARGE)));
+  if(PARCOURS[nom].completer && !assez()) ok.push(...(await tout(gen, sp, 'B')).filter(r => garder(r, PAYS_LARGE)));
   if(!PARCOURS[nom].qualiteA && new Set(ok.map(r => r.rec)).size < PAR_ESPECE) ok.push(...(await tout(gen, sp, 'B')).filter(garder));
   const qOrdre = { A: 2, B: 1 };
-  ok.sort((a, b) => (b.cnt === 'France') - (a.cnt === 'France')
+  ok.sort((a, b) => (b.cnt === 'France') - (a.cnt === 'France') || PAYS.has(b.cnt) - PAYS.has(a.cnt)
     || ((a.also || []).filter(Boolean).length === 0 ? -1 : 0) - ((b.also || []).filter(Boolean).length === 0 ? -1 : 0)
     || (qOrdre[b.q] || 0) - (qOrdre[a.q] || 0)
     || (+b.id) - (+a.id));
