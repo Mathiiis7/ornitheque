@@ -17593,6 +17593,15 @@ const XC_API_KEY = 'a082ff6c2adafb02ea6b275da67cd903988f82ea';
 // 2026-11-18 au soir, elle repondait 504 au bout de 60 s a toutes ses demandes ; la fiche en
 // enchainait jusqu'a huit, l'une apres l'autre, et restait des minutes sur « Recherche… ».
 const XC_DELAI_MS = 6000;
+// fetch qui abandonne si le serveur n'a pas commence a repondre dans le delai. Le delai ne couvre
+// pas la lecture : une page de xeno-canto pese 190 Ko (100 enregistrements, mesure le 2026-11-19),
+// deux partent ensemble, et un telephone mal capte qui la recoit lentement n'est pas en panne.
+async function _fetchAvantDelai(url, ms){
+  const ctrl = new AbortController();
+  const minuteur = setTimeout(() => ctrl.abort(), ms);
+  try{ return await fetch(url, { signal: ctrl.signal }); }
+  finally{ clearTimeout(minuteur); }
+}
 // Le jeu GBIF qui republie xeno-canto : memes fichiers, memes sonagrammes, et il repondait pendant
 // la panne du 2026-11-18. Recours de la fiche quand l'API de xeno-canto ne repond pas.
 const GBIF_JEU_XC = 'b1047888-ae52-4179-9dd5-5448ea342a24';
@@ -17640,7 +17649,7 @@ async function _chercherSons(sci){
     if(typeStr) bits.push('type:' + typeStr);
     if(qA) bits.push('q:A');
     try{
-      const r = await fetch('https://xeno-canto.org/api/3/recordings?query=' + encodeURIComponent(bits.join(' ')) + '&key=' + XC_API_KEY, { signal: AbortSignal.timeout(XC_DELAI_MS) });
+      const r = await _fetchAvantDelai('https://xeno-canto.org/api/3/recordings?query=' + encodeURIComponent(bits.join(' ')) + '&key=' + XC_API_KEY, XC_DELAI_MS);
       if(!r.ok) throw new Error('xeno-canto ' + r.status);
       const j = await r.json();
       const recs = Array.isArray(j?.recordings) ? j.recordings : [];
@@ -17726,7 +17735,7 @@ async function _chercherSons(sci){
 async function _sonsGbif(sci, norm){
   try{
     const u = 'https://api.gbif.org/v1/occurrence/search?datasetKey=' + GBIF_JEU_XC + '&scientificName=' + encodeURIComponent(sci) + '&mediaType=Sound&limit=40';
-    const r = await fetch(u, { signal: AbortSignal.timeout(10000) });
+    const r = await _fetchAvantDelai(u, 10000);
     if(!r.ok) return null;
     const j = await r.json();
     const songList = [], callList = [];

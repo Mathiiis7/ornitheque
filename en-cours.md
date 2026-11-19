@@ -1,10 +1,12 @@
 # Où on en est (2026-11-19)
 
-## Fiche espèce sans xeno-canto : v1120 (19/11, ticket qg#84 fermé)
+## Fiche espèce sans xeno-canto : v1120 et v1121 (19/11, ticket qg#84 fermé)
 - La fiche d'un oiseau de parcours joue nos copies et s'affiche sans attendre xeno-canto (0,1 s). Le cri, et tout
-  pour les autres oiseaux, vient de l'API de xeno-canto, abandonnée au bout de 6 s (`XC_DELAI_MS`) ou au premier
-  refus, puis de GBIF (`_sonsGbif`, mêmes fichiers et sonagrammes). Liens directs `/sounds/uploaded/...` au lieu
-  de `/download`. Un échec des deux n'est plus gardé en cache : la fiche suivante réessaie.
+  pour les autres oiseaux, vient de l'API de xeno-canto, abandonnée si elle n'a pas commencé à répondre en 6 s
+  (`XC_DELAI_MS`, `_fetchAvantDelai`) ou au premier refus, puis de GBIF (`_sonsGbif`, mêmes fichiers et
+  sonagrammes). Le délai ne couvre pas la lecture (v1121) : une page pèse 190 Ko, un téléphone mal capté la reçoit
+  lentement sans être en panne. Liens directs `/sounds/uploaded/...` au lieu de `/download` : 100 sur 100 identiques
+  à ceux de GBIF, accents et espaces compris. Un échec des deux n'est plus gardé en cache : la fiche suivante réessaie.
 - Mesuré avec l'API simulée en panne (`outils/verif/_essai-fiche-sons.mjs`, aucune demande au vrai xeno-canto) :
   chant copié à 0,5 s, cri par GBIF à 6,8 s ; Tichodrome à 6,8 s, ou 1 s quand xeno-canto refuse aussitôt.
 - Sonagrammes laissés chez xeno-canto : ils répondaient pendant la panne du 18/11 et pèsent 2 à 6 Mo chacun.
@@ -74,7 +76,7 @@
 - Reste ouvert : nombre de noms proposés, un essai par jour ou illimité, classement à vie ou par mois, que faire tant
   qu'il n'y a que 11 oiseaux.
 
-Dernière version : v1120 / app.js?v=692 (19/11, fiche sans xeno-canto). Prochaine : v1121 / 693.
+Dernière version : v1121 / app.js?v=693 (19/11, délai de xeno-canto). Prochaine : v1122 / 694.
 - **v1115** : l'entraînement ne fait plus bouger la série (seuls les parcours comptent).
 - **v1114** : série d'un oiseau au quiz, règle « partout, sans aide » choisie par Mathis (`_pcQuestionCompte`) :
   5 oiseaux mini, jamais « parmi 3 chants », jamais avec indices vus. Les séries déjà gagnées ne sont pas recalculées.
