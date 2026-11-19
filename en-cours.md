@@ -1,17 +1,28 @@
-# Où on en est (2026-11-18)
+# Où on en est (2026-11-19)
 
-## Chants du quiz copiés sur le site : v1119 (18/11 au soir)
+## Fiche espèce sans xeno-canto : v1120 (19/11, ticket qg#84 fermé)
+- La fiche d'un oiseau de parcours joue nos copies et s'affiche sans attendre xeno-canto (0,1 s). Le cri, et tout
+  pour les autres oiseaux, vient de l'API de xeno-canto, abandonnée au bout de 6 s (`XC_DELAI_MS`) ou au premier
+  refus, puis de GBIF (`_sonsGbif`, mêmes fichiers et sonagrammes). Liens directs `/sounds/uploaded/...` au lieu
+  de `/download`. Un échec des deux n'est plus gardé en cache : la fiche suivante réessaie.
+- Mesuré avec l'API simulée en panne (`outils/verif/_essai-fiche-sons.mjs`, aucune demande au vrai xeno-canto) :
+  chant copié à 0,5 s, cri par GBIF à 6,8 s ; Tichodrome à 6,8 s, ou 1 s quand xeno-canto refuse aussitôt.
+- Sonagrammes laissés chez xeno-canto : ils répondaient pendant la panne du 18/11 et pèsent 2 à 6 Mo chacun.
+- Recours GBIF : pas de qualité A à E ni d'espèces d'arrière-plan, et surtout des WAV récents ; les MP3 passent devant.
+
+## Chants du quiz copiés sur le site : v1119 (18/11 au soir), complétés le 19/11
 - Panne : xeno-canto répondait 504 au bout de 60 s à tous ses liens `/download` et à son API ; le premier chant du
   quiz restait muet, bouton sur « lecture ». Ses fichiers directs (`/sounds/uploaded/...`) et ses sonagrammes répondaient.
 - Choix de Mathis : héberger. `outils/build/chants-heberges.mjs` copie un extrait de 20 s mono 96 kbit/s dans
   `data/chants/<id>.mp3`, licence et lien direct pris sur GBIF (qui republie xeno-canto) ; champ `mp3` dans
-  `data/parcours-*.json`, lu par `_pcSrc` avant `file`. 137 sur 142 copiés, 30,8 Mo. Liste auteur + licence dans
-  À propos > Sources (formulation « Sobre » choisie par Mathis), chargée à l'ouverture du repli.
-- **Reste : 5 chants absents de GBIF** (1185195, 483107, 591238, 64859, 143380), encore lus chez xeno-canto. Quand son
-  API répond : relancer le script, puis monter les `?v=` des fichiers de parcours et de `CHANTS_LICENCES` (app.js).
-- **À relancer aussi pour chaque nouveau parcours**, après `chants-gardes.mjs` (qui réécrit le fichier sans `mp3`).
-- Encore chez xeno-canto : la fiche espèce (enregistrements entiers) et les sonagrammes.
-- Licences : 113 BY-NC-SA 4.0, 19 ND (8 en 4.0, 9 en 3.0, 2 en 2.5 : extrait permis, FAQ Creative Commons), 2 BY, 3 CC0.
+  `data/parcours-*.json`, lu par `_pcSrc` avant `file`. **142 sur 142 copiés, 31,9 Mo** (les 5 derniers le 19/11,
+  quand l'API de xeno-canto a répondu de nouveau). Liste auteur + licence dans À propos > Sources (formulation
+  « Sobre » choisie par Mathis), chargée à l'ouverture du repli.
+- **À relancer pour chaque nouveau parcours**, après `chants-gardes.mjs` (qui réécrit le fichier sans `mp3`), puis
+  monter les `?v=` des fichiers de parcours et de `CHANTS_LICENCES` (app.js).
+- Encore chez xeno-canto : les sonagrammes (choix du 19/11, voir plus haut).
+- Licences : 116 BY-NC-SA 4.0, 1 BY-NC-SA 3.0, 20 ND (8 en 4.0, 9 en 3.0, 3 en 2.5 : extrait permis, FAQ Creative
+  Commons), 2 BY, 3 CC0.
 - Essayé sans marcher : rien, mais ne pas marteler xeno-canto pour vérifier s'il est revenu (une requête suffit).
 
 ## Les 8 parcours « Bientôt » : préparés, rien en ligne (18/11)
@@ -63,7 +74,7 @@
 - Reste ouvert : nombre de noms proposés, un essai par jour ou illimité, classement à vie ou par mois, que faire tant
   qu'il n'y a que 11 oiseaux.
 
-Dernière version : v1119 / app.js?v=691 (18/11, chants copiés). Prochaine : v1120 / 692.
+Dernière version : v1120 / app.js?v=692 (19/11, fiche sans xeno-canto). Prochaine : v1121 / 693.
 - **v1115** : l'entraînement ne fait plus bouger la série (seuls les parcours comptent).
 - **v1114** : série d'un oiseau au quiz, règle « partout, sans aide » choisie par Mathis (`_pcQuestionCompte`) :
   5 oiseaux mini, jamais « parmi 3 chants », jamais avec indices vus. Les séries déjà gagnées ne sont pas recalculées.

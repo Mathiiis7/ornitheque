@@ -448,4 +448,6 @@ fichier du parcours sans le champ `mp3`), puis monter les `?v=` des fichiers de 
 Ce soir-là, xeno-canto répondait 504 au bout de 60 s à tous ses liens `/download` et à son API, alors que
 ses fichiers directs (`/sounds/uploaded/...`) répondaient : le premier chant restait muet. La licence et le
 lien direct de chaque chant viennent de **GBIF**, qui republie xeno-canto et répond pendant ses pannes.
-La fiche espèce lit encore les enregistrements entiers chez xeno-canto.
+La fiche espèce joue ces copies pour les oiseaux des parcours ; pour le reste, elle laisse 6 s à
+l'API de xeno-canto (`XC_DELAI_MS`), puis passe par GBIF (`_sonsGbif`) : sans délai, la panne la laissait des
+minutes sur « Recherche… » (2026-11-19). Ses sonagrammes restent chez xeno-canto.

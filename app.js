@@ -16855,7 +16855,7 @@ function _spPhotoCachePersist(){
     }catch(_){ try{ localStorage.removeItem(_SP_PHOTO_CACHE_KEY); }catch(_){} }
   }, 2000);
 }
-const _spSoundCache = new Map();      // sci → url mp3 | null
+const _spSoundCache = new Map();      // sci → promesse de { song, call, songList, callList }
 // Photos figees : dump du cache utilisateur validees, garanties stables (jamais re-fetch).
 // Chargement lazy la 1ere fois qu'on demande une photo. Contient ~100 especes actuellement,
 // on peut en ajouter en dumpant a nouveau (voir _perfDiag doc).
@@ -17589,39 +17589,74 @@ async function _fetchWikiPhoto(sci){
 // Cle xeno-canto API v3 (Mathis). La v2 a ete fermee en 2024, v3 exige une cle par compte.
 // Regenerable sur https://xeno-canto.org/account si abusee.
 const XC_API_KEY = 'a082ff6c2adafb02ea6b275da67cd903988f82ea';
-async function _fetchXenoSound(sci){
+// Delai de l'API de xeno-canto, qui repond en 0,8 s d'ordinaire (mesure le 2026-11-19). Le
+// 2026-11-18 au soir, elle repondait 504 au bout de 60 s a toutes ses demandes ; la fiche en
+// enchainait jusqu'a huit, l'une apres l'autre, et restait des minutes sur « Recherche… ».
+const XC_DELAI_MS = 6000;
+// Le jeu GBIF qui republie xeno-canto : memes fichiers, memes sonagrammes, et il repondait pendant
+// la panne du 2026-11-18. Recours de la fiche quand l'API de xeno-canto ne repond pas.
+const GBIF_JEU_XC = 'b1047888-ae52-4179-9dd5-5448ea342a24';
+// Une recherche par espece, gardee le temps de la session. C'est la PROMESSE qui est gardee : le
+// survol d'une ligne lance deja la recherche, et ouvrir la fiche aussitot en lancait une seconde.
+// Quand ni xeno-canto ni GBIF n'ont repondu, rien n'est garde : la fiche suivante reessaie, au lieu
+// de rester vide toute la session.
+function _fetchXenoSound(sci){
   const key = sci.toLowerCase();
   if(_spSoundCache.has(key)) return _spSoundCache.get(key);
+  const p = _chercherSons(sci).then(
+    out => { if(out.echec) _spSoundCache.delete(key); return out; },
+    e => { _spSoundCache.delete(key); throw e; });
+  _spSoundCache.set(key, p);
+  return p;
+}
+async function _chercherSons(sci){
   const [gen, sp] = sci.split(' ');
-  if(!gen || !sp){ const empty = {song:null, call:null, songList:[], callList:[]}; _spSoundCache.set(key, empty); return empty; }
+  if(!gen || !sp) return {song:null, call:null, songList:[], callList:[]};
   const norm = u => { if(!u) return null; if(u.startsWith('//')) return 'https:' + u; if(u.startsWith('http://')) return 'https://' + u.slice(7); return u; };
+  // Le fichier lui-meme (sounds/uploaded/<dossier>/<nom>) plutot que le lien /download de l'API :
+  // le 2026-11-18, tous les /download repondaient 504 quand les fichiers repondaient en 0,3 s. Le
+  // dossier est celui du sonagramme (meme regle que outils/build/chants-heberges.mjs).
+  const direct = r => {
+    const dossier = (String(r.sono?.small || '').match(/spectrograms\/([^/]+)\//) || [])[1];
+    return dossier && r['file-name'] ? `https://xeno-canto.org/sounds/uploaded/${dossier}/${encodeURIComponent(r['file-name'])}` : null;
+  };
   // Slim : garde les champs utiles pour l'UI (audio, sonogramme, qualite, lieu, date, duree, enregistreur).
   // also : liste des especes d'arriere-plan detectees dans l'enregistrement (utilise
   // pour boost 'solo' dans le ranking, cf. scoreRec).
   const slim = r => ({
-    id: r.id, file: norm(r.file),
+    id: r.id, file: direct(r) || norm(r.file),
     sono: norm(r.sono?.full || r.sono?.large || r.sono?.med || r.sono?.small),
     q: r.q || '', loc: r.loc || '', cnt: r.cnt || '',
     date: r.date || '', length: r.length || '',
     rec: r.rec || '', url: norm(r.url), type: r.type || '',
     also: Array.isArray(r.also) ? r.also.filter(x => x && x.trim()) : []
   });
+  // null quand xeno-canto ne repond pas (delai, erreur, 429...), [] quand il n'a rien : les deux
+  // se confondaient. Apres un premier echec, plus aucune demande ne part vers lui.
+  let xcEnPanne = false;
   async function queryXC(typeStr, qA){
+    if(xcEnPanne) return null;
     const bits = ['gen:' + gen, 'sp:' + sp];
     if(typeStr) bits.push('type:' + typeStr);
     if(qA) bits.push('q:A');
     try{
-      const r = await fetch('https://xeno-canto.org/api/3/recordings?query=' + encodeURIComponent(bits.join(' ')) + '&key=' + XC_API_KEY);
+      const r = await fetch('https://xeno-canto.org/api/3/recordings?query=' + encodeURIComponent(bits.join(' ')) + '&key=' + XC_API_KEY, { signal: AbortSignal.timeout(XC_DELAI_MS) });
+      if(!r.ok) throw new Error('xeno-canto ' + r.status);
       const j = await r.json();
       const recs = Array.isArray(j?.recordings) ? j.recordings : [];
       return recs.filter(x => x.file).slice(0, 8).map(slim);   // top 8 avec audio
-    }catch(_){ return []; }
+    }catch(_){ xcEnPanne = true; return null; }
   }
   // Chaque categorie : d'abord qualite A, complete avec qualites toutes si necessaire (max 8).
   const [songA, callA] = await Promise.all([queryXC('song', true), queryXC('call', true)]);
-  let songList = songA, callList = callA;
-  if(songList.length < 4){ const extra = await queryXC('song', false); const seen = new Set(songList.map(r=>r.id)); for(const r of extra){ if(!seen.has(r.id)){ songList.push(r); if(songList.length >= 8) break; } } }
-  if(callList.length < 4){ const extra = await queryXC('call', false); const seen = new Set(callList.map(r=>r.id)); for(const r of extra){ if(!seen.has(r.id)){ callList.push(r); if(callList.length >= 8) break; } } }
+  let songList = songA || [], callList = callA || [];
+  let gbifMuet = false;
+  if(xcEnPanne){
+    const g = await _sonsGbif(sci, norm);
+    if(g){ songList = g.songList; callList = g.callList; } else gbifMuet = true;
+  }
+  if(songList.length < 4){ const extra = await queryXC('song', false) || []; const seen = new Set(songList.map(r=>r.id)); for(const r of extra){ if(!seen.has(r.id)){ songList.push(r); if(songList.length >= 8) break; } } }
+  if(callList.length < 4){ const extra = await queryXC('call', false) || []; const seen = new Set(callList.map(r=>r.id)); for(const r of extra){ if(!seen.has(r.id)){ callList.push(r); if(callList.length >= 8) break; } } }
   // Re-tri par pertinence : qualite A > B > C > D > E, puis EU (FR/ES/IT/PT/DE/GB/BE/NL/CH/AT),
   // puis longueur sweet spot 10-90s (parsee "M:SS"), puis id (recent = plus grand id).
   const EU_COUNTRIES = new Set(['France','Spain','Italy','Portugal','Germany','United Kingdom','Belgium','Netherlands','Switzerland','Austria','Ireland','Luxembourg','Denmark','Sweden','Norway','Finland','Poland','Czechia','Slovakia','Hungary','Croatia','Slovenia','Estonia','Latvia','Lithuania','Bulgaria','Romania','Greece','Cyprus','Malta']);
@@ -17645,12 +17680,16 @@ async function _fetchXenoSound(sci){
     score += Math.log10((parseInt(r.id, 10) || 100000) / 100000);
     return score;
   };
-  songList.sort((a, b) => scoreRec(b) - scoreRec(a));
-  callList.sort((a, b) => scoreRec(b) - scoreRec(a));
+  // Un WAV du recours GBIF (champ wav) passe apres tout MP3 : 4 a 10 Mo pour 30 s, telecharges
+  // entiers a l'ouverture de la fiche. L'API de xeno-canto ne pose pas ce champ : son tri ne change pas.
+  const rang = r => scoreRec(r) - (r.wav ? 10000 : 0);
+  songList.sort((a, b) => rang(b) - rang(a));
+  callList.sort((a, b) => rang(b) - rang(a));
+  songList.splice(8); callList.splice(8);   // 8 au plus, comme xeno-canto (GBIF en rend jusqu'a 40)
   // Si pas de cri, tente les autres tags "non-song" courants (les 3 premiers combines).
   if(!callList.length){
     for(const t of ['alarm', 'flight', 'nocturnal', 'begging']){
-      const extra = await queryXC(t, false);
+      const extra = await queryXC(t, false) || [];
       callList.push(...extra.slice(0, 3));
       if(callList.length >= 3) break;
     }
@@ -17676,8 +17715,42 @@ async function _fetchXenoSound(sci){
     call: callList[0]?.file || null,
     songList, callList
   };
-  _spSoundCache.set(key, out);
+  if(xcEnPanne && gbifMuet) out.echec = true;   // ni l'un ni l'autre : _fetchXenoSound ne le garde pas
   return out;
+}
+// Recours GBIF : une seule demande donne chants et cris, tries d'apres le champ behavior (en
+// anglais : « song », « dawn song », « call, alarm call »...). GBIF ne garde ni la qualite (A a E)
+// ni les especes d'arriere-plan : le tri perd ses deux criteres les plus forts. 40 enregistrements,
+// environ 300 Ko en 0,7 s (mesure le 2026-11-19), les plus recents d'abord, WAV pour la plupart.
+// null quand GBIF ne repond pas.
+async function _sonsGbif(sci, norm){
+  try{
+    const u = 'https://api.gbif.org/v1/occurrence/search?datasetKey=' + GBIF_JEU_XC + '&scientificName=' + encodeURIComponent(sci) + '&mediaType=Sound&limit=40';
+    const r = await fetch(u, { signal: AbortSignal.timeout(10000) });
+    if(!r.ok) return null;
+    const j = await r.json();
+    const songList = [], callList = [];
+    for(const o of (j?.results || [])){
+      const son = (o.media || []).find(m => m.type === 'Sound' && m.identifier);
+      const id = String(o.catalogNumber || '').replace(/^XC/i, '');
+      if(!son || !id) continue;
+      const image = (o.media || []).find(m => m.type === 'StillImage' && m.identifier);
+      const sec = parseInt((String(son.description || '').match(/(\d+)\s*s\b/) || [])[1], 10);
+      const beh = String(o.behavior || '');
+      const rec = {
+        id, file: norm(son.identifier), sono: norm(image?.identifier),
+        q: '', loc: o.locality || '', cnt: o.country || '', date: String(o.eventDate || '').slice(0, 10),
+        length: sec >= 0 ? Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0') : '',
+        rec: o.recordedBy || '', url: 'https://xeno-canto.org/' + id, type: beh, also: [],
+        wav: !/mpeg|mp3/i.test(son.format || '')
+      };
+      // Comme la recherche « type:song » de xeno-canto, un enregistrement « call, dawn song » va
+      // dans les deux listes.
+      if(/song/i.test(beh)) songList.push(rec);
+      if(/call|alarm/i.test(beh)) callList.push(rec);
+    }
+    return { songList, callList };
+  }catch(_){ return null; }
 }
 // Rend une section audio (chant ou cri) avec :
 //   - Label du type
@@ -21713,16 +21786,29 @@ function _openSpeciesModalSuite(sci, key, modal, _wasOpen, _savedScroll){
   songRow.innerHTML = ''; callRow.innerHTML = '';
   hint.textContent = '🎧 Recherche du chant et du cri…'; hint.hidden = false;
   const sciMin = sci.toLowerCase();
-  Promise.all([_fetchXenoSound(sci), _pcChantsFiche(sciMin).catch(() => null)]).then(([r, choisis]) => {
-    let { songList = [], callList = [] } = r || {};
-    if(choisis) songList = choisis;
-    // Les cercles d'indices du quiz, a cote du chant (Mathis le 2026-10-18)
-    const indices = PC_CERCLES[sciMin] ? `<span class="sm-indices pc-indices">${_pcCerclesHtml(sciMin)}</span>` : '';
-    _renderSpeciesAudioBlock(songRow, 'Chant', 'smSong', songList, indices);
+  // Les chants choisis par Mathis (oiseaux des parcours) sont nos copies : ils s'affichent des que
+  // le fichier du parcours arrive, sans attendre xeno-canto, et le cri suit quand sa recherche
+  // revient. Les deux attendaient ensemble : pendant la panne du 2026-11-18, meme le chant copie
+  // restait cache. Une reponse qui arrive apres le passage a une autre fiche est ignoree.
+  songRow.dataset.sci = sciMin;
+  const toujours = () => songRow.dataset.sci === sciMin;
+  // Les cercles d'indices du quiz, a cote du chant (Mathis le 2026-10-18)
+  const indices = PC_CERCLES[sciMin] ? `<span class="sm-indices pc-indices">${_pcCerclesHtml(sciMin)}</span>` : '';
+  let chantPose = false;
+  const poserChant = liste => {
+    chantPose = true;
+    _renderSpeciesAudioBlock(songRow, 'Chant', 'smSong', liste, indices);
+    if(liste.length){ songRow.hidden = false; hint.hidden = true; }
+  };
+  const choisisP = _pcChantsFiche(sciMin).catch(() => null);
+  choisisP.then(choisis => { if(toujours() && choisis?.length) poserChant(choisis); });
+  Promise.all([_fetchXenoSound(sci).catch(() => null), choisisP]).then(([r, choisis]) => {
+    if(!toujours()) return;
+    const { songList = [], callList = [] } = r || {};
+    if(!chantPose) poserChant(choisis?.length ? choisis : songList);
     _renderSpeciesAudioBlock(callRow, 'Cri', 'smCall', callList);
-    if(songList.length) songRow.hidden = false;
     if(callList.length) callRow.hidden = false;
-    if(!songList.length && !callList.length){ hint.textContent = "Pas d'enregistrement disponible sur xeno-canto."; }
+    if(songRow.hidden && callRow.hidden){ hint.textContent = "Pas d'enregistrement disponible sur xeno-canto."; hint.hidden = false; }
     else { hint.hidden = true; }
     // Mutex audio wrapper-level (voir IIFE en bas) : couvre auto les nouveaux <audio>.
   });
@@ -26594,7 +26680,7 @@ const PARCOURS_MESANGES = {
     { titre: 'Le mélange', type: 'melange', n: 5, q: 10, sansCercles: true },
     { titre: 'L\'épreuve', type: 'nom', n: 5, q: 15, epreuve: true, sansCercles: true },
   ],
-  chants: 'data/parcours-mesanges.json?v=20261118',   // ?v= a monter apres chants-gardes.mjs ou chants-heberges.mjs
+  chants: 'data/parcours-mesanges.json?v=20261119',   // ?v= a monter apres chants-gardes.mjs ou chants-heberges.mjs
 };
 // Groupe 2 de docs/groupes-chants.md, ouvert le 2026-10-17. Mathis garde les six oiseaux et
 // demande une etape de plus pour le sixieme. Ordre, meme regle que les mesanges : les courants
@@ -26616,7 +26702,7 @@ const PARCOURS_PHRASES = {
     { titre: 'Le mélange', type: 'melange', n: 6, q: 10, sansCercles: true },
     { titre: 'L\'épreuve', type: 'nom', n: 6, q: 15, epreuve: true, sansCercles: true },
   ],
-  chants: 'data/parcours-phrases.json?v=20261118',
+  chants: 'data/parcours-phrases.json?v=20261119',
 };
 const PARCOURS_OUVERTS = [PARCOURS_MESANGES, PARCOURS_PHRASES];
 const _pcParcoursDe = cle => PARCOURS_OUVERTS.find(P => P.cle === cle) || PARCOURS_MESANGES;
@@ -26804,7 +26890,9 @@ async function _pcChantsFiche(sci){
   if(!_pcChants[P.chants]){ try{ _pcChants[P.chants] = await (await fetch(P.chants)).json(); }catch(_){ return null; } }
   const l = _pcChants[P.chants]?.[sci]; if(!l?.length) return null;
   // Le fichier du parcours ne garde que ce que le quiz lit : le lien se refait depuis le numero.
-  return l.map(r => ({ ...r, url: 'https://xeno-canto.org/' + r.id }));
+  // Le son joue est notre copie (data/chants/) : les 20 premieres secondes, ce que le lecteur de
+  // la fiche joue de toute facon (MAX_PLAYBACK_SEC). Sans elle, le fichier chez xeno-canto.
+  return l.map(r => ({ ...r, file: _pcSrc(r), url: 'https://xeno-canto.org/' + r.id }));
 }
 function _pcEntrChoix(){
   try{
@@ -28003,12 +28091,12 @@ const _pcIdChant = r => r ? `Chant n° XC ${esc(r.id)} · ${esc(r.rec)}` : '';
 // Le son que joue le quiz : notre extrait de 20 s (data/chants/, outils/build/chants-heberges.mjs),
 // sinon le fichier chez xeno-canto. Le 2026-11-18, xeno-canto repondait 504 au bout de 60 s a tous
 // ses liens de telechargement : le premier chant restait muet, bouton sur « lecture ». La fiche
-// espece, elle, lit toujours l'enregistrement entier chez xeno-canto (r.file).
+// espece joue aussi ces copies pour les oiseaux des parcours (_pcChantsFiche).
 const _pcSrc = r => r ? (r.mp3 || r.file || '') : '';
 // Page d'aide, « Sources des donnees » : auteur et licence de chaque chant copie pour le Quiz. Les
 // licences Creative Commons demandent de citer auteur, licence et source, et de dire que c'est un
 // extrait. La liste ne se charge qu'a l'ouverture du repli. ?v= a monter avec chants-heberges.mjs.
-const CHANTS_LICENCES = 'data/chants/licences.json?v=20261118';
+const CHANTS_LICENCES = 'data/chants/licences.json?v=20261119';
 function _licenceCC(code){
   const [nom, version] = String(code || '').split('/');
   if(!nom || !version) return '';
